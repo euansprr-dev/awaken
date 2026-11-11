@@ -1868,6 +1868,49 @@
       "mistHeight": 48.0,
       "fogGlow": 0.6,
       "skyGlow": 0.0
+    },
+    "biome:awaken:realm/cinder_crown": {
+      "_name": "The Cinder Crown: a burnt mountain under a brown sky, ash grey and black rock, a low warm sun, everything that still burns blooming against it",
+      "exposure": 1.02,
+      "contrast": 1.16,
+      "saturation": 1.1,
+      "warmth": 0.2,
+      "shadowTint": [
+        0.44,
+        0.33,
+        0.31
+      ],
+      "highlightTint": [
+        1.0,
+        0.78,
+        0.5
+      ],
+      "splitTone": 0.22,
+      "vignette": 0.26,
+      "bloom": 1.1,
+      "bloomThreshold": 0.55,
+      "skyBloom": 0.15,
+      "shafts": 0.6,
+      "haze": 0.4,
+      "hazeStart": 0.28,
+      "hazeTint": [
+        0.78,
+        0.5,
+        0.36
+      ],
+      "hazeTintMix": 0.5,
+      "hazeDesaturate": 0.1,
+      "sunsetWarmth": 0.5,
+      "sunGlow": 0.7,
+      "light": 0.0,
+      "ao": 0.85,
+      "filmic": 1.0,
+      "mist": 0.3,
+      "mistHeight": 66.0,
+      "fogGlow": 0.8,
+      "skyGlow": 0.0,
+      "heat": 0.3,
+      "glow": 0.8
     }
   }
 }

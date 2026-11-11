@@ -21965,6 +21965,81 @@ has its own, written from one table (`tools/realms/kinds_air.py`):
   marching the shafts it is already sent, or a small renderer of the gates' own with its own pipeline. Until one of
   those exists a well is a lit slot, a pool on the floor and motes turning between them.
 
+**Rolled lands** (`kit/land/GeneratedLand`; brief `docs/gates-as-worlds/finish/07-rolled-lands.md`). Euan, 11 Nov: "I don't
+think we should build all the 88 gates by hand... What about some kind of really well built procedural worlds?... they all
+feel very different and still feel just as immersive... Sometimes maybe you have to walk up to the top of a mountain." A
+rolled land is the open-sky twin of a rolled crawl: one generator rolls a whole outdoor world from the gate's seed, a
+**landform** gives it its big shape and lays the run through it, and a **skin** (one class in `realms/land`, as a crawl's
+skin is) says what it is made of. Built so far: one landform, The Ascent, and one skin, the Ember Mines' country; their
+first land is The Cinder Crown (`awaken:cinder_crown`, program `awaken:ember_country`, every rank from E, not yet `ready`).
+
+- **The ground is shaped to the way.** A landform lays its run as *stations*: a point, the height of your feet there, a
+  radius the ground is level over, and a width over which the land comes back to its own shape (`GeneratedLand.station`).
+  A column takes the height of the station it is on (where two overlap, the one whose middle is nearer) or is blended
+  between the nearest station and the natural ground. So a path is always cut into a slope or carried out from it, a
+  den's place is always level, a stair's treads are exact, and every leg can be walked to whatever the seed did to the
+  land behind it. A column's height is a function of where it is and the seed (`ground`), so no chunk asks another what
+  it drew. Kinds of station: `TRAIL` (a worn path, 2.6 each side), `PAD` (a den's place, a hairpin's terrace, a ledge),
+  `STAIR` (one tread, with the way it climbs), `SPUR` (a narrow track), `FLOOR` (a floor a piece lays itself: the way
+  in, a court, the Lord's place). A curved way never climbs more than 0.42 a block and a straight one never more than
+  one, which is what keeps two neighbouring columns of it within a step of each other.
+- **Half blocks everywhere.** Heights are kept in half blocks: a slab of the ground's own stone finishes an odd one.
+  Loose ground (a skin's `soil`, where it has a `drift`) lies in layers an eighth of a block deep off the ways, so dunes
+  are smooth; on a way it only ever makes the half step. Along a path's edges and here and there on a level place the
+  ground stands half a block up; the line you walk stays as laid. Rubble (a stair with its back to the rock, or a slab)
+  lies at the foot of four walls in ten.
+- **Rock that stands steep stands in columns** (`Landform.columns`): in such places a column's height is that of the
+  middle of its cell of a hex lattice (3.4 across the flats), each cell a little higher or lower than the next, the
+  joints a block lower. A cliff is never one plane. What can be seen from the side is cut rock in courses with seams
+  along lines of noise (`face`); a skin's `cap` chooses the top block from what the column is (`Spot`: the way it is on,
+  how its neighbours stand, whether it burns, a slow noise for beds of one thing in another).
+- **What burns** (`Landform.crust`, `heat`; a skin's `crust` and `fall`): channels of it run down the land, cut a block
+  into the ground between banks, and pour over every ledge in their way (the fall stands in the lower column against
+  the face of the higher). They are kept off the face the way climbs.
+- **The run is made as the land is laid out**, as a crawl's is: every den, ambush, Warden, stretch of movement, breather
+  and hidden place is a leg with its site, and the same `RouteCheck` proves it. Dens' companies come from the skin
+  (`herd`, `ambushPack`, `wardenPack`), gone round so no two neighbours match; the wandering packs of "The right
+  amount" fill the country between. A skin stands its own things once the run is laid (`furnish`, `denPlace`, `scatter`).
+- **The Lord's door** (`heartDoor`) is a grate across the way in to the Lord's place, drawn as part of the land, opened
+  by `heart_open` and shut again by `heart_shut` as in any Realm.
+- **The kit's pieces** (`LandPieces`, each drawn in the skin's `Dress`): the way in (a round floor with a lit heart,
+  the arch home three deep, two broken pillars to look between), a cache, a Waystone, a ring of standing stones open
+  toward the way, a lamp on a post, a broken bridge (deck from lip to lip with spans gone; a free span stands on a
+  trestle down to the ground), a gate (two pillars, a beam, a lantern on a chain), a court's paving, and the first of
+  the great builders: a crown of horns round a crater.
+
+**The Ascent** (`kit/land/Ascent`). One mountain standing in a sea, the way in on the shore due south of it, the summit
+in sight from the first step. From the shore: a beach, foothills that roll (fifteen blocks up however far they run), a
+flank at about three in five, then a crag at seven in four up to a crest, and inside the crest a crater whose floor is
+the Lord's (radius 24.5, level, open to the sky, three tiers of two blocks stepping up to the crest). Radial ridges and
+gullies, benches on the flank, crags that stand up as stacks of columns, sea stacks off the shore; all of it gentler
+within 24 blocks of a way. The run at E rank, 14 legs: the way in; a den in the foothills about fifty blocks on; a den
+at the foot of the flank; then the flank in three arms between two hairpin terraces (each an ambush), with a den on a
+terrace either side of the **rift** on the long arm, crossed dead level on a broken bridge (gaps of three cells and two;
+a fall anywhere in the rift is caught); a goat track from the foot of the flank up to the first of those terraces, with
+a ledge and a cache half way (the way round); a hidden place sunk into the hill beyond the far hairpin, behind two
+standing stones; a court at the knee of the mountain where the Warden stands, with a gate where the way comes in and a
+Waystone; a stair of five flights of fourteen treads cut along the crag's face, turning on a landing at each end, a
+balcony with a cache off the middle one; a notch through the crest, the Lord's door across it; the crater. About 120
+blocks of climb and 400 of way. A seed turns east to west, bends the way in, moves the dens and re-rolls every surface.
+A higher rank widens the island by 64 a rank (246 to the water at E) and so lengthens the way in, with a den every
+sixty blocks of it; the mountain itself is the same height. Wardens do not yet grow with rank, and the four other
+landforms of the brief (the Valley, the Basin, the Causeway, the Isles) are not built: `land.params.landform` names one
+by its place in `Landform.Kind`, and anything but 0 fails loudly.
+
+**The Ember Mines' country** (`land/EmberCountry`). No new blocks: ash (`ember_ash`, lying in `ember_ash_drift`) over
+slag, cliffs and standing stones of `ember_basalt` in columns with smooth basalt for the dark courses and cracked basalt
+and ember ore along the seams, `magma_crust` in the channels and the rift with `ember_moltenfall` over the ledges, the
+sea plain water under a brown sky. What grows is what is left: burnt trees (`Snag`, mine timber, in stands with bare
+ash between), stumps, ember crystals crowding whatever still burns, cinders. What was left behind: the miners' lamps
+every thirteen to seventeen blocks up the way and at every landing of the stair, the bridge, a ruined camp at every
+other den and a ring of standing stones at the rest. Five companies of the theme's own, two ambushes, the Ember Tyrant
+in the crater. Its own biome (`awaken:realm/cinder_crown`: brown sky, fog from 48 to 560 so the crown is in sight from
+the shore, a low warm sun at 58 degrees, ash falling) and Lens look. Rule: none yet.
+
+Tests `realm_cinder_crown_walks_to_everything` (seeds 1 and 2: the walk, the route check, the door) and
+`realm_cinder_crown_nothing_floats` (`kit/land/LandTests`). Tour `tools/autopilot/realm-cinder_crown.txt`.
+
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 
 Euan, 10 Nov: the K menu has "a lot of text, a lot of tabs", "I really hate walls of text"; unify "the entire interaction system". The

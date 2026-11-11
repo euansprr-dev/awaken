@@ -35,7 +35,8 @@ public final class LandPrograms {
             Map.entry("awaken:unlit_stair", dev.awaken.gates.realms.land.UnlitStair::new),
             Map.entry("awaken:rime_hollows", dev.awaken.gates.realms.land.RimeHollow::new),
             Map.entry("awaken:green_dark", dev.awaken.gates.realms.land.GreenDark::new),
-            Map.entry("awaken:stopped_works", dev.awaken.gates.realms.land.StoppedWorks::new));
+            Map.entry("awaken:stopped_works", dev.awaken.gates.realms.land.StoppedWorks::new),
+            Map.entry("awaken:ember_country", dev.awaken.gates.realms.land.EmberCountry::new));
 
     public static boolean has(String id) {
         return PROGRAMS.containsKey(id);

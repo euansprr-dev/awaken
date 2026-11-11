@@ -1,0 +1,109 @@
+# The Cinder Crown (SPEC 50.9, "Rolled lands"): the Ascent in the Ember Mines' country, one roll of it (seed 1), walked from the way in to the
+# crater. The land is rolled, so nothing here names a place: a camera stands at the way in, then at each leg in the order you walk them, turned
+# the way you would come to it. Daylight; difficulty normal with the camera in creative, so nothing wakes.
+world autopilot_realm_cinder_crown creative 20261114
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+# straight in at the way in: no gate has to form in the overworld first. Not in the Realm, no tour.
+cmd awaken gate realm_enter E awaken:cinder_crown 1
+need realm
+hud off
+wait 30
+# the first thing you see, exactly as you arrive: the mountain, and the crown on it
+wait 300
+shot cinder_crown_way_in
+look 180 -22
+wait 200
+shot cinder_crown_summit
+# the same from a little behind and above, the arch home in the frame
+cmd awaken gate realm_at MOUTH 0 0 9 13
+look 180 -8
+wait 200
+shot cinder_crown_painting
+cmd awaken gate realm_at MOUTH 0 0 1 -5
+look 0 -4
+wait 200
+shot cinder_crown_arch
+
+# leg by leg, up the mountain
+cmd awaken gate realm_leg FIGHT 0 14 4
+wait 200
+shot cinder_crown_first_den
+cmd awaken gate realm_leg FIGHT 1 14 5
+wait 200
+shot cinder_crown_flank_foot
+cmd awaken gate realm_leg AMBUSH 0 12 4
+wait 200
+shot cinder_crown_hairpin
+cmd awaken gate realm_leg BREATHER 0 8 3
+wait 200
+shot cinder_crown_goat_track
+cmd awaken gate realm_leg FIGHT 2 12 4
+wait 200
+shot cinder_crown_terrace
+cmd awaken gate realm_leg MOVEMENT 0 0 2
+wait 200
+shot cinder_crown_bridge
+cmd awaken gate realm_leg MOVEMENT 0 12 6
+wait 200
+shot cinder_crown_rift
+cmd awaken gate realm_leg FIGHT 3 12 4
+wait 200
+shot cinder_crown_past_rift
+cmd awaken gate realm_leg AMBUSH 1 12 4
+wait 200
+shot cinder_crown_far_hairpin
+cmd awaken gate realm_leg HIDDEN 0 9 3
+wait 200
+shot cinder_crown_hidden
+cmd awaken gate realm_leg WARDEN 0 16 5
+wait 200
+shot cinder_crown_court
+# from the court, up the stair
+cmd awaken gate realm_at WARDEN 0 0 3 6
+look 180 -38
+wait 200
+shot cinder_crown_stair
+cmd awaken gate realm_leg BREATHER 1 0 2
+wait 200
+shot cinder_crown_balcony
+# from over the head of the stair, back down the way you came: the long arm, the foothills, the shore
+cmd awaken gate realm_at LORD 0 0 16 46
+look 0 34
+wait 200
+shot cinder_crown_looking_back
+# the Lord's door, shut and then open, and the crater
+cmd awaken gate realm_at LORD 0 0 12 44
+look 180 24
+wait 200
+shot cinder_crown_door
+cmd awaken gate realm_heart
+cmd awaken gate realm_at LORD 0 0 3 21
+look 180 -14
+wait 200
+shot cinder_crown_crater
+cmd awaken gate realm_at LORD 0 0 2 -20
+look 0 -30
+wait 200
+shot cinder_crown_horns
+# the whole mountain from off the shore, and the way home
+cmd awaken gate realm_at MOUTH 0 -70 34 40
+look 150 4
+wait 300
+shot cinder_crown_from_the_sea
+cmd awaken gate realm_at MOUTH 0 0 1 -3
+look 0 0
+wait 100
+shot cinder_crown_way_home
+quit

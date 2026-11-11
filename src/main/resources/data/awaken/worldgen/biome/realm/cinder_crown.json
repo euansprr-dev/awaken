@@ -1,0 +1,78 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.5,
+  "downfall": 0.0,
+  "effects": {
+    "water_color": "#4a4648",
+    "grass_color": "#6a5e52",
+    "foliage_color": "#5c5048"
+  },
+  "attributes": {
+    "minecraft:visual/fog_color": "#9c7460",
+    "minecraft:visual/sky_color": "#7c5648",
+    "minecraft:visual/fog_start_distance": 48.0,
+    "minecraft:visual/fog_end_distance": 560.0,
+    "minecraft:visual/water_fog_color": "#1c1a1e",
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {
+          "ambient": [],
+          "axolotls": [],
+          "creature": [],
+          "misc": [],
+          "monster": [],
+          "underground_water_creature": [],
+          "water_ambient": [],
+          "water_creature": []
+        }
+      }
+    },
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:ash"
+          },
+          "probability": 0.012
+        },
+        {
+          "particle": {
+            "type": "minecraft:white_ash"
+          },
+          "probability": 0.006
+        }
+      ]
+    },
+    "minecraft:audio/ambient_sounds": {
+      "loop": "minecraft:ambient.basalt_deltas.loop",
+      "mood": {
+        "sound": "minecraft:ambient.basalt_deltas.mood",
+        "tick_delay": 6000,
+        "block_search_extent": 8,
+        "offset": 2.0
+      },
+      "additions": {
+        "sound": "minecraft:ambient.basalt_deltas.additions",
+        "tick_chance": 0.008
+      }
+    },
+    "minecraft:audio/background_music": {
+      "default": {
+        "sound": "awaken:music.gate.ember_mines",
+        "min_delay": 3600,
+        "max_delay": 12000
+      }
+    },
+    "minecraft:visual/block_light_tint": "#ff9a50",
+    "minecraft:visual/ambient_light_color": "#3a3230",
+    "minecraft:visual/sun_angle": 58.0,
+    "minecraft:visual/sky_light_color": "#ffc79c",
+    "minecraft:visual/sunrise_sunset_color": "#a0ff7038",
+    "minecraft:visual/sky_light_factor": 0.94
+  },
+  "carvers": [],
+  "features": []
+}
