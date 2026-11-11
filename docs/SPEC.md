@@ -24605,7 +24605,17 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
   body stands at that moment. Until the aim is known the blow is taken to land on its first tick. `k` is set as the
   blow commits (eased over that tick), then follows you at most a tick a tick while you move about a sweep, and is fixed
   for the last 4 ticks; when the committed blow reaches no tick the ring is drawn at 35% (`Strikes.reaches`). A move that strikes with no capsule (a shot's or a wave's
-  release) counts to its release and has no band (`Strikes.lands`). Any other body: from the count it first showed, on the
+  release) counts to its release and has no band (`Strikes.lands`). **What strikes for a move with an ability** (the
+  client reads the body's abilities from the shared bestiary, `AwakenBoss.abilityNamed`; the numbers are one set for
+  both sides, `KitReach.SLAM_CORE`, `CHARGE_TICKS`, `CHARGE_PAST`, `CHARGE_GRAZE`, `chargeSpeed`): a **slam**'s core
+  (1.5 blocks round the point the move names, `Abilities.area`) lands on the first active tick on whoever stands in
+  it, before the body's own capsules come down, so that is the tick the ring closes on there; its wave beyond is not
+  the ring's (it draws itself on the ground, and a hit by it is logged as a blow the ring said passes by). A
+  **charge** is walked ahead as the server carries it (straight at you and 1.5 past, a flier down to your feet, a
+  stride a tick from the tick after it sets off, its body's touch within 0.6 asked before each stride and its capsules
+  where it stands): the ring closes on that tick but shows **no band**, because the tick is an estimate (a wall, the
+  ground under a flier, who else stands in the way). A **leap** or a **step** closes its ring as it sets off, as the
+  tell always did, with no band. Any other body: from the count it first showed, on the
   client's game clock; a tell gone with more than 1.5 ticks left was called off, a count 2.5 over what is left is a new blow.
 - **One speed** (`aim.client.Reticle`): every ring appears `APPROACH` 12 ticks before its blow at 1 + `SPREAD` 1.15 lock
   rings and closes in a straight line of time, steady in brightness, onto the lock ring as the blow lands; it lingers
@@ -24625,8 +24635,12 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
   count's cue.
 - **Development count** (stage 0; development runs only): each answered blow logs `[fights] ring: DEFLECT with the ring at
   +0.31 ticks; guard raised at 2.40 ticks (in the band)`, and leaving the world logs the totals (blows answered, the
-  ring's average and worst offset, guards raised in the band and how many of those deflected). The black box is also
-  kept under its own time, the last five (`logs/arms-blackbox-<time>.tsv`).
+  ring's average and worst offset, guards raised in the band and how many of those deflected); only a blow the ring
+  said reaches you counts toward the offset. Each kit blow also logs as it commits (`[fights] clock: proving_ringer
+  swing_a commits: it reaches you (active tick 2, tick 19 of the move)`). The black box is also kept under its own
+  time, the last five (`logs/arms-blackbox-<time>.tsv`). A tour raises the guard on the ring's own clock with `arms
+  parry <ticks>` (`ArmsAutopilot`: at the first tick a deflectable blow that reaches you is that near, held 8 ticks),
+  which is how the band is measured against the server (`tools/autopilot/boss-experience.txt`).
 - Not built: the hands' word for a parry (the plan's ambitious option); a white-gold shot's ring to its arrival.
 - Tests: `fights_ring_lands` (the rule's tick is the tick the Ringer's Swing lands on a still body).
 
