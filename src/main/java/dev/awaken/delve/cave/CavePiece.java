@@ -33,7 +33,6 @@ import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -155,7 +154,7 @@ public class CavePiece extends StructurePiece {
          */
         void settle() {
             if (held.isEmpty()) return;
-            held.sort(Comparator.comparingInt(BlockPos::getY).reversed());
+            held.sort((a, b) -> Integer.compare(b.getY(), a.getY()));
             for (BlockPos p : held) {
                 BlockState s = level.getBlockState(p);
                 if (!held(s.getBlock()) || holds(s, p)) continue;
