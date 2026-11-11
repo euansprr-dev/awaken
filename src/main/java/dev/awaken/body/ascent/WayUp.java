@@ -114,6 +114,164 @@ public final class WayUp {
         if (BodyConfig.wayUp()) sync(p, memory(p), -1);
     }
 
+    // ---- the leap, a move at a time (SPEC §71.3) -----------------------------------------------------------------------
+
+    /** The leap's moves, in the order the Leaper's Gauntlet's stands give them. */
+    public enum Leap implements net.minecraft.util.StringRepresentable {
+        DOUBLE("double", "Double jumps"), DASH("dash", "Dashes"), SLAM("slam", "Slams"), DIVE("dive", "Dives");
+
+        public static final Leap[] VALUES = values();
+        private final String id;
+        /** What a run's count of it is called on the tally. */
+        public final String counted;
+
+        Leap(String id, String counted) {
+            this.id = id;
+            this.counted = counted;
+        }
+
+        public int bit() {
+            return 1 << ordinal();
+        }
+
+        @Override
+        public String getSerializedName() {
+            return id;
+        }
+
+        public static @Nullable Leap byName(String name) {
+            for (Leap l : VALUES) if (l.id.equals(name)) return l;
+            return null;
+        }
+    }
+
+    /**
+     * Whether a leap first given at a stand comes a move at a time. The leap's own rules ask {@link #canLeap} before
+     * a second jump, a dash, a slam or an aimed dive since 11 Nov 2026 ({@code AscentMoves}, {@code AscentServer}); this
+     * stays false, so such a leap still comes whole and the later stands only play their titles, until the Gauntlet's
+     * three stands stand in a world (the gates session's course): turning it on is the manager's call.
+     */
+    public static final boolean LEAP_BY_PARTS = false;
+    /** Whether the aimed dive exists yet (its stand gives nothing until it does): built 11 Nov 2026 (SPEC §17.33). */
+    public static final boolean DIVE_BUILT = true;
+    /** The first finished run's XP, as a share of the level (a fifth until the plan of 11 Nov 2026, decision 8). */
+    static final double GAUNTLET_XP = 0.5;
+
+    /** Whether this player may make one of the leap's moves (the server's word; the client's copy is synced). */
+    public static boolean canLeap(ServerPlayer p, Leap l) {
+        return !BodyConfig.wayUp() || memory(p).canLeap(l);
+    }
+
+    /** Whether the Leaper's Gauntlet has been run to its end. */
+    static boolean gauntletRun(ServerPlayer p) {
+        return (p.getData(AscentContent.MEMORY).flags() & AscentMemory.LEAPER_TRIAL_DONE) != 0;
+    }
+
+    /** The counts of a timed run in progress, a slot a {@link Leap} (not saved: a run does not outlive a session). */
+    private static final Map<UUID, int[]> RUN = new HashMap<>();
+
+    /**
+     * A stand taken (the client held Use on it for a second): the server's own checks, then the move is the player's,
+     * saved at once, and its stroke and title are told. The first stand of a player without the leap gives the leap.
+     */
+    static void take(ServerPlayer p, BlockPos pos) {
+        if (!on(p) || !(p.level().getBlockState(pos).getBlock() instanceof LeapStandBlock)) return;
+        Leap l = p.level().getBlockState(pos).getValue(LeapStandBlock.MOVE);
+        // standing on it, on the ground, still
+        if (!p.onGround() || p.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.25, pos.getZ() + 0.5) > 1.6 * 1.6) return;
+        if (l == Leap.DIVE && !DIVE_BUILT) return;
+        if (memory(p).stand(l)) return;
+        boolean had = Ascent.has(p, Ascent.Tier.LEAPER);
+        if (!had) Ascent.grant(p, Ascent.Tier.LEAPER, "the Leaper's Gauntlet: the " + l.getSerializedName() + " stand");
+        // a leap that came whole another way stays whole; one first given here comes a move at a time
+        WayMemory m = memory(p);
+        m = m.withStand(l, had ? m.parts() : LEAP_BY_PARTS);
+        set(p, m);
+        sync(p, m, -1);
+        AwakenNet.send(p, new WayPayloads.Stroke(l.ordinal(), pos.asLong()));
+        p.level().playSound(null, pos, net.minecraft.sounds.SoundEvents.ANVIL_LAND, net.minecraft.sounds.SoundSource.BLOCKS, 0.7F, 0.62F);
+        dev.awaken.core.api.TrialHooks.standTaken(p, dev.awaken.core.api.TrialHooks.LEAPER, l.getSerializedName(), pos);
+        Progression.count(p, "awaken:ascent_stand_" + l.getSerializedName());
+        dev.awaken.Awaken.LOG.info("[ascent] the way up: {} unlocked at a stand at {} for {}{}", l, pos.toShortString(), p.getPlainTextName(),
+                had ? " (the leap was already held)" : "");
+    }
+
+    /** A mark of the Gauntlet's course reached (TrialHooks.at): the client shows what belongs there; a run starts counting. */
+    static void mark(ServerPlayer p, String mark, BlockPos from, BlockPos to) {
+        if (!BodyConfig.wayUp()) return;
+        if (mark.equals(dev.awaken.core.api.TrialHooks.MARK_RUN)) {
+            RUN.put(p.getUUID(), new int[Leap.VALUES.length]);
+            return;
+        }
+        int kind;
+        Leap l = null;
+        int n = 0;
+        if (mark.equals(dev.awaken.core.api.TrialHooks.MARK_REACH)) {
+            kind = WayPayloads.SPOT_REACH;
+        } else if (mark.startsWith(dev.awaken.core.api.TrialHooks.MARK_MISS)) {
+            kind = WayPayloads.SPOT_MISS;
+            String[] parts = mark.split("/");
+            if (parts.length > 1) l = Leap.byName(parts[1]);
+        } else if (mark.startsWith(dev.awaken.core.api.TrialHooks.MARK_USE)) {
+            kind = WayPayloads.SPOT_USE;
+            String[] parts = mark.split("/");
+            l = parts.length > 1 ? Leap.byName(parts[1]) : null;
+            if (l == null) return;
+            try {
+                n = parts.length > 2 ? Integer.parseInt(parts[2]) : 1;
+            } catch (NumberFormatException e) {
+                n = 1;
+            }
+        } else {
+            return;
+        }
+        AwakenNet.send(p, new WayPayloads.Spot(kind, l == null ? -1 : l.ordinal(), n, from.asLong(), to.asLong()));
+    }
+
+    /** One of the leap's moves was made and counted (AscentServer): a timed run in progress counts it. */
+    static void used(ServerPlayer p, Leap l) {
+        int[] c = RUN.get(p.getUUID());
+        if (c != null) c[l.ordinal()]++;
+    }
+
+    /**
+     * The Gauntlet's timed run finished (TrialHooks.pay): the first time, the leap is whole and paid for (half a level,
+     * ten mastery, the old far landing's counters); every time, what was paid and the run's counts go back to the course
+     * to show, and the log gets one line a play can be read from.
+     */
+    static dev.awaken.core.api.TrialHooks.Pay pay(ServerPlayer p, int ticks, int medal) {
+        AscentMemory mem = p.getData(AscentContent.MEMORY);
+        boolean first = (mem.flags() & AscentMemory.LEAPER_TRIAL_DONE) == 0;
+        int before = mem.level(AscentMemory.Track.LEAPER), xp = 0;
+        if (first) {
+            Ascent.grant(p, Ascent.Tier.LEAPER, "leaper's gauntlet");
+            p.setData(AscentContent.MEMORY, p.getData(AscentContent.MEMORY).withFlag(AscentMemory.LEAPER_TRIAL_DONE));
+            AscentServer.link(p, AscentMemory.Track.LEAPER, 10);
+            double share = dev.awaken.progression.Curve.xpToNext(Progression.profile(p).level()) * GAUNTLET_XP;
+            Progression.grantXp(p, share, Progression.XpSource.DISCOVERY);
+            xp = (int) Math.round(share);
+            Progression.count(p, "awaken:ascent_leaper_trial");
+            AscentQuests.advance(p, AscentQuests.GAUNTLET);
+        }
+        WayMemory m = memory(p).whole();
+        set(p, m);
+        sync(p, m, -1);
+        int[] c = RUN.remove(p.getUUID());
+        if (c == null) c = new int[Leap.VALUES.length];
+        java.util.ArrayList<dev.awaken.core.api.TrialHooks.Pay.Count> counts = new java.util.ArrayList<>(4);
+        for (Leap l : Leap.VALUES) {
+            if (l == Leap.DIVE && c[l.ordinal()] == 0) continue;
+            counts.add(new dev.awaken.core.api.TrialHooks.Pay.Count(l.counted, c[l.ordinal()]));
+        }
+        AscentMemory after = p.getData(AscentContent.MEMORY);
+        int level = after.level(AscentMemory.Track.LEAPER), points = after.points(AscentMemory.Track.LEAPER);
+        int lo = 25 * level * level, hi = 25 * (level + 1) * (level + 1);
+        float fill = level >= 10 ? 1F : Math.max(0F, Math.min(1F, (points - lo) / (float) (hi - lo)));
+        dev.awaken.Awaken.LOG.info("[gauntlet] run by {}: {} double jumps, {} dashes, {} slams, {} dives, {}, medal {}{}", p.getPlainTextName(),
+                c[0], c[1], c[2], c[3], String.format("%d:%02d", ticks / 1200, ticks / 20 % 60), medal, first ? ", the first: paid " + xp + " XP" : "");
+        return new dev.awaken.core.api.TrialHooks.Pay(first, xp, before, level, fill, List.copyOf(counts));
+    }
+
     /** Saved with the player and kept through death (registered with the Ascent's own attachments). */
     public static final Supplier<AttachmentType<WayMemory>> MEMORY = AscentContent.ATTACHMENTS.register("way_up",
             () -> AttachmentType.builder(() -> WayMemory.EMPTY).serialize(WayMemory.MAP_CODEC, m -> !m.isEmpty()).copyOnDeath().build());
@@ -134,7 +292,7 @@ public final class WayUp {
     static final String THREAD = "rank.way_up", NOW = "ascent:way/";
 
     /** What the server last told each client, when each rung's place woke (not saved), and soft falls. */
-    private record Sent(int told, int done, int owed, List<Long> places, long gateAt, int moves) {}
+    private record Sent(int told, int done, int owed, List<Long> places, long gateAt, int moves, int leap, int stands) {}
 
     private static final Map<UUID, Sent> SENT = new HashMap<>();
     private static final Map<UUID, long[]> WOKE_AT = new HashMap<>();
@@ -162,6 +320,11 @@ public final class WayUp {
         var r = event.registrar("1");
         r.playToClient(WayPayloads.Way.TYPE, WayPayloads.Way.STREAM_CODEC);
         r.playToClient(WayPayloads.Lesson.TYPE, WayPayloads.Lesson.STREAM_CODEC);
+        r.playToClient(WayPayloads.Spot.TYPE, WayPayloads.Spot.STREAM_CODEC);
+        r.playToClient(WayPayloads.Stroke.TYPE, WayPayloads.Stroke.STREAM_CODEC);
+        r.playToServer(WayPayloads.Take.TYPE, WayPayloads.Take.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer p) take(p, BlockPos.of(msg.pos()));
+        });
     }
 
     static void forget(UUID id) {
@@ -170,6 +333,7 @@ public final class WayUp {
         WAITING_SINCE.remove(id);
         SOFT_UNTIL.remove(id);
         POINTS.remove(id);
+        RUN.remove(id);
     }
 
     public static WayMemory memory(ServerPlayer p) {
@@ -194,7 +358,9 @@ public final class WayUp {
         if (!Ascent.has(p, Ascent.Tier.TETHER)) return rank >= Rank.D.ordinal() ? Rung.ROPE : null;
         // wings before the leap once C-rank is held: the core hands the leap down, and the bigger thing leads
         if (!Ascent.has(p, Ascent.Tier.WINGS) && rank >= Rank.C.ordinal()) return Rung.WINGS;
-        if (!Ascent.has(p, Ascent.Tier.LEAPER)) return Rung.LEAP;
+        // the leap waits until its Gauntlet is run, not only until it is held (SPEC §71): a leap handed down whole by a sky
+        // core still has its stands' halls and its pay to come
+        if (!Ascent.has(p, Ascent.Tier.LEAPER) || !gauntletRun(p)) return Rung.LEAP;
         return null;
     }
 
@@ -221,10 +387,13 @@ public final class WayUp {
         if (Progression.rank(p) == Rank.SOVEREIGN && !Ascent.has(p, Ascent.Tier.SOVEREIGN)) Sovereign.give(p);
         WayMemory m = memory(p);
         // a rung held needs no place any more
+        boolean run = gauntletRun(p);
         for (Rung r : Rung.VALUES) {
-            if (Ascent.has(p, r.tier) && m.place(r) != null) m = m.withPlace(r, null);
+            if (Ascent.has(p, r.tier) && (r != Rung.LEAP || run) && m.place(r) != null) m = m.withPlace(r, null);
         }
-        if (Ascent.has(p, Ascent.Tier.LEAPER) && m.leapGate() >= 0) m = m.withGate(-1, null);
+        // the Gauntlet's gate stays on the road until it is run (the leap itself is taken inside it now, SPEC §71)
+        if (run && m.leapGate() >= 0) m = m.withGate(-1, null);
+        if (run && m.parts()) m = m.whole();
         Rung r = waiting(p);
         int woke = -1;
         if (r != null && p.level().dimension() == Level.OVERWORLD && p.level() instanceof ServerLevel level) {
@@ -288,7 +457,7 @@ public final class WayUp {
 
     private static void sync(ServerPlayer p, WayMemory m, int woke) {
         int moves = moves(p);
-        Sent now = new Sent(m.told(), m.done(), m.owed(), m.places(), m.leapAt(), moves);
+        Sent now = new Sent(m.told(), m.done(), m.owed(), m.places(), m.leapAt(), moves, m.leapOpen(), m.stands());
         if (woke < 0 && now.equals(SENT.get(p.getUUID()))) return;
         SENT.put(p.getUUID(), now);
         long[] places = new long[Rung.VALUES.length];
@@ -296,7 +465,7 @@ public final class WayUp {
             BlockPos at = m.place(r);
             places[r.ordinal()] = at == null ? WayMemory.NONE : at.asLong();
         }
-        AwakenNet.send(p, new WayPayloads.Way(m.told(), m.done(), m.owed(), places, m.leapAt(), woke, moves));
+        AwakenNet.send(p, new WayPayloads.Way(m.told(), m.done(), m.owed(), places, m.leapAt(), woke, moves, m.leapOpen(), m.stands()));
     }
 
     // ---- places -----------------------------------------------------------------------------------------------------
@@ -364,7 +533,7 @@ public final class WayUp {
      * Leaper's Gauntlet opens at its foot. {@code foot}: the ground the climb began from, under the crown.
      */
     static void crownReached(ServerPlayer p, BlockPos crown, int footY) {
-        if (!on(p) || Ascent.has(p, Ascent.Tier.LEAPER) || !Ascent.has(p, Ascent.Tier.TETHER)) return;
+        if (!on(p) || gauntletRun(p) || !Ascent.has(p, Ascent.Tier.TETHER)) return;
         AscentMemory a = p.getData(AscentContent.MEMORY);
         if ((a.flags() & AscentMemory.LEAPER_TRIAL) != 0 || memory(p).leapGate() >= 0) return;
         // the crown answers only the line (SPEC §17.29): asked here, last, so the rim's watch (every other tick while
@@ -441,8 +610,9 @@ public final class WayUp {
                 BlockPos gate = m.gateAt();
                 if (m.leapGate() >= 0 && gate != null) {
                     at = gate;
-                    yield Goals.Step.of("way/leap_gate", Goals.Goal.RANK, "Run the gate that opened where you climbed")
-                            .why("It is a course, not a fight, and it stays open until you have run it.").thread(THREAD, 22).teaches("tier:leaper");
+                    yield Goals.Step.of("way/leap_gate", Goals.Goal.RANK, "Run the Leaper's Gauntlet")
+                            .why(Ascent.has(p, Ascent.Tier.LEAPER) ? "It is a course for the leap, and it pays the first time you finish it. No fighting."
+                                    : "It holds a new way to move. No fighting.").thread(THREAD, 22).teaches("tier:leaper");
                 }
                 yield at != null
                         ? Goals.Step.of("way/leap", Goals.Goal.RANK, "Climb a Tether Spire with your rope")
@@ -489,8 +659,19 @@ public final class WayUp {
         WayMemory m = memory(p).withPlace(r, null);
         boolean handedDown = top != null && t.ordinal() < top.ordinal() && p.tickCount > 100;
         dev.awaken.Awaken.LOG.info("[ascent] the way up: {} given to {}{}", r, p.getPlainTextName(), handedDown ? " (handed down: its lesson is owed)" : "");
-        if (handedDown) m = m.withOwed(r);
-        if (r == Rung.LEAP) m = m.withGate(-1, null);
+        if (handedDown) {
+            m = m.withOwed(r);
+            // its own title, after the one that was asked for has had the screen (SPEC §71.2: every unlock is named)
+            net.minecraft.resources.Identifier title = AscentUnlocks.of(r);
+            if (title != null) {
+                var server = p.level().getServer();
+                dev.awaken.core.Later.run(server, 180, () -> {
+                    // still this player, still here (a relog makes a new body; a test's player is gone by then)
+                    if (server.getPlayerList().getPlayer(p.getUUID()) == p && !p.hasDisconnected()) dev.awaken.core.api.Unlocks.show(p, title);
+                });
+            }
+        }
+        if (r == Rung.LEAP && gauntletRun(p)) m = m.withGate(-1, null);
         set(p, m);
         if (r == Rung.WINGS && !handedDown) SOFT_UNTIL.put(p.getUUID(), AscentServer.now(p) + SOFT_FALL);
         sync(p, m, -1);

@@ -49,6 +49,7 @@ public final class SignalClient {
                         .orElseGet(() -> new SignalPayloads.SetDestination(false, "", net.minecraft.core.BlockPos.ZERO, ""))));
         Herald.install();
         Tips.install();
+        UnlockMoment.install();
         modBus.addListener(net.neoforged.neoforge.client.event.AddClientReloadListenersEvent.class, e -> e.addListener(dev.awaken.Awaken.id("tips"),
                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener) Tips::load));
     }
@@ -88,6 +89,16 @@ public final class SignalClient {
             if (msg.offer()) Tips.serverOffer(msg.id());
             else Tips.done(msg.id());
         });
+        event.register(SignalPayloads.Unlock.TYPE, (msg, ctx) -> {
+            net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(msg.id());
+            dev.awaken.core.api.Unlocks.Unlock u = id == null ? null : dev.awaken.core.api.Unlocks.get(id);
+            if (u != null) UnlockMoment.offer(u);
+            else dev.awaken.Awaken.LOG.warn("[unlock] the server named an unlock this client does not know: {}", msg.id());
+        });
+        event.register(SignalPayloads.UnlockMade.TYPE, (msg, ctx) -> {
+            net.minecraft.resources.Identifier id = net.minecraft.resources.Identifier.tryParse(msg.id());
+            if (id != null) UnlockMoment.offer(new dev.awaken.core.api.Unlocks.Unlock(id, msg.label(), msg.name(), msg.how(), msg.colour()));
+        });
     }
 
     private static void onLayers(RegisterGuiLayersEvent event) {
@@ -100,6 +111,8 @@ public final class SignalClient {
         TrackerHud.render(g, dt);
         TaskHud.render(g, dt);
         Tips.render(g, dt);
+        // over both styles of the System, and over everything of its own (SPEC §71.2)
+        UnlockMoment.render(g, dt);
     }
 
     private static void tick() {
@@ -107,6 +120,7 @@ public final class SignalClient {
         TrackerHud.tick();
         TaskHud.tick();
         Tips.tick();
+        UnlockMoment.tick(net.minecraft.client.Minecraft.getInstance());
         HorizonClient.tick();
         boolean c = classic();
         if (c != wasClassic) { // switched style in the settings: drop what the other one had on screen
@@ -130,5 +144,6 @@ public final class SignalClient {
         TaskHud.clear();
         TrackerHud.clear();
         HorizonClient.clear();
+        UnlockMoment.clear();
     }
 }

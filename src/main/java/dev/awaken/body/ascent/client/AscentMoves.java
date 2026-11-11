@@ -375,6 +375,9 @@ public final class AscentMoves {
             apply(p, in);
             return;
         }
+        if (attackPressed && TRACE && !p.onGround() && !(state == AscentState.CARRY && leapt && !slamming && !diving)) {
+            trace(state == AscentState.CARRY && slamming ? "no dive: a slam" : diving ? "no dive: diving already" : "no dive: not in a leap");
+        }
         switch (state) {
             case NONE -> {
                 // a Runner move (a wall-run, a hang) or a climb (a mantle, a crossing: SPEC §17.32, a press during one
@@ -1814,9 +1817,13 @@ public final class AscentMoves {
      */
     private static boolean leaperMove(LocalPlayer p, boolean jumpPressed, boolean sprintPressed, boolean sneakPressed, boolean fromNone) {
         if (!has(AscentPayloads.Tier.LEAPER) || p.onGround()) return false;
-        boolean dbl = jumpPressed && (airMovesUsed & 1) == 0 && !dev.awaken.body.client.RunnerMoves.wallBeside(p);
-        boolean dash = sprintPressed && (airMovesUsed & 2) == 0;
-        boolean dive = sneakPressed && !slamming && heightAboveGround(p) >= AscentRules.SLAM_MIN_HEIGHT;
+        // each only once it is open (the Way Up's mask, SPEC §71.3: a leap first given at a Gauntlet's stand may come a
+        // move at a time; given any other way every move is open)
+        boolean dbl = jumpPressed && (airMovesUsed & 1) == 0 && !dev.awaken.body.client.RunnerMoves.wallBeside(p)
+                && WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.DOUBLE);
+        boolean dash = sprintPressed && (airMovesUsed & 2) == 0 && WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.DASH);
+        boolean dive = sneakPressed && !slamming && heightAboveGround(p) >= AscentRules.SLAM_MIN_HEIGHT
+                && WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.SLAM);
         if (!dbl && !dash && !dive) return false;
         if (fromNone) K.set(p.getX(), p.getY(), p.getZ(), stepX, p.getDeltaMovement().y, stepZ);
         leapt = dbl || dash; // a slam is no leap: it never stands aside for an edge
@@ -1866,12 +1873,25 @@ public final class AscentMoves {
      * on. Otherwise the look finds the point to dive to. True when the dive began.
      */
     private static boolean aimDive(LocalPlayer p, Minecraft mc, float yaw, float pitch) {
-        if (!has(AscentPayloads.Tier.LEAPER) || (airMovesUsed & 4) != 0 || ticks - diveAt < AscentRules.DIVE_COOL) return false;
-        if (mc.hitResult != null && mc.hitResult.getType() != net.minecraft.world.phys.HitResult.Type.MISS) return false;
-        if (dev.awaken.core.api.Aim.locked()) return false;
+        // each refusal is traced (only with the trace on: tours read why a press made no dive)
+        if (!has(AscentPayloads.Tier.LEAPER) || !WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.DIVE)) {
+            trace("no dive: not open to this player");
+            return false;
+        }
+        if ((airMovesUsed & 4) != 0 || ticks - diveAt < AscentRules.DIVE_COOL) {
+            trace("no dive: one already this airtime or within 2 s");
+            return false;
+        }
+        if (mc.hitResult != null && mc.hitResult.getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
+            trace("no dive: the hand's press (something in its reach under the crosshair)");
+            return false;
+        }
         double reach = p.entityInteractionRange();
-        if (dev.awaken.core.api.Aim.meantId(p, dev.awaken.core.api.Aim.target(), yaw, pitch, reach) >= 0
-                || dev.awaken.core.api.Aim.calm(p, yaw, pitch, reach) >= 0) return false;
+        if (dev.awaken.core.api.Aim.locked() || dev.awaken.core.api.Aim.meantId(p, dev.awaken.core.api.Aim.target(), yaw, pitch, reach) >= 0
+                || dev.awaken.core.api.Aim.calm(p, yaw, pitch, reach) >= 0) {
+            trace("no dive: a lock or a creature the press means");
+            return false;
+        }
         Vec3 eye = p.getEyePosition(), look = Vec3.directionFromRotation(pitch, yaw);
         var hit = p.level().clip(new net.minecraft.world.level.ClipContext(eye, eye.add(look.scale(AscentRules.DIVE_REACH)),
                 net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.SOURCE_ONLY, p));

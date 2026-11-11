@@ -467,13 +467,22 @@ public final class Rooms {
                 if (atBars) break;
             }
             if (!atBars) continue;
-            if (inRoom(level, p, f, r)) return false;
+            // standing in the bars' own cell reads as in the room, and isn't: only someone past them is in
+            if (inRoom(level, p, f, r) && inside(level, p, g, f, r, -0.5, 0.5) == null) return false;
+            boolean held = false;
             for (java.util.UUID u : g.inside) {
                 ServerPlayer mate = level.getServer().getPlayerList().getPlayer(u);
-                if (mate == null || mate == p || mate.level() != level || !mate.isAlive()) continue;
-                if (!inRoom(level, mate, f, r) || !dev.awaken.core.api.PartyHooks.sameParty(p, mate)) continue;
+                if (mate == null || mate == p || mate.level() != level || !mate.isAlive() || mate.isSpectator()) continue;
+                if (!inRoom(level, mate, f, r) || inside(level, mate, g, f, r, -0.5, 0.5) != null) continue;
+                held = true;
+                if (!dev.awaken.core.api.PartyHooks.sameParty(p, mate)) continue;
                 p.teleportTo(level, mate.getX(), mate.getY(), mate.getZ(), java.util.Set.of(), p.getYRot(), p.getXRot(), true);
                 Signal.toast(p, Component.literal("The bars let you through to " + mate.getGameProfile().name() + "."));
+                return true;
+            }
+            // bars with nobody behind them keep nobody out: a room that sealed empty, or emptied, lets the next one in
+            if (!held && through(level, p, g, f, r, -2.5, 0.5)) {
+                Signal.toast(p, Component.literal("The bars let you through."));
                 return true;
             }
         }
@@ -591,8 +600,10 @@ public final class Rooms {
     /** Bars every doorway of a room (arena and Lord fights) or opens them again. */
     public static void lock(ServerLevel level, GateRecord g, FloorLayout f, Room r, boolean on) {
         FloorState fs = g.floor(f.area, f.floor);
-        if (on) fs.locked.add(r.id);
-        else fs.locked.remove(r.id);
+        if (on) {
+            fs.locked.add(r.id);
+            stepInside(level, g, f, r);
+        } else fs.locked.remove(r.id);
         BlockState bars = GatesRegistry.BARS.get().defaultBlockState();
         for (Room.Door d : r.doors) {
             for (BlockPos p : barsPositions(g, f, d)) {
@@ -604,6 +615,57 @@ public final class Rooms {
         BlockPos c = GateService.roomFloor(g, f, r, r.centerX(), r.centerZ());
         level.playSound(null, c, GatesRegistry.SND_BARS.get(), SoundSource.BLOCKS, 1.2F, on ? 0.8F : 1.3F);
         GateRegistry.get(level.getServer()).setDirty();
+    }
+
+    /**
+     * Bars never come down in anyone's face. A room begins at its bars, so whoever set it off may still be standing in
+     * the doorway: everyone of this gate in a doorway as it is barred is set down two blocks inside first. Until 11 Nov
+     * the bars came down in the cell the player stood in, on whichever side of them their feet happened to be, and a
+     * Lord's room could seal with its challenger outside it (Euan, in a Bell Crypt: "it basically appeared in front of me
+     * instead, and now I'm basically blocked outside").
+     */
+    private static void stepInside(ServerLevel level, GateRecord g, FloorLayout f, Room r) {
+        for (ServerPlayer q : List.copyOf(level.players())) {
+            if (q.isSpectator() || !q.isAlive()) continue;
+            RunState run = Runs.run(q);
+            if (run.gateId != g.id || run.area != f.area || run.floor != f.floor) continue;
+            through(level, q, g, f, r, -0.5, 1.3);
+        }
+    }
+
+    /** Puts a player two blocks inside a room through the doorway they stand in ({@link #inside}). Returns whether they moved. */
+    private static boolean through(ServerLevel level, ServerPlayer q, GateRecord g, FloorLayout f, Room r, double from, double to) {
+        double[] t = inside(level, q, g, f, r, from, to);
+        if (t == null) return false;
+        q.teleportTo(level, t[0], q.getY(), t[1], java.util.Set.of(), q.getYRot(), q.getXRot(), true);
+        return true;
+    }
+
+    /**
+     * Where two blocks inside a room is (x, z) for a player standing in one of its doorways: from {@code from} blocks
+     * short of the bars' middle to {@code to} past it, within the doorway's width and height. Null when they stand in none.
+     */
+    private static double[] inside(ServerLevel level, ServerPlayer q, GateRecord g, FloorLayout f, Room r, double from, double to) {
+        for (Room.Door d : r.doors) {
+            int ix = d.side == 1 ? -1 : d.side == 0 || d.side == 2 ? 0 : 1, iz = d.side == 0 ? 1 : d.side == 2 ? -1 : 0;
+            for (int lat = RoomGeometry.DOOR_LO; lat <= RoomGeometry.DOOR_HI; lat++) {
+                int x = d.side == 0 || d.side == 2 ? d.gx * 16 + lat : d.side == 1 ? d.gx * 16 + 15 : d.gx * 16;
+                int z = d.side == 0 ? d.gz * 16 : d.side == 2 ? d.gz * 16 + 15 : d.gz * 16 + lat;
+                BlockPos bar = GateService.world(g, f, x, d.y, z), in = GateService.world(g, f, x + ix, d.y, z + iz);
+                // the way in as the world has it (a floor may be turned), then how far in and how far to the side they stand
+                double wx = in.getX() - bar.getX(), wz = in.getZ() - bar.getZ();
+                double px = q.getX() - (bar.getX() + 0.5), pz = q.getZ() - (bar.getZ() + 0.5);
+                double along = px * wx + pz * wz, across = Math.abs(pz * wx - px * wz);
+                if (across > 0.5 || along < from || along >= to || q.getY() < bar.getY() - 1.5 || q.getY() > bar.getY() + RoomGeometry.DOOR_HEIGHT) continue;
+                for (double step : new double[]{2, 3, 1.5}) {
+                    double tx = bar.getX() + 0.5 + wx * step, tz = bar.getZ() + 0.5 + wz * step;
+                    BlockPos feet = BlockPos.containing(tx, q.getY() + 0.1, tz);
+                    if (!level.getBlockState(feet).getCollisionShape(level, feet).isEmpty() || !level.getBlockState(feet.above()).getCollisionShape(level, feet.above()).isEmpty()) continue;
+                    return new double[]{tx, tz};
+                }
+            }
+        }
+        return null;
     }
 
     public static List<BlockPos> barsPositions(GateRecord g, FloorLayout f, Room.Door d) {

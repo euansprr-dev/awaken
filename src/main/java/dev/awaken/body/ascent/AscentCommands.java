@@ -235,8 +235,10 @@ final class AscentCommands {
                 int cx = box.minX() + 24, cz = box.minZ() + 24, deckY = box.minY() + 12;
                 if (!level.getBlockState(new net.minecraft.core.BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) {
                     dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
-                } else if (!dev.awaken.above.ruin.SkyRig.casePlaced(level, cx, deckY, cz)) {
-                    dev.awaken.above.ruin.SkyRig.rigCase(level, cx, deckY, cz);
+                } else {
+                    // a platform rigged before the hall or the arch gets them now (the views look at both)
+                    if (!dev.awaken.above.ruin.SkyRig.hallPlaced(level, cx, deckY, cz)) dev.awaken.above.ruin.SkyRig.rigHall(level, cx, deckY, cz);
+                    if (!dev.awaken.above.ruin.SkyRig.archPlaced(level, cx, deckY, cz)) dev.awaken.above.ruin.SkyRig.rigArch(level, cx, deckY, cz);
                 }
                 if (where == 3) {
                     double a = Math.toRadians(45 + viewTurn);
@@ -257,17 +259,24 @@ final class AscentCommands {
                 int fg = dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz);
                 if (where == 2) {
                     // six blocks short of the lowest stone, from where the stone below it would have stood
-                    var stones = dev.awaken.above.ruin.SkyRig.stairOn(level, cx, deckY, cz);
-                    var helix = dev.awaken.above.ruin.SkyRig.helix(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.Stair.DEFAULT, level.getMinY());
+                    // the stair stands by now: read back from its stones (worked out from the land again it has none)
+                    var stones = dev.awaken.above.ruin.SkyRig.stairStanding(level, cx, deckY, cz);
                     if (stones.isEmpty()) {
-                        src.sendFailure(Component.literal("The platform at " + cx + ", " + cz + " has no stair stones over its land"));
+                        src.sendFailure(Component.literal("The platform at " + cx + ", " + cz + " has no stair standing"));
                         return 0;
                     }
+                    var helix = dev.awaken.above.ruin.SkyRig.helix(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.Stair.DEFAULT, level.getMinY());
                     var low = stones.getFirst();
                     var next = helix.get(Math.min(helix.size() - 1, stones.size()));
                     double dx = low.x() - next.x(), dz = low.z() - next.z(), d = Math.max(1e-6, Math.hypot(dx, dz));
                     double sx = low.x() + 0.5 - dx / d * 6, sz = low.z() + 0.5 - dz / d * 6;
-                    int gy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) Math.floor(sx), (int) Math.floor(sz));
+                    // the ground under the start, found down from the lowest stone's top: a higher stone of the helix can hang
+                    // over the start, and the heightmap stood the body on it (stair tour 43030529770: on a stone at 226, the
+                    // pilot found no platform 150 over it and never climbed)
+                    var g = new net.minecraft.core.BlockPos.MutableBlockPos((int) Math.floor(sx), low.top() + 1, (int) Math.floor(sz));
+                    while (g.getY() > level.getMinY() && !net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES.isOpaque().test(level.getBlockState(g))) g.move(net.minecraft.core.Direction.DOWN);
+                    int gy = g.getY() == low.top() + 1 ? level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, g.getX(), g.getZ())
+                            : g.getY() + 1;
                     float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
                     float pitch = (float) -Math.toDegrees(Math.atan2(low.top() + 1 - (gy + 1.62), 6));
                     p.teleportTo(level, sx, gy, sz, java.util.Set.of(), yaw, pitch, true);

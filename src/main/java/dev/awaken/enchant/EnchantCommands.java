@@ -33,6 +33,9 @@ final class EnchantCommands {
                         c.getSource().sendSuccess(() -> Component.literal(got + " marks put in memory"), false);
                         return n;
                     })))
+                    // a page as a door gives one: into the pack, flying in from four blocks ahead (for tours of the first touch)
+                    .then(Commands.literal("page").then(Commands.argument("page", StringArgumentType.word()).executes(c ->
+                            page(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "page")))))
                     .then(Commands.literal("forget").executes(c -> {
                         ServerPlayer p = c.getSource().getPlayerOrException();
                         Known.save(p, Known.fresh());
@@ -40,6 +43,20 @@ final class EnchantCommands {
                         return 1;
                     }))));
         });
+    }
+
+    private static int page(ServerPlayer p, String path) {
+        for (Inscriptions.Entry e : Inscriptions.ALL) {
+            if (!e.id().getPath().equals(path)) continue;
+            var stack = Pages.page(p.level(), e.id(), "From a command");
+            if (stack == null) return 0;
+            if (!p.getInventory().add(stack)) p.drop(stack, false, net.minecraft.util.Prediction.SERVER_ONLY);
+            EnchantFx.page(p, e, p.getEyePosition().add(p.getLookAngle().scale(4)));
+            Pages.givenCard(p, e);
+            p.sendSystemMessage(Component.literal("A page of " + e.name() + ". " + Pages.then(e)).withColor(e.colour()), false);
+            return 1;
+        }
+        return 0;
     }
 
     private static int learn(ServerPlayer p, String only) {

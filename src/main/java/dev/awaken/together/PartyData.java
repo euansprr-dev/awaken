@@ -26,15 +26,23 @@ public final class PartyData extends SavedData {
     public static final class Party {
         public final List<UUID> members = new ArrayList<>();
         public final long formedDay;
+        /** How the party shares XP ({@link SharedXp}): -1 until someone chooses, which means the world's setting. */
+        int share;
 
         Party(List<UUID> members, long formedDay) {
+            this(members, formedDay, -1);
+        }
+
+        Party(List<UUID> members, long formedDay, int share) {
             this.members.addAll(members);
             this.formedDay = formedDay;
+            this.share = share;
         }
 
         static final Codec<Party> CODEC = RecordCodecBuilder.create(i -> i.group(
                 UUIDUtil.STRING_CODEC.listOf().fieldOf("members").forGetter(p -> List.copyOf(p.members)),
-                Codec.LONG.optionalFieldOf("formed_day", 0L).forGetter(p -> p.formedDay)
+                Codec.LONG.optionalFieldOf("formed_day", 0L).forGetter(p -> p.formedDay),
+                Codec.INT.optionalFieldOf("share", -1).forGetter(p -> p.share)
         ).apply(i, Party::new));
     }
 

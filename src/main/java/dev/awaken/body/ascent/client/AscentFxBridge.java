@@ -31,51 +31,56 @@ public final class AscentFxBridge {
         }
     }
 
-    private static boolean shuttered;
-
-    /**
-     * A sky platform's air, from its core's client tick (SPEC §17.29): wind going round the island's rim, leaves where its
-     * trees stand, the Wings' case humming close to, all quieter at night; and the case's shutter as the gift's scene
-     * begins beside it. Nothing plays from more than 48 out.
-     */
-    public static void skyAir(BlockPos core) {
-        var mc = net.minecraft.client.Minecraft.getInstance();
-        var p = mc.player;
-        var level = mc.level;
-        if (p == null || level == null) return;
-        double cx = core.getX() + 0.5, cy = core.getY(), cz = core.getZ() + 0.5;
-        double dx = p.getX() - cx, dy = p.getY() - cy, dz = p.getZ() - cz, h2 = dx * dx + dz * dz;
-        var amb = net.minecraft.sounds.SoundSource.AMBIENT;
-        if (AscentScene.age >= 1 && AscentScene.age <= 3 && AscentScene.playingMode == dev.awaken.body.ascent.AscentPayloads.GIFT_WINGS) {
-            if (!shuttered && h2 < 100 && Math.abs(dy) < 6) {
-                level.playLocalSound(cx, cy + 3.2, cz, dev.awaken.body.ascent.AscentContent.CASE_OPEN.get(), net.minecraft.sounds.SoundSource.BLOCKS, 1F, 1F, false);
-            }
-            shuttered = true;
-        } else {
-            shuttered = false;
-        }
-        if (h2 > 48 * 48 || dy < -40 || dy > 24) return;
-        var r = level.getRandom();
-        float hush = level.isDarkOutside() ? 0.6F : 1F;
-        if (r.nextInt(90) == 0) {
-            double a = r.nextDouble() * Math.PI * 2, rad = 14 + r.nextDouble() * 4;
-            level.playLocalSound(cx + Math.cos(a) * rad, cy + (r.nextDouble() - 0.3) * 4, cz + Math.sin(a) * rad,
-                    dev.awaken.body.ascent.AscentContent.SKY_WIND.get(), amb, (0.55F + r.nextFloat() * 0.25F) * hush, 0.85F + r.nextFloat() * 0.2F, false);
-        }
-        if (r.nextInt(120) == 0) {
-            // where a tree stands at an eighth (a platform from before the island has none)
-            double a = Math.toRadians(22.5 + 45 * r.nextInt(8)), lx = cx + Math.cos(a) * 12.2, lz = cz + Math.sin(a) * 12.2;
-            if (level.getBlockState(BlockPos.containing(lx, cy + 4, lz)).is(net.minecraft.tags.BlockTags.LEAVES)) level.playLocalSound(lx, cy + 5, lz,
-                    dev.awaken.body.ascent.AscentContent.SKY_LEAVES.get(), amb, 0.45F * hush, 0.9F + r.nextFloat() * 0.2F, false);
-        }
-        if (h2 < 100 && Math.abs(dy) < 6 && r.nextInt(100) == 0) {
-            level.playLocalSound(cx, cy + 1.5, cz, dev.awaken.body.ascent.AscentContent.CASE_HUM.get(), net.minecraft.sounds.SoundSource.BLOCKS,
-                    0.5F, 0.8F + r.nextFloat() * 0.1F, false);
-        }
+    /** A Gauntlet stand near enough to tick says so (SPEC §71.3): the Lesson lights it and pins its prompt if it is still to take. */
+    public static void stand(BlockPos pos, int leap) {
+        WayClient.standSeen(pos, leap);
     }
 
     /** A sky platform's core breathing a ring of light. */
     public static void coreRing(BlockPos pos) {
         AscentFx.ring(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5, new Vec3(0, 1, 0), 0.45F);
+    }
+
+    /**
+     * The air round the wings' case (SPEC §17.9, "The wings on show"), each client tick of a core within 48 blocks:
+     * the core's ring of light every three seconds; light shed off the feathers, rising; the wind across the deck
+     * carrying motes of it out over the rim; the pair stirring (the wings' own fold, low) and a gust now and then; and
+     * as the gift's scene begins, the case opening (the vault's shutter, Minecraft's own) under the wings' opening.
+     */
+    public static void caseTick(net.minecraft.world.level.Level level, BlockPos pos) {
+        var mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player == null || mc.level != level) return;
+        double cx = pos.getX() + 0.5, cy = pos.getY(), cz = pos.getZ() + 0.5, d2 = mc.player.distanceToSqr(cx, cy, cz);
+        if (d2 > 48 * 48) return;
+        long t = level.getGameTime() + pos.asLong();
+        var r = level.getRandom();
+        int gift = AscentScene.wingsGift();
+        boolean pair = gift >= -1 && gift < 34 || gift < -1 && !AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.WINGS);
+        if (t % 60 == 0) coreRing(pos);
+        if (pair && t % 4 == 0) {
+            double a = r.nextDouble() * Math.PI * 2, d = 0.3 + r.nextDouble() * 1.4;
+            MoteParticle.next(r.nextFloat() < 0.35F ? 0xEAF7FF : 0x9FD4FF, 0.6F + r.nextFloat() * 0.5F, 50 + r.nextInt(30), -0.012F, false);
+            level.addParticle(dev.awaken.body.ascent.AscentContent.MOTE.get(), cx + Math.cos(a) * d, cy + 2.2 + r.nextDouble() * 1.8, cz + Math.sin(a) * d,
+                    0, 0.008 + r.nextDouble() * 0.01, 0);
+        }
+        if (t % 3 == 0) {
+            // the wind: from the stair's side across the deck and off the pier's
+            double side = (r.nextDouble() - 0.5) * 26, back = -13 + r.nextDouble() * 6, inv = 0.7071;
+            MoteParticle.next(r.nextFloat() < 0.2F ? 0xEAF7FF : 0xBFE3FF, 0.5F + r.nextFloat() * 0.4F, 70 + r.nextInt(40), 0F, false);
+            level.addParticle(dev.awaken.body.ascent.AscentContent.MOTE.get(), cx + (back - side) * inv, cy + 0.4 + r.nextDouble() * 5, cz + (back + side) * inv,
+                    0.09 + r.nextDouble() * 0.05, (r.nextDouble() - 0.4) * 0.012, 0.09 + r.nextDouble() * 0.05);
+        }
+        if (pair && d2 < 14 * 14 && t % 92 == 0) {
+            level.playLocalSound(cx, cy + 3, cz, dev.awaken.body.ascent.AscentContent.WINGS_FOLD.get(), net.minecraft.sounds.SoundSource.BLOCKS, 0.2F,
+                    0.7F + r.nextFloat() * 0.08F, false);
+        }
+        if (t % 190 == 0) {
+            level.playLocalSound(cx + 8, cy + 2, cz + 8, dev.awaken.body.ascent.AscentContent.WIND.get(), net.minecraft.sounds.SoundSource.AMBIENT, 0.28F,
+                    0.8F + r.nextFloat() * 0.15F, false);
+        }
+        if (gift == 1 && d2 < 16 * 16) {
+            level.playLocalSound(cx, cy + 2, cz, net.minecraft.sounds.SoundEvents.VAULT_OPEN_SHUTTER, net.minecraft.sounds.SoundSource.BLOCKS, 0.9F, 0.8F, false);
+            level.playLocalSound(cx, cy + 3, cz, dev.awaken.body.ascent.AscentContent.WINGS_OPEN.get(), net.minecraft.sounds.SoundSource.BLOCKS, 0.8F, 0.92F, false);
+        }
     }
 }

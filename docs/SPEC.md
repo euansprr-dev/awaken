@@ -1002,8 +1002,10 @@ of `AwakenConfig.Client`.
   mobs module grounds normal and elite fliers, never a kit flier).
 - `dev.awaken.core.api.Strikes` additions (§68): `Coming` / `installComing` with `left(entity, partialTick)` (ticks until its
   told blow reaches you, a double on one clock, NaN when none), `reaches(entity)`, `comingKind(entity)`, `lands(entity)`
-  (client; the mobs module's `TellClock`); `Answer {DEFLECT, BLOCK, GUARD_BREAK, STRUCK}`, `installAnswers`, `answered`
-  (client: how the local guard answered, told to the ring); `Duel.reeling`, `Duel.atLastStand` (`reeling(entity)`,
+  (client; the mobs module's `TellClock`); `Answer {DEFLECT, BLOCK, GUARD_BREAK, STRUCK, PASSED}`, `Why {NONE, EARLY,
+  LATE, TOO_SOON, SIDE, UNGUARDABLE}`, `installAnswers(AnswerSink)` (`answered(answer, attackerId, why)`), `answered(answer,
+  attackerId)` and `answered(answer, attackerId, why)` (client: how the local guard answered and why a guard that was up
+  missed, told to the ring, §68.6); `Duel.reeling`, `Duel.atLastStand` (`reeling(entity)`,
   `atLastStand(entity)`); `Postures.beaten(target, ticks, by)` and `Postures.executing(source)` (`beaten`, `executing`: a
   body held broken for its last stand, and whether a blow now landing is an Execution's).
 - `dev.awaken.core.api.Lasting` (§68.1) — an interface an item class of ours names to be never destroyed by wear:
@@ -1157,6 +1159,10 @@ Plan v2 · onboarding and progression (details in docs/modules/onboarding.md):
 - §4.3 is replaced: home XP = kill 4% × min(2, hp/20), ore 1%, block 0.05% of a level, each through diminishing returns per
   source (10-minute tally; budgets kill .15, ore .06, build .03, other .25 of a level per 10 min), tapered by
   1/(1 + levels above the content / 10). Discoveries (`Progression.discover`) are uncapped.
+  **12 Nov (Euan: builders and miners must be able to rank up too):** only kills taper by level now; a block or an ore
+  is the same work at level 60 as at level 6. Block 0.075% of a level; budgets ore .08, build .08, deep ore .10
+  (kill .15 unchanged). Mirrored in `tools/sim/pacing_sim.py`. One pool across every source outside gates is the next
+  step and is not built (`progression_diminishing_returns` holds each source to its own budget).
 - Profile schema 2 adds `banked_xp` and `unlocks`. XP earned before awakening is banked and paid on Accept, which tops the
   player up to level 2. The Accept card is a choice card.
 - Truths are first offered at level 5 (level-road flag `awaken:truths`), then at each rank-up.
@@ -2920,6 +2926,14 @@ Gates in a party:
 - Sealing: when an arena or the Lord's room seals behind someone, party members of the same run on the same floor
   within 48 blocks step through with them; a party member who reaches the bars of a sealed room their party is fighting
   in is let through.
+- Bars never come down in anyone's face (`Rooms.stepInside`, 11 Nov): a room begins at its bars, so whoever set it off
+  may still be standing in the doorway. Everyone of the gate in a doorway as it is barred (from half a block short of
+  the bars' middle to 1.3 past it) is set down two blocks inside before the bars are there. Until then the bars came
+  down in the cell the player stood in, on whichever side their feet were, and a Lord's room could seal with its
+  challenger outside (Euan, in a Bell Crypt: "it basically appeared in front of me instead, and now I'm basically
+  blocked outside"). And bars with nobody behind them keep nobody out: someone at the bars of a sealed room that no
+  living player is past (it sealed empty, or emptied) is let through, "The bars let you through." Standing in the
+  bars' own cell does not count as being in the room.
 - Size: n = players of the gate on that floor (1 to 4). Room groups get +35% monsters per extra player (rounded) and +1
   elite per two extra players; the Lord +50% health per extra player (its hoard is already one per player). Scripted
   gates (the story's) never scale.
@@ -3763,7 +3777,7 @@ listener-relative loop, louder and higher with speed. Comfort lives in `config/a
 0-7.5 (5), speedFov 0-1 (1, times vanilla's FOV-effects slider), movementShake (on; also off with Awaken's
 cameraShake), reducedMotion (off: on removes streaks, air motes, the boom flash and the tremor, and halves the roll).
 Camera Overhaul (pack, optional) is switched off through its own public settings (`Configuration.get().general
-.enabled`, never saved) while an Ascent state is airborne, and put back after (decision 6; compileOnly, the one class
+.enabled`, never saved) while an Ascent state is airborne or a scene holds the view still (§65.2), and put back after (decision 6; compileOnly, the one class
 `body.client.feel.CameraOverhaulPause`).
 
 Look (no vanilla particles or render types reused for the shapes): the rope is a ribbon of `textures/ascent/rope.png`
@@ -4024,7 +4038,12 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
       ratchet winds (`gate.rig.windup`); it is drawn coming down out of the ceiling for 4 ticks, then its blocks land
       (`gate.rig.press`), and whoever is under it is hit (3 + 11% of health; SPEC §47.14) and thrown back. It lifts back into the
       ceiling over 14 ticks (`gate.rig.lift`). The loop starts with the clock (a run started alone starts it fresh, so
-      its beat is the one the par was set to) and stops, putting everything back, when the room empties;
+      its beat is the one the par was set to) and stops, putting everything back, when the room empties.
+      A press that is up is drawn parked in the ceiling, and the floor under it keeps steady chevrons at half strength, so every press
+      of a course can be seen from its first landing (`RigFx.parked`, `pressMarks`; the client is told each press's
+      columns, block and travel with the floor's rig scene). Nothing is there to walk into: its blocks exist only while
+      it is down. Until 11 Nov nothing at all was drawn of a press that was up (Euan, playing a Foundry course: "They're
+      invisible until you actually get super close to them... the wall spawns in front of you");
     - **wall-run**: 5 rows of open pit (6 from B) in a straight stretch, with a wall (`gate_run_wall`, dark panels ruled
       with lit grooves) beside them on one side, a row past either end, from the pit to 4 over the floor: run along it.
   - **Rings**: after every second obstacle, over a straight floor row with 8+ rows still to go, a hoop of the theme's
@@ -4145,9 +4164,12 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   open wings 2-4 blocks a second (0.13 shot them up 58 in 5 s); a windway of 0.02-0.03 along carries a glide.
 - **The updraft vent** (`awaken:updraft_vent`, a Precursor grate, light 10, pickaxe): a column of rising air, radius
   3.5, 34 high from its top, lift 0.045 to 24 up then fading to 0 at the top, 35% less at the rim; columns don't stack
-  (the strongest counts). Drawn as 24 soft filaments of pale air rising up the column (6-10 long, 0.3 a tick), turned
-  to face you, over a faint haze its width, both fading where the lift fades (additive: strength in the colour, not
-  alpha; one draw a vent, seen from 160); heard as a soft rising rush every 2.5-4 s near it (`ascent.updraft`).
+  (the strongest counts). Drawn as fourteen gusts rising up the column (7-13 long, 0.3-0.5 a tick), each a soft
+  line that tapers to nothing at both ends and winds round the column as it climbs, fading in over the vent and out
+  where the lift fades, seen from 160. They are the windways' gusts, drawn in the same pass after the level (§17.12
+  "The look"): the first build's filaments and its sheet of haze went through the level's own passes on a type that
+  writes depth, and stood as a dark slab against Lens's night sky. Heard as a soft rising rush every 2.5-4 s near it
+  (`ascent.updraft`).
   Client side the loaded vents are a list their block entities join, so the air costs a list walk. The sandbox puts
   one on a 13-high pillar off the tower's side (its column reaches past the deck). The Wilds' pylons stand on them.
 - **The Wilds' hooks** (§17.4): every server tick a ladder state runs (a rope, the carry, wings, flight, a wall-run, a
@@ -4246,18 +4268,20 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
 - **The perch**: the top ring stands in a 3x3 of plating (trim corners), its stub on the chain's side. From the hang
   under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
   of the pier's end (7 up) pulls the body onto the pier.
-- **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within 3
-  without Wings is judged (`WingCoreBlockEntity.judge`, in this order since 11 Nov 2026): **the rank first**, C or above
-  (`WingCoreBlockEntity.RANK`, progression plan decision 2, 2026-10-26); then the way up, which is the platform's visit
-  (§17.29: the `#awaken:warded_sky` ward opened on the way in and kept while the player stays in it), nothing built
+- **The core, the rank first** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a
+  player within 4.7 (the case's rail is two out, its corners nearly three) without Wings is judged
+  (`WingCoreBlockEntity.judge`, in this order since 11 Nov 2026): **the rank first**, C or above
+  (`WingCoreBlockEntity.RANK`, progression plan decision 2, 2026-10-26; Euan at a core at rank D: "it's way too early to
+  get these... it says, like, come back when you're rank C"); then the way up, which is the platform's visit (§17.29:
+  the `#awaken:warded_sky` ward opened on the way in and kept while the player stays in it), nothing built
   (`ArrivalHooks.byMovement`) and the rope carried them (`ArrivalHooks.byLine`). Passing all three, they are given Wings
-  (`Ascent.grant`, "sky platform core")
-  with the gift's scene (`Remember` mode `GIFT_WINGS`: "Wings of light.", the wings unfold round the body, then the
-  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told why on arrival, then at
-  most every 10 s for each reason (`Throttle`), each in its own words, and the server log says which
-  ("[ascent] the sky core at x, y, z stays dark for Name: rank|built|line"; a gift logs too):
-  - rank (`core.rank`): "The core stays dark. It's waiting for a C-rank hunter, so come back when you've reached rank
-    C." A promise is noted (`Promises.seen`, key `wing_core:x,y,z`, need rank C, "A sky core's wings").
+  (`Ascent.grant`, "sky platform core") with the gift's scene (`Remember` mode `GIFT_WINGS`), `ascent.vow_call`,
+  counter `awaken:ascent_wings_core`. Anyone else is told why on the action bar on arrival, then at most every 10 s for
+  each reason (`Throttle`), each in its own words, and the server log says which ("[ascent] the sky core at x, y, z
+  stays dark for Name: rank|built|line"; a gift logs too):
+  - rank (`core.rank`): "Come back at rank C. These wings will wait for you.", with the vault's refusal (Minecraft's own
+    recording, low). The core goes on the Tasks page (`Promises.seen`, key `wing_core:x,y,z`, need rank C, "A sky
+    core's wings").
   - built (`core.built`): "The core stays dark. It won't answer anyone who built their way up here. Climb its rings
     with your rope."
   - line (`core.line`): "The core stays dark. It only answers someone who climbed its rings with the rope, not with a
@@ -4269,11 +4293,36 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   is what Euan met on 11 Nov, up the rings by rope: "The core stays dark. It only answers someone who climbed its rings
   by rope." (then the words of both refusals; the core logged nothing then). Before 11 Nov the rank came last, so a
   D-rank climber heard about the rope before the rank. Before 26 Oct a refusal came once a minute, on the minute, so a
-  refused player could wait 60 s in silence. The Horizon's "wings" need is reached by Wings or the rope alone (the rings are a rope ladder) and reads
-  "· needs a rope or wings". It breathes a ring of light every 3 s. The
-  platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
-- **The island, the arch and the Wings' case** (11 Nov 2026; the manager's brief: "a floating island that stops you in
-  your tracks", the real wings in a glass case that opens and gives them):
+  refused player could wait 60 s in silence. The Horizon's "wings" need is reached by Wings or the rope alone (the
+  rings are a rope ladder) and reads "· needs a rope or wings". It breathes a ring of light every 3 s. The platform's
+  `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
+- **The wings on show** (11 Nov 2026, Euan: "put the wings themselves inside of a glass case... the new wing model...
+  that can really motivate you to come back at rank C"; the client's `WingCaseRenderer`). Over the core hang **the real
+  wings** (§62's `WingForm` pair drawn by `WingFeathers` in `WingPipelines`' own types, 0.64 where a player's are 0.94,
+  so the open pair turns inside the glass), 3.2 over
+  the core's floor, breathing between nearly open and open, turning once in 38 seconds, lit by themselves, their halos
+  behind them, in a column of light from the core's top to the roof (a sheet turned to face the eye, bright down its
+  middle and at its foot, breathing with them) and with their light on the core's top, inside a case of light glass: four panes from the rail to the roof (a
+  faint tint, brighter at the foot, a bright line up each corner and round the top, a band of sheen crossing one pane
+  after another every ten seconds). One pair, drawn within 80 blocks (the far forms past 48), nothing allocated in a
+  frame. What a player sees is their own truth: without wings, the case shut and the pair inside; with them, the case
+  open and empty over a low light.
+  - *The gift at the case*: as the gift's scene begins the glass sinks into the rail (22 ticks; the vault's shutter
+    opening, Minecraft's own recording, under the wings' opening) and the pair opens right out and crosses to between
+    the player's shoulder blades, thinning out as it arrives at tick 34, when the scene's own wings open on their back
+    (`AscentScene.wingsGift`). The "UNLOCKED · Wings" title (§71.2) begins with the same scene.
+  - *The air* (`AscentFxBridge.caseTick`, within 48 blocks of a core): motes of the wings' light shed off the feathers
+    and rising; the wind as motes carried across the deck and out over the pier; the pair stirring (the wings' own
+    fold, low, every 4.6 s within 14 blocks) and a gust every 9.5 s; the core's ring of light every 3 s as before.
+- **The wings' hall** (`SkyRig.rigHall`, `hallAxis`, `hallPlaced`; laid with the rig, and on its own for platforms rigged
+  before it: its mark is the lit panel under the core, placed last; the blueprint never changes). The cabin Euan stood
+  in was "a dark tiled room". Two opposite corners are opened as **portals** four high with pillars for jambs, light
+  in the threshold and a soul lantern hung in the head; a **rail** of polished deepslate wall stands round the core two out, which the case's glass
+  rises from (nobody walks into the case), with light in the deck under its corners; a lamp every third cell down the
+  pier's middle. The blueprint keeps its chest and its stand in two opposite corners of the cabin whichever way it was
+  turned, so the portals take the pier's diagonal when its corners are empty (the pier runs straight in at the case,
+  and the wings read from its end) and the other diagonal otherwise (a quarter turn round the deck from the pier).
+- **The island and the arch** (11 Nov 2026; the manager's brief: "a floating island that stops you in your tracks"):
   - *The island* (new platforms only, blueprint `SKY_STYLE` 3, `RuinBuilder.garden`): the deck sits in the ground it
     tore up. A ring of garden one step below the deck, from the deck's edge (11.6) out to about 13.6 along the axes and
     12.2 along the diagonals, ragged; the rim sits on a layer of its earth. Under the ring a collar of rock (tuff,
@@ -4284,30 +4333,15 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
     the crown clears a head on the rim, a lantern hung on the outer side) and now and then a tall autumn poplar; no
     crown within 4 of a diagonal (the arch's room) or near an axis (the tethers). The four torn-up islands are bigger
     (3 to 4.3 across the radius) and grown over: a cherry with petals where the oak stood, a poplar on the first,
-    wildflowers, glow berries under them. The cabin's door is three wide and three high in a pillared frame, so the case
-    reads from the pier. Everything stays inside the 49×26×49 piece and clear of `ascent_sky_rig`'s checks.
-  - *The arch* (`SkyRig.archCells`, `rigCase`; old platforms get it too, placed only where nothing solid stands): where
+    wildflowers, glow berries under them. Everything stays inside the 49×26×49 piece and clear of `ascent_sky_rig`'s checks.
+  - *The arch* (`SkyRig.archCells`, `rigArch`, `archPlaced`: the light in its beam is its mark; old platforms get it
+    too, placed only where nothing solid stands): where
     the pier's root meets the deck (7, 7), a Precursor pillar either side of the way (9, 5) and (5, 9), 2.8 off its line,
     four high and capped; across their tops a beam two cells thick (a + b = 14 and 15, 5 over the deck, four clear over
     the walk) with a light at its middle; a lantern hung under the beam on each side of the walk, at (8, 6) and (6, 8).
-  - *The case* (`WingCaseRenderer`, one per core, drawn within 96): three blocks square and 3.4 high round the core, a
-    dark metal frame of four posts and rails with a lamp under the lid, glass panes drawn as faint additive light with
-    an edge line, two streaks and a shaft of light down from the lid. Inside, the real model (`WingFeathers.pair`, the
-    first rung's pair, 0.42 of size, raised 34 degrees) hangs open, breathing on the hover's beat. It faces north, away
-    from the cabin's door, so whoever looks in through the door sees the wings as they will sit on their own back, and
-    sways 22 degrees either way over 30 s (a whole turn every 36 s showed them edge-on half the time, a white blob behind
-    a post in a tour's shot). Barriers fill the case's 3x3 three high round the core and over it (`SkyRig.caseCells`, only into air), so
-    nobody walks into its glass. A player who has Wings sees the case open and empty. When the gift's scene starts
-    beside it (`GIFT_WINGS`, within 10), the glass sinks into the base over 14 ticks, the case's shutter sounds, and from
-    tick 10 the wings fold, leave the case and fly to the player's back on a curve, growing to full size, gone into the
-    player's own wings as they flourish (tick 34). The client alone draws all of this from the scene's own clock (no
-    float clocks, nothing sent).
-  - *The air* (`AscentFxBridge.skyAir`, from the core's client tick, within 48): wind going round the rim about every
-    4.5 s (`ascent.sky_wind`: the game's dry-grass wind takes and a poplar's), leaves where a tree really stands
-    (`ascent.sky_leaves`, the poplar's rustles), the case's hum within 10 (`ascent.case_hum`, the vault's own), all
-    quieter at night; the shutter (`ascent.case_open`, an iron trapdoor's opening at pitch 0.7). Every take was measured
-    with `tools/art/specs/ding_check.py` and the ones with a ring left out: every chain recording rings, so the tethers
-    stay silent; the vault's shutter rings at 3.9 kHz, so it is not used.
+  The island was built beside a case of this session's own (rope-hold-swing, 11 Nov), barriers in a 3x3 round the core and
+  sounds for its hum and shutter; build had the wings' hall and its case by then, so those were dropped in the merge and
+  the hall's case kept. The island's own wind and leaves sounds went with them (the hall's air has its gusts).
 - **The rope's moves for a ladder** (§17.6 rope, both sides):
   - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
     up to it rather than swinging.
@@ -4344,7 +4378,9 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   chain of slings: the body is level with the third stone four seconds after leaving the ground. `ascent_sky_stair`
   logs the shapes and judges this one. With the island in the bench's model (11 Nov, run 43022550555) the hopping bot
   still climbs 12 of 12 (in about 28 s, no hard hit) and the key-only bot 5 of 6 (one fell from stone 14), so the
-  island costs the stair a little. **Off in the rig** (`SkyRig.STAIR` false) until Euan has seen its tour shots;
+  island costs the stair a little. **Off in the rig** until Euan has seen the climb filmed (`SkyRig.STAIR`, one
+  constant to turn it on, 11 Nov: a laid stair stays in a saved world for good; once on, platforms rigged before it get
+  it on their next load; the first rig's chain and rings stay beside it);
   `/awaken ascent sky goto stair` builds it on the platform it goes to and stands you on the ground short of the
   lowest stone, facing it; pilot `run stair` climbs it (`tools/autopilot/sky-stair.txt`).
 
@@ -4475,17 +4511,55 @@ Held at the edge of the land the client has (the edge hold, §28.9): a windway's
   samples a scan; cached, so later scans finish the search) are linked; the lanes of pairs seen in the last 5 min are the
   server's, and the ones within 900 of a player (at most 64) go to them (`AscentPayloads.Lanes`) when that set changes.
   Nothing saved; forgotten when the server stops.
-- **The look** (`WindwayRenderer`): along each lane within 280 of the camera, curls of pale mint-white air (5-11 long,
-  one every 3.2 with a fifth missing) flow at 1.25 b/t, each wavering as it goes and turned to face you, fading with
-  distance and at the lane's ends; a faint sheet of light down its heart shows the line from a deck's edge (gone within
-  10 of you). Brighter round you while it holds you; a rush of air as it takes you, its breath every 3.5 s while it carries you.
+- **The look** (`WindwayRenderer`; rebuilt 2026-11-11, Euan playing by night: "I really don't like these wind flows
+  ... they look very bad ... they look glitchy basically, as you can see, like they kind of cut off. Near the actual
+  island as well ... rebuild something that kind of looks like wind gusts or something that actually look good. And
+  they don't use much performance"). **Gusts**: long thin lines of pale air that taper to nothing at both ends, flow
+  down the lane, waver, and come and go. No sheet of haze, no texture, no edge anywhere.
+  - What was wrong: the curls and the faint sheet down the lane's heart were drawn through the level's passes on
+    `RenderTypes.energySwirl`, which writes depth. Lens tells sky from land by depth, so every quad read as
+    something solid and Lens left the game's own sky showing behind it: by night two hard-edged near-black slabs
+    with square ends, beginning at full width beside the islands.
+  - Three streams a lane within 320 of the camera, each sliding along at its own pace with a gust in most slots
+    (18% are gaps), every gust keeping its slot and so its look as it goes: the body (1.25 b/t, a slot every 8,
+    16-30 long, 0.5-3.6 from the lane's heart), slower and fainter ones round the outside (0.95 b/t, every 12.5,
+    22-40 long, 2.6-5.3 out), and short quick darts through all of it (1.65 b/t, every 19, 9-15 long). A gust winds
+    slowly round the lane's heart, wavers, drifts a little against its neighbours, and fades in and out as it
+    travels (visible a little over half the way). About a quarter of the body's gusts and an eighth of the outer
+    ones **curl**: over a few blocks the line runs on ahead, rises, comes back over itself and carries on (a loop
+    two to three and a half blocks tall). Brighter round you while the lane holds you (1.3 times, within 40).
+  - A gust is a ribbon turned to face you. Across its width its strength falls from the middle to nothing (seven
+    columns of vertices within 44 blocks, five beyond), so it has no edge; its width and strength taper to nothing
+    at its tail and its head; it is a third to two thirds of a block wide, wider with distance so a far gust stays
+    a line. Two tones across: a pale core and a soft blue-grey flank. Pale air has to read on a blue sky, which the
+    core does, and on white haze and cloud, where a white line is no line at all (the first build's streaks showed
+    by day only where its slab stood behind them): there the flank carries it, and on the blue sky the flank is lost.
+    Seen along a lane's own way (from its heart, or from the rim above its start) its gusts are short strokes
+    heading for one point: there they stay thin and straight and half as strong (no widening for distance, the
+    curl flattened out), from straight along to 25 degrees off; widened and curled they were a litter of ticks round
+    that point. Close by a gust is finer (0.4 of its width at the eye, whole from 22 blocks): a ribbon a block wide
+    was a bar across the view. It fades out over a lane's first 40 blocks and its last 48 (nothing begins or ends
+    at an island), with distance from 176 to 320, and within 5 blocks of the eye, so none smears across the view.
+    The core is pale mint-white by day (244, 255, 250), a dimmer sea-green by night (138, 198, 192) where white
+    lines would glare; the flank (104, 146, 204) by day, a faint teal glow by night (48, 90, 106).
+  - Drawn after the level in one pass of its own (`RenderLevelStageEvent.AfterLevel`, as the gate pillars are):
+    the game's plain position-and-colour quads, alpha-blended, tested against the world's depth and writing none,
+    no fog (they fade themselves). With the updrafts' columns (§17.6) in the same pass. Under Lite, Cinematic and
+    Ultra the pass goes into Lens's layer for light, laid over the finished picture (§22 "Light over the Air");
+    otherwise straight onto the frame. No lane or vent near: no buffer mapped, no pass. Cost: the vertices are
+    written straight into a mapped buffer (16 bytes each, at most 12,288 quads, 0.8 MB; a lane in full view is
+    some 2,000), nothing allocated per frame; the pass itself is a load and store of the frame's depth, as a gate
+    pillar's is. Frame times not measured yet (the Mac is his while he plays).
+  - A rush of air as a lane takes you, its breath every 3.5 s while it carries you (unchanged).
 - Dev: `/awaken ascent windway` (the lanes known, the nearest), `/awaken ascent windway goto` (onto the deck of the
   platform the nearest lane starts from, at its rim on the lane's side, facing along it; checks the deck's height
   against the seed's); `tools/autopilot/ascent-windway.txt` (Wings, the pilot's `glide` off the rim). Test:
   `ascent_windway` (the lane's ends; carried the whole way and set down slowly looking along it, 15° under or 15° over;
   a look 45° away breaks out; AirHooks hears the server's lanes).
   Tour (seed 4246): the lane took the glide 2 s after the wings opened and carried it 667 blocks in 21 s, out at 0.34
-  b/t 7 over the next deck. From a deck in daylight the lane reads faintly (inside it, plainly).
+  b/t 7 over the next deck. (Of the first look: from a deck in daylight the lane read faintly; inside it, plainly.)
+  Look tour: `tools/autopilot/steady60-windway-ci.txt` (the lane from the rim, the side, inside and back at its
+  start, by day, dusk and night under Cinematic; by night under Lite and Swift; an updraft).
 - Not yet: windways round spires and other heights, weather that turns them, a ride counted toward Wings mastery.
 
 ### 17.13 The feel pass, part 1: the action camera
@@ -4965,7 +5039,7 @@ manual; stop the build at the first block; the payoff answers only the line; dan
   crown says "The crown stays dark. It answers only to a line."; the core tells a tower from a clever climb in its own
   words (§17.9, 11 Nov 2026: rank first, then built, then the line; at once, then at most every 10 s each). The visit is
   the whole verdict at the core, held as long as the player stays in the ward: no stopwatch on the deck. What it keeps
-  is in view from the pier: the real wings in a glass case through a door three wide, under an arch (§17.9). The Tether Vow
+  is in view from the pier: under the arch, the real wings in a glass case through the wings' hall's portal (§17.9). The Tether Vow
   is kept only at the mast by the line.
 - **A climb cache's inner seal** (`wilds.ward.Caches`, attachment `awaken:inner_seal` on the chest: schema 1, the best
   table, who it opened to). A spire's, sky platform's or hero crown's chest keeps its ordinary roll in its own table
@@ -5158,7 +5232,8 @@ than a fall, so you pick where you land. `AscentMoves.aimDive`, `AscentRules.div
   from one dive's start to the next. It costs no Aether: no Leaper move spends any, since Aether is the Skyborn's
   flight (§17.8). The wait does the Aether's job. A slam needs 4 blocks of height, which takes a rope or a long fall,
   so it comes seldom. A dive needs only a leap, about 15 ticks round, so without the wait its shock would land on
-  every leap. With it, every second or third leap can dive.
+  every leap. With it, every second or third leap can dive. It is the Way Up's fourth move (`WayUp.Leap.DIVE`, the
+  "Dive" title, §71.7): open with the leap unless the leap is ever given a move at a time.
 - **Whose press.** The hand's first, then the rope's, then the dive's.
   - It is the hand's in three cases: the crosshair is on anything in the hand's reach (a creature to hit, a block to
     break); the hand means a creature near the look (the mark's creature by `Aim.meantId`, or a calm one by
@@ -6087,7 +6162,8 @@ magic.
     on the Mac, not on CI). Where the pipeline doesn't compile, or the bound projection isn't perspective, each user's
     CPU estimate stands, as before. Development: client command `/awaken lens projection off|on|check` (off: every
     user's CPU estimate, for A/B; check: the latest roll read back).
-- **Heightfield** `awaken:lens_height` (`LensHeightfield`, 1024×1024 RG16F, mips 1-4 hold the max of their 2×2; about
+- **Heightfield** `awaken:lens_height` (`LensHeightfield`, 1024×1024 RGBA16F since "Shadows beyond the block map"
+  (b a roof's underside, a the floor under it), mips 1-4 hold the max of their 2×2 (the min for b); about
   5.6 MB on the GPU and the same off-heap mirror): from the client chunks' own heightmaps (26.3 sends MOTION_BLOCKING
   and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g
   without leaves. **The heightfield sees every solid block** (`LensHeights`, Euan 2026-10-29: "in a closed room the
@@ -6807,6 +6883,94 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `docs/perf/steady60/play-2026-11-11/steppe-fog-before-after.jpg`. In Euan's own shot the sand shapes were
     stronger than any the runner drew; his chunk fade is off, so it was most likely the edge hold's mist as new land
     was being made, which is a reading and not a measurement.
+- **Shadows beyond the block map** (Euan, playing, 2026-11-11, in a jungle: "There's an issue here with the tree's
+  shadow ... it moves as I move, so the shadow isn't consistent ... it's very cut off, and then if I move, the shadow
+  moves along with my view ... if I move completely to the left of the tree, then the entire shadow of the tree
+  basically disappears. We need to double check this is fixed across the board for not just trees"). The Sun Pass
+  has two answers for "does the sun reach this point": the block map, exact, within 46 blocks of the camera, and the
+  heightfield beyond it and for the rest of a ray that leaves the map. The heightfield knows a column's top with its
+  leaves and without, not where a crown ends below, and it took the whole column under the leaves' top for leaves: a
+  curtain to the ground. So a ray that passed under a crown was shaded wherever the heightfield had the say, and lit
+  where the map did, and the line between the two, a straight edge on the ground at the map's reach toward the sun,
+  moved with the camera. Under tall trees (a jungle) that was a slab of shade that came and went.
+  - **The rule**: beyond the block map a crown shades a ray only in the top seven blocks of its column
+    (`CANOPY` in lens_light.fsh, `heightRay`), so a tree far off casts its crown's shadow and light passes under
+    it, as the map finds for the same tree near by. Inside the map nothing is lost: a point is called lit without
+    a walk only when nothing at all stands over its ray, leaves at any height included (`leafy`), so the walk still
+    has its say wherever the old curtain did, at the same cost.
+  - **Roofs with air under them** (the same day; the tour's stone table still threw a slab's shadow from its feet at
+    78 blocks, in both runs): a solid thing with open air under it (a bridge, an arch, a market roof, a table) was
+    a solid pillar to the heightfield. The heightfield now holds two more heights a column (RGBA16F): where the
+    solid at its top has open air under it within six blocks, the underside of that solid (b) and the top of
+    whatever stands under the air, found within 64 blocks (a). Elsewhere b is far above anything (4096) and a is
+    the solid top, so one test serves every column: solid under a, and from b up to the top. `heightRay` tests a
+    ray's whole span through each near column against that, and a point under such a roof marches on if its ray
+    leaves its own column below the underside (before, anything under a solid top was simply out of the sun). The
+    coarse levels hold the least b and the most a of their columns, so a far step never lets light through where
+    one column would stop it (a leg in a 4×4 cell makes the cell a pillar: thicker than it is, never thinner).
+    - Read with the chunk (`LensHeightfield.roofs`): only when a chunk's tops changed, so the steady rescan
+      costs what it did; a new chunk costs up to six block reads a column more. A hollow dug under a roof that
+      leaves every top as it was shows when a top next changes. The texture and its mirror are twice the size
+      (11 MB each from 5.6). Tick time not measured.
+    - Not held: a roof thicker than six blocks (a floating island: still a pillar to the ground), air deeper than
+      64 under a roof (solid from there down), a third layer under the floor. The CPU's own marches (the lit
+      air, the sun map, the dust) still take a column for solid under its top; they only ever spare a walk or
+      colour the air, never shade a surface.
+  - **What still differs with distance**: leaves lower than a crown's top seven (a spruce's skirt, a bush under a
+    giant) shade only inside the map.
+  - Tour: `tools/autopilot/steady60-treeshadow-ci.txt` (a built jungle giant and a stone table from 16, 42 and 78
+    blocks, and from the ground).
+- **Shade on creatures** (Euan, playing, 2026-11-11, with a cow at arm's length: "the shadows on animals are a bit
+  broken ... you can see really weird frames or really weird pixels ... actual artifacts in the shadows, where the
+  shadows have jagged edges or like zigzags"). Close to the eye the Air's shadows are cut in the texture's own
+  pixels: a point on a face square to the world asks for its light from the centre of its sixteenth-of-a-block
+  texel, in the light pass and again where the composite reads the light (SPEC §22 "Sunlight"). Those texels are the
+  world's, on the world's grid. A creature's side is square to the world whenever it happens to face that way, and
+  its shade was then cut along a grid that is not its skin's and does not move with it: stair-steps a texel wide
+  that crawled as it walked or breathed. Now only a block's own face is cut that way (`blockFace` in
+  lens_height.glsl: the point just behind the surface lies in its column's solid, by the heightfield); a creature,
+  a dropped item or anything else with open air behind its surface keeps the smooth shadow, the sun's small disc
+  smoothed over frames. Known gaps: under a solid roof everything reads as a block (the heightfield has one top a
+  column), so a creature indoors is cut as before; and a leaf block's face is no longer cut (the solid top is
+  without leaves), which on a leaf texture does not show. Tour:
+  `tools/autopilot/steady60-creature-shade-ci.txt`.
+- **Near lights against the sky** (Euan, playing by night, 2026-11-11: "the Firefly lights goes behind clouds. Which
+  shouldn't be the case"). A particle writes no depth, so where a firefly's glow shows against the sky its pixel is
+  sky to the composite, and the wisps and the clouds were laid over it as they are over the stars. What the frame
+  holds over the game's own sky is the sun, the moon, the stars and any light that is near; a near light is told
+  from the rest by where it is and by its colour: not within the sun's disc (some 12 degrees) or the moon's (some
+  8), and not white as the stars are (its strongest channel leads its weakest by a quarter and more). That light is
+  put back over whatever of the sky covered it (`nearGlow`, `skyCover` in lens_composite.glsl). Not while the
+  game's own sunrise glow is up, which is coloured sky: at dusk a firefly still goes behind a cloud. Not solved by
+  it: a white or grey particle (snow, smoke) against a cloud, and a near light in front of far land, which takes
+  the land's fog. No tour: fireflies come by chance at night; to be seen in play.
+- **Light over the Air** (`LensGlow`, `lens_lay.fsh`; 2026-11-11, for the windways, §17.12). Soft light that
+  belongs to the world and not to a surface (a windway's gusts, an updraft's) has no right place in the frame Lens
+  is given. If it writes depth, Lens takes it for something solid and leaves the game's own sky behind every quad
+  (the windways' dark slabs). If it writes none, it is part of whatever is behind it: on land it takes that land's
+  fog and goes under any cloud laid over that land; on the sky it survives only as what the frame holds over the
+  game's sky colour ("Near lights against the sky"), which a daylight sky clips to a tint. So it is not put in
+  the frame at all. `LensGlow.open(label, mainTarget)` gives a caller a render pass after the level
+  (`RenderLevelStageEvent.AfterLevel`): its colour is a layer of Lens's own, the size and format of the main
+  target, cleared as the first pass of a frame opens; its depth is the world's, tested and never written. The
+  caller draws alpha-blended (`BlendFunction.TRANSLUCENT`), which leaves colour premultiplied in rgb and cover in
+  alpha. The chain's last pass, once a plain copy of the picture into the main target, is `lens_lay`: the picture,
+  with the layer laid over it. So that light is in front of Lens's sky, fog and clouds always (a lane behind a
+  cloud shows through it: the price, and for a line that guides you no loss), and it is as bright by day as by
+  night.
+  - Laid after the composite's colour, so the light is the colour it was drawn, as it is with Lens off; what the
+    composite does to the whole picture afterwards is done to it too (an open panel's dimming, the vignette), and
+    it stays behind the hand (the hand's own depth, "Reach and cover"). Not laid in a development view. During a
+    story's tear from black `open` gives the main target instead, as it does whenever no chain will lay the layer
+    (Lens off, Swift, VFX): the same draw there gives the same picture on the game's own sky.
+  - Why the last pass and not the composite: the composite reads sixteen textures, which is all one shader stage
+    may have on Apple's GPUs without argument buffers; a seventeenth could cost the whole chain there.
+  - Cost: the copy it replaces, plus two texture reads a pixel. The layer is 33 MB at 4K, made the first time
+    something draws into it and given back ten seconds after the last; on a frame nothing drew, the pass reads one
+    clear texel. Straight out ("The trim") skips the last pass; on a frame with light to lay Tiles lets the
+    composite draw into swap as written, so the last pass runs: the copy back is paid only while a gust is in view.
+  - Order: `LensGlow.settle` runs last of all after the level (LOWEST), so whichever order the listeners come in,
+    the chain reads this frame's light or none.
 - **The Air in other worlds** (Euan 2026-11-11, in the first rolled gate world, Cinder Crown: "Each should have its
   own sky and atmosphere ... the cinder crown, it should have kind of a more reddish sky, I think, and a reddish
   atmosphere"). The Air drew one sky everywhere its sun shines (`sunHere`: any world with an overworld skybox, the
@@ -6825,7 +6989,13 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     colour) and `hazeDesaturate`. Nothing else: no key says "own sky", it is every world but the overworld.
   - `lens_air.glsl` (`airLand`, the end of `airSky`), frame texels 24, 25, 26 w (the land's horizon) and 27 w (its
     share; the Holo plates' spare components), `LensFrame.land`, `LensClient.ownSky`. The overworld is untouched.
-  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite).
+  - **How much fog** stays the Air's own, by the render distance: a land's look gives the fog its tint, not its
+    amount (`haze` and `hazeStart` do not act under the Air). On Amber Reach that is hazier than the land's first
+    pictures, the far cliffs fading more. Shown the two side by side and asked whether a gate world's fog should
+    follow its look's haze strength, Euan said: "Leave it" (2026-11-11).
+  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite). Before, run
+    42996721809; after, 42996759340: the sky, the far fog and the clouds are the land's amber. Sheet:
+    `docs/perf/steady60/play-2026-11-11/gate-sky-before-after.jpg`.
 - **Glasswater: the Air's water** (Euan 2026-11-11: "Right now the water is still vanilla basically ... keep it MC
   like ... I don't want like insane physics ... pretty simple water that doesn't take a lot of performance away, but
   that's much more cinematic and less flat"; told that Cinematic's water mirrored the game's old sky: "that makes no
@@ -19742,7 +19912,7 @@ Lunge, Frost Walker, Soul Speed, Sweeping Edge, Channeling) stays only where it 
   piece allows.", "This piece takes it to N at most.", "You need 6 levels and 2 lapis.". Test `enchant_room_depth`.
 
 ### 45.5 The Inscribing Table (`InscribingTableBlock`, `Inscribe`)
-- **`awaken:inscribing_table`**: lapis, book, lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
+- **`awaken:inscribing_table`**: lapis, stick (a book until §45.15), lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
   `#stone_crafting_materials`); axe-mineable; drops itself. (The plan's "unlocks when you first hold a page" is not
   built: the recipe is always known.)
 - **Use it holding a piece** to lay it on the slate and open the book. The server opens a session (table, hand slot, a
@@ -19798,6 +19968,8 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   `village.Trade`.
 
 ### 45.10 The writing scene, the table drawn, the Journal (`enchant.client`)
+(Since §45.15 the book's two pages and the result card are the `classicTable` setting only, the table is a desk with the
+book on a rest, and the piece on the slate is the thing itself. The view, the hands, the trace and its numbers stand.)
 - **You step to the desk and the view leans in** (a change from the plan's "cinematic by default"): as the scene opens
   you take a short walk (a few moves over 12 ticks, collisions and all) to the spot 0.36 out from the table's front,
   where both hands reach the slate, if you're within three blocks of it, on its floor (within 0.6) and there's room
@@ -19979,6 +20151,163 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
 - **The Inscribing Table's book on a narrow page** (Euan's MacBook, GUI 4): each row's line drops detail until it fits,
   so the price always shows: "Up to II here (III in your Study) · 6 levels and 2 lapis", then without the Study, then
   without "here", then the price alone; the foot's hint wraps.
+
+### 45.15 The polish pass: the door, the desk, one script (plan docs/enchanting/POLISH.md, page https://claude.ai/artifact/GGUiB3qof3qZMVuxQoMAsb; Euan approved the full plan 2026-11-11: "go ahead with the full plan", with three changes)
+His changes, which override the page where they differ: **no menu** ("let's not make it a menu for enchanting. It should
+stay 3D inside of the actual world, like similar to how it is now, maybe just better, like more cinematic"); an
+inscription's look **must not distract from the armour set** but should give "a nice shine" or a small aura (§45.17);
+and **a page must say how it is used** ("I thought the pages were like being automatically applied... say: you enchant
+this onto a weapon by doing XYZ"). What the audit found is in POLISH.md §2: across two worlds he was given six pages, read
+four, and never built the table. Built first as a pilot (the door, the desk, his three banes and Lantern); the other five
+new words followed the same day (§45.16), at his word that every approved plan be finished.
+
+- **A page says how it is used.** Its own lines end "Use this page to learn it. That puts it on nothing yet." and
+  `Entry.howTo()`: "To put it on a weapon, hold the piece and use an Inscribing Table." (the noun by what it fits:
+  `Entry.piece()`). The line when one is given: "The Hive Regent carried a page of Bane of Crawlers. Use the page to learn
+  it, then write it onto a weapon at an Inscribing Table." (`Pages.then`). Reading one, chat says "You learned Bane of
+  Crawlers. It isn't on anything yet." while the card below is sure to show (five lines of chat lay over it at his
+  size), and once the card is paced, all of it: "... To put it on a weapon, hold the piece and use an Inscribing Table.
+  It fits your Beastbound Maul. You can make a table: it's on your Tasks page." (the last two only where they hold).
+  The first time ever the System's line about gates follows as a paced toast short enough to show whole: "Each kind of
+  gate keeps its own enchantment." (it was a longer toast, cut after "and its L").
+  **Two System panels** say the same in the room a panel has, which is a title and three lines of 188 pixels at the size
+  he plays at (the first cut had a body and rows: the body was cut with "..." and the how-to folded behind "Press K to
+  see 2 more"). Each line is a row with no value, which a panel draws at full width. Given (`Pages.givenCard`, 7 s):
+  "Page of Bane of Crawlers" / "It isn't on your gear yet." / "Use the page to learn it. Then" / "write it on at an
+  Inscribing Table." Read (`Pages.learnedCard`, 12 s): "Learned: Bane of Crawlers" / "It isn't on anything yet." / "To
+  write it on, hold the piece" / "and use an Inscribing Table." Until you have written your first enchantment both
+  panels are CRITICAL, so the System's pacing never holds them (`Pages.doorTier`: paced, the first filmed run showed
+  neither, a new world being quiet for its first five minutes); after that they are paced like any notice. A page held
+  to the table is read there.
+- **A bane's line leads with what it does** ("Your hits land 8% harder for each level on spiders, bees and the creatures
+  of a Hive."); what it won't touch is the Journal entry's small print.
+- **The recipe** takes a stick where it took a book: lapis, stick, lapis / planks, essence shard, planks / stone, lapis,
+  stone. Tasks' `enchant/table` asks for the stick.
+- **A converted vanilla table** opens facing as the server says (`Open.facing`): the scene framed itself before the new
+  block reached the client and fell back to north.
+- **The door's log**: `[enchant] door: page given|read|table set|opened|written[ clean| from memory] <id> t=<game time>`.
+- **One script** (`Marks`, written by `tools/art/specs/_enchant_glyphs.py java`): 36 designed glyphs in place of five
+  generated templates. A glyph is its family's frame (wards a shield, banes a spear, spoils a cup, carrying a gable,
+  keeping a knot) and the enchantment's own sign, straight cuts between points of a 7 by 7 grid, 2 to 5 strokes, sampled
+  about every 0.11 of the mark with every corner a sample. `Marks.frame(no)` counts the frame's strokes; `Marks.grid(no)`
+  gives the corners. Numbers 32 to 36 are drawn for the words not built yet. A Word Stone's `word` runs 1 to 36.
+- **Every page has its own leaf**: 36 item textures (`enchantment_page_<path>`: the sign in dark ink on a parchment with a
+  band in the family's colour) chosen by the item model select `awaken:page` (`PageSelect`: the enchantment's id path).
+- **The scribe's desk** (the block's model, `tools/art/specs/enchant.py`): two trestle ends and a stretcher, an apron with
+  a brass pull, the slate (its top at 12 of 16) with the lapis channel, a rail along the back, a brass rest at the
+  writer's left where the book lies (shut when nobody is near, opening as they come), and an inkwell of lapis at their
+  right with the burin standing in it while nobody writes and while its writer still chooses: the hand takes it up as
+  the chosen page comes down (`InscribeScene.burinOut`; held through the choosing, the fist lay over the right-hand
+  pages). While you choose the arm rig still holds that arm, low by your side and out of the view: left to the game, its
+  own hand came back into the corner still holding the piece. The floating book is gone. Shape and outline follow.
+- **The piece is the thing itself** (`InscribingTableRenderer.lay`): drawn with `ItemDisplayContext.NONE`, where our
+  weapons and armour are their own meshes, and laid by the bounds of what is drawn: a flat icon or a weapon on its side
+  across the slate (0.8 of a block along its diagonal), a breastplate or leggings on their back (half a block across), a
+  helm or boots standing (0.42 across and never taller than 0.32). A sculpted armour piece's item says only that it
+  fills a block, so its real width, height and depth are measured from its meshes as the armour's item renderer fits it
+  (`InscribingTableRenderer.shape`; taken as the block, a breastplate floated a third of a block over the slate and the
+  view to its mark went flat). The glyph rides on the piece's top (`InscribeScene.lift`).
+- **Choosing in the world, no menu** (`Desk`; the screen only frees the pointer). The pages of what you know that fits
+  rise out of the book over 10 ticks and hang in a row over the desk's near edge, each the real page, leaning back toward
+  your eyes, at most sixteen. Pointing at one (its place on screen from the camera) lifts it, shows its glyph on the
+  piece, and shows one label over the row on the page's own side of the piece, so it covers neither the row nor the
+  piece: its name and level, its line, "Up to II here, III in your Study", the price as the
+  things themselves (red when you can't pay) and "Click to write it." (the wheel changes the level; a page in memory:
+  "Click: from memory. Shift and click: trace it."). A click takes the page down onto the piece over 8 ticks while the rest
+  sink, and the trace begins. What can't go on lies flat on the slate, dim, and its label says why. What is written
+  shows as glyphs in sockets let into the slate down its left side (behind the piece, a longsword's point lay over the
+  one it had), a framed glyph for each thing written and an empty frame for each it still has room for; a press held
+  on one for 16 ticks closes a ring round it and scrapes it off, its label to its left. A line of key caps at the foot
+  says the rest.
+  The view frames the whole desk while you choose. The room steps back (a soft dark frame at the screen's edges).
+- **The wake** shows the enchantment's name in the Hall's blackletter over a soft light, how it came out ("A clean hand",
+  "Written", "From memory") and, at the foot, the levels that came back and "Its mark is in your memory now." with Space
+  to write another and Esc to step away. No card. It is drawn here, not through `HallMoment`, whose anvil doesn't belong
+  at a desk.
+- **`classicTable`** (`config/awaken-enchant-client.toml`, off): the old book of two pages and the result card, kept for
+  one build.
+- Dev: `/awaken admin enchant page <id>` gives a page as a door does. Tour `tools/autopilot/enchant-polish.txt`. Tests
+  `enchant_glyphs`, `enchant_door`.
+
+### 45.16 The six new words (`Lantern`, `LanternGlowBlock`, `Words`)
+- **`awaken:lantern`** (helmets, I-III, carrying): your helmet lights the dark around you. The Lantern Night Market's
+  Lord carries its page; Looting, which he carried, is sold at the market and found in old books.
+- Where the wearer's head is darker than the word's own light (8, 10, 12), one `awaken:lantern_glow` stands there: a block
+  with nothing to see, touch or hold that only gives light, so friends see by it too. It follows when the wearer has gone
+  two blocks, sits in water as water, and goes out in daylight, by a brighter fire, when the helmet comes off, at death,
+  on leaving, or when left four blocks behind. What the old glow still lends a place doesn't count as light of the
+  world's own (`Lantern.dark`). A glow nobody wears clears itself on its own tick (a crash, a chunk that slept).
+  Asked every fourth tick a wearer.
+- One soft sound as it catches (`block.lantern.place`). **Its frame time on the Mac is not measured yet**: each move
+  rebuilds a chunk section. Test `enchant_lantern`.
+
+**The other five** (`Words`; numbers 32 to 36 in `Inscriptions.ALL`, each with its glyph and page; thirty-six in all).
+Four Lords who carried a vanilla name carry these, and the vanilla four (Unbreaking, Respiration, Blast Protection,
+Projectile Protection) are sold at the market, found in old books and carved on Word Stones (the vaults gain Unbreaking
+and Blast Protection, the ocean lab Respiration, the sky platforms Projectile Protection).
+- **Wayfarer** (`awaken:wayfarer`, boots, I-III, carrying; the Glass Desert's Lord): on a laid road
+  (`RoadHooks.nearestRoad` within a block) or a path under the feet you move 8, 14 or 20% faster (a transient
+  `awaken:enchantment.wayfarer` on movement speed, held through a jump, gone when you land off the road), and what a
+  sprint there cost in hunger is given back (a tenth a block). Motes of its script at your heels while it works. Looked
+  at every fifth tick.
+- **Gather** (`awaken:gather`, weapons and tools, I-II, spoils; the Precursor Lab's Lord): what you break and what you
+  kill with it goes into your pack from within 8 or 12 blocks (`BlockDropsEvent`, `LivingDropsEvent`, after Harvest's
+  extra and the glints); what doesn't fit falls where it would have. Never another player's pack, and never what a Lord
+  or a named beast leaves, which lies there for everyone who fought. A gold thread from where it fell to your hand for
+  the first three, and one soft pickup.
+- **Regrowth** (`awaken:regrowth`, anything that wears, I-III, keeping; the Overgrown Temple's Lord): under open sky by
+  day, or with rain falling on you, each worn or held piece that carries it mends one use every 12, 8 or 5 seconds, a
+  green thread coming down into it. Never on a piece with Mending (the data's `exclusive_set`, and the tick skips one).
+  The boss branch's Lasting touches the same durability: whichever merges second fits to the first.
+- **Remembrance** (`awaken:remembrance`, anything that wears, one level, keeping; the Drowned Archive's Lord): when a
+  Lord, a Warden, a named beast or one of vanilla's great creatures (`EnchantEffects.spared`, never a player) falls to
+  you, the weapon in your hand and each piece you wear that carries the word keep its name: item component
+  `awaken:remembered` (schemaVersion 1, a list of names oldest first, twelve at most, saved and synced). A Lord is named
+  as the game says it ("the Bell Warden"), a named beast with its title. Chat: "Your Beastbound Maul remembers the Bell
+  Warden." (or "Your gear remembers ..." for more than one piece); the tooltip lists them under "It remembers:", three
+  a line. The notch of light on the piece's script line for each name is not built: the light on a piece is packed by
+  the arms and armour renderers, which have no room in it for a count.
+- **Long Arm** (`awaken:long_arm`, chestplates, I-II, carrying): data alone, one or two blocks on
+  `minecraft:block_interaction_range`; entity reach is untouched, so it never strikes further. Found only on the sky
+  platforms' Word Stones (two of that set's six).
+- **Clear Blood** pulses green where you stand once a second while it burns poison, wither or spores off, and while
+  **Insight** is in your hand experience comes in with a gold glint (one in eight ticks, however many orbs).
+- Test `enchant_new_words`. The tour films Gather and Wayfarer.
+
+### 45.17 Seen at work, and on the piece
+- **On our weapons and armour** (both shaders' enchantment block; `tools/art/mesh_render.py` in step): what glows of
+  itself keeps its own colour (it took the enchantment's, which made the piece read as a different one). An inscribed
+  piece shows a shine, a clean band of light crossing it on its metal in about a second every five, with its script
+  showing for a moment in the band's wake and a few pixels catching it, and a small aura, the enchantment's colour held
+  faintly (a tenth) on the faces turned furthest from you, breathing. Between crossings the piece is itself. Nothing
+  here may be bright for long: in the hand nearly every face of a blade is turned away, and the first cut, with the
+  letters and the aura always on, striped the whole blade in the enchantment's colour.
+- **A ward's plate**: its glyph stands between you and the blow, 0.8 of a block across, a soft halo, a body in the
+  Force's colour and a white-hot core, held bright for half of 24 ticks. What it took off flies from the plate as
+  sparks of the Force's colour, four to nine by how much it took.
+- **A bane's brand**: its glyph on the creature where the blow landed, white-hot for 8 ticks, then glowing on it as it
+  moves for two seconds. A creature a bane kills goes out in the bane's red: a ring of it over the ground where it fell,
+  motes lifting off (`EnchantFx.banedOut`).
+- **A page given** flies from where it was (a fallen Lord, a lode's heart) to the one it goes to over 16 ticks, its sign
+  showing, with a page's turn and a soft pickup.
+- **Reading** (a page, an old book, a Word Stone): the glyph lifts in front of the reader, cut by cut in the order it
+  will be traced, holds, then runs down into their hand; the column of light is softer.
+- An extra drop's glint is larger, and the drop rides a gold thread from where it came out (Looting, Fortune,
+  Harvest).
+- **The drifting letters** (a table in a Study, a Word Stone, Wayfarer's motes): one in three is the sign of a word you
+  know, the rest the script's twelve letters (`LetterParticle.pick`; 36 sign sprites after the letters in
+  `particles/enchant_letter.json`, written by the art spec in that order).
+
+### 45.18 Sound (first picks; Euan's ear decides on `tools/art/enchant_listen.py`)
+Every beat is Minecraft's own recordings by name. A stroke seals with one recording (`enchant.seal`, an eye set into an
+End portal frame) two semitones higher each stroke, not a family's chime. The wake is `block.respawn_anchor.set_spawn`
+over a bell's resonance low (`enchant.wake_under`); the piece's chord of §45.14 (each other enchantment's note a third, a
+fifth and an octave up) is gone, since a stack of pitched chimes at the peak is the high tone he asked to be rid of.
+Reading is a page's turn and a respawn anchor's charge. The cut under the hand is grains of the burin by distance drawn
+(every 0.12 of the mark), not a one-shot played as a loop. A ward is a shield's block, a bane a trident going in, an
+extra drop gold armour put on, carrying a bucket filling. None of it has been heard in the game. The listening page
+(`python3 tools/art/enchant_listen.py serve`, http://127.0.0.1:8767) plays ten beats in their moments, today's beside
+three picks each; his marks land in `run-autopilot/enchant-listen/picks.json`.
 
 ## 46. The War Anvil (weapon forging; plan docs/weapon-forge/PLAN.md, page https://claude.ai/artifact/UzcPa1mNX9gL1dsAuTiAJZ; Euan approved all of it 2026-11-02: "go ahead with the weapon forge plan")
 
@@ -22434,6 +22763,15 @@ Euan caught fence posts standing in the air beside a road in the proof, and aske
    way, except a piece marked `mayOverlap` (a spire on its plinth) or `startsWay` (the ring a road starts from). The first full run
    found what no eye had: the pavilion's roof sat four blocks above its columns, every hut's finial stood over a hole in its dome, and
    a lamp cut the pavilion's middle post in two.
+4. **Half a block of air is air** (11 Nov; Euan, in the Cinder Workings: "There are some floating things here... we need to make
+   sure that never happens in any gates"). A slab laid low carries people and other bodies, but its top is lower than its cell's,
+   so a plant, a crystal, a candle or a drift set in the cell above stands half a block up (`Kinds.low`). A stair is not counted:
+   half its top is whole, and Amber Reach's candles down a flight of steps stand on it. The float check reports it as a floater, `Settle` takes it out and counts it, and the rolled dungeons' small
+   things (`GeneratedCrawl.detail`) are set only where the floor is a whole block: until now they were set over the half steps the
+   depth pass had laid, which is what he saw. A cache a pack leaves makes the slab under it whole (`RealmRun.spoils`). The first
+   run of the stricter check over every land found 96 more in three hand-built lands that are never settled (Kingsroot Keep 79,
+   the Vine Seat 13, Saltcomb Flats 4: grass, ferns, drifts and a dead bush on pale slabs); each now takes them out as it draws
+   (`Settle.overSlabs`).
 
 ### 50.7 Realms (the foundation)
 
@@ -22450,7 +22788,11 @@ have a ready Realm is that Realm (`Blueprints.open` and `pick`: one its finder h
 floors as before. A blueprint that does not say it is ready is never rolled, only entered by command, so a land still being
 built cannot turn up in play. Ready on 11 Nov: Amber Reach, The Hour Crypt, The Broodwarren and the seventeen rolled kinds
 (§50.9). Not yet: Kingsroot Keep, The Vine Seat, The Quiet Barrow, Saltcomb Flats, The Wax Galleries (their owners set the
-line when they are done) and the blockouts. The switch's default stays off in code until a full suite has run with it on
+line when they are done) and the blockouts. (Later the same day those five were marked ready at Euan's word, and after
+them the five rolled lands of §50.9 "Rolled lands": the Cinder Crown, Fallwater Vale and the High Caps from E, the Glass Sea
+from D, the Hush Tarn from C. Each had walked clean in the real game, their tests were green under the stricter float rule,
+and the Cinder Crown had been seen under its own red sky, run 43013074163. He had seen the first of them and said "this
+looks really good. Let's keep going in this direction", then "Yes, merge them".) The switch's default stays off in code until a full suite has run with it on
 (the old gates' tests make gates and expect floors); a world turns it on in `config/awaken-synced.toml`. Gates already
 standing keep what they are.
 
@@ -22487,8 +22829,8 @@ in this land, so no block of it can ever flow.
 **The heart of a Realm** (`Land.inHeart`, `Land.change(moment)`, `RealmState.doorShut, heartStage`): the Lord sleeps until someone comes in. The door
 is wax as thick as a wall until the last Warden falls (`heart_open`); it shuts behind whoever's fighting once nobody's lingering at it (`heart_shut`);
 the room answers the fight at two thirds and one third of the Lord's life (`heart_weeps`, `heart_winds`), and stills when it dies (`heart_still`).
-Nobody left inside: the Lord goes, the hall resets, the door opens again. Moments are block edits sent with `Block.UPDATE_CLIENTS`, computed by the
-land so a restart redraws the same thing.
+Nobody left in the fight (`RealmState.fighters`, §68.6 "The fight holds"): the Lord goes, the hall resets, the door opens again, and
+everyone in the gate is told so. Moments are block edits sent with `Block.UPDATE_CLIENTS`, computed by the land so a restart redraws the same thing.
 
 **Life** (`RealmLife`, spawned from a blueprint's `life` and `folk`): kept up by density around each player, once every two seconds, always at least
 28 blocks from anyone. A herd of 3-5 where fewer than 5 are within 64; 6 flies within 40; up to 9 folk round a village once a player is within 130. All
@@ -22803,11 +23145,60 @@ on 11 Nov: The Ossuary Floor, The Slag Pit, The Spore Ring, The Drowned Hall, Th
 The Black Landing.
 
 **The right amount** (the same day: "the big worlds we've built so far... look pretty good, like with the right amount of mobs in
-them"). An open land (anything that is not a crawl) is never empty between its dens: about every twenty seconds, for a player out
-in the land with fewer than three of the gate's monsters within forty-four blocks, more than forty-eight from the way in and clear
-of every fight the land has placed, one more pack of the theme's own stands waiting thirty to forty-four blocks off
-(`RealmPacks.wander`). A land gets four such packs and one more for every rank. They pay as any kill does, on top of the gate's
-own shares: whether that stays is Euan's call.
+them"). An open land (anything that is not a crawl) is never empty between its dens. The first cut of this put one more pack
+thirty to forty-four blocks from a player every twenty seconds (`RealmPacks.wander`); it is gone, replaced the same day by:
+
+**Who lives there** (`RealmCountry`; Euan, 11 Nov, on the first rolled land: "Also think about mob and herd spawns etc to make
+these really fun and immersive"). A land under a sky (not a crawl, not under a roof) is read in cells 56 across, and each cell's
+haunt comes from the seed and the shape of the ground alone (`Land.ground`), so the same land has the same life for everyone, a
+herd is where a herd would stand, and it is all there before anyone arrives. Nine places in a cell are looked at: the most
+level, the highest, and a second level one. A cell holds one of:
+
+- **nothing**: 50 cells in a hundred, so the country has quiet stretches and nothing comes at even steps (Euan, 10 Nov: world
+  content "must feel natural, with quiet stretches");
+- **a herd** (44 in a hundred of the rest): four to seven of the land's herd animal on ground that falls no more than two blocks
+  in three, each kept within eighteen blocks of it;
+- **small creatures** (28): two to four of the land's little ones, on rougher ground;
+- **a pack on the prowl** (14): a den's worth of the theme's monsters, by herd where the theme has herds, walking a beat between
+  the cell's two level places: the spot they keep moves from one to the other every forty seconds by the world's clock
+  (`Dormant.stop`), so the whole pack turns together and each keeps its place in it. They notice and fight as a den's do. You
+  can watch them go, wait them out, or meet them;
+- **a lookout** (9): one of the theme's (its marksman where it has one) on the cell's highest place, which must stand four
+  blocks or more over the level one, and three or four more (one more for every two ranks) waiting on that level ground behind
+  it. A lookout sees twenty-four blocks with a clear line, up or down a slope, where the rest see thirteen. Seen by it, you hear
+  a raid horn and everyone of its own within thirty-eight blocks wakes and comes for you. Put it down unseen and the reserve
+  never knows;
+- **the big one at home** (5): the theme's Warden kind with two of its own (three from B rank), on level ground at least 64
+  blocks from every leg and site. Nobody has to go near it. Put down, it leaves a cache where it lived.
+
+Mostly animals, on purpose: a hostile haunt is an event, not the texture of the land, which the run's own dens already are (the
+first weights, 22, 16 and 8, put 75 hostile haunts in Amber Reach's 336 cells, about eight along one walk; these put about
+four; and the first walk of the Cinder Crown met nine herds of rams for one pack, so half of all cells are empty now and
+herds are a little rarer, the hostile kinds as common as before). Ground under the water is never a haunt: it is the most
+level ground a land has, and Amber Reach's first herd ground was a pool's bed. A cell that asks for something its ground cannot give takes the next gentler thing (a lookout with no perch is a pack on the
+prowl; a herd on a slope is small creatures) or nothing. Every haunt keeps 24 blocks clear of every site and 26 of every leg,
+and 56 of the way in. A land has its share of each hostile kind (packs 4 and one and a half more a rank, lookouts 2 and one more
+every two ranks, one lair, two from B); a cell past the share holds nothing. A haunt fills when someone is within 92 blocks and
+nobody within 50, as a den's pack does at 80, and a hostile one fills once (`RealmState.woken`: `haunt_<n>` when settled,
+`hauntp`, `hauntw`, `hauntl` by kind, `hauntd` once a lair's cache is out). The run comes first: nothing of the country's stands
+while the gate already holds more than twenty-eight monsters (its cap is forty), or where a pack already stands within
+twenty-four blocks. The country's monsters pay as any kill does, on top of the gate's own
+shares: whether that stays is Euan's call.
+
+Herds and small creatures are not monsters of the gate: they are the wide world's own wild animals (`MobHooks.spawnNamed` with
+no gate, at the gate's level), not counted, paying nothing from the pool, gone when nobody is near and back on their ground six
+minutes later if most of a herd is missing and nobody is there to see. Each theme has a kit (`RealmCountry.KITS`): the Ember
+Mines have crag rams, scree marmots and peak kites overhead; the Overgrown Temple crested basilisks, dart frogs and lumen moths;
+the Frost Monastery frost stags and frostfinches; the Glass Desert dune rays and glass scarabs; the Fungal Hollow mossbacks and
+mudskippers; the Hive pollen grazers (and its elite, the Door, as its lookout: a bee on a rock cannot be seen); the Bell Crypt hollow owls; the Drowned Archive bog toads, mudskippers and bogwicks. No
+animal in a kit changes the land (none that plants, grows things or leaves a trail). A blueprint's `life.herds` names its own
+herd animals instead of the kit's, and `life.ambient` what is in its air; both may now name a wild animal as well as a Realm's
+own. Only a peaceful animal comes (`MobHooks.peaceful`: one that is never hostile, or only fights back): a night hunter or a
+named beast named in a sheet gives nothing. The Quiet Barrow's sheet had named the Old Antler as its herd, which gave nothing
+for as long as only a Realm's own creatures could be named and then, on the country's first walk, five of him on the moor; its
+herd is frost stags now. Amber Reach's pollen grazers stand on grounds like every other herd. Under a roof a Realm's herds are still kept round the
+player as before (`RealmLife.herd`). The wide world's named beasts (the Stonehorn and the rest) are not used: each is one of a
+kind out there.
 
 **Every rank.** Each finished blueprint lists every rank from the one its theme opens at up to S, not the two it first had. Packs
 already grow with rank (`RealmPacks.roll`, `den`, `warden`). A run's shape does not change with rank yet.
@@ -22885,6 +23276,245 @@ has its own, written from one table (`tools/realms/kinds_air.py`):
   A beam needs what that shader cannot give: light added to the picture, any faintness, a smooth edge. That is Lens
   marching the shafts it is already sent, or a small renderer of the gates' own with its own pipeline. Until one of
   those exists a well is a lit slot, a pool on the floor and motes turning between them.
+
+**Rolled lands** (`kit/land/GeneratedLand`; brief `docs/gates-as-worlds/finish/07-rolled-lands.md`). Euan, 11 Nov: "I don't
+think we should build all the 88 gates by hand... What about some kind of really well built procedural worlds?... they all
+feel very different and still feel just as immersive... Sometimes maybe you have to walk up to the top of a mountain." A
+rolled land is the open-sky twin of a rolled crawl: one generator rolls a whole outdoor world from the gate's seed, a
+**landform** gives it its big shape and lays the run through it, and a **skin** (one class in `realms/land`, as a crawl's
+skin is) says what it is made of. Built so far, none yet `ready`: The Ascent in the Ember Mines' country (The Cinder
+Crown, `awaken:cinder_crown`, program `awaken:ember_country`, every rank from E), The Valley in the Overgrown Temple's
+(Fallwater Vale, `awaken:fallwater_vale`, `awaken:temple_country`, from E), The Basin in the Frost Monastery's (The Hush
+Tarn, `awaken:hush_tarn`, `awaken:frost_country`, from C), The Causeway in the Glass Desert's (The Glass Sea,
+`awaken:glass_sea`, `awaken:glass_country`, from D), The Isles in the Fungal Hollow's (The High Caps,
+`awaken:high_caps`, `awaken:fungal_country`, from E). `land.params.landform` names the landform by its place in
+`Landform.Kind` (0 Ascent, 1 Valley, 2 Basin, 3 Causeway, 4 Isles).
+
+- **Each land has its own sky and atmosphere** (Euan, 11 Nov: "Each should have its own sky and atmosphere. That
+  matches."). No two lands share an hour, a light colour, a grade or an air. A land's biome chooses the hour
+  (`sun_angle`), the light (`sky_light_color`, `sky_light_factor`), the sky overhead (`sky_color`) and the far colour
+  (`fog_color`), chosen brighter than they should look because the hour darkens them, its particles and its sound; its
+  Lens look chooses the grade and what the far colour is tinted with (`hazeTint`, `hazeTintMix`); its blueprint lists
+  what is in the air. Mist is laid on water or on the ground it belongs to, never at eye height along the way: a land's
+  great thing has to be seen from the way in, and a layer you look along for three hundred blocks hides it (Fallwater
+  Vale's first walk). A land grows with rank only so far that the great thing stays in sight from the way in.
+- **How far the great thing may stand.** Under Lens's Air (§22) the air itself takes a thing away with distance: by day
+  about half of it at 200 blocks and two thirds at 300, more at dusk, dawn and night, and more again toward the edge of
+  the render distance where no far renderer carries the land on (`lens_composite.glsl`, the Air's `near` and far terms).
+  So a rolled land keeps its great thing within about 230 blocks of the way in at the lowest rank it opens at, makes it
+  tall, and gives it something that carries: a dark shape against the sky, or a light. The Basin, the Causeway and the
+  Isles are sized to this. The Ascent's mountain stands at 300 and reads by its size; the Valley's temple at 280 does
+  not, and wants either a shorter valley or a longer reach for the Air in a Realm.
+
+- **The ground is shaped to the way.** A landform lays its run as *stations*: a point, the height of your feet there, a
+  radius the ground is level over, and a width over which the land comes back to its own shape (`GeneratedLand.station`).
+  A column takes the height of the station it is on (where two overlap, the one whose middle is nearer) or is blended
+  between the nearest station and the natural ground. So a path is always cut into a slope or carried out from it, a
+  den's place is always level, a stair's treads are exact, and every leg can be walked to whatever the seed did to the
+  land behind it. A column's height is a function of where it is and the seed (`ground`), so no chunk asks another what
+  it drew. Kinds of station: `TRAIL` (a worn path, 2.6 each side), `PAD` (a den's place, a hairpin's terrace, a ledge),
+  `STAIR` (one tread, with the way it climbs), `SPUR` (a narrow track), `FLOOR` (a floor a piece lays itself: the way
+  in, a court, the Lord's place). A curved way never climbs more than 0.42 a block and a straight one never more than
+  one, which is what keeps two neighbouring columns of it within a step of each other.
+- **Half blocks everywhere.** Heights are kept in half blocks: a slab of the ground's own stone finishes an odd one.
+  Loose ground (a skin's `soil`, where it has a `drift`) lies in layers an eighth of a block deep off the ways, so dunes
+  are smooth; on a way it only ever makes the half step. Along a path's edges and here and there on a level place the
+  ground stands half a block up; the line you walk stays as laid. Rubble (a stair with its back to the rock, or a slab)
+  lies at the foot of four walls in ten.
+- **Rock that stands steep stands in columns** (`Landform.columns`): in such places a column's height is that of the
+  middle of its cell of a hex lattice (3.4 across the flats), each cell a little higher or lower than the next, the
+  joints a block lower. A cliff is never one plane. What can be seen from the side is cut rock in courses with seams
+  along lines of noise (`face`); a skin's `cap` chooses the top block from what the column is (`Spot`: the way it is on,
+  how its neighbours stand, whether it burns, whether rock stands a few blocks upwind of it, a slow noise for beds of
+  one thing in another and a slower one for whole drifts). A column's facts are worked out once, by the pass that lays
+  the ground, and read back by the pass that finishes it.
+- **What burns** (`Landform.crust`, `heat`; a skin's `crust` and `fall`): channels of it run down the land, cut a block
+  into the ground between banks, and pour over every ledge in their way (the fall stands in the lower column against
+  the face of the higher). None crosses a way.
+- **The run is made as the land is laid out**, as a crawl's is: every den, ambush, Warden, stretch of movement, breather
+  and hidden place is a leg with its site, and the same `RouteCheck` proves it. Dens' companies come from the skin
+  (`herd`, `ambushPack`, `wardenPack`), gone round so no two neighbours match; the wandering packs of "The right
+  amount" fill the country between. A skin stands its own things once the run is laid (`furnish`, `denPlace`, `scatter`).
+- **The Lord's door** (`heartDoor`) is a grate across the way in to the Lord's place, drawn as part of the land, opened
+  by `heart_open` and shut again by `heart_shut` as in any Realm. A skin says what each cell of it is (`door`; the plain
+  answer is its `bars`): a thicket of leaf with roots through it in the temple's country, a wall of ice in the frost's.
+- **Water that is ice.** Where a skin's `water` is a body, the lake is ground: `ground` answers the ice's top, the kit's
+  pieces stand on it, the skin's `scatter` is asked for every column of it (told `wet`), and the air's still water is
+  left out.
+- **What a country built** (`Landform.built`, `Spot.built`): a landform may raise part of the ground as building (a
+  temple's tiers); a skin dresses those columns as masonry in `cap` and `face`, and grows nothing on them. And where a
+  landform wants a hall at its heart it asks the skin (`hall`): the plain answer is a roofless ruin of the land's own
+  rock (`LandPieces.Hall`), a skin with builders of its own answers with their work.
+- **The kit's pieces** (`LandPieces`, each drawn in the skin's `Dress`): the way in (a round floor with a lit heart,
+  the arch home three deep, two broken pillars to look between), a cache, a Waystone, a ring of standing stones open
+  toward the way, a lamp on a post, a broken bridge (deck from lip to lip with spans gone; a free span stands on a
+  trestle down to the ground), a gate (two pillars, a beam, a lantern on a chain), a court's paving, and the first of
+  the great builders: a crown of horns round a crater.
+
+**The Ascent** (`kit/land/Ascent`). One mountain standing in a sea, the way in at the tip of a spit that runs ninety
+blocks out from its south shore, so the whole mountain, crown and all, stands in the first look (from the shore itself
+the crown ran off the top of the view). From the spit: a beach, foothills that roll (fifteen blocks up however far they run), a
+flank at about three in five, then a crag at seven in four up to a crest, and inside the crest a crater whose floor is
+the Lord's (radius 24.5, level, open to the sky, three tiers of two blocks stepping up to the crest). Radial ridges and
+gullies, benches on the flank, crags that stand up as stacks of columns, sea stacks in clusters off the shore; all of
+it gentler within 24 blocks of a way. Four channels run down the shoulders and the back; a fifth pours straight down
+the face beside the stair, from the crest to a pool at the knee, so that something on the mountain is seen burning
+from the way in; and a vent (a knoll of columns with a fall down the side that faces the way in) stands beside the
+approach a little past the first den, wherever there is room for it. The run at E rank, 14 legs: the way in; two dens in the foothills, the first
+about fifty blocks on; a den at the foot of the flank; then the flank in three arms between two hairpin terraces (each an ambush), with a den on a
+terrace either side of the **rift** on the long arm, crossed dead level on a broken bridge (gaps of three cells and two;
+a fall anywhere in the rift is caught); a goat track from the foot of the flank up to the first of those terraces, with
+a ledge and a cache half way (the way round); a hidden place sunk into the hill beyond the far hairpin, behind two
+standing stones; a court at the knee of the mountain where the Warden stands, with a gate where the way comes in and a
+Waystone; a stair of five flights of fourteen treads cut along the crag's face, turning on a landing at each end, a
+balcony with a cache off the middle one; a notch through the crest, the Lord's door across it; the crater. About 120
+blocks of climb and 500 of way. A seed turns east to west, bends the way in, moves the dens and re-rolls every surface.
+A higher rank widens the island by 64 a rank (246 to the water at E) and so lengthens the way in, with a den every
+sixty blocks of it; the mountain itself is the same height. Wardens do not yet grow with rank.
+
+**The Ember Mines' country** (`land/EmberCountry`). No new blocks. The ground is dark and quiet: slag underfoot
+everywhere, black `ember_basalt` wherever the land stands steep (in columns, with beds of slag and smooth basalt and
+cracked basalt and ember ore along the seams), nothing mixed block by block. The pale ash (`ember_ash`, lying in
+`ember_ash_drift`) is what the wind left: on ledges and column tops, banked at the foot of walls, in the lee of rock,
+in a few broad drifts; and trodden along the way, which so shows as one pale line through the dark (the first walk had
+ash as the base and read as a tan patchwork: the gates session's look notes, 11 Nov). `magma_crust` in the channels
+and the rift with `ember_moltenfall` over the ledges; the sea is plain water. What grows is what is left: burnt trees (`Snag`, mine timber, in stands with bare
+ash between), stumps, ember crystals crowding whatever still burns, cinders. What was left behind: the miners' lamps
+every thirteen to seventeen blocks up the way and at every landing of the stair, the bridge, a ruined camp at every
+other den and a ring of standing stones at the rest. Five companies of the theme's own, two ambushes, the Ember Tyrant
+in the crater. Its own biome (`awaken:realm/cinder_crown`) and Lens look. Its hour is the last light: the sun at 79
+degrees, because under Lens's Air (§22, on by default in Cinematic and Ultra wherever the sky is the overworld's) a
+Realm's `sky_color`, `fog_color` and its look's haze are never seen, and the one thing a biome still chooses is where
+the sun stands; 79 puts the Air in its dusk band (gold toward the sun, violet away, long shadows). The biome's brown
+sky and fog from 48 to 560 show only with the Air off. Client air: embers, wind, smoke, dust (the `ash` kind's flakes
+draw too large near the eye; the biome's own ash particles fall instead, mostly the pale kind: a dark one near the eye
+reads as a black block against the sky). Rule: none yet. Its sky is red: `sky_color` #c2482e, `fog_color` #e87c48, a
+low red light (#ffb48c), a grade that leans red (warmth 0.6, red highlights over brown-red shadows) and a red-orange
+haze tint at one half; Lens shows a land's own sky and far colour from the Steady Light branch on, and until that is
+in the build the Air's dusk is violet and pink (the walks of 11 Nov).
+
+**The Valley** (`kit/land/Valley`). A long valley between walls 58 blocks high, a river down it, and at its head the
+country's temple with the river's fall coming down the wall behind it. The way in is a terrace 22 blocks up the south
+wall, so the first look is down the whole length; a stair of 22 treads goes down from it. The floor rolls, swings from
+side to side and widens round the temple; two spurs of the hills lie across the banks; crags stand up out of the
+floor. The temple is ground, not a piece: five tiers of six blocks, each five back from the one under it, a stair of
+thirty treads straight up its south face to a top 24.5 in radius, which is the Lord's. The wall at the head stands
+sheer over its pool (everywhere else a bank comes down to the water at eight in five), and the fall is thirteen wide
+and the wall's whole height. The run at E rank, 10 legs: the way in; a den by the river; a den in a hollow of the west
+wall, off the way, with a track in from below and out above (the way round); an ambush on a rise; the river's gorge
+crossed dead level on a broken bridge; a den on the east bank; a hidden pocket in the east wall, with a lamp; a second
+ambush; the temple's forecourt, where the Warden stands, behind a gate; the stair, the Lord's door across its head,
+the top. A higher rank lengthens the valley by 12 a rank (400 long at E): at 44 a rank the temple was out of sight
+from the way in at any rank above D.
+
+**The Overgrown Temple's country** (`land/TempleCountry`). No new blocks: the Fane family and the temple's own plants.
+One green: moss underfoot lying in layers, rooted earth in patches under it, cliffs of pale stone in courses with a
+dark course every ninth row and moss on every ledge, an old flagged road half taken back. Great trees in stands with
+clearings between (lower near the way in, so the valley is seen over them), a trunk on buttress roots, a crown in two
+or three masses lit on top and dark underneath, vines from its rim; ferns in clumps, moss creeping over stone, fallen
+leaves. Ruined pillars round the dens, an idol between braziers at every other one, braziers along the road. What a
+country built (the temple's tiers) is the same stone dressed, a dark plinth and a band of brick to every tier. The
+Lord's door is a thicket. Fallwater Vale's hour is the morning after rain: the sun at 328, a clear yellow-green
+light (#f2ffd6), `sky_color` #8fc4b0, `fog_color` #b4d2a2, a grade of teal shade under yellow-green leaf light, mist
+on the river only, fireflies, moths, dust and spores in the air, frogs. Lord: the Root Saint.
+
+**The Basin** (`kit/land/Basin`). A wide bowl among peaks, its sides in three benches stepping down twelve blocks at
+a time to a lake 76 in radius, and on an island in the lake the country's hall. The way in stands on a prow at the
+very lip of the top bench (from a bench's middle its own edge hides the lake). The way goes down bench by bench and
+turns back on itself at the foot of each ramp, so the island is always in front: along the top bench, a ramp cut in
+the cliff, a hairpin; back along the second and over a crevasse that splits the bench from the cliff behind it to its
+edge, on a broken bridge; a ramp, a hairpin; back along the third; a last ramp to the shore, where the Warden holds a
+court behind a gate; then straight out across the lake to the island, whose round floor (radius 23.5) is the Lord's,
+with rock raised out of the lake behind it for the hall to stand on. A steep track cuts the first corner by a ledge
+(the way round), and a pocket is cut into the cliff behind the third bench. 11 legs. A bench is 20 wide plus 5 a
+rank, so the way in is 159 blocks from the island's middle at E, 189 at C (the lowest the frost opens at) and 234 at S.
+
+**The Frost Monastery's country** (`land/FrostCountry`). No new blocks. One white: snow over everything in layers,
+grey only where it is too steep to lie, along the middle of the road and on what was built. Every cliff is one of the
+monks' old walls: cut stone, a dark course every eighth row, ice hanging down it in falls two blocks wide, snow
+clinging in patches; a crevasse's walls are ice lit from inside. Water is ice: the lake is swept bare in lanes, snow
+lying in swells between, here and there a light under it, its bed dark so it looks deep; the road crosses it flush,
+butter lamps on red posts either side all the way. Masts of prayer flags stand off the road (two red poles, the strings
+of flags between them one over another), a chorten at every other den and a few on the benches, ice crystals where the
+wind leaves them. Nothing hangs: the checks' table of kinds counts the theme's hanging blocks (flags, icicles) as things
+that stand, so a flag rests on a wall's top or on the string under it, and there are no icicles under the eaves yet. The Lord's door is a wall of ice. Its hall
+(`Dzong`) is the one thing still whole: the Lord's court in front, a round floor inside a low white wall with twelve
+piers, a lamp on each and flags strung from pier to pier, a gate under a red beam; behind it the keep in three tiers, 73, 53 and 31
+blocks wide, each set back from the one under it, every wall leaning in a block in ten, a foot of the old stone, white
+above with windows two rows high, a red storey under each eave with a lamp in most of its windows, a dark eave a block
+proud all round and snow on the terrace over it, a turret on each front corner of the first
+terrace, a dark roof stepping in to a ridge 90 blocks over the court, and a lamp on the ridge. The Hush Tarn's hour
+is the first light of a clear winter morning: the sun at 292, a cold white light (#eef6ff), `sky_color` #5e9fe6,
+`fog_color` #dcecff, a cold grade (warmth -0.22, deep blue shadows under faintly gold highlights), block light a warm
+gold so the lamps are the only warm thing in it, a knee-deep breath of mist on the ice, fine snow in the air, wind.
+Lord: the Abbot of Frost.
+
+**The Causeway** (`kit/land/Causeway`). A flat sea to every horizon, one raised road across it, and on the skyline at
+the road's end the country's great thing on its rock. The way in is on a headland ten blocks over the sea, at its lip.
+The road leaves it by a ramp and runs out on a dyke three blocks over the surface (its banks come down in three
+blocks, so it stands as a wall out of the sea), swings west past an island, crosses back east over a breach on what
+is left of a bridge, swings past a second island and comes in from the south to a round bastion at the foot of the
+rock, where the Warden holds the gate; a stair of twelve treads goes up the rock's face to the Lord's floor (radius
+23.5), with rock behind it for the great thing. The dens are where the brief asks: a round widening of the road, then
+the two islands beside it, each a table of rock 56 across joined to the road by a bar; the first has a bar at each
+end (the way round), and from the second a bar at the sea's own level, which barely shows, runs on to a small island
+kept back. Eleven dunes and tables stand in the sea as country, none within 24 blocks of the road. 10 legs. The Lord's
+floor is 230 blocks from the way in at D, the lowest rank the desert opens at, and 10 more a rank; the road is about
+330 long, its bends placed by share of its length. A corner of the road is rounded by cutting it three times, with
+points laid in line either side of anything that has to be straight.
+
+**The Glass Desert's country** (`land/GlassCountry`). No new blocks. Its water is glass (`desert_glass`, amber over a
+bed of dark brick): the sea is somewhere to walk, with sand blown back over a third of it in long swells, a light
+under it here and there, splinters, and great shards of it standing in clumps (`Shard`, up to 24 tall, leaning, a
+tenth of their blocks lit). Whatever stands out of it is pale sand in dunes, rippled where it lies flat, dry grass in
+clumps; or sandstone in tables, a course of brick every seventh row, a streak of glass where the melting ran down.
+The road is paved in sandstone with a line of blue tile down its middle, and pillars stand beside it every ten blocks
+out of the glass, their heads all five over the road, one in four broken, one in three carrying a light. The Lord's
+door is a sheet of glass. Its great thing is the tower that did the melting, the Burning Glass (`Tower`): the Lord's
+floor a sunburst of twenty-four rays of tile and sandstone inside a wall that is glass between twelve pillars, so the
+sea is seen through it, two pylons at the gate; behind it the tower, square, 32 across at its foot and 14 at its head
+80 up, sandstone on a foot of brick, two rows of tile every sixteen, a seam of lit glass up the middle of every face;
+and on its head, in a ring of stone 44 across, a disc of lit glass 36 across facing the way in, its middle 104 over
+the floor, a shaft of its light coming down on the floor. The Glass Sea's hour is white noon: the sun at 14, a
+white-gold light (#fff6e0), `sky_color` #9ad2ff, `fog_color` #fff0cc, a hot grade (warmth 0.22, short brown shadows,
+strong bloom, heat shimmer 0.7), sand, dust and wind in the air. Lord: the Glass Serpent.
+
+**The Isles** (`kit/land/Isles`). Tables standing out of a sea, each on a stalk about a third as wide as itself, each
+higher than the one before (eight or nine blocks), spans from one to the next, and the last and highest (twelve more,
+100 across) the country's great thing. They stand round an arc that bulges to one side, most of a circle and more of
+it the more of them there are, so from the way in on the first you look straight across open water at the last, with
+the others stepping up beside the view, and the last table's middle is 220 blocks from the way in at E and 280 at S. Three tables stand between the
+first and the last at E and D, four at C and B, five at A and S, a den on each. The way crosses each table by its
+middle and the span after it; the middle table is split from edge to edge and crossed on what is left of a bridge (the
+kit's bridge runs either way now), an ambush on its near half and its den on the far one; a small table hangs off the
+way between the one before it and its near half (the way round); on the last table an ambush where the last span
+comes in, a court where the Warden stands, the Lord's floor (radius 23.5) in its middle, and a span down from its far
+side to a small table kept back. 12 legs at E. Tables and spans are ground like any other, laid as heights, so their
+tops are where `ground` says; one piece (`Isles.Under`) then takes away everything under them but the stalks and puts
+the sea back: a column keeps its top three blocks (a table thickens to seven at its stalk), unless a neighbour stands
+so far over it that the two would not touch, when it goes altogether (the one-block skirt a way's edge leaves beside
+a span: there `ground` still answers the skirt's height). A way over the sea is laid with a blend of 0.6, so a span
+stands sheer. The skin says what a stalk's side, a table's underside and a span's underside are made of (`stalk`).
+
+**The Fungal Hollow's country** (`land/FungalCountry`). No new blocks. Everything that stands is a glowcap: a table is
+a cap, purple flesh with glowing moss over most of it in layers, bare flesh at its shoulder and in patches, loam
+wherever anything walks; its stalk a pale stem; its whole underside gills, which light the sea beneath; a span is a
+strand of the same stem; where a cap is torn the flesh glows. Glowcaps the size of trees stand on the caps in stands
+with clearings between (`Glowcap`, 4 to 16 tall), lamps of the same stuff along the way, sprouts in clumps on the
+moss and threads over the bare flesh, and threads of light fall off the rims into the sea (`Glowfall`, each standing
+on a stone at the water: seventy of them). Its great thing is what stands on the last cap (`Grove`): the Lord's floor
+of moss and loam with a veined stone at its heart, inside a fence of stems capped with flesh, eleven glowcaps standing
+in the fence with their gills over the floor and two taller ones at the gate; and behind it, out of the cap's back,
+one glowcap far taller than the rest, its cap 44 across and its top 54 over the floor, gills under all of it. The
+High Caps' hour is night as near as the Air allows it (its haze is thickest when the sun is low or gone, so the sun
+stands at 308 and plays the moon): sky light at three tenths and cyan (#9ae8f4), `sky_color`
+#2c5a78, `fog_color` #3a8a90, block light cyan, a teal grade with strong bloom, mist on the sea lit from under the
+caps, spores and stars in the air (no particles of the biome's own: vanilla's warped spore is a dark square, and
+against a bright sky a dark square near the eye reads as a block), the warped forest's sounds. Lord: the Mother of Spores.
+
+Tests, for each land at the lowest rank it opens at (`kit/land/LandTests`): `realm_<land>_walks_to_everything` (seeds 1
+and 2: the walk, the route check, the door) and `realm_<land>_nothing_floats`, for `cinder_crown`, `fallwater_vale`,
+`hush_tarn`, `glass_sea` and `high_caps`. Tours `tools/autopilot/realm-<land>.txt`, each ending with the first look again with the Air off.
 
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 
@@ -23939,7 +24569,7 @@ serves. A later Proving still hands down any rung not yet held, and each rung ha
   is a Tasks row with its place until run, and is opened again if lost.
 - *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is §17.9: the rank first, then the rope up
   its rings (the platform's visit, no stopwatch on the deck, since 11 Nov 2026), each refusal in its own words. The
-  wings wait in a glass case round the core, and the gift opens it and sends them to the player's back (§17.9). After the gift: a line of
+  wings hang in a glass case at the core, and the gift opens it and sends them to the player's back (§17.9). After the gift: a line of
   light off the pier along the windway (§17.12), or out toward open ground where no lane starts there; for 60 s inside the
   platform's ward a fall is a soft landing.
 - *The open sky (A).* As §47.8. The edge's moment is the Lesson's key strip; wings never earned are given two seconds
@@ -24477,7 +25107,7 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   furnace's lock). No breath in a station's own view: you are aiming.
 - **When the place is taken:** view 1 (0.66 back, 0.90 up), then view 2 (0.55, 0.72), each tried with the furnace's eight
   rays from your eyes to the place; with none clear the view is framed from your own eyes as §24 describes (the old
-  behaviour, 12 ticks in and 10 out, with its breath). A block set into the way while you work gives the view back to
+  behaviour, 12 ticks in and 10 out; it holds still while you work, §65.2). A block set into the way while you work gives the view back to
   your eyes at once and the screen stays open.
 - **Third person:** a scene is seen from the station's view whatever view you play in. Coming from third person the view
   glides from where your camera was, the game is put in first person for the scene (as the Inscribing Table does), and
@@ -24491,35 +25121,74 @@ What the audit found (tours `tools/autopilot/interact-audit-stations.txt`, `-van
   degrees from past the near edge; at seven window sizes, with and without side panels, in all three views the view is
   square to the table, every slot is inside the room and a click on its middle picks it; the glide's lengths).
 
-### 65.2 The carrying hand (`anims.client.station.StationHands`, `anims.client.WorldBody`, `core.api.FirstPerson.Rig`)
-- **While a stack is on your pointer and the pointer is over the station** (above the inventory strip, and its line of
-  sight meets the table's level within 0.35 of the table's sides and far edge), your main hand holds it. The stack is
-  drawn in the world exactly where the pointer's line meets the air `HOVER` 0.07 over the top: flat as it will lie, its
-  far edge tipped 18 degrees up toward you, rolling up to 14 degrees with the pointer's speed. It has no lag, so what
-  you click is what it is over (it is drawn after the hands are posed, from the same frame's pointer). The screen draws
-  no icon on the pointer then; anywhere else it is vanilla's icon.
-- **The arm** is one straight vanilla arm (`Rig.worldArms`): the fist's middle sits `HAND_BACK` 0.11 short of the stack
-  and the arm lies back toward a point 0.45 past the table's near edge and 0.30 over its top, 0.10 to the hand's own
-  side (`StationView.carry`), kept inside what the strip covers (`acrossMost`). It is drawn at the table's scale: a fist
-  0.8 of a grid square across (`handDistance`: the hand pass's distance that gives that size), and up to 1.8 times its
-  model's length (`Rig.armStretch`, a scale along the limb about its joint) so its far end passes under the strip, which
-  the game draws over it. No elbow, no second piece, no sleeve end in view.
-- **Timing:** the hand comes in under a picked-up stack and goes back out on a 45 ms ease; set down, it dips 0.045 and
-  comes back over 150 ms; picked up, the stack rises 0.03 over 140 ms. Empty, the main hand waits just off the near edge
-  under the pointer's column only once it carries; with nothing in it, it rests off the near corner on its own side
-  (0.36 across, clear of the strip's glass), as the other hand always does. A slot you change without carrying (a shift-click, a
-  number key) gets one 190 ms pass from the nearer hand. Every move is an ease toward a target from wherever the hand is
-  (50 ms): a new target never sends it back to rest first.
-- **One side decides.** The pointer and your own clicks drive all of it (`StationClient.tick` reads slot changes within
-  6 ticks of your click only to start a dip, a rise or a pass). A reply from the server changes what lies on a square,
-  as on any container screen, and never a hand. Clocks are whole nanoseconds and differences of them.
+### 65.2 The hands at a station (`anims.client.station.StationHands`, `anims.station.StationView`, `anims.client.WorldBody`, `core.api.FirstPerson.Rig`)
+Rewritten after Euan played it on 11 Nov ("trembling hands, and you can see the edge of them ... the behind of them
+doesn't really look natural"). What that build did wrong is said with each rule.
+- **A hand is in the view only while it works.** Your main hand while a stack is on your pointer and the pointer is
+  over the station (above the inventory strip, its line of sight meeting the table's level within 0.35 of the table's
+  sides and far edge, or the upright plane before a furnace or a stand); either hand for the one 190 ms pass a change
+  without carrying gets (a shift-click, a number key, a blow as work is taken). Resting, **there is no hand in the
+  view**: the game's own hand and what it holds step aside for the whole scene (`Rig.noHands`). The old build rested
+  both hands off the near corners: from a station's own view, and above all in the narrow room beside JEI's panels, a
+  resting arm was its cut end and its back, two blocks at the foot of the frame.
+- **The stack** is drawn in the world exactly where the pointer's line meets the air `HOVER` 0.07 over the top: flat as
+  it will lie, its far edge tipped 18 degrees up toward you, **steady**. It has no lag (drawn after the hands are
+  posed, from the same frame's pointer), and the world draws it exactly when the screen stops drawing the pointer's
+  icon (`StationHands.carrying`, one answer for both: it was drawn twice for two frames on the way in). It rolled up
+  to 14 degrees with the pointer's speed: gone.
+- **The arm is your own arm**: one straight vanilla arm (`Rig.worldArms`) at its own size and its own proportions (a
+  fist a quarter of a block across, the arm three times that), **never drawn longer than it is**. Two builds drew a
+  small fist (0.8 of a grid square) on an arm up to 1.8 times its length so it would reach the strip; played, the arms
+  were "way too stretched and don't look like the actual arms anymore" (Euan, 11 Nov). A real fist is 4 texels and a
+  grid square is 3 apart, so the hand is a square and a third across: what lies under it shows through (below).
+- **Its pose is a pure function of where the stack is held, the view and the layout** (`StationView.armTo`): no
+  clock, no speed, nothing remembered. The fist's middle sits `HAND_BACK` 0.18 short of the stack (the stack is at its
+  fingers). The arm takes the shortest line from the stack to the line of sight through a point under the strip
+  (`ROOT_DROP` 24 px under its top, `ROOT_INSET` 34 px inside its sides, on the hand's own side of the stack): so on
+  screen it runs from the fist to under the strip, and in the world it lies back toward you across the table. At his
+  window (427 by 240 GUI, with or without JEI's panels) a table's farthest reach needs 0.98 of the arm's own length:
+  it is drawn at its own size. Where the strip is farther than that (a wide workstation view in the narrow room: the
+  cartography table at his window needs 1.28) the whole arm is drawn larger, up to 1.3
+  (`StationView.armGrow`, one number for the scene); where even that is too short the scene has **no arm** (a cut end
+  in the view is worse than no hand): the brewing stand at his GUI size, whose view opens to the widest there. Each
+  arm is drawn at its own distance in the hand pass (`Rig.armDistance`). The scene's strip is drawn nearly solid
+  (0.95), so what lies under it is not seen through it. No elbow, no second piece, no cut end in view.
+  **What trembled in the arm itself:** its line leaned by up to 0.08 against the pointer's speed, a speed taken a
+  frame at a time from a real mouse (noise, times a lever of half an arm); its length was searched in twentieths, so
+  it grew and shrank in steps as the pointer moved; and the hand pass had vanilla's sway in it (below). The largest
+  cause was the view itself (below).
+- **In and out:** the hand comes in along its own line from under the strip and goes back the same way (a 45 ms ease
+  for a stack, a sine for a pass); set down, hand and stack dip 0.045 and come back over 150 ms; picked up, the stack
+  rises 0.03 over 140 ms. Nothing fades and nothing rests. When the screen shuts the hands are gone with it.
+- **Where the world has them** (`WorldBody.drawArms`, for every world arm: a station's, a touch's, a ledge's): world
+  offsets go to view space by the matrix the world is drawn with this frame (`cameraRenderState.viewRotationMatrix`),
+  and **vanilla's hand sway is undone** for them. The hand pass's stack arrives already turned by a tenth of how far
+  your look runs ahead of your body (`viewXRot - xBob`, `viewYRot - yBob`); a hand that is somewhere in the world slid
+  off its place every time you turned. The view's bob stays: the world is drawn with it too.
+- **The view holds still** (`FirstPerson.holdView`, `viewHeld`; `body.client.feel.CameraOverhaulPause`). **The largest
+  cause of the trembling**, found by the pose log on CI and then in his own pack: Camera Overhaul sways the view idly
+  whenever you stand still (`cameraSwayIntensity`), and standing still is all a scene is. With the eye fixed, the
+  look wandered by about a third of a degree, so the table slid under a stack and a hand that were pinned to the
+  pointer (and under the pointer itself: the square it was over could change). A station scene now holds the view
+  from the tick it opens until the view is home; the Feel Director pauses Camera Overhaul for any held view and for
+  any scene's own camera (`FirstPerson.cameraOwned`), through the mod's own public setting, as it already did in
+  flight, and puts it back after.
+- **One side decides, on whole clocks.** The pointer and your own clicks drive all of it (`StationClient.tick` reads
+  slot changes within 6 ticks of your click only to start a dip, a rise or a pass). A reply from the server changes
+  what lies on a square and never a hand. The hands' eases are differences of whole nanoseconds; the view's glide is
+  whole ticks since it began plus the tick's part (it was a float of the running tick count). The view itself holds
+  still while you work, from a station's own place or from your own eyes (it breathed a quarter of a degree from your
+  eyes).
 - **Nothing hidden:** a square whose middle is under the sleeve (`StationView.sleeveOver`) shows its stack on a small
-  plate of glass where it lies (two thirds of the square's width), drawn by the screen over the arm. Only squares nearer to you than the one the stack is
-  over can be under it.
-- Tests: `stations_hand_never_hides` (every slot, seven window sizes, with and without side panels, either main hand:
-  the stretch is within 1 to 1.8, the arm's far end is under the strip or off the frame, the arm never lies over the
-  result, only nearer squares are under the sleeve, never more than two). The hands' motion itself is client code and
-  is checked on film.
+  plate of glass where it lies (two thirds of the square's width), drawn by the screen over the arm.
+- Tests: `stations_hand_never_hides` (every scene, every slot, eight window sizes, with and without side panels, either
+  hand: the arm is never longer than it is and its far end is under the strip or off the frame; at his window, 427 by
+  240, every bench and the furnace have their arm and a table's is at its own size; on a table the arm never lies
+  over the result and no square farther than the stack is under the sleeve) and `stations_hand_steady` (the same held
+  place gives the same arm whatever was asked before; as the held place crosses a station in 400 steps the arm keeps
+  its length while its line and its far end on screen change a little at every step, never by a jump). On film: the pilot's `handslog on` writes a line a frame of where each arm
+  was drawn (`anims.client.HandsLog`); `tools/autopilot/hands-smooth.txt` holds a stack still in each scene and sweeps
+  the pointer across one.
 
 ### 65.3 Things with weight (`StationClient.onSubmit`, `StationScreen.extractStation`)
 - A stack **lies as a small pile**: 1 item, 2 for a count of 2 to 5, 3 up to 32, 4 above (`StationClient.pile`), each a
@@ -24617,14 +25286,16 @@ choice and a jukebox keep vanilla's own sounds. No listening page yet: these are
 
 ### 65.7 Boxes (`anims.client.Touches`, `anims.client.LivingSlots`, `anims.station.SlotMoves`)
 The glass screen stays (§56): nothing is faster for twenty-seven slots. What is round it changes.
-- **The lid is in your hands.** A chest, ender chest, shulker box or cache: both hands under the lid's front edge, and
-  the edge they hold is the lid's own as it stands each tick (`Touches.lid`: the lid turns about a hinge a texel in
-  from the back and nine up, by vanilla's eased `getOpenNess`; a shulker's rim rises with `getProgress`), so they go up
-  with it and let go as it stands (`LID`, 13 ticks). A barrel is one hand drawing the hatch in its face (`HATCH`).
-- **Nothing waits.** A box's screen opens at once: it was held four ticks for the hands (`LID_WAIT`, gone). The glass
-  fades in over the lid moment as before (§56).
-- **Let down again.** When that screen shuts the hands take the lid's raised edge and bring it down with it (`LID_DOWN`,
-  11 ticks; both hands free, as for the lift).
+- **The lid, by one hand.** A chest, ender chest, shulker box or cache: one free hand to the lid's lip where it lies
+  shut (`Touches.lid`, a fixed place: seven texels out from a chest's middle and nine up), a lift of 0.09, and away:
+  seven ticks in all (`LID`), and the lid goes on up by itself. A barrel is one hand drawing the hatch in its face
+  (`HATCH`, seven ticks). **As played on 11 Nov** it was both hands riding the lid's own edge to the top of its swing
+  for thirteen ticks over a screen that had already opened ("the hands way too high and for way too long"); and the
+  edge they rode was read with the partial tick of an earlier frame, so it moved unevenly between ticks (the tremble
+  at a chest).
+- **Nothing waits.** A box's screen opens at once. The glass fades in over the lid moment as before (§56).
+- **Shutting plays no hand.** The lid shuts by itself, as vanilla's does. A hand let it down for eleven ticks, and
+  whoever shut a chest and turned away at once saw that hand chase the lid across the frame.
 - **Looking in.** While the screen is open the view tips toward the box by up to 4 degrees in pitch and 2 in yaw and the
   field of view narrows 4%, eased in and out at 0.3 a tick (`Touches.lookIn`); your own look is not moved. Not with
   reduced motion, and not while a station's view is away.
@@ -24703,6 +25374,10 @@ The glass screen stays (§56): nothing is faster for twenty-seven slots. What is
   work plan, fabricator and broken machine as both hands, our Word Stone, log terminal, door core, return pad, fallen
   star, well lift, monolith, pick stone and Hearthfire as a palm, our doors as a push, the ghost lever as a lever, the
   left chest as a lid. The Forge is three blows with a piece in the hand and a palm for anything else it offers.
+- **Turned away, a touch is over** (`Reaches.pose`, every quick touch): the moment the thing stands more than 37
+  degrees off the middle of the view (`COS_AWAY` 0.80) the hands stop following it; from where the view last had them
+  they go home under the frame in 120 ms, in the view's own frame, and the touch ends. A fist held to a place in the
+  world while the view swung away from it was drawn chasing it.
 - **A scene's own hands take over:** a block whose scene is about to open plays no touch over it.
 - **Every touch has a body** (`TouchKinds.Body`, to everyone tracking the player and to them, at most one every 5
   ticks): `touch_one_low`/`_mid`/`_high` (6 ticks), `touch_both_…` (8), `touch_pull` (8), `touch_strike` (6),
@@ -24877,6 +25552,192 @@ bell): his pick decides the whole family.
 - Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
   first values. The listening page is the check, and his marks choose (`apply`, then `build`).
 
+## 67. The Far Landing (a journey played far from the city; page https://claude.ai/artifact/449tuDbGGVgmuAP2LAHRs2, copy `docs/journey/far-landing.html`, build plan `docs/journey/BUILD-PLAN.md`; Euan approved all eleven decisions 2026-11-11: "Go ahead with the full plan and recommendations")
+
+The first hour stays in and around Carillon as built. Then an old Precursor skiff on the ridge flies you out on the wind to
+a landing about 6 km away, and the real game starts there: danger is measured from the landing, and the city's errands
+come to you by letter and through the skiff's hold. You can go back any time (the skiff runs both ways), the city asks
+you back twice to hear a bell rung for you, and the morning after the Hundred Peal it fetches you home. New worlds only.
+
+**67.1 The switch: rules 4.**
+- `RegionMap.RULES` is 4. A world keeps the rules it was made under (`living_regions` saves `rules`); one with no record
+  is new and gets 4. Old worlds (V20 is 3) are untouched. The GameTest server keeps `TEST_RULES` (2).
+- Everything of this section asks `TheLull.farLanding(server)` (true only under rules ≥ 4 with Carillon standing) or
+  `TheLull.landing(server)` (null otherwise). With it false the game behaves exactly as before.
+
+**67.2 The landing (`core.api.FarLanding`, pure).**
+- 48 bearings (turned by the seed) × radii 5,000, 5,500, 6,000, 6,500, 7,000 round the city. Each spot scores its land
+  (3: plains, sunflower plains, meadow, flower forest, cherry grove, birch; 2: other forest, taiga, savanna, plains;
+  −2: snowy, slopes, windswept, stony, grove, dark forest, pale garden; −5: ocean, river, beach, shore, swamp, mangrove,
+  desert, badlands, peaks, jungle, bamboo, mushroom, ice, frozen, deep dark, dripstone, lush), then the 28 best by land
+  are measured for flatness (a cross of nine points 48 apart: 2 − spread/6, never under the sea: −3) and water (a river
+  or lake biome at 150 or 300 in eight directions: +1). Ties break on the seed. Cached per session; saved in the region
+  record as `landing_x`/`landing_z`.
+
+**67.3 The land under rules 4 (`RegionMap`).**
+- `cx, cz` stay the city (TheLull, the Commons, its ramp, its name); `lx, lz` (the landing) is where danger is measured.
+- `wideLevelAt`: the Commons' ramp to 700, 8–9 to 1,000 round the city as before; past that each region's level with its
+  odds and calm ways measured from the landing. Round the landing the land is capped at 9 (E) to the safe line (1,300)
+  and eases into the field over `LANDING_EASE` 300 more; round the city the ring eases from 8–9 at `CITY_CALM` 1,000 to
+  the field at `CITY_EASE` 1,600.
+- `makeWideLevel`: a heart within the safe line of the landing, or within 1,000 of the city, is E; the odds by distance
+  are from the landing. A calm region is named like a shelter only when it is over 2,000 from both.
+- Roads, `FirstTown`, `Holdfasts` and the stone people's places measure from the landing (§28, §43.3), keeping their old
+  clearance from the city. Aldo stays on his milestone by the ridge.
+
+**67.4 The skiff and its moorings (`dev.awaken.frontier`).** Redesigned 11 Nov 2026 at Euan's word ("massively
+improving the design and experience of it"): the first look was a plank box with a mast in the helm's view.
+- **The skiff is an old Precursor wind-skiff that people have kept flying**, in its own blocks (`SkiffBlocks`, none with
+  an item, all declared to the ledger): Precursor navy plating (`skiff_hull`, with stairs for the flared shoulders), a
+  planked deck whose side carries the gold sheer line (`skiff_deck`, an axis so the planks always run along the keel),
+  low gold-capped gunwales on any edges of their block (`skiff_gunwale`), thin spars (`skiff_spar`), canvas two texels
+  thick in three planes with dyed tip panels (`skiff_sail`), brass (`skiff_brass`), the helm with its wheel
+  (`skiff_helm`) and a caged lamp, blue on the skiff and amber on its mooring (`skiff_lamp`). Navy, gold, warm planks,
+  cream canvas, Precursor blue: nothing else in the world looks like it. Art, models and blockstates come from
+  `tools/art/skiff_art.py`; every shape is a box on the texel grid.
+- **The shape is a plan**, `tools/art/skiff_plan.py`: it checks the plan (no two blocks in one place, all in the
+  footprint, the helm's stand free), draws it from outside and from the helm without the game, and writes
+  `SkiffPlan.java`, which `Skiff` reads (state words like `awaken:skiff_sail[band=true,plane=flat]`). Drawn facing
+  south, the origin the berth's middle at the main deck's height.
+  - Hull: five wide and fourteen long, narrowing to a two-block beak; plating one deep with flared shoulders, a gold
+    keel (`precursor_trim`) and the lift core (a glow panel) in a fin under it (`KEEL` −3).
+  - A quarterdeck a step up at the stern (z −6..−3). The helm stands at its front edge (`HELM` 0,2,−3; you stand at
+    `STAND` 0,2,−4), so the eye is 2.6 over the main deck and sees over the whole skiff: nothing on the centre line
+    rises to eye height. Ahead of it: the deck, cargo lashed either side of the middle, the gunwales running to the
+    beak, a bowsprit and the blue bow light under the horizon.
+  - Two wings: a boom from a king post on a brass mount at each shoulder of the hull (z 3) with canvas swept back from
+    it, six out and five deep at the root, at y 3 (clear over a head on the deck and on the pier).
+  - Nothing hangs in the air by a few texels: a thin spar is centred in its block, so a lamp stands on an upright one
+    (the sprit's end, the sternpost, the mast's top) or hangs from a whole block (the mast's crossarm, the bay's ridge).
+  - The wind-wheel behind the stern: a brass hub (`HUB` 0,4,−7) with four canvas blades three long, the same from
+    every quarter turn, on a sternpost with the stern light.
+  - Each block names what it moves with in flight (`Part.rig`): the hull, a wing, the wheel.
+- **The mooring is a place** (`Skiff.jetty`, `Moorings.build`): the old Precursor landing ring (trim, plating, a glow
+  panel under the core, three glow studs) set in a stone pad, a disc of 6.5 whose top is the highest ground under the
+  mooring (`PAD` −4; `LIFT` 4) and whose every column is filled down to the land, kerbed in stone brick, so on a slope
+  it stands as a terrace and never hangs. On it a timber cradle holds the hull. A spruce pier runs along the −x side
+  on log posts down to whatever is under them, with a kerb beam, a rail, amber lamps on its end posts and goods
+  waiting at its bow end; on its outer side a bay under a slate roof (a bench; at the landing the hold, a barrel at
+  `HOLD` −8,1,−6, and the Association's notice board at `BOARD` −8,1,−5; at the ridge just goods). By the bay stands
+  the mooring mast: a top light and two hung from a crossarm, to find your way back by, and a pennant. Steps three
+  wide go down from the pier's stern end on stone until they reach the ground. Footprint ±8 × −9..9, the pad to 12
+  clear above.
+- The ridge mooring: city centre + (22, −ridge − 30), beside Aldo; built once a player is within 160. The landing's:
+  built when its chunk loads. Each faces the other end (snapped). The exact spot is the best of a ±20 search on a step of
+  4 (height spread ×3, water ×6, road ×8, distance/6, and 2 a block where the ground astern drops more than 3 below
+  the pad, so the steps reach the ground soon; a tree's trunk is not the ground). A glade of 6 round the footprint is
+  cleared of logs and leaves, and in a fringe of 6 more every leaf no longer joined to a log (through other leaves,
+  within six, the way the game itself counts) comes down too, with the snow that lay on it, so a mooring in a forest
+  stands in the open with nothing left hanging. Both are guarded: breaking, placing and explosions there are refused except for
+  creative players and operators. Saved in `FrontierData` (`awaken:frontier`, schema 1); a mooring's `look` (2 now, 1
+  when absent) lets one of an older look be taken down and built again where it stood.
+- Rotations: WEST (−z, x), NORTH (−x, −z), EAST (z, −x), with `Rotation` CW 90, 180, CCW 90 for the block states (the
+  canvas swaps its two upright planes on a quarter turn, the gunwale turns its edges).
+
+**67.5 The flight (`Flights`, `client.FlightFilm`, `client.CloudCrossing`, `client.SkiffFx`, `client.FlightAir`).**
+- The helm takes you once Ilse has given you her coal (`FarPost.ready`: The Last Delivery past its talk-to-Ilse step, or
+  the story off; `/awaken frontier ready` for tours). Everyone on the deck flies together. Overworld only.
+- The server: a lift of 120 ticks (a sneak-use after your first flight: 14, straight into the cloud); the far land loads
+  under a `frontier_flight` ticket (radius 3, 90 s); the move happens once the lift is over and the land is loaded, or
+  after 40 s more. `teleportTo` keeps the client's camera. No damage from the helm until the client says it has set down
+  (`Landed`) or 30 s after the move. A logout or a server stop mid-air puts you on the far deck before you are saved; a
+  crash does on your next login (`pending`).
+- The client films it as one `OpeningCamera` shot through `Cinema`. The resting skiff is swapped on that client for
+  barriers (unseen, still solid) and drawn block by block with its own models (`submitMovingBlock`), each block turned
+  with its rig: the wings about their roots, the wind-wheel about its hub.
+  - **It wakes** (`WAKE`, 40 ticks; not on a quick flight): watched from outside, low off the open bow quarter,
+    drifting in (lifted clear of any land in the way). The mooring is let go, the core hums up, the wings rise 15
+    degrees on their booms, the wheel spins up to 30 degrees a tick, dust blows out across the pad with motes of the
+    core's light, the bell rings once. The skiff only stirs on its cradle, so everyone aboard is seen where they
+    really stand.
+  - **It lifts** (to tick 120), at the helm: a surge off the cradle, speed gathered along the bow (3 blocks a tick),
+    the turn toward the far end leaning into it, 140 up when the cloud closes. The wings beat slowly, the view opens a
+    little with speed and sways with the hull, streaks of wind and then cloud come past (`FlightAir`: sprites that hang
+    in the air ahead and off the line of flight, so the skiff's own speed carries them by; a streak lies along the
+    flight and turns about that line to face the eye).
+  - **The crossing** is an overlay drawn like the gates' crossing: the painting of where you're going
+    (`textures/gui/frontier/crossing_out.png` / `crossing_home.png`, a sky gradient without it), "OUT ON THE WIND" or
+    "HOME ON THE WIND", the name surfacing from its middle, a gold rule, how far and which way, a hair of light that
+    fills as the land arrives. It is the film's own layer, so it is kept through the shot's hidden HUD
+    (`Cinema.keepLayer`). It holds at least 3 s and until the far land is drawn (or 20 s): drawn means nothing is
+    left to draw anywhere, or the land round the mooring is (its own nine chunks and 38 of the 49 round it), since
+    the far land can go on arriving for a long while and the skiff can come down as it does.
+  - **It comes down** over 110 ticks, in from 190 back and 120 up, out of thinning cloud: the wings flare to 24 degrees
+    as it brakes and fold flat as it settles, the wheel runs down to rest exactly as it stood (three turns, eased), two
+    bells, dust off the pad, the hull onto its cradle with a dip. The real far skiff returns six ticks before the end.
+- Sound (`merge/frontier` `sounds.json`, each an event of the game's own recordings): the mooring let go (a chain), the
+  core waking, humming and going quiet (the beacon), canvas filling (wing beats), the skiff's bell, timbers creaking
+  (doors and gates, low), the wind (the elytra's), the hull settling (wood). The hum and the wind are two beds in the
+  ear that follow the skiff's speed and go close and quiet inside the cloud.
+- Watchers within 160 of a mooring see the skiff wake and lift away with its party (their bodies hidden once it
+  lifts); it comes back empty to its berth 15 s later, wings and wheel moving the same way.
+- **Lit by the open sky in the air.** A drawn block is lit by the world's light where it is; past three blocks from
+  its berth the skiff takes the light of the open sky over that berth instead, because where it flies the land may
+  not have come yet and a place with no land has no light (CI run 43001781354: the hull black early in the descent).
+- **The real far skiff stays hidden all the way down.** A mooring built while nobody was near keeps its block
+  changes until its land starts ticking and sends them then, after this client has hidden the skiff: on a first flight
+  the real one came back under the drawn one and the view passed through its wind-wheel (CI run 43014440009). While
+  it descends the client hides it again each tick, and hides it late if it only then arrives (`FlightFilm.keepHidden`).
+- **The descent is onto the mooring as built.** A far mooring that isn't built when the skiff lifts is only a spot
+  (the seed's, at sea level + 8); the server's ARRIVED carries where it really stands, and the film comes down there
+  (`Flight.to`). Before 11 Nov the film kept the spot, so a first flight came down beside the mooring, in whatever
+  land was there, and jumped to the helm at the end.
+- **Held at the far helm.** 26.3's client lets a player sink a tenth of a block a tick where it has no chunk yet, so
+  after the move they would come to rest inside whatever land arrived, or fall through it into a cave, and see the
+  descent from the dark (CI runs 42989684224 and 42996376582: landed at y 13 and y 20 under a helm at 85). The client
+  holds the traveller where the server put them (`FlightFilm.holdAtHelm`) until the film has set them down and there
+  is land under them, a minute at most.
+- The homecoming's skiff (67.8) is drawn beside you, its bow toward the city and its core just clear of the highest
+  ground under it, so on a slope it hangs over the low side and is never in the hill (`Flights.BESIDE`); the view goes
+  from your own eyes up to its helm over 26 ticks, and it has no outside shot.
+
+**67.6 Errands come to you (`core.api.FarPost`).**
+- Letters: a card in the writer's words wherever you are (`FarPost.letter`), a copy kept in the hold (16 kept a player,
+  the newest three read out when the hold has nothing else to do).
+- The hold: a keepsake held at it goes home (world: its family writes back; you keep it; counts as shown); else each
+  waiting step of a city person's (Oren, Hale, Hettie, Kestrel, Bram; never Ilse's, which stays at her fire) is handed
+  over, up to six steps a chain a use (a talk is a note sent; a delivery is the things put in; a short delivery says
+  what's missing); else Oren's offer again if it can be taken; else the letters.
+- Hale's board stands beside it (`Bounties.board`). Hale's rack sells patterns at every Armoury door
+  (`ArmsArmoury.rackHere`, the view's `rack`).
+- Bram's bells (the Registry's handbell for the first gate, its tolling bell for the twenty-fifth) go on the Registry's
+  wagon to your yard, with his letter. Village bells are told by letter, the villages measured from the landing, and
+  their thanks come by letter.
+- Oren writes once you're out on the land with his offer on the letter (Help takes the chain); his loads go in the hold.
+
+**67.7 Going back: two invitations (`Invitations`).**
+- A city bell that's due while you're away from Carillon is yours at once, hanging where it always has. Its letter: the
+  Roost's from Kestrel, the Square's from the Choir, the market's from Hettie, the Quay's from the dockers. The first of
+  the Roost and the Square (round 1, about C rank) and the first of the market and the Quay (round 2, about B) also ask
+  you to come and hear it. While one stands it is an optional row under Out there on the Tasks page.
+- Standing in Carillon with one standing: the bell rings out over you, and people come: round 1 Kestrel and Hale (his
+  new rack), round 2 Hettie and Oren (he looks at your work). Nothing waits on it.
+
+**67.8 The homecoming (`Homecoming`).**
+- The morning after your Hundred Peal (before noon of the next play day, or any time once a morning has passed), under
+  the open sky, a card: the skiff has come for you. Go home: it is drawn where you stand (nothing built there, nobody
+  else sees it) and takes you, and anyone beside you, to the ridge. There you hear every city bell from far off and Ilse
+  says she's walking down behind you. Walking into Carillon after the peal, by skiff or not: every bell over you, and
+  Bram, Kestrel, Oren, Hale, Hettie and Ilse thank you in plain words. Once. A Tasks row says "Go home to Carillon"
+  until then. Ilse's visit to your home after the Wake stays as built (§43.14).
+
+**67.9 Ilse's talk.** In a far world her lines are the same with three changes: after Aldo, "There's an old skiff up
+on the ridge. It flies itself, out on the wind to the far country and back again. That's where hunters start now. Nobody
+from the city can stay out there, so nobody will bother you."; the coal is for wherever you want to live "in the far
+country"; her goodbye tells you the skiff brings you back whenever you want.
+
+**67.10 Tasks.** "Take the skiff to the far country" (main path, between your first power and your fire, at the helm,
+until you've landed); "Go and hear the … rung for you" (optional); "Go home to Carillon" (after the peal).
+
+**67.11 Commands and checks.**
+- `/awaken frontier status | goto ridge|landing | look ridge|landing [0-5] | fly [quick] | ready | letter | invite <bell> | homecoming`.
+- GameTests (`FrontierTests`, pure): `frontier_landing_fair` (20 seeds, 5–7 km, fair ground, the same every time),
+  `frontier_levels_rules_four` (E to 1,300 round the landing, the city's ring, rules 3 unchanged, harder past it),
+  `frontier_skiff_shape` (every facing: no two parts in one block, all in the footprint, the stand on the deck, the bow
+  the way it faces).
+- Tours: `far-landing-flight`, `far-landing-world`, `far-landing-homecoming` (seed 4245).
+- Nothing here has been played by a person. The skiff and mooring picture goes to Euan before merge.
+
 ## 68. The Whole Boss Fight (plan docs/boss-experience/PLAN.md, page https://claude.ai/artifact/VDXqPTJJxktRgDLiJJRdH7; Euan approved all fourteen decisions 2026-11-11: "Go with all")
 
 Euan fought the Ringer on build 69fee63de with a longsword (11 Nov 2026): the E sword broke mid-fight, the closing ring was
@@ -24966,8 +25827,17 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
   press needs to reach the server, which sees the guard a tick after the press and counts whole ticks.
 - **After** (`Strikes.answered`, from the server's own DEFLECT / BLOCK / GUARD_BREAK / HURT replies through
   `arms.client.ArmsAnswers`, one line at the top of `ArmsPredict.onResult`): a deflect bursts the ring outward (300 ms); a
-  block or a broken guard says "Too early" under it, and a guard raised within 5 ticks after being struck says "Too late"
-  (650 ms; `timing_words` in `awaken-aim-client.toml`).
+  guard that missed snaps it shut, dull grey, and says why under it: a block or a broken guard "Too early", "Too late" or
+  "Raised again too soon" (from the server's reason, §68.6 "A parry you can read"), a blow that went past a raised guard
+  "It came from the side" or "Dodge that one", and a guard raised within 5 ticks after being struck "Too late"
+  (650 ms). The words teach, then go quiet: each shows its first `AimConfig.TAUGHT` 3 times only, counted per word in
+  `timing_words_seen` in `awaken-aim-client.toml`, so the count holds through restarts (empty it to be taught again).
+  Why 3, and per word: Euan 11 Nov, "I definitely don't want that to be every single time ... just the first few
+  times, so you understand, you need to like time it better"; each word names a different mistake (early, late, the
+  lockout, the side, an unguardable blow), so each gets its own few, and three is enough to tie a word to the feel of
+  the miss without becoming the thing the eye waits for. After that the ring's white burst and its dull grey snap
+  (every time) carry the timing. `timing_words` is `FIRST_FEW` (the default), `ALWAYS` (every time, for good) or `OFF`
+  (never, from the start); an old `true` / `false` from before is read as `FIRST_FEW`.
 - **On a boss without a lock:** the duel body nearest its blow within 32 blocks shows its ring with no brackets
   (`boss_ring`). The out-of-view arcs brighten on the same clock.
 - **The glint** (`ArmsTells`): fires once as the ring enters the band, on the same clock; a body with no clock keeps the
@@ -25059,6 +25929,77 @@ Execution), `opening` (the camera), `living` (the plate's words).
 - Counter-hits (decision 13) are not built. The Journal picture of a finishing blow (decision 14) is later.
 - Known and not changed here: `ServerPace.now` is a float of game time, so in a world past about a hundred hours a kit
   body's own animation clock steps by a tick or more; the ring uses `ServerPace.since`.
+
+**68.6 Three things from the Ember Tyrant (Euan's playtest 2026-11-11 on c90fc5791, a Realm with `gateRealms` on).** His
+words: the Lord reset in the middle of the fight, his parries didn't feel like they landed, and its kneel was over before
+his charged heavy came down. Modules `gates` (the hall), `mobs` (the lonely heal, the log), `arms` (the guard, the
+charge), `aim` (the ring).
+- **The fight holds (gates, `RealmLive.heart`).** *Why:* the hall decided "nobody left inside" from one look every half
+  second: a single sample with nobody standing in `Land.inHeart` while the door was shut discarded the Lord and woke a
+  whole new one. `inHeart` ends before a hall's walls (`GeneratedCrawl`: `lordHall.out < 0.96`, four blocks under its
+  floor), so a leap off a ledge, a dodge into the wall's last stretch, a rope swing or a fall into a pit ended the fight
+  with nobody having left. *The rule now:* who is in the fight is a saved list (`RealmState.fighters`, codec field
+  `fighters`). Everyone alive and not a spectator who stands in the heart while the Lord is awake joins it (everyone in
+  it when it wakes, at once). A fighter is out (`RealmLive.outOfFight`, pure) when they fall (die), leave the Realm (the
+  arch, a respawn at the Hearth), or are away from the hall for longer than `AWAY_TICKS` 200 (10 s): "at the hall" is
+  within `HALL_REACH` 68 blocks of the Lord's place across and 48 up or down, the same reach that keeps the door from
+  shutting; a fighter offline that long has left the game. The time each fighter was last at the hall is kept in memory
+  only, and a fighter loaded from a save counts as just seen, so a pause (the server stands still), a save, a quit and a
+  reload, a step out of the door and a leap never put the Lord to rest. Only when the list is empty and the door is shut
+  does the Lord go back to rest, whole, the hall reset and the door open (so nobody is ever locked out), and every
+  player in the gate and every fighter just out is told, in chat: "Nobody is left in the fight. The Ember Tyrant has gone
+  back to rest, whole again. The door to its hall is open.", and by a toast that says only "The Ember Tyrant has gone
+  back to rest." (a toast holds two lines of 144 px at any GUI scale, and the full sentence was cut off after "has
+  gon…"; the longest Lord's name, the Gearwright Colossus, fills 244 of the two lines' 288 px). A Lord whose fight was put to rest while its chunk was away leaves as
+  it loads (`RealmLive.strayLord`, from `GateEvents.onJoin`), so a fresh one never stands beside it. The log says each
+  step (`[realms] gate N: ... joined the fight`, `... is out of the fight with the Lord (fell)`, `... stood past the
+  heart's line (x y z, d blocks from the Lord); the fight held` once a fighter a fight, `nobody is left fighting ...`).
+  Tour commands: `/awaken gate realm_edge` (onto the hall's floor just past the heart's line) and `/awaken gate
+  realm_lord` (the Lord's health, the door and how many are in the fight, said and logged).
+- **Left alone (mobs, `AwakenBoss.arena`).** The other rule that heals a Lord, unchanged: no player out of creative
+  within its home radius + 16 (38 blocks for the Tyrant) for 600 ticks (30 s) heals it in place and starts its fight
+  over, so it can't be worn down from out of its reach. It now says so: the log (`[fights] ... had nobody within 38
+  blocks for 30s: healed from h/max and starts over`) and a line to every player within its radius + 96: "The Ember
+  Tyrant had nobody to fight for half a minute, so it has healed and the fight starts over."
+- **A parry you can read (arms, aim).** *What his log shows:* no guard of his was logged (the ring's `[fights] ring:`
+  count runs in development builds only, and the black box ended at 18:07:38, before the fight), so whether each guard
+  deflected, blocked or went unregistered can't be read back. It does show the Tyrant's blows missing him about 35
+  times (`[fights] missed`), the Maul's deflect window of 3 ticks (the tightest of all), and a build with the old,
+  jumpy ring (§68.2 is the fix for the timing read). *Added, without repeating §68.2:* every guard a creature's blow
+  meets is logged on the server in any build (`[arms] guard: BLOCK ember_tyrant's LIGHT blow, raised 5 ticks before it
+  (deflect window 3, grace 0) (early)`, with "raised again too soon after lowering it" and "from outside the guard"),
+  and a missed blow's line says whether the guard was up (`, guard up 7 ticks`). The server now says why a guard only
+  blocked or broke (`ArmsRules.missWhy`, in the BLOCK and GUARD_BREAK replies' `aux`: `MISS_EARLY`, `MISS_TOO_SOON` for a
+  guard raised again within the lockout's 8 ticks of lowering it without a deflect, `MISS_LATE` for one raised after a
+  held blow's grace), and when a blow goes past a guard that was up (`GUARD_PASS`, to the fighter only: `PASS_SIDE`, it
+  came from outside the guard's front; `PASS_UNGUARDABLE`, a red or violet blow no guard stops). The ring answers every
+  miss the same way every time: it snaps shut, dull grey, 0.3 smaller over 260 ms (`MISS` 0x8C929C), against a
+  deflect's white burst outward; the block's thud and the hurt are as before. Its words: "Too early", "Too late",
+  "Raised again too soon", "It came from the side", "Dodge that one", each its first 3 times only (§68.2). A
+  block called "Too early" because it was really the lockout or a late raise was the old ring's wrong word. Windows,
+  lockout and grace are unchanged: nothing in the log says they were the cause (open: the lockout turns a second raise into a block with no word on the
+  old build; the play log will now say how often).
+- **A kneel you can punish (arms).** *Measured* (`archetypes.json`; a charge begins at `min` 6 held ticks, a release on
+  the ting starts an Execution, windup 2): press to hit, released on the ting, was the glint + 3 ticks: Maul 23 (held
+  to its full 30, 33), Axe, Greatblade, Scythe 21, Glaive 20, Longsword, War-staff, Precursor, Chainblade 19, Spear,
+  Katana, Twinblades, Shieldblade 18, Rapier, Gauntlets 17, Daggers 16; against a Lord's kneel of 40 ticks
+  (`BROKEN_TICKS_LORD`; 50 for anything else), less the reaction to the break. The Execution never needed more than
+  `min`, but nothing said so: the ting, the charge's fill and the hands all waited for the glint. *The rule:* against a
+  body that kneels a charge is full the moment it is one (`ArmsRules.fullAt(charge, kneeling)`: `min`, else the glint).
+  The ting rings on that tick (once a charge, also when a kneel begins mid-charge), the fill is full, and a draw begun
+  on a kneeling body takes `ChargeDraw.ticks(min)` (3.6 ticks; the draw's length is fixed as it begins, so a kneel that
+  starts mid-draw never jumps the hands). Press to hit is 9 ticks for every weapon (min 6, the release, windup 2),
+  which leaves 31 of a Lord's 40 (21 after a half-second's reaction). The server is unchanged (it already chose the
+  Execution on any release while the body kneels), so are the kneel lengths: a longer kneel was the other way, and the
+  combat sim (`tools/sim/combat_sim.py --override rules.BROKEN_TICKS_LORD=50`) shortens the Tyrant's time to kill by
+  10 to 13%, an easier boss for players who already land it; this keeps the challenge in breaking the stance. The log
+  says each break (`[arms] stance broken: ember_tyrant kneels 40 ticks (by Euan)`) and each heavy let go on or just after
+  a kneel (`[arms] heavy let go after 7 ticks held on ember_tyrant: kneeling with 22 ticks left, an Execution`).
+- Tests: `realm_fight_holds` (the rule's pure parts: who is out and why; a fighter who leaps past the heart's line, a
+  pause and a save keep the Lord, the last fighter out puts it to rest), `arms_defence_rules` (now also `missWhy`),
+  `arms_kneel_full` (`fullAt` for every weapon, and press to hit on a kneel within a Lord's 40 ticks with 20 to spare).
+  Tours: `tools/autopilot/realm-lord-holds.txt` (the autopilot's new `pause <ticks>` opens the pause menu as Esc does),
+  `tools/autopilot/tyrant-parry-kneel.txt` (the Tyrant on the duel stage with a Maul: early guards, parries, a kneel).
 
 ## 69. The Hearth's family: Aya and Dubu (plan docs/family/PLAN.md, page https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN; Euan approved all of it 2026-11-11: "Go ahead with the full plan")
 
@@ -25274,11 +26215,17 @@ Gentle, for that player only, all decided on the server by who a thing is aimed 
   Lord or Warden +25% health and stance (a Full partner +50%), a room a sixth more monsters, no extra elite.
 - XP, loot, boss pieces, bells and rank as anyone. Titles and records for hard feats are not earned on Gentle.
 - A blow aimed at a Full player is exactly what it was. Numbers here are first values, in `awaken-together.toml`.
+- The gate's entry card has a `Fights` row when party members are online: "You: Full. Ana: Gentle." (12 Nov.)
 
 **70.5 Reassessments.** Everyone of the party near the bell comes as a fighter on their own setting (a tied pair is no
 longer skipped). At the level and ready: the rank, whatever the setting. Short of the level: they may come and are
 told this one doesn't count for them yet. The Warden's gift goes to all, as before. A Warden's health and stance
 grow by `FightsHooks.fighters` (a player on Gentle half of one), not by a head count.
+- **A card at the bell** (12 Nov, Euan: "go ahead"): when the one who starts has party members within 24 blocks, each
+  of them gets a 30-second card ("<name> is starting the C-rank Reassessment", `Come along` / `Stay here`, saying
+  whether it counts for them yet). The bell rings as soon as all have answered, or when the cards run out, for the
+  starter and whoever said yes; nobody is pulled in (`Provings.open`, action `provingcome:<starter>`). A hall opened
+  without the cards (`openAt`, tests) still takes everyone near.
 
 **70.6 The joins.** Everyone already awakened is told when someone who hasn't awakened logs in. The **Answering Peal**
 (`Answering`, through `BellHooks.onRung`): a handbell rung in the overworld calls to every party member more than 64
@@ -25296,3 +26243,159 @@ Under the Far Landing (§67): anyone who has flown once may take the helm home.
 **70.7 Tests and tours.** `core.test.Pair` (two real survival test players in a party); prefixes `pair_`, `gentle_`;
 tours with a server-played **tour partner** (`/awaken together partner ...`), the client on Full in one and on Gentle
 in the next. Budget: under 12 messages a second per player in a fight for everything here, under 2 at rest.
+  12 Nov adds `pair_shared_xp`, `pair_shared_xp_never_twice` and `together_payloads_over_the_wire` (each Together
+  payload written and read back through its codec: a single-player game hands payloads over without writing them, so a
+  codec fault would first show with a second player).
+
+**70.8 A party earns as one** (12 Nov, Euan: "if you're in the same party ... the other person should get a decent
+amount of XP as well ... a huge bummer if one person is not ranking up at the same time as you ... three options, one
+where it's exactly the same, one where other people in the party get a certain amount, maybe 50%, and one where ...
+it's each one for themselves"). `together/SharedXp`, the party's own setting (`share` on the saved party; a new party
+takes `xp_share` from `awaken-together.toml`, default **equal**), changed by any member on the band's TOGETHER section
+(`Shared XP`: `[ Equal ] [ Half ] [ Own ]` on a row of their own so it fits at GUI scale 9, with a line saying what the lit one means) or
+`/awaken together share equal|half|own`; everyone in the party is told. Joining a party says which it is on.
+- **Equal**: what any member is paid, every other member online gets too, wherever they are (another land, a gate, at
+  home). **Half**: they get `xp_share_part` of it (0.5). **Each their own**: nothing is passed on.
+- **Never twice.** Grants are gathered through `Progression.onXpGranted` and settled when the tick ends, by thing
+  (source and world key): a member is passed `part x the most another member was paid for it, minus what they were
+  paid for it themselves`, so a kill two stood near (paid to both in one tick) is paid once each. A gate pays each
+  player inside it on their own clock (their own Satchel claimed on the way out, their own kill share, the Lord's XP
+  in beats), so gate XP is never passed to a member who was inside a gate with the earner in the last ten minutes
+  (`SharedXp.watch`, once a second): they have their own. Two who play side by side earn what they always did; two
+  who play apart each earn what both did, so a pair split between a gate and the home levels faster than one player
+  alone (at most twice as fast). Known edge: a member who leaves a gate early gets none of the floors their partner
+  goes on to clear in the next ten minutes.
+- **What is passed on**: gate kills, floors and Lords (to members who weren't in that gate), home XP (kills, ores,
+  blocks) and world XP (hunts, crafts, camps, troubles). **Firsts and errands stay your own**: discoveries, the story,
+  Truths, dreams, the Descent, anomalies, directives and commands are never passed on (each player is paid for those
+  on their own clock, so passing them would pay a pair twice).
+- A share is paid as it was earned (`Progression.grantShared`: no second scale or perk, no listener, so it is never
+  shared on); the same XP is worth more levels to a lower member, so a partner who is behind catches up. Before
+  awakening it is banked. Offline members get nothing. Only a formed party shares this way: people who merely stand
+  in the same gate keep the old rule (`Parties.sharing`).
+
+## 71. The Leaper's Gauntlet, remade, and the Unlock title (plan docs/leapers-gauntlet/PLAN.md, page https://claude.ai/artifact/1jMUNxA9HGq32BxcCJP8B1; Euan approved all twelve decisions on 11 Nov 2026: "Go ahead with the full plan")
+
+**Status: approved in full by Euan on 11 Nov 2026, typed to the movement-unlocks session ("Go ahead with the full
+plan"; recorded as yes on the page, `d1` to `d12`). The movement module's part is built (71.7). The course itself
+(71.4) is the gates session's and is not built yet: until it is, the old course of §17.10 still stands, with its gift
+remade.** This section is the short form; the plan record is the contract.
+
+Euan, 11 Nov, after playing the Gauntlet: "I had no idea that's where I got the double jump from ... I thought I already
+had it"; "it took like maybe 30 seconds ... what was the point of that gate?"; "I don't even know if I got XP". And on
+11 Nov: the title should be "the big title, and it says you just unlocked double jump. Press space in the air again to
+use it ... And maybe every time you unlock a major thing in the game, it actually shows you that as well."
+
+**71.1 What was found** (code at edc314667, his play log, CI tour `gauntlet-now` run 43008682852). The course is flat,
+31 rows, par 8.1 s, and needs the leap once. The leap is given on the last row before the chasm at a sprint
+(`TrialHooks.atEdge`); in his run that was 17:27:28.559 and the pit threw him back at 17:27:29.562, then twice more. The
+gift's title shares the screen with the clock, par, the pit's critical toast and whatever else is due. The dash and the
+slam are named on the end card and never needed. The pay is "+90 XP" in small type. The gate's own notice was filed
+unseen, its panel says "Find the Rest Shrine", and its Tasks row says "where you climbed" even when it opened by mastery.
+
+**71.2 The Unlock title** (a shared kit, `core.api.Unlocks.show(player, id)`, drawn in the System's layer beside the
+discovery title): the spaced label UNLOCKED, a line of light, the name at three times normal size, the how-line with the
+player's own key ("Double Jump" · "Press [Space] again in the air"); six seconds; the System's moment swell under
+Minecraft's `ui.toast.challenge_complete`; every tier of message and every tip held while it shows, a tip already up
+faded; never in a fight (it waits); never paced, never filed; then the how-line stays as the Lesson's pinned prompt.
+Major unlocks, if he says yes: a new way to move, a new power, a new rank, a new layer of the world.
+
+**71.3 The stand** (`awaken:leap_stand`, the Ascent's; placed by the course at a mark): Use held 20 ticks while standing
+on it gives that stand's move (saved at the stroke) and plays its title. Inside the Gauntlet the leap is unlocked a move
+at a time (double jump, dash, slam, later the aimed dive: a mask in `WayMemory` schema 2, honoured by the leap's own
+rules, which are rope-hold-swing's files); given any other way, all at once as now.
+
+**71.4 The Gauntlet** (the gates session builds it): a way in that ends at a gulf a figure of light crosses and you
+cannot; three stands, each followed by a hall that cannot be crossed without its move (Double Jump 4 uses, Air Dash 4,
+Slam 3; no clock, no pit, a net that lifts you back); the Long Run (timed, about 85 s par, 14 leap moves, rings, a pit
+that throws back and does not hurt, medals); the tally floor (XP counted up as `LordPay` does, the mastery bar, time and
+medal on a plate, the player's counts). Proposed: half a level's XP the first time; the gate stays standing to run
+again; the look of the Stopped Works. The gates session's answer (11 Nov): a hand-laid Realm in the Stopped Works' kit,
+not the Rig hall; steps, gaps, shafts, marks, doors on a word and constructs are easy there; a slam-broken deck needs a
+slam-landed call from the Ascent; rings, clock and medals must be ported from the Rig (medium); a scripted gate onto one
+named Realm is new and small; the kit's fall catch costs 3 + 8% health and would cost nothing here; its check needs the
+leap's reach from the leap's own rules.
+
+**71.5 Words.** The gate's panel and card say its point ("It holds a new way to move. No fighting."); the HUD's line
+follows the hall; the pit's toast is dropped in the trial; the Tasks row is "Run the Leaper's Gauntlet".
+
+**71.6 Who.** The Unlock title, the stand, the mask's memory, the lessons, words, Tasks, K rows and the gold figure's own
+drawing: the movement-unlocks session. The mask honoured in `AscentMoves` and `AscentServer`'s events, the aimed dive,
+the double-jump mantle: rope-hold-swing. The place, halls, check, clock and pit rules, crossing, HUD lines, tally floor
+and re-run: the gates session.
+
+**71.7 Built (11 Nov 2026, `claude/movement-unlocks-b62e18`; the movement module's part).**
+- **The Unlock title.** `core.api.Unlocks` (register on both sides, `show(player, id)`, client `show`, `showing`,
+  `pending`); the System sends `signal_unlock` and draws it in `signal.client.UnlockMoment`: the spaced label in the
+  unlock's colour, a line of light out to 120 px and more, the name at 3 times text (2.4, 2, 1.5 when it would not fit
+  with 12 px either side), the how-line with `{key.x}` and `{hold}` drawn as the player's own caps (an unbound key reads
+  "Not set"), a dark band behind that fades out over ten thin steps (to the sides and below; above it stops at 33 px, the foot of the top right corner's panels, and the title starts at 40 px or a sixth of the way down). 14 ticks in, 98 held, 18 out; reduced motion (`FirstPerson.reducedMotion`):
+  no rise and no sweep. Sound: `ui.moment` at 0.8 under Minecraft's `ui.toast.challenge_complete` at 0.9. It starts only
+  with no screen, no choice card, no discovery up, and `SystemHud.inCombat()` false, and waits however long; the same
+  unlock twice is one. While it shows: the director and tips are held, `SystemHud.tickToasts` and `tickPanel` hold new
+  toasts (critical ones too) and info cards, and `Tips` fades a tip already up. At most five wait their turn (a
+  command that hands out everything would otherwise hold the screen for minutes; play gives three at most).
+  `/awaken signal unlock <id>` (admin) shows a registered one. *Not built:* the gates' run HUD stepping aside (asked
+  of the gates session: `showing()`).
+- **The other three kinds** (Euan's "every time you unlock a major thing"; the title replaces the plain announcement,
+  never a window and a title). Each is made on the spot with `Unlocks.show(player, new Unlock(id, label, name, how,
+  colour))`, sent whole as `signal_unlock_made`:
+  - *A new power* (`Powers.learnOrLevel`, in place of the "New power" window): NEW POWER, the power's name in its
+    family's colour, and "Press [its key] to use it" with the key it landed on (`Powers.keyOf`), or "It works on its
+    own while you have it" for a passive, or "Press [K] and put it on a key" when no key was free. The Journal's
+    "Power learned" notice still keeps what it does. A changed variant keeps its window.
+  - *A new rank* (`Progression.passReassessment`, in place of the Reassessment window): RANK UP, "C-rank" in the
+    rank's colour, "C-rank gates will start to appear for you". The rank-up sound and the Journal's notice stay.
+  - *A new stratum* (`DescentModule`, in place of the toast): NEW STRATUM, the stratum's name in its rank's colour,
+    "Stratum 3 has opened below you". It follows the rank's title.
+- **The ladder's titles** (`body.ascent.AscentUnlocks`): Rope, Double Jump, Air Dash, Slam, Dive, Wings, Flight, The
+  Sovereign's Form. With `wayUp` on a gift's scene keeps its light and swell and draws no words (`AscentScene.render`);
+  `WayClient.sceneBegan` shows the title: the old course's edge → Double Jump, its far landing → Air Dash then Slam, a
+  core's gift and wings-first at the sky's edge → Wings, the Sky Warden's fall → Flight, the last rank fight → the
+  form; the Vow's line → Rope, as the rope pulls you up (`VowScene`), and its "That's it. The rope is yours." is now a
+  small line. A lesson or a card of keys that follows a gift waits until no title is pending. A rung handed down gets
+  its title 9 s after the one asked for (`WayUp.onGranted`; a handed-down leap's is Double Jump).
+- **The old edge, until the new course replaces it:** at `LEAP_EDGE` the client holds the body for 100 ticks where it
+  last stood on the ground (its own position each tick, so nothing rubber-bands), so the title is not read from the pit.
+- **The leap a move at a time.** `WayUp.Leap` (DOUBLE, DASH, SLAM, DIVE); `WayMemory` schema 2 adds `stands` (taken) and
+  `parts`; `canLeap` is true unless `parts` and that stand is not taken. Synced as two bytes of `ascent_way`
+  (`WayClient.canLeap`, `stand`). The server refuses the count of a move not yet open (`AscentServer.onEvent`, `slam`,
+  `diveLand`). Since 11 Nov the leap's own rules ask too (rope-hold-swing: `AscentMoves.leaperMove` before a second
+  jump, a dash and a slam, `aimDive` before the aimed dive; the client's copy starts all open, so a late sync never
+  shuts a move). **`WayUp.LEAP_BY_PARTS` is still false**, so the first stand gives the leap whole and the later stands
+  play their titles only, until the Gauntlet's three stands stand in a world (turning it on is the manager's call).
+  `DIVE_BUILT` true since the aimed dive (§17.33): its stand gives it; a run counts its dives (`EV_AIM_DIVE`), and a
+  dive's landing is never a course's slam (`TrialHooks.slamLanded` fires only from `slam`).
+- **The stand.** `awaken:leap_stand` (a plate 4 px tall with property `move`; unbreakable, light 9; in the courses'
+  shelf; `LedgerSources` never-held). Its block entity only tells the client it is near. The client lights the nearest
+  one still to take with rising gold, pins "Step onto it" within 6 blocks and "Hold [Use] to take it" when stood on;
+  Use held 20 ticks while standing still sends `ascent_take` (the Use key's own action is cancelled there). The server
+  checks again (on the ground, within 1.6, not taken) in `WayUp.take`: the leap if not held, the stand's bit, saved, then
+  `ascent_stroke`, `TrialHooks.standTaken` for the course's door, Minecraft's anvil at 0.62. The client holds the body 40
+  ticks, light climbs the legs, and the title shows 12 ticks in.
+- **The course's hooks** (`core.api.TrialHooks`, additions): `at(player, trial, mark, from, to)` with marks `reach`,
+  `use/<move>/<n>`, `miss` or `miss/<move>`, `run` (`from` and `to` are the cells feet stand in, not the floor; a
+  `miss` comes once for every three falls at one spot); `pay(...)` returning `Pay` (first, XP, mastery before and
+  after, its fill, counts by name: the course shows them and works out nothing itself); `finished`; `onSlam` /
+  `slamLanded` (fired from `AscentServer.slam`); `onStand` / `standTaken` (once, on the tick a stand is taken; the
+  course answers with its press stroke and the door). As agreed with the gates session on 11 Nov: a door is real
+  blocks, so it opens for everyone in the gate once anyone has taken its stand, and the hall past it is what asks for
+  the move; every runner still takes each stand for themselves.
+  The Ascent's side: `WayUp.mark` (sends `ascent_spot`; `run` starts a count), `WayUp.used`, `WayUp.pay` (the first
+  time: the flag, 10 mastery, half a level, the leap made whole; always: the counts and one log line, "[gauntlet] run
+  by … : 14 double jumps, …").
+- **Lessons** (`Lesson`): REACH (the figure crossing the gulf every 4 s, no words), STAND_NEAR, STAND_ON (a gold line
+  filling under it), LEAP_SPOT, DASH_SPOT, SLAM_SPOT (pinned over a hall's first spot for each move, and again after a
+  `miss`; each ends at the tick its move is made, the slam's when it lands).
+- **The road.** The leap waits until the Gauntlet is run (`LEAPER_TRIAL_DONE`), not only until it is held: its gate
+  stays on the road and the Tasks row reads "Run the Leaper's Gauntlet" ("It holds a new way to move. No fighting.",
+  or for someone already holding the leap, "It is a course for the leap, and it pays the first time you finish it.");
+  the gate opens for a rope-holder whose Gauntlet is not run, whatever they hold. The panel says its point. The old
+  course's far landing pays half a level too.
+- **The figure of light.** `awaken:lesson_figure` (`LessonFigure`: no mind, no weight, made by a client for itself, never
+  summoned, sent or saved; discarded if a server ever ticks one) drawn by `LessonFigureRenderer`: the player's body
+  shape in one pale gold (`textures/entity/ascent/lesson_figure.png`, from `tools/art/ascent_figure.py`), emissive,
+  about 70% there, no shadow. The Gauntlet's ghost is no longer used by the Lesson.
+- **K, Powers:** while the leap is held by parts, a line a move taken and "◆ Another move waits further into the
+  Gauntlet."
+- **Tests:** `way_up_stands` (new), `way_up_road` (the gate stays until the run is paid; paid once).

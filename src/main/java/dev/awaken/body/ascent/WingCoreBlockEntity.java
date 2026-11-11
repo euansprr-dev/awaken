@@ -16,10 +16,12 @@ import net.minecraft.world.phys.Vec3;
  * the scene of a first time, if they hold the rank it waits for ({@link #RANK}, progression plan decision 2) and the
  * rope carried them up to it (the platform's visit, ArrivalHooks.byLine: its rings by rope, never a pearl, a power's
  * flight, a hang or a tower). Otherwise it says why on first contact, then at most every {@link #TELL_EVERY}, each
- * refusal in its own words ({@link Refusal}), and logs it. Nothing saved.
+ * refusal in its own words ({@link Refusal}), and logs it. Nothing saved. The wings themselves hang in a case over it
+ * (the client's WingCaseRenderer).
  */
 public class WingCoreBlockEntity extends BlockEntity {
-    static final double REACH = 3.0;
+    /** From the core's middle to anyone standing at the case's rail (two out, its corners nearly three). */
+    static final double REACH = 4.7;
     /** The rank the core gives wings to. */
     static final dev.awaken.progression.Rank RANK = dev.awaken.progression.Rank.C;
     /** A refusal is said on arrival, then at most this often. */
@@ -76,6 +78,9 @@ public class WingCoreBlockEntity extends BlockEntity {
         if (why != Refusal.NONE) {
             if (dev.awaken.core.Throttle.allow(p, "wing_core_" + why.key, TELL_EVERY)) {
                 p.sendSystemMessage(Component.translatable("awaken.ascent.core." + why.key, RANK.label), true);
+                // the case's own answer to the rank: the vault's shutter refusing, low (Minecraft's own recording)
+                if (why == Refusal.RANK) p.level().playSound(null, pos, net.minecraft.sounds.SoundEvents.VAULT_INSERT_ITEM_FAIL,
+                        net.minecraft.sounds.SoundSource.BLOCKS, 0.9F, 0.7F);
                 dev.awaken.Awaken.LOG.info("[ascent] the sky core at {} stays dark for {}: {}", pos.toShortString(), p.getPlainTextName(), why.key);
             }
             if (why == Refusal.RANK) {
@@ -99,9 +104,8 @@ public class WingCoreBlockEntity extends BlockEntity {
         return true;
     }
 
-    /** Client: the core breathes a ring of light now and then, and its island has an air of its own (SPEC §17.29). */
+    /** Client: the case's air (light off the feathers, wind across the deck, the wings stirring). */
     static void clientTick(Level level, BlockPos pos, BlockState state, WingCoreBlockEntity be) {
-        if ((level.getGameTime() + pos.asLong()) % 60 == 0) dev.awaken.body.ascent.client.AscentFxBridge.coreRing(pos);
-        dev.awaken.body.ascent.client.AscentFxBridge.skyAir(pos);
+        dev.awaken.body.ascent.client.AscentFxBridge.caseTick(level, pos);
     }
 }

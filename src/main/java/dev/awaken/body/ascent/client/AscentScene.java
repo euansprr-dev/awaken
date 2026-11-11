@@ -24,8 +24,7 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 final class AscentScene {
     private AscentScene() {}
 
-    /** The scene's length; the tick the wings unfold (the Wings' case times its flight to it); a short edge's length. */
-    static final int LENGTH = 130, WINGS_AT = 34, EDGE_LENGTH = 64;
+    private static final int LENGTH = 130, WINGS_AT = 34, EDGE_LENGTH = 64;
     static int pending, playing, age = -1, waited, mode, playingMode;
 
     static void remember(int bits, int sceneMode) {
@@ -41,6 +40,12 @@ final class AscentScene {
 
     static boolean running() {
         return age >= 0;
+    }
+
+    /** The wings' gift, for the case at a sky core: -2 none, -1 given and waiting to begin, else the scene's age. */
+    static int wingsGift() {
+        if (pending != 0 && age < 0 && mode == AscentPayloads.GIFT_WINGS) return -1;
+        return age >= 0 && playingMode == AscentPayloads.GIFT_WINGS ? age : -2;
     }
 
     static void tick(LocalPlayer p) {
@@ -112,7 +117,9 @@ final class AscentScene {
         // The Way Up (SPEC §63.3): in a fight there is no scene, only the Lesson's strip of keys; and no gift carries a
         // line of clipped words any more (its Lesson or its card of keys says how)
         boolean way = dev.awaken.body.BodyConfig.wayUp();
-        if (way && playingMode == AscentPayloads.SKY_EDGE) return;
+        // and since SPEC §71.2 a gift's words are the Unlock title's (WayClient.sceneBegan): the scene keeps its light and
+        // its swell, and draws no line of its own. Only an old world's first load ("Your body remembers") still does.
+        if (way && playingMode != AscentPayloads.REMEMBER) return;
         float a1 = edge ? env(t, 2, 10, 46, 62) : env(t, 8, 22, 100, 122), a2 = edge ? env(t, 12, 20, 50, 64)
                 : env(t, WINGS_AT + 6, WINGS_AT + 20, 104, 126);
         if (way && playingMode != AscentPayloads.REMEMBER) a2 = 0;

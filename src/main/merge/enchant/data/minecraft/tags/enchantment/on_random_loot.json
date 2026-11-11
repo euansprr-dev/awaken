@@ -14,6 +14,11 @@
     "minecraft:loyalty",
     "minecraft:riptide",
     "minecraft:luck_of_the_sea",
-    "minecraft:lure"
+    "minecraft:lure",
+    "minecraft:looting",
+    "minecraft:unbreaking",
+    "minecraft:respiration",
+    "minecraft:blast_protection",
+    "minecraft:projectile_protection"
   ]
 }

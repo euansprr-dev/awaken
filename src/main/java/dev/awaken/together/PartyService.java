@@ -198,6 +198,13 @@ final class PartyService implements PartyHooks.Access {
         if (!were) {
             Signal.toast(a, line("You and " + name(b) + " are travelling together now."));
             Signal.toast(b, line("You and " + name(a) + " are travelling together now."));
+            PartyData.Party made = data.of(a.getUUID());
+            if (made != null && SharedXp.of(made) != SharedXp.OWN) {
+                String shared = "Shared XP is on " + SharedXp.label(SharedXp.of(made)) + (SharedXp.of(made) == SharedXp.EQUAL
+                        ? ": what either of you earns, you both get." : ": you each get half of what the other earns.") + " The band's Together section changes it.";
+                Signal.toast(a, line(shared));
+                Signal.toast(b, line(shared));
+            }
             a.level().playSound(null, a.getX(), a.getY(), a.getZ(), TogetherContent.JOIN, SoundSource.PLAYERS, 0.7F, 1F);
             DirectorLog.log(a, "together", "party with " + name(b));
         }

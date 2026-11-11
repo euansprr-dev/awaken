@@ -36,11 +36,12 @@ public final class AscentClient {
         modBus.addListener((net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent e) -> e.registerEntityModifier(
                 new com.google.common.reflect.TypeToken<net.minecraft.client.renderer.entity.EntityRenderer<net.minecraft.world.entity.Entity,
                         net.minecraft.client.renderer.entity.state.EntityRenderState>>() {}, AscentAnims::modify));
-        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) ->
-                e.registerBlockEntityRenderer(AscentContent.UPDRAFT_VENT_BE.get(), UpdraftRenderer::new));
-        // the Wings' case on a sky platform's core (SPEC §17.9)
-        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) ->
-                e.registerBlockEntityRenderer(AscentContent.WING_CORE_BE.get(), WingCaseRenderer::new));
+        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> {
+            e.registerBlockEntityRenderer(AscentContent.UPDRAFT_VENT_BE.get(), UpdraftRenderer::new);
+            // the Lesson's figure of light (SPEC §71)
+            e.registerEntityRenderer(AscentContent.FIGURE.get(), LessonFigureRenderer::new);
+            e.registerBlockEntityRenderer(AscentContent.WING_CORE_BE.get(), WingCaseRenderer::new);
+        });
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_flow"), AscentFlow::render));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
@@ -71,7 +72,8 @@ public final class AscentClient {
         bus.addListener(net.neoforged.neoforge.client.event.sound.PlaySoundEvent.class, AscentScores::onPlay);
         bus.addListener(ExtractLevelRenderStateEvent.class, AscentRender::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, AscentRender::onSubmit);
-        bus.addListener(SubmitCustomGeometryEvent.class, WindwayRenderer::onSubmit);
+        // the windways' and updrafts' gusts: a pass of their own after the level (SPEC §17.12, "The look")
+        bus.addListener(net.neoforged.neoforge.client.event.RenderLevelStageEvent.AfterLevel.class, WindwayRenderer::onAfterLevel);
         bus.addListener(RenderFrameEvent.Post.class, e -> ClipRecorder.frame());
         // the whole figure turns with the flight (after the body's own lean, LOW, and the casts' at LOWEST)
         bus.addListener(EventPriority.HIGH, RenderPlayerEvent.Pre.class, AscentAnims::onPre);

@@ -36,9 +36,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * as it rose spiral up round it from the ground to under the pier, each a short sling over the last ({@link #stair}),
  * a lantern hanging under each. Placed with the rig, and on its own for platforms rigged before it.
  * <p>
- * The Wings' case and the arrival (11 Nov 2026): barriers in the drawn case's footprint round the core
- * ({@link #caseCells}) and an arch over the pier's root ({@link #archCells}); placed with the rig, and on their own for
- * platforms rigged before them.
+ * The arrival (11 Nov 2026): an arch over the pier's root ({@link #archCells}), beside the wings' hall; placed with the
+ * rig, and on its own for platforms rigged before it.
  */
 public final class SkyRig {
     private SkyRig() {}
@@ -248,7 +247,8 @@ public final class SkyRig {
             if (!level.getBlockState(new BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) rig(level, cx, deckY, cz);
             else {
                 if (STAIR && !stairPlaced(level, cx, deckY, cz)) rigStair(level, cx, deckY, cz);
-                if (!casePlaced(level, cx, deckY, cz)) rigCase(level, cx, deckY, cz);
+                if (!hallPlaced(level, cx, deckY, cz)) rigHall(level, cx, deckY, cz);
+                if (!archPlaced(level, cx, deckY, cz)) rigArch(level, cx, deckY, cz);
             }
         }
     }
@@ -279,8 +279,13 @@ public final class SkyRig {
         return g;
     }
 
-    /** Places the pier, the chain, the rings and the core. */
+    /** Places the pier, the chain, the rings, the stair (while {@link #STAIR}), the core and the wings' hall. */
     public static void rig(ServerLevel level, int cx, int deckY, int cz) {
+        rig(level, cx, deckY, cz, STAIR);
+    }
+
+    /** {@code stair}: with the stair down to the ground or without it (a test's rig high over other tests). */
+    public static void rig(ServerLevel level, int cx, int deckY, int cz, boolean stair) {
         int ground = groundUnder(level, cx, cz);
         Layout l = layout(cx, deckY, cz, ground);
         int flags = Block.UPDATE_CLIENTS;
@@ -330,27 +335,15 @@ public final class SkyRig {
             }
             if (opened > 0) dev.awaken.Awaken.LOG.info("[ascent] sky platform at {}, {}: {} leaves cleared under the first ring", cx, cz, opened);
         }
-        if (STAIR) rigStair(level, cx, deckY, cz);
+        if (stair) rigStair(level, cx, deckY, cz);
         level.setBlock(l.core(), AscentContent.WING_CORE.get().defaultBlockState(), flags);
-        rigCase(level, cx, deckY, cz);
+        rigHall(level, cx, deckY, cz);
+        rigArch(level, cx, deckY, cz);
         dev.awaken.Awaken.LOG.info("[ascent] sky platform rigged at {}, {} (deck {}): {} rings down to {} (ground {})", cx, cz, deckY,
                 l.rings().size(), l.chainBottom(), ground);
     }
 
-    // ---- the Wings' case and the arrival (11 Nov 2026) ----------------------------------------------------------
-
-    /**
-     * The Wings' case's footprint (SPEC §17.9): the case is drawn (WingCaseRenderer), three blocks square round the core
-     * and 3.4 high, so barriers stand in the 3x3 round the core three high, and over the core, to keep bodies out of its
-     * glass.
-     */
-    public static List<BlockPos> caseCells(BlockPos core) {
-        List<BlockPos> out = new ArrayList<>();
-        for (int dy = 0; dy <= 2; dy++) for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
-            if (dx != 0 || dz != 0 || dy > 0) out.add(core.offset(dx, dy, dz));
-        }
-        return out;
-    }
+    // ---- the arrival's arch (11 Nov 2026) -------------------------------------------------------------------
 
     /** The arch's place: the pier's cells out along x and z where it crosses (a + b = 2 ARCH and one more). */
     static final int ARCH = 7;
@@ -379,17 +372,14 @@ public final class SkyRig {
         return out;
     }
 
-    /** Whether the case's barriers stand (a platform rigged before 11 Nov has none yet). */
-    public static boolean casePlaced(ServerLevel level, int cx, int deckY, int cz) {
-        return level.getBlockState(new BlockPos(cx, deckY + 2, cz)).is(Blocks.BARRIER);
+    /** Whether the arch stands (a platform rigged before 11 Nov has none yet): the light in its beam's middle. */
+    public static boolean archPlaced(ServerLevel level, int cx, int deckY, int cz) {
+        return level.getBlockState(new BlockPos(cx + ARCH, deckY + 5, cz + ARCH)).is(RuinBuilder.glow().getBlock());
     }
 
-    /** The case's barriers (in air only) and the arch over the pier's root (where nothing solid stands). */
-    public static void rigCase(ServerLevel level, int cx, int deckY, int cz) {
+    /** The arch over the pier's root, where nothing solid stands (the light in its beam is the mark it is up). */
+    public static void rigArch(ServerLevel level, int cx, int deckY, int cz) {
         int flags = Block.UPDATE_CLIENTS;
-        for (BlockPos q : caseCells(new BlockPos(cx, deckY + 1, cz))) {
-            if (level.getBlockState(q).isAir()) level.setBlock(q, Blocks.BARRIER.defaultBlockState(), flags);
-        }
         for (int[] c : archCells()) {
             BlockPos q = new BlockPos(cx + c[0], deckY + c[1], cz + c[2]);
             if (!level.getBlockState(q).canBeReplaced()) continue;
@@ -403,11 +393,69 @@ public final class SkyRig {
         }
     }
 
+    // ---- the wings' hall (11 Nov 2026) ---------------------------------------------------------------------------
+
+    /** Whether the cabin is the wings' hall yet: the lit panel under the core is its mark (placed last). */
+    public static boolean hallPlaced(ServerLevel level, int cx, int deckY, int cz) {
+        return level.getBlockState(new BlockPos(cx, deckY, cz)).is(RuinBuilder.glow().getBlock());
+    }
+
+    /**
+     * Which of the cabin's diagonals has its inner corners empty. The blueprint keeps its chest and its stand in two
+     * opposite corners whichever way it was turned: 1 when the pier's diagonal (+x +z, -x -z) is free, so the pier
+     * runs straight in at a portal; -1 when the other is (+x -z, -x +z), a quarter turn round the deck from the pier.
+     */
+    public static int hallAxis(ServerLevel level, int cx, int deckY, int cz) {
+        return level.getBlockState(new BlockPos(cx + 3, deckY + 1, cz + 3)).isAir() && level.getBlockState(new BlockPos(cx - 3, deckY + 1, cz - 3)).isAir() ? 1 : -1;
+    }
+
+    /**
+     * The cabin made the hall where the wings hang (SPEC §17.9, "The wings on show"; the client's WingCaseRenderer
+     * draws the pair and the case's glass): two opposite corners opened as portals four high with pillars for jambs,
+     * light in the threshold and a soul lantern hung in the head; a rail of wall round the core two out, which the case's glass stands on (nobody
+     * walks into the case), light in the deck under its corners; a line of light down the pier's middle; and the mark
+     * under the core last. Placed with the rig, and on its own for platforms rigged before it.
+     */
+    public static void rigHall(ServerLevel level, int cx, int deckY, int cz) {
+        int flags = Block.UPDATE_CLIENTS, axis = hallAxis(level, cx, deckY, cz);
+        BlockState air = Blocks.AIR.defaultBlockState();
+        for (int s = -1; s <= 1; s += 2) {
+            int px = s, pz = s * axis;
+            int[][] open = {{4, 4}, {3, 4}, {4, 3}, {2, 4}, {4, 2}}, jambs = {{1, 4}, {4, 1}};
+            for (int up = 1; up <= 4; up++) {
+                for (int[] o : open) level.setBlock(new BlockPos(cx + px * o[0], deckY + up, cz + pz * o[1]), air, flags);
+                for (int[] j : jambs) level.setBlock(new BlockPos(cx + px * j[0], deckY + up, cz + pz * j[1]), RuinBuilder.pillar(), flags);
+            }
+            level.setBlock(new BlockPos(cx + px * 4, deckY, cz + pz * 4), RuinBuilder.glow(), flags);
+            // a lamp of the Signal's colour hung in the portal's head (three clear under it)
+            level.setBlock(new BlockPos(cx + px * 4, deckY + 4, cz + pz * 4), Blocks.SOUL_LANTERN.defaultBlockState()
+                    .setValue(net.minecraft.world.level.block.LanternBlock.HANGING, true), flags);
+        }
+        BlockState wall = Blocks.POLISHED_DEEPSLATE_WALL.defaultBlockState();
+        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
+        // the rail, then each piece joined to its neighbours (a block set from code takes no shape by itself)
+        for (int pass = 0; pass < 2; pass++) {
+            for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
+                if (Math.max(Math.abs(dx), Math.abs(dz)) != 2) continue;
+                m.set(cx + dx, deckY + 1, cz + dz);
+                BlockState now = level.getBlockState(m);
+                if (pass == 0 && now.canBeReplaced()) level.setBlock(m, wall, flags);
+                else if (pass == 1 && now.is(wall.getBlock())) level.setBlock(m, Block.updateFromNeighbourShapes(now, level, m), flags);
+            }
+        }
+        for (int dx = -2; dx <= 2; dx += 4) for (int dz = -2; dz <= 2; dz += 4) level.setBlock(new BlockPos(cx + dx, deckY, cz + dz), RuinBuilder.glow(), flags);
+        // the pier's middle: a lamp every third cell (its end stays brass: the first flight's last step)
+        for (int a = PIER_ROOT; a < PIER; a += 3) level.setBlock(new BlockPos(cx + a, deckY, cz + a), RuinBuilder.glow(), flags);
+        level.setBlock(new BlockPos(cx, deckY, cz), RuinBuilder.glow(), flags);
+        dev.awaken.Awaken.LOG.info("[ascent] sky platform at {}, {}: the wings' hall, its portals on the {} diagonal", cx, cz, axis > 0 ? "pier's" : "other");
+    }
+
     /** How far round the deck's centre the stair builds (its radius and a stone's, and the canopy cleared round it). */
     static final int STAIR_REACH = 40;
     /**
-     * Whether the rig builds the stair (with the platform's look, waiting for Euan's eye on its tour shots before any
-     * world gets it); {@code /awaken ascent sky goto stair} builds it on the platform it goes to either way.
+     * Whether the rig builds the stair. Off until Euan has seen the climb filmed (11 Nov 2026): a laid stair stays in a
+     * saved world for good, and nobody has seen one yet. {@code /awaken ascent sky goto stair} builds it on the platform
+     * it goes to either way, so it can be looked at before it is turned on.
      */
     public static final boolean STAIR = false;
 
@@ -475,34 +523,24 @@ public final class SkyRig {
                 stones.isEmpty() ? "-" : stones.getFirst().top());
     }
 
-    /** The stair's stones on the land as it is under them, bottom first ({@link #stair}). */
-    public static List<Stone> stairOn(ServerLevel level, int cx, int deckY, int cz) {
-        // the land under each place, under its stone if one is there: once the stair stands, a heightmap stands on the
-        // stones themselves, and every stone read as sitting on the ground (a tour's sky goto stair found none)
-        Map<Long, Integer> tops = new java.util.HashMap<>();
-        for (Stone s : helix(cx, deckY, cz, Stair.DEFAULT, -64)) tops.put(BlockPos.asLong(s.x(), 0, s.z()), s.top());
-        java.util.function.IntBinaryOperator ground = (x, z) -> {
-            Integer top = tops.get(BlockPos.asLong(x, 0, z));
-            return top == null ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) : land(level, x, z, top);
-        };
-        return stair(cx, deckY, cz, Stair.DEFAULT, ground, (x, z) -> !level.getFluidState(new BlockPos(x, ground.applyAsInt(x, z) - 1, z)).isEmpty());
+    /**
+     * The stair's stones as they stand, bottom first: a laid stair can't be worked out from the land again (the land's
+     * heights are the stones' own tops now, so {@link #stairOn} finds none), but it can be read back, the helix from
+     * the top down for as long as a column's height is its stone's top.
+     */
+    public static List<Stone> stairStanding(ServerLevel level, int cx, int deckY, int cz) {
+        List<Stone> kept = new ArrayList<>();
+        for (Stone s : helix(cx, deckY, cz, Stair.DEFAULT, level.getMinY())) {
+            if (level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, s.x(), s.z()) != s.top() + 1) break;
+            kept.add(s);
+        }
+        return kept.reversed();
     }
 
-    /**
-     * The land's first free height in a column where a stone tops out at {@code top}: the heightmap's, unless that is the
-     * stone (it reaches within 12 of the top): then down through the stone's cells to the air under its keel, and on down
-     * to the first block a heightmap would stand on. No air under it within 14: it is the land.
-     */
-    static int land(ServerLevel level, int x, int z, int top) {
-        int h = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-        if (h <= top - 12) return h;
-        var opaque = Heightmap.Types.MOTION_BLOCKING_NO_LEAVES.isOpaque();
-        BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos(x, 0, z);
-        int y = Math.min(h - 1, top + 1), floor = top - 14;
-        while (y > floor && !level.getBlockState(m.setY(y)).isAir()) y--;
-        if (y <= floor) return h;
-        while (y > level.getMinY() && !opaque.test(level.getBlockState(m.setY(y)))) y--;
-        return y + 1;
+    /** The stair's stones on the land as it is under them, bottom first ({@link #stair}): only before it is laid. */
+    public static List<Stone> stairOn(ServerLevel level, int cx, int deckY, int cz) {
+        return stair(cx, deckY, cz, Stair.DEFAULT, (x, z) -> level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z),
+                (x, z) -> !level.getFluidState(new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1, z)).isEmpty());
     }
 
     /** The block for a stone's cell. */

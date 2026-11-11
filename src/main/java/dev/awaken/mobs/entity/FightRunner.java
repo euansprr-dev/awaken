@@ -1047,8 +1047,11 @@ final class FightRunner {
         // out of: a dash, a step, a roll
         // a blow that met nobody though you stood in its reach: one line each, for the next playtest (SPEC §47.3)
         if (k == active && mind != null && inReach && hits == 0 && !m.hits().isEmpty() && target != null) {
-            dev.awaken.Awaken.LOG.info("[fights] missed {} {} {}: {} blocks off, {}", fight.id(), m.id(), cls,
-                    String.format("%.1f", edgeDistance(target)), boss.getSensing().hasLineOfSight(target) ? "in sight" : "out of sight");
+            // with the guard's state: a guard raised for a blow that passed you by is no parry to judge (SPEC §68.6)
+            boolean guard = target.isUsingItem() && dev.awaken.arms.Arms.guards(target.getUseItem());
+            dev.awaken.Awaken.LOG.info("[fights] missed {} {} {}: {} blocks off, {}{}", fight.id(), m.id(), cls,
+                    String.format("%.1f", edgeDistance(target)), boss.getSensing().hasLineOfSight(target) ? "in sight" : "out of sight",
+                    guard ? ", guard up " + target.getTicksUsingItem() + " ticks" : "");
         }
         if (k == active && inReach && !struck && fight.mirrors() && read == Strikes.Habit.NONE) slips++;
         if (t < wind + active + recover) {

@@ -468,9 +468,15 @@ public final class AscentServer {
                 if (Ascent.has(p, Ascent.Tier.WINGS) && st.wings) link(p, AscentMemory.Track.WINGS, 6);
             }
             case AscentPayloads.EV_DOUBLE, AscentPayloads.EV_DASH, AscentPayloads.EV_DIVE, AscentPayloads.EV_AIM_DIVE -> {
-                if (Ascent.has(p, Ascent.Tier.LEAPER)) {
+                // the leap a move at a time (SPEC §71.3): one not yet taken at its stand is not counted
+                WayUp.Leap leap = msg.what() == AscentPayloads.EV_DOUBLE ? WayUp.Leap.DOUBLE
+                        : msg.what() == AscentPayloads.EV_DASH ? WayUp.Leap.DASH
+                        : msg.what() == AscentPayloads.EV_AIM_DIVE ? WayUp.Leap.DIVE : WayUp.Leap.SLAM;
+                if (Ascent.has(p, Ascent.Tier.LEAPER) && WayUp.canLeap(p, leap)) {
                     link(p, AscentMemory.Track.LEAPER, 2);
                     dev.awaken.core.api.TipHooks.done(p, AscentTips.LEAPER);
+                    // a Gauntlet's timed run counts its jumps and dashes here, its slams where they land
+                    if (leap != WayUp.Leap.SLAM) WayUp.used(p, leap);
                 }
             }
             case AscentPayloads.EV_SLAM_LAND, AscentPayloads.EV_DIVE_LAND -> {
@@ -500,6 +506,10 @@ public final class AscentServer {
         // in the Sovereign form a dive lands as the Judgement Fall (SPEC §17.19)
         if ((m.state.airborne() || now(p) - m.endedAt < SOFT_LANDING) && Sovereign.judgement(p, speed)) return;
         if (!Ascent.has(p, Ascent.Tier.LEAPER) || !(m.state.airborne() || now(p) - m.endedAt < SOFT_LANDING)) return;
+        if (!WayUp.canLeap(p, WayUp.Leap.SLAM)) return;
+        // a course may answer it (SPEC §71.4: a deck that only a slam breaks), and a timed run counts it
+        dev.awaken.core.api.TrialHooks.slamLanded(p, p.getX(), p.getY(), p.getZ(), speed);
+        WayUp.used(p, WayUp.Leap.SLAM);
         shock(p, speed);
     }
 
@@ -514,6 +524,8 @@ public final class AscentServer {
     static void diveLand(ServerPlayer p, float speed) {
         AscentMotion m = motion(p);
         if (!Ascent.has(p, Ascent.Tier.LEAPER) || !(m.state.airborne() || now(p) - m.endedAt < SOFT_LANDING)) return;
+        // the Way Up's dive (SPEC §71.3); never a course's slam (a deck only a slam breaks stays whole under a dive)
+        if (!WayUp.canLeap(p, WayUp.Leap.DIVE)) return;
         if (now(p) - m.diveLandAt < DIVE_LAND_GAP) return;
         m.diveLandAt = now(p);
         shock(p, (float) Math.min(AscentRules.DIVE_SPEED, Math.max(0, speed)));

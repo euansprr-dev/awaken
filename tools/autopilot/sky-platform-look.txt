@@ -3,7 +3,8 @@
 # then a real climb up the rings by rope at day (the core must give the wings: "[ascent] the sky core at ... gives"),
 # and the gift replayed beside the case at day and at dusk (the glass sinks, the wings fold and fly to the back).
 # Views: /awaken ascent sky view <out> <up> [turn] (out along the pier's diagonal from the deck's middle, turned by
-# turn degrees, up over the deck, facing the core), in spectator. Turned 45 is due south: the cabin's door.
+# turn degrees, up over the deck, facing the core), in spectator. Turned 0 is the pier's diagonal: the wings' hall's
+# portal when its corners are free (SkyRig.hallAxis), so d05a looks in through it and d05 stands at the rail's corner.
 # The first view is asked twice: the server's first search for the platform took 7 s on CI and the shot went first.
 # Run on CI: tools/tour-ci.sh tools/autopilot/sky-platform-look.txt 2400
 world sky_platform_look survival 4246
@@ -64,10 +65,10 @@ shot d03_under
 cmd awaken ascent sky view 13 0.4 0
 wait 40
 shot d04_top_arch
-cmd awaken ascent sky view 9 1 45
+cmd awaken ascent sky view 7.5 1.2 0
 wait 40
 shot d05a_door
-cmd awaken ascent sky view 4.4 1 45
+cmd awaken ascent sky view 3.4 1 0
 wait 40
 shot d05_case
 # ---- dusk: the same views
@@ -85,10 +86,10 @@ shot k03_under
 cmd awaken ascent sky view 13 0.4 0
 wait 40
 shot k04_top_arch
-cmd awaken ascent sky view 9 1 45
+cmd awaken ascent sky view 7.5 1.2 0
 wait 40
 shot k05a_door
-cmd awaken ascent sky view 4.4 1 45
+cmd awaken ascent sky view 3.4 1 0
 wait 40
 shot k05_case
 # ---- day: the climb by rope from under the lowest ring

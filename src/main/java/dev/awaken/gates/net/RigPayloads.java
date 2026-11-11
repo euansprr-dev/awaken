@@ -19,10 +19,12 @@ public final class RigPayloads {
 
     /**
      * A rig room as the client needs it. Mirror Hall: the lens, its direction and the seal. Wells: their boxes (min, max
-     * pairs). Gauntlet: its checkpoint rings, each as the two end cells of the row it stands over (floor level).
+     * pairs). Gauntlet: its checkpoint rings, each as the two end cells of the row it stands over (floor level), and its
+     * presses: the floor-level cell of every column a press comes down in, the block it is made of and how far it travels,
+     * so a press that is up can be drawn where it is parked.
      */
     public record Room(int kind, int theme, BlockPos min, BlockPos max, BlockPos lens, int dir, BlockPos seal, List<BlockPos> wells,
-                       boolean surge) {
+                       boolean surge, List<BlockPos> presses, int ram, int travel) {
         public static final StreamCodec<ByteBuf, Room> CODEC = StreamCodec.of((buf, r) -> {
             ByteBufCodecs.VAR_INT.encode(buf, r.kind);
             ByteBufCodecs.VAR_INT.encode(buf, r.theme);
@@ -33,9 +35,13 @@ public final class RigPayloads {
             BlockPos.STREAM_CODEC.encode(buf, r.seal);
             BlockPos.STREAM_CODEC.apply(ByteBufCodecs.list(16)).encode(buf, r.wells);
             ByteBufCodecs.BOOL.encode(buf, r.surge);
+            BlockPos.STREAM_CODEC.apply(ByteBufCodecs.list(512)).encode(buf, r.presses);
+            ByteBufCodecs.VAR_INT.encode(buf, r.ram);
+            ByteBufCodecs.VAR_INT.encode(buf, r.travel);
         }, buf -> new Room(ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), BlockPos.STREAM_CODEC.decode(buf),
                 BlockPos.STREAM_CODEC.decode(buf), BlockPos.STREAM_CODEC.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
-                BlockPos.STREAM_CODEC.decode(buf), BlockPos.STREAM_CODEC.apply(ByteBufCodecs.list(16)).decode(buf), ByteBufCodecs.BOOL.decode(buf)));
+                BlockPos.STREAM_CODEC.decode(buf), BlockPos.STREAM_CODEC.apply(ByteBufCodecs.list(16)).decode(buf), ByteBufCodecs.BOOL.decode(buf),
+                BlockPos.STREAM_CODEC.apply(ByteBufCodecs.list(512)).decode(buf), ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf)));
     }
 
     /** The rig rooms of the floor you are on (empty when you are on none). */

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "awaken:block/skiff_hull",
+    "top": "awaken:block/skiff_hull",
+    "side": "awaken:block/skiff_hull"
+  }
+}

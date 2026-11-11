@@ -16,10 +16,12 @@ public final class WayPayloads {
     /**
      * Server → client: your road. {@code told}, {@code done}, {@code owed}: a bit a rung ({@link WayUp.Rung}); the five
      * places (packed blocks, {@link WayMemory#NONE} for none); the Gauntlet's gate while it stands; {@code woke}: the
-     * rung whose place lit up just now (-1 for none), so the client shows it once; and {@code moves}: which of Rope and
-     * Wings' six moves have been made once (a bit each, {@link WayUp.Move}), so a move's lesson ends for good.
+     * rung whose place lit up just now (-1 for none), so the client shows it once; {@code moves}: which of Rope and
+     * Wings' six moves have been made once (a bit each, {@link WayUp.Move}), so a move's lesson ends for good;
+     * {@code leap}: which of the leap's moves may be made (a bit each, {@link WayUp.Leap}; all of them unless the leap is
+     * being taken a stand at a time, SPEC §71.3) and {@code stands}: the stands taken.
      */
-    public record Way(int told, int done, int owed, long[] places, long gateAt, int woke, int moves) implements CustomPacketPayload {
+    public record Way(int told, int done, int owed, long[] places, long gateAt, int woke, int moves, int leap, int stands) implements CustomPacketPayload {
         public static final Type<Way> TYPE = new Type<>(Awaken.id("ascent_way"));
         public static final StreamCodec<ByteBuf, Way> STREAM_CODEC = StreamCodec.of((buf, m) -> {
             ByteBufCodecs.VAR_INT.encode(buf, m.told);
@@ -29,11 +31,13 @@ public final class WayPayloads {
             buf.writeLong(m.gateAt);
             buf.writeByte(m.woke);
             buf.writeByte(m.moves);
+            buf.writeByte(m.leap);
+            buf.writeByte(m.stands);
         }, buf -> {
             int told = ByteBufCodecs.VAR_INT.decode(buf), done = ByteBufCodecs.VAR_INT.decode(buf), owed = ByteBufCodecs.VAR_INT.decode(buf);
             long[] places = new long[WayUp.Rung.VALUES.length];
             for (int i = 0; i < places.length; i++) places[i] = buf.readLong();
-            return new Way(told, done, owed, places, buf.readLong(), buf.readByte(), buf.readByte());
+            return new Way(told, done, owed, places, buf.readLong(), buf.readByte(), buf.readByte(), buf.readByte(), buf.readByte());
         });
         @Override public Type<Way> type() { return TYPE; }
     }
@@ -53,5 +57,42 @@ public final class WayPayloads {
             buf.writeDouble(m.dz);
         }, buf -> new Lesson(ByteBufCodecs.VAR_INT.decode(buf), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readDouble(), buf.readDouble()));
         @Override public Type<Lesson> type() { return TYPE; }
+    }
+
+    /** What a {@link Spot} marks: the gulf before the first stand, a spot that needs a move, a spot missed three times. */
+    public static final int SPOT_REACH = 0, SPOT_USE = 1, SPOT_MISS = 2;
+
+    /**
+     * Server → client: a mark of the Leaper's Gauntlet's course reached (SPEC §71.4), with its two ends (packed blocks:
+     * a gulf's lips, a spot's take-off and landing). {@code leap}: the move the spot needs ({@link WayUp.Leap}'s ordinal,
+     * -1 for none); {@code n}: which of the hall's spots it is, from 1.
+     */
+    public record Spot(int kind, int leap, int n, long from, long to) implements CustomPacketPayload {
+        public static final Type<Spot> TYPE = new Type<>(Awaken.id("ascent_spot"));
+        public static final StreamCodec<ByteBuf, Spot> STREAM_CODEC = StreamCodec.of((buf, m) -> {
+            buf.writeByte(m.kind);
+            buf.writeByte(m.leap);
+            buf.writeByte(m.n);
+            buf.writeLong(m.from);
+            buf.writeLong(m.to);
+        }, buf -> new Spot(buf.readByte(), buf.readByte(), buf.readByte(), buf.readLong(), buf.readLong()));
+        @Override public Type<Spot> type() { return TYPE; }
+    }
+
+    /** Server → client: your stand's stroke has landed (§71.3): the move is yours, saved; play it and show its title. */
+    public record Stroke(int leap, long pos) implements CustomPacketPayload {
+        public static final Type<Stroke> TYPE = new Type<>(Awaken.id("ascent_stroke"));
+        public static final StreamCodec<ByteBuf, Stroke> STREAM_CODEC = StreamCodec.of((buf, m) -> {
+            buf.writeByte(m.leap);
+            buf.writeLong(m.pos);
+        }, buf -> new Stroke(buf.readByte(), buf.readLong()));
+        @Override public Type<Stroke> type() { return TYPE; }
+    }
+
+    /** Client → server: Use was held for a second on the stand at {@code pos}, standing on it. The server checks it all again. */
+    public record Take(long pos) implements CustomPacketPayload {
+        public static final Type<Take> TYPE = new Type<>(Awaken.id("ascent_take"));
+        public static final StreamCodec<ByteBuf, Take> STREAM_CODEC = StreamCodec.of((buf, m) -> buf.writeLong(m.pos), buf -> new Take(buf.readLong()));
+        @Override public Type<Take> type() { return TYPE; }
     }
 }

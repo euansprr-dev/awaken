@@ -36,6 +36,7 @@ public final class EnchantContent {
     static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
     static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Awaken.MODID);
     static final DeferredRegister<DataComponentType<?>> EFFECTS = DeferredRegister.create(Registries.ENCHANTMENT_EFFECT_COMPONENT_TYPE, Awaken.MODID);
+    static final DeferredRegister.DataComponents COMPONENTS = DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, Awaken.MODID);
     static final DeferredRegister<AttachmentType<?>> ATTACHMENTS = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Awaken.MODID);
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
     static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
@@ -67,6 +68,12 @@ public final class EnchantContent {
     public static final Supplier<BlockEntityType<WordStoneBlockEntity>> WORD_STONE_BE = BLOCK_ENTITIES.register("word_stone",
             () -> new BlockEntityType<>(WordStoneBlockEntity::new, WORD_STONE.get()));
 
+    /** The light a Lantern helmet sheds (SPEC §45.16): nothing to see, touch or hold; it only gives light. */
+    public static final DeferredBlock<LanternGlowBlock> LANTERN_GLOW = BLOCKS.registerBlock("lantern_glow", LanternGlowBlock::new,
+            p -> p.replaceable().noCollision().noLootTable().noOcclusion().instabreak()
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.POPPED)
+                    .lightLevel(s -> Lantern.LIGHT[s.getValue(LanternGlowBlock.LEVEL)]));
+
     /** One enchantment, held in vanilla's {@code stored_enchantments} so every tooltip and JEI read it; used, it teaches. */
     public static final DeferredItem<PageItem> PAGE = ITEMS.registerItem("enchantment_page", PageItem::new,
             p -> p.stacksTo(16).rarity(Rarity.RARE));
@@ -86,6 +93,23 @@ public final class EnchantContent {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> HARVEST = EFFECTS.register("harvest",
             () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
 
+    /** A helmet that lights the dark (SPEC §45.16). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> LANTERN = EFFECTS.register("lantern",
+            () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
+
+    /** The rest of the new words (SPEC §45.16, {@link Words}); Long Arm is an attribute in its data alone. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> REGROWTH = EFFECTS.register("regrowth",
+            () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> REMEMBRANCE = EFFECTS.register("remembrance",
+            () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> GATHER = EFFECTS.register("gather",
+            () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> WAYFARER = EFFECTS.register("wayfarer",
+            () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
+    /** The names a piece with Remembrance keeps (schemaVersion 1), saved and synced with the item. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Words.Remembered>> REMEMBERED =
+            COMPONENTS.registerComponentType("remembered", b -> b.persistent(Words.Remembered.CODEC).networkSynchronized(Words.Remembered.STREAM_CODEC));
+
     /** What you know (SPEC §45.2): kept through death, synced to you alone for the book, the Journal and Tasks. */
     public static final Supplier<AttachmentType<Known>> KNOWN = ATTACHMENTS.register("enchant_known",
             () -> AttachmentType.builder(Known::fresh).serialize(Known.CODEC).copyOnDeath()
@@ -98,7 +122,9 @@ public final class EnchantContent {
             CUT_METAL = sound("cut_metal"), CUT_LEATHER = sound("cut_leather"),
             NOTE_WARD = sound("note_ward"), NOTE_BANE = sound("note_bane"), NOTE_SPOILS = sound("note_spoils"),
             NOTE_CARRY = sound("note_carry"), NOTE_KEEP = sound("note_keep"), WAKE = sound("wake"), LEARN = sound("learn"),
-            FLARE = sound("flare"), DRIFT = sound("drift"), SCRAPE = sound("scrape");
+            FLARE = sound("flare"), DRIFT = sound("drift"), SCRAPE = sound("scrape"),
+            // a stroke sealing (it rang its family's note, a chime pitched up a step each time), and the low bell under the wake
+            SEAL = sound("seal"), WAKE_UNDER = sound("wake_under");
 
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register("enchant." + name, () -> SoundEvent.createVariableRangeEvent(Awaken.id("enchant." + name)));
@@ -119,6 +145,7 @@ public final class EnchantContent {
         ITEMS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
         EFFECTS.register(modBus);
+        COMPONENTS.register(modBus);
         ATTACHMENTS.register(modBus);
         SOUNDS.register(modBus);
         PARTICLES.register(modBus);

@@ -91,6 +91,11 @@ public final class Bells {
      * answer their home's song. Nothing plays at their feet.
      */
     static boolean ring(ServerPlayer p, BellCatalog.Def d, String where, @Nullable BlockPos hangs) {
+        return ring(p, d, where, hangs, false);
+    }
+
+    /** As above; {@code byWagon}: a bell you'd have been handed goes on the Registry's wagon to your yard instead (SPEC §67). */
+    static boolean ring(ServerPlayer p, BellCatalog.Def d, String where, @Nullable BlockPos hangs, boolean byWagon) {
         BellBook b = book(p);
         if (b.held.containsKey(d.no())) return false;
         MinecraftServer server = p.level().getServer();
@@ -102,7 +107,8 @@ public final class Bells {
         }
         boolean first = !b.given;
         b.given = true;
-        boolean isFar = far(d), seed = d.source() == BellCatalog.Source.SEED, wagon = d.source() == BellCatalog.Source.PROVING;
+        boolean isFar = far(d), seed = d.source() == BellCatalog.Source.SEED, proving = d.source() == BellCatalog.Source.PROVING;
+        boolean wagon = proving || byWagon && !isFar && !seed;
         if (isFar) b.far.put(d.no(), (hangs != null ? hangs : p.blockPosition()).asLong());
         // a Proving's Great Bell: the Registry's kept it in its cellar, and its wagon brings it to your yard the next day
         if (wagon) b.wagon.put(d.no(), PlayDays.current(server));
@@ -114,8 +120,9 @@ public final class Bells {
         StringBuilder body = new StringBuilder(d.rank().label + "-rank. ");
         body.append(isFar ? "People still ring it. It stays where it hangs and answers your song from there."
                 : seed ? "It hangs in the middle of your Great Belfry."
-                : wagon ? "The Registry has kept it in its cellar for eleven years. Its wagon will leave it in your yard by morning"
+                : proving ? "The Registry has kept it in its cellar for eleven years. Its wagon will leave it in your yard by morning"
                         + (home.isPresent() ? "." : ", once you have a home.") + " It needs a Great Beam, 12 or more blocks above your fire."
+                : wagon ? "The Registry's wagon will leave it in your yard by morning" + (home.isPresent() ? "." : ", once you have a home.") + " Hang it by your fire."
                 : "It's yours. Take it home and hang it.");
         if (!d.voice().words.isEmpty()) body.append(" While it hangs: ").append(d.voice().words.substring(0, 1).toLowerCase(java.util.Locale.ROOT)).append(d.voice().words.substring(1));
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Bell " + d.number() + " · " + d.name()))
@@ -348,7 +355,12 @@ public final class Bells {
     /** In Carillon: a city bell that's due rings where it hangs, and one that's due elsewhere is remembered aloud. */
     private static void city(ServerPlayer p) {
         ServerLevel level = p.level();
-        if (!CityHooks.inCity(level, p.blockPosition())) return;
+        boolean inCity = level == level.getServer().overworld() && CityHooks.inCity(level, p.blockPosition());
+        if (!inCity && dev.awaken.core.api.TheLull.farLanding(level.getServer())) {
+            farCity(p);
+            return;
+        }
+        if (!inCity) return;
         for (CityBell c : CITY_BELLS) {
             if (has(p, c.id()) || !cityBellDue(p, c.id())) continue;
             BlockPos at = c.spot().equals("roost") ? CityHooks.startPoint(p) : c.spot().equals("square") ? CityHooks.square(level) : null;
@@ -360,6 +372,21 @@ public final class Bells {
             remembered(p, BellCatalog.of(c.id()), at, c.remembered());
         }
         // the homes people left: their people tell of them in their own words (VillageBells, §43.16 stage 5)
+    }
+
+    /**
+     * A Far Landing world (SPEC §67): you're out on the land, so a city bell that's due is rung for you in Carillon wherever
+     * you are. It hangs where it always has and answers your song from there, and the city writes to you about it (two of
+     * the four letters ask you to come and hear it).
+     */
+    private static void farCity(ServerPlayer p) {
+        ServerLevel over = p.level().getServer().overworld();
+        for (CityBell c : CITY_BELLS) {
+            if (has(p, c.id()) || !cityBellDue(p, c.id())) continue;
+            BlockPos at = c.spot().equals("square") ? CityHooks.square(over) : null;
+            if (at == null) at = dev.awaken.core.api.TheLull.centre(p.level().getServer());
+            if (ring(p, BellCatalog.of(c.id()), "rung for you in Carillon while you were out on the land", at)) dev.awaken.core.api.FarPost.cityBell(p, c.id());
+        }
     }
 
     /** A Dreamt lead: a dream bell rang and got away. */
@@ -753,8 +780,25 @@ public final class Bells {
             save(p, b);
             say(p, "[Bram at the Registry has something for you.]");
         }
+        if (dev.awaken.core.api.TheLull.farLanding(p.level().getServer())) {
+            posted(p, id);
+            return;
+        }
         Vec3 at = CitizenHooks.where(p.level(), "bram");
         if (at != null && p.distanceToSqr(at) <= BRAM_NEAR * BRAM_NEAR) handed(p, id);
+    }
+
+    /**
+     * A Far Landing world (SPEC §67): you're a long way from the Registry, so Bram puts the bell on the Registry's wagon,
+     * which leaves it in your yard, and writes to you.
+     */
+    static void posted(ServerPlayer p, String id) {
+        boolean first = id.equals("registry");
+        if (!ring(p, BellCatalog.of(id), first ? "sent by Bram on the Registry's wagon, for your first gate"
+                : "sent by Bram on the Registry's wagon, for your twenty-fifth gate", null, true)) return;
+        dev.awaken.core.api.FarPost.letter(p, "Bram at the Registry", first
+                ? "Your first gate. The Registry gives every hunter one of these for it: the old handbell off the front desk. We had a cupboard full of them once. You're a long way out, so it's coming on the wagon. It'll be in your yard by morning."
+                : "Twenty-five gates. The Registry used to toll this one for every hunter who got that far. Nobody has, in eleven years. It's on the wagon to you now. Hang it somewhere it can be heard.");
     }
 
     /** Bram hands over one of the Registry's bells, in his own words. */

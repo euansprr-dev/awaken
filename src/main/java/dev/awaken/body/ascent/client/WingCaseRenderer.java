@@ -2,7 +2,6 @@ package dev.awaken.body.ascent.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import dev.awaken.body.ascent.AscentPayloads;
 import dev.awaken.body.ascent.WingCoreBlockEntity;
 import dev.awaken.body.ascent.WingForm;
@@ -13,133 +12,57 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaternionf;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Wings' case on a sky platform's core (SPEC §17.9, 11 Nov 2026): the real wings (WingFeathers, the model Euan
- * approved) held open and raised in a tall glass case over the core, breathing slowly, lit from its lid. They face away
- * from the cabin's door (north), so whoever looks in through it sees them as they will sit on their own back, and sway
- * a little either way over half a minute (a whole turn showed them edge-on half the time: a tour's shot caught a white
- * blob behind a post). Three blocks square and 3.4 high on the deck, its
- * posts and rails dark Precursor metal with a line of light up each inner edge.
+ * The wings on show at a sky platform's core (SPEC §17.9, "The wings on show"): the real feathered pair (SPEC §62:
+ * {@link WingForm} drawn by {@link WingFeathers} in {@link WingPipelines}' own types) hung over the core inside a case
+ * of light glass that stands on the rail the rig lays round it. They breathe between nearly open and open and turn once
+ * in 38 seconds, lit by themselves, in a column of light from the core to the roof, so they read through the cabin's
+ * portals from the pier.
  * <p>
- * The gift is the case opening: when the core gives the wings, the glass sinks into the base over 0.7 s, the wings wake
- * with one beat, fold, and fly in an arc to the receiver's back, growing to their own size, arriving as the scene's
- * wings unfold there (AscentScene's WINGS_AT). The server decides the gift; this only plays it. For each viewer the
- * case holds the wings until they have their own; after that it stands open and empty. Drawn within 96 blocks; the
- * wings' detail by distance (WingForm.lod). The case has no collision of its own: the rig stands barriers in its
- * footprint (SkyRig.caseCells).
+ * What a player sees is their own truth: without wings, the case shut and the pair inside; while the core gives them
+ * (the gift's scene), the glass sinks into the rail and the pair comes across to their back, arriving as their own wings
+ * open; with wings, the case open and empty over a low light.
+ * <p>
+ * One pair, drawn only within {@link #NEAR} blocks (the far forms past 48); nothing here allocates in a frame.
  */
 public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlockEntity, WingCaseRenderer.State> {
-    /** The case: half its width round the core's middle, its height over the deck, the base's and the rails' height. */
-    static final float HALF = 1.5F, H = 3.4F, BASE = 0.25F, RAIL = 0.18F, POST = 0.16F;
-    /** The wings in the case: their size, their root over the deck, their raise (degrees; negative lifts them). */
-    static final float SIZE = 0.42F, ROOT_Y = 2.15F, RAISE = -34F;
-    /** Where the case's wings face (a body's yaw: north, away from the door), how far they sway either way (degrees). */
-    static final float FACE = 180F, SWAY = 22F;
-    /** A sway of the case's wings there and back, and their slow breath (ticks). */
-    static final int SWAY_TICKS = 600, BREATH_TICKS = 64;
-    /** The gift: the glass sinks over this long; the wings wake, then fly from here to the scene's unfolding. */
-    static final int SINK = 14, WAKE = 10;
-
-    private static final int METAL = 0x2B3038, METAL_DARK = 0x1C2027, EDGE = 0x8FE6FF, GLASS = 0x2E5F78;
-    /** The square's corners in turn round it. */
-    private static final float[] SX = {-1, 1, 1, -1}, SZ = {-1, -1, 1, 1};
+    /** The pair is drawn this near; the case's glass and light a little further. */
+    static final double NEAR = 80;
+    /**
+     * The pair's size beside a player's (0.94): open, a wing reaches about 50 texels from the middle with its long
+     * feathers, and the glass is two blocks out, so the pair turns inside it. Where it hangs over the core's floor, and
+     * the glass's reach.
+     */
+    private static final float SIZE = 0.64F, HANG = 3.2F, HALF = 2F, RAIL = 1.5F, ROOF = 5F;
+    /** The gift: the glass is down by this age of its scene; the pair leaves at FLY_FROM and arrives as the scene's own wings open (34). */
+    private static final float OPEN_TICKS = 22, FLY_FROM = 6, FLY_TICKS = 28;
 
     public static final class State extends BlockEntityRenderState {
-        final float[] pose = new float[WingForm.N];
-        final float[] pair = {1, RAISE, 0};
-        /** How far the glass has sunk (0 shut, 1 gone into the base). */
-        float open;
-        /** The wings: drawn at all, their root (blocks from the core's corner), their facing (degrees) and size. */
-        boolean wings;
-        double wx, wy, wz;
-        float yaw, size, glow, alpha;
+        float time, open, fly, tx, ty, tz, camX, camZ;
+        boolean pair, near;
         int lod;
-        /** The camera's turn (the halos face it). */
-        final org.joml.Quaternionf eye = new org.joml.Quaternionf();
-        final SubmitNodeCollector.CustomGeometryRenderer frame = this::frame, glass = this::glass, feathers = this::feathers, halos = this::halos,
-                mount = this::mount;
-
-        private void frame(PoseStack.Pose p, VertexConsumer vc) {
-            int light = lightCoords;
-            float lo = 0.5F - HALF, hi = 0.5F + HALF;
-            // four posts at the corners
-            for (int i = 0; i < 4; i++) {
-                float x = (i & 1) == 0 ? lo : hi - POST, z = (i & 2) == 0 ? lo : hi - POST;
-                cube(p, vc, x, 0, z, x + POST, H, z + POST, METAL, light);
-            }
-            // the base and the lid: a rail along each side, the lid's plate over all
-            for (int s = 0; s < 4; s++) {
-                boolean alongX = s < 2;
-                float c = (s & 1) == 0 ? lo : hi - POST;
-                if (alongX) {
-                    cube(p, vc, lo + POST, 0, c, hi - POST, BASE, c + POST, METAL_DARK, light);
-                    cube(p, vc, lo + POST, H - RAIL, c, hi - POST, H, c + POST, METAL, light);
-                } else {
-                    cube(p, vc, c, 0, lo + POST, c + POST, BASE, hi - POST, METAL_DARK, light);
-                    cube(p, vc, c, H - RAIL, lo + POST, c + POST, H, hi - POST, METAL, light);
-                }
-            }
-            cube(p, vc, lo - 0.06F, H, lo - 0.06F, hi + 0.06F, H + 0.1F, hi + 0.06F, METAL_DARK, light);
-            // the lid's lamp: a square of light under its middle
-            cube(p, vc, 0.5F - 0.45F, H - RAIL - 0.04F, 0.5F - 0.45F, 0.5F + 0.45F, H - RAIL, 0.5F + 0.45F, 0xD8F6FF, 0xF000F0);
-        }
-
-        private void glass(PoseStack.Pose p, VertexConsumer vc) {
-            float lo = 0.5F - HALF + POST * 0.5F, hi = 0.5F + HALF - POST * 0.5F;
-            // the panes sink into the base: their top comes down to it
-            float top = H - RAIL - (H - RAIL - BASE) * open;
-            if (top > BASE + 0.02F) {
-                for (int s = 0; s < 4; s++) {
-                    float x0, z0, x1, z1;
-                    switch (s) {
-                        case 0 -> { x0 = lo; z0 = lo; x1 = hi; z1 = lo; }
-                        case 1 -> { x0 = hi; z0 = lo; x1 = hi; z1 = hi; }
-                        case 2 -> { x0 = hi; z0 = hi; x1 = lo; z1 = hi; }
-                        default -> { x0 = lo; z0 = hi; x1 = lo; z1 = lo; }
-                    }
-                    pane(p, vc, x0, z0, x1, z1, BASE, top, GLASS, 0.22F);
-                    // a bright edge along the glass's top (it shows the glass going down) and two faint streaks
-                    pane(p, vc, x0, z0, x1, z1, top - 0.035F, top, EDGE, 0.55F);
-                    streak(p, vc, x0, z0, x1, z1, top, 0.18F, 0.30F);
-                    streak(p, vc, x0, z0, x1, z1, top, 0.36F, 0.41F);
-                }
-            }
-            // the lid's light falling on the wings: a soft square shaft, brighter at the top
-            float a = 0.05F * (0.6F + 0.4F * glow);
-            float t0 = H - RAIL - 0.05F, t1 = BASE + 0.4F, in0 = 0.45F, in1 = 0.95F;
-            int hiCol = argb(0xCFF3FF, a), loCol = argb(0xCFF3FF, 0);
-            for (int s = 0; s < 4; s++) {
-                // the shaft's four sides, corner a to corner b, each widening as it falls
-                float ax = SX[s], az = SZ[s], bx = SX[(s + 1) & 3], bz = SZ[(s + 1) & 3];
-                vc.addVertex(p, 0.5F + ax * in0, t0, 0.5F + az * in0).setColor(hiCol);
-                vc.addVertex(p, 0.5F + bx * in0, t0, 0.5F + bz * in0).setColor(hiCol);
-                vc.addVertex(p, 0.5F + bx * in1, t1, 0.5F + bz * in1).setColor(loCol);
-                vc.addVertex(p, 0.5F + ax * in1, t1, 0.5F + az * in1).setColor(loCol);
-            }
-        }
-
-        private void feathers(PoseStack.Pose p, VertexConsumer vc) {
-            WingFeathers.pair(p, vc, pose, 0, pair, 0, WingFeathers.LIGHT, alpha, lod, false);
-        }
-
-        private void mount(PoseStack.Pose p, VertexConsumer vc) {
-            WingFeathers.mount(p, vc, 0xDFF8FF, alpha, 1F + 0.12F * glow);
-        }
-
-        private void halos(PoseStack.Pose p, VertexConsumer vc) {
-            WingFeathers.faceEye(p, eye);
-            WingFeathers.halos(p, vc, pose, 0, pair, 0, WingFeathers.LIGHT[WingFeathers.HALO], glow, alpha);
-        }
     }
+
+    // this frame's case (the geometry runs after every submit; platforms stand hundreds of blocks apart, so one is in view)
+    private static final float[] POSE = new float[WingForm.N], PAIR = {1F, 0F, 0F};
+    private static final Quaternionf TURN = new Quaternionf();
+    private static float alpha, glow, open, time, camX, camZ, column;
+    private static int lod;
+    private static final SubmitNodeCollector.CustomGeometryRenderer FEATHERS =
+            (pose, vc) -> WingFeathers.pair(pose, vc, POSE, 0, PAIR, 0, WingFeathers.LIGHT, alpha, lod, false);
+    private static final SubmitNodeCollector.CustomGeometryRenderer HALOS = (pose, vc) -> {
+        WingFeathers.faceEye(pose, AscentRender.eye());
+        WingFeathers.halos(pose, vc, POSE, 0, PAIR, 0, WingFeathers.LIGHT[WingFeathers.HALO], glow, alpha);
+    };
+    private static final SubmitNodeCollector.CustomGeometryRenderer GLASS = WingCaseRenderer::glass;
 
     public WingCaseRenderer(BlockEntityRendererProvider.Context ctx) {}
 
@@ -149,99 +72,138 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
     }
 
     @Override
-    public void extractRenderState(WingCoreBlockEntity be, State state, float pt, Vec3 camera, ModelFeatureRenderer.@Nullable CrumblingOverlay crumbling) {
-        BlockEntityRenderer.super.extractRenderState(be, state, pt, camera, crumbling);
-        Minecraft mc = Minecraft.getInstance();
-        LocalPlayer me = mc.player;
-        int t = AscentMoves.ticks;
-        state.lod = WingForm.lod(camera.distanceToSqr(Vec3.atCenterOf(be.getBlockPos())));
-        // the case's own wings: raised, breathing, swaying; the clock is whole ticks, eased by the partial one
-        float turn = FACE + SWAY * Mth.sin(((t % SWAY_TICKS) + pt) / SWAY_TICKS * Mth.TWO_PI);
-        float breath = ((t % BREATH_TICKS) + pt) / 20F;
-        WingForm.beat(WingForm.HOVER, breath, BREATH_TICKS / 20F, 0.16F, 0.22F, state.pose);
-        state.yaw = turn;
-        state.size = 1F;
-        state.wx = 0.5;
-        state.wy = ROOT_Y;
-        state.wz = 0.5;
-        state.glow = 0.55F + 0.45F * (0.5F + 0.5F * Mth.sin(breath / (BREATH_TICKS / 20F) * Mth.TWO_PI));
-        state.open = 0;
-        state.wings = true;
-        state.alpha = 1F;
-        boolean mine = AscentMoves.has(AscentPayloads.Tier.WINGS);
-        boolean waiting = AscentScene.pending != 0 && AscentScene.mode == AscentPayloads.GIFT_WINGS;
-        boolean gift = AscentScene.age >= 0 && AscentScene.playingMode == AscentPayloads.GIFT_WINGS && me != null
-                && me.distanceToSqr(Vec3.atCenterOf(be.getBlockPos())) < 10 * 10;
-        if (gift) {
-            float a = AscentScene.age + pt;
-            state.open = WingForm.ease(a / SINK);
-            if (a >= AscentScene.WINGS_AT) {
-                state.wings = false;
-            } else if (a > WAKE) {
-                // fold and fly: an arc from the case to the back, growing to the wings' own size, turning to the body
-                float u = WingForm.ease((a - WAKE) / (AscentScene.WINGS_AT - WAKE));
-                float[] folded = FOLDED;
-                WingForm.mix(state.pose, WingForm.FOLD, WingForm.ease(Math.min(1, u * 1.8F)), folded);
-                System.arraycopy(folded, 0, state.pose, 0, WingForm.N);
-                Vec3 at = me.getPosition(pt);
-                float body = Mth.rotLerp(pt, me.yBodyRotO, me.yBodyRot);
-                double bx = at.x - be.getBlockPos().getX() + Mth.sin(body * Mth.DEG_TO_RAD) * 0.25;
-                double by = at.y - be.getBlockPos().getY() + 1.4;
-                double bz = at.z - be.getBlockPos().getZ() - Mth.cos(body * Mth.DEG_TO_RAD) * 0.25;
-                double mx = (0.5 + bx) / 2, my = Math.max(ROOT_Y, by) + 1.2, mz = (0.5 + bz) / 2;
-                double v = 1 - u;
-                state.wx = v * v * 0.5 + 2 * v * u * mx + u * u * bx;
-                state.wy = v * v * ROOT_Y + 2 * v * u * my + u * u * by;
-                state.wz = v * v * 0.5 + 2 * v * u * mz + u * u * bz;
-                state.yaw = turn + Mth.wrapDegrees(body - turn) * u;
-                state.size = Mth.lerp(u, 1F, 1F / SIZE);
-                state.glow = 1F;
-                state.pair[1] = Mth.lerp(u, RAISE, 0);
-                // through your own eyes they fade as they reach you (they arrive at the back, where the camera is)
-                double ex = state.wx + be.getBlockPos().getX() - camera.x, ey = state.wy + be.getBlockPos().getY() - camera.y,
-                        ez = state.wz + be.getBlockPos().getZ() - camera.z;
-                state.alpha = (float) Mth.clamp((Math.sqrt(ex * ex + ey * ey + ez * ez) - 0.9) / 1.2, 0, 1);
-                if (state.alpha < 0.02F) state.wings = false;
-            } else {
-                // waking: one fuller beat, the light up
-                WingForm.beat(WingForm.HOVER, a / 20F, WAKE / 20F, 0.6F * WingForm.ease(a / WAKE), 0.3F, state.pose);
-                state.glow = 1F;
-            }
-        } else if (mine && !waiting) {
-            // theirs already: the case stands open and empty for them
-            state.open = 1;
-            state.wings = false;
+    public void extractRenderState(WingCoreBlockEntity be, State s, float partialTicks, Vec3 camera, ModelFeatureRenderer.@Nullable CrumblingOverlay crumbling) {
+        BlockEntityRenderer.super.extractRenderState(be, s, partialTicks, camera, crumbling);
+        BlockPos p = be.getBlockPos();
+        double dx = camera.x - (p.getX() + 0.5), dy = camera.y - (p.getY() + HANG), dz = camera.z - (p.getZ() + 0.5), d2 = dx * dx + dy * dy + dz * dz;
+        s.time = AscentMoves.ticks + partialTicks;
+        s.camX = (float) dx;
+        s.camZ = (float) dz;
+        s.near = d2 < NEAR * NEAR;
+        s.lod = WingForm.lod(d2);
+        LocalPlayer me = Minecraft.getInstance().player;
+        int gift = me != null && me.distanceToSqr(p.getX() + 0.5, p.getY(), p.getZ() + 0.5) < 16 * 16 ? AscentScene.wingsGift() : -2;
+        if (gift >= -1) {
+            float age = gift + partialTicks;
+            s.open = gift < 0 ? 0 : WingForm.ease(age / OPEN_TICKS);
+            s.fly = gift < 0 ? 0 : WingForm.ease((age - FLY_FROM) / FLY_TICKS);
+            s.pair = s.fly < 1;
+            // to between the shoulder blades of whoever it is given to
+            float yaw = me.getYRot() * Mth.DEG_TO_RAD;
+            s.tx = (float) (me.getX() - (p.getX() + 0.5)) + Mth.sin(yaw) * 0.3F;
+            s.ty = (float) (me.getY() + 1.35 - (p.getY() + HANG));
+            s.tz = (float) (me.getZ() - (p.getZ() + 0.5)) - Mth.cos(yaw) * 0.3F;
+        } else {
+            boolean has = AscentMoves.has(AscentPayloads.Tier.WINGS);
+            s.open = has ? 1 : 0;
+            s.fly = 0;
+            s.pair = !has;
         }
     }
-
-    /** The fold's pose, worked into while the wings fly (never allocated per frame). */
-    private static final float[] FOLDED = new float[WingForm.N];
 
     @Override
-    public void submit(State state, PoseStack ps, SubmitNodeCollector out, CameraRenderState camera) {
-        state.eye.set(camera.orientation);
-        out.submitCustomGeometry(ps, frameType(), state.frame);
-        if (state.wings) {
-            ps.pushPose();
-            ps.translate(state.wx, state.wy, state.wz);
-            ps.rotateDegrees(Axis.YP, 180F - state.yaw);
-            float k = SIZE * state.size;
-            ps.scale(-k, -k, k);
-            // the wings' root, in their model space, to the middle
-            ps.translate(0F, -WingFeathers.ROOT_Y / 16F, -WingFeathers.ROOT_Z / 16F);
-            out.submitCustomGeometry(ps, WingPipelines.feather(0), state.feathers);
-            out.submitCustomGeometry(ps, WingPipelines.feather(0), state.mount);
-            if (state.lod < 2) out.order(1).submitCustomGeometry(ps, WingPipelines.halo(), state.halos);
-            ps.popPose();
+    public void submit(State s, PoseStack pose, SubmitNodeCollector out, CameraRenderState camera) {
+        if (!s.near) return;
+        time = s.time;
+        open = s.open;
+        lod = s.lod;
+        camX = s.camX;
+        camZ = s.camZ;
+        // the column of light the pair hangs in: gone with the pair
+        column = s.pair ? 1 - s.fly : 0;
+        if (s.pair) {
+            // breathing between nearly open and open; opened right out as it leaves the case
+            float k = Mth.lerp(s.fly, 0.86F + 0.1F * Mth.sin(time / 46F), 1F);
+            WingForm.mix(WingForm.FOLD, WingForm.OPEN, k, POSE);
+            POSE[WingForm.CASC] = 1;
+            POSE[WingForm.P0] += 3F * Mth.sin(time / 31F) * (1 - s.fly);
+            // thinning out over the last of the way across: the scene's own wings open where it arrives
+            alpha = 1 - WingForm.ease((s.fly - 0.8F) / 0.2F);
+            glow = 0.75F + 0.25F * Mth.sin(time / 46F);
+            float size = Mth.lerp(s.fly, SIZE, 0.94F), at = s.fly;
+            pose.pushPose();
+            pose.translate(0.5F + s.tx * at, HANG + s.ty * at + 0.06F * Mth.sin(time / 23F) * (1 - at), 0.5F + s.tz * at);
+            pose.rotate(TURN.rotationY(time / 760F * Mth.TWO_PI));
+            // the wings' own space is a body's back: x to its left, y down, z behind, from the neck (the roots 3 down, 4 behind)
+            pose.scale(-size, -size, size);
+            pose.translate(0, -WingFeathers.ROOT_Y / 16F, -WingFeathers.ROOT_Z / 16F);
+            out.submitCustomGeometry(pose, WingPipelines.feather(0), FEATHERS);
+            if (lod < 2) out.order(1).submitCustomGeometry(pose, WingPipelines.halo(), HALOS);
+            pose.popPose();
         }
-        out.order(1).submitCustomGeometry(ps, WingPipelines.halo(), state.glass);
+        out.order(1).submitCustomGeometry(pose, WingPipelines.halo(), GLASS);
     }
 
-    private static RenderType frame;
+    // ---- the case: glass made of light ----------------------------------------------------------------------------------
 
-    private static RenderType frameType() {
-        if (frame == null) frame = RenderTypes.entitySolid(WingPipelines.WHITE);
-        return frame;
+    private static final int TINT = 0xA8DCFF, EDGE = 0xEAF7FF;
+
+    private static int a(float alpha, int rgb) {
+        return (int) (255 * Mth.clamp(alpha, 0, 1)) << 24 | rgb;
+    }
+
+    /** A quad through four corners, drawn for both sides, each corner with its own strength. */
+    private static void quad(PoseStack.Pose pose, VertexConsumer vc, float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2,
+                             float x3, float y3, float z3, int c0, int c1, int c2, int c3) {
+        vc.addVertex(pose, x0, y0, z0).setColor(c0);
+        vc.addVertex(pose, x1, y1, z1).setColor(c1);
+        vc.addVertex(pose, x2, y2, z2).setColor(c2);
+        vc.addVertex(pose, x3, y3, z3).setColor(c3);
+        vc.addVertex(pose, x3, y3, z3).setColor(c3);
+        vc.addVertex(pose, x2, y2, z2).setColor(c2);
+        vc.addVertex(pose, x1, y1, z1).setColor(c1);
+        vc.addVertex(pose, x0, y0, z0).setColor(c0);
+    }
+
+    /**
+     * Four panes standing on the rail up to the roof (sunk into the rail by how open the case is), brighter at the
+     * foot; a bright line up each corner and round the top; a band of sheen crossing each pane every ten seconds, one
+     * pane after another; and the light the pair throws on the core's top (it stays, low, in an empty case).
+     */
+    private static void glass(PoseStack.Pose pose, VertexConsumer vc) {
+        float top = RAIL + (ROOF - RAIL) * (1 - open), c = 0.5F, lo = c - HALF, hi = c + HALF;
+        if (top > RAIL + 0.02F) {
+            int foot = a(0.085F, TINT), head = a(0.03F, TINT), line = a(0.5F, EDGE), none = a(0, EDGE);
+            for (int side = 0; side < 4; side++) {
+                // a pane from (ax, az) to (bx, bz)
+                float ax = side == 0 ? lo : side == 1 ? hi : side == 2 ? hi : lo, az = side == 0 ? lo : side == 1 ? lo : side == 2 ? hi : hi;
+                float bx = side == 0 ? hi : side == 1 ? hi : side == 2 ? lo : lo, bz = side == 0 ? lo : side == 1 ? hi : side == 2 ? hi : lo;
+                quad(pose, vc, ax, RAIL, az, bx, RAIL, bz, bx, top, bz, ax, top, az, foot, foot, head, head);
+                // the corner's line (each pane draws the one it starts at) and the top's
+                float ux = (bx - ax) / (2 * HALF), uz = (bz - az) / (2 * HALF), w = 0.05F;
+                quad(pose, vc, ax, RAIL, az, ax + ux * w, RAIL, az + uz * w, ax + ux * w, top, az + uz * w, ax, top, az, line, none, none, line);
+                quad(pose, vc, ax, top - w, az, bx, top - w, bz, bx, top, bz, ax, top, az, none, none, line, line);
+                // the sheen: a soft band leaning across the pane, its turn a quarter of the cycle
+                float cycle = (time / 200F + side * 0.25F) % 1F;
+                if (cycle < 0.3F) {
+                    float m = -0.2F + cycle / 0.3F * 1.4F, half = 0.22F, lean = 0.35F;
+                    int mid = a(0.13F, EDGE);
+                    for (int part = 0; part < 2; part++) {
+                        float s0 = Mth.clamp(m + (part == 0 ? -half : 0), 0, 1), s1 = Mth.clamp(m + (part == 0 ? 0 : half), 0, 1);
+                        float t0 = Mth.clamp(s0 + lean, 0, 1), t1 = Mth.clamp(s1 + lean, 0, 1);
+                        quad(pose, vc, Mth.lerp(s0, ax, bx), RAIL, Mth.lerp(s0, az, bz), Mth.lerp(s1, ax, bx), RAIL, Mth.lerp(s1, az, bz),
+                                Mth.lerp(t1, ax, bx), top, Mth.lerp(t1, az, bz), Mth.lerp(t0, ax, bx), top, Mth.lerp(t0, az, bz),
+                                part == 0 ? none : mid, part == 0 ? mid : none, part == 0 ? mid : none, part == 0 ? none : mid);
+                    }
+                }
+            }
+        }
+        // the column of light the pair hangs in, from the core's top to the roof: a sheet turned to face the eye, bright
+        // down its middle and at its foot, breathing with the pair (it is what reads from the pier and the stair)
+        float cl = (float) Math.sqrt(camX * camX + camZ * camZ);
+        if (column > 0.01F && cl > 0.05F) {
+            float wide = 1.25F, sx = -camZ / cl * wide, sz = camX / cl * wide, breath = 0.85F + 0.15F * Mth.sin(time / 46F);
+            int low = a(0.2F * column * breath, TINT), high = a(0.07F * column * breath, TINT), off = a(0, TINT);
+            quad(pose, vc, c - sx, 1.02F, c - sz, c, 1.02F, c, c, ROOF, c, c - sx, ROOF, c - sz, off, low, high, off);
+            quad(pose, vc, c, 1.02F, c, c + sx, 1.02F, c + sz, c + sx, ROOF, c + sz, c, ROOF, c, low, off, off, high);
+        }
+        // the light on the core's top
+        float y = 1.03F, r = 1.7F, strength = (0.16F + 0.05F * Mth.sin(time / 46F)) * (1 - 0.55F * open);
+        int mid = a(strength, TINT), rim = a(0, TINT);
+        for (int i = 0; i < 8; i++) {
+            float a0 = i / 8F * Mth.TWO_PI, a1 = (i + 1) / 8F * Mth.TWO_PI;
+            quad(pose, vc, c, y, c, c, y, c, c + Mth.cos(a1) * r, y, c + Mth.sin(a1) * r, c + Mth.cos(a0) * r, y, c + Mth.sin(a0) * r, mid, mid, rim, rim);
+        }
     }
 
     @Override
@@ -251,63 +213,8 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
 
     @Override
     public AABB getRenderBoundingBox(WingCoreBlockEntity be) {
-        // the case, and the gift's flight out to a receiver up to ten blocks off
-        return new AABB(be.getBlockPos()).inflate(10, 0, 10).expandTowards(0, 6, 0);
-    }
-
-    // ---- geometry: blocks from the core's corner ----------------------------------------------------------------------
-
-    /** A box lit by the world (its faces shaded as a block's are). */
-    private static void cube(PoseStack.Pose p, VertexConsumer vc, float x0, float y0, float z0, float x1, float y1, float z1, int rgb, int light) {
-        quad(p, vc, x0, y1, z0, x0, y1, z1, x1, y1, z1, x1, y1, z0, shade(rgb, 1F), light, 0, 1, 0);
-        quad(p, vc, x0, y0, z1, x0, y0, z0, x1, y0, z0, x1, y0, z1, shade(rgb, 0.5F), light, 0, -1, 0);
-        quad(p, vc, x0, y0, z0, x0, y1, z0, x1, y1, z0, x1, y0, z0, shade(rgb, 0.8F), light, 0, 0, -1);
-        quad(p, vc, x1, y0, z1, x1, y1, z1, x0, y1, z1, x0, y0, z1, shade(rgb, 0.8F), light, 0, 0, 1);
-        quad(p, vc, x0, y0, z1, x0, y1, z1, x0, y1, z0, x0, y0, z0, shade(rgb, 0.6F), light, -1, 0, 0);
-        quad(p, vc, x1, y0, z0, x1, y1, z0, x1, y1, z1, x1, y0, z1, shade(rgb, 0.6F), light, 1, 0, 0);
-    }
-
-    private static void quad(PoseStack.Pose p, VertexConsumer vc, float ax, float ay, float az, float bx, float by, float bz, float cx, float cy, float cz,
-                             float dx, float dy, float dz, int argb, int light, float nx, float ny, float nz) {
-        vert(p, vc, ax, ay, az, 0, 0, argb, light, nx, ny, nz);
-        vert(p, vc, bx, by, bz, 0, 1, argb, light, nx, ny, nz);
-        vert(p, vc, cx, cy, cz, 1, 1, argb, light, nx, ny, nz);
-        vert(p, vc, dx, dy, dz, 1, 0, argb, light, nx, ny, nz);
-    }
-
-    private static void vert(PoseStack.Pose p, VertexConsumer vc, float x, float y, float z, float u, float v, int argb, int light, float nx, float ny, float nz) {
-        vc.addVertex(p, x, y, z).setColor(argb).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(p, nx, ny, nz);
-    }
-
-    /** A pane of glass (additive: it brightens what is behind it), from (x0, z0) to (x1, z1), seen from both sides. */
-    private static void pane(PoseStack.Pose p, VertexConsumer vc, float x0, float z0, float x1, float z1, float y0, float y1, int rgb, float a) {
-        int c = argb(rgb, a);
-        vc.addVertex(p, x0, y0, z0).setColor(c);
-        vc.addVertex(p, x0, y1, z0).setColor(c);
-        vc.addVertex(p, x1, y1, z1).setColor(c);
-        vc.addVertex(p, x1, y0, z1).setColor(c);
-    }
-
-    /** A faint slanting streak across a pane, from {@code f0} to {@code f1} of its width at the top, under {@code top}. */
-    private static void streak(PoseStack.Pose p, VertexConsumer vc, float x0, float z0, float x1, float z1, float top, float f0, float f1) {
-        float h = top - BASE;
-        if (h < 0.3F) return;
-        int c = argb(0xBFEFFF, 0.12F);
-        float lean = 0.35F;
-        float ax = Mth.lerp(f0, x0, x1), az = Mth.lerp(f0, z0, z1), bx = Mth.lerp(f1, x0, x1), bz = Mth.lerp(f1, z0, z1);
-        float cx = Mth.lerp(Math.min(1, f1 + lean), x0, x1), cz = Mth.lerp(Math.min(1, f1 + lean), z0, z1);
-        float dx = Mth.lerp(Math.min(1, f0 + lean), x0, x1), dz = Mth.lerp(Math.min(1, f0 + lean), z0, z1);
-        vc.addVertex(p, ax, top, az).setColor(c);
-        vc.addVertex(p, bx, top, bz).setColor(c);
-        vc.addVertex(p, cx, BASE + h * 0.15F, cz).setColor(argb(0xBFEFFF, 0));
-        vc.addVertex(p, dx, BASE + h * 0.15F, dz).setColor(argb(0xBFEFFF, 0));
-    }
-
-    private static int shade(int rgb, float f) {
-        return 0xFF000000 | (int) (((rgb >> 16) & 255) * f) << 16 | (int) (((rgb >> 8) & 255) * f) << 8 | (int) ((rgb & 255) * f);
-    }
-
-    private static int argb(int rgb, float a) {
-        return (int) (255 * Mth.clamp(a, 0, 1)) << 24 | (rgb & 0xFFFFFF);
+        BlockPos p = be.getBlockPos();
+        // the pair's way across to whoever it is given to is inside this too (the core answers within five blocks)
+        return new AABB(p.getX() - 6, p.getY(), p.getZ() - 6, p.getX() + 7, p.getY() + 7, p.getZ() + 7);
     }
 }

@@ -241,7 +241,9 @@ public final class Stilled extends SavedData {
         ServerLevel level = p.level().getServer().overworld();
         Settlement city = Settlements.byId(Settlements.CARILLON).orElse(null);
         if (city == null || p.level() != level || !dev.awaken.core.api.CityHooks.inCity(level, p.blockPosition())) {
-            say(p, "[A " + thing + " with " + name + " scratched into it. Somebody in Carillon might know this name.]");
+            // played far from the city (SPEC §67): the skiff's hold at the landing sends it home
+            say(p, "[A " + thing + " with " + name + " scratched into it. Somebody in Carillon might know this name."
+                    + (dev.awaken.core.api.TheLull.farLanding(p.level().getServer()) ? " The skiff's hold at the landing can send it home to them.]" : "]"));
             return;
         }
         int best = -1;
@@ -284,6 +286,36 @@ public final class Stilled extends SavedData {
         } else {
             s.say(p, rec, given + ": You keep it. Really. I'm glad it's out there with you.", 20 * 5);
         }
+        return true;
+    }
+
+    /**
+     * A keepsake held at the skiff's hold, in a world played far from Carillon (SPEC §67): it goes home to its family on
+     * the skiff, and they write back. It comes back to you in the same hold, so you keep it; once per keepsake, as shown.
+     */
+    static boolean sendHome(ServerPlayer p, ItemStack held) {
+        var d = held.get(StilledContent.KEEPSAKE.get());
+        if (d == null) return false;
+        Settlement city = Settlements.byId(Settlements.CARILLON).orElse(null);
+        String person = null;
+        if (city != null) {
+            for (int rec = 0; rec < city.records(); rec++) {
+                if (ofFamily(city, rec, d.family())) {
+                    person = city.personName(rec);
+                    break;
+                }
+            }
+        }
+        String family = StilledText.cap(StilledText.plural(d.family()));
+        if (!mark(p, "done:" + d.figure())) {
+            say(p, "[" + family + " have already had it home once, and sent it back to you. It's yours to keep now.]");
+            return true;
+        }
+        String from = person == null ? family + " in Carillon" : person + " in Carillon";
+        say(p, "[The " + StilledText.KEEPSAKES[Math.floorMod(d.n(), StilledText.KEEPSAKES.length)].thing() + " goes in the hold for "
+                + StilledText.plural(d.family()) + ". The skiff will take it to Carillon.]");
+        dev.awaken.core.api.FarPost.letter(p, from, StilledText.letterReaction(d.n(), StilledText.relationWord(d.relation())));
+        dev.awaken.progression.Progression.count(p, "awaken:keepsakes_shown");
         return true;
     }
 

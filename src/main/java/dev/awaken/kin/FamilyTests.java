@@ -141,11 +141,20 @@ final class FamilyTests {
         h.assertTrue(!FamilyService.name(q, dubu, "Rex") && FamilyService.name(p, dubu, "Tofu") && one.name.equals("Tofu")
                 && dubu.getCustomName() != null && dubu.getCustomName().getString().equals("Tofu"), "only the Hearth's owner renames him");
         h.assertTrue(FamilyService.name(p, dubu, "") && one.name.equals("Dubu"), "an empty name gives his own back");
-        // a zombie hunting you is a fight
+        // a zombie hunting you is a fight. Hunted is a real survival player: a mock one is always creative, and no mob
+        // takes a creative player as its target (Mob.setTarget drops it), so with p this asked about a fight that never
+        // was. (The fight check answers from memory for half a second, so it is asked once, after the zombie hunts.)
+        AwakenTests.Live live = AwakenTests.survivalPlayer(h, "family-fight", new BlockPos(3, 2, 3));
         var zombie = h.spawn(net.minecraft.world.entity.EntityTypes.ZOMBIE, new BlockPos(5, 2, 5));
-        zombie.setTarget(p);
-        h.assertTrue(FamilyService.threat(level, p) != null, "a zombie hunting you is a fight he keeps out of");
-        zombie.discard();
+        try {
+            ServerPlayer hunted = live.player();
+            zombie.setTarget(hunted);
+            h.assertTrue(zombie.getTarget() == hunted, "the test's own ground: a zombie hunts a survival player");
+            h.assertTrue(FamilyService.threat(level, hunted) != null, "a zombie hunting you is a fight he keeps out of");
+        } finally {
+            zombie.discard();
+            live.leave();
+        }
         forget(level, owner);
         level.getServer().getPlayerList().remove(p);
         level.getServer().getPlayerList().remove(q);

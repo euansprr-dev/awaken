@@ -828,8 +828,7 @@ public final class RuinBuilder {
      * A Precursor disc above the clouds: a keel of glowing rings beneath (it reads as a light in the sky from the ground),
      * a brass-railed deck, a glass cabin with a spire; round it four islands of earth it tore up with it, tethered by
      * chains, and long chains dangling lanterns below. From SKY_STYLE ({@code island}) the deck sits in the island it
-     * tore up ({@link #garden}), the cabin's door is three wide so the Wings' case reads from the pier, and the four
-     * islands are bigger and grown over.
+     * tore up ({@link #garden}) and the four islands are bigger and grown over.
      */
     private static void sky(RandomSource r, Brush b, boolean island) {
         List<MachineType> machines = machinesFor(RuinKind.SKY, r);
@@ -871,19 +870,10 @@ public final class RuinBuilder {
                 b.set(x, DECK + 6, z, cabinCorner ? trim() : wall ? of(Blocks.POLISHED_DEEPSLATE) : (Math.abs(x - C) <= 1 && Math.abs(z - C) <= 1) ? glow() : plating());
             }
         }
-        if (island) {
-            // a door three wide and three high in a pillared frame: from the pier the case inside reads through it
-            for (int x = C - 1; x <= C + 1; x++) for (int y = DECK + 1; y <= DECK + 3; y++) b.set(x, y, C + 4, air());
-            for (int y = DECK + 1; y <= DECK + 3; y++) {
-                b.set(C - 2, y, C + 4, pillar());
-                b.set(C + 2, y, C + 4, pillar());
-            }
-            for (int x = C - 2; x <= C + 2; x++) b.set(x, DECK + 4, C + 4, trim());
-        } else {
-            b.set(C, DECK + 1, C + 4, air());
-            b.set(C, DECK + 2, C + 4, air());
-            b.set(C, DECK + 3, C + 4, trim());
-        }
+        // the door (the wings' hall opens two of the cabin's corners as its portals: SkyRig.rigHall)
+        b.set(C, DECK + 1, C + 4, air());
+        b.set(C, DECK + 2, C + 4, air());
+        b.set(C, DECK + 3, C + 4, trim());
         // the spire
         for (int y = DECK + 7; y <= DECK + 12; y++) b.set(C, y, C, pillar());
         for (int[] o : new int[][]{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) b.set(C + o[0], DECK + 9, C + o[1], trim());

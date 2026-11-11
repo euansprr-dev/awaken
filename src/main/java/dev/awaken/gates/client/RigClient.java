@@ -79,6 +79,7 @@ public final class RigClient {
         RigRunHud.clear();
         RigGhost.clear();
         ringRooms = List.of();
+        hangRooms = List.of();
         rooms = List.of();
         surge = new boolean[0];
         beams.clear();
@@ -98,6 +99,42 @@ public final class RigClient {
 
     static boolean hasRings() {
         return !ringRooms.isEmpty();
+    }
+
+    /**
+     * A Gauntlet's presses as drawn while they are up (SPEC §17.5): the floor-level cell of every column, the block, how far
+     * up it is parked, and one render state a column, made the first time it is drawn and kept.
+     */
+    static final class HangRoom {
+        final int theme, travel;
+        final BlockState ram;
+        final List<BlockPos> cells;
+        final double x, y, z;
+        net.minecraft.client.renderer.block.MovingBlockRenderState[] states;
+
+        HangRoom(RigPayloads.Room r) {
+            theme = r.theme();
+            travel = r.travel();
+            ram = Block.stateById(r.ram());
+            cells = List.copyOf(r.presses());
+            x = (r.min().getX() + r.max().getX()) / 2.0;
+            y = r.min().getY();
+            z = (r.min().getZ() + r.max().getZ()) / 2.0;
+        }
+    }
+
+    private static List<HangRoom> hangRooms = List.of();
+
+    static List<HangRoom> hangRooms() {
+        return hangRooms;
+    }
+
+    private static List<HangRoom> hangs(List<RigPayloads.Room> rooms) {
+        List<HangRoom> out = new ArrayList<>();
+        for (RigPayloads.Room r : rooms) {
+            if (r.kind() == RigRoom.Kind.GAUNTLET.ordinal() && !r.presses().isEmpty() && r.travel() > 0) out.add(new HangRoom(r));
+        }
+        return List.copyOf(out);
     }
 
     /** A ring stands over its row (the two end cells), centred two over the floor, wider than the course by a block each side. */
@@ -121,6 +158,7 @@ public final class RigClient {
 
     static void scene(RigPayloads.Scene s) {
         ringRooms = rings(s.rooms());
+        hangRooms = hangs(s.rooms());
         rooms = List.copyOf(s.rooms());
         surge = new boolean[rooms.size()];
         for (int i = 0; i < rooms.size(); i++) surge[i] = rooms.get(i).surge();

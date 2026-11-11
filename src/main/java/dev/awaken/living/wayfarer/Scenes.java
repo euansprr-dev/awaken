@@ -624,6 +624,11 @@ public final class Scenes extends SavedData {
             var map = RegionService.map(s);
             return new BlockPos(map.centreX(), 0, map.centreZ());
         }, s -> CityBasin.site(s).isPresent());
+        // the Far Landing (SPEC §67): the region map's landing, in a world made under rules 4 with Carillon standing
+        dev.awaken.core.api.TheLull.installLanding(s -> {
+            var map = RegionService.map(s);
+            return map.farLanding() ? new BlockPos(map.landingX(), 0, map.landingZ()) : null;
+        });
     }
 
     /** A chain was dropped: the scene made for its places goes. */

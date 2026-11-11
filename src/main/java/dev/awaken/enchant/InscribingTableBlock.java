@@ -37,9 +37,9 @@ import org.jspecify.annotations.Nullable;
  */
 public class InscribingTableBlock extends BaseEntityBlock {
     public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
-    /** The desk, and the brass stand at the back (north-facing: the writer stands on the north side, the stand to the south). */
+    /** The scribe's desk (north-facing: the writer stands on the north side): the slate on two trestle ends, the rail at the back. */
     private static final java.util.Map<Direction, VoxelShape> SHAPES = Shapes.rotateHorizontal(
-            Shapes.or(Block.box(0, 0, 0, 16, 13, 16), Block.box(6, 13, 12, 10, 15, 15)));
+            Shapes.or(Block.box(0, 10, 0, 16, 12, 16), Block.box(0, 12, 14, 16, 15, 16), Block.box(1, 0, 2, 3, 10, 14), Block.box(13, 0, 2, 15, 10, 14)));
 
     public InscribingTableBlock(BlockBehaviour.Properties p) {
         super(p);
@@ -85,7 +85,12 @@ public class InscribingTableBlock extends BaseEntityBlock {
 
     @Override
     protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (hand != InteractionHand.MAIN_HAND || stack.getItem() instanceof PageItem) return InteractionResult.TRY_WITH_EMPTY_HAND;
+        if (stack.getItem() instanceof PageItem) {
+            // a page held to the table is read there: the natural thing to try with one in your hand
+            if (player instanceof ServerPlayer sp && Pages.read(sp, stack)) stack.consume(1, player);
+            return InteractionResult.SUCCESS;
+        }
+        if (hand != InteractionHand.MAIN_HAND) return InteractionResult.TRY_WITH_EMPTY_HAND;
         if (level instanceof ServerLevel sl && player instanceof ServerPlayer sp && sl.getBlockEntity(pos) instanceof InscribingTableBlockEntity be) {
             Inscribe.open(sp, be);
         }

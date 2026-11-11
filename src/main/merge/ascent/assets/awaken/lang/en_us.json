@@ -49,7 +49,7 @@
   "awaken.ascent.gift.wings": "You have wings now.",
   "awaken.ascent.gift.wings.how": "In a fall, press jump to open them.",
   "awaken.ascent.core.built": "The core stays dark. It won't answer anyone who built their way up here. Climb its rings with your rope.",
-  "awaken.ascent.core.rank": "The core stays dark. It's waiting for a %1$s-rank hunter, so come back when you've reached rank %1$s.",
+  "awaken.ascent.core.rank": "Come back at rank %s. These wings will wait for you.",
   "block.awaken.anchor_ring": "Anchor Ring",
   "block.awaken.wing_core": "Wing Core",
   "awaken.ascent.gift.leap": "That was the leap. It's yours.",
@@ -73,10 +73,8 @@
   "awaken.ascent.crown.colossus": "The Elder Colossus's crown%s",
   "awaken.ascent.crown.lumen": "The Lumen Spire's crown%s",
   "block.awaken.spire_crown": "Spire Crown",
-  "subtitles.awaken.ascent.sky_wind": "Wind round the island",
-  "subtitles.awaken.ascent.sky_leaves": "Leaves rustle",
-  "subtitles.awaken.ascent.case_hum": "The Wings' case hums",
-  "subtitles.awaken.ascent.case_open": "The Wings' case opens",
   "subtitles.awaken.ascent.dive": "Someone dives",
-  "subtitles.awaken.ascent.dive_land": "A dive hits the ground"
+  "subtitles.awaken.ascent.dive_land": "A dive hits the ground",
+  "block.awaken.leap_stand": "Leaper's Stand",
+  "entity.awaken.lesson_figure": "Figure of Light"
 }

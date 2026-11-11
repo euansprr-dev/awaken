@@ -11,9 +11,11 @@ import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.DoublePlantBlock;
 import net.minecraft.world.level.block.HangingRootsBlock;
 import net.minecraft.world.level.block.LanternBlock;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.SlabType;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,6 +42,17 @@ public final class Kinds {
         return made;
     }
 
+    /**
+     * A body whose top is lower than its cell's: a slab laid low. It carries people and other bodies, but a plant, a
+     * crystal, a candle or a drift set over it stands in the cell above with half a block of air under it. The floors
+     * that step in half blocks (SPEC §50.9 "Depth") made these common; Euan, 11 Nov, in the Cinder Workings: "There are
+     * some floating things here... we need to make sure that never happens in any gates." A stair is not one: half its
+     * top is whole, and candles down a flight of steps (Amber Reach's) stand on it.
+     */
+    public static boolean low(BlockState s) {
+        return s != null && s.getBlock() instanceof SlabBlock && s.getValue(SlabBlock.TYPE) == SlabType.BOTTOM;
+    }
+
     private static int classify(BlockState s) {
         Block b = s.getBlock();
         if (b == Blocks.WATER) return WATER;
@@ -51,6 +64,8 @@ public final class Kinds {
         if (b == Blocks.LILY_PAD || id.equals("crypt_lily_candle") || id.equals("market_boat_lamp")) return AFLOAT;
         if (b instanceof LanternBlock) return s.getValue(BlockStateProperties.HANGING) ? HANGS : ON_GROUND;
         if (id.endsWith("_bell_rope") || id.equals("gate_bell")) return HANGS;
+        // an icicle and a flag hang from an eave: read as things that stand, Settle took them out from under every roof
+        if (id.endsWith("_icicles") || id.endsWith("_flags")) return HANGS;
         if (b instanceof HangingRootsBlock || id.endsWith("_drip") || id.endsWith("_vines") || id.endsWith("_vines_plant")) return HANGS;
         if (b instanceof VineBlock) return BESIDE;
         if (b instanceof BushBlock || b instanceof DoublePlantBlock || b instanceof CarpetBlock || b instanceof CropBlock

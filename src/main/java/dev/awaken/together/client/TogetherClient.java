@@ -32,6 +32,11 @@ public final class TogetherClient {
             Kneeling.clear();
         });
         AimClient.freePress = Pings::press;
+        // a finishing blow your party strikes plays for you as it does for them (SPEC §70.3)
+        dev.awaken.mobs.client.finish.FinishClient.sharedWith = e -> {
+            for (TogetherNet.Member m : ClientParty.members()) if (!m.is(TogetherNet.F_SELF) && m.id().equals(e.getUUID())) return true;
+            return false;
+        };
         StatusSections.add(StatusSections.Tab.STATUS, new TogetherSection());
         // the party on the Atlas (SPEC §70.2): each member where the server last said they stand, in their colour
         dev.awaken.core.api.MapMarks.register(player -> {
@@ -41,6 +46,12 @@ public final class TogetherClient {
                 if (m.is(TogetherNet.F_SELF)) continue;
                 int colour = ClientParty.COLOURS[row++ % ClientParty.COLOURS.length];
                 if (!m.is(TogetherNet.F_ELSEWHERE)) out.add(new dev.awaken.core.api.MapMarks.Mark(new net.minecraft.core.BlockPos(m.x(), m.y(), m.z()), colour & 0xFFFFFF, m.name(), true));
+            }
+            // what the party is pointing at, while it shows on screen
+            for (ClientParty.Live l : ClientParty.pings()) {
+                TogetherNet.Ping pg = l.ping();
+                out.add(new dev.awaken.core.api.MapMarks.Mark(net.minecraft.core.BlockPos.containing(pg.x(), pg.y(), pg.z()), ClientParty.colourOf(pg.by()) & 0xFFFFFF,
+                        pg.name() + ": " + pg.line(), true));
             }
             return out;
         });

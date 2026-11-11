@@ -7,6 +7,9 @@
 # landing, and "[ascent] where dive_<case> x y z" where the feet came to rest (on the mark: y 200, within half a block
 # of its middle).
 # Marks (their middles): A (0.5, 200, 10.5), B (8.5, 200, 9.5), C (-12.5, 200, 7.5), D (-4.5, 200, 7.5).
+# Timing: the aim is held from the ground, the double jump goes, and attack comes 4 ticks on. Each line costs about 6
+# ticks on the CI runner and a double jump from flat ground is in the air 16 ticks, so "wait 8" then "wait 2" pressed
+# attack after the landing every time (run 43030529832: no dive at all).
 # Look tour: tools/tour-ci.sh tools/autopilot/aimed-dive.txt 1200
 world aimed_dive survival 4253
 waitworld
@@ -51,10 +54,10 @@ wait 10
 # ---- A: ahead, 10 off ----
 cmd tp @s 0.5 200 0.5 0 10
 wait 20
-cmd awaken ascent pilot double jump 5
-wait 8
-cmd awaken ascent pilot aimat 0.5 200 10.5 8
+cmd awaken ascent pilot aimat 0.5 200 10.5 60
 wait 2
+cmd awaken ascent pilot double jump 5
+wait 4
 cmd awaken ascent pilot attack
 cmd awaken ascent pilot hold attack 2
 wait 3
@@ -68,10 +71,10 @@ wait 50
 # ---- B: left (east), 12.0 off ----
 cmd tp @s 0.5 200 0.5 -42 10
 wait 20
-cmd awaken ascent pilot double jump 5
-wait 8
-cmd awaken ascent pilot aimat 8.5 200 9.5 8
+cmd awaken ascent pilot aimat 8.5 200 9.5 60
 wait 2
+cmd awaken ascent pilot double jump 5
+wait 4
 cmd awaken ascent pilot attack
 cmd awaken ascent pilot hold attack 2
 wait 3
@@ -85,10 +88,10 @@ wait 50
 # ---- C: right (west), 14.8 off ----
 cmd tp @s 0.5 200 0.5 62 10
 wait 20
-cmd awaken ascent pilot double jump 5
-wait 8
-cmd awaken ascent pilot aimat -12.5 200 7.5 8
+cmd awaken ascent pilot aimat -12.5 200 7.5 60
 wait 2
+cmd awaken ascent pilot double jump 5
+wait 4
 cmd awaken ascent pilot attack
 cmd awaken ascent pilot hold attack 2
 wait 3
@@ -102,12 +105,11 @@ wait 50
 # ---- D: from a sprint going south, the mark right-ahead (8.6 from the start) ----
 cmd tp @s 0.5 200 -4.5 0 10
 wait 20
+cmd awaken ascent pilot aimat -4.5 200 7.5 60
 cmd awaken ascent pilot hold forward,sprint 14
-wait 8
+wait 6
 cmd awaken ascent pilot double jump 5
-wait 8
-cmd awaken ascent pilot aimat -4.5 200 7.5 8
-wait 2
+wait 4
 cmd awaken ascent pilot attack
 cmd awaken ascent pilot hold attack 2
 wait 3
@@ -123,10 +125,10 @@ camera first
 wait 5
 cmd tp @s 0.5 200 0.5 0 10
 wait 20
-cmd awaken ascent pilot double jump 5
-wait 8
-cmd awaken ascent pilot aimat 0.5 200 10.5 8
+cmd awaken ascent pilot aimat 0.5 200 10.5 60
 wait 2
+cmd awaken ascent pilot double jump 5
+wait 4
 cmd awaken ascent pilot attack
 cmd awaken ascent pilot hold attack 2
 wait 2
@@ -143,10 +145,10 @@ camera back
 wait 5
 cmd tp @s 0.5 200 0.5 0 10
 wait 20
-cmd awaken ascent pilot double jump 5
-wait 8
-cmd awaken ascent pilot aimat 0.5 200 60.5 8
+cmd awaken ascent pilot aimat 0.5 200 60.5 60
 wait 2
+cmd awaken ascent pilot double jump 5
+wait 4
 cmd awaken ascent pilot attack
 cmd awaken ascent pilot hold attack 2
 wait 40

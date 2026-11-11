@@ -33,7 +33,7 @@ import org.jspecify.annotations.Nullable;
  */
 public class WordStoneBlock extends BaseEntityBlock {
     public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
-    public static final IntegerProperty WORD = IntegerProperty.create("word", 1, 30);
+    public static final IntegerProperty WORD = IntegerProperty.create("word", 1, 36);
     /** The plinth and the stele (north-facing: the carved face looks north). */
     private static final java.util.Map<Direction, VoxelShape> SHAPES = Shapes.rotateHorizontal(
             Shapes.or(Block.box(1, 0, 1, 15, 3, 15), Block.box(3, 3, 5, 13, 16, 11)));

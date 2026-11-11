@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "name": "Fallwater Vale",
+  "line": "The river comes down off the wall behind the old temple, and the forest has had the valley to itself for a long time.",
+  "form": "land",
+  "theme": "overgrown_temple",
+  "ranks": [
+    "E",
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
+  ],
+  "land": {
+    "program": "awaken:temple_country",
+    "water": 62,
+    "params": {
+      "landform": 1
+    }
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/fallwater_vale"
+    ],
+    "lens": "fallwater_vale",
+    "air": [
+      "mist",
+      "fireflies",
+      "moths",
+      "dust",
+      "spores"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 6
+  },
+  "heart": {
+    "lord": "root_saint",
+    "seat": "the_high_floor"
+  },
+  "moods": [
+    "morning_after_rain"
+  ],
+  "ready": true
+}

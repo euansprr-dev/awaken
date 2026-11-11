@@ -25,8 +25,16 @@ final class ClientParty {
     private static List<TogetherNet.Member> members = List.of();
     private static final List<Live> PINGS = new ArrayList<>();
 
+    private static int share;
+
     static void receive(TogetherNet.Party m) {
         members = List.copyOf(m.members());
+        share = m.share();
+    }
+
+    /** How the party shares XP: 0 each their own, 1 half, 2 equal. */
+    static int share() {
+        return share;
     }
 
     static void receive(TogetherNet.Ping p) {
@@ -36,6 +44,7 @@ final class ClientParty {
 
     static void clear() {
         members = List.of();
+        share = 0;
         PINGS.clear();
     }
 

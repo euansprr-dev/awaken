@@ -1,0 +1,67 @@
+# Who lives on the Cinder Crown (SPEC 50.9 "Who lives there"): rams on level ground, marmots, kites overhead, a pack of the
+# Ember Mines' own on the prowl (from above, twice, so its walk shows), a lookout on its perch with its reserve behind,
+# and the big one at home, wherever this seed has them. Difficulty is normal so the hostile haunts fill; the camera is
+# creative, so nothing notices it. Each haunt is first looked at from 70 blocks, which is where it fills. What filled is
+# in the log: "[country]".
+world autopilot_realm_cinder_crown_country creative 20261121
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+cmd awaken gate realm_enter E awaken:cinder_crown
+need realm
+hud off
+wait 300
+
+cmd awaken gate realm_haunt HERD 0 70 14
+wait 100
+cmd awaken gate realm_haunt HERD 0 12 4
+wait 80
+shot country_rams
+cmd awaken gate realm_haunt HERD 1 70 14
+wait 100
+cmd awaken gate realm_haunt HERD 1 26 3
+wait 80
+shot country_rams_from_the_path
+
+cmd awaken gate realm_haunt SMALL 0 70 14
+wait 100
+cmd awaken gate realm_haunt SMALL 0 7 2
+wait 60
+shot country_marmots
+
+cmd awaken gate realm_haunt PROWL 0 70 14
+wait 100
+cmd awaken gate realm_haunt PROWL 0 16 14
+wait 60
+shot country_prowl_1
+cmd awaken gate realm_haunt PROWL 0 60 30
+wait 700
+cmd awaken gate realm_haunt PROWL 0 16 14
+wait 60
+shot country_prowl_2
+cmd awaken gate realm_haunt PROWL 0 8 2
+wait 60
+shot country_prowl_close
+
+cmd awaken gate realm_haunt WATCH 0 70 14
+wait 100
+cmd awaken gate realm_haunt WATCH 0 12 0
+wait 60
+shot country_lookout_below
+
+cmd awaken gate realm_haunt LAIR 0 70 14
+wait 100
+cmd awaken gate realm_haunt LAIR 0 12 4
+wait 60
+shot country_lair
+quit
