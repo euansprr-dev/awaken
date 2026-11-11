@@ -169,7 +169,7 @@ public final class StorageClient {
         if (!(e.getScreen() instanceof AbstractContainerScreen<?> s) || !offered(s)) return;
         Tray.skip();
         var mouse = e.getMouseButtonEvent();
-        if (mouse.button() != 0 || !(pinMode || mouse.hasAltDown())) return;
+        if (mouse.button() != InputConstants.MOUSE_BUTTON_LEFT || !(pinMode || mouse.hasAltDown())) return; // 26.3: left is 1
         Slot over = s.getHoveredSlot();
         if (over == null || !(over.container instanceof Inventory) || over.getContainerSlot() < Inventory.getSelectionSize()
                 || over.getContainerSlot() >= Inventory.INVENTORY_SIZE) return;
