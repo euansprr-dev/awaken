@@ -190,6 +190,14 @@ final class SwingTests {
                     Vector3f up = q.transform(new Vector3f(st.hand()).sub(st.offHand()), new Vector3f()).normalize();
                     h.assertTrue(y > 0F && up.y > 0.9F && up.z > -0.05F, "the Maul's charge holds it raised (fist " + x + ", " + y + "; haft " + up + ")");
                 }
+                // the Axe's too ("Yes, the Axe too"), drawn back over the sword shoulder: its fist by the middle's height on the
+                // sword side, and the hand's up (its haft's way within ten degrees) tipped toward that shoulder, never ahead
+                // (the old hold's top leaned 27 degrees ahead and 36 in toward the middle)
+                if (a.id().equals(Arms.AXE)) {
+                    Vector3f up = q.transform(new Vector3f(0F, 1F, 0F));
+                    h.assertTrue(x > 0F && y > -0.2F && up.x > 0.25F && up.y > 0.8F && up.z > -0.1F,
+                            "the Axe's charge holds it raised over the shoulder (fist " + x + ", " + y + "; up " + up + ")");
+                }
             }
             boolean two = TWO_HANDED.contains(a.id());
             h.assertTrue((st.offHand() != null) == two && (st.vanillaOffHand() != null) == two,

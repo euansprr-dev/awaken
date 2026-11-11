@@ -1,9 +1,12 @@
-# The Maul's charge held raised (SPEC §25 "The Maul's charge is held raised"; Euan 2026-11-11: "it's just holding it in
-# front of the character instead of actually like bringing it up as if you were going to hit down"):
+# The Maul's and the Axe's charges held raised (SPEC §25 "The Maul's charge is held raised", "The Axe's charge is held raised
+# too"; Euan 2026-11-11: "it's just holding it in front of the character instead of actually like bringing it up as if you
+# were going to hit down", then "Yes, the Axe too"):
 #   clips/maul_heavy the press, the draw up, the hold (the fists high, the haft rising out of the top, neither arm's end
-#                    on the bottom edge), the release and the slam at 2 ticks a second, a picture a half tick. No still of
-#                    the Maul's hold: the runner waits for the terrain before a shot (31 s on 11 Nov), long past a hold
-#   <x>_held         the other overhead heavies' held charges, as they still are, to set beside it
+#                    on the bottom edge), the release and the slam at 2 ticks a second, a picture a half tick. No stills of
+#                    a hold: the runner waits for the terrain before a shot (31 s on 11 Nov), long past a hold
+#   clips/axe_heavy  the same for the Axe: drawn back over the sword shoulder, the head in the top right corner, the chop
+#   clips/axe_third  the Axe's charge from behind: its own set held high over the shoulder (no longer the shared low draw),
+#                    then its chop, a picture every 2 ticks
 # ci knobs: PACK=perf,feel,comfort,world
 world armsmaulcharge creative 781
 waitworld
@@ -46,32 +49,26 @@ arms studio awaken:gatewrought_axe
 arms waitserver 100
 look 0 6
 wait 20
-arms heavy 60
-wait 32
-shot axe_held
-wait 60
-arms studio awaken:gatewrought_greatblade
-arms waitserver 100
-look 0 6
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+shot axe_rest
+arms rate 2
+wait 2
+arms film axe_heavy 64 0.5 2
+wait 3
+arms heavy 22
+wait 36
+arms rate 20
+wait 30
+camera back
 wait 20
-arms heavy 60
-wait 32
-shot greatblade_held
-wait 60
-arms studio awaken:gatewrought_longsword
-arms waitserver 100
-look 0 6
-wait 20
-arms heavy 60
-wait 32
-shot longsword_held
-wait 60
-arms studio awaken:gatewrought_scythe
-arms waitserver 100
-look 0 6
-wait 20
-arms heavy 60
-wait 32
-shot scythe_held
-wait 60
+arms rate 2
+wait 2
+arms film axe_third 48 2 2
+wait 3
+arms heavy 22
+wait 36
+arms rate 20
+camera first
+wait 30
 quit

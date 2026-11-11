@@ -255,7 +255,12 @@ HEAVY_SET = 0.75  # and a heavy's, further in: a charge holds it for as long as 
 # the far corner to a two-handed haft, would show its end on the bottom edge with the fists any higher (its end stays 1.29
 # under the middle through the hold and the drive; the shipped strikes reach 1.2). The drive takes the move off on the
 # blow's own power curve, so the hit and everything after it are the cut's own.
-RAISED_HEAVY = {"maul": dict(grip=(0.42, -0.1, -0.6), tilt=25.0)}
+# The Axe too (Euan 2026-11-11, "Yes, the Axe too"): one-handed, it is drawn back over the sword shoulder, the haft angled
+# up to the top right corner with the whole head in it (upright with the fist this high its head left the frame: a raised
+# axe has to be seen to be one), a little further out so its chop down runs at the Maul's pace (235 degrees a tick at the
+# hit against the Maul's 227; nearer, 259). Its arm alone limits it: its end stays 1.37 under the middle in the hold and
+# 1.2 through the drive (the old hold's reached 1.14).
+RAISED_HEAVY = {"maul": dict(grip=(0.42, -0.1, -0.6), tilt=25.0), "axe": dict(grip=(0.2, -0.1, -0.75), tilt=45.0)}
 CARRY_KEEP = 0.4  # a leading strike's follow-through keeps at least this much of its travel
 FULL_SET = 0.7  # a cut's set has its blade's middle this far out on the side it comes from (of the way to the screen's edge)
 FULL_END = 0.75  # and its carry takes it this far out on the far side: edge to edge, never a half cut

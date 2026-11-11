@@ -41,7 +41,7 @@ public final class ArmsClips {
             "glaive", "scythe", "warstaff", "twinblades", "daggers", "shieldblade");
 
     /** Styles that hold their own heavy's draw while it charges (arms_<style>_heavy_charge: the very pose it is loosed from). */
-    public static final java.util.Set<String> OWN_CHARGE = java.util.Set.of("katana", "greatblade", "maul", "spear", "glaive",
+    public static final java.util.Set<String> OWN_CHARGE = java.util.Set.of("katana", "greatblade", "maul", "axe", "spear", "glaive",
             "scythe", "warstaff", "twinblades", "daggers", "shieldblade");
 
     /** The guard a style raises (the Shieldblade's, its shield up in front; every other's the blade across it). */
