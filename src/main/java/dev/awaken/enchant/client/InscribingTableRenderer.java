@@ -48,7 +48,8 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
     static final float SLATE = 12 / 16F, CHANNEL = 7 / 16F;
     /** How a piece lies: flat on its side (an icon, a weapon), on its back (a breastplate, leggings), or standing (a helm, boots). */
     static final int FLAT = 0, BACK = 1, UPRIGHT = 2;
-    private static final ItemStack BURIN = new ItemStack(dev.awaken.enchant.EnchantContent.BURIN.get());
+    /** The burin in the inkwell: made at first need (at class load, during the first resource reload, items aren't bound yet). */
+    private static ItemStack burin = ItemStack.EMPTY;
     private static final float[] NO_FLOATS = new float[0];
     private static final int[] NO_INTS = new int[0];
 
@@ -126,8 +127,10 @@ public final class InscribingTableRenderer implements BlockEntityRenderer<Inscri
             lay(s, piece);
         }
         if (s.mine && !piece.isEmpty()) InscribeScene.pieceTop(s.pTop);
-        if (s.phase == InscribingTableBlockEntity.IDLE) items.updateForTopItem(s.burin, BURIN, ItemDisplayContext.NONE, be.getLevel(), null, 0);
-        else s.burin.clear();
+        if (s.phase == InscribingTableBlockEntity.IDLE) {
+            if (burin.isEmpty()) burin = new ItemStack(dev.awaken.enchant.EnchantContent.BURIN.get());
+            items.updateForTopItem(s.burin, burin, ItemDisplayContext.NONE, be.getLevel(), null, 0);
+        } else s.burin.clear();
         s.pages = s.sockets = 0;
         if (s.mine && !EnchantClientConfig.classic() && Desk.shown(pt)) {
             Desk.layout(pt);

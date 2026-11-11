@@ -460,9 +460,26 @@ def table_model():
     stands the burin in it while nobody writes). Faces without a uv take the model's own."""
     f = lambda tex, **kw: {"texture": tex} | kw  # noqa: E731
 
+    def span(a0, a1):
+        """A run of the model's own coordinates as texels inside 0..16 (a part above the block's top slides down into it)."""
+        if a1 > 16:
+            a0, a1 = a0 - (a1 - 16), 16
+        if a0 < 0:
+            a0, a1 = 0, a1 - a0
+        return max(0, a0), min(16, a1)
+
+    def uv(lo, hi, d):
+        (x0, y0, z0), (x1, y1, z1) = lo, hi
+        if d in ("up", "down"):
+            u, v = span(x0, x1), span(z0, z1)
+            return [u[0], v[0], u[1], v[1]]
+        u, v = span(*((x0, x1) if d in ("north", "south") else (z0, z1))), span(y0, y1)
+        return [u[0], 16 - v[1], u[1], 16 - v[0]]
+
     def solid(lo, hi, tex, **over):
-        faces = {d: f(tex) for d in ("north", "south", "west", "east", "up", "down")}
-        faces.update(over)
+        faces = {d: f(tex, uv=uv(lo, hi, d)) for d in ("north", "south", "west", "east", "up", "down")}
+        for d, face in over.items():
+            faces[d] = face if "uv" in face else face | {"uv": uv(lo, hi, d)}
         return box(lo, hi, faces)
 
     els = [
