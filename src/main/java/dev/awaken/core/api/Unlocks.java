@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The Unlock title (SPEC §71.2; Euan, 2026-11-12: "the big title, and it says you just unlocked double jump. Press space
+ * The Unlock title (SPEC §71.2; Euan, 2026-11-11: "the big title, and it says you just unlocked double jump. Press space
  * in the air again to use it ... And maybe every time you unlock a major thing in the game, it actually shows you that
  * as well"). One kit for every major unlock: a new way to move, a new power, a new rank, a new layer of the world.
  * A module registers what can be unlocked (on both sides, in its common init) and shows it by id; the System draws it

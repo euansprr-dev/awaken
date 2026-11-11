@@ -1,6 +1,6 @@
-# The Leaper's Gauntlet, remade, and the Unlock title (plan record, 12 Nov 2026)
+# The Leaper's Gauntlet, remade, and the Unlock title (plan record, 11 Nov 2026)
 
-Status: **APPROVED in full by Euan on 12 Nov 2026 ("Go ahead with the full plan": all twelve decisions yes, recorded on
+Status: **APPROVED in full by Euan on 11 Nov 2026 ("Go ahead with the full plan": all twelve decisions yes, recorded on
 the page). The movement module's part is built (SPEC §71.7); the course is the gates session's and is not built yet.**
 It follows `.claude/PLANNING-PROCESS.md` and `.claude/UI-EXCELLENCE.md` and ends
 at an approval page, https://claude.ai/artifact/1jMUNxA9HGq32BxcCJP8B1 (`docs/leapers-gauntlet/page.html`, its
@@ -21,7 +21,7 @@ In the gates session, 11 Nov 2026, after playing the Gauntlet:
   already had it, and it was just telling me to use it as an extra thing here. So we need to actually think about how to
   make that AAA as well."
 
-In this session, 12 Nov 2026, on seeing today's title:
+In this session, 11 Nov 2026, on seeing today's title:
 
 - "No, I don't think it should say you can jump in the air again. That's so boring. Like, AAA level would be something
   like an actual similar to when you discover something like a discoverer, at least like the big title, and it says you
@@ -44,7 +44,7 @@ In this session, 12 Nov 2026, on seeing today's title:
   Sounds start from Minecraft's own recordings, no synthetic dings. Layouts hold at 427 by 240 (his 4K at GUI scale 9).
   The rope-hold-swing session owns the leap's rules; the gates session owns the course.
 - **Unknowns checked here:** what he saw second by second (his log and a first-person tour); what the kit can build
-  (asked of the gates session, which answered on 12 Nov: "The gates session's answers" below).
+  (asked of the gates session, which answered on 11 Nov: "The gates session's answers" below).
 
 Strong, weak and unacceptable, in what can be observed:
 
@@ -329,7 +329,7 @@ land's work by its own estimate; rope-hold-swing 1 to 2 for the mask. What could
 
 On the page, numbered as there.
 
-## The gates session's answers (12 Nov 2026, from its code as it stood)
+## The gates session's answers (11 Nov 2026, from its code as it stood)
 
 **Build it as a hand-laid Realm in the Stopped Works' kit** (as the Hour Crypt and the Broodwarren are; `realms/kit/crawl/
 CrawlLand`: rooms, arenas, tunnels, shafts, gulfs), not in the old Rig hall, which is rows along one axis. A Realm is its

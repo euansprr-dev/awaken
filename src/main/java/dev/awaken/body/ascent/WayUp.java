@@ -153,7 +153,7 @@ public final class WayUp {
     public static final boolean LEAP_BY_PARTS = false;
     /** Whether the aimed dive exists yet (its stand gives nothing until it does). */
     public static final boolean DIVE_BUILT = false;
-    /** The first finished run's XP, as a share of the level (a fifth until the plan of 12 Nov 2026, decision 8). */
+    /** The first finished run's XP, as a share of the level (a fifth until the plan of 11 Nov 2026, decision 8). */
     static final double GAUNTLET_XP = 0.5;
 
     /** Whether this player may make one of the leap's moves (the server's word; the client's copy is synced). */

@@ -25100,16 +25100,16 @@ Under the Far Landing (§67): anyone who has flown once may take the helm home.
 tours with a server-played **tour partner** (`/awaken together partner ...`), the client on Full in one and on Gentle
 in the next. Budget: under 12 messages a second per player in a fight for everything here, under 2 at rest.
 
-## 71. The Leaper's Gauntlet, remade, and the Unlock title (plan docs/leapers-gauntlet/PLAN.md, page https://claude.ai/artifact/1jMUNxA9HGq32BxcCJP8B1; Euan approved all twelve decisions on 12 Nov 2026: "Go ahead with the full plan")
+## 71. The Leaper's Gauntlet, remade, and the Unlock title (plan docs/leapers-gauntlet/PLAN.md, page https://claude.ai/artifact/1jMUNxA9HGq32BxcCJP8B1; Euan approved all twelve decisions on 11 Nov 2026: "Go ahead with the full plan")
 
-**Status: approved in full by Euan on 12 Nov 2026, typed to the movement-unlocks session ("Go ahead with the full
+**Status: approved in full by Euan on 11 Nov 2026, typed to the movement-unlocks session ("Go ahead with the full
 plan"; recorded as yes on the page, `d1` to `d12`). The movement module's part is built (71.7). The course itself
 (71.4) is the gates session's and is not built yet: until it is, the old course of §17.10 still stands, with its gift
 remade.** This section is the short form; the plan record is the contract.
 
 Euan, 11 Nov, after playing the Gauntlet: "I had no idea that's where I got the double jump from ... I thought I already
 had it"; "it took like maybe 30 seconds ... what was the point of that gate?"; "I don't even know if I got XP". And on
-12 Nov: the title should be "the big title, and it says you just unlocked double jump. Press space in the air again to
+11 Nov: the title should be "the big title, and it says you just unlocked double jump. Press space in the air again to
 use it ... And maybe every time you unlock a major thing in the game, it actually shows you that as well."
 
 **71.1 What was found** (code at edc314667, his play log, CI tour `gauntlet-now` run 43008682852). The course is flat,
@@ -25136,7 +25136,7 @@ cannot; three stands, each followed by a hall that cannot be crossed without its
 Slam 3; no clock, no pit, a net that lifts you back); the Long Run (timed, about 85 s par, 14 leap moves, rings, a pit
 that throws back and does not hurt, medals); the tally floor (XP counted up as `LordPay` does, the mastery bar, time and
 medal on a plate, the player's counts). Proposed: half a level's XP the first time; the gate stays standing to run
-again; the look of the Stopped Works. The gates session's answer (12 Nov): a hand-laid Realm in the Stopped Works' kit,
+again; the look of the Stopped Works. The gates session's answer (11 Nov): a hand-laid Realm in the Stopped Works' kit,
 not the Rig hall; steps, gaps, shafts, marks, doors on a word and constructs are easy there; a slam-broken deck needs a
 slam-landed call from the Ascent; rings, clock and medals must be ported from the Rig (medium); a scripted gate onto one
 named Realm is new and small; the kit's fall catch costs 3 + 8% health and would cost nothing here; its check needs the
@@ -25150,7 +25150,7 @@ drawing: the movement-unlocks session. The mask honoured in `AscentMoves` and `A
 the double-jump mantle: rope-hold-swing. The place, halls, check, clock and pit rules, crossing, HUD lines, tally floor
 and re-run: the gates session.
 
-**71.7 Built (12 Nov 2026, `claude/movement-unlocks-b62e18`; the movement module's part).**
+**71.7 Built (11 Nov 2026, `claude/movement-unlocks-b62e18`; the movement module's part).**
 - **The Unlock title.** `core.api.Unlocks` (register on both sides, `show(player, id)`, client `show`, `showing`,
   `pending`); the System sends `signal_unlock` and draws it in `signal.client.UnlockMoment`: the spaced label in the
   unlock's colour, a line of light out to 120 px and more, the name at 3 times text (2.4, 2, 1.5 when it would not fit

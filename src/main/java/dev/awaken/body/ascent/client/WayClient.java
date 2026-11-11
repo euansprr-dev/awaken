@@ -179,7 +179,7 @@ public final class WayClient {
     static void sceneBegan(int mode) {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null || !BodyConfig.wayUp()) return;
-        // every gift is named in the Unlock title (SPEC §71.2; Euan, 2026-11-12); what teaches it waits for the title
+        // every gift is named in the Unlock title (SPEC §71.2; Euan, 2026-11-11); what teaches it waits for the title
         switch (mode) {
             case AscentPayloads.LEAP_EDGE -> {
                 // the old course's edge, until the Gauntlet's stands replace it: the body is held where it last stood,
