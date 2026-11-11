@@ -49,7 +49,7 @@
   "awaken.ascent.gift.wings": "You have wings now.",
   "awaken.ascent.gift.wings.how": "In a fall, press jump to open them.",
   "awaken.ascent.core.dark": "The core stays dark. It only answers someone who climbed up to it by rope.",
-  "awaken.ascent.core.rank": "The core stays dark. It is waiting for a %s-rank hunter.",
+  "awaken.ascent.core.rank": "Come back at rank %s. These wings will wait for you.",
   "block.awaken.anchor_ring": "Anchor Ring",
   "block.awaken.wing_core": "Wing Core",
   "awaken.ascent.gift.leap": "That was the leap. It's yours.",

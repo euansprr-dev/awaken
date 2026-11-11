@@ -4266,17 +4266,44 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
 - **The perch**: the top ring stands in a 3x3 of plating (trim corners), its stub on the chain's side. From the hang
   under the ring below, a zip to the perch's underside near its edge vaults the body onto it; from it, a zip to the side
   of the pier's end (7 up) pulls the body onto the pier.
-- **The core** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck): twice a second, a player within 3
-  without Wings, **at C-rank or above** (`WingCoreBlockEntity.RANK`, progression plan decision 2, 2026-10-26), who came
-  up by moving (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the
-  last 20 s in a ladder state or a Runner move and no block placed) is given Wings (`Ascent.grant`, "sky platform core")
-  with the gift's scene (`Remember` mode `GIFT_WINGS`: "Wings of light.", the wings unfold round the body, then the
-  hint to open them), `ascent.vow_call`, counter `awaken:ascent_wings_core`. Anyone else is told why on arrival, then at
-  most every 10 s (`Throttle`): "The core stays dark. It answers only to a climb up its rings." or "The core stirs, and
-  stays dark. It waits for a C-rank hunter." (before: once a minute, on the minute, so a refused player could wait 60 s
-  in silence). The Horizon's "wings" need is reached by Wings or the rope alone (the rings are a rope ladder) and reads
-  "· needs a rope or wings". It breathes a ring of light every 3 s. The
-  platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
+- **The core, the rank first** (`awaken:wing_core`, unbreakable, in the cabin's middle on the deck; 11 Nov 2026, Euan
+  at a core at rank D: "it's way too early to get these... it says, like, come back when you're rank C"): twice a
+  second, a player within 4.7 (the case's rail is two out, its corners nearly three) without Wings is asked **the rank
+  first** (`WingCoreBlockEntity.RANK`, C; progression plan decision 2), however they came: below it "Come back at rank
+  C. These wings will wait for you." on the action bar with the vault's refusal (Minecraft's own recording, low), at
+  once and then at most every 10 s, and the core goes on the Tasks page (`Promises.seen`, need rank C, "A sky core's
+  wings"). At the rank the way they came is asked as before: by the line (`ArrivalHooks.byLine`) and by moving
+  (`ArrivalHooks.byMovement` and `Ascent.arrivedByMovement(p, 20)`: a third of the last 20 s in an airborne Ascent
+  state or a Runner move and no block placed), else the line's or the dark's refusal; then Wings (`Ascent.grant`, "sky
+  platform core") with the gift's scene (`Remember` mode `GIFT_WINGS`), `ascent.vow_call`, counter
+  `awaken:ascent_wings_core`. The Horizon's "wings" need is reached by Wings or the rope alone and reads "· needs a rope
+  or wings". The platform's `#awaken:warded_sky` ward, its loot table and the Horizon's "wings" reach are unchanged.
+- **The wings on show** (11 Nov 2026, Euan: "put the wings themselves inside of a glass case... the new wing model...
+  that can really motivate you to come back at rank C"; the client's `WingCaseRenderer`). Over the core hang **the real
+  wings** (§62's `WingForm` pair drawn by `WingFeathers` in `WingPipelines`' own types, 0.64 where a player's are 0.94,
+  so the open pair turns inside the glass), 3.2 over
+  the core's floor, breathing between nearly open and open, turning once in 38 seconds, lit by themselves, their halos
+  behind them, in a column of light from the core's top to the roof (a sheet turned to face the eye, bright down its
+  middle and at its foot, breathing with them) and with their light on the core's top, inside a case of light glass: four panes from the rail to the roof (a
+  faint tint, brighter at the foot, a bright line up each corner and round the top, a band of sheen crossing one pane
+  after another every ten seconds). One pair, drawn within 80 blocks (the far forms past 48), nothing allocated in a
+  frame. What a player sees is their own truth: without wings, the case shut and the pair inside; with them, the case
+  open and empty over a low light.
+  - *The gift at the case*: as the gift's scene begins the glass sinks into the rail (22 ticks; the vault's shutter
+    opening, Minecraft's own recording, under the wings' opening) and the pair opens right out and crosses to between
+    the player's shoulder blades, thinning out as it arrives at tick 34, when the scene's own wings open on their back
+    (`AscentScene.wingsGift`). The "UNLOCKED · Wings" title (§71.2) begins with the same scene.
+  - *The air* (`AscentFxBridge.caseTick`, within 48 blocks of a core): motes of the wings' light shed off the feathers
+    and rising; the wind as motes carried across the deck and out over the pier; the pair stirring (the wings' own
+    fold, low, every 4.6 s within 14 blocks) and a gust every 9.5 s; the core's ring of light every 3 s as before.
+- **The wings' hall** (`SkyRig.rigHall`, `hallAxis`, `hallPlaced`; laid with the rig, and on its own for platforms rigged
+  before it: its mark is the lit panel under the core, placed last; the blueprint never changes). The cabin Euan stood
+  in was "a dark tiled room". Two opposite corners are opened as **portals** four high with pillars for jambs, light
+  in the threshold and a soul lantern hung in the head; a **rail** of polished deepslate wall stands round the core two out, which the case's glass
+  rises from (nobody walks into the case), with light in the deck under its corners; a lamp every third cell down the
+  pier's middle. The blueprint keeps its chest and its stand in two opposite corners of the cabin whichever way it was
+  turned, so the portals take the pier's diagonal when its corners are empty (the pier runs straight in at the case,
+  and the wings read from its end) and the other diagonal otherwise (a quarter turn round the deck from the pier).
 - **The rope's moves for a ladder** (§17.6 rope, both sides):
   - *Vertical zip*: a throw at something more than 6 above and nearly overhead (sideways under 0.45 of the rise) zips
     up to it rather than swinging.
@@ -4310,7 +4337,8 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   off the ground, with no hard hit; shapes round it (12 to 13 up, 18 to 21 on, 28 to 32 out) climb 11 or 12 of 12
   with up to two hard hits in 18 climbs, from a pull up a stone's face or a swing under the top stones. The climb is a
   chain of slings: the body is level with the third stone four seconds after leaving the ground. `ascent_sky_stair`
-  logs the shapes and judges this one. **Off in the rig** (`SkyRig.STAIR` false) until Euan has seen its tour shots;
+  logs the shapes and judges this one. **On in the rig** from 11 Nov with the wings' hall (`SkyRig.STAIR`, one constant
+  to turn it off; platforms rigged before it get it on their next load; the first rig's chain and rings stay beside it);
   `/awaken ascent sky goto stair` builds it on the platform it goes to and stands you on the ground short of the
   lowest stone, facing it; pilot `run stair` climbs it (`tools/autopilot/sky-stair.txt`).
 
@@ -24371,7 +24399,7 @@ serves. A later Proving still hands down any rung not yet held, and each rung ha
 - *The leap (after D).* The Leaper's Gauntlet (§17.10) opens at the foot of the first crown reached by the line (a Tether
   Spire's or a hero tree's, §17.11, §17.16), or where the player stands at Tether mastery 4, whichever is first. Its gate
   is a Tasks row with its place until run, and is opened again if lost.
-- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is unchanged (§17.9). After the gift: a line of
+- *Wings (C).* The Examiner's fall wakes a sky platform. The core's rule is §17.9's (the rank is asked first; from 11 Nov the wings hang in a case at the core and the climb is the stair). After the gift: a line of
   light off the pier along the windway (§17.12), or out toward open ground where no lane starts there; for 60 s inside the
   platform's ward a fall is a soft landing.
 - *The open sky (A).* As §47.8. The edge's moment is the Lesson's key strip; wings never earned are given two seconds
