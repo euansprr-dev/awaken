@@ -24527,3 +24527,90 @@ bell): his pick decides the whole family.
   AUDIT.md are the record.
 - Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
   first values. The listening page is the check, and his marks choose (`apply`, then `build`).
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 70. Together, All the Way (co-op from the first bell to the last; plan docs/coop/PLAN.md, page https://claude.ai/artifact/EDCD8YwLJb9mbAQLLNhULS; Euan approved all twenty-one decisions 2026-11-11: "Go ahead with the full plan")
+
+Two people who always know where the other is, are never split up by a rule, and fight the same fight at the
+difficulty each of them enjoys. It extends "Together" (after §20) and replaces §55's rules. Euan's ruling the same day,
+on the first page's support job: "I don't think they should just become a healer ... they should still have their
+weapons, their powers ... it's kind of two people having a different difficulty mode ... still being revertible."
+Module `dev.awaken.together`; switches in `awaken-together.toml`, each stage's own, and with one off that stage plays
+exactly as before. **Alone, every rule here is inert** (`alone_plays_the_same`).
+
+**70.1 The party.** Up to four players who chose each other, saved per world (`awaken:together`, schema 1: members,
+who asked, the play-day). `PartyHooks.members` is the party plus, as before, anyone inside your gate run; a shared
+Hearth alone no longer makes one (a household is still asked for by `HearthHooks`, never through the party).
+- Formed by a card, never a command: the band's Status page has a TOGETHER section (it replaces RIDING ALONG) listing
+  players within 48 blocks or of your household with what can be done (`Travel together`, `Share my home`, `Go to`,
+  `Leave`); each is a 30-second card for the other, remembered by the server so a client can't answer one it wasn't
+  asked. Commands (`/awaken together ...`) stay for servers and tests.
+- Players who walk the opening together are a party from the square on.
+- A home for two: a party member placing the Ember within 24 blocks of another member who has no home asks them "Make
+  this your home too?"; a yes makes them the **second keeper** (`HearthRecord` household, optional field): the owner's
+  rights except ending the household. One second keeper a Hearth.
+- Leaving: either side, out of a fight. A party of one is no party. Logging off keeps it.
+
+**70.2 Seeing and pointing.**
+- The party strip (client, the band's look, off with the HUD, setting small / off): a row per member: name, health,
+  one state (in a menu, in a gate with its floor, on Gentle, on a knee, down, far) and an arrow on the screen's edge
+  with the distance when out of view. Hidden with no party. Synced on change only: health in twentieths, state,
+  floor; position twice a second only while the client isn't tracking that player.
+- The Atlas draws party members in your dimension as live dots; `Go to <name>` is a destination that follows them.
+- Pings on the lock key (middle click; a lock always wins on a monster, and a lock is shown to the party as their
+  target): on anything else a marker in world light for 8 s, on the edge when off screen and on the Atlas, with one
+  line chosen by what it is ("Over here", "Ore here", "Let's go in", "Look at this", "On my way", "Help" while down;
+  a double click "Careful here"). Binocular marks are shared. Four in two seconds (`core.Throttle`).
+
+**70.3 Any two in one fight.**
+- A tell carries its target; the full closing ring and any verdict show only for that player, a thin ring for the
+  rest; a blow that reaches everyone is everyone's.
+- A boss holds its target for a whole phrase and changes only at an opening, to whoever did most to it since the last
+  change, shown with its notice; `FightMind` keeps a read per player.
+- Its back is turned: a blow landing on a creature in the middle of a blow at someone else does a quarter more damage
+  and stance. Never alone.
+- Stance grows with fighters as health does (+50% each), once stage 0 has measured the need.
+- Standing back up (gates): a fighter who would die while another of the party stands on the floor goes down instead,
+  kneeling and untargetable for 20 s; a partner holding Use on them for 2 s lifts them at 30% health with 2 s of
+  grace; once a fighter a floor (twice on Story). Nobody comes, or all down: the death as before. Cheat Death first.
+- After a real death with the party still inside: you wake at the gate's door, and it lets you back in at the last
+  shrine once they are out of a fight. The Satchel and the Fracture are the price as before.
+- The finishing blow (§67 of the boss plan, when built): either may take it; everyone in the fight sees the film.
+
+**70.4 My fights: Full or Gentle** (replaces §55's bond, 40% hits, half XP, no rank and the fold).
+One setting per player (attachment `awaken:fights`, schema 1, kept through death and logout; default Full). Changed on
+the TOGETHER section at once out of a fight (in a gate at the next room; never mid-fight). The party sees a mark.
+Gentle, for that player only, all decided on the server by who a thing is aimed at:
+- A boss aiming at them: LIGHT and HEAVY blows only (never PERILOUS or GRAB), strings of two at most, no mind answers,
+  8 more ticks of hold before the blow, the opening after it half as long again. A script with nothing plain to throw
+  uses the body's plain blows; never nothing.
+- A held guard stops HEAVY as well as LIGHT (`ArmsRules.Answer.BLOCK`, not `GUARD_BREAK`); a timed deflect earns as before.
+- Attention: with a Full fighter in sight a boss gives them about one phrase in four; small monsters, two at a time.
+- Half damage taken, after armour, from everything.
+- A killing blow is a **second wind**: thrown back, 2 s on a knee untargetable, up at half health; three a floor,
+  refilled at a shrine (outside gates after a minute of calm). After those, down as anyone.
+- A fall that would kill in a gate sets them back on the last safe ground, two hearts lighter.
+- A death costs what STORY costs (half the Satchel kept, no Fracture), whatever the world's setting.
+- Their hits, stance damage and powers are full. They count as **half a fighter** when a room or a boss is sized: a
+  Lord or Warden +25% health and stance (a Full partner +50%), a room a sixth more monsters, no extra elite.
+- XP, loot, boss pieces, bells and rank as anyone. Titles and records for hard feats are not earned on Gentle.
+- A blow aimed at a Full player is exactly what it was. Numbers here are first values, in `awaken-together.toml`.
+
+**70.5 Reassessments.** Everyone of the party near the bell comes as a fighter on their own setting (a tied pair is no
+longer skipped). At the level and ready: the rank, whatever the setting. Short of the level: they may come and are
+told this one doesn't count for them yet. The Warden's gift goes to all, as before.
+
+**70.6 The joins.** A host is told once when a new player arrives in Carillon. The **Answering Peal**: a partner rings
+their handbell for you; you hear it from its bearing; ring yours back, stand still 5 s and you're beside them (both in
+the overworld, neither in a fight, gate, trial or dream; every 10 minutes; from your first landing on). **Match my
+friend** (off by default): within 32 blocks of a party member ten or more levels under you, in land at their level,
+your hits are evened down to their level; the land's dread stays on each player's real level. **Shown the way**: a
+monument a partner opened without you is a lead; touched with them there, it pays you once. A partner's solo finds
+are leads for you, never completions. **Ours**: a Journal page of firsts done together, each with its play-day. On the
+Tasks page a step both have open carries a mark, and one optional row says when a partner is ready for a Reassessment.
+Under the Far Landing (§67): anyone who has flown once may take the helm home.
+
+**70.7 Tests and tours.** `core.test.Pair` (two real survival test players in a party); prefixes `pair_`, `gentle_`;
+tours with a server-played **tour partner** (`/awaken together partner ...`), the client on Full in one and on Gentle
+in the next. Budget: under 12 messages a second per player in a fight for everything here, under 2 at rest.
