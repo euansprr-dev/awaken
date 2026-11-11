@@ -26249,8 +26249,8 @@ plan with `leaperTrial` once it says it is ready, which it does not until someon
 - **Halls.** A hall is a machine hall 17 wide with a way of decks 5 wide down its middle over a casting pit 18 down
   (piers every eighth cell, a beam between each pair, press heads stopped over the pit, a lit casting floor). The way in:
   a gap of 2, a step, a gap of 3, then the gulf (6 wide, the far side 2 higher) with the first stand's room off its lip.
-  "Twice": that gulf, a step 3 up, a gap of 4 onto a ledge 2 higher, a gap of 11 beside a wall. "Through": a gap of 9, two
-  presses over a deck 28 long, a turn with a gap of 8, a gulf of 12. "Down" is rooms, not a hall: a gantry over a well
+  "Twice": that gulf, a step 3 up, a gap of 4 onto a ledge 2 higher, a gap of 7 beside a wall. "Through": a gap of 7, two
+  presses over a deck 28 long, a turn with a gap of 7, a gulf of 12. "Down" is rooms, not a hall: a gantry over a well
   with a cracked deck across it 5 down and the way on 3 under that; three castings stood in a doorway with a brass plate
   before them; a room with a bay sunk 4 and a ram stuck down in its way out.
 - **A stand's room** is round, the stand (`awaken:leap_stand`, set live by the course so it has its block entity) on a
@@ -26304,5 +26304,17 @@ plan with `leaperTrial` once it says it is ready, which it does not until someon
 - **Coming back:** someone who has run it before (`TrialHooks.finished`) is set down on the landing as they arrive:
   "You've run this before, so you start at the Long Run." The gate is never marked cleared, so it stays standing.
 - **The HUD's line** goes on to "Run the Long Run" on the landing and through the run, then "The way out is open".
-- *Not built yet:* the gate's card showing the best time and medal; a place for the rope on the run; the walk check on
-  the leap's real reach (it takes the plan's sizes); par set from real runs. Nobody has played it.
+- **Reach** (from the leap's own rules, sent by the rope session 11 Nov 2026 at Leaper mastery 0: sprint take-off 0.49
+  a tick, second jump +0.52, dash 0.95, the carry's drag 0.988; the carry shortened by 16/19 because a tour measured it
+  that much shorter than the rules; widest gap in cells onto a far side so much higher):
+  a plain sprint jump with the ground mantle 6.6 level, 5.9 at +1, 5.6 at +2, 4.5 at +3, nothing at +4;
+  a second jump 7.9 to 8.4 level, 6.8 to 7.4 at +2, 5.7 to 6.7 at +3;
+  a jump and a dash 8.1 to 9.0 level; a jump, a second jump and a dash 13.9 level.
+  So the first gulf (6 wide, 2 higher) cannot be made without the leap (short by 0.4) and can with it (0.8 to spare);
+  the teaching halls' other gates were cut to fit one move: "Twice"'s long gap from 11 to 7, "Through"'s two dash gaps
+  from 9 and 8 to 7. A step 3 up and a gap of 4 onto a ledge 2 higher can also be made by a jump and a mantle; they are
+  places to use the move, not gates. The Long Run keeps the plan's sizes (gaps of 9 and 10, gulfs of 12): each is
+  within a second jump and a dash together, and a gap of 9 is not certain on a dash alone.
+- *Not built yet:* the gate's card showing the best time and medal; a place for the rope on the run; a check that
+  proves each crossing against the reach above (the walk check takes the land's word for which crossings need a move);
+  par set from real runs. Nobody has played it.

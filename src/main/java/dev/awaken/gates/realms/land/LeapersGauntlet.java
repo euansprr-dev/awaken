@@ -20,11 +20,11 @@ import static dev.awaken.gates.realms.kit.N.rnd;
  * stand. No hall before the Long Run has a clock or costs anything to fall in.
  *
  * <p>Built so far: the way in, the first stand, the hall "Twice" (the double jump), the second stand, the hall "Through"
- * (the dash: a gap of nine, two presses over the way that still turn over, a gap of eight round a corner, a gulf of
+ * (the dash: a gap of seven, two presses over the way that still turn over, a gap of seven round a corner, a gulf of
  * twelve), the third stand and "Down" (the slam: a cracked deck under a gantry, three castings stood in a doorway, a ram
  * stuck down in the way with its plate in a sunk bay), the Long Run (three halls on three levels, a well between each
- * two, five rings, a clock) and the tally floor. Sizes are the plan's targets until the walk check runs on the leap's
- * real reach.
+ * two, five rings, a clock) and the tally floor. The teaching halls' gaps are sized by the leap's real reach (SPEC
+ * §71.8 "Reach"); the Long Run's are the plan's, every one within what a second jump and a dash together carry.
  *
  * <p>A hall here is a {@link Hall}: a machine hall seventeen wide cut out of the works, with a way of decks five wide
  * down its middle and nothing else to stand on. Under the decks is the casting pit, eighteen down, its floor a crust of
@@ -260,15 +260,17 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         part(new Tunnel("to_stand1", 8, Y + 1, -106, 14, Y + 1, -106, 2.4, 5, seed + 2));
         rounds[0] = part(new Round("stand1", 20, Y + 1, -106, 6, 7));
         // "Twice": the gulf (six wide, the far side two higher), a step three up, a gap onto a ledge two higher, and a
-        // long gap with only a wall beside it
+        // gap of seven with a wall beside it. Sized by the leap's own rules (SPEC §71.8 "Reach"): a second jump carries
+        // about eight across on the level and seven onto a side two higher; a gap of eleven was one for the dash as well
         twice = part(new Hall("twice", -8, -102, 8, -51, Y + 1, 7)
-                .deck(-2, -96, 2, -90, Y + 3).deck(-2, -89, 2, -84, Y + 6).deck(-2, -79, 2, -74, Y + 8).deck(-2, -62, 2, -51, Y + 8)
-                .wall(-3, -74, -3, -62).piers());
+                .deck(-2, -96, 2, -90, Y + 3).deck(-2, -89, 2, -84, Y + 6).deck(-2, -79, 2, -70, Y + 8).deck(-2, -62, 2, -51, Y + 8)
+                .wall(-3, -70, -3, -62).piers());
         rounds[1] = part(new Round("stand2", 0, Y2, -44, 7, 7));
-        // "Through": a gap of nine; then the way turns east, with a gap of eight just past the turn and a gulf of twelve
+        // "Through": a gap of seven; then the way turns east, with a gap of seven just past the turn and a gulf of
+        // twelve. A jump and a dash carry eight to nine; the gulf takes a jump, a second jump and a dash (about thirteen)
         part(new Tunnel("to_through", 0, Y2, -38, 0, Y2, -30, 2.6, 5, seed + 5));
-        through = part(new Hall("through", -8, -30, 8, 19, Y2, 0).deck(-2, -30, 2, -25, Y2).deck(-2, -15, 2, 13, Y2).deck(3, 9, 8, 13, Y2).piers());
-        east = part(new Hall("through_east", 9, 3, 41, 19, Y2, 0).deck(9, 9, 10, 13, Y2).deck(19, 9, 25, 13, Y2).deck(38, 9, 41, 13, Y2).piers());
+        through = part(new Hall("through", -8, -30, 8, 19, Y2, 0).deck(-2, -30, 2, -23, Y2).deck(-2, -15, 2, 13, Y2).deck(3, 9, 8, 13, Y2).piers());
+        east = part(new Hall("through_east", 9, 3, 41, 19, Y2, 0).deck(9, 9, 11, 13, Y2).deck(19, 9, 25, 13, Y2).deck(38, 9, 41, 13, Y2).piers());
         rounds[2] = part(new Round("stand3", 48, Y2, 11, 7, 7));
         part(new Tunnel("to_down", 54, Y2, 11, 62, Y2, 11, 2.6, 5, seed + 7));
         // "Down": a gantry over a well with a cracked deck across it five down; under the well, a room whose way on is a
@@ -345,9 +347,9 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         leaps.add(new Leap("double", 0, Y + 1, -103, 0, Y + 3, -96));
         leaps.add(new Leap("double", 0, Y + 3, -90, 0, Y + 6, -89));
         leaps.add(new Leap("double", 0, Y + 6, -84, 0, Y + 8, -79));
-        leaps.add(new Leap("double", 0, Y + 8, -74, 0, Y + 8, -62));
-        leaps.add(new Leap("dash", 0, Y2, -25, 0, Y2, -15));
-        leaps.add(new Leap("dash", 10, Y2, 11, 19, Y2, 11));
+        leaps.add(new Leap("double", 0, Y + 8, -70, 0, Y + 8, -62));
+        leaps.add(new Leap("dash", 0, Y2, -23, 0, Y2, -15));
+        leaps.add(new Leap("dash", 11, Y2, 11, 19, Y2, 11));
         leaps.add(new Leap("dash", 25, Y2, 11, 38, Y2, 11));
         // the halls that teach end here; the Long Run's crossings are for the walk check only, and are shown to nobody
         List<Leap> taught = List.copyOf(leaps);
