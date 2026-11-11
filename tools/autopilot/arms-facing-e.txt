@@ -36,8 +36,8 @@ wait 4
 cmd tp @s -4.5 201 6.5 0 12
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_delver
 wait 60
-arms film fp_delver_stone_1p_rest 3 1 3
-wait 4
+arms film fp_delver_stone_1p_rest 8 1 3
+wait 9
 arms film fp_delver_stone_1p 16 0.5 3
 wait 1
 cmd awaken delve demo strike
@@ -45,8 +45,8 @@ wait 17
 cmd tp @s -4.5 201 6.5 0 12
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_breaker
 wait 60
-arms film fp_breaker_stone_1p_rest 3 1 3
-wait 4
+arms film fp_breaker_stone_1p_rest 8 1 3
+wait 9
 arms film fp_breaker_stone_1p 16 0.5 3
 wait 1
 cmd awaken delve demo strike
@@ -54,8 +54,8 @@ wait 17
 cmd tp @s -4.5 201 6.5 0 12
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
 wait 60
-arms film fp_mattock_stone_1p_rest 3 1 3
-wait 4
+arms film fp_mattock_stone_1p_rest 8 1 3
+wait 9
 arms film fp_mattock_stone_1p 16 0.5 3
 wait 1
 cmd awaken delve demo strike
@@ -63,8 +63,8 @@ wait 17
 cmd tp @s 4.5 201 6.5 0 12
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
 wait 60
-arms film fp_mattock_dirt_1p_rest 3 1 3
-wait 4
+arms film fp_mattock_dirt_1p_rest 8 1 3
+wait 9
 arms film fp_mattock_dirt_1p 16 0.5 3
 wait 1
 cmd awaken delve demo strike
@@ -72,8 +72,8 @@ wait 17
 cmd tp @s -4.5 201 6.5 0 12
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_sounder
 wait 60
-arms film fp_sounder_stone_1p_rest 3 1 3
-wait 4
+arms film fp_sounder_stone_1p_rest 8 1 3
+wait 9
 arms film fp_sounder_stone_1p 16 0.5 3
 wait 1
 cmd awaken delve demo strike
@@ -84,8 +84,8 @@ wait 4
 cmd tp @s -4.5 201 6.5 0 12
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_delver
 wait 60
-arms film fp_delver_stone_3p_rest 3 1 3
-wait 4
+arms film fp_delver_stone_3p_rest 8 1 3
+wait 9
 arms film fp_delver_stone_3p 16 0.5 3
 wait 1
 cmd awaken delve demo strike
@@ -93,8 +93,8 @@ wait 17
 cmd tp @s -4.5 201 6.5 0 12
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_breaker
 wait 60
-arms film fp_breaker_stone_3p_rest 3 1 3
-wait 4
+arms film fp_breaker_stone_3p_rest 8 1 3
+wait 9
 arms film fp_breaker_stone_3p 16 0.5 3
 wait 1
 cmd awaken delve demo strike
@@ -102,8 +102,8 @@ wait 17
 cmd tp @s -4.5 201 6.5 0 12
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
 wait 60
-arms film fp_mattock_stone_3p_rest 3 1 3
-wait 4
+arms film fp_mattock_stone_3p_rest 8 1 3
+wait 9
 arms film fp_mattock_stone_3p 16 0.5 3
 wait 1
 cmd awaken delve demo strike
@@ -111,8 +111,8 @@ wait 17
 cmd tp @s 4.5 201 6.5 0 12
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
 wait 60
-arms film fp_mattock_dirt_3p_rest 3 1 3
-wait 4
+arms film fp_mattock_dirt_3p_rest 8 1 3
+wait 9
 arms film fp_mattock_dirt_3p 16 0.5 3
 wait 1
 cmd awaken delve demo strike
@@ -120,8 +120,8 @@ wait 17
 cmd tp @s -4.5 201 6.5 0 12
 cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_sounder
 wait 60
-arms film fp_sounder_stone_3p_rest 3 1 3
-wait 4
+arms film fp_sounder_stone_3p_rest 8 1 3
+wait 9
 arms film fp_sounder_stone_3p 16 0.5 3
 wait 1
 cmd awaken delve demo strike

@@ -13,6 +13,7 @@ every tier the same). Pictures are films at half the frame (arms film's downscal
     tools/tour-ci.sh tools/autopilot/arms-facing-a.txt 3600
     gh run download <run> -R euansprr-dev/awaken -n tour-arms-facing-a-clips -D run-autopilot/clips-ci/facing-a
     python3 tools/art/facing_tour.py sheet OUT_DIR run-autopilot/clips-ci/facing-a ...
+    python3 tools/art/facing_tour.py fill run-autopilot/clips-ci/facing-a ...   arms-facing-f.txt: blank shots again
 """
 import csv
 import json
@@ -90,9 +91,14 @@ def timing():
     return out
 
 
-def fp_lines(item, name, sid, moves, tim, turns=None):
-    """First person: the weapon posed a tick before each move's hit and on it, each a short film of the held pose (a
-    film of one tick ends in the tick it starts, before a frame is drawn)."""
+# a posed shot's film, in ticks: one of a tick ends in the tick it starts, before a frame is drawn, and the runner's
+# client can go a few ticks without drawing one
+FILM = 8
+
+
+def fp_lines(item, name, sid, moves, tim, turns=None, only=None):
+    """First person: the weapon posed a tick before each move's hit and on it, each a short film of the held pose
+    ({@code only}: just these shots, by film name)."""
     out = [f"cmd item replace entity @s weapon.mainhand with {item}", "wait 30"]
     for mv in moves:
         if mv not in tim[sid]:
@@ -102,7 +108,9 @@ def fp_lines(item, name, sid, moves, tim, turns=None):
         if turns and mv in turns:  # a one-faced head half way through its turn into the blow
             marks.insert(0, ("t", turns[mv]))
         for tag, t in marks:
-            out += [f"arms pose {mv} {t / total:.4f}", "wait 4", f"arms film fa_{name}_{mv}_{tag} 3 1 3", "wait 4"]
+            film = f"fa_{name}_{mv}_{tag}"
+            if only is None or film in only:
+                out += [f"arms pose {mv} {t / total:.4f}", "wait 4", f"arms film {film} {FILM} 1 3", f"wait {FILM + 1}"]
     out.append("arms pose off")
     return out
 
@@ -119,9 +127,9 @@ def tp_lines(item, name, sid, tim):
             f"wait {ticks - gap}", "arms rate 20", "wait 10"]
 
 
-def turn_marks():
-    """The Toll's turned moves: the tick its turn in the fist is half way (first person's turn curve)."""
-    baked = json.load(open(SWINGS))["styles"]["maul"]["moves"]
+def turn_marks(sid):
+    """A style's turned moves (its one-faced heads'): the tick the turn in the fist is half way (first person's curve)."""
+    baked = json.load(open(SWINGS))["styles"][sid]["moves"]
     out = {}
     for mv, row in baked.items():
         tn = row.get("turn")
@@ -135,7 +143,7 @@ def turn_marks():
 def weapons(group, by):
     """[(item, name, style, first-person moves, turns)] for a group's styles."""
     out = []
-    turns = turn_marks()
+    faced = set(json.load(open(SWINGS)).get("faced3", []))
     for sid in GROUPS[group]:
         if sid == "hunter":
             out += [(f"awaken:{w}", w, "longsword", ["strike_1", "strike_2"], None) for w in HUNTER]
@@ -144,8 +152,8 @@ def weapons(group, by):
             out += [(i, i.split(":")[1], s, MAUL_MOVES if s == "maul" else ["strike_1", "strike_2"], None) for i, s in VANILLA.items()]
             continue
         for w in by[sid]:
-            if w == "bell_warden_maul":
-                moves, t = ALL_MOVES, turns
+            if w in faced:  # a one-faced head: every move, the turned ones half way through the turn too
+                moves, t = ALL_MOVES, turn_marks(sid)
             elif w.startswith("gatewrought_"):
                 moves, t = ALL_MOVES, None
             elif sid == "maul":
@@ -171,7 +179,7 @@ def picks_tour():
                     continue
                 name = f"fp_{form}_{ground}_{'1p' if cam == 'first' else '3p'}"
                 lines += [f"cmd tp @s {x} 201 6.5 0 12", f"cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_{form}",
-                          "wait 60", f"arms film {name}_rest 3 1 3", "wait 4", f"arms film {name} 16 0.5 3", "wait 1",
+                          "wait 60", f"arms film {name}_rest {FILM} 1 3", f"wait {FILM + 1}", f"arms film {name} 16 0.5 3", "wait 1",
                           "cmd awaken delve demo strike", "wait 17"]
     lines.append("quit")
     return lines
@@ -190,7 +198,8 @@ def write():
             lines = HEAD.format(title=f"Facing, {g}: " + ", ".join(GROUPS[g]), g=g,
                                 what="every weapon a tick before the hit and on it in first person, then strike 1 into"
                                      " strike 2 in third person from behind its right shoulder").splitlines()
-            lines += ["arms waitserver 40", f"arms studio {first}", "arms waitserver 100", "camera first", "look 0 6", "wait 20"]
+            # the runner's client draws the studio seconds after the server builds it
+            lines += ["arms waitserver 40", f"arms studio {first}", "arms waitserver 100", "camera first", "look 0 6", "wait 200"]
             for item, name, sid, moves, turns in ws:
                 lines += fp_lines(item, name, sid, moves, tim, turns)
             lines += ["camera back", "cmd awaken fx sidecam 35", "opt fov 50", "look 0 6", "wait 20"]
@@ -204,15 +213,73 @@ def write():
     return out
 
 
+def _blank(clips, name):
+    """A posed shot to film again: no picture, or one of the sky before the studio was drawn."""
+    from PIL import Image, ImageStat
+    p = os.path.join(clips, name, "f00000.png")
+    if not os.path.exists(p):
+        return True
+    im = Image.open(p).convert("L")
+    w, h = im.size
+    return ImageStat.Stat(im.crop((int(w * 0.3), int(h * 0.3), int(w * 0.7), int(h * 0.6)))).mean[0] > 170
+
+
+def fill(clip_dirs):
+    """tools/autopilot/arms-facing-f.txt: the first-person shots of tours a to d that came back blank, filmed again."""
+    by = styles()
+    tim = timing()
+    have = {}
+    for d in clip_dirs:
+        for n in os.listdir(d):
+            have[n] = d
+    want = []
+    for g in GROUPS:
+        if g == "e":
+            continue
+        for item, name, sid, moves, turns in weapons(g, by):
+            films = set()
+            for mv in moves:
+                if mv not in tim[sid]:
+                    continue
+                for tag in (["t"] if turns and mv in turns else []) + ["a", "b"]:
+                    n = f"fa_{name}_{mv}_{tag}"
+                    if n not in have or _blank(have[n], n):
+                        films.add(n)
+            if films:
+                want.append((item, name, sid, moves, turns, films))
+    if not want:
+        return None, 0
+    lines = HEAD.format(title="Facing, f: the shots to film again", g="f",
+                        what="the first-person shots of tours a to d that came back blank").splitlines()
+    lines += ["arms waitserver 40", f"arms studio {want[0][0]}", "arms waitserver 100", "camera first", "look 0 6", "wait 200"]
+    for item, name, sid, moves, turns, films in want:
+        lines += fp_lines(item, name, sid, moves, tim, turns, films)
+    lines.append("quit")
+    path = os.path.join(TOURS, "arms-facing-f.txt")
+    with open(path, "w") as f:
+        f.write("\n".join(lines) + "\n")
+    return path, sum(len(w[5]) for w in want)
+
+
 # ---- the sheets ------------------------------------------------------------------------------------------------------
 
 CELL = (400, 225)
 
 
-def _pic(clips, name, i=0):
+# third person: the middle of the frame, where the wielder stands (the camera behind its shoulder at fov 50)
+CROP3 = (0.23, 0.05, 0.78, 0.6)
+
+
+def _pic(clips, name, i=0, crop=None):
     from PIL import Image
     p = os.path.join(clips, name, f"f{i:05d}.png")
-    return Image.open(p).convert("RGB").resize(CELL) if os.path.exists(p) else None
+    if not os.path.exists(p):
+        return None
+    im = Image.open(p).convert("RGB")
+    if crop:
+        w, h = im.size
+        im = im.crop((int(w * crop[0]), int(h * crop[1]), int(w * crop[2]), int(h * crop[3])))
+    return im.resize(CELL)
 
 
 def _near(clips, name, move, t):
@@ -228,7 +295,7 @@ def _near(clips, name, move, t):
             d = abs(float(row["view"]) - t)
             if best is None or d < best[0]:
                 best = (d, int(row["pic"]), float(row["view"]))
-    return (None, None) if best is None else (_pic(clips, name, best[1]), best[2])
+    return (None, None) if best is None else (_pic(clips, name, best[1], CROP3), best[2])
 
 
 def sheet(out_dir, clip_dirs):
@@ -307,13 +374,14 @@ def sheet(out_dir, clip_dirs):
                 continue
             for v in ("1p", "3p"):
                 n = f"fp_{form}_{ground}_{v}"
-                cells = [_pic(have[n + "_rest"], n + "_rest") if n + "_rest" in have else None]
+                crop = CROP3 if v == "3p" else None
+                cells = [_pic(have[n + "_rest"], n + "_rest", 0, crop) if n + "_rest" in have else None]
                 if n in have:
                     k = len([f for f in os.listdir(os.path.join(have[n], n)) if f.endswith(".png")])
-                    cells += [_pic(have[n], n, i) for i in range(0, min(k, 24), 4)]
+                    cells += [_pic(have[n], n, i, crop) for i in range(min(k, 8))]
                 rows.append((f"{form} {ground} {v}", cells))
     if any(c for _, cs in rows for c in cs):
-        board(rows, ["rest"] + [f"dig {i / 2:.0f}" for i in range(0, 24, 4)], "the forged picks (gatewrought; every tier holds alike)",
+        board(rows, ["rest"] + [f"dig {i + 1}" for i in range(8)], "the forged picks (gatewrought; every tier holds alike)",
               os.path.join(out_dir, "facing_picks.png"))
     return made
 
@@ -322,6 +390,9 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "sheet":
         for p in sheet(sys.argv[2], sys.argv[3:]):
             print(p)
+    elif len(sys.argv) > 1 and sys.argv[1] == "fill":
+        path, n = fill(sys.argv[2:])
+        print(f"{path}: {n} shots" if path else "nothing to film again")
     else:
         for p in write():
             print(p)
