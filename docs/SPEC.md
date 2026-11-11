@@ -6656,6 +6656,15 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
   the walk would have stopped (`walkEnd`: the trusted box's edge or 72 cells). Everything else walks. The lit air
   never shades a surface itself: it reaches farther than the walk, and where it called a block dark and the walk
   beside it found the sun, the difference lay on open grass as a patchwork under a low sun (Euan 2026-11-10).
+  - **The walk's reads** (Steady 60, 12 Nov): under the block map, rows 1024 to 1031 are its open map, one texel a
+    4x4 of columns within a chunk, one bit for each four levels of each of its eight sections, set where all 64 blocks
+    are read and open (a section not read yet is all ones, so never open). It goes up with the chunk's block texels,
+    from the same cells, in the same call. The walk reads the open texel when it enters a new 4x4, steps through an
+    open level's cells without reading their block texel, and fetches a block texel only when it moves to a new one
+    (one texel is a column of a section, sixteen blocks). The cells it visits, their order, the arithmetic and every
+    answer are as before: `tools/lens/walkcheck.py` ran the walk as it stood at 5a1f0582b beside it on every pixel of
+    ten frames (four suns, three views, 3 to 50% of pixels walking) and not one differed in status, exit distance or
+    answer, bit for bit. 0.2 ms at the tree (the world pass 17.49 to 17.28 ms, the Dell, his settings).
 - **The sun's rays** (on with the Sun Pass and the Air; autopilot `lens rays`). Two parts.
   - **The lit air** (`LensLit`): how much of the sun reaches every block of air in the block map's window, 0..1, as an
     R8 texture `awaken:lens_lit` (2048x1024: 128 slices of 128x128, x across and y up, sixteen slices a row), addressed
