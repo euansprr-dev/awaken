@@ -6631,6 +6631,14 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     particles are light, not things: they draw through their own pipeline (`awaken:pipeline/lens_particle`, the
     particle pipeline without a depth write), so no shadow, contact darkness or haze of Lens's falls under them (in the
     depth they cast blocky little shadows, Euan 2026-11-10), and one within 1.2 to 3.4 blocks of the eye fades out. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
+- **The Sun Pass in play, a part at a time** (development; client commands, nothing saved): `/awaken lens sunpass
+  off|on|setting` (the block map's walk; off leaves the heightfield's answer alone), `/awaken lens rays off|on|setting`
+  (the lit air, and with it the shortcut that spares sure pixels the walk), and `/awaken lens paths on|off`, which
+  marks on every sunlit surface which part answered it, over the answer itself and in the world's own blocks: plain
+  where the heightfield found nothing over the ray or a block stopped the walk, lines across the sun's way where the
+  lit air was sure, lines along it where the walk left the map in the open, a checker where the walk met a section
+  not read yet (frame texel 29, w). For a shadow that changes with where you stand, the mark under it names the part
+  that changed its mind.
 - **The Sun Pass** (client `lensSunPass`, default on; autopilot `lens sunpass`): `LensBlocks`, a block map. 128 blocks
   across and high, a ring by world block modulo 128; one RGBA8 texel (128x1024) a column of a section, two bits a
   block: open, stops the sun (solid render, a full occluding shape, a stair, a near-whole footprint), leaves, a lower
@@ -6651,8 +6659,18 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
 - **The sun's rays** (on with the Sun Pass and the Air; autopilot `lens rays`). Two parts.
   - **The lit air** (`LensLit`): how much of the sun reaches every block of air in the block map's window, 0..1, as an
     R8 texture `awaken:lens_lit` (2048x1024: 128 slices of 128x128, x across and y up, sixteen slices a row), addressed
-    from the volume's own corner (frame texels 15 w, 20 zw and 21 w: whether it is there and the camera's place in
-    it). The sun travels in the world's x-y plane, so each z-slice is its own flat problem: a worker thread (one,
+    from the volume's own corner (frame texels 15 w, 20 zw and 28 w: whether it is there and the camera's place in
+    it). **The corner's z rode in texel 21 until 12 Nov**, and the world's own projection (`WorldProjection`) copies
+    its sun over the whole of texel 21 every frame, w and all, as 0. The shader then took the camera to stand on the
+    volume's z edge: a surface less than two blocks to the camera's +z was "outside the volume" and walked (right),
+    and every surface farther to its +z was judged by a slice of air some 64 to 79 blocks to its north, open sky as
+    a rule, so the lit air was "sure of the sun" there and the walk never ran. A tree's shadow was whole from the
+    south, gone from the north, and cut along a straight east-west line two blocks ahead of the camera in between;
+    the sun's rays in the air were read from that far slice too (Euan, playing, 11 and 12 Nov: "the shadow moves as
+    I move", "on one side of the tree the shadow is perfect, then if I go to the other side, the shadow is gone ...
+    its for ALL trees"; found with `/awaken lens rays off`, which brought every shadow back, and `/awaken lens paths
+    on`, which drew the lit air's mark across the trunk's own shadow). Rule: a frame value never rides in a texel
+    another writer replaces (texels 0 to 11 and 21 are the projection's, whole). The sun travels in the world's x-y plane, so each z-slice is its own flat problem: a worker thread (one,
     lowest priority) sweeps each slice once from the sun's side, column by column under a low sun and row by row under
     a high one, every cell taking the light of the two cells its ray came through (mixed by the ray's slope), cut by
     what it holds: a block 0, a lower half 0.43, leaves 0.33, one leaf block in three 0.91 (a canopy's shade is

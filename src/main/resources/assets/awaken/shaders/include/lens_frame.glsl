@@ -12,9 +12,12 @@
 //   17   x seconds, wrapping every hour (ripples, shimmer); y 1 when clouds and light are spread over frames
 //   18-19 the clouds (lens_clouds.glsl)
 //   20   x the Holo world plates drawn this frame, y the storm cells
-//   21   the sun on screen: xy uv, z 1 when it is ahead of the camera (WorldProjection)
+//   21   the sun on screen: xy uv, z 1 when it is ahead of the camera (WorldProjection, which writes all four
+//        components every frame: nothing else can live in this texel)
 //   24-41 each plate: camera-relative centre,
 //        half-width and half-height vectors (3 texels a plate); 42-47 the storm cells (lens_storm_frame.glsl)
+//        (their w's are spare: 24-27 the land's horizon, lens_air.glsl; 28 the camera's z in the lit air's volume;
+//        29 the development view of the Sun Pass's parts, lens_light.fsh)
 
 #include <awaken:lens_block.glsl>
 
