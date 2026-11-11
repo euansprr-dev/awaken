@@ -6492,6 +6492,28 @@ optimise for macOS"; docs/perf/LENS-APPLE.md):
   - Lens writes the same values to a live buffer each frame (the parameters as byte/255, what the texture fetch
     returns), and Tiles' PostPass hook binds it.
   - With LensUse.x at 0 (not bound), F() and P() read the textures as before.
+- **The Tiles twins** (Steady 60, 12 Nov; tools/lens/block.py writes `lens_cinematic_tiles` and `lens_ultra_tiles`,
+  composite `lens_composite_lit_tiles.fsh`; autopilot `lens twin off|setting`):
+  - Why: with the block bound every value is one constant load, but each F() and P() still chose per pixel between
+    the block and its texture, and a value that may come from a texture is a per-pixel register: some 60 of them were
+    held through the whole lit composite. A shader that size runs only as fast as its registers let the GPU keep
+    pixels in flight, so the composite ran slower for code it never reached (the Dell at 4K, his settings: leaving out
+    the near clouds' walk saved 2.2 ms where nearly every pixel leaves it at once, the water 1.5 ms with no water in
+    view, and the parts summed to more than the 11.5 ms the composite cost; tools/lens/regs.py).
+  - Each lit chain has a twin, written from it by block.py, whose composite reads the block alone (LENS_UNIFORMS)
+    and has no development views (LENS_NO_DEBUG). LensClient runs the twin while Tiles has handed the block over and
+    still would (`Tiles.blockLive`), no development view is on and `lens twin` isn't off; else the chain as written.
+  - Same picture, to well under the scene's own noise: with the block bound the composite already read every value
+    from it, and the twin makes the same reads of the same block. It is not bit for bit: once the Metal compiler
+    knows a value is the same for every pixel it orders some sums differently, and a pixel balanced on a threshold
+    can land the other way, chiefly far leaves where the light buffer's nearest-distance pick ties (upsampleAt).
+    tools/lens/twincheck.py, both composites of one frame from the same inputs at 4K, five views: 0.13-0.40% of the
+    shot marked (marks three pixels wide; some 300 to 1,600 pixels of 8.3 million differ). The composite as written
+    with its own values one bit up (`_nudge`) marks 0.4-1.8%; two stills of the scene as written 5 s apart differ by
+    over 5 steps in 33-62% of values. Without the development views alone it is bit for bit (0 pixels; `_nodbg`).
+    In a frame that loses the block mid-way (Tiles off on a failure) the twin draws the game's own picture, and the
+    next tick runs the chain as written.
+  - Never edit a twin: edit its chain and run block.py. probes.py builds the probe chains from the twins.
 - **Together, measured** (GPU world pass, old path → new; frame p50):
 
   | Look | GPU world pass | frame p50 |

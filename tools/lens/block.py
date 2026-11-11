@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Declares Lens's uniform block (shaders/include/lens_block.glsl: LensF[48], LensP[32], LensUse) on every pass of the
 Lens chains whose shader reads F() or P(), with zeros: where Tiles' hook doesn't bind the live block, LensUse.x stays 0
-and the shaders read their textures as before. Run from the repo root after changing a chain (then tools/lens/probes.py)."""
+and the shaders read their textures as before. Run from the repo root after changing a chain (then tools/lens/probes.py).
+Then writes each lit chain's Tiles twin (SPEC §22 "Steady 60"): lens_cinematic_tiles.json and lens_ultra_tiles.json, the
+same chain with the composite read from the block alone (lens_composite_lit_tiles.fsh). LensClient runs a twin only
+while Tiles binds the live block, so never edit a twin: edit its chain and run this."""
 import json
 from pathlib import Path
 
@@ -24,3 +27,16 @@ for tier in ("swift", "cinematic", "ultra"):
             n += 1
     f.write_text(json.dumps(d, indent=2) + "\n")
     print(f"{tier}: LensBlock on {n} passes")
+
+# the Tiles twins: the lit chains with the composite that reads the block alone
+TWIN = {"awaken:post/lens_composite_lit": "awaken:post/lens_composite_lit_tiles"}
+for tier in ("cinematic", "ultra"):
+    d = json.loads((FX / f"lens_{tier}.json").read_text())
+    n = 0
+    for p in d["passes"]:
+        if p["fragment_shader"] in TWIN:
+            p["fragment_shader"] = TWIN[p["fragment_shader"]]
+            n += 1
+    assert n == 1, f"{tier}: one composite"
+    (FX / f"lens_{tier}_tiles.json").write_text(json.dumps(d, indent=2) + "\n")
+    print(f"{tier}: twin lens_{tier}_tiles.json")

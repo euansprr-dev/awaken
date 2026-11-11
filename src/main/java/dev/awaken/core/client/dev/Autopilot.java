@@ -63,6 +63,7 @@ import java.util.Map;
  * opt renderDistance|simulationDistance|volume &lt;n&gt;  changes an option for the following scenes (volume: master %)
  * lens off|swift|cinematic|ultra                switches Awaken's light layer, for same-moment A/B shots
  * lens chain <probe>|off                       measurement: awaken:lens_probe_<probe> (tools/lens/probes.py) in place of the Look's chain
+ * lens twin off|setting                        measurement: Cinematic and Ultra as written, or (setting) their Tiles twins while the block is live
  * lens temporal on|off|setting                  Lens 2's clouds and light spread over frames, or every pixel every frame
  * lookpreset performance|close_up|balanced|vista  the Look page's presets (Look, Far Sight, render distance, 4K scale, steady)
  * lookswitch swift|lite|cinematic|ultra         picks a Look tier as a click on its card would (the open Look screen's,
@@ -712,6 +713,11 @@ public final class Autopilot {
                     waitTicks = 20;
                     return true;
                 }
+                if (arg.trim().startsWith("twin")) { // lens twin off|setting: Cinematic and Ultra as written, or their Tiles twins
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.twin(arg.trim().substring(4)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().startsWith("chain")) {
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.chain(arg.trim().substring(5)));
                     waitTicks = 20;
@@ -809,7 +815,7 @@ public final class Autopilot {
                 }
                 waitTicks = 20;
             }
-            case "display" -> { // display <name prefix> [fullscreen]: measurement only (look-steady-60), with the owner's OK:
+            case "display" -> { // display <name prefix> [fullscreen|borderless]: measurement only (look-steady-60), with the owner's OK:
                 // the tour on the screen he plays on (e.g. "display DELL fullscreen"), where tours otherwise never go
                 String[] d = arg.trim().split("\\s+");
                 long window = mc.getWindow().handle();
@@ -829,8 +835,22 @@ public final class Autopilot {
                     org.lwjgl.sdl.SDLVideo.SDL_SetWindowPosition(window, centred, centred);
                     mc.getWindow().syncWindow();
                     boolean full = d.length > 1 && d[1].equals("fullscreen");
+                    boolean bare = d.length > 1 && d[1].equals("borderless");
                     mc.options.fullscreen().set(full);
-                    Awaken.LOG.info("[autopilot] display {}: on {}{}", d[0], org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(target), full ? ", fullscreen" : "");
+                    if (bare) {
+                        // the display's whole size without a border, as vanilla's borderless window on Windows: the same
+                        // pixels as fullscreen where macOS refuses a fullscreen Space (a locked screen, 12 Nov)
+                        try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+                            org.lwjgl.sdl.SDL_Rect b = org.lwjgl.sdl.SDL_Rect.malloc(stack);
+                            if (org.lwjgl.sdl.SDLVideo.SDL_GetDisplayBounds(target, b)) {
+                                org.lwjgl.sdl.SDLVideo.SDL_SetWindowBordered(window, false);
+                                org.lwjgl.sdl.SDLVideo.SDL_SetWindowSize(window, b.w(), b.h());
+                                org.lwjgl.sdl.SDLVideo.SDL_SetWindowPosition(window, b.x(), b.y());
+                                mc.getWindow().syncWindow();
+                            }
+                        }
+                    }
+                    Awaken.LOG.info("[autopilot] display {}: on {}{}", d[0], org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(target), full ? ", fullscreen" : bare ? ", borderless" : "");
                 }
                 waitTicks = 80;
             }

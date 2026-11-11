@@ -121,7 +121,7 @@ public final class Tiles {
     // the chains whose tail is "composite into swap, copy into main" (the measuring chains are left as written)
     private static boolean tail(String pass) {
         return pass.startsWith("awaken:lens_cinematic/") || pass.startsWith("awaken:lens_ultra/") || pass.startsWith("awaken:lens_swift/")
-                || pass.startsWith("awaken:lens_lite/");
+                || pass.startsWith("awaken:lens_lite/") || pass.startsWith("awaken:lens_cinematic_tiles/") || pass.startsWith("awaken:lens_ultra_tiles/");
     }
 
     /** A pass's colour target: Pixels' texture for the pass that draws into swap, when one was given and it fits. */
@@ -161,6 +161,8 @@ public final class Tiles {
 
     private static @Nullable GpuBuffer lensBlock;
     private static @Nullable Boolean forcedBlock;
+    // the hook has handed a Lens pass the live block (the mixin is in and runs)
+    private static boolean blockSeen;
 
     /** Lens's live uniform block (lens.client.LensBlock), set each frame it's written. */
     public static void lensBlock(GpuBuffer buffer) {
@@ -174,7 +176,19 @@ public final class Tiles {
             loggedBlock = true;
             Awaken.LOG.info("[tiles] {}: Lens's values from one uniform block", pass);
         }
+        blockSeen = true;
         return lensBlock;
+    }
+
+    /**
+     * Whether Lens's passes get the live block (SPEC §22 "Steady 60"): the hook has handed it over and still would. While
+     * this holds, Lens may run a chain whose composite reads its values from the block alone (LensClient's twins); a frame
+     * that loses it mid-way (Tiles off on a failure) draws the game's own picture, and the next tick runs the chain as
+     * written.
+     */
+    public static boolean blockLive() {
+        // (as uniform() decides for any Lens pass)
+        return blockSeen && lensBlock != null && forcedBlock != Boolean.FALSE && on("awaken:lens_");
     }
 
     /** Autopilot {@code lens block on|off|setting}: the A/B switch for the uniform block alone (Tiles' other parts stay). */

@@ -60,6 +60,10 @@ public final class LensClient {
     private static LensGlow glow;
     static final Identifier CINEMATIC = Awaken.id("lens_cinematic");
     static final Identifier ULTRA = Awaken.id("lens_ultra");
+    // their Tiles twins (SPEC §22 "Steady 60"; tools/lens/block.py): the same chains with the composite that reads Lens's
+    // values from the uniform block alone, run while Tiles hands that block over
+    static final Identifier CINEMATIC_TILES = Awaken.id("lens_cinematic_tiles");
+    static final Identifier ULTRA_TILES = Awaken.id("lens_ultra_tiles");
     /** Lens 2 (SPEC §22): the frame's matrices in floats ({@code awaken:lens_frame}) and the terrain's heights. */
     static final Identifier FRAME = Awaken.id("textures/effect/lens_frame.png");
     static final Identifier HEIGHT = Awaken.id("textures/effect/lens_height.png");
@@ -233,6 +237,15 @@ public final class LensClient {
     // measurement only (autopilot `lens chain <id>`): a probe chain in place of Cinematic's or Ultra's (tools/lens/probes.py)
     private static @org.jspecify.annotations.Nullable Identifier forcedChain, lastForced;
 
+    // measurement only (autopilot `lens twin off|setting`): Cinematic and Ultra as written even while the block is live
+    private static boolean noTwin;
+
+    /** Autopilot {@code lens twin off|setting}: the A/B switch for the Tiles twins (SPEC §22 "Steady 60"). */
+    public static String twin(String arg) {
+        noTwin = arg.trim().equals("off");
+        return "twin " + (noTwin ? "off" : "with Tiles' block") + (dev.awaken.turbo.tiles.Tiles.blockLive() ? " (block live)" : " (block not live)");
+    }
+
     /** Autopilot {@code lens chain <name>|off}: runs awaken:lens_probe_<name> instead of the Look's chain (Cinematic or Ultra on). */
     public static String chain(String name) {
         String n = name.trim();
@@ -353,6 +366,14 @@ public final class LensClient {
             default -> SWIFT;
         };
         if (want != null && want != SWIFT && want != LITE && forcedChain != null) want = forcedChain;
+        // Steady 60 (SPEC §22): while Tiles hands Lens's passes the live uniform block, Cinematic and Ultra run their twins,
+        // whose composite reads its values from the block alone: the very values it reads now, without a texture read
+        // beside each that made it a per-pixel register (some 4 ms of a 4K frame). A development view keeps the chain as
+        // written (the twin has none)
+        if (debug == 0 && !noTwin && dev.awaken.turbo.tiles.Tiles.blockLive()) {
+            if (want == CINEMATIC) want = CINEMATIC_TILES;
+            else if (want == ULTRA) want = ULTRA_TILES;
+        }
         // Lite is the Air and nothing else: its chain has no other sky to fall back to
         if (want == LITE && forcedAir == null) air = true;
         // the server replaces this list whenever it syncs post effects, so Lens re-asserts itself every tick, first
@@ -363,8 +384,10 @@ public final class LensClient {
         if (want != LITE) effects.remove(LITE);
         if (want != CINEMATIC) effects.remove(CINEMATIC);
         if (want != ULTRA) effects.remove(ULTRA);
+        if (want != CINEMATIC_TILES) effects.remove(CINEMATIC_TILES);
+        if (want != ULTRA_TILES) effects.remove(ULTRA_TILES);
         boolean wasFramed = framed;
-        lit = want == CINEMATIC || want == ULTRA || want != null && want == forcedChain;
+        lit = want == CINEMATIC || want == ULTRA || want == CINEMATIC_TILES || want == ULTRA_TILES || want != null && want == forcedChain;
         framed = lit || want == LITE;
         if (want != null) {
             ensureParams();
@@ -439,7 +462,7 @@ public final class LensClient {
         } else if (litAir != null) {
             litAir.forget();
         }
-        if (lit && !scene) LensParticles.tick(mc, want == ULTRA, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null,
+        if (lit && !scene) LensParticles.tick(mc, want == ULTRA || want == ULTRA_TILES, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null,
                 air && sunHere, sunDir.y, rain);
         // a hard cut on joining a world
         float k = snap ? 1f : ease;

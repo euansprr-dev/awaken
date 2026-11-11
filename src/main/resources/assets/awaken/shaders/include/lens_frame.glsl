@@ -21,7 +21,14 @@
 
 #include <awaken:lens_block.glsl>
 
+#ifdef LENS_UNIFORMS
+vec4 F(int i) { return LensF[i]; }
+#elif defined(PROBE_NUDGE)
+// (measurement only, tools/lens/twincheck.py: every value one step of its last bit up, the rounding control)
+vec4 F(int i) { return (LensUse.x > 0.5 ? LensF[i] : texelFetch(FrameSampler, ivec2(i, 0), 0)) * 1.00000012; }
+#else
 vec4 F(int i) { return LensUse.x > 0.5 ? LensF[i] : texelFetch(FrameSampler, ivec2(i, 0), 0); }
+#endif
 
 mat4 frameMat(int i) { return mat4(F(i), F(i + 1), F(i + 2), F(i + 3)); }
 
