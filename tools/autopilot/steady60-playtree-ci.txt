@@ -1,10 +1,12 @@
 # The tree in Euan's own world whose shadow changes with where he stands (playing, 11 Nov, after the first fix: "Same
 # exact glitch with the tree shadow changing based on where I stand ... on one side of the tree the shadow is perfect,
-# then if I go to the other side, the shadow is gone"). His world's seed, his pack and terrain preset, the spot and the
-# hour his save holds (15:27 UTC: a morning sun 30 degrees up in the east), a 90 degree view as he plays. From his own
-# spot, then from four sides of the ground he was looking at, level and from a little above: the shadows on that ground
-# should be the same from every one. Each view twice: as played, and with the block map's walk off (`lens sunpass
-# off`), which is the heightfield's answer alone.
+# then if I go to the other side, the shadow is gone"). His world's seed, his pack and terrain preset; the place is the
+# bell stand in his screenshots, which his save holds at -1533 69 -715 (twelve blocks from where he logged out; a new
+# world from the seed has the same land and trees there, without what he placed). The hour is his save's, a morning sun
+# 30 degrees up in the east, and an hour earlier in the morning. A 90 degree view as he plays.
+# The ground round the stand from six sides, eleven blocks off, at eye height: the shadows on that ground should be the
+# same from every one. Each view twice: as played, and with the block map's walk off (`lens sunpass off`), the
+# heightfield's answer alone. (The first version of this tour shot while the opening still held the camera.)
 # SPEC §22 "Shadows beyond the block map".
 # Run: tools/tour-ci.sh tools/autopilot/steady60-playtree-ci.txt 2400
 # ci knobs: LENS=cinematic PACK=perf,feel,comfort,world TECTONIC=awakened RD=16
@@ -14,70 +16,70 @@ window 1440 900
 gui 0
 cmd gamerule send_command_feedback false
 cmd gamerule spawn_mobs false
-cmd gamerule advance_time false
 cmd weather clear 1000000
 cmd awaken opening skip
-wait 100
+wait 400
 screen close
 cmd awaken powers starter 1
-wait 20
+wait 40
 screen close
-cmd gamemode spectator
-cmd tp @s -1527.9 69.5 -704.0 -132.1 17.8
+cmd gamerule advance_time false
 cmd time set 1977
+cmd gamemode spectator
+cmd tp @s -1533.5 69 -704.5 180 15
 opt fov 90
 camera first
 hud off
 wait 600
 info
-# --- where he stood, as he looked
-shot p0_his_spot
+cmd tp @s -1533.5 69 -726.5 0 18
+wait 260
+shot q1_from_north
 lens sunpass off
 wait 80
-shot p0_his_spot_heightfield
+shot q1_from_north_walk_off
 lens sunpass setting
-# --- the ground he looked at (14 blocks ahead: -1517.5, -713.4) from its four sides, 16 blocks off
-cmd tp @s -1533.5 70.5 -713.4 -90 14
-wait 240
-shot p1_from_west
+cmd tp @s -1522.5 69 -715.5 90 18
+wait 260
+shot q2_from_east
 lens sunpass off
 wait 80
-shot p1_from_west_heightfield
+shot q2_from_east_walk_off
 lens sunpass setting
-cmd tp @s -1501.5 70.5 -713.4 90 14
-wait 240
-shot p2_from_east
+cmd tp @s -1533.5 69 -704.5 180 18
+wait 260
+shot q3_from_south
 lens sunpass off
 wait 80
-shot p2_from_east_heightfield
+shot q3_from_south_walk_off
 lens sunpass setting
-cmd tp @s -1517.5 70.5 -729.4 0 14
-wait 240
-shot p3_from_north
+cmd tp @s -1544.5 69 -715.5 -90 18
+wait 260
+shot q4_from_west
 lens sunpass off
 wait 80
-shot p3_from_north_heightfield
+shot q4_from_west_walk_off
 lens sunpass setting
-cmd tp @s -1517.5 70.5 -697.4 180 14
-wait 240
-shot p4_from_south
+cmd tp @s -1524.5 69 -724.5 45 18
+wait 260
+shot q5_from_northeast
 lens sunpass off
 wait 80
-shot p4_from_south_heightfield
+shot q5_from_northeast_walk_off
 lens sunpass setting
-# --- the same ground from above, from the west and from the east: one shadow, two places to stand
-cmd tp @s -1547.5 92 -713.4 -90 38
-wait 240
-shot p5_above_west
+cmd tp @s -1542.5 69 -706.5 -135 18
+wait 260
+shot q6_from_southwest
 lens sunpass off
 wait 80
-shot p5_above_west_heightfield
+shot q6_from_southwest_walk_off
 lens sunpass setting
-cmd tp @s -1487.5 92 -713.4 90 38
-wait 240
-shot p6_above_east
-lens sunpass off
-wait 80
-shot p6_above_east_heightfield
-lens sunpass setting
+# --- an hour earlier, the sun 15 degrees up: from the north and the south again
+cmd time set 1000
+cmd tp @s -1533.5 69 -726.5 0 18
+wait 260
+shot q7_low_sun_from_north
+cmd tp @s -1533.5 69 -704.5 180 18
+wait 260
+shot q8_low_sun_from_south
 quit
