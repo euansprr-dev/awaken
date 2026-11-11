@@ -1,7 +1,8 @@
 # The held light's pool, off the ground (Euan, playing, 11 Nov; SPEC §28.3 "Held light"): the soft pool a carried torch
 # lays at your feet was drawn at the feet's own height, so in the air (a jump, a fall) it was a flat disc of light
 # floating at your level, lighting what lay under it and nothing over it: a line across every wall and block.
-# A dark stone room by night, a torch in hand: standing, then lifted a block off the floor (levitation, as a jump's top).
+# A dark stone room by night, a torch in hand: standing, then held against the ceiling two blocks up (levitation; a
+# runner's ticks are too uneven to catch a jump's top), then down again.
 # Run: tools/tour-ci.sh tools/autopilot/heldlight-aloft-ci.txt 1800
 # ci knobs: LENS=cinematic
 world steadystill creative 4545
@@ -43,19 +44,13 @@ wait 300
 look -90 18
 wait 40
 shot h1_standing
-cmd effect give @s minecraft:levitation 2 0 true
-wait 20
+cmd effect give @s minecraft:levitation 120 0 true
+wait 160
 shot h2_aloft
-wait 60
-cmd effect clear @s
-wait 60
 look -40 26
 wait 20
-shot h3_standing_side
-cmd effect give @s minecraft:levitation 2 0 true
-wait 20
 shot h4_aloft_side
-wait 60
 cmd effect clear @s
-wait 40
+wait 100
+shot h3_standing_side
 quit
