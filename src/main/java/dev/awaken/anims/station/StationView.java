@@ -325,7 +325,7 @@ public final class StationView {
      * (never longer for its width). Where even that is too short, the scene has no arm at all: a cut end in the view is
      * worse than no hand.
      */
-    public static final double GROW_MOST = 1.25;
+    public static final double GROW_MOST = 1.3;
 
     /** The screen x the far end of an arm is aimed at, for a hand of this {@code side} holding at screen x {@code sx}. */
     private static double rootX(Layout l, double sx, int side) {

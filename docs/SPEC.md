@@ -24268,7 +24268,8 @@ doesn't really look natural"). What that build did wrong is said with each rule.
   (`ROOT_DROP` 24 px under its top, `ROOT_INSET` 34 px inside its sides, on the hand's own side of the stack): so on
   screen it runs from the fist to under the strip, and in the world it lies back toward you across the table. At his
   window (427 by 240 GUI, with or without JEI's panels) a table's farthest reach needs 0.98 of the arm's own length:
-  it is drawn at its own size. In a window too small for that the whole arm is drawn larger, up to 1.25
+  it is drawn at its own size. Where the strip is farther than that (a wide workstation view in the narrow room: the
+  cartography table at his window needs 1.28) the whole arm is drawn larger, up to 1.3
   (`StationView.armGrow`, one number for the scene); where even that is too short the scene has **no arm** (a cut end
   in the view is worse than no hand): the brewing stand at his GUI size, whose view opens to the widest there. Each
   arm is drawn at its own distance in the hand pass (`Rig.armDistance`). The scene's strip is drawn nearly solid
