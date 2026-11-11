@@ -13,6 +13,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
@@ -23,6 +24,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.fml.ModList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -32,6 +34,10 @@ import java.util.List;
  * a drum is the woodpecker on that trunk, the hoot the owl turning its head. Placed, mono, quiet: they sit on top of
  * AmbientSounds' bed of real recordings (heard everywhere, from nowhere), never over it. Counted in the Conductor's
  * voice budget, at most {@link #VOICES} at once and a few new a second, quieter where the world is hushed.
+ * <p>Every voice is a recording (SPEC §66.3): Minecraft's own by name (a parrot's wingbeats and chirps, a bat's
+ * take-off, wood knocked), layered by {@code core.audio.client.SoundLayers}. The crow, the owl and the gull have no
+ * recording in the game, so with AmbientSounds (the pack's sound profile) they call with its real ones
+ * ({@link #real}); without it the crow and the gull fall back to a parrot's squawk and the owl keeps silent.
  * <p>Two things here have no body: crickets in the grass at night (a few voices placed in the grass round you, each
  * falling silent when you walk within six blocks of it and starting again a while after you've passed), and the hush a
  * predator brings (a monster near you quiets the birds and insects round it, as docs/sound/PLAN.md planned).
@@ -52,6 +58,17 @@ final class WildSound {
     private static final long[] CRICKET_NEXT = new long[3], CRICKET_QUIET = new long[3];
     private static @Nullable SoundEvent gull;
     private static boolean registered;
+
+    /** Whether AmbientSounds is here: its recordings are the real crow, owl and gull, and its own crickets sing. */
+    static final boolean REAL = ModList.get().isLoaded("ambientsounds");
+    static final int CROW = 0, OWL = 1, GULL = 2;
+    private static final Identifier[] REAL_ID = {Identifier.fromNamespaceAndPath("ambientsounds", "animals.crow"),
+            Identifier.fromNamespaceAndPath("ambientsounds", "animals.owl"), Identifier.fromNamespaceAndPath("ambientsounds", "animals.seagull")};
+    /** How far each is heard (blocks), its level right beside you, and the least ticks between two of it. */
+    private static final float[] REAL_RANGE = {56F, 72F, 80F}, REAL_LEVEL = {0.5F, 0.9F, 0.45F};
+    private static final int[] REAL_GAP = {500, 300, 600};
+    private static final long[] REAL_NEXT = new long[3];
+    private static final SoundInstance[] REAL_PLAYING = new SoundInstance[3];
 
     static void init() {
         if (registered) return;
@@ -107,6 +124,33 @@ final class WildSound {
         sm.play(s);
     }
 
+    /**
+     * A crow, an owl or a gull calls. With AmbientSounds: one of its recordings of the real bird. Those are stereo and
+     * several seconds long (a few caws, a hoot and its answer), so they can't come from a point: one plays unplaced, as
+     * loud as the bird's distance allows, never two of a kind at once and well apart, so where you see crows you hear
+     * crows. Without it: {@code fallback} at the bird (null: silent).
+     */
+    static void real(WildCritter c, int who, @Nullable SoundEvent fallback, float volume, float pitch) {
+        if (!REAL) {
+            if (fallback != null) play(c, fallback, volume, pitch);
+            return;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || Wildlife.now < REAL_NEXT[who]) return;
+        var sm = mc.getSoundManager();
+        if (REAL_PLAYING[who] != null && sm.isActive(REAL_PLAYING[who])) return;
+        double dx = c.getX() - Wildlife.camX, dy = c.getY() - Wildlife.camY, dz = c.getZ() - Wildlife.camZ;
+        float near = 1F - (float) Math.sqrt(dx * dx + dy * dy + dz * dz) / REAL_RANGE[who];
+        if (near <= 0F) return;
+        float v = REAL_LEVEL[who] * volume * near * near * Soundscape.hushAt(c.getX(), c.getY(), c.getZ());
+        if (v < 0.03F) return;
+        SoundInstance s = new SimpleSoundInstance(REAL_ID[who], SoundSource.AMBIENT, v, 0.97F + R.nextFloat() * 0.06F, R, false, 0,
+                SoundInstance.Attenuation.NONE, 0, 0, 0, true);
+        REAL_PLAYING[who] = s;
+        REAL_NEXT[who] = Wildlife.now + REAL_GAP[who] + R.nextInt(REAL_GAP[who] / 2);
+        sm.play(s);
+    }
+
     // ---- songs ----------------------------------------------------------------------------------------------------------
 
     /** A songbird's song by its kind (the coat names it): a blackbird sings the robin's phrases, lower. */
@@ -141,7 +185,7 @@ final class WildSound {
 
     static void gull(WildCritter c) {
         if (gull == null) gull = BuiltInRegistries.SOUND_EVENT.getValue(Awaken.id("city.gull.call"));
-        if (gull != null) play(c, gull, 0.7F, 0.9F + c.getRandom().nextFloat() * 0.25F);
+        real(c, GULL, gull, 0.7F, 0.9F + c.getRandom().nextFloat() * 0.25F);
     }
 
     // ---- predators ----------------------------------------------------------------------------------------------------
@@ -183,6 +227,8 @@ final class WildSound {
     // ---- crickets -----------------------------------------------------------------------------------------------------
 
     private static void crickets(ClientLevel level) {
+        // AmbientSounds sings the night's crickets itself, from real recordings: ours would only double them
+        if (REAL) return;
         int t = Wildlife.tod;
         if (t < 12800 || t > 22800 || Wildlife.rain > 0.2F) return;
         for (int i = 0; i < CRICKET.length; i++) {
@@ -197,7 +243,8 @@ final class WildSound {
                 if (d2 > 22 * 22) CRICKET[i] = 0L;
                 else if (Wildlife.now >= CRICKET_NEXT[i] && Wildlife.now >= CRICKET_QUIET[i]) {
                     play(x + 0.5, y + 0.1, z + 0.5, WildlifeModule.CRICKET.get(), 0.55F, 0.92F + (i * 0.05F));
-                    CRICKET_NEXT[i] = Wildlife.now + 60 + R.nextInt(50);
+                    // Minecraft's night insects (the firefly bush) last 7 to 17 seconds a take
+                    CRICKET_NEXT[i] = Wildlife.now + 220 + R.nextInt(120);
                 }
                 continue;
             }
@@ -229,5 +276,9 @@ final class WildSound {
         hostiles = 0;
         for (int i = 0; i < CRICKET.length; i++) CRICKET[i] = 0L;
         for (int i = 0; i < VOICES; i++) PLAYING[i] = null;
+        for (int i = 0; i < REAL_NEXT.length; i++) {
+            REAL_NEXT[i] = 0L;
+            REAL_PLAYING[i] = null;
+        }
     }
 }

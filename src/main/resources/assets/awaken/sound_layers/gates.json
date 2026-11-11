@@ -1,0 +1,90 @@
+{
+ "awaken:gate.rig.cave": [
+  {
+   "delay": 250,
+   "pitch": 0.8,
+   "sound": "minecraft:block.gravel.fall",
+   "volume": 0.8
+  }
+ ],
+ "awaken:gate.rig.fall": [
+  {
+   "delay": 100,
+   "pitch": 0.8,
+   "sound": "minecraft:block.gravel.fall",
+   "volume": 0.5
+  }
+ ],
+ "awaken:gate.rig.flip_down": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:entity.breeze.land",
+   "volume": 0.5
+  }
+ ],
+ "awaken:gate.rig.flip_up": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:entity.breeze.jump",
+   "volume": 0.5
+  }
+ ],
+ "awaken:gate.rig.knit": [
+  {
+   "delay": 100,
+   "pitch": 1.1,
+   "sound": "minecraft:block.deepslate_bricks.place",
+   "volume": 0.6
+  }
+ ],
+ "awaken:gate.rig.medal": [
+  {
+   "delay": 0,
+   "pitch": 1.0,
+   "sound": "minecraft:block.amethyst_block.chime",
+   "volume": 0.4
+  }
+ ],
+ "awaken:gate.rig.press": [
+  {
+   "delay": 100,
+   "pitch": 0.5,
+   "sound": "minecraft:block.anvil.land",
+   "volume": 0.25
+  }
+ ],
+ "awaken:gate.rig.rubble": [
+  {
+   "delay": 50,
+   "pitch": 0.7,
+   "sound": "minecraft:block.stone.break",
+   "volume": 0.7
+  }
+ ],
+ "awaken:gate.rig.run": [
+  {
+   "delay": 100,
+   "pitch": 1.1,
+   "sound": "minecraft:block.deepslate.hit",
+   "spread": 0.05,
+   "volume": 0.6
+  },
+  {
+   "delay": 200,
+   "pitch": 1.2,
+   "sound": "minecraft:block.deepslate.hit",
+   "spread": 0.05,
+   "volume": 0.5
+  }
+ ],
+ "awaken:gate.rig.turn": [
+  {
+   "delay": 0,
+   "pitch": 0.7,
+   "sound": "minecraft:block.piston.extend",
+   "volume": 0.4
+  }
+ ]
+}

@@ -259,7 +259,7 @@ final class Birds {
             if (roll < WildSound.hootChance(c)) {
                 Wildlife.replay(c, "hoot");
                 c.timer = 60 + r.nextInt(60);
-                WildSound.play(c, WildlifeModule.HOOT.get(), 0.9F, 0.95F + r.nextFloat() * 0.1F);
+                WildSound.real(c, WildSound.OWL, null, 0.9F, 1F);
             } else if (roll < 0.9F) {
                 clip(c, wet ? "fluff" : "idle");
                 c.timer = 80 + r.nextInt(160);
@@ -281,7 +281,7 @@ final class Birds {
         } else if (roll < 0.8F) {
             Wildlife.replay(c, "caw");
             c.timer = 34;
-            WildSound.play(c, WildlifeModule.CAW.get(), 0.9F, 0.9F + r.nextFloat() * 0.2F);
+            WildSound.real(c, WildSound.CROW, WildlifeModule.CAW.get(), 0.9F, 0.9F + r.nextFloat() * 0.2F);
         } else if (roll < 0.95F || ground) {
             clip(c, "idle");
             c.timer = 30 + r.nextInt(60);
@@ -475,7 +475,7 @@ final class Birds {
         if (c.kind == WildKinds.OWL) {
             // owls fly without a sound
         } else WildSound.play(c, big ? WildlifeModule.WINGS_BIG.get() : WildlifeModule.FLUSH.get(), big ? 0.8F : 0.9F, 0.9F + r.nextFloat() * 0.2F);
-        if (c.kind == WildKinds.CROW && r.nextBoolean()) WildSound.play(c, WildlifeModule.CAW.get(), 1F, 1.05F);
+        if (c.kind == WildKinds.CROW && r.nextBoolean()) WildSound.real(c, WildSound.CROW, WildlifeModule.CAW.get(), 1F, 1.05F);
         if (!c.leaving && c.kind != WildKinds.WOODPECKER && r.nextFloat() < 0.6F && findPerch(c, level, r, ox, oz, 0, 6)) {
             takeOff(c, PERCH, r, true);
             return;

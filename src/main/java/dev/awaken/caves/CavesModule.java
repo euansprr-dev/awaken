@@ -43,7 +43,7 @@ public final class CavesModule {
     private static final DeferredRegister<MapCodec<? extends Feature>> FEATURES = DeferredRegister.create(Registries.FEATURE_TYPE, Awaken.MODID);
 
     private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
-    /** The underlife's voices (SPEC §42.5; tools/art/specs/audio_underlife.py): a cave cricket's chirps, a roost bursting off the roof. */
+    /** The underlife's voices (SPEC §42.5; the game's own recordings: tools/art/specs/audit_world.py, SPEC §66.5): a cave cricket's chirps, a roost bursting off the roof. */
     public static final DeferredHolder<SoundEvent, SoundEvent> CRICKET = sound("caves.cricket"), BATS = sound("caves.bats");
     /** The regions' sounds (SPEC §42.7): the Rootways' roots; the Ochre Deep's rock, chime crickets and hum. */
     public static final DeferredHolder<SoundEvent, SoundEvent> ROOT_CREAK = sound("caves.root_creak"), ROCK_TICK = sound("caves.rock_tick"),

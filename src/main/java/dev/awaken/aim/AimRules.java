@@ -2,6 +2,10 @@ package dev.awaken.aim;
 
 import dev.awaken.core.api.Aim;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * Lock-on's rules (SPEC §40), side-agnostic and pure so GameTests can hold them: which creature the view means, how
@@ -17,6 +21,11 @@ public final class AimRules {
     public static final float STICKY = 8F;
     /** Nearer creatures win a close call: degrees a block of distance is worth. */
     public static final float NEAR_WEIGHT = 0.35F;
+    /**
+     * With nothing marked, the lock key takes any creature you could strike (a sheep, a deer, a villager) within this cone
+     * and the mark's range: tighter than the mark's, so the key still picks the block you point at.
+     */
+    public static final float PRESS_CONE = 12F;
 
     /** A lock lets go beyond this range or after this long unseen (1.5 s). */
     public static final float LOCK_RANGE = 40F;
@@ -52,6 +61,17 @@ public final class AimRules {
     public static float score(float off, double dist, boolean current, float cone, float range) {
         if (off > cone + (current ? STICKY : 0F) || dist > range) return Float.NaN;
         return off + (float) dist * NEAR_WEIGHT - (current ? STICKY : 0F);
+    }
+
+    /**
+     * Whether the lock key may take {@code e} when nothing hostile is marked: a creature {@code p} could strike, calm or not.
+     * Never a person, a body, an armour stand, something that can't be hit, one's own pet or beast, or what one rides.
+     */
+    public static boolean strikable(Player p, LivingEntity e) {
+        if (e == p || e instanceof Player || e instanceof ArmorStand || !e.isAlive() || Aim.body(e)) return false;
+        if (!e.isPickable() || !e.isAttackable() || e.isInvulnerable()) return false;
+        if (e instanceof OwnableEntity o && o.getOwner() == p) return false;
+        return e.getRootVehicle() != p.getRootVehicle();
     }
 
     /** Whether {@code a} beats {@code best} (NaN never wins; anything beats NaN). */
