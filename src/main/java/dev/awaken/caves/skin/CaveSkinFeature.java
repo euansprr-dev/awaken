@@ -40,6 +40,10 @@ import java.util.Set;
  * where it drips; a dry dead end takes a dusty web. Every choice is a hash of the seed and the cell, so a chunk comes out
  * the same whatever order its neighbours were made in; only this chunk's cells are written.
  * <p>
+ * A piece may lean on the next chunk's rock, read as it is now: that chunk is only carved, and its own structures and features
+ * (a mineshaft, a Delvers' mouth) may yet cut the rock away. Each piece is asked again once the land round it is final, and
+ * goes if nothing holds it (Settle, SPEC §42.4 "Settled").
+ * <p>
  * Never touches anything but natural rock: a piece hangs from or lies on the stone family, deepslate or tuff, and a cell
  * next to anything a structure or a mine put there (planks, rails, bricks, webs, ores...) is left alone.
  * <p>
@@ -133,6 +137,8 @@ public final class CaveSkinFeature implements Feature {
                 return level.getMinY();
             }
         };
+        // its pieces are marked as they're set (Settle.SELF): an old world's chunk that lacks this mark gets them on load
+        Settle.dressed(chunk);
         return dress(cells, cx, cz, level.getSeed(), chunk, regions(chunk)) > 0;
     }
 
@@ -198,8 +204,11 @@ public final class CaveSkinFeature implements Feature {
             for (int ly = 0; ly < 16; ly++) {
                 int y = baseY + ly;
                 if (y < minY) continue;
+                BlockState west = null;     // the cell before in the row, as read (a crumb's west is open)
                 for (int i = 0; i < 256; i++) {
                     BlockState here = section.getBlockState(i & 15, ly, i >> 4);
+                    BlockState w = west;
+                    west = here;
                     if (y < tops[i]) {
                         int x = cx + (i & 15), z = cz + (i >> 4);
                         if (here.isAir()) {
@@ -211,8 +220,25 @@ public final class CaveSkinFeature implements Feature {
                             }
                         } else if (here.is(Blocks.WATER) && rock(below[i]) != null) {
                             if (regions.at(x, y, z) == CaveRegion.DROWNED_GALLERIES) placed += weed(c, seed, x, y, z, here);
-                        } else if (below[i].isAir() && rock(here) != null) {
-                            placed += ceiling(c, seed, x, y - 1, z, here, regions.at(x, y - 1, z), wet[i], crystal, sites);
+                        } else if (!below[i].canOcclude()) {
+                            // open under (air or a liquid; the bulk of the rock, rock under rock, stops at this one read)
+                            if (below[i].isAir()) {
+                                SkinRock rockHere = rock(here);
+                                if ((rockHere != null || crumb(here)) && ((i & 15) == 0 || open(w)) && lone(c, x, y, z)) {
+                                    // a crumb two cuts left, air all round it: it goes, and nothing is laid on it or hung from it
+                                    c.set(x, y, z, below[i]);
+                                    here = below[i];
+                                    west = here;
+                                } else if (rockHere != null) {
+                                    placed += ceiling(c, seed, x, y - 1, z, here, regions.at(x, y - 1, z), wet[i], crystal, sites);
+                                }
+                            } else if (below[i].liquid() && !here.liquid() && ((i & 15) == 0 || w == below[i]) && below[i].getFluidState().isSource()
+                                    && (rock(here) != null || crumb(here)) && drowned(c, x, y, z, below[i])) {
+                                // a crumb wholly in a flooded cave's water or lava: it goes to the same, so no rock hangs in the flood
+                                c.set(x, y, z, below[i]);
+                                here = below[i];
+                                west = here;
+                            }
                         }
                     }
                     below[i] = here;
@@ -397,8 +423,9 @@ public final class CaveSkinFeature implements Feature {
         if (free >= 1 && chance(seed, x, y, z, 5) < STALAGMITE) {
             int up = Math.min(1 + (int) (chance(seed, x, y, z, 6) * 3), free);
             if (clean(c, x, floor, z)) placed += column(c, x, floor, z, rock(c.get(x, floor - 1, z)), Direction.UP, up);
-            // the drops land round its foot
+            // the drops land round its foot, on this chunk's side (never in a neighbour that isn't made yet)
             Direction d = AROUND[(int) (chance(seed, x, y, z, 7) * 4)];
+            if ((x + d.getStepX() & ~15) != (x & ~15) || (z + d.getStepZ() & ~15) != (z & ~15)) d = d.getOpposite();
             placed += puddle(c, seed, x + d.getStepX(), floor, z + d.getStepZ(), pearls);
         } else {
             placed += puddle(c, seed, x, floor, z, pearls);
@@ -686,6 +713,44 @@ public final class CaveSkinFeature implements Feature {
         for (Block b : new Block[] {Blocks.AIR, Blocks.CAVE_AIR, Blocks.WATER, Blocks.LAVA, Blocks.GRAVEL, Blocks.DIRT, Blocks.COARSE_DIRT,
                 Blocks.CLAY, Blocks.SAND, Blocks.CALCITE, Blocks.SMOOTH_BASALT, Blocks.DRIPSTONE_BLOCK, Blocks.POINTED_DRIPSTONE,
                 Blocks.MOSS_BLOCK, Blocks.MOSS_CARPET, Blocks.GLOW_LICHEN, Blocks.MAGMA_BLOCK, Blocks.BEDROCK}) GROUND.add(b);
+    }
+
+    /**
+     * Full blocks besides the host rock that two cuts can leave as a crumb: patches, blobs, a geode's shell, a way's rubble,
+     * a seep's stain, the bedrock's fringe.
+     */
+    private static final Set<Block> CRUMBS = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    static {
+        for (Block b : new Block[] {Blocks.GRAVEL, Blocks.DIRT, Blocks.COARSE_DIRT, Blocks.ROOTED_DIRT, Blocks.CLAY, Blocks.SAND, Blocks.CALCITE,
+                Blocks.SMOOTH_BASALT, Blocks.DRIPSTONE_BLOCK, Blocks.MOSS_BLOCK, Blocks.MAGMA_BLOCK, Blocks.SCULK, Blocks.COBBLESTONE,
+                Blocks.COBBLED_DEEPSLATE, Blocks.BLACKSTONE, Blocks.BEDROCK}) CRUMBS.add(b);
+    }
+
+    private static boolean crumb(BlockState s) {
+        return CRUMBS.contains(s.getBlock()) || ore(s);
+    }
+
+    /**
+     * A cell with air under it and nothing but air or the skin's own pieces over it and on its four sides: a crumb that a
+     * cave, a lake or a way cut round, which nothing holds (SPEC §42.4 "Settled", lone blocks). A side in water isn't open:
+     * the crumb stays rather than leave the water standing beside air.
+     */
+    private static boolean lone(Cells c, int x, int y, int z) {
+        if (!open(c.get(x, y + 1, z))) return false;
+        for (Direction d : AROUND) if (!open(c.get(x + d.getStepX(), y, z + d.getStepZ()))) return false;
+        return true;
+    }
+
+    private static boolean open(BlockState s) {
+        return s.isAir() || !s.canOcclude() && skin(s.getBlock());
+    }
+
+    /** The same still water or lava ({@code flood}, a source) over a cell and on its four sides, as under it. */
+    private static boolean drowned(Cells c, int x, int y, int z, BlockState flood) {
+        if (c.get(x, y + 1, z) != flood) return false;
+        for (Direction d : AROUND) if (c.get(x + d.getStepX(), y, z + d.getStepZ()) != flood) return false;
+        return true;
     }
 
     /** Natural ground, the skin's own pieces, or a cave's water: what a skin cell may sit among. */

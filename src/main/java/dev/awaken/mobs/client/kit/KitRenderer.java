@@ -41,7 +41,8 @@ import org.jspecify.annotations.Nullable;
  * change of what it plays is eased by its {@link KitBlend} (a string's next blow starts where the last one ended); its
  * blows shake the view near them and pause for a moment where they land.
  */
-public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, HeroModel> {
+public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, HeroModel>
+        implements dev.awaken.mobs.client.BodyRest.Posed<HeroRenderState> {
     private static final float FADE = 0.15F, TURN_STEP = 45F, TURN_TIME = 0.4F;
 
     private final Kits.Kit kit;
@@ -460,6 +461,16 @@ public final class KitRenderer extends MobRenderer<AwakenMob, HeroRenderState, H
             pose.rotateDegrees(Axis.XP, -s.kitLean);
             pose.translate(0, -s.kitHip, 0);
         }
+    }
+
+    /** The transforms submit makes before the model, so a lying body can be rested on the ground (SPEC §47.12). */
+    @Override
+    public void bodyChain(HeroRenderState s, PoseStack pose) {
+        pose.scale(s.scale, s.scale, s.scale);
+        setupRotations(s, pose, s.bodyRot, s.scale);
+        pose.scale(-1.0F, -1.0F, 1.0F);
+        scale(s, pose);
+        pose.translate(0.0F, -1.501F, 0.0F);
     }
 
     /** How far through its lean a blow is: none until the lock, all of it by contact and through the strike, then back. */

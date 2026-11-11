@@ -1,0 +1,121 @@
+# A done step stays done (SPEC §27.14, §28.2 "Read whole"; Euan 2026-11-11, back from a gate in his own room, "Build a
+# room near your fire" unticked). His room stood in the chunk west of his fire's; here the same: the fire at x 1538 (chunk
+# 96), the room at 1529 to 1535 (chunk 95). The step ticks; then away 600 blocks east while five minutes pass (the
+# rescan comes due with the home unloaded), back from the east so the fire's chunk loads first, and the step is still
+# ticked, inside the room and on the Tasks page. Last, the doorway knocked out: no room is read now, and the step stays
+# done while the card says what's next.
+# Run on CI: tools/tour-ci.sh tools/autopilot/tasks-done-stays.txt 1200
+world autopilot_tasks_done creative 27142714
+waitworld
+gui 0
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 40
+key dismiss
+wait 10
+screen close
+# the first moves done, as a hunter who has played: their card ("Your body remembers") would sit over the home's
+cmd awaken admin counter "awaken:body_roll" 1
+cmd awaken admin counter "awaken:body_sprint" 1
+cmd awaken admin counter "awaken:body_slide" 1
+cmd awaken admin counter "awaken:body_mantle" 1
+cmd awaken admin counter "awaken:first/moves_done" 1
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 6000
+# ---- a stone floor in the air, well outside the city, across the chunk line at x 1536 ----
+cmd tp @s 1535.5 200 8.5 -90 20
+wait 160
+cmd fill 1518 199 -10 1562 199 26 minecraft:stone
+wait 20
+cmd tp @s 1535.5 200 8.5 -90 20
+wait 20
+# the fire three blocks ahead, east: x 1538, chunk 96
+cmd awaken admin ember give
+wait 20
+cmd awaken admin ember set
+wait 120
+screen close
+# ---- the room west of the line, chunk 95: timber, a door facing the fire, a bed, two lanterns ----
+cmd tp @s 1541.5 200 8.5 90 15
+wait 10
+cmd fill 1529 199 4 1535 203 12 minecraft:spruce_planks hollow
+cmd setblock 1535 200 8 minecraft:oak_door[half=lower,facing=east]
+cmd setblock 1535 201 8 minecraft:oak_door[half=upper,facing=east]
+cmd setblock 1532 200 6 minecraft:red_bed[part=foot,facing=north]
+cmd setblock 1532 200 5 minecraft:red_bed[part=head,facing=north]
+cmd setblock 1530 200 10 minecraft:lantern
+cmd setblock 1534 200 10 minecraft:lantern
+wait 20
+cmd awaken admin hearth scan
+wait 160
+screen close
+# the card leaves the screen 8 s after it last changed (SPEC §40.6), and comes back when it changes or Tab is held:
+# each card shot follows a change, the Lord's Heart taken out of the pack or put back (its row comes and goes)
+shot done_00_room_by_the_fire
+cmd clear @s awaken:lord_heart
+wait 20
+shotnow done_01_card_room_ticked
+cmd tp @s 1531.5 200 9.5 160 10
+wait 40
+cmd give @s awaken:lord_heart 1
+wait 20
+shotnow done_02_inside_card_with_the_heart
+# ---- away east 600 blocks: the home's land unloads while five minutes pass, so its rescan comes due ----
+cmd spreadplayers 2140 8 0 4 false @s
+wait 300
+shot done_03_far_away
+cmd tick sprint 6400
+wait 200
+# ---- back from the east: the fire's chunk comes in first ----
+cmd tp @s 1545.5 200 8.5 90 15
+wait 40
+shotnow done_04_coming_home
+wait 400
+shot done_05_home
+cmd clear @s awaken:lord_heart
+wait 20
+shotnow done_06_card_after_trip_ticked
+cmd tp @s 1531.5 200 9.5 160 10
+wait 60
+cmd give @s awaken:lord_heart 1
+wait 20
+shotnow done_07_inside_after_trip_card_with_the_heart
+screen holo tasks
+tasks now
+wait 60
+shot done_08_tasks_page_after_trip
+screen close
+wait 10
+# ---- the doorway knocked out: no room stands now; the step a room finished stays done ----
+cmd tp @s 1541.5 200 8.5 90 15
+cmd setblock 1535 201 8 minecraft:air
+cmd setblock 1535 200 8 minecraft:air
+cmd fill 1535 200 7 1535 202 9 minecraft:air
+wait 20
+cmd awaken admin hearth scan
+wait 160
+screen close
+cmd clear @s awaken:lord_heart
+wait 20
+shotnow done_09_no_room_now_card_still_ticked
+# the Heart back in the pack, then the guide (its step ticks): the home's card, 2/3, the room's step still done
+cmd give @s awaken:lord_heart 1
+wait 20
+cmd awaken hearth guide
+wait 40
+shot done_10_guide
+screen close
+wait 20
+shotnow done_11_card_after_guide
+quit

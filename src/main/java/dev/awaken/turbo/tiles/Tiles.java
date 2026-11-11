@@ -120,7 +120,8 @@ public final class Tiles {
 
     // the chains whose tail is "composite into swap, copy into main" (the measuring chains are left as written)
     private static boolean tail(String pass) {
-        return pass.startsWith("awaken:lens_cinematic/") || pass.startsWith("awaken:lens_ultra/") || pass.startsWith("awaken:lens_swift/");
+        return pass.startsWith("awaken:lens_cinematic/") || pass.startsWith("awaken:lens_ultra/") || pass.startsWith("awaken:lens_swift/")
+                || pass.startsWith("awaken:lens_lite/");
     }
 
     /** A pass's colour target: Pixels' texture for the pass that draws into swap, when one was given and it fits. */

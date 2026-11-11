@@ -28,7 +28,7 @@ import java.util.Locale;
  * page (Euan, 2026-10-26). The frame-time line is the last minute's p50 and p99, green while it fits the tier's
  * budget. Drawn like the System's own cards: projected glass that scans in while the holo look is on
  * ({@link HudLook}), flat {@link Glass} otherwise. The world keeps running behind it and is never dimmed (this isn't a
- * reading screen), so a choice shows at once. Keys: 1 · 2 · 3 · 4, Esc.
+ * reading screen), so a choice shows at once. Keys: a number for each tier, Esc.
  */
 public final class LookScreen extends Screen implements dev.awaken.signal.client.QuietScreen {
     /** The tiers on offer: VFX stays last, and only with ImmersiveVFX installed. */
@@ -39,16 +39,20 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
     private static final int S_LOOK = 0, S_GRADE = 1, S_FAR = 2, S_DISTANCE = 3, S_SCALE = 4, S_STEADY = 5, S_TEMPORAL = 6, SETTINGS = 7;
     // compact: the whole page fits a 240-pixel-high GUI (auto scale on a 4K or Retina screen)
     private static final int CARD_GAP = 6, PAD = 8, LINE = 10, TOP = 20, FOOT = 15;
-    private static final List<dev.awaken.core.client.ui.Kit.Hint> FOOT_KEYS = List.of(dev.awaken.core.client.ui.Kit.Hint.of("A look", "1-4"),
+    private static final List<dev.awaken.core.client.ui.Kit.Hint> FOOT_KEYS = List.of(dev.awaken.core.client.ui.Kit.Hint.of("A look", "1-" + TIERS.length),
             dev.awaken.core.client.ui.Kit.Hint.of("Choose", "Click"), dev.awaken.core.client.ui.Kit.Hint.of("Back", "Right click"),
             dev.awaken.core.client.ui.Kit.Hint.of("Close", "Esc"));
-    /** One line under each tier's name on this page (the tiers' longer blurbs are for the settings screen). */
+    /**
+     * Two short lines under each tier's name on this page: what it is, then its pace (the tiers' longer blurbs are for
+     * the settings screen). Broken by hand: five cards are narrow, and a line wrapped where it fell began with the dot.
+     */
     private static String shortBlurb(Tier t) {
         return switch (t) {
-            case SWIFT -> "Soft light · 120 fps";
-            case CINEMATIC -> "Shadows · 90+ fps";
-            case ULTRA -> "Finest light · 60+ fps";
-            case VFX -> "ImmersiveVFX, no Lens";
+            case SWIFT -> "Soft light\n120 fps";
+            case LITE -> "Sky and air\nFor laptops";
+            case CINEMATIC -> "Shadows\n90+ fps";
+            case ULTRA -> "Finest light\n60+ fps";
+            case VFX -> "Its own look\nLens off";
         };
     }
     private static final int TITLE = 0xFFF4F6FB, LABEL = 0xFF8FA7C4, BLURB = 0xFFA9BBD4, DIM = 0xFF6F8299;
@@ -83,13 +87,14 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
     protected void init() {
         if (openedAt == 0) openedAt = System.nanoTime();
         java.util.Arrays.fill(settingY, -1);
-        pw = Math.min(396, width - 12);
+        // (five tiers, with ImmersiveVFX installed: the page takes what width a 426-wide GUI has, for cards that hold their words)
+        pw = Math.min(TIERS.length > 4 ? 414 : 396, width - 12);
         px = (width - pw) / 2;
         cw = (pw - 2 * PAD - (TIERS.length - 1) * CARD_GAP) / TIERS.length;
         blurbs.clear();
         int lines = 1;
         for (Tier t : TIERS) {
-            List<FormattedCharSequence> l = font.split(Component.literal(shortBlurb(t)), cw - 12);
+            List<FormattedCharSequence> l = font.split(Component.literal(shortBlurb(t)), cw - 10);
             blurbs.add(l);
             lines = Math.max(lines, l.size());
         }
@@ -320,8 +325,10 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
             if (on) g.outline(x + 1, y + 1, cw - 2, ch - 2, Glass.a(Glass.GOOD, 0.55f));
         }
         float dim = can ? 1f : 0.55f;
-        HudLook.text(g, font, (on ? "● " : "") + t.label, x + 6, y + 5, Glass.a(on ? Glass.GOOD : TITLE, dim), false);
         String key = String.valueOf(i + 1);
+        // (a narrow card, five across: the chosen tier's dot gives way before its name runs under the key's number)
+        String name = on && 6 + font.width("● " + t.label) <= cw - 9 - font.width(key) ? "● " + t.label : t.label;
+        HudLook.text(g, font, name, x + 6, y + 5, Glass.a(on ? Glass.GOOD : TITLE, dim), false);
         HudLook.text(g, font, key, x + cw - 6 - font.width(key), y + 5, Glass.a(Glass.LANTERN, 0.75f * dim), false);
         List<FormattedCharSequence> lines = blurbs.get(i);
         for (int l = 0; l < lines.size(); l++) HudLook.text(g, font, lines.get(l), x + 6, y + 5 + LINE + 2 + l * LINE, Glass.a(BLURB, dim), false);
@@ -420,7 +427,8 @@ public final class LookScreen extends Screen implements dev.awaken.signal.client
     @Override
     public boolean keyPressed(KeyEvent event) {
         int k = event.key();
-        int i = k == InputConstants.KEY_1 ? 0 : k == InputConstants.KEY_2 ? 1 : k == InputConstants.KEY_3 ? 2 : k == InputConstants.KEY_4 ? 3 : -1;
+        int i = k == InputConstants.KEY_1 ? 0 : k == InputConstants.KEY_2 ? 1 : k == InputConstants.KEY_3 ? 2 : k == InputConstants.KEY_4 ? 3
+                : k == InputConstants.KEY_5 ? 4 : -1;
         if (i >= 0 && i < TIERS.length) {
             pick(TIERS[i]);
             return true;

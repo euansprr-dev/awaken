@@ -45,10 +45,11 @@ final class HearthGoals {
         if (home.isEmpty()) return List.of();
         HearthRecord h = home.get();
         List<Step> out = new ArrayList<>();
-        if (!h.rooms.isEmpty() && !h.hasRoom(RoomType.FITTING)) out.add(armoury(h));
+        // what the home has had, not the last scan: a room built stays built for its steps (SPEC §27.14)
+        if (h.hadRoom() && !h.had(RoomType.FITTING)) out.add(armoury(h));
         if (h.hearthfire()) out.add(anchor(p, h));
-        if (h.hasRoom(RoomType.FITTING) && !h.hasRoom(RoomType.ARMORY)) out.add(forge(h));
-        if (h.hearthfire() && h.hasRoom(RoomType.BEDROOM) && !h.hasRoom(RoomType.SANCTUARY)) out.add(sanctuary(h)); // with an Anchor it's one of the picks below
+        if (h.had(RoomType.FITTING) && !h.had(RoomType.ARMORY)) out.add(forge(h));
+        if (h.hearthfire() && h.had(RoomType.BEDROOM) && !h.had(RoomType.SANCTUARY)) out.add(sanctuary(h)); // with an Anchor it's one of the picks below
         Step forgeTier = forgeTier(p, h);
         if (forgeTier != null) out.add(forgeTier);
         Step tier = tier(p, h);
@@ -88,7 +89,7 @@ final class HearthGoals {
         String picked = Goals.chosen(p, ADD);
         List<Option> open = new ArrayList<>();
         for (Option o : OPTIONS) {
-            if (h.hasRoom(o.room())) continue;
+            if (h.had(o.room())) continue;
             if (rank.ordinal() >= o.rank().ordinal() || HearthNow.started(o.room(), h) || id(o).equals(picked)) open.add(o);
         }
         open.sort(java.util.Comparator.comparing((Option o) -> !id(o).equals(picked)).thenComparing(o -> !HearthNow.started(o.room(), h)));
@@ -118,7 +119,7 @@ final class HearthGoals {
 
     /** The Forge's next tier, once your rank opens it (before that the foot of the tab says when). */
     private static @Nullable Step forgeTier(ServerPlayer p, HearthRecord h) {
-        if (!h.hasRoom(RoomType.ARMORY) || h.forgeTier >= HearthRecord.MAX_FORGE_TIER) return null;
+        if (!h.had(RoomType.ARMORY) || h.forgeTier >= HearthRecord.MAX_FORGE_TIER) return null;
         int target = h.forgeTier + 1;
         Upgrades.Def next = Upgrades.forgeTier(target);
         Rank rank = Progression.rank(p);

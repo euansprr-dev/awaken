@@ -1,0 +1,140 @@
+# The Glass Steppe's air (Euan, playing, 11 Nov: "the start of this other biome looks a bit glitchy ... it's like brown
+# fog but low quality"). The biome's own fog colour is sand (#ecdcb8), the Air's sky and far fog are blue: land the
+# game itself fogs whole (the last of the render distance, a chunk fading in, the edge hold's mist) stood as flat sand
+# shapes on a blue sky. At his settings (16 chunks, a wide view, Cinematic, Vivid): a view from the ground and two from
+# above the grass, each as the game's own frame (lensdebug 1), Lens as built and Lens with Vivid; Lite; the land
+# coming back in after the render distance is pulled in; and a fast glide to the edge of the made land, where the
+# edge hold raises its mist (game frame and Lens's, by turns). SPEC §22 "The game's fog under the Air".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-steppe-fog-ci.txt 2700
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=16
+world steppefog creative 777
+waitworld
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 5000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamemode creative
+cmd awaken terrain visit awaken:glass_steppe
+wait 700
+camera first
+hud on
+opt fov 90
+lookswitch cinematic
+wait 300
+look -90 0
+wait 80
+lensdebug 1
+shot f1_ground_east_game
+lensdebug 0
+lens grade awaken
+wait 30
+shot f1_ground_east_lens
+lens grade vivid
+wait 30
+shot f1_ground_east_vivid
+cmd tp @s ~ ~16 ~
+cmd setblock ~ ~-1 ~ minecraft:glass
+wait 200
+look 45 6
+wait 80
+lensdebug 1
+shot f2_above_a_game
+lensdebug 0
+lens grade awaken
+wait 30
+shot f2_above_a_lens
+lens grade vivid
+wait 30
+shot f2_above_a_vivid
+look -135 6
+wait 80
+lensdebug 1
+shot f3_above_b_game
+lensdebug 0
+lens grade awaken
+wait 30
+shot f3_above_b_lens
+lens grade vivid
+wait 30
+shot f3_above_b_vivid
+lookswitch lite
+wait 100
+shot f4_above_b_lite_vivid
+lookswitch cinematic
+wait 300
+# the land coming back in: the render distance pulled in, then let out again
+opt renderDistance 4
+wait 100
+opt renderDistance 16
+wait 4
+shotnow f5_return_a
+wait 8
+shotnow f5_return_b
+wait 16
+shotnow f5_return_c
+wait 200
+# the edge hold's mist: a fast glide north until the land runs out
+cmd gamemode spectator
+cmd tp @s ~ ~30 ~ 180 14
+wait 100
+info
+glide 0 0 -1.2 1200
+wait 50
+info
+lensdebug 1
+shotnow f6_glide_1_game
+lensdebug 0
+shotnow f6_glide_1_lens
+wait 50
+info
+lensdebug 1
+shotnow f6_glide_2_game
+lensdebug 0
+shotnow f6_glide_2_lens
+wait 50
+info
+lensdebug 1
+shotnow f6_glide_3_game
+lensdebug 0
+shotnow f6_glide_3_lens
+wait 50
+info
+lensdebug 1
+shotnow f6_glide_4_game
+lensdebug 0
+shotnow f6_glide_4_lens
+wait 50
+info
+lensdebug 1
+shotnow f6_glide_5_game
+lensdebug 0
+shotnow f6_glide_5_lens
+wait 50
+info
+lensdebug 1
+shotnow f6_glide_6_game
+lensdebug 0
+shotnow f6_glide_6_lens
+wait 50
+info
+lensdebug 1
+shotnow f6_glide_7_game
+lensdebug 0
+shotnow f6_glide_7_lens
+wait 50
+info
+lensdebug 1
+shotnow f6_glide_8_game
+lensdebug 0
+shotnow f6_glide_8_lens
+lens grade setting
+quit

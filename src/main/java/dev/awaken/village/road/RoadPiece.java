@@ -23,7 +23,7 @@ import java.util.List;
  * again. Each chunk it touches paints its share through the settlement painter; the land under it was eased to its
  * heights by its markers' thin beards (none over water: a bridge never dams a river).
  */
-public class RoadPiece extends StructurePiece implements net.neoforged.neoforge.common.world.PieceBeardifierModifier {
+public class RoadPiece extends StructurePiece implements net.neoforged.neoforge.common.world.PieceBeardifierModifier, dev.awaken.core.api.GroundPiece {
     static long paintNanos, chunks, blocks;
 
     private final String key;
@@ -170,6 +170,12 @@ public class RoadPiece extends StructurePiece implements net.neoforged.neoforge.
     @Override
     public BoundingBox getBeardifierBox() {
         return boundingBox;
+    }
+
+    /** The land the leg paints or clears, with its banks (SPEC §28.9, "Ground others stand on"): not its raster's box. */
+    @Override
+    public boolean usesGround(WorldGenLevel level, ChunkGenerator generator, int x, int z, int r) {
+        return ClearOfSettlements.touches(paint(), x, z, r + ClearOfSettlements.BANKS);
     }
 
     @Override
