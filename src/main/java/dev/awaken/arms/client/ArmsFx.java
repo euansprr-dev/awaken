@@ -196,25 +196,56 @@ final class ArmsFx {
      * toward the side it struck); anyone else's at the body's guard, chest high, out on that side.
      */
     static void guardSpark(Entity e, int fromYaw, boolean deflected) {
-        Minecraft mc = Minecraft.getInstance();
         float yaw = fromYaw * Mth.DEG_TO_RAD;
         Vec3 from = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw));
-        boolean own = mc.player != null && e.getId() == mc.player.getId() && mc.options.getCameraType().isFirstPerson();
-        Vec3 at;
-        if (own) {
-            float look = e.getYRot() * Mth.DEG_TO_RAD;
-            int inv = e instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT ? -1 : 1;
-            Vec3 forward = e.getViewVector(1F);
-            Vec3 right = new Vec3(-Mth.cos(look), 0, -Mth.sin(look));
-            Vec3 up = right.cross(forward);
-            float side = Mth.clamp(Mth.sin(Mth.wrapDegrees(fromYaw - e.getYRot()) * Mth.DEG_TO_RAD), -0.7F, 0.7F);
-            at = e.getEyePosition(1F).add(forward.scale(GUARD_DEPTH)).add(right.scale(inv * GUARD_X + side * GUARD_SIDE)).add(up.scale(GUARD_Y));
-        } else {
-            at = e.position().add(0, e.getBbHeight() * 0.68, 0).add(from.scale(e.getBbWidth() * 0.5 + 0.3));
-        }
+        boolean own = own(e);
+        Vec3 at = meeting(e, fromYaw, from, own);
         ItemStack held = e instanceof LivingEntity l ? l.getMainHandItem() : ItemStack.EMPTY;
         int rgb = colour(held, 0, false, Archetype.Move.STRIKE_1) & 0xFFFFFF;
         FxClient.guardSpark(at.x, at.y, at.z, from.x, 0.15, from.z, rgb, deflected ? 1F : 0.55F, own);
+    }
+
+    /** The clash's white-gold (SPEC §25 "The clash"). */
+    private static final int CLASH_GOLD = 0xFFE3A0;
+
+    /**
+     * A deflect's light by its clash (SPEC §25 "The clash"): the deflect's spark in the weapon's own light and, over it
+     * ({@code light} > 0), white-gold sparks thrown the way the turned blow went (on past the guard and across it, away
+     * from the side it came from) with their flash where the weapons met; a heavy's {@code light} throws them wider.
+     */
+    static void clash(Entity e, int fromYaw, float light) {
+        guardSpark(e, fromYaw, true);
+        if (light <= 0) return;
+        float yaw = fromYaw * Mth.DEG_TO_RAD;
+        Vec3 from = new Vec3(-Mth.sin(yaw), 0, Mth.cos(yaw));
+        boolean own = own(e);
+        Vec3 at = meeting(e, fromYaw, from, own);
+        float look = e.getYRot() * Mth.DEG_TO_RAD;
+        Vec3 right = new Vec3(-Mth.cos(look), 0, -Mth.sin(look));
+        float side = Mth.sin(Mth.wrapDegrees(fromYaw - e.getYRot()) * Mth.DEG_TO_RAD);
+        int inv = e instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT ? -1 : 1;
+        // turned aside: on across the blade to the side it didn't come from; met head-on, out past the sword hand
+        Vec3 across = right.scale(Math.abs(side) > 0.15F ? -Math.signum(side) : inv);
+        Vec3 way = from.scale(-0.45).add(across.scale(0.8)).add(0, 0.35, 0).normalize();
+        FxClient.guardSpark(at.x, at.y, at.z, way.x, way.y, way.z, CLASH_GOLD, light, own);
+    }
+
+    /** The fighter's own blade in first person: its light is drawn at sword's length from the eye. */
+    private static boolean own(Entity e) {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.player != null && e.getId() == mc.player.getId() && mc.options.getCameraType().isFirstPerson();
+    }
+
+    /** Where the blow met the guard: on the first-person blade (further out on the side it came from), else before the body. */
+    private static Vec3 meeting(Entity e, int fromYaw, Vec3 from, boolean own) {
+        if (!own) return e.position().add(0, e.getBbHeight() * 0.68, 0).add(from.scale(e.getBbWidth() * 0.5 + 0.3));
+        float look = e.getYRot() * Mth.DEG_TO_RAD;
+        int inv = e instanceof LivingEntity l && l.getMainArm() == HumanoidArm.LEFT ? -1 : 1;
+        Vec3 forward = e.getViewVector(1F);
+        Vec3 right = new Vec3(-Mth.cos(look), 0, -Mth.sin(look));
+        Vec3 up = right.cross(forward);
+        float side = Mth.clamp(Mth.sin(Mth.wrapDegrees(fromYaw - e.getYRot()) * Mth.DEG_TO_RAD), -0.7F, 0.7F);
+        return e.getEyePosition(1F).add(forward.scale(GUARD_DEPTH)).add(right.scale(inv * GUARD_X + side * GUARD_SIDE)).add(up.scale(GUARD_Y));
     }
 
     // the guard's blade in first person (ArmsHands' guard pose), camera space: ahead, right of centre, below the eye;
