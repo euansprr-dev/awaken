@@ -1,0 +1,107 @@
+# The Glass Steppe's air (Euan, playing, 11 Nov: "the start of this other biome looks a bit glitchy ... it's like brown
+# fog but low quality"). The biome's own fog colour is sand (#ecdcb8), the Air's sky and far fog are blue. At his
+# settings (16 chunks, a wide view, Cinematic, Vivid) from the ground and from above the grass, each view three times:
+# the game's own frame (lensdebug 1), Lens with the look as built, Lens with Vivid. Then Lite and Swift.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-steppe-fog-ci.txt 2700
+# ci knobs: PACK=perf,world TECTONIC=awakened LENS=cinematic RD=16
+world steppefog creative 777
+waitworld
+cmd gamerule advance_time false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 5000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamemode creative
+cmd awaken terrain visit awaken:glass_steppe
+wait 700
+camera first
+hud on
+opt fov 90
+lookswitch cinematic
+wait 300
+look 0 0
+wait 80
+lensdebug 1
+shot f1_ground_south_game
+lensdebug 0
+lens grade awaken
+wait 30
+shot f1_ground_south_lens
+lens grade vivid
+wait 30
+shot f1_ground_south_vivid
+look 90 0
+wait 80
+lensdebug 1
+shot f2_ground_west_game
+lensdebug 0
+lens grade awaken
+wait 30
+shot f2_ground_west_lens
+lens grade vivid
+wait 30
+shot f2_ground_west_vivid
+look 180 0
+wait 80
+lensdebug 1
+shot f3_ground_north_game
+lensdebug 0
+lens grade awaken
+wait 30
+shot f3_ground_north_lens
+lens grade vivid
+wait 30
+shot f3_ground_north_vivid
+look -90 0
+wait 80
+lensdebug 1
+shot f4_ground_east_game
+lensdebug 0
+lens grade awaken
+wait 30
+shot f4_ground_east_lens
+lens grade vivid
+wait 30
+shot f4_ground_east_vivid
+cmd tp @s ~ ~16 ~
+cmd setblock ~ ~-1 ~ minecraft:glass
+wait 200
+look 45 6
+wait 80
+lensdebug 1
+shot f5_above_a_game
+lensdebug 0
+lens grade awaken
+wait 30
+shot f5_above_a_lens
+lens grade vivid
+wait 30
+shot f5_above_a_vivid
+look -135 6
+wait 80
+lensdebug 1
+shot f6_above_b_game
+lensdebug 0
+lens grade awaken
+wait 30
+shot f6_above_b_lens
+lens grade vivid
+wait 30
+shot f6_above_b_vivid
+lens grade vivid
+lookswitch lite
+wait 100
+shot f7_above_b_lite_vivid
+lookswitch swift
+wait 100
+shot f7_above_b_swift_vivid
+lens grade setting
+quit
