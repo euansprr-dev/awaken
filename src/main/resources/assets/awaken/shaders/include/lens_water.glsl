@@ -167,8 +167,8 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
         float lv = waterNoise(q * vec2(0.34, 1.25) + vec2(t * 0.070, t * 0.030)) + 0.4 * waterNoise(q * vec2(0.9, 2.6) - vec2(t * 0.050, -t * 0.060));
         float line = 1.0 - smoothstep(0.015, 0.055, abs(fract(lv * 2.0) - 0.5));
         float dash = smoothstep(0.38, 0.52, waterNoise(q * vec2(1.3, 0.5) + vec2(-t * 0.09, 3.7)));
-        float crest = smoothstep(0.42, 0.74, lane);
-        col += (vec3(0.80, 1.0, 0.96) * hour + lightCol * 0.25 * f14.w) * line * dash * crest * fine * 0.36 * shade;
+        float crest = smoothstep(0.30, 0.62, lane);
+        col += (vec3(0.80, 1.0, 0.96) * hour + lightCol * 0.25 * f14.w) * line * dash * crest * fine * 0.50 * shade;
     }
 
     // --- the road of the sun, or the moon: texels that catch it and twinkle. Far out they are their own average
@@ -190,7 +190,8 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
             star = 2.2 * waterSeed(tx, beat2, rate) + arms * (waterSeed(tx + vec2(1.0, 0.0), beat2, rate) + waterSeed(tx - vec2(1.0, 0.0), beat2, rate)
                     + waterSeed(tx + vec2(0.0, 1.0), beat2, rate) + waterSeed(tx - vec2(0.0, 1.0), beat2, rate));
         }
-        col += lightCol * (catches * 1.25 + star * 1.1) * light * (0.35 + 0.65 * fres);
+        // (laid over the water, not added to it: added, a gold glint on blue water went past white and lost its gold)
+        col = mix(col, lightCol * 1.08, clamp(catches * 0.95 + star * 0.8, 0.0, 1.0) * min(light, 1.0) * (0.35 + 0.65 * fres));
     }
     // by night the water holds a scatter of stars
     float dark = smoothstep(0.06, -0.20, f22.y) * (1.0 - rain);
