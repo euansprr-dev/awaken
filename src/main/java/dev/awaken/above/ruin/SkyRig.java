@@ -356,8 +356,8 @@ public final class SkyRig {
 
     /**
      * The cabin made the hall where the wings hang (SPEC §17.9, "The wings on show"; the client's WingCaseRenderer
-     * draws the pair and the case's glass): two opposite corners opened as portals four high with pillars for jambs
-     * and light in the threshold; a rail of wall round the core two out, which the case's glass stands on (nobody
+     * draws the pair and the case's glass): two opposite corners opened as portals four high with pillars for jambs,
+     * light in the threshold and a soul lantern hung in the head; a rail of wall round the core two out, which the case's glass stands on (nobody
      * walks into the case), light in the deck under its corners; a line of light down the pier's middle; and the mark
      * under the core last. Placed with the rig, and on its own for platforms rigged before it.
      */
@@ -372,6 +372,9 @@ public final class SkyRig {
                 for (int[] j : jambs) level.setBlock(new BlockPos(cx + px * j[0], deckY + up, cz + pz * j[1]), RuinBuilder.pillar(), flags);
             }
             level.setBlock(new BlockPos(cx + px * 4, deckY, cz + pz * 4), RuinBuilder.glow(), flags);
+            // a lamp of the Signal's colour hung in the portal's head (three clear under it)
+            level.setBlock(new BlockPos(cx + px * 4, deckY + 4, cz + pz * 4), Blocks.SOUL_LANTERN.defaultBlockState()
+                    .setValue(net.minecraft.world.level.block.LanternBlock.HANGING, true), flags);
         }
         BlockState wall = Blocks.POLISHED_DEEPSLATE_WALL.defaultBlockState();
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();

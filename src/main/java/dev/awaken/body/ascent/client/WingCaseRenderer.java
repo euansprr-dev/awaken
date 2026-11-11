@@ -24,7 +24,8 @@ import org.jspecify.annotations.Nullable;
  * The wings on show at a sky platform's core (SPEC §17.9, "The wings on show"): the real feathered pair (SPEC §62:
  * {@link WingForm} drawn by {@link WingFeathers} in {@link WingPipelines}' own types) hung over the core inside a case
  * of light glass that stands on the rail the rig lays round it. They breathe between nearly open and open and turn once
- * in 38 seconds, lit by themselves, so they read through the cabin's portals from the bridge and the pier.
+ * in 38 seconds, lit by themselves, in a column of light from the core to the roof, so they read through the cabin's
+ * portals from the pier.
  * <p>
  * What a player sees is their own truth: without wings, the case shut and the pair inside; while the core gives them
  * (the gift's scene), the glass sinks into the rail and the pair comes across to their back, arriving as their own wings
@@ -45,7 +46,7 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
     private static final float OPEN_TICKS = 22, FLY_FROM = 6, FLY_TICKS = 28;
 
     public static final class State extends BlockEntityRenderState {
-        float time, open, fly, tx, ty, tz;
+        float time, open, fly, tx, ty, tz, camX, camZ;
         boolean pair, near;
         int lod;
     }
@@ -53,7 +54,7 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
     // this frame's case (the geometry runs after every submit; platforms stand hundreds of blocks apart, so one is in view)
     private static final float[] POSE = new float[WingForm.N], PAIR = {1F, 0F, 0F};
     private static final Quaternionf TURN = new Quaternionf();
-    private static float alpha, glow, open, time;
+    private static float alpha, glow, open, time, camX, camZ, column;
     private static int lod;
     private static final SubmitNodeCollector.CustomGeometryRenderer FEATHERS =
             (pose, vc) -> WingFeathers.pair(pose, vc, POSE, 0, PAIR, 0, WingFeathers.LIGHT, alpha, lod, false);
@@ -76,6 +77,8 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
         BlockPos p = be.getBlockPos();
         double dx = camera.x - (p.getX() + 0.5), dy = camera.y - (p.getY() + HANG), dz = camera.z - (p.getZ() + 0.5), d2 = dx * dx + dy * dy + dz * dz;
         s.time = AscentMoves.ticks + partialTicks;
+        s.camX = (float) dx;
+        s.camZ = (float) dz;
         s.near = d2 < NEAR * NEAR;
         s.lod = WingForm.lod(d2);
         LocalPlayer me = Minecraft.getInstance().player;
@@ -104,6 +107,10 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
         time = s.time;
         open = s.open;
         lod = s.lod;
+        camX = s.camX;
+        camZ = s.camZ;
+        // the column of light the pair hangs in: gone with the pair
+        column = s.pair ? 1 - s.fly : 0;
         if (s.pair) {
             // breathing between nearly open and open; opened right out as it leaves the case
             float k = Mth.lerp(s.fly, 0.86F + 0.1F * Mth.sin(time / 46F), 1F);
@@ -180,6 +187,15 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
                     }
                 }
             }
+        }
+        // the column of light the pair hangs in, from the core's top to the roof: a sheet turned to face the eye, bright
+        // down its middle and at its foot, breathing with the pair (it is what reads from the pier and the stair)
+        float cl = (float) Math.sqrt(camX * camX + camZ * camZ);
+        if (column > 0.01F && cl > 0.05F) {
+            float wide = 1.25F, sx = -camZ / cl * wide, sz = camX / cl * wide, breath = 0.85F + 0.15F * Mth.sin(time / 46F);
+            int low = a(0.2F * column * breath, TINT), high = a(0.07F * column * breath, TINT), off = a(0, TINT);
+            quad(pose, vc, c - sx, 1.02F, c - sz, c, 1.02F, c, c, ROOF, c, c - sx, ROOF, c - sz, off, low, high, off);
+            quad(pose, vc, c, 1.02F, c, c + sx, 1.02F, c + sz, c + sx, ROOF, c + sz, c, ROOF, c, low, off, off, high);
         }
         // the light on the core's top
         float y = 1.03F, r = 1.7F, strength = (0.16F + 0.05F * Mth.sin(time / 46F)) * (1 - 0.55F * open);

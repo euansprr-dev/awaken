@@ -4265,7 +4265,8 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   wings** (§62's `WingForm` pair drawn by `WingFeathers` in `WingPipelines`' own types, 0.64 where a player's are 0.94,
   so the open pair turns inside the glass), 3.2 over
   the core's floor, breathing between nearly open and open, turning once in 38 seconds, lit by themselves, their halos
-  behind them and their light on the core's top, inside a case of light glass: four panes from the rail to the roof (a
+  behind them, in a column of light from the core's top to the roof (a sheet turned to face the eye, bright down its
+  middle and at its foot, breathing with them) and with their light on the core's top, inside a case of light glass: four panes from the rail to the roof (a
   faint tint, brighter at the foot, a bright line up each corner and round the top, a band of sheen crossing one pane
   after another every ten seconds). One pair, drawn within 80 blocks (the far forms past 48), nothing allocated in a
   frame. What a player sees is their own truth: without wings, the case shut and the pair inside; with them, the case
@@ -4279,8 +4280,8 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
     fold, low, every 4.6 s within 14 blocks) and a gust every 9.5 s; the core's ring of light every 3 s as before.
 - **The wings' hall** (`SkyRig.rigHall`, `hallAxis`, `hallPlaced`; laid with the rig, and on its own for platforms rigged
   before it: its mark is the lit panel under the core, placed last; the blueprint never changes). The cabin Euan stood
-  in was "a dark tiled room". Two opposite corners are opened as **portals** four high with pillars for jambs and
-  light in the threshold; a **rail** of polished deepslate wall stands round the core two out, which the case's glass
+  in was "a dark tiled room". Two opposite corners are opened as **portals** four high with pillars for jambs, light
+  in the threshold and a soul lantern hung in the head; a **rail** of polished deepslate wall stands round the core two out, which the case's glass
   rises from (nobody walks into the case), with light in the deck under its corners; a lamp every third cell down the
   pier's middle. The blueprint keeps its chest and its stand in two opposite corners of the cabin whichever way it was
   turned, so the portals take the pier's diagonal when its corners are empty (the pier runs straight in at the case,
