@@ -11,7 +11,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FlowerBedBlock;
 import net.minecraft.world.level.block.LadderBlock;
 import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.LeavesBlock;
@@ -65,6 +67,16 @@ public final class RuinBuilder {
 
     /** The blueprint's version, saved on each piece (1 = before the structures redesign). */
     public static final int STYLE = 2;
+    /**
+     * The sky platform's own version (3 = its island, SPEC §17.29, 11 Nov 2026). A platform started before it keeps
+     * building its old blueprint in its unbuilt chunks, so the two never meet at a chunk edge.
+     */
+    public static final int SKY_STYLE = 3;
+
+    /** The blueprint version a new piece of this kind is built and saved with. */
+    public static int style(RuinKind kind) {
+        return kind == RuinKind.SKY ? SKY_STYLE : STYLE;
+    }
 
     /** Footprints are square (the piece turns inside them). */
     public static Size size(RuinKind kind) {
@@ -207,11 +219,16 @@ public final class RuinBuilder {
     // ---- build ------------------------------------------------------------------------------------------------------
 
     public static void build(RuinKind kind, long seed, int doorRank, Sink out) {
+        build(kind, seed, doorRank, style(kind), out);
+    }
+
+    /** Builds the blueprint a piece saved with {@code style} (see {@link #style}). */
+    public static void build(RuinKind kind, long seed, int doorRank, int style, Sink out) {
         RandomSource r = new XoroshiroRandomSource(seed);
         Brush b = new Brush(out, seed);
         switch (kind) {
             case VAULT, SPAWN_VAULT -> vault(kind, r, doorRank, b);
-            case SKY -> sky(r, b);
+            case SKY -> sky(r, b, style >= SKY_STYLE);
             case OCEAN -> ocean(r, b);
             case MONOLITH -> monolith(r, b);
             case SPIRE -> spire(r, b);
@@ -810,12 +827,13 @@ public final class RuinBuilder {
     /**
      * A Precursor disc above the clouds: a keel of glowing rings beneath (it reads as a light in the sky from the ground),
      * a brass-railed deck, a glass cabin with a spire; round it four islands of earth it tore up with it, tethered by
-     * chains, and long chains dangling lanterns below.
+     * chains, and long chains dangling lanterns below. From SKY_STYLE ({@code island}) the deck sits in the island it
+     * tore up ({@link #garden}) and the four islands are bigger and grown over.
      */
-    private static void sky(RandomSource r, Brush b) {
+    private static void sky(RandomSource r, Brush b, boolean island) {
         List<MachineType> machines = machinesFor(RuinKind.SKY, r);
         boolean terminal = hasTerminal(RuinKind.SKY, r);
-        final int C = 24, DECK = 12;
+        final int C = SKY_C, DECK = 12;
         for (int x = C - 12; x <= C + 12; x++) {
             for (int z = C - 12; z <= C + 12; z++) {
                 double d = Math.sqrt((x - C) * (x - C) + (z - C) * (z - C));
@@ -835,6 +853,7 @@ public final class RuinBuilder {
                 }
             }
         }
+        if (island) garden(b, C, DECK);
         for (int[] l : new int[][]{{C, C - 11}, {C, C + 11}, {C - 11, C}, {C + 11, C}}) b.set(l[0], DECK + 1, l[1], warn());
         // the cabin: pilaster corners, glass walls, a glowing roof, a door to the south
         for (int x = C - 4; x <= C + 4; x++) {
@@ -851,6 +870,7 @@ public final class RuinBuilder {
                 b.set(x, DECK + 6, z, cabinCorner ? trim() : wall ? of(Blocks.POLISHED_DEEPSLATE) : (Math.abs(x - C) <= 1 && Math.abs(z - C) <= 1) ? glow() : plating());
             }
         }
+        // the door (the wings' hall opens two of the cabin's corners as its portals: SkyRig.rigHall)
         b.set(C, DECK + 1, C + 4, air());
         b.set(C, DECK + 2, C + 4, air());
         b.set(C, DECK + 3, C + 4, trim());
@@ -878,14 +898,18 @@ public final class RuinBuilder {
             int jitter = (int) ((b.n(i, 7, 7) - 0.5) * 6);
             int ix = spots[i][0] + (i % 2 == 0 ? jitter : 0), iz = spots[i][1] + (i % 2 == 1 ? jitter : 0);
             int top = 7 + (int) (b.n(i, 9, 9) * 9);
-            double rad = 2.6 + b.n(i, 1, 1) * 1.2;
-            island(b, ix, top, iz, rad, i);
+            double rad = island ? 3.0 + b.n(i, 1, 1) * 1.3 : 2.6 + b.n(i, 1, 1) * 1.2;
+            island(b, ix, top, iz, rad, i, island);
             tether(b, i, ix, iz, top, rad, C, DECK);
         }
     }
 
-    /** An island of earth: grass on top, a stone underside tapering down with ore in it, roots hanging below. */
-    private static void island(Brush b, int cx, int top, int cz, double rad, int which) {
+    /**
+     * An island of earth: grass on top, a stone underside tapering down with ore in it, roots hanging below. Grown over
+     * ({@code lush}, SKY_STYLE): wildflowers and ferns, glow berries hanging under it, a cherry where the oak stood and a
+     * poplar on the first.
+     */
+    private static void island(Brush b, int cx, int top, int cz, double rad, int which, boolean lush) {
         int R = (int) Math.ceil(rad) + 1;
         for (int x = cx - R; x <= cx + R; x++) {
             for (int z = cz - R; z <= cz + R; z++) {
@@ -907,12 +931,18 @@ public final class RuinBuilder {
                     b.set(x, y, z, s);
                 }
                 int bottom = top - depth - 1;
-                if (bottom > 0 && b.n(x, bottom, z) < 0.3) b.set(x, bottom, z, of(Blocks.HANGING_ROOTS));
-                if (d < rad - 1 && b.n(x, top + 1, z) < 0.3) b.set(x, top + 1, z, b.n(x, 5, z) < 0.8 ? of(Blocks.SHORT_GRASS)
+                if (lush && bottom > 0 && b.n(x, bottom, z) < 0.09) berries(b, x, bottom, z, 1 + (int) (b.n(x, 8, z) * 3));
+                else if (bottom > 0 && b.n(x, bottom, z) < 0.3) b.set(x, bottom, z, of(Blocks.HANGING_ROOTS));
+                if (lush && d < rad - 0.6) ground(b, x, top + 1, z, 0.5, false);
+                else if (d < rad - 1 && b.n(x, top + 1, z) < 0.3) b.set(x, top + 1, z, b.n(x, 5, z) < 0.8 ? of(Blocks.SHORT_GRASS)
                         : b.n(x, 6, z) < 0.5 ? of(Blocks.POPPY) : of(Blocks.DANDELION));
             }
         }
-        if (which == 1) {
+        if (lush && which == 1) {
+            cherry(b, cx, top + 1, cz);
+        } else if (lush && which == 0) {
+            poplar(b, cx, top + 1, cz);
+        } else if (which == 1) {
             // a small tree that came up with the ground
             for (int y = top + 1; y <= top + 4; y++) b.set(cx, y, cz, of(Blocks.OAK_LOG));
             for (int x = cx - 2; x <= cx + 2; x++) {
@@ -928,6 +958,178 @@ public final class RuinBuilder {
             b.set(cx, top + 1, cz, trim());
             b.set(cx, top + 2, cz, pillar());
             b.set(cx, top + 3, cz, warn());
+        }
+    }
+
+    // ---- the sky platform's island (SKY_STYLE, SPEC §17.29) --------------------------------------------------------
+
+    /** The deck's disc: the garden starts past it, a step down, and the rim sits on a layer of its earth. */
+    private static final double DISC = 11.6;
+
+    /**
+     * The island the platform tore up with it: a ring of garden round the deck a step below it, out to
+     * {@link #gardenEdge} (wider along the axes than the diagonals). Under it a collar of rock, deepest mid-ring, that
+     * never reaches in to the keel, with glow berries, roots and lichen hanging from it; on it moss, wildflowers, ferns,
+     * bushes, a few firefly bushes, and flowering azaleas and autumn poplars at the eighths between the axes and the
+     * diagonals. Nothing grows within two of a diagonal (the pier, its rings and the stair come in on one) and nothing tall
+     * within three of an axis (the tethers run there).
+     */
+    private static void garden(Brush b, int c, int deck) {
+        int top = deck - 1;
+        for (int dx = -15; dx <= 15; dx++) {
+            for (int dz = -15; dz <= 15; dz++) {
+                double d = Math.sqrt(dx * dx + dz * dz), edge = gardenEdge(b, dx, dz);
+                if (d <= 10.6 || d > edge) continue;
+                int x = c + dx, z = c + dz;
+                if (d <= DISC) {
+                    b.set(x, top, z, b.n(x, top, z) < 0.3 ? of(Blocks.ROOTED_DIRT) : of(Blocks.DIRT));
+                    continue;
+                }
+                double t = gardenT(d, edge);
+                int surface = gardenSurface(b, x, z, dx, dz, top, t);
+                int depth = 1 + (int) Math.round(Math.sin(Math.PI * t) * (3 + 7 * b.sn(x, 0, z, 4.5)) + b.n(x, 3, z) * 1.2);
+                int bottom = Math.max(0, surface - depth);
+                boolean moss = b.sn(x, 1, z, 3.0) < 0.28;
+                for (int y = surface; y >= bottom; y--) {
+                    int k = surface - y;
+                    BlockState st;
+                    if (k == 0) st = moss ? of(Blocks.MOSS_BLOCK) : t > 0.85 && b.n(x, y, z) < 0.35 ? of(Blocks.COARSE_DIRT) : of(Blocks.GRASS_BLOCK);
+                    else if (k <= 2) st = b.n(x, y, z) < 0.2 ? of(Blocks.ROOTED_DIRT) : of(Blocks.DIRT);
+                    else {
+                        double o = b.n(x, y, z), patch = b.sn(x, y, z, 3.0);
+                        st = o < 0.05 ? of(Blocks.COAL_ORE) : o < 0.085 ? of(Blocks.IRON_ORE) : o < 0.11 ? of(Blocks.COPPER_ORE)
+                                : patch < 0.32 ? of(Blocks.TUFF) : patch > 0.7 ? of(Blocks.ANDESITE) : of(Blocks.STONE);
+                    }
+                    b.set(x, y, z, st);
+                }
+                if (bottom > 0) {
+                    double h = b.n(x, bottom - 1, z);
+                    if (h < 0.11) berries(b, x, bottom - 1, z, 1 + (int) (b.n(x, 9, z) * 4));
+                    else if (h < 0.3) b.set(x, bottom - 1, z, of(Blocks.HANGING_ROOTS));
+                    else if (h < 0.42) b.set(x, bottom - 1, z, Blocks.GLOW_LICHEN.defaultBlockState().setValue(BlockStateProperties.UP, true));
+                }
+                if (!onWay(dx, dz)) ground(b, x, surface + 1, z, t, moss);
+            }
+        }
+        // the trees, at most eight, each 12 out at an eighth (a broad azalea, or now and then a tall poplar)
+        for (int k = 0; k < 8; k++) {
+            if (b.n(k, 40, 40) > 0.75) continue;
+            double a = Math.toRadians(22.5 + 45 * k);
+            int dx = (int) Math.round(12.2 * Math.cos(a)), dz = (int) Math.round(12.2 * Math.sin(a));
+            double d = Math.sqrt(dx * dx + dz * dz), edge = gardenEdge(b, dx, dz);
+            if (d <= DISC || d > edge) continue;
+            int x = c + dx, z = c + dz, y = gardenSurface(b, x, z, dx, dz, top, gardenT(d, edge)) + 1;
+            if (b.n(k, 41, 41) < 0.3) poplar(b, x, y, z);
+            else azalea(b, x, y, z, (int) Math.signum(Math.round(Math.cos(a))), (int) Math.signum(Math.round(Math.sin(a))));
+        }
+    }
+
+    /** The garden's edge at a cell: about 13.6 out along the axes and 12.2 along the diagonals, a little ragged. */
+    private static double gardenEdge(Brush b, int dx, int dz) {
+        return 12.9 + 0.7 * Math.cos(4 * Math.atan2(dz, dx)) + (b.sn(dx + 300, 0, dz, 3.0) - 0.5);
+    }
+
+    /** How far across the garden's ring a cell lies: 0 at the deck, 1 at the edge. */
+    private static double gardenT(double d, double edge) {
+        return Math.min(1, (d - DISC) / Math.max(0.5, edge - DISC));
+    }
+
+    /** The garden's top at a cell: a step below the deck, a mound here and there mid-ring (never on a way in). */
+    private static int gardenSurface(Brush b, int x, int z, int dx, int dz, int top, double t) {
+        return top + (!onWay(dx, dz) && t > 0.25 && t < 0.8 && b.sn(x, 2, z, 4.0) > 0.64 ? 1 : 0);
+    }
+
+    /** Within two of a diagonal: the ways in (the pier, its rings and the stair come in on one of the four). */
+    private static boolean onWay(int dx, int dz) {
+        return Math.abs(Math.abs(dx) - Math.abs(dz)) <= 2;
+    }
+
+    /** What grows on a cell of island earth ({@code y} is the cell over it): {@code t} is how far out it lies. */
+    private static void ground(Brush b, int x, int y, int z, double t, boolean moss) {
+        double p = b.n(x, y, z), patch = b.sn(x, 5, z, 3.5);
+        BlockState st = null;
+        if (moss && p < 0.55) st = of(Blocks.MOSS_CARPET);
+        else if (patch > 0.6 && p < 0.75) st = Blocks.WILDFLOWERS.defaultBlockState()
+                .setValue(FlowerBedBlock.AMOUNT, 1 + (int) (p * 5.3) % 4)
+                .setValue(FlowerBedBlock.FACING, Direction.from2DDataValue((int) (b.n(x, 7, z) * 4)));
+        else if (p < 0.035 && t > 0.3) st = of(Blocks.FIREFLY_BUSH);
+        else if (p < 0.07) st = of(Blocks.BUSH);
+        else if (p < 0.1) st = of(b.n(x, 8, z) < 0.5 ? Blocks.FLOWERING_AZALEA : Blocks.AZALEA);
+        else if (p < 0.4) st = of(Blocks.SHORT_GRASS);
+        else if (p < 0.48) st = of(Blocks.FERN);
+        if (st != null) b.set(x, y, z, st);
+    }
+
+    /** Glow berries hanging from under (x, yTop + 1, z), {@code len} long, lit on about half; grown out (they stay put). */
+    private static void berries(Brush b, int x, int yTop, int z, int len) {
+        for (int i = 0; i < len && yTop - i >= 0; i++) {
+            int y = yTop - i;
+            boolean tip = i == len - 1 || y == 0;
+            BlockState st = tip ? Blocks.CAVE_VINES.defaultBlockState().setValue(BlockStateProperties.AGE_25, BlockStateProperties.MAX_AGE_25)
+                    : Blocks.CAVE_VINES_PLANT.defaultBlockState();
+            b.set(x, y, z, st.setValue(BlockStateProperties.BERRIES, b.n(x, y, z + 1) < 0.5));
+        }
+    }
+
+    /** The sky blueprint's centre (local x and z). */
+    private static final int SKY_C = 24;
+
+    /**
+     * Whether a crown may grow at (x, z): not within four of a diagonal, where the arrival's arch stands over whichever
+     * one the pier comes in on (SkyRig.archCells), so a tree leans away from the ways in.
+     */
+    private static boolean crownRoom(int x, int z) {
+        return Math.abs(Math.abs(x - SKY_C) - Math.abs(z - SKY_C)) > 4;
+    }
+
+    /** Leaves that never fall away (nothing on a sky island is a log's own tree). */
+    private static BlockState leaves(Block leaf) {
+        return leaf.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
+    }
+
+    /**
+     * A flowering azalea: a trunk four high (the crown clears a head on the deck's rim), a broad flat crown, and a
+     * lantern hung under it on the side away from the deck ({@code ox}, {@code oz}), so it reads from the air at night.
+     */
+    private static void azalea(Brush b, int x, int y, int z, int ox, int oz) {
+        for (int i = 0; i <= 4; i++) b.set(x, y + i, z, of(Blocks.OAK_LOG));
+        for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) for (int dy = 0; dy <= 2; dy++) {
+            if (dx == 0 && dz == 0 && dy == 0) continue;
+            double e = dx * dx + dz * dz + (dy - 0.6) * (dy - 0.6) * 2.4 + b.n(x + dx, y + 4 + dy, z + dz) * 1.6;
+            if (e > 6.2 || !crownRoom(x + dx, z + dz)) continue;
+            b.set(x + dx, y + 4 + dy, z + dz, leaves(b.n(x + dx, y + 9 + dy, z + dz) < 0.4 ? Blocks.FLOWERING_AZALEA_LEAVES : Blocks.AZALEA_LEAVES));
+        }
+        b.set(x + ox * 2, y + 4, z + oz * 2, leaves(Blocks.AZALEA_LEAVES));
+        b.set(x + ox * 2, y + 3, z + oz * 2, Blocks.LANTERN.defaultBlockState().setValue(LanternBlock.HANGING, true));
+    }
+
+    /** An autumn poplar: a trunk six high and a tall narrow crown in orange, yellow and red. */
+    private static void poplar(Brush b, int x, int y, int z) {
+        for (int i = 0; i < 6; i++) b.set(x, y + i, z, of(Blocks.POPLAR_LOG));
+        for (int dy = 3; dy <= 8; dy++) {
+            double rad = dy == 8 ? 0.4 : dy == 3 ? 1.0 : 1.5;
+            for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0 && dy < 6) continue;
+                if (Math.sqrt(dx * dx + dz * dz) + b.n(x + dx, y + dy, z + dz) * 0.7 > rad + 0.35 || !crownRoom(x + dx, z + dz)) continue;
+                double hue = b.sn(x + dx, y + dy, z + dz, 2.5);
+                b.set(x + dx, y + dy, z + dz, leaves(hue < 0.4 ? Blocks.ORANGE_POPLAR_LEAVES : hue < 0.7 ? Blocks.YELLOW_POPLAR_LEAVES : Blocks.RED_POPLAR_LEAVES));
+            }
+        }
+    }
+
+    /** A cherry that came up with the ground: a trunk that leans out at the top, a wide crown, petals under it. */
+    private static void cherry(Brush b, int x, int y, int z) {
+        for (int i = 0; i < 4; i++) b.set(x + (i == 3 ? 1 : 0), y + i, z, of(Blocks.CHERRY_LOG));
+        int cx = x + 1, top = y + 4;
+        for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) for (int dy = 0; dy <= 2; dy++) {
+            double e = dx * dx + dz * dz + (dy - 0.5) * (dy - 0.5) * 3 + b.n(cx + dx, top + dy, z + dz) * 2;
+            if (e <= 8.5) b.set(cx + dx, top + dy, z + dz, leaves(Blocks.CHERRY_LEAVES));
+        }
+        b.set(cx, top, z, of(Blocks.CHERRY_LOG));
+        for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
+            if (dx * dx + dz * dz > 5 || dx == 0 && dz == 0 || b.n(x + dx, y, z + dz) > 0.55) continue;
+            b.set(x + dx, y, z + dz, Blocks.PINK_PETALS.defaultBlockState().setValue(FlowerBedBlock.AMOUNT, 1 + (int) (b.n(x + dx, 2, z + dz) * 4))
+                    .setValue(FlowerBedBlock.FACING, Direction.from2DDataValue((int) (b.n(x + dx, 3, z + dz) * 4))));
         }
     }
 
