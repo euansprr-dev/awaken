@@ -3,7 +3,9 @@ package dev.awaken.gates.realms.land;
 import dev.awaken.gates.realms.kit.V;
 import dev.awaken.gates.realms.kit.crawl.CrawlLand;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -23,33 +25,41 @@ import static dev.awaken.gates.realms.kit.N.rnd;
  * the third stand. Still to lay: "Down" (the slam), the Long Run, the tally floor. Sizes are the plan's targets until
  * the walk check runs on the leap's real reach.
  *
+ * <p>A hall here is a {@link Hall}: a machine hall seventeen wide cut out of the works, with a way of decks five wide
+ * down its middle and nothing else to stand on. Under the decks is the casting pit, eighteen down, its floor a crust of
+ * slag that glows; nobody reaches it, because the fall catch has them first (and it is deep enough that the catch
+ * cannot miss). The first walk of this land (run 43021300881) was a brick passage seven wide with a light of 15 in a
+ * hundred: the kind of hallway the new gates exist not to be. The walls are the Stopped Works' own now: courses of
+ * brass, furnace mouths over the slag, a pipe run, gauge lights, a roof of plate on brass ribs with lamps let into it.
+ *
  * <p>The way on from the second and the third stand is barred until that stand is taken ({@code trial_open_dash},
  * {@code trial_open_slam}); it opens for everyone in the gate, for good.
- *
- * <p>A hall here is a {@link Hall}: a box cut out of the rock with floor only where a deck is laid. Everything else in
- * it is the pit, fourteen under the way in, with slag at the bottom that nobody reaches: the fall catch has them first.
  */
 public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
-    private static final BlockState SLAG = Blocks.MAGMA_BLOCK.defaultBlockState();
-    /** The way in's floor, and the pit's; the level "Through" is on. */
-    static final int Y = 100, PIT = 86, Y2 = Y + 8;
+    /** The way in's floor; the level "Through" is on; how far under a hall's first deck its pit lies; how far over its highest its roof. */
+    static final int Y = 100, Y2 = Y + 8, DEEP = 18, HEAD = 10;
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
+    /** The casting pit's floor: the Ember Mines' crust, which glows and burns nobody. And the glow over it. */
+    private static final BlockState SLAG = BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("magma_crust")).defaultBlockState(),
+            GLOW = Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 13);
     /** The bars that wait for a stand: a box each, x0 y0 z0 x1 y1 z1. */
     private static final int[] DOOR_DASH = {-4, Y2, -34, 4, Y2 + 5, -34}, DOOR_SLAM = {56, Y2, 7, 56, Y2 + 5, 15};
 
-    /** A box of air with decks in it. A deck is x0, z0, x1, z1 and the height feet stand at. */
+    /** A box of air with decks in it and, here and there, a wall standing in it. A deck is x0, z0, x1, z1 and the height feet stand at. */
     static final class Hall extends Part {
-        final int pit, top;
-        final List<int[]> decks = new ArrayList<>();
+        /** The height of its first deck (what its walls are dressed by), its pit's floor and its roof. */
+        final int base, pit, top;
+        final List<int[]> decks = new ArrayList<>(), walls = new ArrayList<>();
 
-        Hall(String name, int x0, int z0, int x1, int z1, int pit, int top) {
+        Hall(String name, int x0, int z0, int x1, int z1, int base, int rise) {
             this.name = name;
             this.x0 = x0;
             this.z0 = z0;
             this.x1 = x1;
             this.z1 = z1;
-            this.pit = pit;
-            this.top = top;
+            this.base = base;
+            pit = base - DEEP;
+            top = base + rise + HEAD;
         }
 
         Hall deck(int dx0, int dz0, int dx1, int dz1, int feet) {
@@ -57,16 +67,25 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
             return this;
         }
 
-        /** The height feet stand at on the deck over a column, or the pit's. */
-        int feet(int x, int z) {
-            int best = pit;
-            for (int[] d : decks) if (x >= d[0] && x <= d[2] && z >= d[1] && z <= d[3]) best = Math.max(best, d[4]);
+        /** A wall from the pit to the roof: the works' own rock left standing (something to run along). */
+        Hall wall(int wx0, int wz0, int wx1, int wz1) {
+            walls.add(new int[]{wx0, wz0, wx1, wz1});
+            return this;
+        }
+
+        /** The deck over a column, or null over the pit. */
+        int[] deckAt(int x, int z) {
+            int[] best = null;
+            for (int[] d : decks) if (x >= d[0] && x <= d[2] && z >= d[1] && z <= d[3] && (best == null || d[4] > best[4])) best = d;
             return best;
         }
 
         @Override
         public int feet2(int x, int z) {
-            return x < x0 || x > x1 || z < z0 || z > z1 ? NONE : feet(x, z) * 2;
+            if (x < x0 || x > x1 || z < z0 || z > z1) return NONE;
+            for (int[] w : walls) if (x >= w[0] && x <= w[2] && z >= w[1] && z <= w[3]) return NONE;
+            int[] d = deckAt(x, z);
+            return (d == null ? pit : d[4]) * 2;
         }
 
         @Override
@@ -78,11 +97,14 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         List<int[]> ledges() {
             List<int[]> out = new ArrayList<>();
             for (int[] d : decks) {
-                int x = (d[0] + d[2]) / 2;
+                int x = (d[0] + d[2]) / 2, z = (d[1] + d[3]) / 2;
                 if (d[3] - d[1] > 6) {
                     out.add(new int[]{x, d[4], d[1] + 2});
                     out.add(new int[]{x, d[4], d[3] - 2});
-                } else out.add(new int[]{x, d[4], (d[1] + d[3]) / 2});
+                } else if (d[2] - d[0] > 6) {
+                    out.add(new int[]{d[0] + 2, d[4], z});
+                    out.add(new int[]{d[2] - 2, d[4], z});
+                } else out.add(new int[]{x, d[4], z});
             }
             return out;
         }
@@ -94,21 +116,22 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
     public LeapersGauntlet(Ctx ctx) {
         super(ctx, 0x4C454150L);
         part(new Cave("root", 0, Y, -140, 6, 6, 6, seed + 1));
-        // the way in: a gap of two, a step, a gap of three, all with what anyone has; then the lip of the first gulf
-        wayIn = part(new Hall("way_in", -3, -136, 3, -103, PIT, Y + 9)
-                .deck(-3, -136, 3, -128, Y).deck(-3, -125, 3, -119, Y).deck(-3, -118, 3, -113, Y + 1).deck(-3, -109, 3, -103, Y + 1));
-        // the first stand, in a room off the lip: you have looked at the gulf before you come to it
-        part(new Tunnel("to_stand1", 3, Y + 1, -106, 9, Y + 1, -106, 2.2, 4, seed + 2));
-        part(new Cave("stand1", 13, Y + 1, -106, 6, 6, 6, seed + 3));
+        // the way in: a gap of two, a step, a gap of three, all with what anyone has; then the lip of the first gulf, and a
+        // deck off it to the east wall, where the first stand's room is
+        wayIn = part(new Hall("way_in", -8, -136, 8, -103, Y, 1)
+                .deck(-2, -136, 2, -128, Y).deck(-2, -125, 2, -119, Y).deck(-2, -118, 2, -113, Y + 1).deck(-2, -109, 2, -103, Y + 1).deck(3, -108, 8, -104, Y + 1));
+        part(new Tunnel("to_stand1", 8, Y + 1, -106, 14, Y + 1, -106, 2.4, 5, seed + 2));
+        part(new Cave("stand1", 19, Y + 1, -106, 6, 6, 7, seed + 3));
         // "Twice": the gulf (six wide, the far side two higher), a step three up, a gap onto a ledge two higher, and a
         // long gap with only a wall beside it
-        twice = part(new Hall("twice", -3, -102, 3, -51, PIT, Y + 16)
-                .deck(-3, -96, 3, -90, Y + 3).deck(-3, -89, 3, -84, Y + 6).deck(-3, -79, 3, -74, Y + 8).deck(-3, -62, 3, -51, Y + 8));
+        twice = part(new Hall("twice", -8, -102, 8, -51, Y + 1, 7)
+                .deck(-2, -96, 2, -90, Y + 3).deck(-2, -89, 2, -84, Y + 6).deck(-2, -79, 2, -74, Y + 8).deck(-2, -62, 2, -51, Y + 8)
+                .wall(-3, -74, -3, -62));
         part(new Cave("stand2", 0, Y2, -44, 7, 7, 7, seed + 4));
-        // "Through": a gap of nine; then the hall turns east, with a gap of eight just past the turn and a gulf of twelve
+        // "Through": a gap of nine; then the way turns east, with a gap of eight just past the turn and a gulf of twelve
         part(new Tunnel("to_through", 0, Y2, -38, 0, Y2, -30, 2.6, 5, seed + 5));
-        through = part(new Hall("through", -3, -30, 3, 14, Y2 - 14, Y2 + 9).deck(-3, -30, 3, -25, Y2).deck(-3, -15, 3, 14, Y2));
-        east = part(new Hall("through_east", 4, 8, 41, 14, Y2 - 14, Y2 + 9).deck(4, 8, 7, 14, Y2).deck(16, 8, 22, 14, Y2).deck(35, 8, 41, 14, Y2));
+        through = part(new Hall("through", -8, -30, 8, 19, Y2, 0).deck(-2, -30, 2, -25, Y2).deck(-2, -15, 2, 13, Y2).deck(3, 9, 8, 13, Y2));
+        east = part(new Hall("through_east", 9, 3, 41, 19, Y2, 0).deck(9, 9, 10, 13, Y2).deck(19, 9, 25, 13, Y2).deck(38, 9, 41, 13, Y2));
         part(new Cave("stand3", 48, Y2, 11, 7, 7, 7, seed + 6));
         part(new Tunnel("to_down", 54, Y2, 11, 62, Y2, 11, 2.6, 5, seed + 7));
         done();
@@ -120,25 +143,25 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         List<String> none = List.of();
         leg("root", LegKind.ARRIVE, "The stopped works", 0, Y, -140, 6, -1, none, "", "way_in");
         leg("way_in", LegKind.MOVEMENT, "The way in", 0, Y + 1, -116, 16, -1, none, "", "stand1");
-        leg("stand1", LegKind.BREATHER, "The first stand", 13, Y + 1, -106, 6, -1, none, "", "twice");
+        leg("stand1", LegKind.BREATHER, "The first stand", 19, Y + 1, -106, 6, -1, none, "", "twice");
         leg("twice", LegKind.MOVEMENT, "Twice", 0, Y + 6, -78, 26, -1, none, "", "stand2");
         leg("stand2", LegKind.BREATHER, "The second stand", 0, Y2, -44, 7, -1, none, "", "through");
         leg("through", LegKind.MOVEMENT, "Through", 0, Y2, -8, 24, -1, none, "", "stand3");
         leg("stand3", LegKind.BREATHER, "The third stand", 48, Y2, 11, 7, -1, none, "");
 
         // the first gulf is the way in's to catch: whoever falls there has not stood on anything of "Twice" yet
-        course(new Course("way_in", -4, PIT - 2, -137, 4, Y + 12, -97, wayIn.ledges(), true));
-        course(new Course("twice", -4, PIT - 2, -96, 4, Y + 18, -50, twice.ledges(), true));
-        course(new Course("through", -4, Y2 - 16, -31, 3, Y2 + 11, 15, through.ledges(), true));
-        course(new Course("through", 4, Y2 - 16, 7, 42, Y2 + 11, 15, east.ledges(), true));
+        course(new Course("way_in", -9, Y - DEEP - 2, -137, 9, Y + 14, -97, wayIn.ledges(), true));
+        course(new Course("twice", -9, Y - DEEP - 2, -96, 9, Y + 22, -50, twice.ledges(), true));
+        course(new Course("through", -9, Y2 - DEEP - 2, -31, 8, Y2 + 12, 20, through.ledges(), true));
+        course(new Course("through", 9, Y2 - DEEP - 2, 2, 42, Y2 + 12, 20, east.ledges(), true));
 
         leaps.add(new Leap("double", 0, Y + 1, -103, 0, Y + 3, -96));
         leaps.add(new Leap("double", 0, Y + 3, -90, 0, Y + 6, -89));
         leaps.add(new Leap("double", 0, Y + 6, -84, 0, Y + 8, -79));
         leaps.add(new Leap("double", 0, Y + 8, -74, 0, Y + 8, -62));
         leaps.add(new Leap("dash", 0, Y2, -25, 0, Y2, -15));
-        leaps.add(new Leap("dash", 7, Y2, 11, 16, Y2, 11));
-        leaps.add(new Leap("dash", 22, Y2, 11, 35, Y2, 11));
+        leaps.add(new Leap("dash", 10, Y2, 11, 19, Y2, 11));
+        leaps.add(new Leap("dash", 25, Y2, 11, 38, Y2, 11));
     }
 
     @Override
@@ -151,31 +174,34 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         return StoppedWorks.m();
     }
 
-    // ---- what the works is made of ----------------------------------------------------------------------------------------
+    // ---- what the works is made of: the Stopped Works' own walls ----------------------------------------------------------
 
-    /** Brick, with a course of iron every seventh row and old copper sheet between. */
+    /** Courses: a band of brass every fourth, a cog let into it now and then; between them plate in runs of three, iron, panels of copper sheet, a little dark brick. */
     @Override
     protected BlockState rock(StoppedWorks.M m, int x, int y, int z) {
-        int row = Math.floorMod(y, 7);
-        return row == 0 ? m.iron : row == 3 && rnd(x, z, 4101) < 0.5 ? m.sheetOld : m.brick;
+        if (Math.floorMod(y, 4) == 0) return rnd(Math.floorDiv(x, 2), Math.floorDiv(z, 2), 4101) < 0.12 ? m.gear : m.brass;
+        int off = (int) (rnd(y, 0, 4102) * 3);
+        double n = rnd(Math.floorDiv(x + off, 3) * 31 + Math.floorDiv(z + off, 3), y, 4103);
+        return n < 0.5 ? m.plate : n < 0.68 ? m.iron : n < 0.84 ? m.sheet : n < 0.95 ? m.sheetOld : m.brick;
     }
 
     @Override
     protected BlockState deep(StoppedWorks.M m) {
-        return m.iron;
+        return m.plate;
     }
 
-    /** Plate on the decks, with a seam of brass along a deck's edges so its end can be read from the one before; slag under the pits. */
+    /** A deck is plate with a strip of brass across each end, so where it stops can be read from the one before; a pit's floor is slag; rooms are plate and old sheet. */
     @Override
     protected BlockState floor(StoppedWorks.M m, Part part, int x, int y, int z) {
         if (part instanceof Hall h) {
-            if (y < h.pit) return SLAG;
-            for (int[] d : h.decks) {
-                if (y != d[4] - 1 || x < d[0] || x > d[2] || z < d[1] || z > d[3]) continue;
-                return z == d[1] || z == d[3] ? m.brass : m.plate;
-            }
+            int[] d = h.deckAt(x, z);
+            if (d == null) return SLAG;
+            boolean alongZ = d[3] - d[1] >= d[2] - d[0];
+            boolean end = alongZ ? z == d[1] || z == d[3] : x == d[0] || x == d[2];
+            return end ? m.brass : Math.floorMod(x + z, 5) == 0 ? m.sheetOld : m.plate;
         }
-        return m.plate;
+        if (part instanceof Cave && Math.floorMod(x, 4) == 0) return m.brass;
+        return rnd(Math.floorDiv(x, 2), Math.floorDiv(z, 2), 4104) < 0.3 ? m.sheetOld : m.plate;
     }
 
     @Override
@@ -188,19 +214,46 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         return m.bars;
     }
 
+    /**
+     * What is set into the walls and the roof. A hall's walls are dressed by its first deck's height, not by the pit under
+     * them: furnace mouths three and four under the decks, glowing over the slag; the pipe run two over them; a gauge
+     * light every fifth cell at three, with its pool; a second pipe at seven. A room's and a passage's are dressed from
+     * their own floor. Every roof is plate on ribs of brass with a lamp let in every fourth cell each way.
+     */
     @Override
-    protected void adorn(V v, StoppedWorks.M m, Part part, int x, int y, int z, boolean onFloor, boolean underRoof, int wx, int wz) {}
+    protected void adorn(V v, StoppedWorks.M m, Part part, int x, int y, int z, boolean onFloor, boolean underRoof, int wx, int wz) {
+        boolean hall = part instanceof Hall, free = v.get(x, y, z) == null;
+        int up = y - (part instanceof Hall h ? h.base : Part.airFrom(part.feet2(x, z)));
+        if (wx != 0 || wz != 0) {
+            int ax = x + wx, az = z + wz, along = wx != 0 ? az : ax;
+            if (hall && (up == -3 || up == -4) && Math.floorMod(along, 6) <= 1) v.set(ax, y, az, m.furnace);
+            else if (!hall && part instanceof Cave && up == 0 && Math.floorMod(along, 6) <= 1) {
+                v.set(ax, y, az, m.furnace);
+                if (free && Math.floorMod(along, 6) == 0) v.set(x, y, z, m.pool);
+            } else if (up == 2 || hall && up == 7) v.set(ax, y, az, wx != 0 ? m.pipeZ : m.pipeX);
+            else if (up == 3 && Math.floorMod(along, 5) == 0) {
+                v.set(ax, y, az, m.gauge);
+                if (free) v.set(x, y, z, m.pool);
+            } else if (up == 1 && rnd(ax * 7L + y, az, 4105) < 0.06) v.set(ax, y, az, rnd(ax, az, 4106) < 0.5 ? m.gear : m.cog);
+        }
+        if (underRoof && !onFloor) {
+            boolean lamp = Math.floorMod(x, 4) == 2 && Math.floorMod(z, 4) == 2;
+            v.set(x, y + 1, z, lamp ? m.gauge : Math.floorMod(z, 3) == 0 ? m.brass : rnd(Math.floorDiv(x, 3), Math.floorDiv(z, 3), 4107) < 0.7 ? m.plate : m.iron);
+            if (lamp && free) v.set(x, y, z, m.pool);
+        }
+    }
 
-    /** The works has no window: light stands in its air, every fifth cell, over every floor and under each hall's roof. And the bars that wait for a stand are shut. */
+    /** Light over every deck and floor every fifth cell, the slag's glow every fourth cell over the pits, and the bars that wait for a stand shut. */
     @Override
     protected void finish(V v, StoppedWorks.M m) {
         for (int x = v.x0; x < v.x0 + 16; x++) for (int z = v.z0; z < v.z0 + 16; z++) {
-            if (Math.floorMod(x, 5) != 0 || Math.floorMod(z, 5) != 0) continue;
             for (Part p : parts) {
                 int f = p.feet2(x, z);
                 if (f == NONE) continue;
-                light(v, m, x, Part.airFrom(f) + 3, z);
-                if (p instanceof Hall h) light(v, m, x, h.top - 2, z);
+                int feet = Part.airFrom(f);
+                boolean pit = p instanceof Hall h && h.deckAt(x, z) == null;
+                if (pit && Math.floorMod(x, 4) == 0 && Math.floorMod(z, 4) == 0) air(v, x, feet + 1, z, GLOW);
+                if (!pit && Math.floorMod(x, 5) == 0 && Math.floorMod(z, 5) == 0) air(v, x, feet + 3, z, m.pool);
             }
         }
         for (int[] d : new int[][]{DOOR_DASH, DOOR_SLAM}) {
@@ -208,6 +261,10 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
                 for (int y = d[1]; y <= d[4]; y++) if (open(x, y, z)) v.set(x, y, z, m.bars);
             }
         }
+    }
+
+    private void air(V v, int x, int y, int z, BlockState s) {
+        if (open(x, y, z) && v.get(x, y, z) == null) v.set(x, y, z, s);
     }
 
     private List<Edit> unbar(int[] d) {
@@ -227,10 +284,6 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
             return out;
         }
         return super.change(moment);
-    }
-
-    private void light(V v, StoppedWorks.M m, int x, int y, int z) {
-        if (open(x, y, z) && v.get(x, y, z) == null) v.set(x, y, z, m.pool);
     }
 
     @Override

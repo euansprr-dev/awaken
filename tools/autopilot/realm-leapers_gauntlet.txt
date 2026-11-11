@@ -25,6 +25,10 @@ cmd awaken gate realm_at MOUTH 0 0 2 0
 look 0 4
 wait 100
 shot leap_way_in
+cmd awaken gate realm_at MOUTH 0 -6 6 4
+look -25 18
+wait 60
+shot leap_way_in_from_the_side
 cmd awaken gate realm_at MOUTH 0 0 2 15
 look 0 12
 wait 60
@@ -33,11 +37,11 @@ cmd awaken gate realm_at MOUTH 0 0 3 33
 look 0 2
 wait 60
 shot leap_first_gulf
-cmd awaken gate realm_at MOUTH 0 2 2 34
+cmd awaken gate realm_at MOUTH 0 4 2 34
 look -90 4
 wait 60
 shot leap_to_the_stand
-cmd awaken gate realm_at MOUTH 0 13 2 34
+cmd awaken gate realm_at MOUTH 0 19 2 34
 look -90 8
 wait 60
 shot leap_stand_room
@@ -53,12 +57,29 @@ cmd awaken gate realm_at MOUTH 0 0 10 65
 look 0 6
 wait 60
 shot leap_the_long_gap
-cmd awaken gate realm_at MOUTH 0 0 10 86
-look 180 14
+cmd awaken gate realm_at MOUTH 0 6 14 60
+look 150 30
 wait 60
-shot leap_looking_back
+shot leap_twice_from_above
 cmd awaken gate realm_at MOUTH 0 0 10 96
 look 0 6
 wait 60
 shot leap_second_stand
+cmd awaken gate realm_stand dash
+cmd awaken gate realm_at MOUTH 0 0 10 111
+look 0 8
+wait 80
+shot leap_through
+cmd awaken gate realm_at MOUTH 0 0 10 148
+look -90 6
+wait 60
+shot leap_the_corner
+cmd awaken gate realm_at MOUTH 0 22 10 151
+look -90 6
+wait 60
+shot leap_the_last_gulf
+cmd awaken gate realm_at MOUTH 0 48 10 151
+look -90 8
+wait 60
+shot leap_third_stand
 quit
