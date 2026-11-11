@@ -60,7 +60,9 @@ public final class FlightFilm {
     record Snap(int dx, int dy, int dz, BlockState state, int rig) {}
 
     static final class Flight {
-        final BlockPos from, to;
+        final BlockPos from;
+        /** The far berth: where the server said it would be when the skiff lifted, then where it really stands (ARRIVED). */
+        BlockPos to;
         final Direction fromFacing;
         Direction toFacing;
         final boolean quick, home, drawn, wake;
@@ -164,6 +166,8 @@ public final class FlightFilm {
     private static void arrived(FrontierNet.Fly m) {
         Flight f = cur;
         if (f == null) return;
+        // a far mooring that wasn't built when the skiff lifted has its real place now: the descent is onto that
+        f.to = m.to();
         f.toFacing = Direction.from2DDataValue(m.toFacing());
         f.arrivedAt = OpeningCamera.age();
         BlockPos stand = Skiff.at(m.to(), f.toFacing, Skiff.STAND);

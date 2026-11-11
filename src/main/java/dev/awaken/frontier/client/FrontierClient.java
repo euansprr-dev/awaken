@@ -84,7 +84,7 @@ public final class FrontierClient {
                 Vec3 from = mark;
                 if (mc.player == null || from == null) return "nothing to wait for";
                 boolean moved = mc.player.position().distanceToSqr(from) > 1;
-                if (!moved && ++waited < 20 * 20) return null;
+                if (!moved && ++waited < 20 * 90) return null;
                 mark = null;
                 waited = 0;
                 return moved ? "moved" : "gave up";

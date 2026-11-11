@@ -28,7 +28,8 @@ cmd awaken frontier ready
 # A runner's server can be far behind its client, so nothing here trusts a count of ticks to mean a command has landed:
 # "frontier mark" then "frontier moved" waits until the player has been put somewhere else, "frontier descent" until the
 # skiff on screen is coming down, "frontier down" until the flight is over.
-# The landing first, once, so its land is made and its mooring built before the flight out.
+# The landing first, once, so its land is made and its mooring built before the flight out. (If the runner's server
+# is too far behind for that, the flight out is a first flight to a mooring not built yet, which is what a player gets.)
 frontier mark
 cmd awaken frontier goto landing
 frontier moved
