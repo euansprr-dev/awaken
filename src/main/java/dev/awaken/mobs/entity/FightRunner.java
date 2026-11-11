@@ -1085,15 +1085,8 @@ final class FightRunner {
     }
 
     private Vec3 world(float x, float y, float z) {
-        if (aim.lean != 0) { // the body leans into the blow about its hips
-            float hip = hip(), cl = Mth.cos(aim.lean * Mth.DEG_TO_RAD), sl = Mth.sin(aim.lean * Mth.DEG_TO_RAD), up = y - hip;
-            float zw = up * sl + z * cl;
-            y = hip + up * cl - z * sl;
-            z = zw;
-        }
-        float r = yaw * Mth.DEG_TO_RAD, c = Mth.cos(r), s = Mth.sin(r);
-        // facing yaw: forward is (-sin, cos); the body's left is (cos, sin)
-        return new Vec3(boss.getX() + x * c - z * s, boss.getY() + y, boss.getZ() + x * s + z * c);
+        // one rule with the ring a client draws for this blow (KitReach, SPEC §67.2)
+        return dev.awaken.mobs.boss.KitReach.point(boss.getX(), boss.getY(), boss.getZ(), yaw, aim.lean, hip(), x, y, z);
     }
 
     /** This tick's capsules against every enemy the boss can see; each is hit once a move. */
@@ -1133,16 +1126,6 @@ final class FightRunner {
 
     /** Whether the capsule from a to b of radius r touches the box (the segment sampled every half block). */
     static boolean touches(Vec3 a, Vec3 b, float r, AABB box) {
-        double len = a.distanceTo(b);
-        int n = Math.max(1, (int) Math.ceil(len / 0.5));
-        for (int i = 0; i <= n; i++) {
-            double f = i / (double) n;
-            double x = a.x + (b.x - a.x) * f, y = a.y + (b.y - a.y) * f, z = a.z + (b.z - a.z) * f;
-            double dx = Math.max(Math.max(box.minX - x, 0), x - box.maxX);
-            double dy = Math.max(Math.max(box.minY - y, 0), y - box.maxY);
-            double dz = Math.max(Math.max(box.minZ - z, 0), z - box.maxZ);
-            if (dx * dx + dy * dy + dz * dz <= r * r) return true;
-        }
-        return false;
+        return dev.awaken.mobs.boss.KitReach.touches(a, b, r, box);
     }
 }

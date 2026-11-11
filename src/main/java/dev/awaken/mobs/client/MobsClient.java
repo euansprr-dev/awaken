@@ -18,6 +18,8 @@ public final class MobsClient {
 
     public static void init(IEventBus modBus) {
         dev.awaken.mobs.client.kit.KitConfig.register();
+        // one clock for every told blow: what the ring and the glint are drawn from (SPEC §67.2)
+        dev.awaken.core.api.Strikes.installComing(TellClock.INSTANCE);
         modBus.addListener(AwRenderers::layers);
         modBus.addListener(AwRenderers::renderers);
         modBus.addListener(RitualRenderers::renderers);
@@ -42,10 +44,12 @@ public final class MobsClient {
             CarrierView.reset();
             ShotRenderer.reset();
             dev.awaken.mobs.entity.ToldBite.reset(true);
+            TellClock.reset();
         });
         bus.addListener(net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent.class, CarrierView::submit);
         BodyRest.register(bus); // a dying or lying body rests on the ground, never in it (SPEC §47.12)
         bus.addListener(net.neoforged.neoforge.client.event.ClientTickEvent.Post.class, e -> CarrierView.tick());
+        bus.addListener(net.neoforged.neoforge.client.event.ClientTickEvent.Post.class, e -> TellClock.tick());
         bus.addListener(net.neoforged.neoforge.event.entity.EntityJoinLevelEvent.class, ShotRenderer::onJoin);
         bus.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, dev.awaken.mobs.client.life.LifeTrace::commands); // dev: /awaken lifetrace
     }

@@ -131,6 +131,79 @@ public final class Strikes {
         return tells.tell(e);
     }
 
+    // ---- the blow that is coming, on one clock (client, SPEC §67.2) ---------------------------------------------------
+
+    /**
+     * When a told blow will reach the one watching, for what is drawn about it (the ring that closes on it, the glint on
+     * the hand). A {@link Tell}'s count is a server's number sent now and then; this is one continuous clock, the body's
+     * own, and it runs to the tick the blow lands, which is after the tell itself has ended. The mobs module's client
+     * installs it.
+     */
+    public interface Coming {
+        /** Ticks until this body's told blow reaches you, with the frame's fraction; NaN when none is coming. */
+        default double left(Entity e, float partialTick) {
+            return Double.NaN;
+        }
+
+        /** Whether the blow now told will reach where you stand (false: it will pass you by, and is drawn dim). */
+        default boolean reaches(Entity e) {
+            return true;
+        }
+
+        /** The class of the blow {@link #left} counts down to; NONE when none is coming. */
+        default Kind kind(Entity e) {
+            return Kind.NONE;
+        }
+
+        /** Whether that blow can be answered at the moment it lands (a blow of its body's: not a shot's or a wave's release). */
+        default boolean lands(Entity e) {
+            return true;
+        }
+    }
+
+    private static Coming coming = new Coming() {};
+
+    public static void installComing(Coming c) {
+        coming = c;
+    }
+
+    public static double left(Entity e, float partialTick) {
+        return coming.left(e, partialTick);
+    }
+
+    public static boolean reaches(Entity e) {
+        return coming.reaches(e);
+    }
+
+    public static Kind comingKind(Entity e) {
+        return coming.kind(e);
+    }
+
+    public static boolean lands(Entity e) {
+        return coming.lands(e);
+    }
+
+    // ---- how a guard answered (client, SPEC §67.2) --------------------------------------------------------------------
+
+    /** What became of a blow at the local player's guard: turned aside, blocked, the guard broken, or struck. */
+    public enum Answer { DEFLECT, BLOCK, GUARD_BREAK, STRUCK }
+
+    public interface AnswerSink {
+        void answered(Answer answer, int attackerId);
+    }
+
+    private static AnswerSink answers = (a, id) -> {};
+
+    /** The ring's side (aim): it bursts on a deflect and says why a guard missed. */
+    public static void installAnswers(AnswerSink sink) {
+        answers = sink;
+    }
+
+    /** Arms' client says how the local player's guard answered a blow of {@code attackerId}'s (-1 unknown). */
+    public static void answered(Answer answer, int attackerId) {
+        answers.answered(answer, attackerId);
+    }
+
     // ---- stagger (server) -------------------------------------------------------------------------------------------
 
     public interface Staggers {
@@ -209,6 +282,11 @@ public final class Strikes {
             return false;
         }
 
+        /** Whether the body is reeling: its phrase's last blow was turned aside (the biggest clash, SPEC §67.3). */
+        default boolean reeling(LivingEntity e) {
+            return false;
+        }
+
         /** Whether the body fights as a duel: braced outside its openings, its stance falls to deflects and punishes. */
         default boolean duelist(LivingEntity e) {
             return false;
@@ -252,6 +330,10 @@ public final class Strikes {
 
     public static void deflected(LivingEntity attacker, Kind kind) {
         duel.deflected(attacker, kind);
+    }
+
+    public static boolean reeling(LivingEntity e) {
+        return duel.reeling(e);
     }
 
     public static boolean opening(LivingEntity e) {

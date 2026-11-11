@@ -163,7 +163,7 @@ public class AwakenBoss extends AwakenMob {
         if (super.stagger(ticks)) reelTicks = Math.max(reelTicks, ticks);
     }
 
-    boolean reeling() {
+    public boolean reeling() {
         return reelTicks > 0;
     }
 
