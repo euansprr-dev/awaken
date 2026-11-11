@@ -118,7 +118,7 @@ public final class SkyRig {
      * ground under it.
      */
     public record Stair(double radius, double rise, double run, double rad, int topGap, double topRadius, int firstOver) {
-        public static final Stair DEFAULT = new Stair(30, 12, 20, 3.6, 8, 29, 6);
+        public static final Stair DEFAULT = new Stair(30, 12, 18, 3.6, 8, 29, 6);
     }
 
     /** A stone of the stair: the middle of its top, the height of its grass, its radius; a raft floats at the water. */

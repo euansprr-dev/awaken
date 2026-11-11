@@ -4274,6 +4274,23 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   at sea level to the pier in about 21 s, the core 7 s later; seed 4246).
 - Over a forest, rigging opens the canopy under the first ring (leaves and vines within 2 of its column, from the
   ground up): a throw from the ground sees the ring (a tour stood under birches throwing into leaves).
+- **The stair** (11 Nov 2026, Euan: the platforms "aren't built in a way where it's actually easy to kind of like
+  Spider-Man swing up"; `SkyRig.Stair`, `helix`, `stair`, `stoneCells`, `rigStair`). Stones of earth the platform tore
+  up as it rose spiral up round it, each a short sling over the last: 30 out from the deck's middle, 12 up and 18 on
+  from one to the next, the top one 29 out on the pier's diagonal and 8 under the deck; from the ground up to that top
+  one, a stone only where it stands 6 or more over the land (over water a raft of plating at the surface). A stone is
+  a disc 3.6 across the radius, grass on top, a rim of earth three deep all round (a clean face to pull up onto) and
+  a keel of stone and ore under its middle, hanging roots, a lantern on two chains under the keel's tip. Under 40 over
+  the land, the canopy is opened round each stone and along the way to the next. Played on the bench
+  (`SwingBench.climb`: the stones' own cells, the deck, its studs, cabin, keel, pier, islands and the old chain and
+  rings; a bot that runs, hops off each stone and holds the rope, aiming like a player at the lowest stone above its
+  feet, and one that only holds forward and the rope): 12 of 12 and 6 of 6 reach the deck in about 25 s, 99% of it
+  off the ground, with no hard hit; shapes round it (12 to 13 up, 18 to 21 on, 28 to 32 out) climb 11 or 12 of 12
+  with up to two hard hits in 18 climbs, from a pull up a stone's face or a swing under the top stones. The climb is a
+  chain of slings: the body is level with the third stone four seconds after leaving the ground. `ascent_sky_stair`
+  logs the shapes and judges this one. **Off in the rig** (`SkyRig.STAIR` false) until Euan has seen its tour shots;
+  `/awaken ascent sky goto stair` builds it on the platform it goes to and stands you on the ground short of the
+  lowest stone, facing it; pilot `run stair` climbs it (`tools/autopilot/sky-stair.txt`).
 
 ### 17.10 Ascension trials: the Leaper's Gauntlet
 - **Opened for you** (`AscentTrials`): once you hold the rope (not the leap) at **D-rank** and have swung enough to
