@@ -117,10 +117,10 @@ def strip(x, y, rows):
     out = ""
     for i, (name, colour, hp, state) in enumerate(rows):
         yy = y + i * 30
-        out += f'''<rect x="{x}" y="{yy}" width="168" height="25" rx="4" fill="#0d1219" opacity="0.86" stroke="#243042"/>
+        out += f'''<rect x="{x}" y="{yy}" width="214" height="25" rx="4" fill="#0d1219" opacity="0.86" stroke="#243042"/>
 <circle cx="{x+12}" cy="{yy+12.5}" r="4" fill="{colour}"/>{t(x+22, yy+11, name, 10.5, INK, weight=600)}
 <rect x="{x+22}" y="{yy+15}" width="74" height="4" rx="1" fill="#1b212c"/><rect x="{x+22}" y="{yy+15}" width="{74*hp}" height="4" rx="1" fill="{GREEN if hp > 0.35 else RED}"/>
-{t(x+162, yy+16, state, 9, DIM, "end")}'''
+{t(x+208, yy+16, state, 9, DIM, "end")}'''
     return out
 
 
@@ -171,39 +171,46 @@ def frame(body, w=640, h=360, label=None, minw=560):
 
 # ---- the two big views of one moment ---------------------------------------------------------------------------------
 
+def chip(x, y, winds=3, left=3):
+    """Her setting and her second winds, by her health."""
+    out = f'<rect x="{x}" y="{y}" width="118" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b3027"/>'
+    out += t(x + 8, y + 12, "GENTLE", 8, ROSE, weight=700, mono=True) + t(x + 8, y + 24, "second winds", 8.5, DIM)
+    for i in range(winds):
+        out += f'<circle cx="{x+78+i*13}" cy="{y+20}" r="4" fill="{IVORY if i < left else "#2a241f"}" stroke="{ROSE}" stroke-width="0.8"/>'
+    return out
+
+
+BLADE = '<path d="M470,360 L400,236 L408,231 L500,360 Z" fill="#cfd8e6"/><path d="M462,360 L452,340 L488,326 L506,360 Z" fill="#5a4630"/>'
+
+
 def m1_fighter():
     b = hall()
     b += lord(322, 250, 1.18, "raise")
-    b += ring(322, 150, 44, HOLO, AMBER)
+    b += ring(322, 150, 44, HOLO, RED)
     b += plate(320, 22, "LORD OF THE AMBER REACH", 0.62, 0.74)
-    # your own blade, bottom right
-    b += '<path d="M470,360 L400,236 L408,231 L500,360 Z" fill="#cfd8e6"/><path d="M462,360 L452,340 L488,326 L506,360 Z" fill="#5a4630"/>'
-    b += thread(150, 360, 640, 262, sag=30, beads=3)
-    b += edge_arrow(632, 244, "Ana", "9 blocks", ROSE)
-    b += strip(12, 44, [("Ana", ROSE, 0.9, "riding along")])
-    b += t(322, 232, "amber: dodge to the side", 10, AMBER, "middle", 600)
+    b += BLADE
+    b += edge_arrow(632, 214, "Ana", "9 blocks", ROSE)
+    b += strip(12, 44, [("Ana", ROSE, 0.9, "Gentle · behind it")])
+    b += t(322, 232, "red: nothing stops it, dash through", 10, RED, "middle", 600)
     b += powers(320, 318, [("Z", "Haymaker", True), ("X", "Dash", True), ("C", "Brace", False), ("V", "Shot", True), ("R", "Barrier", True)])
-    b += motes([(250, 300), (382, 286), (300, 270)])
-    return frame(b, label="MOCKUP · THE FIGHTER'S SCREEN")
+    return frame(b, label="MOCKUP · HIS SCREEN, ON FULL")
 
 
 def m4_rider():
     b = hall()
-    b += lord(398, 236, 0.92, "raise")
-    b += ring(398, 158, 30, HOLO, AMBER, thin=True)
-    b += hunter(300, 262, 1.25, HOLO, "strike")
+    b += hunter(214, 236, 0.85, HOLO, "stand")
+    b += lord(352, 258, 1.12, "raise")
+    b += ring(352, 160, 40, HOLO, RED, thin=True)
     b += plate(320, 22, "LORD OF THE AMBER REACH", 0.62, 0.74)
-    b += motes([(350, 268), (420, 280), (250, 290), (466, 262), (330, 310), (204, 322), (510, 300)])
-    # your hand with the thread, bottom right
-    b += '<path d="M640,330 L560,322 L536,306 L544,296 L572,306 L640,300 Z" fill="#c9a58a"/>'
-    b += thread(544, 300, 312, 222, sag=34, beads=3)
-    b += strip(12, 44, [("Euan", HOLO, 0.55, "this blow is his")])
-    b += t(452, 196, "thin ring: not your blow", 9.5, DIM, "start")
-    # the mark over the Lord
-    b += f'<path d="M398,84 l-7,-11 h14 z" fill="{ROSE}"/>' + t(398, 68, "your mark", 9, ROSE, "middle", 600)
-    b += powers(336, 318, [("Z", "Mark", True), ("X", "Mend", True), ("C", "Bind", True), ("V", "Haul", False), ("R", "Ward", True)], light=18)
-    b += t(110, 300, "3 motes in reach", 9.5, IVORY, "middle")
-    return frame(b, label="MOCKUP · THE RIDER'S SCREEN")
+    b += BLADE
+    # her blow lands on its back
+    b += f'<path d="M372,196 q26,-30 58,-18" fill="none" stroke="{IVORY}" stroke-width="3" stroke-linecap="round"/>'
+    b += t(470, 168, "its back is turned", 10.5, IVORY, "start", 600) + t(470, 182, "a quarter more for this blow", 9.5, DIM, "start")
+    b += t(352, 244, "thin ring: his blow, not yours", 9.5, DIM, "middle")
+    b += strip(12, 44, [("Euan", HOLO, 0.55, "Full · red is on him")])
+    b += chip(12, 318, 3, 3)
+    b += powers(336, 318, [("Z", "Lash", True), ("X", "Dash", True), ("C", "Frost", True), ("V", "Shot", False), ("R", "Dome", True)])
+    return frame(b, label="MOCKUP · HER SCREEN, ON GENTLE")
 
 
 # ---- pings ----------------------------------------------------------------------------------------------------------
@@ -245,28 +252,16 @@ def button(x, y, w, label, sub, colour, primary=False):
 {t(x+12, y+22, label, 12, colour, weight=700)}{t(x+12, y+40, sub[0], 9.5, INK)}{t(x+12, y+52, sub[1], 9.5, DIM)}'''
 
 
-def m3_door():
-    w, h = 640, 300
-    b = hall(w, h, "#131a25")
-    b += '<rect x="278" y="52" width="84" height="118" rx="40" fill="#17202e" stroke="#3a5a86" stroke-width="2"/><ellipse cx="320" cy="112" rx="28" ry="46" fill="#22406a" opacity="0.7"/>'
-    b += card(110, 120, 420, 164, "Go in together, which way?", "D-RANK GATE · WITH ANA")
-    b += button(124, 180, 192, "Fight side by side", ("Both of you fight. The gate is", "a little harder. Full pay each."), HOLO, True)
-    b += button(324, 180, 192, "Ana rides along", ("She can't go down near you and", "works the thread. Half to 3/4 pay."), ROSE)
-    b += t(320, 262, "Ana sees the same card. It needs a yes from both. Runs out in 30 s and chooses nothing.", 9.5, DIM, "middle")
-    b += t(320, 276, "Y accept the lit one  ·  ← → the other way  ·  N go in alone", 9, DIM, "middle", mono=True)
-    return frame(b, w, h, label="MOCKUP · AT A GATE'S DOOR")
-
-
 def m5_together():
-    w, h = 640, 380
+    w, h = 640, 430
     b = f'<rect width="{w}" height="{h}" fill="#090c11"/>'
-    b += f'<rect x="20" y="16" width="600" height="330" rx="8" fill="#0d141d" stroke="#2c4763"/>'
+    b += f'<rect x="20" y="16" width="600" height="388" rx="8" fill="#0d141d" stroke="#2c4763"/>'
     b += t(40, 44, "STATUS", 9, DIM, weight=700, mono=True) + t(100, 44, "TOGETHER", 9, HOLO, weight=700, mono=True)
     b += f'<line x1="100" y1="50" x2="158" y2="50" stroke="{HOLO}" stroke-width="2"/><line x1="40" y1="58" x2="600" y2="58" stroke="#1e2a3a"/>'
     rows = [
-        ("Ana", ROSE, "Level 7 · E rank", "In your party · shares your home · 12 blocks away",
-         [("Ride along", ROSE), ("Bring along", HOLO), ("Leave party", DIM)]),
-        ("Tomas", "#b9d47a", "Level 22 · D rank", "48 blocks away · not in your party",
+        ("Ana", ROSE, "Level 7 · E rank · Gentle", "In your party · shares your home · 12 blocks away",
+         [("Go to Ana", HOLO), ("Leave party", DIM)]),
+        ("Tomas", "#b9d47a", "Level 22 · D rank · Full", "48 blocks away · not in your party",
          [("Travel together", HOLO)]),
     ]
     y = 74
@@ -280,68 +275,71 @@ def m5_together():
             b += f'<rect x="{x}" y="{y+52}" width="{bw}" height="22" rx="4" fill="#0d141d" stroke="{c}"/>' + t(x + bw / 2, y + 67, label, 10, c, "middle", 600)
             x += bw + 8
         y += 92
+    # my fights: the switch
+    b += f'<rect x="36" y="{y}" width="568" height="52" rx="6" fill="#10161f" stroke="#1e2a3a"/>'
+    b += t(52, y + 21, "My fights", 11, INK, weight=600) + t(52, y + 38, "Yours alone. It changes out of a fight; your party sees which you're on.", 10, DIM)
+    b += f'<rect x="452" y="{y+14}" width="136" height="24" rx="12" fill="#0d141d" stroke="#2c4763"/>'
+    b += f'<rect x="454" y="{y+16}" width="66" height="20" rx="10" fill="#17304a" stroke="{HOLO}"/>' + t(487, y + 30, "Full", 10, HOLO, "middle", 700)
+    b += t(553, y + 30, "Gentle", 10, DIM, "middle", 600)
+    y += 60
     b += f'<rect x="36" y="{y}" width="568" height="52" rx="6" fill="#10161f" stroke="#1e2a3a"/>'
     b += t(52, y + 21, "Your home", 11, INK, weight=600) + t(52, y + 38, "Kept by you and Ana. Tomas isn't a member.", 10, DIM)
     b += f'<rect x="452" y="{y+15}" width="136" height="22" rx="4" fill="#0d141d" stroke="{HOLO}"/>' + t(520, y + 30, "Share with Tomas", 10, HOLO, "middle", 600)
-    b += t(320, 332, "Each button sends the other person a card. Nothing here is a typed command.", 9.5, DIM, "middle")
+    b += t(320, 392, "A button that concerns someone else sends them a card. Nothing here is a typed command.", 9.5, DIM, "middle")
     return frame(b, w, h, label="MOCKUP · THE BAND, STATUS PAGE")
 
 
 # ---- the storyboard: one fight, six beats, both screens -------------------------------------------------------------
 
 def beat(view, n):
-    """One small panel of the storyboard. view: 'f' or 'r'. Big marks, few words."""
+    """One small panel of the storyboard. view: 'f' his screen on Full, 'r' her screen on Gentle. Big marks, few words."""
     w, h = 320, 190
     b = hall(w, h)
     L = lambda pose="stand": lord(196 if view == "r" else 160, 132, 0.62 if view == "r" else 0.72, pose)
-    H = lambda pose="stand": hunter(136, 142, 0.9, HOLO, pose)
-    hand = '<path d="M320,176 L276,172 L262,163 L267,157 L282,163 L320,160 Z" fill="#c9a58a"/>'
+    H = lambda pose="stand": hunter(128, 142, 0.9, HOLO, pose)
     blade = '<path d="M240,190 L206,128 L211,125 L256,190 Z" fill="#cfd8e6"/>'
+    hers = '<path d="M300,190 L262,132 L267,129 L316,190 Z" fill="#cfd8e6"/>'
+    bars = '<rect x="0" y="0" width="320" height="16" fill="#000"/><rect x="0" y="174" width="320" height="16" fill="#000"/>'
     if view == "f":
         cx, cy = 160, 70
         if n == 1:
-            b += L() + ring(cx, cy, 26, HOLO) + blade + thread(70, 190, 320, 150, 14, 0)
-            b += f'<path d="M160,22 l-6,-10 h12 z" fill="{ROSE}"/>' + cap("Ana's mark lights it", ROSE)
+            b += L() + ring(cx, cy, 26, HOLO) + blade + cap("it looks at you first", HOLO)
         elif n == 2:
-            b += L("raise") + ring(cx, cy, 26, HOLO) + blade + thread(70, 190, 320, 150, 14, 0) + motes([(120, 150), (200, 146), (150, 164)])
-            b += cap("your blows shed light", IVORY)
+            b += L("raise") + ring(cx, cy, 26, HOLO, AMBER) + blade + cap("amber, at you: dodge to the side", AMBER)
         elif n == 3:
-            b += L() + ring(cx, cy, 26, HOLO) + blade + thread(70, 190, 320, 150, 14, 3)
-            b += '<rect x="218" y="10" width="92" height="9" rx="2" fill="#1b212c"/><rect x="218" y="10" width="38" height="9" rx="2" fill="#7bd69a"/>'
-            b += cap("beads reach you: a heart a second", GREEN)
+            b += L() + ring(cx, cy, 26, HOLO, GOLD, thin=True) + blade + cap("it's on her now: that's your opening", HOLO)
         elif n == 4:
-            b += L() + add(64, 150, 1.1, bound=True) + ring(cx, cy, 26, HOLO) + blade + thread(70, 190, 320, 150, 14, 0)
-            b += cap("the one at your back is tied", IVORY)
+            b += L("raise") + ring(cx, cy, 26, HOLO, RED) + blade + cap("red, at you: dash through it", RED)
         elif n == 5:
-            b += L("raise") + ring(cx, cy, 26, HOLO, RED) + blade + thread(70, 190, 320, 150, 14, 0)
-            b += f'<rect x="3" y="3" width="{w-6}" height="{h-6}" rx="10" fill="none" stroke="{IVORY}" stroke-width="3" opacity="0.8"/>'
-            b += cap("red is coming: the ward is on you", IVORY)
+            b += L() + ring(cx, cy, 26, HOLO) + blade
+            b += f'<rect x="196" y="24" width="116" height="24" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b3027"/><circle cx="208" cy="36" r="4" fill="{ROSE}"/>' + t(218, 40, "Ana · on a knee", 9.5, INK, weight=600)
+            b += cap("her second wind: she's up in two seconds", ROSE)
         else:
-            b += L("kneel") + blade + thread(70, 190, 320, 150, 14, 0)
-            b += '<rect x="0" y="0" width="320" height="16" fill="#000"/><rect x="0" y="174" width="320" height="16" fill="#000"/>'
-            b += t(160, 168, "the finishing blow: both of you in the shot", 10.5, GOLD, "middle", 600)
+            b += L("kneel") + hunter(110, 146, 0.8, ROSE, "strike") + blade + bars
+            b += t(160, 168, "either of you may finish it", 10.5, GOLD, "middle", 600)
     else:
         if n == 1:
-            b += L() + H() + hand + thread(266, 160, 144, 108, 16, 0)
-            b += f'<path d="M196,36 l-6,-10 h12 z" fill="{ROSE}"/>' + cap("look at it, press Mark", ROSE)
+            b += L() + H() + hers
+            b += f'<path d="M250,176 q-10,-40 -30,-58" fill="none" stroke="{ROSE}" stroke-width="1.4" stroke-dasharray="4 4"/>'
+            b += cap("it's watching him: get round behind it", ROSE)
         elif n == 2:
-            b += L("raise") + H("strike") + hand + thread(266, 160, 144, 108, 16, 0) + motes([(180, 150), (222, 142), (100, 158), (60, 170), (250, 152)])
-            b += '<path d="M250,176 q-40,-10 -66,-26" fill="none" stroke="#fbf0dc" stroke-width="1.2" stroke-dasharray="3 4"/>'
-            b += cap("run the floor and gather it", IVORY)
+            b += L("raise") + H() + hers
+            b += f'<path d="M206,96 q14,-18 32,-10" fill="none" stroke="{IVORY}" stroke-width="3" stroke-linecap="round"/>'
+            b += cap("its back is turned: a quarter more", IVORY)
         elif n == 3:
-            b += L() + H() + hand + thread(266, 160, 144, 108, 16, 3)
-            b += cap("hold Mend: light runs down the thread", GREEN)
+            b += lord(160, 140, 0.8, "raise") + ring(160, 68, 28, HOLO, GOLD) + hers
+            b += cap("one plain blow, a long warning: hold guard", GOLD)
         elif n == 4:
-            b += L() + H("strike") + add(84, 150, 1.0, bound=True) + hand + thread(266, 160, 144, 108, 16, 0)
-            b += cap("Bind the one behind him", IVORY)
+            b += L("raise") + ring(196, 76, 20, HOLO, RED, thin=True) + H() + hers + cap("his blow. What reaches you is halved", INK)
         elif n == 5:
-            b += L("raise") + ring(196, 76, 20, HOLO, RED, thin=True) + H() + hand + thread(266, 160, 144, 108, 16, 0)
-            b += f'<ellipse cx="136" cy="118" rx="24" ry="34" fill="none" stroke="{IVORY}" stroke-width="2.5"/><ellipse cx="136" cy="118" rx="28" ry="38" fill="none" stroke="{ROSE}" stroke-width="1" opacity="0.6"/>'
-            b += cap("red shows: Ward, or Haul him out", IVORY)
+            b += L() + H() + hers
+            b += f'<rect x="3" y="3" width="{w-6}" height="{h-6}" rx="10" fill="none" stroke="{IVORY}" stroke-width="3" opacity="0.8"/>'
+            for i in range(3):
+                b += f'<circle cx="{142+i*18}" cy="34" r="6" fill="{IVORY if i < 2 else "#2a241f"}" stroke="{ROSE}"/>'
+            b += cap("a second wind: on a knee, then up at half", IVORY)
         else:
-            b += L("kneel") + H("strike") + hunter(104, 146, 0.8, ROSE, "stand", flip=True) + thread(108, 114, 140, 108, 6, 0)
-            b += '<rect x="0" y="0" width="320" height="16" fill="#000"/><rect x="0" y="174" width="320" height="16" fill="#000"/>'
-            b += t(160, 168, "you're in the film, thread in hand", 10.5, GOLD, "middle", 600)
+            b += L("kneel") + hunter(236, 140, 0.8, HOLO, "stand", flip=True) + hunter(150, 146, 0.95, ROSE, "strike") + bars
+            b += t(160, 168, "this one's yours: both of you in the shot", 10.5, GOLD, "middle", 600)
     return f'<svg viewBox="0 0 {w} {h}" role="img" xmlns="http://www.w3.org/2000/svg">{b}</svg>'
 
 
@@ -351,12 +349,12 @@ def cap(s, colour, y=180):
 
 
 BEATS = [
-    ("0:00", "The Lord wakes", "Ana marks it. Monsters go for Euan first, so she stands off to the side."),
-    ("0:10", "Blows land", "Every blow Euan lands sheds a mote. Ana runs the floor for them: 14 light."),
-    ("0:25", "He takes a hit", "Ana holds Mend. It pauses each time he's struck, so it can't outrun the fight."),
-    ("0:40", "It calls two more", "Ana ties the one running at his back for four seconds."),
-    ("1:05", "Red", "Nothing blocks a red blow. Ana wards him (the hit is halved) or hauls him to her side."),
-    ("1:30", "It kneels", "Euan takes the finishing blow. The film frames both of them."),
+    ("0:00", "The Lord wakes", "It goes for Euan first. With him in sight it gives Ana about one phrase in four."),
+    ("0:15", "Its back is turned", "While it swings at him, her blows on it count a quarter more. So do his, when it's on her."),
+    ("0:35", "It turns to her", "On Gentle it throws her only white-gold and amber, with a longer warning, and a held guard stops both."),
+    ("0:55", "Red on him", "His fight is untouched: red blows, grabs, long strings. A blast that reaches her does half."),
+    ("1:10", "A sweep catches her", "A blow that would kill her is a second wind instead. She has three a floor."),
+    ("1:30", "It kneels", "Either of them may take the finishing blow. Her hits counted in full all the way."),
 ]
 
 
@@ -364,8 +362,8 @@ def s1_storyboard():
     rows = []
     for i, (at, title, line) in enumerate(BEATS, 1):
         rows.append(f'''<div class="beat"><div class="beat-head"><span class="num">{at}</span><h4>{title}</h4><p>{line}</p></div>
-<figure class="pane f"><span class="who f">Euan fights</span>{beat("f", i)}</figure>
-<figure class="pane r"><span class="who r">Ana rides</span>{beat("r", i)}</figure></div>''')
+<figure class="pane f"><span class="who f">Euan · Full</span>{beat("f", i)}</figure>
+<figure class="pane r"><span class="who r">Ana · Gentle</span>{beat("r", i)}</figure></div>''')
     return '<div class="board">' + "".join(rows) + '</div>'
 
 
@@ -376,38 +374,32 @@ def s2_panel(n):
     b = hall(w, h, "#15161f")
     if n == 1:
         b += '<rect x="146" y="70" width="28" height="60" fill="#232a36"/><path d="M140,70 q20,-34 40,0 z" fill="#3a3222"/><circle cx="160" cy="62" r="4" fill="#ffe9a8"/>'
-        b += hunter(118, 150, 0.95, HOLO) + hunter(206, 150, 0.9, ROSE, flip=True) + thread(196, 114, 128, 112, 12, 0)
-        b += cap("tied, at the Reading Bell", INK)
+        b += hunter(118, 150, 0.95, HOLO) + hunter(206, 150, 0.9, ROSE, flip=True)
+        b += cap("both hands on the Reading Bell", INK)
     elif n == 2:
-        b += lord(190, 132, 0.66, "raise", "#b0c8ff") + hunter(112, 144, 0.9, HOLO, "strike") + '<path d="M320,176 L276,172 L262,163 L267,157 L282,163 L320,160 Z" fill="#c9a58a"/>'
-        b += thread(266, 160, 120, 110, 16, 2)
-        b += '<rect x="196" y="8" width="116" height="26" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b3027"/>'
-        b += t(204, 19, "THE THREAD'S TASK", 7.5, ROSE, weight=700, mono=True)
-        for i in range(12):
-            b += f'<circle cx="{206+i*9}" cy="27" r="3" fill="{IVORY if i < 7 else "#2a241f"}"/>'
-        b += cap("the Warden is his; the beads are hers", INK)
+        b += lord(176, 132, 0.66, "raise", "#b0c8ff") + ring(176, 72, 22, HOLO, RED) + hunter(96, 144, 0.9, HOLO, "strike")
+        b += '<path d="M300,190 L262,132 L267,129 L316,190 Z" fill="#cfd8e6"/>'
+        b += cap("red for him, never for her", INK)
     elif n == 3:
-        b += lord(190, 132, 0.66, "kneel", "#b0c8ff") + hunter(120, 144, 0.9, HOLO, "strike") + hunter(92, 148, 0.8, ROSE, flip=True) + thread(96, 116, 124, 110, 6, 0)
+        b += lord(190, 132, 0.66, "kneel", "#b0c8ff") + hunter(120, 144, 0.9, HOLO, "strike") + hunter(92, 148, 0.8, ROSE, "strike")
         b += cap("it's beaten", GOLD)
     else:
         for i, (c, lab, sub) in enumerate([(HOLO, "D", "Euan"), (ROSE, "D", "Ana")]):
             x = 62 + i * 110
-            b += f'<rect x="{x}" y="40" width="88" height="112" rx="5" fill="#ede3cc"/><rect x="{x}" y="40" width="88" height="16" rx="5" fill="#cbbd9b"/>'
-            b += t(x + 44, 52, "HUNTER'S LICENCE", 6.5, "#5c5037", "middle", 700, True)
-            b += f'<circle cx="{x+44}" cy="96" r="22" fill="none" stroke="#3d6fa8" stroke-width="2.5"/>' + t(x + 44, 106, lab, 26, "#3d6fa8", "middle", 700)
-            if i == 1:
-                b += f'<path d="M{x+14},100 Q{x+44},84 {x+74},100" fill="none" stroke="#b8643c" stroke-width="2"/><circle cx="{x+44}" cy="92" r="2.6" fill="#b8643c"/>'
-            b += t(x + 44, 140, sub, 9.5, "#3a3324", "middle", 600)
-        b += cap("the same rank; hers shows the thread", INK)
+            b += f'<rect x="{x}" y="34" width="88" height="112" rx="5" fill="#ede3cc"/><rect x="{x}" y="34" width="88" height="16" rx="5" fill="#cbbd9b"/>'
+            b += t(x + 44, 46, "HUNTER'S LICENCE", 6.5, "#5c5037", "middle", 700, True)
+            b += f'<circle cx="{x+44}" cy="90" r="22" fill="none" stroke="#3d6fa8" stroke-width="2.5"/>' + t(x + 44, 100, lab, 26, "#3d6fa8", "middle", 700)
+            b += t(x + 44, 134, sub, 9.5, "#3a3324", "middle", 600)
+        b += cap("the same rank, the same letter", INK)
     return f'<svg viewBox="0 0 {w} {h}" role="img" xmlns="http://www.w3.org/2000/svg">{b}</svg>'
 
 
 def s2_proving():
     caps = [
-        ("You go in tied", "Both of you wake in the hall. The Warden gets no extra health for her, and never picks her while you stand."),
-        ("Two tests in one fight", "Yours is the Warden. Hers is the thread's task: keep the thread whole, go down no more than twice, do twelve deeds."),
+        ("You go in together", "Today a tied pair is skipped. Here she comes as a fighter like anyone, on her own setting."),
+        ("One Warden, two fights", "Yours is the whole thing. What it aims at her is plainer and slower, and it stands a quarter longer for her."),
         ("You win", "Whatever the Warden leaves goes to both of you. The Ringer's chain is the rope, and she gets hers too."),
-        ("Both licences", "You take D. With her task done, she takes D by the thread. If it wasn't, she's told what was short and can go again."),
+        ("Both licences", "She earns the same XP, so she's at the level when you are. One fight ranks you both."),
     ]
     out = "".join(f'<figure class="step">{s2_panel(i)}<figcaption><strong>{a}.</strong> {c}</figcaption></figure>' for i, (a, c) in enumerate(caps, 1))
     return f'<div class="steps">{out}</div>'
@@ -415,7 +407,7 @@ def s2_proving():
 
 def main():
     src = (HERE / "page.src.html").read_text()
-    parts = {"M1": m1_fighter(), "M4": m4_rider(), "M2": m2_pings(), "M3": m3_door(), "M5": m5_together(),
+    parts = {"M1": m1_fighter(), "M4": m4_rider(), "M2": m2_pings(), "M5": m5_together(),
              "S1": s1_storyboard(), "S2": s2_proving()}
     for k, v in parts.items():
         assert "{{" + k + "}}" in src, k
