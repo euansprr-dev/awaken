@@ -41,7 +41,9 @@ import java.util.Set;
  * nothing counts too. A lichen with some faces held and some not is "partial" (a face sticking out of a cut-away wall); with
  * none held it is "loose". Only chunks that have started ticking are read (the world-gen re-check has run on them by then);
  * the rest are counted as not settled. Each kind with any goes to the log with a few of its cells, and how many of its
- * missing holds lie across a chunk's edge (the mark of a neighbour cutting the rock after the dressing leaned on it).
+ * missing holds lie across a chunk's edge (the mark of a neighbour cutting the rock after the dressing leaned on it). A full
+ * block with air or water on all six sides counts as "lone" (a way's stray floor stone). Anything not the skin's names the
+ * structure with a piece at its first cell, so it can go to its owner.
  * <p>
  * {@code /awaken caves floaters <radius> look <pick>} then stands the player where it can see the pick-th of them (the skin's
  * first, loose before partial, nearest first; each at least {@link RegionCommands#APART} from the ones before), for a picture;
@@ -78,7 +80,7 @@ final class Floaters {
         ServerLevel level = src.getLevel();
         BlockPos from = BlockPos.containing(src.getPosition());
         int cx0 = from.getX() >> 4, cz0 = from.getZ() >> 4;
-        Map<Block, Kind> kinds = new IdentityHashMap<>();
+        Map<Block, Kind> kinds = new IdentityHashMap<>(), lone = new IdentityHashMap<>();
         Map<BlockState, Boolean> looked = new IdentityHashMap<>();
         List<Floater> all = new ArrayList<>();
         int read = 0, unsettled = 0;
@@ -92,7 +94,7 @@ final class Floaters {
                     continue;
                 }
                 read++;
-                scan(level, chunk, kinds, looked, all);
+                scan(level, chunk, kinds, lone, looked, all);
             }
         }
         List<Kind> bad = new ArrayList<>(kinds.values().stream().filter(k -> k.bad() > 0).toList());
@@ -100,10 +102,11 @@ final class Floaters {
         int total = kinds.values().stream().mapToInt(k -> k.seen).sum(), floating = bad.stream().mapToInt(Kind::bad).sum();
         int ours = kinds.values().stream().filter(k -> CaveSkinFeature.skin(k.block)).mapToInt(k -> k.seen).sum();
         int oursBad = bad.stream().filter(k -> CaveSkinFeature.skin(k.block)).mapToInt(Kind::bad).sum();
+        int lonely = lone.values().stream().mapToInt(k -> k.seen).sum();
         long ms = (System.nanoTime() - t0) / 1_000_000;
         Awaken.LOG.info(String.format(Locale.ROOT,
-                "[caves] floaters at %d %d %d r %d: %d chunks read (%d not settled yet, skipped); %d unsupported of %d hanging or standing pieces under the ground; ours (the skin) %d of %d; %d ms",
-                from.getX(), from.getY(), from.getZ(), radius, read, unsettled, floating, total, oursBad, ours, ms));
+                "[caves] floaters at %d %d %d r %d: %d chunks read (%d not settled yet, skipped); %d unsupported of %d hanging or standing pieces under the ground; ours (the skin) %d of %d; %d lone blocks (air or water on all six sides); %d ms",
+                from.getX(), from.getY(), from.getZ(), radius, read, unsettled, floating, total, oursBad, ours, lonely, ms));
         for (Kind k : bad) {
             StringBuilder cells = new StringBuilder();
             for (BlockPos p : k.cells) cells.append(cells.isEmpty() ? "" : "; ").append(p.getX()).append(' ').append(p.getY()).append(' ').append(p.getZ());
@@ -112,9 +115,17 @@ final class Floaters {
             Awaken.LOG.info(String.format(Locale.ROOT, "[caves] floaters   %s: %d of %d (%d loose, %d partial; %d leaning across a chunk edge, %d on an edge column) at %s%s",
                     BuiltInRegistries.BLOCK.getKey(k.block), k.bad(), k.seen, k.loose, k.partial, k.across, k.edge, cells, in));
         }
-        int f = floating, o = oursBad, r = read, u = unsettled;
-        src.sendSuccess(() -> Component.literal(String.format(Locale.ROOT, "Floaters: %d of %d pieces in %d settled chunks (%d ours), %d chunks not settled yet",
-                f, total, r, o, u)).withColor(f == 0 ? 0x9FE6D6 : 0xE6B89F), false);
+        List<Kind> lones = new ArrayList<>(lone.values());
+        lones.sort(Comparator.comparingInt((Kind k) -> k.seen).reversed());
+        for (Kind k : lones) {
+            StringBuilder cells = new StringBuilder();
+            for (BlockPos p : k.cells) cells.append(cells.isEmpty() ? "" : "; ").append(p.getX()).append(' ').append(p.getY()).append(' ').append(p.getZ());
+            Awaken.LOG.info(String.format(Locale.ROOT, "[caves] floaters   lone %s: %d at %s; the first in %s",
+                    BuiltInRegistries.BLOCK.getKey(k.block), k.seen, cells, owner(level, k.cells.getFirst())));
+        }
+        int f = floating, o = oursBad, r = read, u = unsettled, l = lonely;
+        src.sendSuccess(() -> Component.literal(String.format(Locale.ROOT, "Floaters: %d of %d pieces in %d settled chunks (%d ours), %d lone blocks, %d chunks not settled yet",
+                f, total, r, o, l, u)).withColor(f + l == 0 ? 0x9FE6D6 : 0xE6B89F), false);
         return look < 0 ? Math.max(1, floating) : look(src, level, from, all, look);
     }
 
@@ -168,7 +179,7 @@ final class Floaters {
         return best;
     }
 
-    private static void scan(ServerLevel level, LevelChunk chunk, Map<Block, Kind> kinds, Map<BlockState, Boolean> looked, List<Floater> all) {
+    private static void scan(ServerLevel level, LevelChunk chunk, Map<Block, Kind> kinds, Map<Block, Kind> lone, Map<BlockState, Boolean> looked, List<Floater> all) {
         LevelChunkSection[] sections = chunk.getSections();
         int bx = chunk.getPos().getMinBlockX(), bz = chunk.getPos().getMinBlockZ();
         int[] tops = new int[256];
@@ -177,14 +188,24 @@ final class Floaters {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int si = 0; si < sections.length; si++) {
             LevelChunkSection section = sections[si];
-            if (section.hasOnlyAir() || !section.maybeHas(s -> counted(s, looked))) continue;
+            if (section.hasOnlyAir()) continue;
             int y0 = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(si));
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
                     for (int x = 0; x < 16; x++) {
                         if (y0 + y >= tops[z << 4 | x]) continue;
                         BlockState s = section.getBlockState(x, y, z);
-                        if (!counted(s, looked)) continue;
+                        if (!counted(s, looked)) {
+                            // a full block with nothing on any side: a stone left in the air (a way's stray floor, a cut's crumb)
+                            if (s.isSolidRender() && open(y < 15 ? section.getBlockState(x, y + 1, z) : level.getBlockState(m.set(bx + x, y0 + 16, bz + z)))
+                                    && alone(level, m.set(bx + x, y0 + y, bz + z))) {
+                                Kind k = lone.computeIfAbsent(s.getBlock(), Kind::new);
+                                k.seen++;
+                                if (k.cells.size() < LISTED) k.cells.add(m.immutable());
+                                all.add(new Floater(m.immutable(), false, true));
+                            }
+                            continue;
+                        }
                         Kind k = kinds.computeIfAbsent(s.getBlock(), Kind::new);
                         k.seen++;
                         m.set(bx + x, y0 + y, bz + z);
@@ -200,6 +221,17 @@ final class Floaters {
                 }
             }
         }
+    }
+
+    /** Nothing a block could rest on or hang from: air, a liquid, or something any block may replace (a lichen, grass). */
+    private static boolean open(BlockState s) {
+        return s.isAir() || s.getBlock() instanceof LiquidBlock || s.canBeReplaced();
+    }
+
+    /** All six sides of a cell open. */
+    private static boolean alone(ServerLevel level, BlockPos at) {
+        for (Direction d : Direction.values()) if (!open(level.getBlockState(at.relative(d)))) return false;
+        return true;
     }
 
     /** A piece that hangs on or stands on something: not air, not a liquid, not a full block. */
