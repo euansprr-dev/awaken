@@ -151,15 +151,17 @@ public final class SkyRig {
         double[] radii = {R_IN + 1.5, R_MID, R_OUT - 1.5};
         if (known > 0) last = known - 1;
         for (int k = 0; k <= MAX_TIERS && known <= 0; k++) {
-            // the ground a step short of this terrace's wall: its highest decides, its lowest is how deep the wall goes
+            // the ground a step short of this terrace's wall across the stair's width, and its lowest: how deep the wall goes
             double a = top - (k + 1) * TURN - 2.0 / R_MID;
-            int high = Integer.MIN_VALUE, low = Integer.MAX_VALUE;
+            int high = Integer.MIN_VALUE, low = Integer.MAX_VALUE, sum = 0;
             for (double r : radii) {
                 int g = land.ground(cell(cx, r, Math.cos(a)), cell(cz, r, Math.sin(a)));
                 high = Math.max(high, g);
                 low = Math.min(low, g);
+                sum += g;
             }
-            if (deckY - RISE * k + 1 - high <= RISE) {
+            // the middle of the three (one trunk or one pit is not the ground)
+            if (deckY - RISE * k + 1 - (sum - high - low) <= RISE) {
                 last = k;
                 footY = low;
                 int mx = cell(cx, R_MID, Math.cos(a)), mz = cell(cz, R_MID, Math.sin(a)), g = land.ground(mx, mz);

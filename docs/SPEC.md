@@ -4241,7 +4241,8 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   flowers only at its edges, a lantern on two links of chain under its middle. Its last 2.2 blocks are a **wall** of
   plate down to the terrace below, brass at its sides, with a lit **anchor ring** in its lip and two lamps down its face:
   by night the rings and lamps are a spiral of lights from the ground to the disc. The top terrace is level with the
-  deck; the lowest stands no more than 8 over the highest ground before its wall (its wall goes into the ground); where
+  deck; the lowest stands no more than 8 over the ground before its wall (the middle of three heights across the
+  stair, so one trunk or one pit is not the ground; its wall goes down to the lowest of them); where
   that ground is water a **dock** of plate lies at the surface before it. Near the ground (the lowest three terraces)
   leaves, logs and vines over the run are cleared.
 - **Why this shape** (SPEC §62's held rope): a sling takes a top 6 to 30 ahead and above the hand, no steeper than 1.2
