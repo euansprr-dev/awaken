@@ -189,6 +189,8 @@ final class Reticle {
         if (locked) lockRing(g, sx, sy, r, base, now, reduced);
         else if (!bare) brackets(g, sx, sy, r, base, now, reduced);
         if (coming) {
+            // with no lock on it there is no ring for the blow's to close onto: the mark and the bare boss get one while a blow comes
+            if (!locked) glowed(g, RING, RING_G, 128, 128, sx, sy, r * 2.45F, r * 2.45F, 0F, base, 0.6F);
             // the band: where the ring is while a guard raised now turns the blow aside, white while the ring is in it
             if (window > 0) {
                 int i = Mth.clamp(window, 3, 5) - 3;
