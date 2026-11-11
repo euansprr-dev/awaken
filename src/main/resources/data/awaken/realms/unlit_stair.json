@@ -8,6 +8,7 @@
     "A",
     "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:unlit_stair",
     "water": 0

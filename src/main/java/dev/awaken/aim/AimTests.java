@@ -34,6 +34,7 @@ final class AimTests {
         AwakenTests.register("aim_power_bend_cap", 20, AimTests::bendCap);
         AwakenTests.register("aim_bodies", 20, AimTests::bodies);
         AwakenTests.register("aim_calm_lock", 20, AimTests::calmLock);
+        AwakenTests.register("aim_calm_strike", 20, AimTests::calmStrike);
     }
 
     /** A carcass or a dying body can't be meant; a creature lying fallen, about to get up, still can (SPEC §47.12). */
@@ -67,19 +68,38 @@ final class AimTests {
         var p = AwakenTests.survivalPlayer(h, "aim-calm", new BlockPos(1, 1, 1)).player();
         Sheep sheep = h.spawn(EntityTypes.SHEEP, new BlockPos(1, 1, 5));
         sheep.setData(CoreApi.CREATURE_TAG.get(), new CreatureTag(2, CreatureTag.Kind.PASSIVE, false, ""));
-        h.assertTrue(AimRules.strikable(p, sheep), "a levelled sheep can be locked");
+        h.assertTrue(Aim.strikable(p, sheep), "a levelled sheep can be locked");
         Wolf wolf = h.spawn(EntityTypes.WOLF, new BlockPos(3, 1, 5));
-        h.assertTrue(AimRules.strikable(p, wolf), "a wild wolf can be locked");
+        h.assertTrue(Aim.strikable(p, wolf), "a wild wolf can be locked");
         wolf.tame(p);
-        h.assertTrue(!AimRules.strikable(p, wolf), "your own wolf can't");
+        h.assertTrue(!Aim.strikable(p, wolf), "your own wolf can't");
         ArmorStand stand = h.spawn(EntityTypes.ARMOR_STAND, new BlockPos(2, 1, 6));
-        h.assertTrue(!AimRules.strikable(p, stand), "an armour stand can't");
-        h.assertTrue(!AimRules.strikable(p, p), "nor can you");
+        h.assertTrue(!Aim.strikable(p, stand), "an armour stand can't");
+        h.assertTrue(!Aim.strikable(p, p), "nor can you");
         float cone = AimRules.PRESS_CONE, range = AimRules.MARK_RANGE;
         h.assertTrue(!Float.isNaN(AimRules.score(2F, 8, false, cone, range)), "a sheep near the middle 8 blocks off is taken");
         h.assertTrue(Float.isNaN(AimRules.score(cone + 1F, 8, false, cone, range)), "one off to the side isn't (the key picks the block)");
         sheep.hurtServer(level, level.damageSources().generic(), 10000F);
-        h.assertTrue(!AimRules.strikable(p, sheep), "a dying sheep is a body");
+        h.assertTrue(!Aim.strikable(p, sheep), "a dying sheep is a body");
+        h.succeed();
+    }
+
+    /**
+     * A strike takes a calm animal it isn't perfectly on, as it takes a hostile one (SPEC §40.3): a sheep 3 blocks ahead,
+     * looked 15° past, is the strike's; not 60° past, not out of reach. A villager, a golem or a tamed wolf never is.
+     */
+    static void calmStrike(GameTestHelper h) {
+        var p = AwakenTests.survivalPlayer(h, "aim-calm-strike", new BlockPos(1, 1, 1)).player();
+        Sheep sheep = h.spawn(EntityTypes.SHEEP, new BlockPos(1, 1, 4));
+        h.assertTrue(Aim.wild(p, sheep), "a sheep is a calm creature of the wild");
+        h.assertTrue(Aim.calm(p, 15F, 10F, 4.0) == sheep.getId(), "15 degrees past the sheep, the strike still takes it");
+        h.assertTrue(Aim.calm(p, 60F, 10F, 4.0) == -1, "60 degrees past it, it doesn't");
+        h.assertTrue(Aim.calm(p, 0F, 10F, 1.5) == -1, "out of reach, it doesn't");
+        var villager = h.spawn(EntityTypes.VILLAGER, new BlockPos(3, 1, 3));
+        var golem = h.spawn(EntityTypes.IRON_GOLEM, new BlockPos(0, 1, 6));
+        Wolf wolf = h.spawn(EntityTypes.WOLF, new BlockPos(2, 1, 6));
+        wolf.tame(p);
+        h.assertTrue(!Aim.wild(p, villager) && !Aim.wild(p, golem) && !Aim.wild(p, wolf), "a villager, a golem and a pet are the crosshair's only");
         h.succeed();
     }
 

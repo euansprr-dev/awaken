@@ -8,10 +8,20 @@ import java.util.Map;
 
 /**
  * One Realm as authored (SPEC §50.7): data/awaken/realms/&lt;id&gt;.json. A gate rolled from it gets a seed that changes the
- * details; the blueprint and its painting decide what the place is.
+ * details; the blueprint and its painting decide what the place is. {@code ready} says it is finished: only a ready
+ * Realm goes into the bag that gates found in the world are rolled from.
  */
 public record Blueprint(int schemaVersion, String name, String form, String theme, List<String> ranks, LandSpec land, Sky sky, Life life,
-                        Folk folk, Law law, Sites sites, Heart heart, List<String> moods, String line) {
+                        Folk folk, Law law, Sites sites, Heart heart, List<String> moods, String line, boolean ready) {
+
+    /**
+     * A blueprint made in code (a test's, a preview's) is taken as ready. One in a file has to say so itself
+     * ({@code "ready": true}): until it does, no gate found in the world leads to it, though the command still does.
+     */
+    public Blueprint(int schemaVersion, String name, String form, String theme, List<String> ranks, LandSpec land, Sky sky, Life life,
+                     Folk folk, Law law, Sites sites, Heart heart, List<String> moods, String line) {
+        this(schemaVersion, name, form, theme, ranks, land, sky, life, folk, law, sites, heart, moods, line, true);
+    }
 
     public record LandSpec(String program, int water, Map<String, Double> params) {
         static final Codec<LandSpec> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -81,7 +91,8 @@ public record Blueprint(int schemaVersion, String name, String form, String them
             Sites.CODEC.optionalFieldOf("sites", new Sites(3, 0, 20)).forGetter(Blueprint::sites),
             Heart.CODEC.fieldOf("heart").forGetter(Blueprint::heart),
             Codec.STRING.listOf().optionalFieldOf("moods", List.of()).forGetter(Blueprint::moods),
-            Codec.STRING.optionalFieldOf("line", "").forGetter(Blueprint::line)
+            Codec.STRING.optionalFieldOf("line", "").forGetter(Blueprint::line),
+            Codec.BOOL.optionalFieldOf("ready", false).forGetter(Blueprint::ready)
     ).apply(i, Blueprint::new));
 
     /** What's wrong with this blueprint, or empty when it can be built. */

@@ -8,6 +8,7 @@
     "C",
     "B"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:frozen_cells",
     "water": 0
