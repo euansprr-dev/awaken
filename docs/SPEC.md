@@ -24562,6 +24562,11 @@ improving the design and experience of it"): the first look was a plank box with
   ear that follow the skiff's speed and go close and quiet inside the cloud.
 - Watchers within 160 of a mooring see the skiff wake and lift away with its party (their bodies hidden once it
   lifts); it comes back empty to its berth 15 s later, wings and wheel moving the same way.
+- **Held at the far helm.** 26.3's client lets a player sink a tenth of a block a tick where it has no chunk yet, so
+  after the move they would come to rest inside whatever land arrived, or fall through it into a cave, and see the
+  descent from the dark (CI runs 42989684224 and 42996376582: landed at y 13 and y 20 under a helm at 85). The client
+  holds the traveller where the server put them (`FlightFilm.holdAtHelm`) until the film has set them down and there
+  is land under them, a minute at most.
 - The homecoming's skiff (67.8) is drawn beside you, its bow toward the city and its core just clear of the highest
   ground under it, so on a slope it hangs over the low side and is never in the hill (`Flights.BESIDE`); the view goes
   from your own eyes up to its helm over 26 ticks, and it has no outside shot.

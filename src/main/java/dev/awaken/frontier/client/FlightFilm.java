@@ -18,6 +18,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -112,6 +113,9 @@ public final class FlightFilm {
     }
 
     static @Nullable Flight cur;
+    /** Where the server put this player at the far helm (feet), and how many ticks more they're held there. */
+    private static double @Nullable [] pin;
+    private static int pinLeft;
 
     public static boolean flying() {
         return cur != null;
@@ -162,6 +166,9 @@ public final class FlightFilm {
         if (f == null) return;
         f.toFacing = Direction.from2DDataValue(m.toFacing());
         f.arrivedAt = OpeningCamera.age();
+        BlockPos stand = Skiff.at(m.to(), f.toFacing, Skiff.STAND);
+        pin = new double[] {stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5};
+        pinLeft = 20 * 60;
         if (f.phase == Phase.LIFT) {
             // a client a little behind the server: cover now
             f.phase = Phase.CROSS;
@@ -586,6 +593,31 @@ public final class FlightFilm {
         return drawn >= 38;
     }
 
+    /**
+     * Once a client tick. Moved to the far deck, the land there is still coming, and the game lets a player sink (a tenth
+     * of a block a tick) where it has no chunk yet: they'd come to rest inside whatever arrives, or fall through it into
+     * a cave, and see the descent from the dark. So they're held at the helm, where the server put them, until the film
+     * has set them down and there's land under them (a minute at most).
+     */
+    static void holdAtHelm(Minecraft mc) {
+        double[] at = pin;
+        if (at == null) return;
+        LocalPlayer p = mc.player;
+        if (p == null || mc.level == null || --pinLeft <= 0) {
+            pin = null;
+            return;
+        }
+        if (cur == null && mc.level.hasChunk(Mth.floor(at[0]) >> 4, Mth.floor(at[2]) >> 4)) {
+            pin = null;
+            return;
+        }
+        // only where the server put them: never dragged there from somewhere else
+        if (Math.abs(p.getX() - at[0]) > 3 || Math.abs(p.getZ() - at[2]) > 3) return;
+        p.setPos(at[0], at[1], at[2]);
+        p.setDeltaMovement(Vec3.ZERO);
+        p.resetFallDistance();
+    }
+
     /** The flight is over on this client: both skiffs back, the bars up, the cloud gone. */
     static void clear(boolean restoreAll) {
         Flight f = cur;
@@ -605,6 +637,7 @@ public final class FlightFilm {
     static void reset() {
         if (cur != null) endBeds(cur);
         cur = null;
+        pin = null;
         CloudCrossing.end();
     }
 

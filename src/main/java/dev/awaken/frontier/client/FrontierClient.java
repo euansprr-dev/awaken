@@ -31,6 +31,7 @@ public final class FrontierClient {
             if (Minecraft.getInstance().isPaused()) return;
             ticks++;
             SkiffFx.tick();
+            FlightFilm.holdAtHelm(Minecraft.getInstance());
         });
         bus.addListener(SubmitCustomGeometryEvent.class, SkiffFx::submit);
         bus.addListener(RenderPlayerEvent.Pre.class, FrontierClient::player);
