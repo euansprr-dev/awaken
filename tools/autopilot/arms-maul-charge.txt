@@ -1,0 +1,81 @@
+# The Maul's charge held raised (SPEC §25 "The Maul's charge is held raised"; Euan 2026-11-11: "it's just holding it in
+# front of the character instead of actually like bringing it up as if you were going to hit down"):
+#   maul_held        a still of the charge held, at the world's own speed: the fists high, the haft rising out of the top,
+#                    neither arm's end on the bottom edge
+#   clips/maul_heavy the press, the draw up, the hold, the release and the slam at 2 ticks a second, a picture a half tick
+#   <x>_held         the other overhead heavies' held charges, as they still are, to set beside it
+# ci knobs: PACK=perf,feel,comfort,world
+world armsmaulcharge creative 781
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+camera first
+arms studio awaken:gatewrought_maul
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+shot maul_rest
+arms heavy 60
+wait 32
+shot maul_held
+wait 60
+arms rate 2
+wait 2
+arms film maul_heavy 64 0.5 2
+wait 3
+arms heavy 22
+wait 36
+arms rate 20
+wait 30
+arms studio awaken:gatewrought_axe
+arms waitserver 100
+look 0 6
+wait 20
+arms heavy 60
+wait 32
+shot axe_held
+wait 60
+arms studio awaken:gatewrought_greatblade
+arms waitserver 100
+look 0 6
+wait 20
+arms heavy 60
+wait 32
+shot greatblade_held
+wait 60
+arms studio awaken:gatewrought_longsword
+arms waitserver 100
+look 0 6
+wait 20
+arms heavy 60
+wait 32
+shot longsword_held
+wait 60
+arms studio awaken:gatewrought_scythe
+arms waitserver 100
+look 0 6
+wait 20
+arms heavy 60
+wait 32
+shot scythe_held
+wait 60
+quit
