@@ -17,6 +17,9 @@ gui 0
 cmd gamerule send_command_feedback false
 cmd gamerule spawn_mobs false
 cmd weather clear 1000000
+# (the opening is skipped about forty ticks in: sent at once it comes before the wake-up scene has begun, does nothing,
+# and the scene then holds the camera on the city's roofs through the first shots; run 43076232585 shot it throughout)
+wait 40
 cmd awaken opening skip
 wait 400
 screen close
