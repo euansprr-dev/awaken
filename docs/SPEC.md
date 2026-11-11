@@ -25142,7 +25142,7 @@ on purpose isn't put back. With the switch `party` off the rule is the old one (
   rights except ending the household. One second keeper a Hearth.
 - Leaving: either side, out of a fight. A party of one is no party. Logging off keeps it.
 
-**70.2 Seeing and pointing.**
+**70.2 Seeing and pointing.** **12 Nov, Euan: the strip's panel (a partner's name and health, top left) is off:** "it looks very bad ... I don't think we need that at all"; `PartyStrip.row` is no longer drawn. The edge arrows, the pings, the Atlas marks, the band's section and the toast when a partner goes down stay.
 - The party strip (client, the band's look, off with the HUD, setting small / off): a row per member: name, health,
   one state (in a menu, in a gate with its floor, on Gentle, on a knee, down, far) and an arrow on the screen's edge
   with the distance when out of view. Hidden with no party. Synced on change only: health in twentieths, state,
