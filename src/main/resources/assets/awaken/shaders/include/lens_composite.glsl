@@ -197,22 +197,10 @@ vec3 lensWater(vec3 c, vec3 p, vec3 n, float vis, float strength) {
     vec3 N = normalize(vec3(rip.x, 1.0, rip.y)), V = normalize(p), R = reflect(V, N);
     float fres = 0.02 + 0.98 * pow(1.0 - max(dot(-V, N), 0.0), 5.0);
     mat4 vp = frameMat(4);
-    vec3 refl;
-    if (airOn() > 0.0) {
-        // Under the Air the sky is Lens's own, drawn in this pass: the frame still holds the game's sky, and water that
-        // mirrored the frame showed a sky that is nowhere else on screen (Euan, 11 Nov: "that makes no sense"). So the
-        // water mirrors the Air: its sky the way the reflected ray looks, and its block clouds, walked from the
-        // camera's image under the surface.
-        vec3 Rs = normalize(vec3(R.x, max(R.y, 0.02), R.z));
-        refl = airSky(Rs, F(22).xyz, f16.z);
-        vec4 cb = cloudNearFrom(Rs, 1.0e9, 2.0 * max(f12.y - surf, 0.0));
-        refl = refl * cb.a + cb.rgb;
-    } else {
-        // the game's sky: the frame itself where the reflected ray meets open sky on screen, else the fog's colour
-        vec3 s = project(vp, R * 1000.0, z01);
-        refl = P(10).rgb;
-        if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0 && texture(DepthSampler, s.xy).r < 1.0e-7) refl = texture(InSampler, s.xy).rgb;
-    }
+    // the sky above: the frame itself where the reflected ray meets open sky on screen, else the fog's colour
+    vec3 s = project(vp, R * 1000.0, z01);
+    vec3 refl = P(10).rgb;
+    if (s.x > 0.0 && s.y > 0.0 && s.x < 1.0 && s.y < 1.0 && texture(DepthSampler, s.xy).r < 1.0e-7) refl = texture(InSampler, s.xy).rgb;
     if (Quality > 1.5) {
         // Ultra: march the reflected ray against the depth buffer, nearest first
         vec4 p1 = P(1);
@@ -243,6 +231,8 @@ vec3 lrKept;
 bool lrHave = false;
 // how open to the sky this pixel's surface is (1 open, 0 deep under a roof or in a cave): the Air's fog is the sky's
 float lensOpen = 1.0;
+
+#include <awaken:lens_water.glsl>
 
 // The sky's light under a roof, from beside it (SPEC §22 "Steady Light", cover): how much of the open sky a point
 // under solid cover still has from the side, 1 at the roof's edge falling to nothing six blocks in, as the game's own
@@ -408,7 +398,8 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
         float up = smoothstep(0.6, 0.95, n.y), fres = pow(1.0 - clamp(dot(-p / dist, n), 0.0, 1.0), 4.0);
         c += P(10).rgb * fres * up * wet * 0.22;
     }
-    if (m20.r > 0.0) c = lensWater(c, p, n, lr.r, m20.r * fogFade);
+    // (under the Air the water is the Air's own, drawn after this for every tier: lens_water.glsl)
+    if (m20.r > 0.0 && air <= 0.0) c = lensWater(c, p, n, lr.r, m20.r * fogFade);
     return c;
 }
 
@@ -538,6 +529,14 @@ void main() {
     }
     if (!open && !classic && !plate && !lensLite()) c = lensLight(c, pRel, quick, depth, rdEnd, clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0), p1, lightDbg);
 #endif
+    // the Air's water (lens_water.glsl, SPEC §22 "Glasswater"): still water drawn again on its own texel grid, on Lite
+    // too. Not under cover (a cave's lake has no sky to hold: it stays the game's), and it gives way with the game's
+    // own fog
+    if (airOn() > 0.0 && !open && !classic && !plate && waterHere(pRel, quick, game)) {
+        float cover = P(21).r * (lensLite() ? 1.0 : 1.0 - lensOpen);
+        float wk = clamp(P(20).r / 0.6, 0.0, 1.0) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * (1.0 - cover);
+        if (wk > 0.0) c = airWater(c, game, pRel, max(length(dpx.xz), length(dpy.xz)), lrHave ? lrKept.r : 1.0, rdEnd, wk);
+    }
     // the Air (Steady Light): Lens's own sky, and a far fog of the sky's own horizon colour that takes the land into it,
     // so the world's end is never a line. The sun, the moon and the game's stars are kept from the frame (what it drew
     // over its own sky colour); Lens's larger stars join them by night. Places under cover keep the game's air
