@@ -1,10 +1,13 @@
-# Euan's floating camp (11 Nov, "a camp here that is broken... a ton of things are floating"): his New World V20 remade
-# from its seed with the pack's terrain, and his Living Wilds secrets shot where his save holds them. The camp at
-# -1543 77 -584 stood over a hillside a delve mouth had cut; the cairn at -1031 67 -648 over a carver's pit. Two of his
-# camps that stood well, a cairn and a marked mound beside them. Each from the south a little above, then from overhead.
-# Look for: nothing floating or cut off; after the fix the two broken ones are not there at all (the log says why).
+# Euan's floating camp and his floating blocks by The Capped Well (11 Nov): his New World V20 (made that morning on
+# this build) remade from its seed with the pack's terrain, his places shot where his save holds them.
+#  - The Capped Well's neighbour: a hill mouth (floor -1656 88 -136, arch 11 high) whose brow hung at y 100-101 over a
+#    gentle slope. After the fix it has no brow there; the well itself stands whole in both.
+#  - The camp at -1543 77 -584 stood over a hillside a delve mouth had cut; the cairn at -1031 67 -648 over a carver's pit.
+#    After the fix both are not there at all (the log says why). Two camps that stood, a cairn and a marked mound beside.
+# Look for: nothing floating or cut off. The first far teleport holds the server while the land is made (90 s on the
+# runner), so each place waits long after its first teleport: a shot taken early shows the spawn's city instead.
 # ci knobs: PACK=perf,world TECTONIC=awakened RD=10
-#   tools/tour-ci.sh tools/autopilot/floating-camp.txt 2400
+#   tools/tour-ci.sh tools/autopilot/floating-camp.txt 3000
 world floating_camp creative 3761469094609221698
 waitworld
 wait 40
@@ -32,9 +35,21 @@ cmd effect give @s minecraft:resistance 100000 4 true
 cmd gamemode spectator
 wait 40
 
+# ---- The Capped Well (heart -1680 76 -112) and the hill mouth beside it (lip -1656 88 -136, its brow at y 100-101) ----
+cmd tp @s -1665 160 -120
+wait 2400
+cmd tp @s -1700 96 -78 -143 8
+wait 300
+shot well_mouth_wide
+cmd tp @s -1652 95 -112 170 0
+wait 200
+shot mouth_brow_south
+cmd tp @s -1628 106 -135 90 15
+wait 200
+shot mouth_brow_east
 # ---- Euan's camp (the barrel hung at -1544 78 -586) ----
 cmd tp @s -1543 150 -584
-wait 400
+wait 900
 cmd tp @s -1543 85 -571 180 30
 wait 200
 shot camp_euan_south
@@ -46,7 +61,7 @@ wait 100
 shot camp_euan_above
 # ---- the cairn over a carver's pit (its gravel at -1029 67 -648) ----
 cmd tp @s -1031 150 -648
-wait 300
+wait 900
 cmd tp @s -1030 74 -637 180 30
 wait 200
 shot cairn_pit_south
@@ -64,13 +79,13 @@ wait 100
 shot camp_ok_east_above
 # ---- a cairn (its gravel at -1018 65 -778) ----
 cmd tp @s -1020 150 -778
-wait 300
+wait 600
 cmd tp @s -1019 72 -767 180 30
 wait 200
 shot cairn_ok_south
 # ---- a camp on the hills to the north (its barrel at -1477 96 -65) ----
 cmd tp @s -1476 170 -63
-wait 300
+wait 900
 cmd tp @s -1476 104 -51 180 30
 wait 200
 shot camp_ok_north_south
@@ -79,7 +94,7 @@ wait 100
 shot camp_ok_north_above
 # ---- a marked mound (its chest at -1387 63 -769) ----
 cmd tp @s -1387 150 -769
-wait 300
+wait 900
 cmd tp @s -1387 73 -758 180 30
 wait 200
 shot mound_ok_south
