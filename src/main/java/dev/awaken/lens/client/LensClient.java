@@ -633,6 +633,11 @@ public final class LensClient {
         double drift = ((ticks % 768_000L) + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) * 0.04;
         lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, drift, cloudColour);
         lensFrame.air(sunDir.x, sunDir.y, sunDir.z, air && sunHere ? 1f : 0f, skyR, skyG, skyB, starBrightness);
+        // a land with a sky of its own (every world but the overworld): the Air draws the land's colours, its horizon
+        // the game's fog colour with the look's haze tint over it (SPEC §22 "The Air in other worlds")
+        float tintMix = graded[Look.HAZE_TINT_MIX];
+        lensFrame.land(fogR + (graded[Look.HAZE_TINT] - fogR) * tintMix, fogG + (graded[Look.HAZE_TINT + 1] - fogG) * tintMix,
+                fogB + (graded[Look.HAZE_TINT + 2] - fogB) * tintMix, ownSky() ? 1f : 0f);
         lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f);
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
                 rays && litAir.valid());
@@ -646,6 +651,14 @@ public final class LensClient {
     }
 
     private static final float[] AIR_FOG = new float[3];
+    // the game's fog colour this frame, as its terrain was fogged with it
+    private static float fogR, fogG, fogB;
+
+    /** Whether this world's sky is its own under the Air: every world but the overworld (its biomes say its colours). */
+    private static boolean ownSky() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level != null && mc.level.dimension() != Level.OVERWORLD;
+    }
 
     /**
      * The game's fog under the Air (SPEC §22): while Lens draws the sky, the game's own fog takes the Air's horizon colour
@@ -664,6 +677,8 @@ public final class LensClient {
         Minecraft mc = Minecraft.getInstance();
         // (the sun as the last frame had it: this is asked before the frame's own values are worked out)
         if (mc.level == null || sunDir.lengthSquared() < 0.5f) return;
+        // a land with a sky of its own keeps its fog: there the Air's horizon is that colour, not the other way round
+        if (ownSky()) return;
         var forward = camera.forwardVector();
         float hx = forward.x(), hz = forward.z(), len = (float) Math.sqrt(hx * hx + hz * hz);
         if (len < 1.0e-3f) {
@@ -763,6 +778,9 @@ public final class LensClient {
         }
         float underTarget = roof > eye.y + 0.5 ? 1f : 0f;
         under += (underTarget - under) * (1f - (float) Math.exp(-dt * 6.0));
+        fogR = fog.color.x();
+        fogG = fog.color.y();
+        fogB = fog.color.z();
         params.write(debug, graded, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
                 // a far renderer moves vanilla's chunk fog out; Lens's haze keeps vanilla's render distance
                 FarTerrain.renderDistanceFogEnd(fog.renderDistanceEnd), fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,

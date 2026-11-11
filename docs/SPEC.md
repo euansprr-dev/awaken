@@ -6613,6 +6613,25 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `docs/perf/steady60/play-2026-11-11/steppe-fog-before-after.jpg`. In Euan's own shot the sand shapes were
     stronger than any the runner drew; his chunk fade is off, so it was most likely the edge hold's mist as new land
     was being made, which is a reading and not a measurement.
+- **The Air in other worlds** (Euan 2026-11-11, in the first rolled gate world, Cinder Crown: "Each should have its
+  own sky and atmosphere ... the cinder crown, it should have kind of a more reddish sky, I think, and a reddish
+  atmosphere"). The Air drew one sky everywhere its sun shines (`sunHere`: any world with an overworld skybox, the
+  Realms among them): its own blue model, and since "The game's fog under the Air" its horizon colour as the game's
+  fog too, so a Realm biome's `sky_color` and `fog_color` never showed on Lite, Cinematic or Ultra, and with the
+  Air on the look's haze tint did nothing.
+  - **The rule**: in every world but the overworld the sky is the land's own. The Air keeps its shape (a deeper
+    zenith, the horizon rising a little way, the sun's glow, the night's stars and galaxy, wisps, block clouds lit
+    by that sky, the far fog that takes the land into the horizon) and takes its colours from the land: overhead
+    the game's sky colour as it is this frame (the biome's `sky_color` with the land's hour and weather), at the
+    horizon the game's fog colour (`fog_color`) with the look's `hazeTint` laid over it by `hazeTintMix`. The far
+    fog is the same horizon colour, so the land still fades into exactly the sky behind it, and far land greys by
+    the look's `hazeDesaturate`. There the game's fog keeps the land's colour (the overworld's rule is not applied).
+  - **For a land's maker**: set the biome's `minecraft:visual/sky_color` and `fog_color` (the zenith and the
+    horizon), and in the land's look `hazeTint` with `hazeTintMix` (to draw the horizon and the far fog toward a
+    colour) and `hazeDesaturate`. Nothing else: no key says "own sky", it is every world but the overworld.
+  - `lens_air.glsl` (`airLand`, the end of `airSky`), frame texels 24, 25, 26 w (the land's horizon) and 27 w (its
+    share; the Holo plates' spare components), `LensFrame.land`, `LensClient.ownSky`. The overworld is untouched.
+  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite).
 - **Glasswater: the Air's water** (Euan 2026-11-11: "Right now the water is still vanilla basically ... keep it MC
   like ... I don't want like insane physics ... pretty simple water that doesn't take a lot of performance away, but
   that's much more cinematic and less flat"; told that Cinematic's water mirrored the game's old sky: "that makes no

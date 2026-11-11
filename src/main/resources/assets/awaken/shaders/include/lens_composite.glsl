@@ -584,7 +584,8 @@ void main() {
             float inside = P(21).r * (lensLite() ? 1.0 : 1.0 - lensOpen);
             float fog = (1.0 - (1.0 - near) * exp(-t * t * 3.2 * thin)) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * (1.0 - inside) * airK;
             vec3 fc = airFog(dirA, f22.xyz, rainA);
-            c = mix(c, mix(c, vec3(luma(c)), 0.3), fog);
+            // (how grey far land goes: the Air's own share, or in a land with its own sky the look's `hazeDesaturate`)
+            c = mix(c, mix(c, vec3(luma(c)), mix(0.3, h.a, airLand().a)), fog);
             c = mix(c, fc, fog);
         }
     }
