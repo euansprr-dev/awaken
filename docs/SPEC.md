@@ -998,6 +998,17 @@ of `AwakenConfig.Client`.
   `RECOVERY`, `DODGE`, `CAST`; `installArms`/`installPowers` (each module's own part); `stage(entity, facts)` for tests.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
+- `dev.awaken.core.api.Strikes` additions (§68): `Coming` / `installComing` with `left(entity, partialTick)` (ticks until its
+  told blow reaches you, a double on one clock, NaN when none), `reaches(entity)`, `comingKind(entity)`, `lands(entity)`
+  (client; the mobs module's `TellClock`); `Answer {DEFLECT, BLOCK, GUARD_BREAK, STRUCK}`, `installAnswers`, `answered`
+  (client: how the local guard answered, told to the ring); `Duel.reeling`, `Duel.atLastStand` (`reeling(entity)`,
+  `atLastStand(entity)`); `Postures.beaten(target, ticks, by)` and `Postures.executing(source)` (`beaten`, `executing`: a
+  body held broken for its last stand, and whether a blow now landing is an Execution's).
+- `dev.awaken.core.api.Lasting` (§68.1) — an interface an item class of ours names to be never destroyed by wear:
+  `setDamage` stops a use short of breaking, `getMaxDamage` carries a stack's own count over a change of numbers
+  (`formerUses()`), `wornOut(stack)`, `nearlyWornOut(stack)`, `tooltip`, `tell`; `WORN_OUT_SHARE` 0.5.
+- `dev.awaken.core.api.Shots` (client, §68.4) — the game's one cinematic camera for any module: `Shot` (`pose(t, out)`,
+  `length()`, `tick`, `finished`), `take(shot)`, `finish(reason)`, `active()`; the opening installs its `OpeningCamera`.
 - `dev.awaken.delve.api.CaveGround` (§34.1, §21.11) — `cuts(ServerLevel, x0, z0, x1, z1, y0, y1)`: whether a cave place open to
   the sky (mouth, sinkhole, mine) has its box over the box; from the seed (each candidate start's own site search), any thread.
 - `dev.awaken.core.api.GroundPiece` (§28.9, §21.11) — `usesGround(WorldGenLevel, ChunkGenerator, x, z, r)`: a structure piece whose
@@ -24668,3 +24679,423 @@ bell): his pick decides the whole family.
   AUDIT.md are the record.
 - Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
   first values. The listening page is the check, and his marks choose (`apply`, then `build`).
+
+## 68. The Whole Boss Fight (plan docs/boss-experience/PLAN.md, page https://claude.ai/artifact/VDXqPTJJxktRgDLiJJRdH7; Euan approved all fourteen decisions 2026-11-11: "Go with all")
+
+Euan fought the Ringer on build 69fee63de with a longsword (11 Nov 2026): the E sword broke mid-fight, the closing ring was
+"jittery" and "you're not exactly sure when the ring is going to close", a perfect parry was "a very small ding, and the
+screen barely moves", and the final blow was "too boring" ("a cinematic blow ... similar to Mortal Kombat"). "Still
+challenging, obviously." For every boss. What his log, save and statistics and the code showed is in the plan (§2).
+Decisions: 1 E and D uses; 2 nothing forged is destroyed; 3 armour wears by how hard it is hit; 4 the ring on the body's
+clock at one speed, closing when the blow reaches you; 5 the parry band and "Too early" / "Too late"; 6 the ring on a boss
+without a lock; 7 the clash in three sizes, built by the weapon-feel session (SPEC §25); 8 a boss dies only to a finishing
+blow; 9 filmed from outside the body by default; 10 skipped with Sneak from the second time; 11 pilots first (the Ringer,
+the Hive Regent, the Gearwright; Longsword, Maul, Twin Blades, Daggers); 12 the autosave held while a boss fights; 13
+counter-hits not now; 14 the Journal picture later. **No window, health, damage, stance or mind number changes**: the
+simulator's table (`tools/sim/combat_sim.py`) reads none of what this section touches.
+
+**68.1 Gear that lasts (decisions 1 to 3).** Modules `arms`, `gear`, `armour`; the shared rule is `core.api.Lasting` (§12).
+- **Why.** A boss is 90 to 300 landed blows (`docs/boss-experience/harness/durability.py`: E Lords 44 to 81% of a fresh E
+  weapon at 220 uses, the Ringer 107%; his own fight 300) and a whole E gate about 500; D at 500 uses lost 20 to 47% a boss.
+  C and up lost 4 to 15% and are unchanged.
+- **Uses.** Forged weapons (`tools/art/specs/arms_weapons.py` `TIERS`, generated into `ArmsData`) and Hunter blades
+  (`HunterTier.Blade`): E 220 → **900**, D 500 → **1,300**. Armour's durability multiplier (`HunterTier.Armour`, worn by the
+  Hunter sets and every forged set of the tier): E 13 → **24**, D 18 → **28** (a Wildhide helmet 143 → 264; C stays
+  diamond's 33).
+- **One use a blow.** Axe-style weapons were built on vanilla's axe preset, whose `Weapon` component costs two uses a
+  blow; `ArmsItems` sets `Weapon(1, 5 s)` on them (the five seconds a struck shield stays down are kept).
+- **Never destroyed** (`core.api.Lasting`, an interface over NeoForge's `IItemExtension`; `ArmsWeaponItem`, `ArmsMaulItem`,
+  `HunterGearItem`, `ForgedArmourItem` implement it). `setDamage` stops one use short of breaking, so the stack is never
+  broken and nothing removes it. With no use left it is **worn out** (`Lasting.wornOut`, read off the stack's own damage:
+  nothing new is saved, and mending it by any means ends it): its attack damage, armour and toughness are halved
+  (`GearWear.onAttributes`, `ItemAttributeModifierEvent`; `WORN_OUT_SHARE` 0.5), an Arms blow with it fills a stance half as
+  fast (`ArmsServer.onIncomingDamage`), and it still parries. Its icon carries a crack (`GearClient.decorations`, an item
+  decorator on every `Lasting` item), its tooltip reads "Worn out. It hits half as hard until you mend it at an anvil." (or
+  "It protects half as well ..."), and the blow that wears it out says so once over the hotbar with the sound of it giving
+  (`Lasting.tell`). Forged picks keep their own rule (§49).
+- **Old stacks.** A stack that carries its own count of uses (the Armoury's quarter, §27.13) under the old numbers keeps
+  the same share over today's: `Lasting.getMaxDamage` reads a count under the kind's as a share over `formerUses()` (E 220
+  or 143 to 208, D 500 or 198 to 288). Nothing is rewritten.
+- **Armour wears by how hard it is hit** (`gear.GearWear`, `ArmorHurtEvent`; ours only, vanilla armour keeps vanilla's
+  rule). Vanilla takes `max(1, damage / 4)` from every piece, so a duel's many light blows cost a point a piece each; ours
+  takes `damage / 4` with no floor, the part of a point settled by chance. The blow is kept from
+  `LivingIncomingDamageEvent` and `LivingShieldBlockEvent` (both at LOWEST, the same tick and body), since the armour's
+  event carries only the floored wear.
+- **Said at home.** `GearNow`: "Your %s is nearly worn out. Mend it at an anvil." under 15% of its uses (`Lasting.NEARLY`),
+  "... is worn out ..." at none, priority 60.
+- Kept: mending at an anvil with the tier's repair tag, the War Anvil, the Armoury's quarter, enchantments.
+- Tests: `gear_lasts` (a weapon and a piece of armour of ours at their last use stay and are worn out; the worn-out
+  weapon's attack damage is halved and mending restores it; an axe costs one use a blow; an old Armoury count keeps its
+  quarter), `gear_armour_wear` (twenty light blows cost a piece about a quarter of their damage, not twenty).
+
+**68.2 A ring you can read (decisions 4 to 6).** Modules `aim` (the ring), `mobs` (the clock), `arms` (the glint, the answer).
+- **Why.** The ring read a tell's count, which the server re-sends only on every fourth tick of a wind-up
+  (`FightRunner.step`, `AbilityRunner.windup`: `(t & 3) == 0`; plain melee every second) and clears on the wind-up's last
+  tick, a tick or more before the blow lands; `Reticle` drew `(count - partialTick) / total`. So it moved in four jumps with
+  a tremble and vanished a quarter open (CI run 42977120489, the Ringer's Swing: four sizes only, 377, 317, 266 and 223
+  px, still open as the bell came across). The LIGHT glint waited for a count of exactly 5, which a count stepping 16,
+  12, 8, 4 never shows.
+- **One clock** (`mobs.client.TellClock`, installed as `Strikes.Coming`). A blow's time is fixed once and counted on one
+  clock; a later count is never read for time. A kit body's move: from its synced start (`kitStart`), its move table and
+  `ServerPace.since` (a double difference; `ServerPace.now` is a float of game time and too coarse in an old world) to
+  `windup + hold + 1 + k`, `k` the first active tick whose capsules reach where you stand by the server's own rule
+  (`mobs.boss.KitReach.firstTouch`, which `FightRunner.world` and `touches` now call too), asked of the pose the blow
+  has committed to and not of where the body is now: as a move locks the server syncs its aim (`AwakenBoss.DATA_KIT_AIM`,
+  `syncKitAim`: the facing it turns to, the step it takes, its run through the blow and its dip, beside the lean already
+  synced; a blow whose ability does the aiming is committed where it stands), and the client adds the step to where the
+  body stands at that moment. Until the aim is known the blow is taken to land on its first tick. `k` is set as the
+  blow commits (eased over that tick), then follows you at most a tick a tick while you move about a sweep, and is fixed
+  for the last 4 ticks; when the committed blow reaches no tick the ring is drawn at 35% (`Strikes.reaches`). A move that strikes with no capsule (a shot's or a wave's
+  release) counts to its release and has no band (`Strikes.lands`). **What strikes for a move with an ability** (the
+  client reads the body's abilities from the shared bestiary, `AwakenBoss.abilityNamed`; the numbers are one set for
+  both sides, `KitReach.SLAM_CORE`, `CHARGE_TICKS`, `CHARGE_PAST`, `CHARGE_GRAZE`, `chargeSpeed`): a **slam**'s core
+  (1.5 blocks round the point the move names, `Abilities.area`) lands on the first active tick on whoever stands in
+  it, before the body's own capsules come down, so that is the tick the ring closes on there; its wave beyond is not
+  the ring's (it draws itself on the ground, and a hit by it is logged as a blow the ring said passes by). A
+  **charge** is walked ahead as the server carries it (straight at you and 1.5 past, a flier down to your feet, a
+  stride a tick from two ticks after it sets off, its body's touch within 0.6 asked before each stride and its capsules
+  where it stands): the ring closes on that tick but shows **no band**, because the tick is an estimate (a wall, the
+  ground under a flier, who else stands in the way; filmed, four of the Regent's dives landed 0 to 3.3 ticks after the
+  ring closed, 1.7 on average, before the estimate was moved a tick later). A **leap** or a **step** closes its ring as it sets off, as the
+  tell always did, with no band. Any other body: from the count it first showed, on the
+  client's game clock; a tell gone with more than 1.5 ticks left was called off, a count 2.5 over what is left is a new blow.
+- **One speed** (`aim.client.Reticle`): every ring appears `APPROACH` 12 ticks before its blow at 1 + `SPREAD` 1.15 lock
+  rings and closes in a straight line of time, steady in brightness, onto the lock ring as the blow lands; it lingers
+  0.6 ticks closed. A held blow's ring simply comes later.
+- **The band** (art `band3/4/5` from `tools/art/specs/aim_reticle.py`, drawn 3.2 lock rings wide): the ground the ring
+  crosses while a guard raised now turns the blow aside, for the held weapon's window (its guard's `deflect` ticks for a
+  LIGHT or HEAVY blow, its dodge's `evade` ticks for a red or violet one; no band with no style in hand). It is lit, ring
+  and band white, from `window - BAND_EARLY` 0.5 ticks down to `BAND_LATE` 0.75 ticks before the blow: the margins a
+  press needs to reach the server, which sees the guard a tick after the press and counts whole ticks.
+- **After** (`Strikes.answered`, from the server's own DEFLECT / BLOCK / GUARD_BREAK / HURT replies through
+  `arms.client.ArmsAnswers`, one line at the top of `ArmsPredict.onResult`): a deflect bursts the ring outward (300 ms); a
+  block or a broken guard says "Too early" under it, and a guard raised within 5 ticks after being struck says "Too late"
+  (650 ms; `timing_words` in `awaken-aim-client.toml`).
+- **On a boss without a lock:** the duel body nearest its blow within 32 blocks shows its ring with no brackets
+  (`boss_ring`). The out-of-view arcs brighten on the same clock.
+- **The glint** (`ArmsTells`): fires once as the ring enters the band, on the same clock; a body with no clock keeps the
+  count's cue.
+- **Development count** (stage 0; development runs only): each answered blow logs `[fights] ring: DEFLECT with the ring at
+  +0.31 ticks; guard raised at 2.40 ticks (in the band)`, and leaving the world logs the totals (blows answered, the
+  ring's average and worst offset, guards raised in the band and how many of those deflected); only a blow the ring
+  said reaches you counts toward the offset. Each kit blow also logs as it commits (`[fights] clock: proving_ringer
+  swing_a commits: it reaches you (active tick 2, tick 19 of the move)`). The black box is also kept under its own
+  time, the last five (`logs/arms-blackbox-<time>.tsv`). A tour raises the guard on the ring's own clock with `arms
+  parry <ticks>` (`ArmsAutopilot`: at the first tick a deflectable blow that reaches you is that near, held 8 ticks),
+  which is how the band is measured against the server (`tools/autopilot/boss-experience.txt`).
+- **Measured** (CI run 42994866259, `tools/autopilot/boss-experience.txt`: the three pilots fighting a player put back
+  in front of them every three seconds, their own choice of blows and aim; 68 blows the ring said reach, answered). **The band:** 12 guards
+  went up while the ring showed white (from 0.80 to 3.15 ticks before the blow) and all 12 were deflected. Outside it,
+  5 went up 3.55 to 4.00 ticks before (4 deflected, one at 4.00 blocked: "Too early") and 4 went up 0.17 to 0.69
+  before (3 deflected, one at 0.59 struck): the margins hold, and are not generous. **The clock:** of those 68 blows,
+  60 landed with the ring between 0 and 1 tick from closed (the server's word reaches the client inside the
+  tick the ring closes in; the body's animation runs on the same clock), the Colossus's 7 of 7 and the Ringer's Swings
+  among them (49 of its 54). The 8 others: 3 of the Regent's 4 dives (the charge's estimate, above) and 5 of the Ringer's 54,
+  4 of them Clangs, 2 to 6 ticks after the ring closed. Those are not explained: the likeliest is the Clang's wave
+  reaching a player its core and bells missed, in a film that moves the player by command in the middle of wind-ups;
+  a played fight's log (`[fights] clock:` and `[fights] ring:`) is the check. A blow played by command (`duel play`)
+  is no measure: it begins between two of the boss's ticks, so it lands a tick sooner than a move the boss begins.
+- Not built: the hands' word for a parry (the plan's ambitious option); a white-gold shot's ring to its arrival.
+- Tests: `fights_ring_lands` (the rule's tick is the tick the Ringer's Swing lands on a still body).
+
+**68.3 A parry that feels great (decision 7): built by the weapon-feel session in `arms`, recorded in §25.** The contract:
+three sizes of clash by what was turned aside (a LIGHT blow / a HEAVY blow / the blow that makes it reel or breaks its
+stance): freeze 110 / 160 / 200 ms (was 100), view kick 2.6 / 4.0 / 4.5 degrees of pitch with 1.6 / 2.4 / 2.8 of roll (was
+1.8 and 1.2), a shake of 4 / 6 / 8 ticks, the field of view in 4.5% / 6% / 8% (was 3.5%), sparks x2.5 and a white-gold
+flash at the meeting, wider by size, the frame's edges for the third; sounds from Minecraft's own recordings by the boss
+weapon's material with no layer pitched above 1.2 (was an anvil at 0.45 volume pitched 1.6 over a shield block), three
+candidates a size on the local listening page; a block keeps its thud and gets no flash. The size rides in the DEFLECT
+reply's `aux` (0, 1, 2); `Strikes.reeling` gives the mobs' side of the third: `ArmsServer` sizes the clash
+`ArmsRules.clashSize(kind, broke || Strikes.reeling(attacker))`, so a blow whose deflect leaves the body reeling (its
+phrase's last) gets the biggest clash as a broken stance does. The ring's own burst is §68.2's.
+
+**68.4 A final blow worth remembering (decisions 8 to 11).** Modules `mobs` (the last stand, the shot), `arms` (the
+Execution), `opening` (the camera), `living` (the plate's words).
+- **The last stand** (`AwakenBoss.lastStand`, from `die`). A boss whose fight script says `"finish": true` (the three
+  pilots: `proving_ringer`, `hive_regent`, `gearwright_colossus`; `FightScripts.Fight.finish`, default false) doesn't fall
+  to a player's killing blow: it is held at one health, **beaten** (`F_BEATEN`, synced, never saved), every move and phase
+  stopped (`FightRunner.tick` only holds its kneel), a flier brought down (`AwakenMob.bringDown`, kit fliers too), its helpers killed, its stance held broken for
+  `BEATEN_TICKS` 400 (`Strikes.beaten`, Arms' `ArmsServer.beaten`), its bar empty, a low toll. Beaten, nothing hurts it but
+  the finishing blow, and it harms nobody: whatever of its is still in the air lands on no one (`mobs.entity.Finishers`,
+  first of the damage listeners). The plate reads "It's beaten. Hold {attack} to finish it" (`awaken.plate.beaten`). Left
+  alone for 20 s it dies its plain death, credited to whoever beat it. What isn't a player's (a fall, the void, a
+  command) kills it plainly at any time. `/awaken bosses finishing on|off` is the rule's switch.
+- **The finishing blow** is the weapon's own Execution: a heavy held and let go on the beaten body, as on any broken
+  stance (`Strikes.executing`: Arms says whether the blow now landing is one; the weapon's Art counts too, since a full
+  meter makes the Art of the same held heavy), or an Execution or Art that takes a boss's last health without the wait. That blow is the kill: the body dies as it always did, and the server says so once
+  (`mobs_finish`: the body, the striker, the ticks its ending plays) to everyone within 64 blocks. The striker can't be
+  hurt until the ending is over (`Finishers.safe`).
+- **As it is shown** (`mobs.client.finish.FinishClient`; one fixed sequence from that one word). For everyone: the blow's
+  light (a white-gold and a body-coloured flare, sparks the way the blow went, Minecraft's heaviest impact by name,
+  `mobs.finish.blow`), then the body's own ending: its `death` clip with its light leaving it, no vanilla red flash
+  (`KitRenderer`) and no white puff (`AwakenBoss.makePoofParticles`: a last flare and its light let go). For the
+  striker: both bodies held 280 ms, one white frame, the frame's bars (11.5% each; they begin to close while the
+  attack key is held on a beaten body in reach and stay closed 16 ticks after it is let go, so the blow lands inside
+  them), and in the cinematic view the camera out of their eyes (`core.api.Shots`, the opening's `OpeningCamera`): a
+  low shot to one side of the two bodies and a little to the striker's end of the line between them, looking at the
+  body a little under its middle through a drawn-in lens (74% of the player's own field of view, easing to 72%), as far off as fits the
+  two of them across and stands the body's box 62% of the frame high (3.2 to 14 blocks; the second film had it half as large as meant), pushing in an eighth of the way for 6
+  ticks and the ending (26 to 66). **The way back is a cut, never a flight** (the first film flew the camera through the
+  striker's own head): over the shot's last 5 ticks the bars meet, the view is given back under them, and they open on
+  the striker's own eyes. The frame (bars, white frame, skip line) is drawn after every HUD layer
+  (`RenderGuiEvent.Post`), not as a layer: the opening's camera cancels the layers while a shot runs, and the first film
+  had no bars in the shot because of it. Three framings are tried (its left, its right, high behind), each with both
+  ends of the push in open air and in sight of both bodies; none clear, or `OWN_EYES`, or reduced motion: the same beats
+  with no camera move. `finishingBlows` in `awaken-mobs-client.toml`: `CINEMATIC` (default), `OWN_EYES`, `OFF`.
+- **Skipping:** an ending watched once (`endingsSeen`, kept in the client's settings) is skipped by holding Sneak for
+  half a second; the hint shows in the lower bar, and a skip leaves by the same cut (the bars meet first).
+- **Where this differs from the approved page** (the page's storyboard assumed a new move filmed from its start): the cut
+  comes as the blow lands, since the blow is the player's own Execution through their own hands and the server's word
+  for the kill is the only trigger (one side decides; nothing is predicted). So the finishing move is each style's own
+  charged heavy and Execution, with no second beat and no slowed swing; the endings are each body's own death clip in
+  its own light, with no family's "last word" authored yet; the sequence runs about 2 to 4 s from the blow. The
+  sixteen styles' finishing moves and the authored endings are the roll-out's work, after the pilots are played.
+- Tests: `fights_last_stand` (beaten at one health; an ordinary blow does nothing; a boss without an ending dies as
+  before; what nothing withstands kills), `fights_last_stand_ends` (it waits, harms nobody, and dies after 400 ticks).
+
+**68.5 Found in passing (decision 12, and what waits).**
+- **The autosave waits while a boss fights** (`mobs.entity.FightSaves`): while a boss with a fight has a player for its
+  target (or waits beaten), each level's chunks are kept from the autosave (`ServerLevel.noSave`, only where it was on);
+  15 s after the last such tick (`AFTER` 300) they are let go and saved once. A fight over ten minutes lets a save through
+  (`MAX_HOLD`), the server stopping lets go first, and `/awaken bosses saves hold|free` is the switch. A crash in the
+  middle of a boss fight loses that fight's minutes of the world.
+- Counter-hits (decision 13) are not built. The Journal picture of a finishing blow (decision 14) is later.
+- Known and not changed here: `ServerPace.now` is a float of game time, so in a world past about a hundred hours a kit
+  body's own animation clock steps by a tick or more; the ring uses `ServerPace.since`.
+
+## 69. The Hearth's family: Aya and Dubu (plan docs/family/PLAN.md, page https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN; Euan approved all of it 2026-11-11: "Go ahead with the full plan")
+
+Euan's own cat and dog, drawn from his photos (which are private and never in the repo). His words: "when you place your
+hearth for the first time, they should wander up to the house and be one of the kins, but they don't really do
+anything... if they can come like join you on adventures too and follow you around in a very like natural and awesome
+way... And you can also just make them stay... And also make them immortal." Her name is Aya, spelled A-Y-A.
+Code: `dev.awaken.kin.Family*`, client `kin.client.FamilyRenderer`, art `tools/art/specs/hearth_family.py`.
+
+**69.1 The rule.** Nothing fights for you (§43.4) holds for them without exception: neither ever attacks, blocks,
+distracts or warns. Nothing can hurt one, nothing can take one as its target, and neither can be lost.
+
+**69.2 Family, not kin.** They are their own type beside the kin (`FamilyPet`, entity types `awaken:family_aya` "Cat" and
+`awaken:family_dubu` "Dog"; their names are custom names, Aya and Dubu), not `KinKind`s. They take no nook, have no job,
+want, rumour or Kinship, and do not count for `beasts:N`, the Nook bell or any beast step. The Hundred Peal, the Kinsong,
+the Gnawed and a raid's thefts never touch them. One Aya and one Dubu per Hearth, by its owner, shared by its household;
+a sister home gets no second pair.
+
+**69.3 At home.** Each has a day of small things (`FamilyBrain.day`, a choice every few hundred ticks, by weight):
+- Aya by day: the loaf on a raised spot in good light she can step up to (never a chest's lid; a barrel is fine) 30%,
+  belly up under open sky on a clear day 12%, a stroll 26%, sitting 16%, a nap 16% (on the household's bed if one of
+  them has slept in it, else by the fire); a long stretch after any sleep. By night she sleeps 68%.
+- Dubu by day: shadowing whoever is in (a few steps off, sitting, then chin on his paws) 36% when someone is, a stroll
+  30% (his giraffe in his mouth two times in five), chin on his paws near you or the fire 16%, a nap in the sun 10%,
+  sitting 8%. By night he sleeps by the fire 78%, his giraffe under his chin.
+- With you: at a bench or any open screen within 12 blocks she sits and watches and he lies at your feet; when you sleep
+  she is at the foot of your bed and he beside it.
+- Coming home after more than two minutes and 64 blocks away: Dubu runs to meet you with his giraffe and says hello; Aya
+  follows five to eleven seconds later at a walk.
+- Leaving: until you have once asked one along, Dubu walks you to the yard's edge (within 3 of the radius, having been
+  8 inside it in the last 15 s) and sits, and the System says once: "[Dubu wants to come. Crouch and call him and he will.]"
+- The tower's song (§43.7): he sits and howls along, she sits through it with her ears back. A raid warned or on, or a
+  foe within 10 blocks: both in by the fire, low.
+- Sitting is one of three things each time: plainly (half the time), or she grooms a paw or gazes at something only she
+  can see, and he scratches behind an ear or sniffs along the ground.
+- The two of them: by day Dubu sometimes (4 in 100 of his choices, with her awake within 24 blocks) trots over and
+  play-bows at her; half the time she swats the air at him twice, ears back, never touching him, and half the time she
+  looks the other way. In the evening (clock 11,000 to 13,000) both rest by the same fire.
+- Never in the way of your hands: one that stands on, in or against the block you are aiming at within 4.5 blocks steps
+  two blocks aside.
+- A use pets one (a hello and its sound; not while it sleeps). A hello or a stretch is played through where it stands
+  (40 and 52 ticks; her swat 28) before its day goes on. No food, breeding, leash or hearts. They push nothing
+  and cannot be pushed.
+
+**69.4 Arrival.** Half a minute (600 ticks) after the family's clock first sees a household's Hearth (a Hearthfire or an
+Anchor; an old world's Hearth is first seen when its owner next plays), with one of the household in at it and no raid
+warned or on: Dubu is made 24 to 36 blocks off where a hill or wall hides him (else 12 to 20), runs in with his giraffe
+and says hello; at 14 blocks the System says "[That's Dubu. He must have followed you the whole way.]". Aya follows 220
+to 300 ticks later at a walk, sits six blocks off for 70 ticks to look, then comes to your shin: "[And Aya, taking her
+time. They live here now.]". Once per Hearth (`FamilyWorld.Home.stage`). `/awaken admin family arrive` sends them now.
+
+**69.5 Out with you.** Sneak and use on one asks it along (state WITH, its person recorded); again tells it to stay: at
+home that is home, away from home it waits where it is (WAITING). Only the household may ask, and it answers to one
+person at a time.
+- Manner: Dubu keeps 3.2 blocks ahead and to one side, at your side when you sneak; Aya 2.2 behind and to the other
+  side. When you have stood still 3 s (4 for her) each comes over and sits, and after 16 s (21) rests. Asleep by your bed
+  when you sleep away. Speeds: movement 0.3; walk factor 1.0, 1.25 past 5 blocks, 1.45 when you sprint, 1.55 past 10.
+- Catching up: more than 28 blocks behind, or stuck 4 s more than 10 blocks off, it is put on ground 12 to 20 blocks
+  off behind you (out of your view, or hidden by terrain; else 5 to 11) and runs in. A body that falls out of the loaded
+  world is made again the same way. Never beside you.
+- A boat you are in with a free seat within 4.5 blocks: it hops in. Aya will not path through water; Dubu swims.
+- A fight (something within 16 blocks hunting you, or that hurt you, or a foe you struck, in the last 5 s): each runs
+  straight away from it (measured from the fight, not from you: a foe circles you) until it is 11 (Dubu) or 13 (Aya)
+  blocks off, then turns and watches in its wary pose; 3 s after it ends it comes back and says hello.
+- Thresholds: they exist only in the overworld. When their person leaves it, one that is with them waits where it is
+  (DOOR) and rejoins them if they come back within 64 blocks of that spot; after five minutes, or if they come back
+  somewhere else or log off, it goes home. One told to wait goes home when its person is more than 64 blocks off or
+  gone five minutes. Going home from the wild: it walks off homeward for six seconds, its body leaves, and it is at
+  home when the home is next loaded.
+
+**69.6 The record comes first** (`FamilyWorld`, saved data `family`, schema 1, by the Hearth's owner): for each of the
+two its body's id, name, state (HOME, WITH, WAITING, DOOR), person, waiting spot and deadline, and whether it has
+arrived; the Hearth's arrival stage and the household's bed; and the players who have asked one along or had Dubu's hint.
+A body carries only its owner. Every fifth tick a body checks the record names it, else it removes itself; every second
+(`FamilyService.keep`) a record with no loaded body gets one made: at home once the Anchor stands on entity-ticking ground and the body
+has been gone 200 ticks (at once if it was sent home), behind its person when it is out with them, at its spot when it
+waits. So neither can be lost and neither can be two.
+
+**69.7 Immortal.** `FamilyPet.hurtServer` refuses everything but what bypasses invulnerability; falling out of the world
+puts it back (behind its person, else by the fire); `/kill` takes the body and the record makes it again. Fire immune,
+knockback resistance 1, no pushing either way, never leashed, never despawned. `LivingChangeTargetEvent` onto one is
+cancelled. They implement `OwnableEntity` (the Hearth's owner), so powers and sweeps already count them as yours
+(`Combat.isAlly`, `ArmsServer.foe`), and lock-on takes only hostiles.
+
+**69.8 Words.** The kin plate (§43.17): "yours" (or "Ana's"), then what it is doing ("Coming with you.", "Loafing in the
+light.", "Lying with his chin on his paws."), with "Crouch and use to ask her along." until you have asked one along
+once. The Hearth page: their two cards first under Your beasts ("Aya · Cat"), the Hearth's owner may rename them with the
+naming card (an empty name gives its own back). Tasks, Hearth tab: one optional row until first done, "Take Aya or Dubu
+out with you" (`family/ask`). Counter `awaken:family_asked_along`.
+
+**69.9 Their look and motion.** Bodies of their own on the hero rigs with the life layer, not the game's cat and wolf
+(a 5 by 4 pixel face cannot be hers; a wolf is not his shape). `family_aya`: 13 bones, drawn at 0.45, 0.39 blocks at
+the back, 0.68 long. `family_dubu`: 15 bones (one is his giraffe, in his mouth when he carries it and under his chin
+asleep), drawn at 0.5, 0.38 at the back, 0.9 long. Their coats are painted in body space (`coat(x, y, z)`), so a patch
+runs unbroken from box to box; no band is under two pixels; the chest laps a pixel into the rump a hair smaller, and the
+thighs sit inside the flank, so nothing shares a plane and no crack opens when the back bends. Poses (the synced
+`act`): idle, sit, rest (her loaf, his chin on his paws), sleep, roll, nudge (hello), stretch, hide (wary), carry, song,
+swat, groom, gaze (hers), sniff, scratch (his).
+The renderer plays a walk or run by the ground covered, one stride a cycle (Aya 0.24 and 0.8 blocks, Dubu 0.31 and
+0.85), capped at 3.5 and 3.8 cycles a second. Getting down and getting up are acted, not blended: between standing and a
+held pose the renderer plays a clip made for it once (`to_sit`, `to_rest`, `to_sleep`, her `to_roll`, and `from_` each;
+0.45 to 0.9 seconds), which starts on the standing pose and ends on the held pose's first frame. In them the parts go in
+an order (legs and rump, then the head, the tail last; his front feet slide out before his chest goes down; she goes
+down before she rolls over), each runs a little past its place and settles, and getting up runs the order backwards. A
+change of mind half way picks the other clip up at the matching moment. The server waits for it: asked to walk while
+down, one stands for half a second first (`FamilyPet.upAt`). One-shots (hello, stretch, swat) and changes between two
+held poses blend over 10 ticks, other changes over 5. Standing about is one of three clips (`idle` twice as likely as
+`idle_b`, her look over her shoulder and his shake, and `idle_c`, a paw held up), picked again each time one ends. A
+turn on the spot faster than four degrees a tick plays the walk, a full circle three strides.
+
+**69.10 Sounds, switch, commands, tests.** Sounds are the game's own recordings by name, pitched (rule 1 of §66):
+`family.aya.purr|trill|meow` from `entity.cat.purr|purreow|ambient`, `family.dubu.bark|pant|whine|howl` from
+`entity.wolf_cute.ambient|pant|whine` (the howl is the whine at 0.75). Game rule `awaken:hearth_family` (on): off, their
+bodies leave and nothing runs; the record is kept. `/awaken admin family arrive | use aya|dubu [sneak] | state`, and for a
+body to look at that belongs to nobody `place|pose|walk|clear`. Tour `tools/autopilot/family.txt`. Tests (CI):
+`family_never_lost`, `family_ask_and_stay`. Budget: two entities a Hearth, decisions every fifth tick, a spot search of
+at most fourteen tries when one chooses what to do next.
+
+Their sounds can be heard from the game's own files with `/Volumes/MEDIA/pets-ref/aya-dubu-sounds.html` (a local page
+outside the repo; nothing of the game's is copied).
+
+Not built (each its own decision later): fetch with Dubu, Aya on your shoulder at speed. Not built from the plan:
+coming from the skiff's mooring (the Far Landing is not merged), and the head leading a turn. Not checked by a person:
+nothing here has been played, and no sound has been heard in place.
+
+---------------------------------------------------------------------------------------------------------------------
+
+## 70. Together, All the Way (co-op from the first bell to the last; plan docs/coop/PLAN.md, page https://claude.ai/artifact/EDCD8YwLJb9mbAQLLNhULS; Euan approved all twenty-one decisions 2026-11-11: "Go ahead with the full plan")
+
+Two people who always know where the other is, are never split up by a rule, and fight the same fight at the
+difficulty each of them enjoys. It extends "Together" (after §20) and replaces §55's rules. Euan's ruling the same day,
+on the first page's support job: "I don't think they should just become a healer ... they should still have their
+weapons, their powers ... it's kind of two people having a different difficulty mode ... still being revertible."
+Module `dev.awaken.together`; switches in `awaken-together.toml`, each stage's own, and with one off that stage plays
+exactly as before. **Alone, every rule here is inert** (`alone_plays_the_same`).
+
+**70.1 The party.** Up to four players who chose each other, saved per world (`awaken:together`, schema 1: members,
+the play-day; `apart`: who left on purpose). `PartyHooks.members` is the party plus, as before, anyone inside your
+gate run. A shared Hearth alone is not a party, but it leads to one: a player with no party is taken into a
+housemate's while it has room (`PartyService.settled`, so one card, "share my home", does both), and someone who left
+on purpose isn't put back. With the switch `party` off the rule is the old one (the run and the household).
+- Formed by a card, never a command: the band's Status page has a TOGETHER section (it replaces RIDING ALONG): the
+  party's members with how far they are, `[ Leave party ]`, anyone within 48 blocks with `[ Travel together ]`, and
+  the My fights switch. Travel together is a 30-second card for the other (`together:join:<asker>:<other>`),
+  remembered by the server so a client can't answer one it wasn't asked; both asking makes it at once. Not in a fight.
+  Commands: `/awaken together status | with <player> | leave | fights full|gentle`. A party member who doesn't
+  share your home has `[ Share my home ]` under their name: the Hearth's own invitation card (`Household.invite`).
+  **Not built yet:** `Go to` on the section, and the second keeper below.
+- Players who walk the opening together are a party from the square on.
+- A home for two: when a party member has a home of their own and another member with no home stands within 24
+  blocks of its Anchor, the invitation is made for them, once a session (`HomeForTwo`). A yes makes them a member as
+  before. **Not built yet:** the **second keeper** (`HearthRecord` household, optional field): the owner's
+  rights except ending the household. One second keeper a Hearth.
+- Leaving: either side, out of a fight. A party of one is no party. Logging off keeps it.
+
+**70.2 Seeing and pointing.**
+- The party strip (client, the band's look, off with the HUD, setting small / off): a row per member: name, health,
+  one state (in a menu, in a gate with its floor, on Gentle, on a knee, down, far) and an arrow on the screen's edge
+  with the distance when out of view. Hidden with no party. Synced on change only: health in twentieths, state,
+  floor, second winds, seconds left while down, and the block they stand on (`TogetherNet.Party`, one message, at
+  most twice a second, only when it differs from the last one sent to that player). A member on a knee or down kneels
+  in third person for the party (`station_kneel` through `PlayerClips`); on your own screen the edges dim and a line
+  says what is happening.
+- The Atlas shows party members in your dimension as marks in their colour with their name, where the server last
+  said they stand (`MapMarks`, from the same message as the strip). `Go to <name>`, a destination that follows them,
+  is **not built yet**.
+- Pings on the lock key (middle click; a lock always wins on a monster, and a lock is shown to the party as their
+  target): on anything else a marker in world light for 8 s, on the edge when off screen and on the Atlas, with one
+  line chosen by what it is ("Over here", "Ore here", "Let's go in", "Look at this", "On my way", "Help" while down;
+  a double click "Careful here"). Four in two seconds (`core.Throttle`). In a party the press is the ping's (in
+  creative, pick block still gets it too); alone it is pick block's as always (`AimClient.freePress`). The marker is
+  the band's diamond in the pinger's colour with their name over it and the line and distance under it; it opens for
+  a quarter of a second and then sits still. **Not built yet:** pings on the Atlas, shared binocular marks.
+
+**70.3 Any two in one fight.**
+- A tell carries its target; the full closing ring and any verdict show only for that player, a thin ring for the
+  rest; a blow that reaches everyone is everyone's.
+- A boss holds its target for a whole phrase (`AwakenBoss.setTarget` refuses another player while
+  `FightRunner.midPhrase`) and changes only as a phrase is about to start, to whoever of the same party did most to it
+  since it last chose (`Fights.nextTarget`, a ledger per boss filled as blows land); it shows the turn (the notice
+  pose and sound, `NOTICE_TICKS`) before it starts on them. `FightMind` still starts its read again on a new target:
+  with the hold that is once a phrase at most (a read kept per player is **not built yet**).
+- Its back is turned: a blow landing on a creature in the middle of a blow at someone else does a quarter more damage
+  and stance. Never alone.
+- Stance grows with fighters as health does (+50% each), once stage 0 has measured the need.
+- Standing back up (gates): a fighter who would die while another of the party stands on the floor goes down instead,
+  kneeling and untargetable for 20 s; a partner holding Use on them for 2 s lifts them at 30% health with 2 s of
+  grace; once a fighter a floor (twice on Story). Nobody comes, or all down: the death as before. Cheat Death first.
+- After a real death with the party still inside: you wake at the gate's door (within two minutes of the death,
+  on standable ground within five blocks of it), and going back in takes you to the entrance of the floor your party
+  has reached, once they are clear of a fight (`Runs.rejoinFloor`; realms and the story's gates start at their start).
+  The Satchel and the Fracture are the price as before.
+- The finishing blow (§68): either may take it; everyone in the fight sees the film.
+
+**70.4 My fights: Full or Gentle** (replaces §55's bond, 40% hits, half XP, no rank and the fold).
+One setting per player (attachment `awaken:fights`, schema 1, kept through death and logout; default Full). Changed on
+the TOGETHER section at once out of a fight (in a gate at the next room; never mid-fight). The party sees a mark.
+Gentle, for that player only, all decided on the server by who a thing is aimed at:
+- A boss aiming at them: LIGHT and HEAVY blows only (never PERILOUS or GRAB) wherever the phase has any, strings of
+  two at most with no red follow-up, no forks, no mind answers, 8 more ticks of hold before the blow, the opening after
+  it half as long again. A phase with nothing plain keeps what it has, with the longer hold: it is never left with
+  nothing to do.
+- A held guard stops HEAVY as well as LIGHT (`ArmsRules.Answer.BLOCK`, not `GUARD_BREAK`); a timed deflect earns as before.
+- Attention: with a Full fighter in sight a boss gives them about one phrase in four; small monsters, two at a time.
+- Half damage taken, after armour, from everything.
+- A killing blow is a **second wind**: thrown back, 2 s on a knee untargetable, up at half health, then 2 s of grace;
+  three, refilled on reaching a new floor of a gate and, outside one, after a minute without a blow given or taken.
+  After those, down as anyone.
+- A fall that would kill in a gate (or out of its world) sets them back on the last safe ground they stood on (noted
+  once a second), two hearts lighter than they were there. It spends no second wind.
+- A death costs what STORY costs (half the Satchel kept, no Fracture), whatever the world's setting.
+- Their hits, stance damage and powers are full. They count as **half a fighter** when a room or a boss is sized: a
+  Lord or Warden +25% health and stance (a Full partner +50%), a room a sixth more monsters, no extra elite.
+- XP, loot, boss pieces, bells and rank as anyone. Titles and records for hard feats are not earned on Gentle.
+- A blow aimed at a Full player is exactly what it was. Numbers here are first values, in `awaken-together.toml`.
+
+**70.5 Reassessments.** Everyone of the party near the bell comes as a fighter on their own setting (a tied pair is no
+longer skipped). At the level and ready: the rank, whatever the setting. Short of the level: they may come and are
+told this one doesn't count for them yet. The Warden's gift goes to all, as before. A Warden's health and stance
+grow by `FightsHooks.fighters` (a player on Gentle half of one), not by a head count.
+
+**70.6 The joins.** Everyone already awakened is told when someone who hasn't awakened logs in. The **Answering Peal**
+(`Answering`, through `BellHooks.onRung`): a handbell rung in the overworld calls to every party member more than 64
+blocks off (they hear a bell 24 blocks out along its bearing and are told); one of them ringing their own handbell
+within a minute answers instead of ringing their peal: stand still 5 s and you're beside the caller (both in the
+overworld, neither in a fight, gate, trial or dream, nor on a knee; every 10 minutes for the one who travels).
+**Not built yet** (each waits on a plan that isn't merged, or is its own stage): the rest of this paragraph. **Match my
+friend** (off by default): within 32 blocks of a party member ten or more levels under you, in land at their level,
+your hits are evened down to their level; the land's dread stays on each player's real level. **Shown the way**: a
+monument a partner opened without you is a lead; touched with them there, it pays you once. A partner's solo finds
+are leads for you, never completions. **Ours**: a Journal page of firsts done together, each with its play-day. On the
+Tasks page a step both have open carries a mark, and one optional row says when a partner is ready for a Reassessment.
+Under the Far Landing (§67): anyone who has flown once may take the helm home.
+
+**70.7 Tests and tours.** `core.test.Pair` (two real survival test players in a party); prefixes `pair_`, `gentle_`;
+tours with a server-played **tour partner** (`/awaken together partner ...`), the client on Full in one and on Gentle
+in the next. Budget: under 12 messages a second per player in a fight for everything here, under 2 at rest.

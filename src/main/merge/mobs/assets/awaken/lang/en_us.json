@@ -2,7 +2,7 @@
   "awaken.mobs.broker.ask": "The Broker steps back. Sneak and ask if you want a duel.",
   "awaken.mobs.broker.duel_body": "Lanterns down, one challenger, no help. Win and the market's Lord is yours to claim.",
   "awaken.mobs.broker.duel_chat": "The Lantern Broker offers a duel. Press Y, or type /awaken mobs duel within 30 seconds.",
-  "awaken.mobs.broker.duel_footer": "Y to accept \u00b7 N to decline",
+  "awaken.mobs.broker.duel_footer": "Y to accept · N to decline",
   "awaken.mobs.broker.duel_over": "The duel is over. The Broker relights its lanterns.",
   "awaken.mobs.broker.duel_stakes": "Stakes",
   "awaken.mobs.broker.duel_stakes_value": "Lord Heart, parts, a chance at a Power Core",
@@ -390,5 +390,7 @@
   "subtitles.awaken.mobs.listener_hear": "A Listener hears you",
   "subtitles.awaken.mobs.rise": "The dead get up",
   "subtitles.awaken.mobs.telegraph": "Something gathers itself",
-  "subtitles.awaken.mobs.telegraph_heavy": "A heavy attack winds up"
+  "subtitles.awaken.mobs.telegraph_heavy": "A heavy attack winds up",
+  "subtitles.awaken.mobs.finish_blow": "A finishing blow lands",
+  "awaken.finish.skip": "Hold %s to skip"
 }

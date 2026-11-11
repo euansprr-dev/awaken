@@ -74,6 +74,20 @@ public final class OpeningClient {
 
     public static void init(IEventBus modBus) {
         OpeningConfig.register();
+        // the opening's camera, lent to any module with a shot of its own (core.api.Shots: SPEC §16.4, §68.4)
+        dev.awaken.core.api.Shots.install(new dev.awaken.core.api.Shots.Director() {
+            @Override public boolean take(dev.awaken.core.api.Shots.Shot shot) {
+                OpeningCamera.take(new OpeningCamera.Shot() {
+                    @Override public void pose(float t, double[] out) { shot.pose(t, out); }
+                    @Override public int length() { return shot.length(); }
+                    @Override public void tick(int age) { shot.tick(age); }
+                    @Override public void finished(String reason) { shot.finished(reason); }
+                }, 0);
+                return OpeningCamera.active();
+            }
+            @Override public void finish(String reason) { OpeningCamera.finish(reason); }
+            @Override public boolean active() { return OpeningCamera.active(); }
+        });
         dev.awaken.core.api.Dialogue.register(100, new dev.awaken.core.api.Dialogue.Source() {
             public boolean active() { return OpeningHud.dialogueActive(); }
             public void advance() { OpeningHud.advanceDialogue(); }

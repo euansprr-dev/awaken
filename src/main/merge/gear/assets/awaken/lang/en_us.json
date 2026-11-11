@@ -40,5 +40,11 @@
   "item.awaken.sovereign_boots": "Sovereign Striders",
   "item.awaken.sovereign_blade": "Sovereign Oathblade",
   "item.awaken.sovereign_focus": "Sovereign Sceptre",
-  "item.awaken.sovereign_mattock": "Old Sovereign Mattock"
+  "item.awaken.sovereign_mattock": "Old Sovereign Mattock",
+  "awaken.gear.worn_out.weapon": "Worn out. It hits half as hard until you mend it at an anvil.",
+  "awaken.gear.worn_out.armour": "Worn out. It protects half as well until you mend it at an anvil.",
+  "awaken.gear.wore_out.weapon": "Your %s is worn out. It hits half as hard until you mend it at an anvil.",
+  "awaken.gear.wore_out.armour": "Your %s is worn out. It protects half as well until you mend it at an anvil.",
+  "awaken.gear.now.worn_out": "Your %s is worn out. Mend it at an anvil.",
+  "awaken.gear.now.nearly": "Your %s is nearly worn out. Mend it at an anvil."
 }

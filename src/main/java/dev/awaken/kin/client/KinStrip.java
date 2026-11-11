@@ -70,6 +70,8 @@ public final class KinStrip {
 
     /** The body of a kind, to draw it as itself; null for an id that isn't a kind. */
     public static @Nullable EntityType<?> body(String kind) {
+        if (kind.equals("family_aya")) return dev.awaken.kin.FamilyContent.AYA.get();
+        if (kind.equals("family_dubu")) return dev.awaken.kin.FamilyContent.DUBU.get();
         for (KinKind k : KinKind.values()) if (k.id().equals(kind)) {
             var h = KinContent.TYPES.get(k);
             return h == null ? null : h.get();

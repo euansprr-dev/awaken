@@ -69,6 +69,7 @@ final class Peals {
         if (p.getCooldowns().isOnCooldown(stack)) return;
         p.getCooldowns().addCooldown(stack, RING_COOLDOWN);
         level.playSound(null, p.blockPosition(), BellContent.HANDBELL_RING.get(), SoundSource.PLAYERS, 1.5F, 1F);
+        if (dev.awaken.core.api.BellHooks.rung(level, p)) return; // answering a partner's ring: the Answering Peal (SPEC §70.6)
         BellBook book = Bells.book(p);
         if (book.peal.equals(HundredPeal.KINSONG)) {
             if (book.pealed) HundredPeal.kinsong(level, p);
