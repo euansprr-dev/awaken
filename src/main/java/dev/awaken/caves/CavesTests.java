@@ -881,6 +881,17 @@ final class CavesTests {
         h.assertTrue(UnderSites.onSurface(level, m, o.getX() + 0.5, o.getY() + 0.01, o.getZ() + 0.5, Direction.UP), "on the floor");
         h.assertFalse(UnderSites.onSurface(level, m, o.getX() - 2.5, o.getY() + 0.01, o.getZ() - 2.5, Direction.UP), "on the pool");
         h.assertTrue(UnderSites.onSurface(level, m, o.getX() + 0.5, o.getY() + 6.99, o.getZ() + 0.5, Direction.DOWN), "on the roof");
+        // the whole body on its face (SPEC §42.4 "Settled"): not sunk into the roof, not hanging under a lip's edge into the air
+        double wx = o.getX() - 4 + 0.01, lx = o.getX() + 3 - 0.01, cz = o.getZ() + 0.5;
+        h.assertTrue(UnderSites.bodyOnSurface(level, m, wx, o.getY() + 3.5, cz, Direction.EAST, 0.14), "a body on the west wall");
+        h.assertFalse(UnderSites.bodyOnSurface(level, m, wx, o.getY() + 6.95, cz, Direction.EAST, 0.14), "a body into the roof");
+        h.assertTrue(UnderSites.bodyOnSurface(level, m, lx, o.getY() + 2.5, cz, Direction.WEST, 0.14), "a body on the lip's face");
+        h.assertFalse(UnderSites.bodyOnSurface(level, m, lx, o.getY() + 2.05, cz, Direction.WEST, 0.14), "a body over the lip's edge");
+        // a curtain wholly under its roof: not into the wall, not past the lip
+        h.assertTrue(UnderSites.hangs(level, m, o.getX() + 0.5, o.getY() + 6.98, cz, 0.42), "a curtain under the roof");
+        h.assertFalse(UnderSites.hangs(level, m, o.getX() - 4 + 0.3, o.getY() + 6.98, cz, 0.42), "a curtain into the wall");
+        h.assertTrue(UnderSites.hangs(level, m, o.getX() + 3.5, o.getY() + 1.98, cz, 0.42), "a curtain under the alcove's roof");
+        h.assertFalse(UnderSites.hangs(level, m, o.getX() + 3.1, o.getY() + 1.98, cz, 0.42), "a curtain past the lip");
         h.assertTrue(UnderSites.heldLight(new ItemStack(Items.TORCH)) == 14, "a torch gives 14");
         h.assertTrue(UnderSites.heldLight(new ItemStack(Items.STONE)) == 0, "stone gives none");
         h.succeed();

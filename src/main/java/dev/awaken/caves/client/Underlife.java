@@ -182,7 +182,8 @@ final class Underlife {
                 case BAT -> bat(i, level);
                 case FISH -> fish(i, level);
                 case CRICKET -> cricket(i, level);
-                case GLOWWORM -> { }   // they hang where they are
+                // they hang where they are, while the roof is there over the whole curtain
+                case GLOWWORM -> { if (!UnderSites.hangs(level, M, x[i], y[i], z[i], THREADS)) free(i); }
                 default -> free(i);
             }
         }
@@ -253,14 +254,14 @@ final class Underlife {
                 if (roost(level, cx, cy, cz)) made++;
             } else if ((bits & UnderSites.WALL) != 0 && count[BEETLE] < want(BEETLE) && R.nextFloat() < 0.6F) {
                 Direction wall = UnderSites.wall(level, M, cx, cy, cz);
-                if (wall != null && crawler(BEETLE, cx, cy, cz, wall.getOpposite())) made++;
+                if (wall != null && crawler(level, BEETLE, cx, cy, cz, wall.getOpposite()) >= 0) made++;
             } else if ((bits & UnderSites.FLOOR) != 0 && (bits & UnderSites.WALL) != 0 && count[CRICKET] < want(CRICKET)) {
                 if (cricket(cx, cy, cz)) made++;
             } else if ((bits & (UnderSites.FLOOR | UnderSites.WALL)) != 0 && count[MILLIPEDE] < want(MILLIPEDE) && R.nextFloat() < 0.4F) {
                 Direction wall = (bits & UnderSites.WALL) != 0 && R.nextBoolean() ? UnderSites.wall(level, M, cx, cy, cz) : null;
-                if (crawler(MILLIPEDE, cx, cy, cz, wall != null ? wall.getOpposite() : Direction.UP)) made++;
+                if (crawler(level, MILLIPEDE, cx, cy, cz, wall != null ? wall.getOpposite() : Direction.UP) >= 0) made++;
             } else if ((bits & UnderSites.ROOF) != 0 && count[BEETLE] < want(BEETLE) && R.nextFloat() < 0.3F) {
-                if (crawler(BEETLE, cx, cy, cz, Direction.DOWN)) made++;
+                if (crawler(level, BEETLE, cx, cy, cz, Direction.DOWN) >= 0) made++;
             }
         }
     }
@@ -398,23 +399,49 @@ final class Underlife {
 
     // ---- beetles and millipedes: walking a surface ----------------------------------------------------------------------
 
+    /** A crawler's drawn size (UnderlifeRender draws it this big): the chitin crawler, a beetle, a millipede. */
+    static float crawlerSize(int k, int look) {
+        return k == BEETLE ? look == CRAWLER ? 0.3F : 0.2F : 0.34F;
+    }
+
+    /**
+     * How far a crawler's body reaches from its middle at any heading (its square's corner, half its size times the root of
+     * two): all of that lies on its rock (SPEC §42.4 "Settled").
+     */
+    private static double reach(int i) {
+        return crawlerSize(kind[i], variant[i]) * 0.7072;
+    }
+
+    /** Half a glow-worm curtain's width and half a hanging bat's (UnderlifeRender): all of it under the roof. */
+    static final float THREADS = 0.42F, HANG = 0.19F;
+
     /**
      * A crawler on the face of the rock at cell + (opposite of {@code out}): {@code face} is the way out of the rock, its
-     * yaw the heading within that face (0 along the face's first axis, see {@link #axes}).
+     * yaw the heading within that face (0 along the face's first axis, see {@link #axes}). Its whole body on the rock: a
+     * spot near the face's edge that would leave some of it over the air gives way to the middle of the cell's face.
      */
-    private static boolean crawler(int k, int cx, int cy, int cz, Direction out) {
+    private static int crawler(ClientLevel level, int k, int cx, int cy, int cz, Direction out) {
         int i = slot(k);
-        if (i < 0) return false;
-        double ox = cx + 0.5 - out.getStepX() * 0.49 + (out.getStepX() == 0 ? (R.nextDouble() - 0.5) * 0.7 : 0);
-        double oy = cy + 0.5 - out.getStepY() * 0.49 + (out.getStepY() == 0 ? (R.nextDouble() - 0.5) * 0.7 : 0);
-        double oz = cz + 0.5 - out.getStepZ() * 0.49 + (out.getStepZ() == 0 ? (R.nextDouble() - 0.5) * 0.7 : 0);
+        if (i < 0) return -1;
+        double r = reach(i), ox = 0, oy = 0, oz = 0;
+        for (int t = 0; t < 2; t++) {
+            double j = t == 0 ? 0.7 : 0;
+            ox = cx + 0.5 - out.getStepX() * 0.49 + (out.getStepX() == 0 ? (R.nextDouble() - 0.5) * j : 0);
+            oy = cy + 0.5 - out.getStepY() * 0.49 + (out.getStepY() == 0 ? (R.nextDouble() - 0.5) * j : 0);
+            oz = cz + 0.5 - out.getStepZ() * 0.49 + (out.getStepZ() == 0 ? (R.nextDouble() - 0.5) * j : 0);
+            if (UnderSites.bodyOnSurface(level, M, ox, oy, oz, out, r)) break;
+            if (t == 1) {
+                free(i);
+                return -1;
+            }
+        }
         place(i, ox, oy, oz);
         ax[i] = ox;
         ay[i] = oy;
         az[i] = oz;
         face[i] = out.ordinal();
         state[i] = R.nextBoolean() ? MOVE : REST;
-        return true;
+        return i;
     }
 
     /** A face's two in-plane axes (u then v) for a surface facing {@code out}. */
@@ -431,6 +458,13 @@ final class Underlife {
 
     private static void crawl(int i, ClientLevel level) {
         boolean beetle = kind[i] == BEETLE;
+        Direction out = DIRS[face[i]];
+        double r = reach(i);
+        // its rock gone from under it (mined, or the land changed): it drops away, never left drawn on the air
+        if (!UnderSites.bodyOnSurface(level, M, x[i], y[i], z[i], out, r)) {
+            free(i);
+            return;
+        }
         double dpx = x[i] - px, dpy = y[i] - (py + 0.5), dpz = z[i] - pz;
         // still while you're close: a beetle freezes, a millipede curls up and waits
         if (dpx * dpx + dpy * dpy + dpz * dpz < 2.2 * 2.2) {
@@ -443,19 +477,18 @@ final class Underlife {
             if (state[i] == MOVE) yaw[i] += (R.nextFloat() - 0.5F) * 120F;
         }
         if (state[i] != MOVE) return;
-        Direction out = DIRS[face[i]];
         axes(out, UV);
         yaw[i] += (R.nextFloat() - 0.5F) * (beetle ? 14F : 8F);
         float a = yaw[i] * Mth.DEG_TO_RAD, c = Mth.cos(a), s = Mth.sin(a);
         double sp = beetle ? 0.028 : 0.013;
         double nx = x[i] + (UV[0] * c + UV[3] * s) * sp, ny = y[i] + (UV[1] * c + UV[4] * s) * sp, nz = z[i] + (UV[2] * c + UV[5] * s) * sp;
         double hx = nx - ax[i], hy = ny - ay[i], hz = nz - az[i];
-        if (hx * hx + hy * hy + hz * hz < 16 && UnderSites.onSurface(level, M, nx, ny, nz, out)) {
+        if (hx * hx + hy * hy + hz * hz < 16 && UnderSites.bodyOnSurface(level, M, nx, ny, nz, out, r)) {
             x[i] = nx;
             y[i] = ny;
             z[i] = nz;
         } else {
-            // the edge of its face, or too far from home: turn about
+            // the edge of its face (its whole body stays on it), or too far from home: turn about
             yaw[i] += 100F + R.nextFloat() * 160F;
             yawO[i] = yaw[i];
         }
@@ -504,6 +537,11 @@ final class Underlife {
     private static void bat(int i, ClientLevel level) {
         double dpx = ax[i] - px, dpy = ay[i] - (py + 1), dpz = az[i] - pz, d2 = dpx * dpx + dpy * dpy + dpz * dpz;
         if (state[i] == REST) {
+            // its roof gone: the roost lets go
+            if (!UnderSites.hangs(level, M, x[i], y[i], z[i], HANG)) {
+                scatter(group[i], level);
+                return;
+            }
             // hanging: a slow sway, a shuffle of the wings now and then
             yaw[i] += Mth.sin(now * 0.03F + phase[i]) * 0.6F;
             boolean lit = heldLight > 0 && d2 < 9 * 9;
@@ -682,6 +720,11 @@ final class Underlife {
             }
             return;
         }
+        // its floor gone from under it: away
+        if (!UnderSites.rock(level.getBlockState(M.set(Mth.floor(x[i]), Mth.floor(y[i]) - 1, Mth.floor(z[i]))))) {
+            free(i);
+            return;
+        }
         if (d2 < 3.2 * 3.2 || --timer[i] <= 0) {
             hop(i, level, d2 < 3.2 * 3.2);
             return;
@@ -727,7 +770,13 @@ final class Underlife {
             if (!UnderSites.open(level.getBlockState(M.set(nx, cy, nz))) || !UnderSites.rock(level.getBlockState(M.set(nx, cy + 1, nz)))) continue;
             int i = slot(GLOWWORM);
             if (i < 0) break;
-            place(i, nx + 0.2 + R.nextDouble() * 0.6, cy + 0.995, nz + 0.2 + R.nextDouble() * 0.6);
+            // the whole curtain under the roof: a spot by the roof's edge gives way to the middle of the cell
+            double gx = nx + 0.2 + R.nextDouble() * 0.6, gz = nz + 0.2 + R.nextDouble() * 0.6;
+            if (!UnderSites.hangs(level, M, gx, cy + 0.995, gz, THREADS)) {
+                gx = nx + 0.5;
+                gz = nz + 0.5;
+            }
+            place(i, gx, cy + 0.995, gz);
             state[i] = REST;
             light[i] = GLOW;
             made++;
@@ -799,6 +848,65 @@ final class Underlife {
             n++;
         }
         return n;
+    }
+
+    /**
+     * The wall studio (tours; SPEC §42.4 "Settled"): crawlers set walking up the rock faces in view 2.5 to 5.5 blocks off, faces
+     * under a ledge's top edge first (where a body is likeliest to hang over the air), as the underlife makes them for
+     * itself, made at once where the camera sees them. Returns how many.
+     */
+    static int walls(ClientLevel level) {
+        clear();
+        int n = 0, bx = Mth.floor(px), by = Mth.floor(py), bz = Mth.floor(pz);
+        for (int t = 0; t < 4000 && n < 8; t++) {
+            int cx = bx + R.nextInt(15) - 7, cy = by + R.nextInt(9) - 3, cz = bz + R.nextInt(15) - 7;
+            double ex = cx + 0.5 - camX, ey = cy + 0.5 - camY, ez = cz + 0.5 - camZ, d2 = ex * ex + ey * ey + ez * ez;
+            if (d2 < 6.25 || d2 > 30 || !inView(cx + 0.5, cy + 0.5, cz + 0.5, 0.8F)) continue;
+            int bits = UnderSites.classify(level, M, cx, cy, cz);
+            Direction wall = (bits & UnderSites.WALL) != 0 ? UnderSites.wall(level, M, cx, cy, cz) : null;
+            Direction out = wall != null ? wall.getOpposite() : (bits & UnderSites.ROOF) != 0 ? Direction.DOWN
+                    : (bits & UnderSites.FLOOR) != 0 ? Direction.UP : null;
+            if (out == null) continue;
+            // a ledge: open over the wall's rock, so the face has a top edge to walk up to
+            boolean ledge = wall != null && UnderSites.open(level.getBlockState(M.set(cx + wall.getStepX(), cy + 1, cz + wall.getStepZ())));
+            if (!ledge && t < 3000) continue;
+            int i = crawler(level, out == Direction.UP || n % 3 == 2 ? MILLIPEDE : BEETLE, cx, cy, cz, out);
+            if (i < 0) continue;
+            alpha[i] = alphaO[i] = 1F;
+            state[i] = MOVE;
+            timer[i] = 600;
+            // up the face (along its second axis), toward the edge
+            yaw[i] = yawO[i] = 90F;
+            n++;
+        }
+        return n;
+    }
+
+    /**
+     * For tours: every crawler, resting bat, glow-worm curtain and resting cricket checked against its rule (the whole body on
+     * its face, the whole width under its roof, the floor under its feet); the ones off it go to the log with where they are.
+     */
+    static String check(ClientLevel level) {
+        int seen = 0, off = 0;
+        StringBuilder where = new StringBuilder();
+        for (int i = 0; i < CAP; i++) {
+            int k = kind[i];
+            if (k < 0 || held[i]) continue;
+            boolean on = switch (k) {
+                case BEETLE, MILLIPEDE -> UnderSites.bodyOnSurface(level, M, x[i], y[i], z[i], DIRS[face[i]], reach(i));
+                case BAT -> state[i] != REST || UnderSites.hangs(level, M, x[i], y[i], z[i], HANG);
+                case GLOWWORM -> UnderSites.hangs(level, M, x[i], y[i], z[i], THREADS);
+                case CRICKET -> state[i] == HOP || UnderSites.rock(level.getBlockState(M.set(Mth.floor(x[i]), Mth.floor(y[i]) - 1, Mth.floor(z[i]))));
+                default -> true;   // moths fly and fish swim
+            };
+            if (k == MOTH || k == FISH || k == BAT && state[i] != REST || k == CRICKET && state[i] == HOP) continue;
+            seen++;
+            if (on) continue;
+            off++;
+            where.append(where.isEmpty() ? ": " : "; ").append(NAMES[k]).append(String.format(java.util.Locale.ROOT, " %.2f %.2f %.2f", x[i], y[i], z[i]));
+        }
+        String line = "Underlife check: " + seen + " on rock or hanging, " + off + " off it" + where;
+        return line;
     }
 
     private static float yawOf() {

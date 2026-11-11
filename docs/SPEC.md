@@ -17003,6 +17003,15 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
     `/awaken caves at x y z` goes to a cell through the passage. Tours `caves-floaters-v20.txt` (Euan's spot, a deep
     mineshaft, two mouths, eight regions on V20's seed) and `caves-floaters-home.txt` (his New World (11)); GameTest
     `caves_settled`.
+  - **The underlife** (Euan, the same day: two rust beetles half off an Ochre Deep ledge, "floating bugs"). A crawler's whole
+    body lies on its face, not only its middle: the square its quad covers at any heading (half its size times the root of
+    two) has rock behind every corner and open air in front, where it is made and at every step, so it turns short of an
+    edge and never sinks into a face it meets. A glow-worm curtain and a hanging bat hang wholly under their roof (rock over
+    every corner of their width, open under it). Every crawler, resting bat, curtain and resting cricket is checked against
+    its rock each tick and goes when the rock does (a bat's roost lets go). A crawler is drawn with its face's own normal, so
+    it takes the light its rock takes: it was drawn lit as if facing up, brighter than the wall it stood on. Client only:
+    `/awaken underlife walls` (crawlers set walking up the faces in view, ledges first) and `/awaken underlife check` (any off
+    their rock, to the log); tour `caves-underlife-walls.txt`; the rules in `caves_underlife_sites`.
 
 ### 42.5 The underlife (P1; client only)
 `caves.client.Underlife` (simulation, flat arrays, nothing allocated after start), `UnderlifeRender` (quads from

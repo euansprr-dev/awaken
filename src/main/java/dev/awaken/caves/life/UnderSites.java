@@ -80,6 +80,37 @@ public final class UnderSites {
         return open(level.getBlockState(m.set(floor(x + out.getStepX() * 0.1), floor(y + out.getStepY() * 0.1), floor(z + out.getStepZ() * 0.1))));
     }
 
+    /**
+     * True when a body lying flat on a surface, reaching {@code r} from its middle, lies wholly on it: rock behind its middle
+     * and behind every corner of the square round it, open in front of each (SPEC §42.4 "Settled": no half a beetle over a
+     * ledge's edge, none sunk into the floor where a wall meets it). A square under a block wide touches at most four cells,
+     * each holding a corner, so five points are enough.
+     */
+    public static boolean bodyOnSurface(BlockGetter level, BlockPos.MutableBlockPos m, double x, double y, double z, Direction out, double r) {
+        if (!onSurface(level, m, x, y, z, out)) return false;
+        // the face's two axes: x and z on a floor or roof, the other flat one and y on a wall
+        int ux = out.getAxis() == Direction.Axis.X ? 0 : 1, uz = out.getAxis() == Direction.Axis.X ? 1 : 0;
+        int vy = out.getAxis() == Direction.Axis.Y ? 0 : 1, vz = out.getAxis() == Direction.Axis.Y ? 1 : 0;
+        for (int c = 0; c < 4; c++) {
+            double su = (c & 1) == 0 ? -r : r, sv = (c & 2) == 0 ? -r : r;
+            if (!onSurface(level, m, x + ux * su, y + vy * sv, z + uz * su + vz * sv, out)) return false;
+        }
+        return true;
+    }
+
+    /**
+     * True when a body hanging from a point just under a roof, reaching {@code r} from its middle, hangs wholly from it: rock
+     * over its middle and over every corner of the square round it, open under each (a bat, a glow-worm curtain).
+     */
+    public static boolean hangs(BlockGetter level, BlockPos.MutableBlockPos m, double x, double y, double z, double r) {
+        int roof = floor(y) + 1;
+        for (int c = 0; c < 5; c++) {
+            int cx = floor(c == 4 ? x : x + ((c & 1) == 0 ? -r : r)), cz = floor(c == 4 ? z : z + ((c & 2) == 0 ? -r : r));
+            if (!rock(level.getBlockState(m.set(cx, roof, cz))) || !open(level.getBlockState(m.set(cx, roof - 1, cz)))) return false;
+        }
+        return true;
+    }
+
     /** The light a held item gives (a torch's 14), 0 for none: any block item whose block gives light. */
     public static int heldLight(ItemStack s) {
         return !s.isEmpty() && s.getItem() instanceof BlockItem bi ? bi.getBlock().defaultBlockState().getLightEmission() : 0;
