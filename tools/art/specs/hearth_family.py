@@ -459,6 +459,11 @@ def aya_coat(part, p):
         return y < 17.0                       # black haunches over white feet
     down = y - 10.0                           # 0 at the spine, 8 at the belly
     left = x > 0
+    if down < 0.25:
+        # along the top of her back she is black from her cap to her tail: her white comes up her sides and stops at
+        # the spine, so no sliver of white shows along her back when she is seen from the side (in the game it read as
+        # a bright line)
+        return True
     if z < -4.0:
         return False                          # the white collar behind her head, and her chest
     if z < -1.0:                              # the shoulder patch: over the top, further down on her left
