@@ -1,6 +1,6 @@
-"""The Hearth's family (plan docs/family/PLAN.md): Awa the cat and Dubu the dog, drawn from the owner's photos.
+"""The Hearth's family (plan docs/family/PLAN.md): Aya the cat and Dubu the dog, drawn from the owner's photos.
 
-  family_awa   a fluffy black-and-white cat: a black cap over the ears and eyes, a white blaze up the nose with a black
+  family_aya   a fluffy black-and-white cat: a black cap over the ears and eyes, a white blaze up the nose with a black
                wedge beside it, a black cheek on her left, green eyes, a pink nose, a white chest, belly and paws, a
                black saddle with a white streak through it, black haunches and a thick black tail
   family_dubu  a small, long, low white dog: fawn drop ears with feathering, a fawn patch over each eye, a white blaze,
@@ -31,8 +31,8 @@ from wild_fauna import sym, stubs, clip_of, hold  # noqa: E402
 JAVA_OUT = os.path.join(ROOT, "src/main/java/dev/awaken/kin/client/FamilyData.java")
 
 LIGHT = 1.22  # the previews' sun: the game lights an entity a little brighter than fauna_rig's default
-SCALE = {"family_awa": 0.45, "family_dubu": 0.5}
-TEMPER = {"family_awa": "cute", "family_dubu": "cute"}
+SCALE = {"family_aya": 0.45, "family_dubu": 0.5}
+TEMPER = {"family_aya": "cute", "family_dubu": "cute"}
 
 
 def keys(*pts):
@@ -227,11 +227,11 @@ def tuck(cl, legs, k=0.12):
 
 
 # =====================================================================================================================
-# Awa
+# Aya
 # =====================================================================================================================
 
-def awa():
-    r = Rig("family_awa", (128, 64))
+def aya():
+    r = Rig("family_aya", (128, 64))
     r.walk_stride, r.run_stride, r.run_speed, r.shadow = 0.62, 1.3, (0.12, 0.26), 0.32
     body = r.bone("body", (0, 14, 1))
     body.cube("rump", -4.5, -4, 0, 9, 8, 8)
@@ -264,16 +264,16 @@ def awa():
     t4.cube("otail4", -1.5, -1.5, 0, 3, 3, 3)
     r.look = [("head", 0.85, 0.7), ("chest", 0.1, 0.0)]
     r.pack()
-    _awa_clips(r)
+    _aya_clips(r)
     return r
 
 
-AWA_TAIL = ("tail", "tail2", "tail3", "tail4")
+AYA_TAIL = ("tail", "tail2", "tail3", "tail4")
 
 
-def _awa_tail(cl, pose, sway=0.0, lag=0.11, n=8, per=1.0, axis=1):
+def _aya_tail(cl, pose, sway=0.0, lag=0.11, n=8, per=1.0, axis=1):
     """The tail held in a pose (each link's extra bend, degrees) with a wave running down it."""
-    for k, nm in enumerate(AWA_TAIL):
+    for k, nm in enumerate(AYA_TAIL):
         px_, py_, pz_ = pose[k]
         if sway:
             a = sway * (1 + 0.35 * k)
@@ -286,13 +286,13 @@ def _awa_tail(cl, pose, sway=0.0, lag=0.11, n=8, per=1.0, axis=1):
             hold(cl, nm, rot=(px_, py_, pz_))
 
 
-def _awa_clips(r):
+def _aya_clips(r):
     legs = ("fleg_l", "fleg_r", "hleg_l", "hleg_r")
 
     # ---- standing: weight on four feet, the tail swaying slow, an ear flicking at something only she can hear
     idle = clip_of(r, "idle", 4.0, loop=True)
     cycle(idle, "chest", "scale", lambda p: (1 + 0.025 * s(p * 2), 1 + 0.025 * s(p * 2), 1), 8)
-    _awa_tail(idle, ((-6, 0, 0), (-4, 0, 0), (0, 0, 0), (6, 0, 0)), sway=9, n=8)
+    _aya_tail(idle, ((-6, 0, 0), (-4, 0, 0), (0, 0, 0), (6, 0, 0)), sway=9, n=8)
     idle.rot("ear_r", keys((0, 0, 0, 0), (1.2, 0, 0, 0), (1.3, 14, 0, -22), (1.42, 0, 0, 0), (1.5, 8, 0, -14), (1.62, 0, 0, 0), (4, 0, 0, 0)))
     idle.rot("ear_l", keys((0, 0, 0, 0), (2.9, 0, 0, 0), (3.0, 14, 0, 22), (3.14, 0, 0, 0), (4, 0, 0, 0)))
     idle.rot("head", keys((0, 0, 0, 0), (0.8, 0, 0, 0), (1.3, 2, -14, 4), (2.4, 2, -14, 4), (2.9, 0, 0, 0), (4, 0, 0, 0)))
@@ -307,7 +307,7 @@ def _awa_clips(r):
     cycle(move, "chest", "rot", lambda p: (0, -6.0 * s(p, 0.05), -2.2 * s(p, 0.3)), 12)
     cycle(move, "head", "rot", lambda p: (1.5 * c(p * 2), 2.5 * s(p, 0.05), 0.6 * s(p, 0.3)), 12)
     cycle(move, "head", "pos", lambda p: (0, -0.15 * c(p * 2, 0.1), 0), 12)
-    _awa_tail(move, ((30, 0, 0), (6, 0, 0), (2, 0, 0), (22, 0, 0)), sway=5, n=12)
+    _aya_tail(move, ((30, 0, 0), (6, 0, 0), (2, 0, 0), (22, 0, 0)), sway=5, n=12)
 
     # ---- running: a bounding canter, the back flexing, the tail streaming level behind
     run = clip_of(r, "run", 0.42, loop=True)
@@ -317,7 +317,7 @@ def _awa_clips(r):
     cycle(run, "body", "rot", lambda p: (5.5 * s(p, -0.1), 0, 0), 12)
     cycle(run, "chest", "rot", lambda p: (-9 * s(p, -0.1), 0, 0), 12)
     cycle(run, "head", "rot", lambda p: (4.5 * s(p, -0.1), 0, 0), 12)
-    _awa_tail(run, ((-14, 0, 0), (-10, 0, 0), (-8, 0, 0), (-4, 0, 0)), sway=7, n=12, axis=0)
+    _aya_tail(run, ((-14, 0, 0), (-10, 0, 0), (-8, 0, 0), (-4, 0, 0)), sway=7, n=12, axis=0)
     hold(run, "ear_l", rot=(26, 0, 10))
     hold(run, "ear_r", rot=(26, 0, -10))
 
@@ -380,7 +380,7 @@ def _awa_clips(r):
     cycle(roll, "fleg_r", "rot", lambda p: (-64 + 16 * s(p * 2, 0.5), 0, 8), 8)
     cycle(roll, "hleg_l", "rot", lambda p: (38 + 8 * s(p, 0.3), 0, -22), 8)
     cycle(roll, "hleg_r", "rot", lambda p: (30 + 8 * s(p, 0.6), 0, 22), 8)
-    _awa_tail(roll, ((-20, 0, 0), (-12, 14, 0), (-10, 10, 0), (-6, 8, 0)), sway=14, n=8, per=2)
+    _aya_tail(roll, ((-20, 0, 0), (-12, 14, 0), (-10, 10, 0), (-6, 8, 0)), sway=14, n=8, per=2)
 
     # ---- hello: the tail straight up and shivering, a head-butt and a rub along your shin
     nudge = clip_of(r, "nudge", 1.8)
@@ -418,9 +418,9 @@ def _awa_clips(r):
     hold(hide, "head", rot=(-6, 0, 0), pos=(0, -1.0, 0.6))
     hold(hide, "ear_l", rot=(34, 0, 38))
     hold(hide, "ear_r", rot=(34, 0, -38))
-    for nm in AWA_TAIL[1:]:
+    for nm in AYA_TAIL[1:]:
         hold(hide, nm, scale=(1.25, 1.25, 1))
-    _awa_tail(hide, ((-30, 0, 0), (-12, 0, 0), (-8, 0, 0), (0, 0, 0)), sway=16, n=8)
+    _aya_tail(hide, ((-30, 0, 0), (-12, 0, 0), (-8, 0, 0), (0, 0, 0)), sway=16, n=8)
     stubs(r)
 
 
@@ -431,8 +431,8 @@ EAR = Ramp("#6d4a55", "#94656f", "#b98891")
 TAILS = ("tail1", "otail2", "otail3", "otail4")
 
 
-def awa_coat(part, p):
-    """True where Awa is black. Body space: x + is her left, y down, z + is back; the torso runs z -7 .. 9, its back
+def aya_coat(part, p):
+    """True where Aya is black. Body space: x + is her left, y down, z + is back; the torso runs z -7 .. 9, its back
     is at y 10 and its belly at y 18."""
     x, y, z = p
     if part in ("oear_l", "eartip_l") or part in TAILS:
@@ -461,12 +461,12 @@ def awa_coat(part, p):
     return down < (6.0 if z >= 7.0 else 5.0)  # the rump, black nearly to the belly at the tail
 
 
-def paint_awa(r, P):
+def paint_aya(r, P):
     T = texels(r)
     for (tu, tv), (part, fname, i, j, p, n) in T.items():
         if part in ("ohead", "cheek_l", "cheek_r", "muzzle"):
             continue
-        black = awa_coat(part, p)
+        black = aya_coat(part, p)
         if part == "oear_l" and fname == "north" and 0 < i < 3:
             P.skin.set(tu, tv, EAR.at(1.4 if (i, j) == (1, 1) else 0.6))   # the ear's inside: dusky pink
             continue
@@ -480,11 +480,11 @@ def paint_awa(r, P):
         else:
             col = fur(WHITE, 4.0, p, n, part, lock=5, depth=0.14, seed=7, fall=0.2)
         P.skin.set(tu, tv, col)
-    _awa_head(r, P, T)
+    _aya_head(r, P, T)
     return P.skin, P.glow
 
 
-def _awa_head(r, P, T):
+def _aya_head(r, P, T):
     """Her face, drawn as you see her: columns run from her right cheek (your left) to her left."""
     B, Wt = "B", "W"
     # rows 0..7 of the front of the head (the muzzle box covers columns 3..7 of rows 5..7)
@@ -935,7 +935,7 @@ def paint_vanilla_wolf(r, P):
 # Building, previews
 # =====================================================================================================================
 
-DESIGNS = {"family_awa": (awa, paint_awa), "family_dubu": (dubu, paint_dubu)}
+DESIGNS = {"family_aya": (aya, paint_aya), "family_dubu": (dubu, paint_dubu)}
 
 
 def rigs(only=None):
@@ -950,7 +950,7 @@ def textures(rig, painter):
 
 def java(all_rigs):
     src = ["package dev.awaken.kin.client;", "", "import java.util.List;", "", "/**",
-           " * GENERATED by tools/art/specs/hearth_family.py: do not edit by hand. Awa and Dubu's bodies as plain data, in the",
+           " * GENERATED by tools/art/specs/hearth_family.py: do not edit by hand. Aya and Dubu's bodies as plain data, in the",
            " * hero rigs' format ({@link dev.awaken.mobs.client.anim.HeroRig#parse}); textures in textures/entity/family/.",
            " */", "public final class FamilyData {", "    private FamilyData() {}", "",
            "    /** Render scale (designed larger than it stands). */",
@@ -994,7 +994,7 @@ def turnaround(outdir, only=None, px=22):
     for rid, rig, painter in rigs(only):
         skin, glow, _ = textures(rig, painter)
         tex = skin.image()
-        who = "her" if rid == "family_awa" else "his"
+        who = "her" if rid == "family_aya" else "his"
         views = [("front", 0.01, 6), (f"front, from {who} left", 35, 14), (f"{who} left side", 90, 6), (f"back, from {who} left", 145, 14),
                  (f"{who} right side", -90, 6), (f"front, from {who} right", -35, 14), ("from above", 20, 62)]
         if os.environ.get("VIEWS"):
@@ -1191,7 +1191,7 @@ def page_art(outdir, films=True):
     from PIL import Image
     os.makedirs(outdir, exist_ok=True)
     M = _made()
-    awa_r, awa_t, awa_shut = M["family_awa"]
+    aya_r, aya_t, aya_shut = M["family_aya"]
     dub_r, dub_t, dub_shut = M["family_dubu"]
     steve = R.steve()
     made = []
@@ -1201,7 +1201,7 @@ def page_art(outdir, films=True):
 
     # ---- 1. each of them from every side
     for rid, (rig, tex, _) in M.items():
-        who = "her" if rid == "family_awa" else "his"
+        who = "her" if rid == "family_aya" else "his"
         views = [("from the front", 0.01, 8), (f"front, {who} left", 38, 14), (f"{who} left side", 90, 8), (f"back, {who} left", 142, 14),
                  ("from behind", 180, 8), (f"{who} right side", -90, 8), (f"front, {who} right", -38, 14), ("as you look down at " + ("her" if who == "her" else "him"), 24, 58)]
         st = pose(rig, "idle", 0.0)
@@ -1224,9 +1224,9 @@ def page_art(outdir, films=True):
     # ---- 2. their size: beside the player, and beside the game's own cat and wolf
     cat_r, cat_t = _other(vanilla_cat, paint_vanilla_cat)
     wolf_r, wolf_t = _other(vanilla_wolf, paint_vanilla_wolf)
-    sc_a, sc_d = SCALE["family_awa"], SCALE["family_dubu"]
+    sc_a, sc_d = SCALE["family_aya"], SCALE["family_dubu"]
     img = scene([(_player(), steve, 0.9375, (0.0, 0.0), 0),
-                 (pose(awa_r, "sit", 0.2), awa_t, sc_a, (-0.85, -0.25), -14),
+                 (pose(aya_r, "sit", 0.2), aya_t, sc_a, (-0.85, -0.25), -14),
                  (pose(dub_r, "idle", 0.1), dub_t, sc_d, (0.95, -0.15), 20)], (760, 620), 15.5, yaw=22, pitch=9, ground=0.9)
     path = os.path.join(outdir, "scale.png")
     img.convert("RGB").save(path)
@@ -1234,7 +1234,7 @@ def page_art(outdir, films=True):
 
     # ---- 3. the two directions: the game's own bodies wearing their coats, and bodies of their own
     for name, a_member, b_member in (
-            ("direction_awa", (cat_r.tree(), cat_t, 0.8, 12.0), (pose(awa_r, "idle", 0.0), awa_t, sc_a, 2.5)),
+            ("direction_aya", (cat_r.tree(), cat_t, 0.8, 12.0), (pose(aya_r, "idle", 0.0), aya_t, sc_a, 2.5)),
             ("direction_dubu", (wolf_r.tree(), wolf_t, 1.0, 8.5), (pose(dub_r, "idle", 0.0), dub_t, sc_d, 6.5))):
         both = []
         for tree, tex, sc, _top in (a_member, b_member):
@@ -1267,10 +1267,10 @@ def page_art(outdir, films=True):
         made.append(path)
 
     # ---- 4. moments: stills of the poses that came from the photos
-    stills = [("awa_loaf", awa_r, awa_t, sc_a, "loaf", 0.4, 40, 16), ("awa_sit", awa_r, awa_t, sc_a, "sit", 0.3, 34, 12),
-              ("awa_roll", awa_r, awa_t, sc_a, "roll", 0.9, 64, 24), ("awa_sleep", awa_r, awa_shut, sc_a, "sleep", 0.5, 150, 34),
-              ("awa_hello", awa_r, awa_t, sc_a, "nudge", 0.9, 40, 14), ("awa_walk", awa_r, awa_t, sc_a, "move", 0.1, 60, 12),
-              ("awa_stretch", awa_r, awa_t, sc_a, "stretch", 1.2, 62, 14), ("awa_wary", awa_r, awa_t, sc_a, "hide", 0.3, 40, 16),
+    stills = [("aya_loaf", aya_r, aya_t, sc_a, "loaf", 0.4, 40, 16), ("aya_sit", aya_r, aya_t, sc_a, "sit", 0.3, 34, 12),
+              ("aya_roll", aya_r, aya_t, sc_a, "roll", 0.9, 64, 24), ("aya_sleep", aya_r, aya_shut, sc_a, "sleep", 0.5, 150, 34),
+              ("aya_hello", aya_r, aya_t, sc_a, "nudge", 0.9, 40, 14), ("aya_walk", aya_r, aya_t, sc_a, "move", 0.1, 60, 12),
+              ("aya_stretch", aya_r, aya_t, sc_a, "stretch", 1.2, 62, 14), ("aya_wary", aya_r, aya_t, sc_a, "hide", 0.3, 40, 16),
               ("dubu_lie", dub_r, dub_t, sc_d, "lie", 0.4, 38, 16), ("dubu_sit", dub_r, dub_t, sc_d, "sit", 1.9, 34, 12),
               ("dubu_sleep", dub_r, dub_shut, sc_d, "sleep", 0.5, -56, 34), ("dubu_carry", dub_r, dub_t, sc_d, "carry", 0.1, 52, 12),
               ("dubu_hello", dub_r, dub_t, sc_d, "nudge", 0.55, 46, 14), ("dubu_run", dub_r, dub_t, sc_d, "run", 0.1, 60, 12),
@@ -1282,7 +1282,7 @@ def page_art(outdir, films=True):
         made.append(path)
 
     # ---- 5. together by the fire's light: her loaf, him asleep with his giraffe
-    img = scene([(pose(awa_r, "loaf", 0.4), awa_t, sc_a, (-0.62, 0.2), -22),
+    img = scene([(pose(aya_r, "loaf", 0.4), aya_t, sc_a, (-0.62, 0.2), -22),
                  (pose(dub_r, "lie", 0.4), dub_t, sc_d, (0.5, -0.1), 26)], (760, 380), 30, yaw=24, pitch=18, ground=0.86)
     path = os.path.join(outdir, "together.png")
     img.convert("RGB").save(path)
@@ -1322,11 +1322,11 @@ def page_art(outdir, films=True):
         return lambda t: [(pose(rig, clip, t), tex, sc, (0, 0), 0)]
 
     for name, rig, tex, sc, clip, yaw in (
-            ("awa_walk", awa_r, awa_t, sc_a, "move", 62), ("awa_run", awa_r, awa_t, sc_a, "run", 62),
-            ("awa_sit", awa_r, awa_t, sc_a, "sit", 34), ("awa_loaf", awa_r, awa_t, sc_a, "loaf", 40),
-            ("awa_sleep", awa_r, awa_shut, sc_a, "sleep", 150), ("awa_roll", awa_r, awa_t, sc_a, "roll", 64),
-            ("awa_hello", awa_r, awa_t, sc_a, "nudge", 40), ("awa_stretch", awa_r, awa_t, sc_a, "stretch", 62),
-            ("awa_idle", awa_r, awa_t, sc_a, "idle", 40),
+            ("aya_walk", aya_r, aya_t, sc_a, "move", 62), ("aya_run", aya_r, aya_t, sc_a, "run", 62),
+            ("aya_sit", aya_r, aya_t, sc_a, "sit", 34), ("aya_loaf", aya_r, aya_t, sc_a, "loaf", 40),
+            ("aya_sleep", aya_r, aya_shut, sc_a, "sleep", 150), ("aya_roll", aya_r, aya_t, sc_a, "roll", 64),
+            ("aya_hello", aya_r, aya_t, sc_a, "nudge", 40), ("aya_stretch", aya_r, aya_t, sc_a, "stretch", 62),
+            ("aya_idle", aya_r, aya_t, sc_a, "idle", 40),
             ("dubu_walk", dub_r, dub_t, sc_d, "move", 62), ("dubu_run", dub_r, dub_t, sc_d, "run", 62),
             ("dubu_carry", dub_r, dub_t, sc_d, "carry", 52), ("dubu_sit", dub_r, dub_t, sc_d, "sit", 34),
             ("dubu_lie", dub_r, dub_t, sc_d, "lie", 38), ("dubu_sleep", dub_r, dub_shut, sc_d, "sleep", 58),
@@ -1335,11 +1335,11 @@ def page_art(outdir, films=True):
         loops = 2 if cl.loop and cl.length < 1.0 else 1
         movie(name, solo(rig, tex, sc, clip), cl.length * loops, yaw=yaw)
 
-    # out with you: the player walking, Dubu trotting a little ahead, Awa at your heel with her tail up
+    # out with you: the player walking, Dubu trotting a little ahead, Aya at your heel with her tail up
     def out_with_you(t):
         return [(_player(walk=t / 1.04), steve, 0.9375, (0.0, 0.0), 0),
                 (pose(dub_r, "move", t), dub_t, sc_d, (0.3, -1.5), 6),
-                (pose(awa_r, "move", t * 0.84 / 1.04), awa_t, sc_a, (1.05, 0.35), -4)]
+                (pose(aya_r, "move", t * 0.84 / 1.04), aya_t, sc_a, (1.05, 0.35), -4)]
     movie("following", out_with_you, 2.08, fps=14, size=(760, 560), px=15, yaw=58, pitch=11, ground=0.9)
     return made
 

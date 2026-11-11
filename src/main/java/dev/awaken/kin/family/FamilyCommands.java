@@ -16,15 +16,15 @@ import java.util.List;
 
 /**
  * The preview's admin tools (for the plan's look tour, tools/autopilot/family.txt):
- * {@code /awaken admin family place awa|dubu <pose> <yaw>} stands one where you stand, facing {@code yaw}, in a pose
- * ({@link FamilyPet#ACTS}); {@code pose awa|dubu <pose>} changes the pose of those within 64 blocks; {@code walk awa|dubu
+ * {@code /awaken admin family place aya|dubu <pose> <yaw>} stands one where you stand, facing {@code yaw}, in a pose
+ * ({@link FamilyPet#ACTS}); {@code pose aya|dubu <pose>} changes the pose of those within 64 blocks; {@code walk aya|dubu
  * <blocks> <speed>} sends them that far the way they face; {@code clear} takes every one within 64 away.
  */
 final class FamilyCommands {
     private FamilyCommands() {}
 
     private static EntityType<FamilyPet> type(String who) {
-        return "dubu".equals(who) ? FamilyContent.DUBU.get() : FamilyContent.AWA.get();
+        return "dubu".equals(who) ? FamilyContent.DUBU.get() : FamilyContent.AYA.get();
     }
 
     private static List<FamilyPet> near(ServerPlayer p, String who) {
@@ -78,7 +78,7 @@ final class FamilyCommands {
     }
 
     private static com.mojang.brigadier.builder.RequiredArgumentBuilder<net.minecraft.commands.CommandSourceStack, String> who() {
-        return Commands.argument("who", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("awa", "dubu"), b));
+        return Commands.argument("who", StringArgumentType.word()).suggests((c, b) -> SharedSuggestionProvider.suggest(List.of("aya", "dubu"), b));
     }
 
     private static com.mojang.brigadier.builder.RequiredArgumentBuilder<net.minecraft.commands.CommandSourceStack, String> pose() {

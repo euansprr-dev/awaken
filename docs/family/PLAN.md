@@ -1,4 +1,6 @@
-# Awa and Dubu at the Hearth: the plan
+# Aya and Dubu at the Hearth: the plan
+
+Her name is **Aya**, spelled A-Y-A (Euan, 11 Nov 2026: "it's AYA, not AWA"; the brief's "Awa" was a mishearing).
 
 Status: **waiting for Euan's approval**. Page (private, it shows his photos): https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN,
 published 11 Nov 2026. Nothing below is built into play.
@@ -24,7 +26,7 @@ The photos are private and never enter this repo. The page that shows them is a 
 - **Rules from earlier decisions that bind this:** nothing fights for you (SPEC §43.4); kin do only boring work, and
   these two do none; taming is discovered, and these two are a gift, not a taming; motion at the Fresh Animations bar;
   plain words; answered through the world, not a screen; safe for a server with many players.
-- **A strong result:** he looks at Awa in the game and says "that's her". She loafs where the real one loafs. Dubu meets
+- **A strong result:** he looks at Aya in the game and says "that's her". She loafs where the real one loafs. Dubu meets
   him at the yard's edge with his giraffe. Out in the wild they keep up without ever popping in beside him, and a fight
   never involves them.
 - **A weak result:** two vanilla-looking animals with their colours, standing about.
@@ -54,7 +56,7 @@ anyone who is not a working beast.
 ## 3. Their bodies: two directions, one recommendation
 
 - **A. The game's own cat and wolf bodies, wearing their coats.** Fresh Animations would move them for free in Euan's
-  pack. But the vanilla cat's face is 5 by 4 pixels, so Awa's blaze, wedge and black cheek cannot be drawn and she reads
+  pack. But the vanilla cat's face is 5 by 4 pixels, so Aya's blaze, wedge and black cheek cannot be drawn and she reads
   as any tuxedo cat; and Dubu is a small, long, low dog with drop ears and a plume, while the wolf is tall, prick-eared
   and straight-tailed. Their own poses (the loaf, belly up, chin on paws, the giraffe) have no FA clip, and FA's files
   are not ours to extend. Without the pack they would move like vanilla.
@@ -67,9 +69,9 @@ The page shows A and B side by side at the same real size.
 
 Numbers of the drawn bodies:
 
-| | Awa | Dubu |
+| | Aya | Dubu |
 |---|---|---|
-| Rig | `family_awa`, 13 bones, texture 128 x 64 | `family_dubu`, 15 bones, texture 128 x 64 |
+| Rig | `family_aya`, 13 bones, texture 128 x 64 | `family_dubu`, 15 bones, texture 128 x 64 |
 | Drawn scale | 0.45 (36 texels a block) | 0.5 (32 texels a block) |
 | Height at the back | 0.39 blocks | 0.38 blocks |
 | Nose to rump | 0.68 blocks | 0.9 blocks |
@@ -84,7 +86,7 @@ more `KinKind`s. So:
 - They take no nook and have no job, no want, no rumour and no Kinship ladder.
 - They do not count for `beasts:N`, the Nook bell, or any beast step on Tasks.
 - They are on the Hearth page under Your beasts, first, as two cards: name, where they are, what they are doing.
-- They wear the kin plate: "Awa" and "yours", then what she is doing.
+- They wear the kin plate: "Aya" and "yours", then what she is doing.
 - The Hundred Peal, the Kinsong, the Gnawed and raids' thefts never touch them. In a raid they hide with the beasts
   and come out at dawn.
 
@@ -96,10 +98,10 @@ more `KinKind`s. So:
   minute after the fire is lit, by day or night, never during a raid or a Fault.
 - **How:** Dubu first. He runs in from the way you came (the landing's mooring on a Far Landing world, else the bearing
   of the Last Fire, else from behind you), from 24 to 40 blocks off and out of sight, straight to you, and greets you.
-  Awa comes ten to fifteen seconds behind at a walk, stops a few blocks off, sits and looks, then comes over and rubs
+  Aya comes ten to fifteen seconds behind at a walk, stops a few blocks off, sits and looks, then comes over and rubs
   your shin.
 - **Words** (the System's bracket lines, once): "[That's Dubu. He must have followed you the whole way.]" then
-  "[And Awa, taking her time. They live here now.]"
+  "[And Aya, taking her time. They live here now.]"
 - **A world that already has a Hearth** (Euan's): the same scene the next time its owner is home and outdoors.
 - **If no path can be found:** each is placed on open ground 12 to 20 blocks off, out of your sight, and walks the rest.
 - **A Hearth that moves:** they come to the new one the same way. With no Hearth at all they stay with its owner.
@@ -108,7 +110,7 @@ more `KinKind`s. So:
 
 They do nothing useful. A day is made of small things, each picked from what is really at the home:
 
-| | Awa | Dubu |
+| | Aya | Dubu |
 |---|---|---|
 | Rests | The loaf, on something raised and in the light: a sill, a slab, a stair, a barrel, your bed | Chin on his paws near where you are |
 | Sleeps | Curled, on a bed, a carpet or by the fire; at the foot of your bed when you sleep | On his side by the fire, his giraffe under his chin |
@@ -140,7 +142,7 @@ Three states each, shown on the plate: **At home**, **With you**, **Waiting here
 
 - **Dubu** ranges. He trots a few blocks ahead, stops and looks back until you catch up, sniffs at things, heels close
   when you sneak, and runs flat out beside you when you sprint. He swims.
-- **Awa** trails. A few blocks behind or to one side, tail up, along walls and fences where there are any. She will not
+- **Aya** trails. A few blocks behind or to one side, tail up, along walls and fences where there are any. She will not
   swim: she goes round, or catches up.
 - **When you outrun them** (rope, wings, a mount, a boat with no free seat, Homeward): they are never left in unloaded
   land and never appear beside you. Each is placed out of your sight 12 to 20 blocks back along the way you came and runs
@@ -175,7 +177,7 @@ if you are gone five minutes or come back somewhere else.
 
 ### 5.8 With other players
 
-- One Awa and one Dubu per Hearth, shared by its household. A sister home gets no second pair.
+- One Aya and one Dubu per Hearth, shared by its household. A sister home gets no second pair.
 - Any member can ask one along. It answers to one person at a time and goes home when that person logs out.
 - Other players can pet them. They cannot take them, push them or hurt them.
 - The Hearth's owner can rename them with the naming card that kin already have. Their coats stay.
@@ -192,12 +194,12 @@ if you are gone five minutes or come back somewhere else.
 ### 5.10 Tasks, the Hearth page, the Journal
 
 - Hearth page: their two cards, first under Your beasts.
-- Tasks, Hearth tab: one row, only until it has been done once: "Awa and Dubu will come with you if you ask."
+- Tasks, Hearth tab: one row, only until it has been done once: "Aya and Dubu will come with you if you ask."
 - No Journal entry: they are not a discovery.
 
 ### 5.11 Sounds
 
-From the game's own recordings, by name, pitched for them: the cat's purr, purreow and ambient for Awa; the wolf's
+From the game's own recordings, by name, pitched for them: the cat's purr, purreow and ambient for Aya; the wolf's
 whine, pant, shake and a high, short bark for Dubu. No synthetic sounds. A listening page comes with stage 1.
 
 ### 5.12 Motion: the bar for the build
@@ -234,7 +236,7 @@ spread over ticks, and remembers what it found. No allocation per tick.
   danger; thresholds; the rules for several players; the Tasks row.
 - **Stage 3, themselves:** her perches, sills, beds and sun; his giraffe, chin rests and yard's edge; the bells; the two
   of them together; every transition as a real clip; motion to the FA bar.
-- **Later, each its own decision:** fetch with Dubu; Awa on your shoulder at speed; a basket to craft.
+- **Later, each its own decision:** fetch with Dubu; Aya on your shoulder at speed; a basket to craft.
 
 At AI pace: stage 1 about three to four hours, stage 2 the same, stage 3 four to five, most of it motion. Built in one
 go and tested once at the end, film-checked on CI.
@@ -247,22 +249,23 @@ SPEC because it decides nothing about play.
 
 ## 8. Decisions for Euan
 
-1. Her name is spelled **Awa**. (Recommended: yes.)
-2. Awa's look, as drawn. (Yes, or say what is off.)
-3. Dubu's look, as drawn. (Yes, or say what is off.)
-4. Bodies of their own, not the vanilla cat and wolf. (Yes.)
-5. They arrive half a minute after the first fire, Dubu first; on your current world, the next time you are home. (Yes.)
-6. Family, not kin: no nook, no job, not counted for beast goals or the Nook bell. (Yes.)
-7. Sneak and use asks one along or tells it to stay; use pets. (Yes.)
-8. Out with you they keep up by catching up from out of sight, never by appearing beside you. (Yes.)
-9. In a fight they back off and watch; nothing can target or hurt them; they never help. (Yes.)
-10. They do not enter gates, dreams, the Nether or the End; they wait, then go home. (Yes.)
-11. On a server: one pair per Hearth, shared by its household; the owner may rename them. (Yes.)
-12. Sounds from the game's own cat and wolf recordings, pitched for them. (Yes.)
-13. One Tasks row until you have first asked one along. (Yes.)
-14. Later extras: (a) fetch with Dubu, yes; (b) Awa rides your shoulder when you sprint, glide or ride, yes;
+Her name is settled: **Aya**, spelled A-Y-A (Euan, 11 Nov 2026: "it's AYA, not AWA"). It is not a decision.
+
+1. Aya's look, as drawn. (Yes, or say what is off.)
+2. Dubu's look, as drawn. (Yes, or say what is off.)
+3. Bodies of their own, not the vanilla cat and wolf. (Yes.)
+4. They arrive half a minute after the first fire, Dubu first; on your current world, the next time you are home. (Yes.)
+5. Family, not kin: no nook, no job, not counted for beast goals or the Nook bell. (Yes.)
+6. Sneak and use asks one along or tells it to stay; use pets. (Yes.)
+7. Out with you they keep up by catching up from out of sight, never by appearing beside you. (Yes.)
+8. In a fight they back off and watch; nothing can target or hurt them; they never help. (Yes.)
+9. They do not enter gates, dreams, the Nether or the End; they wait, then go home. (Yes.)
+10. On a server: one pair per Hearth, shared by its household; the owner may rename them. (Yes.)
+11. Sounds from the game's own cat and wolf recordings, pitched for them. (Yes.)
+12. One Tasks row until you have first asked one along. (Yes.)
+13. Later extras: (a) fetch with Dubu, yes; (b) Aya rides your shoulder when you sprint, glide or ride, yes;
     (c) a basket to craft, no.
-15. Build stages 1 to 3 in one go, tested once at the end. (Yes.)
+14. Build stages 1 to 3 in one go, tested once at the end. (Yes.)
 
 ## 9. Not verified
 

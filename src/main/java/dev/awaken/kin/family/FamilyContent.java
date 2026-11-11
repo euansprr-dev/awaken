@@ -9,7 +9,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * The Hearth's family (plan docs/family/PLAN.md): Awa and Dubu's entity types. Until the plan is approved these are the
+ * The Hearth's family (plan docs/family/PLAN.md): Aya and Dubu's entity types. Until the plan is approved these are the
  * preview bodies only ({@link FamilyPet}); nothing spawns them but {@code /awaken admin family}.
  */
 public final class FamilyContent {
@@ -17,7 +17,7 @@ public final class FamilyContent {
 
     static final DeferredRegister.Entities ENTITIES = DeferredRegister.createEntities(Awaken.MODID);
 
-    public static final DeferredHolder<EntityType<?>, EntityType<FamilyPet>> AWA = ENTITIES.registerEntityType("family_awa", FamilyPet::new,
+    public static final DeferredHolder<EntityType<?>, EntityType<FamilyPet>> AYA = ENTITIES.registerEntityType("family_aya", FamilyPet::new,
             MobCategory.CREATURE, b -> b.sized(0.45F, 0.5F).eyeHeight(0.36F).clientTrackingRange(8));
     public static final DeferredHolder<EntityType<?>, EntityType<FamilyPet>> DUBU = ENTITIES.registerEntityType("family_dubu", FamilyPet::new,
             MobCategory.CREATURE, b -> b.sized(0.5F, 0.55F).eyeHeight(0.4F).clientTrackingRange(8));
@@ -25,7 +25,7 @@ public final class FamilyContent {
     public static void init(IEventBus modBus) {
         ENTITIES.register(modBus);
         modBus.addListener((EntityAttributeCreationEvent e) -> {
-            e.put(AWA.get(), FamilyPet.attributes().build());
+            e.put(AYA.get(), FamilyPet.attributes().build());
             e.put(DUBU.get(), FamilyPet.attributes().build());
         });
         FamilyCommands.register();

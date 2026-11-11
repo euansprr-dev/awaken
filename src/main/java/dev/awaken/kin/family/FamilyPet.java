@@ -19,7 +19,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.EnumSet;
 
 /**
- * Awa the cat or Dubu the dog (plan docs/family/PLAN.md), as a body to look at: it stands where an admin command puts
+ * Aya the cat or Dubu the dog (plan docs/family/PLAN.md), as a body to look at: it stands where an admin command puts
  * it and holds the pose it is told. This is the plan's preview only. Nothing in the game makes one, it has no life of its
  * own yet, and it changes nothing in play; what they do at the Hearth and out with you is built once the plan is approved.
  * Nothing can hurt it.

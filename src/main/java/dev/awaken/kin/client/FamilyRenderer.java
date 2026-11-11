@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Draws Awa and Dubu (plan docs/family/PLAN.md) from their rigs ({@link FamilyData}), as the kin are drawn: the pose it
+ * Draws Aya and Dubu (plan docs/family/PLAN.md) from their rigs ({@link FamilyData}), as the kin are drawn: the pose it
  * holds picks the clip of the same name, moving swaps in its walk or run, clips crossfade, and the life layer (breath,
  * blinks, springy ears and tail) goes on top. Asleep, its eyes are shut.
  */
