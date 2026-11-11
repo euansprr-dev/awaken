@@ -8,6 +8,8 @@
 // Needs lens_frame.glsl, lens_air.glsl, lens_cloud_cells.glsl and lens_storm_blocks.glsl (stormClearing) before it. v the ray (unit), scene the distance to what
 // the pixel shows (1e9 for sky). Returns rgb the light the clouds send this way (premultiplied), a how much of what is
 // behind still shows.
+vec4 P(int i);  // the including pass's parameter read (texel 25 r: Lite)
+
 float cloudNearHg(float mu, float g) { return (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
 
 vec4 cloudNear(vec3 v, float scene) {
@@ -112,6 +114,12 @@ vec4 cloudNear(vec3 v, float scene) {
     // into the haze with distance, as the far ones go
     float at = tHit > 0.0 ? tHit : t0;
     float far = smoothstep(260.0, 1500.0, at), gone = smoothstep(520.0, 1500.0, at) * 0.6;
+    // (Lite has no far clouds behind these, SPEC §22 "Lite": they are gone into the haze before the walk's end, where
+    // the layer would stop at a line across the sky)
+    if (P(25).r > 0.5) {
+        far = max(far, smoothstep(240.0, 600.0, at));
+        gone = max(gone, smoothstep(330.0, 620.0, at));
+    }
     L = mix(L, airFog(v, f22.xyz, f16.z) * (1.0 - T), far * 0.9) * (1.0 - gone);
     T = 1.0 - (1.0 - T) * (1.0 - gone);
     return vec4(L, T);

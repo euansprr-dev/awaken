@@ -1985,7 +1985,8 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   tools/autopilot/lens-dh.txt (2026-10-24, OpenGL on the M4, DH Swift, render distance 16: depth read, far terrain
   intact, haze across the vanilla edge within ~0.03 of itself away from silhouettes; logs/lens-dh-sheet.jpg). Params
   texels: 13 the ritual, 14 Holo.
-- The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): three tiers (four with ImmersiveVFX installed, below), and one choice
+- The Look switch, AWAKEN · LOOK (`compat.client.LookScreen`; the rules in `compat.Look`): four tiers (five with ImmersiveVFX installed, below; Lite,
+  between Swift and Cinematic, joined on 2026-11-11 and owns Swift's keys with `lens = LITE`, §22 "Lite"), and one choice
   sets every companion that offers a supported way, writing only the keys below, so each mod's own menu still works
   for the rest. Opened with O (`key.awaken.look`; U went to Sovereign on 2026-10-25, Awaken's key category), from Awaken's settings (Mods → AWAKEN →
   Config → the client section's "Look" row, under Lens) and by autopilot (`screen look`, `lookswitch <tier>`). The
@@ -2005,10 +2006,10 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   | Iris shaders switch | off | off | off (was on; Lens 2's Ultra replaced Iris, §22) |
   | Sodium, vanilla options | none | none | none |
 
-  VFX, the fourth tier (Euan, 9 Nov: Swift, Cinematic, Ultra, VFX, "VFX only has that active"): `lens = VFX`, and Lens
+  VFX, the last tier (Euan, 9 Nov: Swift, Cinematic, Ultra, VFX, "VFX only has that active"): `lens = VFX`, and Lens
   stays off, story scenes included, while ImmersiveVFX draws. Offered only with that mod installed; a saved VFX without
   it reads as Swift. No frame-time budget is promised. The mod has no off switch and a jar can't be unloaded, so the
-  three Lens tiers put it to sleep through its own `ModConfigSpec` (`compat.client.ImmersiveVfxLook`, found through
+  Lens tiers put it to sleep through its own `ModConfigSpec` (`compat.client.ImmersiveVfxLook`, found through
   FML's `ModConfigs` by key, so no compile dependency): every on/off setting false, the choices in `Look.VFX_ASLEEP`,
   then `spec.save()`, which writes the file and fires the reload the mod listens for, as its menu does. What the player
   had waits in config/awaken-immersivevfx-kept.json (`schemaVersion`) and comes back with VFX. The first client tick
@@ -6433,6 +6434,37 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `lens_grade_vivid_reads`. The offline tuning tool is `tools/lens/grade_preview.py`
     (the colour step's maths on finished frames; keep it in step with the shader); the pictures are in
     `docs/perf/steady60/grades/`.
+- **Lite** (Euan 2026-11-11: "a new version between Swift and Cinematic ... it has all the best stuff, like the
+  atmosphere and everything, but it's really optimized for performance ... if my girlfriend was playing on her ... M1
+  MacBook with 16 gigs of RAM ... let's keep Swift as it is now ... if you want to turn everything off, you just use
+  Swift"). A fourth Lens tier, `lens = LITE`, second on the Look page (Cinematic, Ultra and VFX move one key along).
+  It is the Air with none of Lens 2's light: the sky and the air are Cinematic's, the land is lit as the game lights
+  it.
+  - **What it keeps**: the Air's sky (the day's colours, sunrise and sunset, the night and its stars), the far fog
+    that fades the land into that sky, the block clouds, the block storm with its lightning, the sun's rays across
+    the screen (the shafts pass), bloom, the place's look (exposure, tints, contrast), the grades, a story moment's
+    look, and Swift's cave rule (under a roof the game's own darks stand).
+  - **What it leaves out**: everything that reads the world a second time. Sun shadows, contact shadows, ambient
+    occlusion, the warm and cool light, wet ground, water reflections, the lit air's mist and its beams between
+    trees, the light's motes (`LensParticles`), and the far clouds' pass with the soft rain it draws under a storm.
+    With no far clouds behind them the near ones are gone into the haze by 620 blocks (`cloudNear`), where the layer
+    would otherwise stop at a line across the sky.
+  - **How**: `lens_lite.json` is ten passes where Cinematic's is fourteen and Swift's eight: the far probe and its
+    copy, the Air's sky, the bloom prefilter (with the cloud walk at half size), three blur steps, the shafts, the
+    composite, the copy out (which straight out skips, "The trim"). It runs Cinematic's own prefilter and composite
+    programs, so there is no second shader to keep in step and none more to compile; parameter texel 25 r tells them
+    it is Lite, and they skip `lensLight`, the mist and every read of the light buffer, the heightfield and the far
+    clouds, whose samplers are bound to small stand-ins. In `LensClient` two flags part what was one: `framed` (the
+    chain reads the frame's values: Lite, Cinematic, Ultra) and `lit` (Lens 2's light: Cinematic, Ultra). Lite never
+    creates the heightfield, the block map, the sun map or the lit air, and does none of their tick work
+    (`lens cost` counts no ticks under it). It always has the Air, whatever `lensAir` says: its chain has no other
+    sky. Distant Horizons takes Swift's values.
+  - **The Look page**: five cards with ImmersiveVFX installed, so the page is 414 wide then (396 with four), each
+    card's two lines are broken by hand (what it is, its pace), and on a narrow card the chosen tier's dot gives way
+    before its name runs under the key's number. Keys 1 to 5.
+  - **Not measured**: its pace on an M1. There is none here and CI's runners have no real GPU, so the 60 fps on its
+    card (budget 16.7 / 25 ms) is what it is built for, not a reading. Seen on CI beside Swift and Cinematic:
+    `tools/autopilot/steady60-lite-ci.txt`. Test: `compat_look_tiers`.
 - **Not built yet**: the frame record, the pass-by-pass trim of the older Cinematic steps (the largest target left:
   each full-size pass costs about 0.3 ms to exist on this GPU), Far Sight off by default on these tiers, the Air on
   Swift (it has no view direction there), ground mist, the Look page rows for the Air and the Sun Pass.

@@ -37,7 +37,8 @@ void main() {
     float sky = texture(DepthSampler, texCoord).r < 1.0e-7 ? 1.0 : 0.0;
 #ifdef LENS_LIGHT
     // the clouds are part of the sky that blooms and that the shafts are made of: bright edges glow, cloud cuts the rays
-    vec4 cl = texture(CloudsSampler, texCoord);
+    // (Lite, parameter texel 25 r, draws no far clouds' buffer: its sampler is a stand-in)
+    vec4 cl = P(25).r > 0.5 ? vec4(0.0, 0.0, 0.0, 1.0) : texture(CloudsSampler, texCoord);
     {
         // the Air's near clouds in front of the others: walked here at this pass's own half size (lens_cloud_walk.glsl)
         float dz = texture(DepthSampler, texCoord).r;
