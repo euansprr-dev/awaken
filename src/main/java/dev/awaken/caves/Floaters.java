@@ -119,7 +119,8 @@ final class Floaters {
         lones.sort(Comparator.comparingInt((Kind k) -> k.seen).reversed());
         for (Kind k : lones) {
             StringBuilder cells = new StringBuilder();
-            for (BlockPos p : k.cells) cells.append(cells.isEmpty() ? "" : "; ").append(p.getX()).append(' ').append(p.getY()).append(' ').append(p.getZ());
+            for (BlockPos p : k.cells) cells.append(cells.isEmpty() ? "" : "; ").append(p.getX()).append(' ').append(p.getY()).append(' ').append(p.getZ())
+                    .append(" (").append(around(level, p)).append(')');
             Awaken.LOG.info(String.format(Locale.ROOT, "[caves] floaters   lone %s: %d at %s; the first in %s",
                     BuiltInRegistries.BLOCK.getKey(k.block), k.seen, cells, owner(level, k.cells.getFirst())));
         }
@@ -226,6 +227,22 @@ final class Floaters {
     /** Nothing a block could rest on or hang from: air, a liquid, or something any block may replace (a lichen, grass). */
     private static boolean open(BlockState s) {
         return s.isAir() || s.getBlock() instanceof LiquidBlock || s.canBeReplaced();
+    }
+
+    /**
+     * What a lone cell has round it, for the log: the liquids and the open blocks that aren't air (a lichen, a vine, grass),
+     * each with its side, and "on a chunk's edge" where a side is in the next chunk; "air" when there's nothing else.
+     */
+    private static String around(ServerLevel level, BlockPos at) {
+        StringBuilder b = new StringBuilder();
+        for (Direction d : Direction.values()) {
+            BlockState s = level.getBlockState(at.relative(d));
+            if (s.isAir()) continue;
+            b.append(b.isEmpty() ? "" : ", ").append(d.getSerializedName()).append(' ').append(BuiltInRegistries.BLOCK.getKey(s.getBlock()).getPath());
+        }
+        int lx = at.getX() & 15, lz = at.getZ() & 15;
+        if (lx == 0 || lx == 15 || lz == 0 || lz == 15) b.append(b.isEmpty() ? "" : ", ").append("on a chunk's edge");
+        return b.isEmpty() ? "air" : b.toString();
     }
 
     /** All six sides of a cell open. */
