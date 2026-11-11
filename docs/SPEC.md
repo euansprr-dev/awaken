@@ -25431,8 +25431,13 @@ and re-run: the gates session.
   `ascent_stroke`, `TrialHooks.standTaken` for the course's door, Minecraft's anvil at 0.62. The client holds the body 40
   ticks, light climbs the legs, and the title shows 12 ticks in.
 - **The course's hooks** (`core.api.TrialHooks`, additions): `at(player, trial, mark, from, to)` with marks `reach`,
-  `use/<move>/<n>`, `miss` or `miss/<move>`, `run`; `pay(...)` returning `Pay` (first, XP, mastery before and after, its
-  fill, counts by name); `finished`; `onSlam` / `slamLanded` (fired from `AscentServer.slam`); `onStand` / `standTaken`.
+  `use/<move>/<n>`, `miss` or `miss/<move>`, `run` (`from` and `to` are the cells feet stand in, not the floor; a
+  `miss` comes once for every three falls at one spot); `pay(...)` returning `Pay` (first, XP, mastery before and
+  after, its fill, counts by name: the course shows them and works out nothing itself); `finished`; `onSlam` /
+  `slamLanded` (fired from `AscentServer.slam`); `onStand` / `standTaken` (once, on the tick a stand is taken; the
+  course answers with its press stroke and the door). As agreed with the gates session on 11 Nov: a door is real
+  blocks, so it opens for everyone in the gate once anyone has taken its stand, and the hall past it is what asks for
+  the move; every runner still takes each stand for themselves.
   The Ascent's side: `WayUp.mark` (sends `ascent_spot`; `run` starts a count), `WayUp.used`, `WayUp.pay` (the first
   time: the flag, 10 mastery, half a level, the leap made whole; always: the counts and one log line, "[gauntlet] run
   by … : 14 double jumps, …").

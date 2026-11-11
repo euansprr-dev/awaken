@@ -36,9 +36,11 @@ public final class TrialHooks {
 
         /**
          * A runner entered a named mark of a trial's course (SPEC §71.4), with the two ends of the thing marked (a
-         * gulf's lips, a spot's take-off and landing; the same block twice for a point). The Leaper's Gauntlet's marks:
-         * {@link #MARK_REACH}, {@link #MARK_USE} + "double/1" (and "dash/2", "slam/3", ...), {@link #MARK_MISS} (three
-         * falls at one spot: shown again) and {@link #MARK_RUN} (the timed run's first step).
+         * gulf's lips, a spot's take-off and landing; the same block twice for a point). Both are world block positions
+         * of the cell feet stand in (the one above the floor), not of the floor. The Leaper's Gauntlet's marks:
+         * {@link #MARK_REACH}, {@link #MARK_USE} + "double/1" (and "dash/2", "slam/3", ...), {@link #MARK_MISS} or
+         * "miss/double" (sent once for every three falls at one spot: the spot is shown again) and {@link #MARK_RUN}
+         * (the timed run's first step).
          */
         default void at(ServerPlayer p, String trial, String mark, BlockPos from, BlockPos to) {}
 
@@ -85,7 +87,10 @@ public final class TrialHooks {
 
     /**
      * A runner took what a stand of a trial holds (§71.3: the Gauntlet's stands; {@code move} is "double", "dash", "slam"
-     * or "dive"). The course opens the way on from that stand for that runner.
+     * or "dive"). Called once, on the server, on the tick the stand is taken: the runner's body is then held for 40
+     * ticks and the move's title shows 12 ticks in. The course answers with its own stroke and opens the way on from
+     * that stand. A door is real blocks, so it opens for everyone in the gate; the hall past it is what asks for the
+     * move, and every runner still takes each stand for themselves.
      */
     public interface StandListener {
         void taken(ServerPlayer p, String trial, String move, BlockPos stand);

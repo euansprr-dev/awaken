@@ -329,7 +329,8 @@ public final class WayClient {
     private static void onSpot(WayPayloads.Spot msg) {
         LocalPlayer p = Minecraft.getInstance().player;
         if (p == null || !BodyConfig.wayUp()) return;
-        Vec3 from = Vec3.atBottomCenterOf(BlockPos.of(msg.from())).add(0, 1, 0), to = Vec3.atBottomCenterOf(BlockPos.of(msg.to())).add(0, 1, 0);
+        // the course names the cells feet stand in (the one above the floor), so their bottoms are the floor's top
+        Vec3 from = Vec3.atBottomCenterOf(BlockPos.of(msg.from())), to = Vec3.atBottomCenterOf(BlockPos.of(msg.to()));
         if (msg.kind() == WayPayloads.SPOT_REACH) {
             if (!stand(WayUp.Leap.DOUBLE) && Lesson.kind() == null) Lesson.begin(Lesson.Kind.REACH, from.lerp(to, 0.5), Lesson.leapPath(from, to));
             SPOTS[WayUp.Leap.DOUBLE.ordinal()] = new Vec3[]{from, to};
