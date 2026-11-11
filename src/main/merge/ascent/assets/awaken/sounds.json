@@ -367,5 +367,29 @@
         "attenuation_distance": 24
       }
     ]
+  },
+  "ascent.dive": {
+    "subtitle": "subtitles.awaken.ascent.dive",
+    "sounds": [
+      {
+        "name": "minecraft:entity.phantom.swoop",
+        "type": "event",
+        "volume": 0.75,
+        "pitch": 1.15,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "ascent.dive_land": {
+    "subtitle": "subtitles.awaken.ascent.dive_land",
+    "sounds": [
+      {
+        "name": "minecraft:item.mace.smash_ground",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
   }
 }

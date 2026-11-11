@@ -67,6 +67,14 @@ public final class AscentRules {
     public static final double DASH_SPEED = 0.95, DASH_GAIN = 1.33, DASH_LIFT = 0.08;
     /** A dive slam: from at least this high, straight down at this speed; the landing's shock reaches this far. */
     public static final double SLAM_MIN_HEIGHT = 4, SLAM_SPEED = 1.7, SLAM_RADIUS = 3.5;
+    /**
+     * The aimed dive (SPEC §17.33): attack in a leap's carry flies the body down to the point under the crosshair. The
+     * look finds it within DIVE_REACH of the eye, at least DIVE_DROP_MIN under the feet. It flies at DIVE_SPEED (under
+     * the slam's 1.7, so its landing never hits harder), reached over DIVE_RAMP ticks. After DIVE_MAX_TICKS the carry
+     * takes the body back. Once an airtime, and DIVE_COOL ticks from one dive's start to the next.
+     */
+    public static final double DIVE_REACH = 24, DIVE_DROP_MIN = 1, DIVE_SPEED = 1.6;
+    public static final int DIVE_RAMP = 3, DIVE_MAX_TICKS = 30, DIVE_COOL = 40;
 
     // ---- carry: the momentum you keep after letting go ------------------------------------------------------------
     public static final double CARRY_DRAG_H = 0.988, CARRY_DRAG_V = 0.98;
@@ -530,6 +538,50 @@ public final class AscentRules {
         k.x += k.vx;
         k.y += k.vy;
         k.z += k.vz;
+    }
+
+    // ---- the aimed dive (SPEC §17.33) ---------------------------------------------------------------------------------
+
+    /** Whether feet at (fx, fy, fz) may dive to (tx, ty, tz): at least DIVE_DROP_MIN under them, within the dive's reach. */
+    public static boolean diveTo(double fx, double fy, double fz, double tx, double ty, double tz) {
+        double dx = tx - fx, dy = ty - fy, dz = tz - fz;
+        return -dy >= DIVE_DROP_MIN && dx * dx + dy * dy + dz * dz <= (DIVE_REACH + 1.62) * (DIVE_REACH + 1.62);
+    }
+
+    /** The dive's speed on its {@code age}th tick (0: the press's tick): up to DIVE_SPEED over DIVE_RAMP whole ticks. */
+    public static double diveSpeed(int age) {
+        return DIVE_SPEED * Math.min(1, (age + 1) / (double) DIVE_RAMP);
+    }
+
+    /**
+     * One tick of the aimed dive, with no gravity and no drag: straight at the point at the dive's speed. Once the point is
+     * nearer than a tick's flight, the step goes onto it and a quarter block lower, so the floor under it stops the
+     * feet and the landing is read there. After that, straight down at the dive's speed. Returns whether the point has been
+     * reached ({@code there}: it had been, before this tick).
+     */
+    public static boolean diveStep(Kin k, double tx, double ty, double tz, int age, boolean there) {
+        double sp = diveSpeed(age);
+        if (there) {
+            k.vx = 0;
+            k.vy = -sp;
+            k.vz = 0;
+        } else {
+            double dx = tx - k.x, dy = ty - k.y, dz = tz - k.z, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (d <= sp) {
+                k.vx = dx;
+                k.vy = dy - 0.25;
+                k.vz = dz;
+                there = true;
+            } else {
+                k.vx = dx / d * sp;
+                k.vy = dy / d * sp;
+                k.vz = dz / d * sp;
+            }
+        }
+        k.x += k.vx;
+        k.y += k.vy;
+        k.z += k.vz;
+        return there;
     }
 
     // ---- glide ------------------------------------------------------------------------------------------------------

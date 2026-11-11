@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 final class AscentFx {
     private AscentFx() {}
 
-    static final int BITE = 0, RING = 1, LOOSE = 2, MISS = 3;
+    static final int BITE = 0, RING = 1, LOOSE = 2, MISS = 3, MARK = 4;
 
     static final class Shot {
         int kind = -1;
@@ -205,6 +205,23 @@ final class AscentFx {
             mc.level.addParticle(dev.awaken.body.ascent.AscentContent.MOTE.get(), p.getX() + rx * s * out, surfaceY + 0.12, p.getZ() + rz * s * out,
                     rx * s * 0.09 + k.vx * 0.15, 0.03 + r.nextDouble() * 0.03, rz * s * 0.09 + k.vz * 0.15);
         }
+    }
+
+    /**
+     * The aimed dive's mark (SPEC §17.33): where the dive will land, a ring on the ground closing in on the point over the
+     * dive's flight ({@code life} ticks). One at a time; {@link #unmark} takes it away when the dive ends.
+     */
+    static void mark(double x, double y, double z, int life) {
+        unmark();
+        Shot s = shot(MARK, Math.max(4, life));
+        s.x = x;
+        s.y = y;
+        s.z = z;
+        s.size = 1F;
+    }
+
+    static void unmark() {
+        for (Shot s : SHOTS) if (s.kind == MARK) s.kind = -1;
     }
 
     static void ring(double x, double y, double z, Vec3 dir, float size) {

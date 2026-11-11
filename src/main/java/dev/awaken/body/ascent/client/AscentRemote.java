@@ -97,6 +97,12 @@ public final class AscentRemote {
                         msg.what() == AscentPayloads.EV_DOUBLE ? new net.minecraft.world.phys.Vec3(0, 1, 0) : e.getLookAngle(), 0.3F);
             }
             case AscentPayloads.EV_DIVE -> AscentSounds.local(e, AscentContent.WINGS_FOLD.get(), 0.8F, 0.7F);
+            // the aimed dive (SPEC §17.33): the swoop as it goes, the smash and a ring where it lands
+            case AscentPayloads.EV_AIM_DIVE -> AscentSounds.local(e, AscentContent.DIVE.get(), 1F, 1F);
+            case AscentPayloads.EV_DIVE_LAND -> {
+                AscentSounds.local(e, AscentContent.DIVE_LAND.get(), Math.min(1F, 0.45F + msg.speed() * 0.35F), 1F);
+                AscentFx.ring(e.getX(), e.getY() + 0.15, e.getZ(), new net.minecraft.world.phys.Vec3(0, 1, 0), 0.42F);
+            }
             // Rope and Wings (SPEC §62): the moves as others see and hear them
             case AscentPayloads.EV_SLING -> AscentSounds.move(e, "sling", AscentContent.LAUNCH.get(), 0.6F, 1.1F);
             case AscentPayloads.EV_SPRING -> AscentSounds.move(e, "spring", AscentContent.LAUNCH.get(), 0.6F, 1.1F);

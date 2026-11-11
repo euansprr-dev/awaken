@@ -3841,7 +3841,7 @@ is what the Ascent decided while building it.
   (+0.52 on top of any rise; it comes before the wings: a second jump opens them), sprint in the air = an air dash
   along the look's heading at max(0.95, 1.33 × your horizontal speed) with a lift of 0.08, sneak with 4+ blocks under
   you = a dive slam (horizontal speed ×0.25, straight down at 1.7). Each goes into the carry with the swing's momentum,
-  so a release can chain into a dash and a slam.
+  so a release can chain into a dash and a slam. After a double jump or a dash, attack = the aimed dive (§17.33).
   A slam's landing: within 3.5 blocks, creatures take 3 + 3 × the landing speed (falling off to 40% at the edge) and
   are thrown out; players only where the world's PvP rule allows; your own tamed creatures never. The server applies it
   only with the Leaper tier, out of an airborne state a moment ago.
@@ -5148,6 +5148,65 @@ The fix: a leap is the body's own air again whenever it meets an edge, and it cl
   The log names what took each (`air catch: ...`, `air mantle onto`, `vault ... from the air`, `hang (grab)`) and where
   the feet came to rest (`[ascent] where`). The pilot gained `double <key> [gap]` and `where <label>`; the Ascent's
   `grant` gained `leaper` (the rope and the Leaper, no wings).
+
+### 17.33 The aimed dive (Euan's play, 2026-11-11: "if you click like your attack button ... it pushes you down faster towards where you clicked ... so that you choose where you're gonna land")
+After a double jump or an air dash, attack sends the body down along the look to the point under the crosshair, faster
+than a fall, so you pick where you land. `AscentMoves.aimDive`, `AscentRules.diveStep`.
+
+- **When.** In a leap's carry (§17.32: after a double jump or an air dash, never a slam), when attack is pressed. It
+  goes once an airtime (the Leaper's third bit, back on landing or a rope's bite), with 2 s (`DIVE_COOL` 40 ticks)
+  from one dive's start to the next. It costs no Aether: no Leaper move spends any, since Aether is the Skyborn's
+  flight (§17.8). The wait does the Aether's job. A slam needs 4 blocks of height, which takes a rope or a long fall,
+  so it comes seldom. A dive needs only a leap, about 15 ticks round, so without the wait its shock would land on
+  every leap. With it, every second or third leap can dive.
+- **Whose press.** The hand's first, then the rope's, then the dive's.
+  - It is the hand's in three cases: the crosshair is on anything in the hand's reach (a creature to hit, a block to
+    break); the hand means a creature near the look (the mark's creature by `Aim.meantId`, or a calm one by
+    `Aim.calm`, which a weapon's press takes without a perfect aim); or a lock is on (§40). Then there's no dive.
+  - It is the rope strike's (§62) when a creature is under the crosshair out of the hand's reach.
+  - Otherwise it is the dive's.
+
+  A weapon's own air attack, the Plunge (§25), needs a fall of 2 blocks. A leap's carry keeps the fall at nothing, so
+  a Plunge never comes up on a press here, and the dive takes nothing from it. A weapon in hand still swings at the
+  air on the same press, as it does with the rope strike, and the Ascent's hands step aside for the swing (`AscentFp`).
+  No power casts on the attack key.
+- **Where.** The look from the eye finds a block within 24 (`DIVE_REACH`), and the point is where it meets it. On a
+  floor the feet land on the point. On a side the body aims 0.4 out from the face and falls down to its foot. The
+  point must lie at least 1 block under the feet (`DIVE_DROP_MIN`): a dive goes down, and a level aim is the dash's.
+- **The fallback** is no dive: when nothing is within 24, at the sky, or at a point not under the feet, the press is
+  only the hand's swing, and the dive stays unspent for this airtime. A dive anywhere other than where you aimed would
+  undo the move's point, so the fallback is never straight down.
+- **The flight.** Straight at the point, with no gravity and no drag.
+  - Its speed is 1.6 a tick (`DIVE_SPEED`): faster than any fall from a leap's height, and under the slam's 1.7. It
+    reaches that over 3 ticks (0.53, 1.07, 1.6), so 11 blocks take 8 ticks.
+  - The last step goes onto the point and a quarter block under it, so the floor there stops the feet. If there's no
+    floor, it goes straight down from there.
+  - A wall in the way (the body stopped against it), or 30 ticks (`DIVE_MAX_TICKS`), gives the body back to the carry,
+    which falls. Since it is still a leap's carry, it can climb what it hit (§17.32).
+  - Only the rope cuts in during the flight: no jump, sprint, sneak, edge or wings. The point is fixed at the press,
+    and the crosshair after it changes nothing.
+- **The landing** comes at the speed the dive flew (the last step only closes the gap).
+  - The server lands the slam's shock by the slam's own rule (§17.3): 3 + 3 × the speed within 3.5 blocks, falling
+    off with distance, and creatures are thrown out. The speed it takes is never above 1.6, so a dive lands for at most
+    7.8 where a slam lands for 8.1 and more.
+  - Not twice within 20 ticks (`AscentServer.DIVE_LAND_GAP`), against a client that sends landings faster than its
+    dives can come.
+  - A hard landing's roll follows, as after any.
+- **Its look.** The press puts a mark on the ground at the point: a thin warm-white ring closing from 1.25 across to
+  0.34 round a still dot over the flight, gone at the landing. At the dive's speed the Ascent's own contrails stream
+  off the hands (they show over 1.15 a tick), and the fists go up (`fp_dive`). The landing has its ring on the ground
+  and the slam's shake.
+- **Its sounds** are Minecraft's own recordings: the phantom's swoop as it goes (`ascent.dive`: `entity.phantom.swoop`,
+  pitch 1.15) and the mace's ground smash where it lands (`ascent.dive_land`: `item.mace.smash_ground`, louder with
+  speed).
+- **Others** see the contrails and the landing's ring, and hear both sounds (`EV_AIM_DIVE`, `EV_DIVE_LAND`).
+- **One side decides.** The client decides the dive, its point and its flight, and the server only answers the
+  landing. The clock is whole ticks since the press, with no timer kept.
+- **Test:** `ascent_aimed_dive`: the point's rule, the flight onto it and down, and the server's shock and its gap.
+- **Tour:** `tools/autopilot/aimed-dive.txt`. Double jumps from a standstill, then attack at a gold mark 8.6 to 14.8
+  blocks off at four headings, one from a sprint, one in first person, and one aimed past the reach (the fallback).
+  The log has `aimed dive to`, `the dive lands <off> from its point` and `[ascent] where`. The pilot gained
+  `aimat <x> <y> <z> <ticks>` and `hold attack <ticks>`.
 
 ## 18. Pixels (render scale and upscaling; Far Sight path 4, approved 2026-10-24)
 

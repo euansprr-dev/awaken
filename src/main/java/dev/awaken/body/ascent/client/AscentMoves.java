@@ -83,7 +83,7 @@ public final class AscentMoves {
     private static boolean tetherWas, jumpWas, sneakWas, sprintWas, leftWas, rightWas;
     /** The barrel roll's double tap: the last side tapped and when; when the last roll went. */
     private static int sideTapAt = -100, sideTapDir, rollAt = -100;
-    /** The Leaper's air moves used this airtime (bits: 1 double jump, 2 air dash), back on landing or a rope's bite. */
+    /** The Leaper's air moves used this airtime (bits: 1 double jump, 2 air dash, 4 aimed dive), back on landing or a rope's bite. */
     static int airMovesUsed;
     /** A dive slam is falling: its landing shakes the ground. */
     static boolean slamming;
@@ -92,6 +92,13 @@ public final class AscentMoves {
      * aside for the body's own climb (a crossing, a mantle, the hang).
      */
     private static boolean leapt;
+    /**
+     * The aimed dive (SPEC §17.33): flying to (diveX, diveY, diveZ), diveAge whole ticks in, begun at diveAt; diveThere
+     * once the point is reached (straight down from there).
+     */
+    private static boolean diving, diveThere;
+    private static double diveX, diveY, diveZ;
+    private static int diveAge, diveAt = -1000;
     /** This tick's keys, for the first-person stances (AscentFp). */
     static boolean keyFwd, keySprint, keyJump, keySneak;
     private static int lastJumpPress = -100;
@@ -361,6 +368,13 @@ public final class AscentMoves {
             apply(p, in);
             return;
         }
+        // the aimed dive (SPEC §17.33): an attack in a leap's carry, at nothing the hand or the rope takes, flies the body
+        // down to the point under the crosshair
+        if (attackPressed && state == AscentState.CARRY && leapt && !slamming && !diving && aimDive(p, mc, yaw, pitch)) {
+            diveTick(p, yaw);
+            apply(p, in);
+            return;
+        }
         switch (state) {
             case NONE -> {
                 // a Runner move (a wall-run, a hang) or a climb (a mantle, a crossing: SPEC §17.32, a press during one
@@ -454,6 +468,9 @@ public final class AscentMoves {
             case CARRY -> {
                 if (tetherPressed && has(AscentPayloads.Tier.TETHER) && fire(p)) {
                     // swinging again
+                } else if (diving) {
+                    // the aimed dive holds its line: only the rope cuts in
+                    diveTick(p, yaw);
                 } else if (chain && pullTicks == 0 && fire(p, false)) {
                     // the rope held: the next swing as soon as there's one
                 } else if (jumpPressed && dev.awaken.body.client.RunnerMoves.wallBeside(p)) {
@@ -1844,6 +1861,70 @@ public final class AscentMoves {
     }
 
     /**
+     * The aimed dive's press (SPEC §17.33). The press is the hand's when something is in its reach under the crosshair
+     * (a creature, a block), when it means a creature near the look (what a weapon's press would take), or with a lock
+     * on. Otherwise the look finds the point to dive to. True when the dive began.
+     */
+    private static boolean aimDive(LocalPlayer p, Minecraft mc, float yaw, float pitch) {
+        if (!has(AscentPayloads.Tier.LEAPER) || (airMovesUsed & 4) != 0 || ticks - diveAt < AscentRules.DIVE_COOL) return false;
+        if (mc.hitResult != null && mc.hitResult.getType() != net.minecraft.world.phys.HitResult.Type.MISS) return false;
+        if (dev.awaken.core.api.Aim.locked()) return false;
+        double reach = p.entityInteractionRange();
+        if (dev.awaken.core.api.Aim.meantId(p, dev.awaken.core.api.Aim.target(), yaw, pitch, reach) >= 0
+                || dev.awaken.core.api.Aim.calm(p, yaw, pitch, reach) >= 0) return false;
+        Vec3 eye = p.getEyePosition(), look = Vec3.directionFromRotation(pitch, yaw);
+        var hit = p.level().clip(new net.minecraft.world.level.ClipContext(eye, eye.add(look.scale(AscentRules.DIVE_REACH)),
+                net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.SOURCE_ONLY, p));
+        if (hit.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK) {
+            trace("no dive: nothing under the crosshair within reach");
+            return false;
+        }
+        Vec3 at = hit.getLocation();
+        Direction face = hit.getDirection();
+        // on a floor the feet land on the point; on a side the body aims half a width out from it and falls down its foot
+        double tx = at.x + face.getStepX() * 0.4, ty = at.y, tz = at.z + face.getStepZ() * 0.4;
+        if (!AscentRules.diveTo(p.getX(), p.getY(), p.getZ(), tx, ty, tz)) {
+            trace(String.format("no dive: the point (%.2f, %.2f, %.2f) is not under the feet", tx, ty, tz));
+            return false;
+        }
+        double d = Math.sqrt(p.distanceToSqr(tx, ty, tz));
+        airMovesUsed |= 4;
+        diving = true;
+        diveThere = false;
+        diveAge = 0;
+        diveAt = ticks;
+        diveX = tx;
+        diveY = ty;
+        diveZ = tz;
+        AscentSounds.local(p, AscentContent.DIVE.get(), 1F, 1F);
+        AscentFx.mark(tx, ty, tz, (int) Math.ceil(d / AscentRules.DIVE_SPEED) + 1);
+        event(AscentPayloads.EV_AIM_DIVE, (float) d);
+        FeelDirector.dive();
+        AscentFp.dive();
+        AscentFlow.gain(0.06F);
+        trace(String.format("aimed dive to (%.2f, %.2f, %.2f), %.2f away", tx, ty, tz, d));
+        return true;
+    }
+
+    /** A tick of the aimed dive. A wall in its way, or its time run out, gives the body back to the carry. */
+    private static void diveTick(LocalPlayer p, float yaw) {
+        if ((diveAge > 0 && p.horizontalCollision) || diveAge >= AscentRules.DIVE_MAX_TICKS) {
+            trace(diveAge >= AscentRules.DIVE_MAX_TICKS ? "the dive runs out" : "the dive meets a wall");
+            stopDive();
+            carry(yaw, 0, 0);
+            return;
+        }
+        diveThere = AscentRules.diveStep(K, diveX, diveY, diveZ, diveAge, diveThere);
+        diveAge++;
+    }
+
+    private static void stopDive() {
+        diving = false;
+        AscentFx.unmark();
+        AscentFp.diveEnd();
+    }
+
+    /**
      * The Sovereign's Judgement Fall (SPEC §17.19): from at least {@code minHeight} up, the body drops at {@code speed},
      * a dive whose landing the server answers as Judgement. False when too low or held by a rope.
      */
@@ -2237,6 +2318,9 @@ public final class AscentMoves {
         double h = K.hspeed(), fall = -impactVy;
         landAt = ticks;
         landSpeed = (float) Math.sqrt(h * h + Math.max(0, fall) * Math.max(0, fall));
+        // an aimed dive's last step only closes the gap to its point: it landed at the speed it flew
+        boolean dived = diving;
+        if (dived) landSpeed = Math.max(landSpeed, (float) AscentRules.diveSpeed(diveAge - 2));
         trace(String.format("lands h %.2f fall %.2f", h, fall));
         boolean wings = state.wings;
         // the flare (SPEC §62): down slow and level on open wings, they cup and the feet touch
@@ -2260,6 +2344,17 @@ public final class AscentMoves {
             AscentFp.slamLand();
             AscentFlow.gain(0.1F);
             event(AscentPayloads.EV_SLAM_LAND, landSpeed);
+        } else if (dived) {
+            // the aimed dive's landing (SPEC §17.33): the mace's smash, a ring on the ground, the slam's shake; the server
+            // lands its shock on the slam's rule
+            AscentSounds.local(p, AscentContent.DIVE_LAND.get(), Math.min(1F, 0.45F + landSpeed * 0.35F), 1F);
+            AscentFx.ring(p.getX(), p.getY() + 0.15, p.getZ(), new Vec3(0, 1, 0), 0.42F);
+            FeelDirector.slam(landSpeed);
+            AscentFp.slamLand();
+            AscentFlow.gain(0.1F);
+            event(AscentPayloads.EV_DIVE_LAND, landSpeed);
+            double off = Math.sqrt((p.getX() - diveX) * (p.getX() - diveX) + (p.getZ() - diveZ) * (p.getZ() - diveZ));
+            trace(String.format("the dive lands %.2f from its point (%.2f, %.2f, %.2f) at %.2f", off, diveX, diveY, diveZ, landSpeed));
         } else {
             FeelDirector.land(landSpeed);
         }
@@ -2288,6 +2383,7 @@ public final class AscentMoves {
         if (state.rope) AscentFx.loose(p.getId(), ax, ay, az);
         state = AscentState.NONE;
         leapt = false;
+        if (diving) stopDive();
         stateAge = 0;
         sent = false;
         // a vault ends with the landing (left set, the next carry would pull toward this one's ledge)
@@ -2309,6 +2405,7 @@ public final class AscentMoves {
         if (s != AscentState.CARRY) {
             pullTicks = 0;
             leapt = false;
+            if (diving) stopDive();
         }
         AscentState was = state;
         state = s;

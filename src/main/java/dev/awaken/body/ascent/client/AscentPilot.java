@@ -26,6 +26,8 @@ import net.minecraft.util.Mth;
  * double &lt;key&gt; [gap]         a double tap, as a player's: 2 ticks down, up, 2 down again gap ticks after the first
  *                            (default 5; a barrel roll: double right; a double jump timed: double jump 7)
  * use | attack               one click of the use or attack key (a door, a lever, a plant: the touches, Hands P4)
+ * hold attack &lt;ticks&gt;        the attack key held down (the aimed dive reads it held, SPEC §17.33)
+ * aimat &lt;x&gt; &lt;y&gt; &lt;z&gt; &lt;ticks&gt;  look from the eye at that point every tick for so long (the aimed dive's tour)
  * usehold &lt;ticks&gt;            hold the use key (eating)
  * station &lt;slot&gt; [button]     a click on a slot of the open crafting-table scene (Hands P5)
  * where &lt;label&gt;              log where the feet are (a tour's landing points)
@@ -35,8 +37,13 @@ import net.minecraft.util.Mth;
 public final class AscentPilot {
     private AscentPilot() {}
 
-    private static final int FORWARD = 0, BACK = 1, LEFT = 2, RIGHT = 3, JUMP = 4, SNEAK = 5, SPRINT = 6, TETHER = 7;
-    private static final int[] HOLD = new int[8];
+    private static final int FORWARD = 0, BACK = 1, LEFT = 2, RIGHT = 3, JUMP = 4, SNEAK = 5, SPRINT = 6, TETHER = 7, ATTACK = 8;
+    private static final int[] HOLD = new int[9];
+    /** The attack key was set down by a hold (only then is it let go: a real click is never touched). */
+    private static boolean attackSet;
+    /** "aimat": the point looked at, and for how many more ticks. */
+    private static double aimAtX, aimAtY, aimAtZ;
+    private static int aimAtTicks;
     private static float aimYaw, aimPitch, aimStepYaw, aimStepPitch;
     private static int aimTicks;
     /** A double tap in progress: the key and how far along (-1: none). */
@@ -62,6 +69,12 @@ public final class AscentPilot {
                     int i = key(k);
                     if (i >= 0) HOLD[i] = t;
                 }
+            }
+            case "aimat" -> {
+                aimAtX = Double.parseDouble(a[1]);
+                aimAtY = Double.parseDouble(a[2]);
+                aimAtZ = Double.parseDouble(a[3]);
+                aimAtTicks = Math.max(1, Integer.parseInt(a[4]));
             }
             case "aim" -> {
                 float yaw = Float.parseFloat(a[1]), pitch = Float.parseFloat(a[2]);
@@ -143,6 +156,7 @@ public final class AscentPilot {
             case "sneak" -> SNEAK;
             case "sprint" -> SPRINT;
             case "tether" -> TETHER;
+            case "attack" -> ATTACK;
             default -> -1;
         };
     }
@@ -151,6 +165,7 @@ public final class AscentPilot {
         script = "";
         java.util.Arrays.fill(HOLD, 0);
         aimTicks = 0;
+        aimAtTicks = 0;
         apply();
     }
 
@@ -180,8 +195,15 @@ public final class AscentPilot {
             p.setYHeadRot(p.getYRot());
             p.setXRot(Mth.clamp(p.getXRot() + aimStepPitch, -90, 90));
         }
+        if (aimAtTicks > 0) {
+            aimAtTicks--;
+            double dx = aimAtX - p.getX(), dy = aimAtY - p.getEyeY(), dz = aimAtZ - p.getZ();
+            p.setYRot((float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG));
+            p.setYHeadRot(p.getYRot());
+            p.setXRot((float) Mth.clamp(-Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG, -90, 90));
+        }
         // in Shoulder Surfing's decoupled view the camera is the look: it follows the pilot's
-        if (!script.isEmpty() || aimTicks > 0) dev.awaken.body.client.feel.ShoulderView.look(p.getYRot(), p.getXRot());
+        if (!script.isEmpty() || aimTicks > 0 || aimAtTicks > 0) dev.awaken.body.client.feel.ShoulderView.look(p.getYRot(), p.getXRot());
         if (doubleAge >= 0 && doubleKey >= 0) {
             if (doubleAge == 0 || doubleAge == doubleGap) HOLD[doubleKey] = Math.max(HOLD[doubleKey], 2);
             if (++doubleAge > doubleGap + 1) doubleAge = -1;
@@ -209,6 +231,9 @@ public final class AscentPilot {
         set(o.keyShift, HOLD[SNEAK] > 0);
         set(o.keySprint, HOLD[SPRINT] > 0);
         set(AwakenKeys.ROPE, HOLD[TETHER] > 0);
+        boolean attack = HOLD[ATTACK] > 0;
+        if (attack || attackSet) set(o.keyAttack, attack);
+        attackSet = attack;
     }
 
     private static void set(KeyMapping k, boolean down) {
