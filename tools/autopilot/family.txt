@@ -148,10 +148,12 @@ shotnow family_d3_after_the_fight
 cmd gamemode creative
 
 # ---- E. Dubu told to wait, away from home; you walk on with Aya ----
+walk 320
+wait 380
 cmd awaken admin family use dubu sneak
 camera front
-walk 50
-wait 90
+walk 60
+wait 110
 cmd awaken admin family state
 shotnow family_e1_dubu_waits_aya_comes
 camera first

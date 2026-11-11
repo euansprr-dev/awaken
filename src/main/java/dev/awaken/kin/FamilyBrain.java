@@ -63,7 +63,8 @@ final class FamilyBrain {
         if (b.position().distanceToSqr(b.lastAt) < 0.01 && !b.getNavigation().isDone()) b.stuck++;
         else b.stuck = 0;
         b.lastAt = b.position();
-        if (b.stuck > 40 && FamilyService.rescue(level, b)) return;
+        // (not while it keeps back from a fight: being put right would put it beside you)
+        if (b.stuck > 40 && b.waryUntil <= now && FamilyService.rescue(level, b)) return;
         if (b.arriveTo != null) {
             arrive(level, b, now);
             return;
@@ -180,15 +181,25 @@ final class FamilyBrain {
         if (threat != null) {
             b.waryUntil = now + 60;
             b.wasWary = true;
-            Vec3 away = p.position().subtract(threat);
-            away = away.horizontalDistanceSqr() < 0.01 ? new Vec3(1, 0, 0) : new Vec3(away.x, 0, away.z).normalize();
+            // straight away from the fight itself (not from you: a foe circles you, and a spot measured from the two of you
+            // swings round with it), until it is well back; then it turns and watches
             double back = b.kind() == FamilyKind.AYA ? BACK_AYA : BACK_DUBU;
-            BlockPos to = FamilySpots.standable(level, p.getX() + away.x * back, p.getY(), p.getZ() + away.z * back);
-            if (to == null || go(b, to, 1.5, 2.0)) {
+            Vec3 from = new Vec3(b.getX() - threat.x, 0, b.getZ() - threat.z);
+            double d = from.length();
+            BlockPos to = null;
+            if (d < back) {
+                Vec3 dir = d < 0.01 ? new Vec3(1, 0, 0) : from.scale(1.0 / d);
+                for (int k = 0; k < 5 && to == null; k++) { // dead away from it, else a little to one side or the other
+                    double ang = k == 0 ? 0 : (k % 2 == 1 ? 0.7 : -0.7) * ((k + 1) / 2);
+                    double cx = dir.x * Math.cos(ang) - dir.z * Math.sin(ang), cz = dir.x * Math.sin(ang) + dir.z * Math.cos(ang);
+                    to = FamilySpots.standable(level, b.getX() + cx * 6, b.getY(), b.getZ() + cz * 6);
+                }
+            }
+            if (to == null) {
                 b.getNavigation().stop();
                 b.act(FamilyPet.HIDE);
                 b.getLookControl().setLookAt(threat.x, threat.y + 1, threat.z);
-            }
+            } else go(b, to, 1.5, 1.0);
             return;
         }
         if (b.waryUntil > now) {

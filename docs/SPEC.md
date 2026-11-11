@@ -24474,9 +24474,9 @@ person at a time.
   off behind you (out of your view, or hidden by terrain; else 5 to 11) and runs in. A body that falls out of the loaded
   world is made again the same way. Never beside you.
 - A boat you are in with a free seat within 4.5 blocks: it hops in. Aya will not path through water; Dubu swims.
-- A fight (something within 16 blocks hunting you, or that hurt you, or a foe you struck, in the last 5 s): each runs to
-  a spot 11 (Dubu) or 13 (Aya) blocks from you on the far side from it and watches in its wary pose; 3 s after it ends
-  it comes back and says hello.
+- A fight (something within 16 blocks hunting you, or that hurt you, or a foe you struck, in the last 5 s): each runs
+  straight away from it (measured from the fight, not from you: a foe circles you) until it is 11 (Dubu) or 13 (Aya)
+  blocks off, then turns and watches in its wary pose; 3 s after it ends it comes back and says hello.
 - Thresholds: they exist only in the overworld. When their person leaves it, one that is with them waits where it is
   (DOOR) and rejoins them if they come back within 64 blocks of that spot; after five minutes, or if they come back
   somewhere else or log off, it goes home. One told to wait goes home when its person is more than 64 blocks off or
