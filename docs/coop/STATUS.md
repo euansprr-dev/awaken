@@ -29,7 +29,10 @@ with no local Java (Euan was playing): everything was compiled and tested throug
 - `Go to <name>` as a destination that follows; pings on the Atlas; shared binocular marks.
 - A read per player in `FightMind` (it still starts again on a new target; with the hold that is once a phrase).
 - Match my friend; shown the way; leads from a partner's finds; the Ours page; marks on the Tasks page.
-- The finishing film for everyone (the boss plan isn't built); the helm rule for the Far Landing (not merged here).
+- The finishing film for everyone: unblocked since the boss plan merged (SPEC §68). It is a client-side change in
+  `mobs.client.finish.FinishClient`: let party members through its "mine" test and frame from the striker's place;
+  the server already tells everyone within 64 blocks. Either fighter can already take the blow.
+- The helm rule for the Far Landing (held for the skiff redesign, not in build).
 - Hard-feat titles and records refusing Gentle (no counter is touched yet: list them with the progression owner).
 - The two-client CI probe and the wire baseline numbers (a test player's channel takes no custom payloads, so tests count sends in `TogetherNet`).
 - Dead branches left where code still asks `RidingHooks.rider` or `run.riding` (always false now): gates, progression,
