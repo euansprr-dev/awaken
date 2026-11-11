@@ -24,8 +24,10 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * The Wings' case on a sky platform's core (SPEC §17.9, 11 Nov 2026): the real wings (WingFeathers, the model Euan
- * approved) held open and raised in a tall glass case over the core, breathing slowly and turning once every 36 s, lit
- * from its lid so they read through the cabin's glass from the pier. Three blocks square and 3.4 high on the deck, its
+ * approved) held open and raised in a tall glass case over the core, breathing slowly, lit from its lid. They face away
+ * from the cabin's door (north), so whoever looks in through it sees them as they will sit on their own back, and sway
+ * a little either way over half a minute (a whole turn showed them edge-on half the time: a tour's shot caught a white
+ * blob behind a post). Three blocks square and 3.4 high on the deck, its
  * posts and rails dark Precursor metal with a line of light up each inner edge.
  * <p>
  * The gift is the case opening: when the core gives the wings, the glass sinks into the base over 0.7 s, the wings wake
@@ -40,8 +42,10 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
     static final float HALF = 1.5F, H = 3.4F, BASE = 0.25F, RAIL = 0.18F, POST = 0.16F;
     /** The wings in the case: their size, their root over the deck, their raise (degrees; negative lifts them). */
     static final float SIZE = 0.42F, ROOT_Y = 2.15F, RAISE = -34F;
-    /** A turn of the case's wings, and their slow breath (ticks). */
-    static final int TURN_TICKS = 720, BREATH_TICKS = 64;
+    /** Where the case's wings face (a body's yaw: north, away from the door), how far they sway either way (degrees). */
+    static final float FACE = 180F, SWAY = 22F;
+    /** A sway of the case's wings there and back, and their slow breath (ticks). */
+    static final int SWAY_TICKS = 600, BREATH_TICKS = 64;
     /** The gift: the glass sinks over this long; the wings wake, then fly from here to the scene's unfolding. */
     static final int SINK = 14, WAKE = 10;
 
@@ -110,7 +114,7 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
                 }
             }
             // the lid's light falling on the wings: a soft square shaft, brighter at the top
-            float a = 0.10F * (0.6F + 0.4F * glow);
+            float a = 0.05F * (0.6F + 0.4F * glow);
             float t0 = H - RAIL - 0.05F, t1 = BASE + 0.4F, in0 = 0.45F, in1 = 0.95F;
             int hiCol = argb(0xCFF3FF, a), loCol = argb(0xCFF3FF, 0);
             for (int s = 0; s < 4; s++) {
@@ -151,8 +155,8 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
         LocalPlayer me = mc.player;
         int t = AscentMoves.ticks;
         state.lod = WingForm.lod(camera.distanceToSqr(Vec3.atCenterOf(be.getBlockPos())));
-        // the case's own wings: raised, breathing, turning; the clock is whole ticks, eased by the partial one
-        float turn = ((t % TURN_TICKS) + pt) / TURN_TICKS * 360F;
+        // the case's own wings: raised, breathing, swaying; the clock is whole ticks, eased by the partial one
+        float turn = FACE + SWAY * Mth.sin(((t % SWAY_TICKS) + pt) / SWAY_TICKS * Mth.TWO_PI);
         float breath = ((t % BREATH_TICKS) + pt) / 20F;
         WingForm.beat(WingForm.HOVER, breath, BREATH_TICKS / 20F, 0.16F, 0.22F, state.pose);
         state.yaw = turn;

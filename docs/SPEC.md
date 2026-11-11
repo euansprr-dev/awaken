@@ -4293,8 +4293,10 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   - *The case* (`WingCaseRenderer`, one per core, drawn within 96): three blocks square and 3.4 high round the core, a
     dark metal frame of four posts and rails with a lamp under the lid, glass panes drawn as faint additive light with
     an edge line, two streaks and a shaft of light down from the lid. Inside, the real model (`WingFeathers.pair`, the
-    first rung's pair, 0.42 of size, raised 34 degrees) hangs open, turning once every 36 s and breathing on the hover's
-    beat. Barriers fill the case's 3x3 three high round the core and over it (`SkyRig.caseCells`, only into air), so
+    first rung's pair, 0.42 of size, raised 34 degrees) hangs open, breathing on the hover's beat. It faces north, away
+    from the cabin's door, so whoever looks in through the door sees the wings as they will sit on their own back, and
+    sways 22 degrees either way over 30 s (a whole turn every 36 s showed them edge-on half the time, a white blob behind
+    a post in a tour's shot). Barriers fill the case's 3x3 three high round the core and over it (`SkyRig.caseCells`, only into air), so
     nobody walks into its glass. A player who has Wings sees the case open and empty. When the gift's scene starts
     beside it (`GIFT_WINGS`, within 10), the glass sinks into the base over 14 ticks, the case's shutter sounds, and from
     tick 10 the wings fold, leave the case and fly to the player's back on a curve, growing to full size, gone into the
