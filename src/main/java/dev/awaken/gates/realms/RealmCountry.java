@@ -209,6 +209,9 @@ public final class RealmCountry {
             slopes[i] = -1;
             if (land.edge(x, z) > -12 || !free(land, x, z, 24)) continue;
             int y = land.ground(x, z);
+            // under the water is the most level ground a land has, and nothing stands there (Amber Reach's first herd
+            // ground was a pool's bed: none of five came; its lookout's reserve was in the honey)
+            if (y < land.water()) continue;
             xs[i] = x;
             zs[i] = z;
             ys[i] = y;
