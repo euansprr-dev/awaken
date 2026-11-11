@@ -170,14 +170,17 @@ final class UnlockMoment {
         int nameW = Math.round(font.width(s.name()) * scale), nameH = Math.round(9 * scale);
         int howW = width(font, how);
         // the upper middle, clear of the crosshair: label, light, name, how
-        int top = Math.max(22, (int) (sh * 0.15F));
+        // (and under the panels of the top right corner: the body's list ends 33 px down, and on a 240-tall screen a long
+        // name's band reached up into it, the titles tour)
+        int top = Math.max(40, (int) (sh * 0.167F));
         int ly = top + 12, ny = ly + 7, hy = ny + nameH + 6;
         int half = Math.max(nameW, howW) / 2 + 18;
         // a soft dark band so the words read over a bright sky or a busy wall: ten thin steps, so its edge is a fade
         // (three steps read as stacked panels over the open sky, the titles tour)
         for (int i = 0; i < 10; i++) {
             int gx = 4 * (9 - i), gy = (9 - i) * 3 / 2;
-            g.fill(cx - half - gx, top - 6 - gy, cx + half + gx, hy + 14 + gy, Sheet.argb(0x05080F, 0.058F * a));
+            // wide to the sides and below (short of the crosshair); above, only to the foot of the corner's panels
+            g.fill(cx - half - gx, top - 3 - Math.min(gy, 4), cx + half + gx, hy + 12 + Math.min(gy, 8), Sheet.argb(0x05080F, 0.058F * a));
         }
         // the label, spaced out, in the unlock's colour
         HudLook.centered(g, font, spaced(s.label().toUpperCase(java.util.Locale.ROOT)), cx, top, Glass.a(s.colour(), 0.95F * a), true);
