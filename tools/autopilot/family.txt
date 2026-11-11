@@ -67,11 +67,7 @@ wait 70
 camera front
 wait 12
 shotnow family_a2_dubu_says_hello
-hud on
-wait 10
-shotnow family_a3_the_system_says
-hud off
-wait 380
+wait 390
 cmd awaken admin family state
 shotnow family_a4_aya_sits_and_looks
 camera back
@@ -108,15 +104,15 @@ wait 100
 cmd awaken admin family use dubu sneak
 cmd awaken admin family use aya sneak
 cmd awaken admin family state
-camera back
-wait 30
-walk 170
-wait 80
-shotnow family_c1_out_with_you
 camera front
-wait 50
-shotnow family_c2_out_with_you_from_the_front
-wait 140
+wait 30
+walk 230
+wait 150
+shotnow family_c1_out_with_you
+camera back
+wait 40
+shotnow family_c2_out_with_you_from_behind
+wait 180
 cmd awaken admin family state
 shotnow family_c3_you_stop_they_sit
 camera back
@@ -126,8 +122,10 @@ shotnow family_c4_you_stop_from_behind
 # ---- D. a fight: they keep well back and watch, and come back when it is over ----
 cmd gamemode survival
 cmd summon minecraft:husk ~4 ~ ~
-wait 90
+wait 150
 cmd awaken admin family state
+camera back
+wait 6
 shotnow family_d1_a_fight_they_keep_back
 camera front
 wait 8
@@ -141,16 +139,16 @@ cmd gamemode creative
 
 # ---- E. Dubu told to wait, away from home; you walk on with Aya ----
 cmd awaken admin family use dubu sneak
-camera back
-walk 60
-wait 100
-cmd awaken admin family state
 camera front
-wait 10
+walk 50
+wait 90
+cmd awaken admin family state
 shotnow family_e1_dubu_waits_aya_comes
-cmd awaken admin family use dubu sneak
-cmd awaken admin family use aya sneak
 camera first
+wait 20
+# the posed bodies below belong to nobody; the real two leave the stage for them (the rule off takes their bodies, the
+# record keeps them)
+cmd gamerule awaken:hearth_family false
 wait 40
 
 # ---- 1. in front of the fire: her loaf, his chin on his paws ----
