@@ -22,6 +22,12 @@ wait 40
 key dismiss
 wait 10
 screen close
+# the first moves done, as a hunter who has played: their card ("Your body remembers") would sit over the home's
+cmd awaken admin counter "awaken:body_roll" 1
+cmd awaken admin counter "awaken:body_sprint" 1
+cmd awaken admin counter "awaken:body_slide" 1
+cmd awaken admin counter "awaken:body_mantle" 1
+cmd awaken admin counter "awaken:first/moves_done" 1
 # the director holds paced lines for a world's first five minutes: run them through
 cmd tick sprint 6200
 wait 240
