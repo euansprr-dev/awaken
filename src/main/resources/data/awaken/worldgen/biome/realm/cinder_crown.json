@@ -3,16 +3,16 @@
   "temperature": 0.5,
   "downfall": 0.0,
   "effects": {
-    "water_color": "#4a4648",
+    "water_color": "#5a3a36",
     "grass_color": "#6a5e52",
     "foliage_color": "#5c5048"
   },
   "attributes": {
-    "minecraft:visual/fog_color": "#9c7460",
-    "minecraft:visual/sky_color": "#7c5648",
+    "minecraft:visual/fog_color": "#b4533a",
+    "minecraft:visual/sky_color": "#7a2e22",
     "minecraft:visual/fog_start_distance": 48.0,
     "minecraft:visual/fog_end_distance": 560.0,
-    "minecraft:visual/water_fog_color": "#1c1a1e",
+    "minecraft:visual/water_fog_color": "#24100e",
     "minecraft:gameplay/natural_mob_spawns": {
       "modifier": "overlay",
       "argument": {
@@ -66,11 +66,11 @@
         "max_delay": 12000
       }
     },
-    "minecraft:visual/block_light_tint": "#ff9a50",
-    "minecraft:visual/ambient_light_color": "#423a3c",
+    "minecraft:visual/block_light_tint": "#ff8a44",
+    "minecraft:visual/ambient_light_color": "#46342f",
     "minecraft:visual/sun_angle": 79.0,
-    "minecraft:visual/sky_light_color": "#ffd4ac",
-    "minecraft:visual/sunrise_sunset_color": "#a0ff7038",
+    "minecraft:visual/sky_light_color": "#ffb48c",
+    "minecraft:visual/sunrise_sunset_color": "#c0ff5028",
     "minecraft:visual/sky_light_factor": 1.0
   },
   "carvers": [],

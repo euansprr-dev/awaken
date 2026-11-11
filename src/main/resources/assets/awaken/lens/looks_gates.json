@@ -1870,47 +1870,47 @@
       "skyGlow": 0.0
     },
     "biome:awaken:realm/cinder_crown": {
-      "_name": "The Cinder Crown: a burnt mountain under a brown sky, ash grey and black rock, a low warm sun, everything that still burns blooming against it",
-      "exposure": 1.02,
+      "_name": "The Cinder Crown: the last light on a burnt mountain. Everything leans red: the sky goes rose and blood-orange, the land is lit rust, the shadows are a deep red-brown, and whatever still burns blooms against it",
+      "exposure": 1.0,
       "contrast": 1.16,
-      "saturation": 1.1,
-      "warmth": 0.2,
+      "saturation": 1.16,
+      "warmth": 0.6,
       "shadowTint": [
-        0.44,
-        0.33,
-        0.31
+        0.5,
+        0.2,
+        0.18
       ],
       "highlightTint": [
         1.0,
-        0.78,
-        0.5
+        0.4,
+        0.24
       ],
-      "splitTone": 0.22,
-      "vignette": 0.26,
-      "bloom": 1.1,
-      "bloomThreshold": 0.55,
-      "skyBloom": 0.15,
-      "shafts": 0.6,
+      "splitTone": 0.55,
+      "vignette": 0.3,
+      "bloom": 1.2,
+      "bloomThreshold": 0.52,
+      "skyBloom": 0.2,
+      "shafts": 0.7,
       "haze": 0.4,
       "hazeStart": 0.28,
       "hazeTint": [
-        0.78,
-        0.5,
-        0.36
+        0.74,
+        0.3,
+        0.2
       ],
-      "hazeTintMix": 0.5,
-      "hazeDesaturate": 0.1,
-      "sunsetWarmth": 0.5,
-      "sunGlow": 0.7,
+      "hazeTintMix": 0.55,
+      "hazeDesaturate": 0.08,
+      "sunsetWarmth": 0.8,
+      "sunGlow": 0.9,
       "light": 0.0,
       "ao": 0.85,
       "filmic": 1.0,
       "mist": 0.3,
       "mistHeight": 66.0,
-      "fogGlow": 0.8,
+      "fogGlow": 0.9,
       "skyGlow": 0.0,
-      "heat": 0.3,
-      "glow": 0.8
+      "heat": 0.35,
+      "glow": 0.9
     }
   }
 }
