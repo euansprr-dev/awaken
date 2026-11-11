@@ -7813,7 +7813,12 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     blade low and back to the blade side) and then loosed the Axe's own chop from overhead, so it now holds its own: the
     chop's first key, high over the shoulder, trembling (`arms_axe_heavy_charge`, made in `arms_moves.py` since the Axe is
     not rigged; `ArmsClips.OWN_CHARGE`). Test: `arms_feel_rules` holds the fist on the sword side by the middle's height
-    and the hand's up tipped toward that shoulder, never ahead.
+    and the hand's up tipped toward that shoulder, never ahead. Filmed in the game on CI (same tour, run 42970162115): the
+    draw carries the head up into the top right corner in about nine ticks; the hold keeps the haft angled up to that corner
+    with the head in it (its top just cut by the edge), the fist and forearm in the lower right and no arm end on the
+    bottom edge; the release brings the axe in from the corner to the hit, which the server confirmed. From behind, the
+    charge holds the arm up with the axe dropped back over the shoulder (the heavy's own wrist, `ArmsWrist.charge`) and
+    chops from there with no snap.
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
