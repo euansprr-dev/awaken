@@ -60,6 +60,7 @@ public final class InscribeScene {
 
     // the session
     static @Nullable BlockPos pos;
+    private static @Nullable Direction facing;
     static int session, slot;
     static boolean study, live;
     static int phase = NONE;
@@ -119,6 +120,7 @@ public final class InscribeScene {
         slot = o.slot();
         study = o.study();
         live = true;
+        facing = Direction.from2DDataValue(o.facing());
         place();
         phase(BOOK);
         no = level = 0;
@@ -551,8 +553,10 @@ public final class InscribeScene {
     private static void place() {
         Minecraft mc = Minecraft.getInstance();
         if (pos == null || mc.level == null) return;
+        // the server's word for the facing first: a vanilla table that has just turned may still be the old block here
+        // (it framed the scene from the table's side, SPEC 45.15)
         var st = mc.level.getBlockState(pos);
-        Direction d = st.hasProperty(InscribingTableBlock.FACING) ? st.getValue(InscribingTableBlock.FACING) : Direction.NORTH;
+        Direction d = facing != null ? facing : st.hasProperty(InscribingTableBlock.FACING) ? st.getValue(InscribingTableBlock.FACING) : Direction.NORTH;
         fx = d.getStepX();
         fz = d.getStepZ();
         rx = fz;

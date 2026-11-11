@@ -17,11 +17,11 @@ public final class EnchantPayloads {
     private EnchantPayloads() {}
 
     /** Server → the writer: a session at this table for the piece in hand ({@code slot}); whether the table stands in a Study. */
-    public record Open(BlockPos pos, int session, int slot, boolean study) implements CustomPacketPayload {
+    public record Open(BlockPos pos, int session, int slot, boolean study, int facing) implements CustomPacketPayload {
         public static final Type<Open> TYPE = new Type<>(Awaken.id("enchant_open"));
         public static final StreamCodec<ByteBuf, Open> STREAM_CODEC = StreamCodec.composite(
                 BlockPos.STREAM_CODEC, Open::pos, ByteBufCodecs.VAR_INT, Open::session, ByteBufCodecs.VAR_INT, Open::slot,
-                ByteBufCodecs.BOOL, Open::study, Open::new);
+                ByteBufCodecs.BOOL, Open::study, ByteBufCodecs.VAR_INT, Open::facing, Open::new);
         @Override public Type<Open> type() { return TYPE; }
     }
 

@@ -122,12 +122,49 @@ public final class Pages {
         Known.save(p, k);
         p.level().playSound(null, p.blockPosition(), EnchantContent.LEARN.get(), SoundSource.PLAYERS, 0.9F, 1F);
         for (Inscriptions.Entry e : learned) {
-            p.sendSystemMessage(Component.literal("You learned " + e.name() + " for good. ").withColor(e.colour())
-                    .append(Component.literal(e.line() + " Write it onto your gear at an Inscribing Table.").withColor(0xC9D2E0)), false);
+            door(p, "read", e);
+            // chat keeps the record short; the card says what it does and how it gets onto a piece
+            p.sendSystemMessage(Component.literal("You learned " + e.name() + ". ").withColor(e.colour())
+                    .append(Component.literal("It isn't on anything yet. " + e.howTo()).withColor(0xC9D2E0)), false);
+            dev.awaken.signal.Signal.send(p, learnedCard(p, k, e, first && e == learned.getFirst()));
         }
         EnchantFx.learned(p, learned.getFirst());
-        if (first) dev.awaken.signal.Signal.toast(p, Component.literal("Every kind of gate keeps its own enchantment, and its Lord carries the page."));
         return learned;
+    }
+
+    /**
+     * The card a learned enchantment gets (a panel, so nothing is cut): what it does, that it is on nothing yet, how it
+     * gets onto a piece, the piece you carry that it fits, and where a table comes from while you have none. The first
+     * one ever also carries the System's line about gates (it was a toast, and was cut after "and its L").
+     */
+    static dev.awaken.signal.SignalWindow learnedCard(ServerPlayer p, Known k, Inscriptions.Entry e, boolean first) {
+        var w = dev.awaken.signal.SignalWindow.builder(dev.awaken.signal.SignalWindow.Kind.NOTICE, Component.literal(e.name()).withColor(e.colour()))
+                .body(Component.literal(e.line()))
+                .row("Learned", "You know it for good. It isn't on anything yet.")
+                .row("To use it", e.howTo() + " You write it on there.");
+        ItemStack fit = fits(p, e);
+        if (!fit.isEmpty()) w.row("It fits", "your " + fit.getHoverName().getString());
+        if (!k.hadTable()) w.row("The table", "You can make one. It's on your Tasks page.");
+        if (first) w.footer(Component.literal("Every kind of gate keeps its own enchantment, and its Lord carries the page."));
+        return w.presentation(dev.awaken.signal.SignalWindow.Presentation.PANEL).topic("enchant").ttl(20 * 14).build();
+    }
+
+    /** A piece the player carries that this enchantment fits (worn first, then the hands, then the pack), or empty. */
+    static ItemStack fits(ServerPlayer p, Inscriptions.Entry e) {
+        var h = p.level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(e.key());
+        if (h.isEmpty()) return ItemStack.EMPTY;
+        for (ItemStack s : EnchantGoals.carried(p)) if (EnchantRules.fits(s, h.get())) return s;
+        return ItemStack.EMPTY;
+    }
+
+    /** One line a step of the way from a page to a written piece, with the game's time, so a play's log says where it stops. */
+    static void door(ServerPlayer p, String step, Inscriptions.@Nullable Entry e) {
+        Awaken.LOG.info("[enchant] door: {} {} t={} ({})", step, e == null ? "-" : e.id().getPath(), p.level().getGameTime(), p.getGameProfile().name());
+    }
+
+    /** "Use the page to learn it, then write it onto a weapon at an Inscribing Table." */
+    static String then(Inscriptions.Entry e) {
+        return "Use the page to learn it, then write it onto " + e.piece() + " at an Inscribing Table.";
     }
 
     // ---- old books ------------------------------------------------------------------------------------------------------
@@ -191,8 +228,9 @@ public final class Pages {
             Known.save(p, k);
         }
         if (!p.getInventory().add(page)) p.drop(page, false, net.minecraft.util.Prediction.SERVER_ONLY);
+        door(p, "page given", entry);
         p.sendSystemMessage(Component.literal(Character.toUpperCase(lord.charAt(0)) + lord.substring(1)
-                + " carried a page of " + entry.name() + ". Use it to learn it.").withColor(entry.colour()), false);
+                + " carried a page of " + entry.name() + ". " + then(entry)).withColor(entry.colour()), false);
         return true;
     }
 

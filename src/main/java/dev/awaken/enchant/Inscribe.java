@@ -107,7 +107,10 @@ public final class Inscribe {
         SESSIONS.put(p.getUUID(), s);
         be.set(p.getUUID(), piece, InscribingTableBlockEntity.BOOK, 0, 0);
         level.playSound(null, be.getBlockPos(), EnchantContent.BOOK_OPEN.get(), SoundSource.BLOCKS, 0.9F, 1F);
-        AwakenNet.send(p, new EnchantPayloads.Open(be.getBlockPos(), s.id, s.slot, study));
+        Pages.door(p, "opened", null);
+        // the facing rides along: a table that has just turned from a vanilla one may not have reached the client yet
+        AwakenNet.send(p, new EnchantPayloads.Open(be.getBlockPos(), s.id, s.slot, study,
+                be.getBlockState().getValue(InscribingTableBlock.FACING).get2DDataValue()));
     }
 
     /** Whether there's anything to do with this piece here: something you know fits it, or something on it to scrape. */
@@ -129,6 +132,7 @@ public final class Inscribe {
         if (k.table) return;
         k.table = true;
         Known.save(p, k);
+        Pages.door(p, "table set", null);
     }
 
     // ---- acts ---------------------------------------------------------------------------------------------------------
@@ -243,6 +247,7 @@ public final class Inscribe {
         Known k = Known.of(p);
         boolean remembered = clean && k.remember(e.id());
         k.written++;
+        Pages.door(p, clean ? "written clean" : s.memory ? "written from memory" : "written", e);
         Known.save(p, k);
         s.snapshot = hand.copy();
         s.ench = null;

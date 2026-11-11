@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  * from the game turns to paper.
  */
 public class PageItem extends Item {
-    static final int GREY = 0x9AA3B2;
+    static final int GREY = 0x9AA3B2, HOW = 0xD9C9A4;
 
     public PageItem(Item.Properties p) {
         super(p);
@@ -57,7 +57,12 @@ public class PageItem extends Item {
         }
         String where = Pages.where(stack);
         if (!where.isEmpty()) out.accept(Component.literal(where).withColor(GREY));
-        out.accept(Component.literal("Use it to learn it for good").withColor(GREY));
+        // reading only teaches it: say so, and say how it gets onto a piece (SPEC 45.15)
+        for (Inscriptions.Entry e : Pages.teaches(stack)) {
+            out.accept(Component.literal("Use this page to learn it. That puts it on nothing yet.").withColor(HOW));
+            out.accept(Component.literal(e.howTo()).withColor(HOW));
+            break;
+        }
     }
 
     @Override

@@ -67,6 +67,12 @@ public final class EnchantContent {
     public static final Supplier<BlockEntityType<WordStoneBlockEntity>> WORD_STONE_BE = BLOCK_ENTITIES.register("word_stone",
             () -> new BlockEntityType<>(WordStoneBlockEntity::new, WORD_STONE.get()));
 
+    /** The light a Lantern helmet sheds (SPEC §45.16): nothing to see, touch or hold; it only gives light. */
+    public static final DeferredBlock<LanternGlowBlock> LANTERN_GLOW = BLOCKS.registerBlock("lantern_glow", LanternGlowBlock::new,
+            p -> p.replaceable().noCollision().noLootTable().noOcclusion().instabreak()
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)
+                    .lightLevel(s -> Lantern.LIGHT[s.getValue(LanternGlowBlock.LEVEL)]));
+
     /** One enchantment, held in vanilla's {@code stored_enchantments} so every tooltip and JEI read it; used, it teaches. */
     public static final DeferredItem<PageItem> PAGE = ITEMS.registerItem("enchantment_page", PageItem::new,
             p -> p.stacksTo(16).rarity(Rarity.RARE));
@@ -84,6 +90,10 @@ public final class EnchantContent {
             () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
     /** More hide, bone and pelt from wild beasts. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> HARVEST = EFFECTS.register("harvest",
+            () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
+
+    /** A helmet that lights the dark (SPEC §45.16). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<EnchantEffects.Marker>> LANTERN = EFFECTS.register("lantern",
             () -> DataComponentType.<EnchantEffects.Marker>builder().persistent(EnchantEffects.Marker.CODEC).build());
 
     /** What you know (SPEC §45.2): kept through death, synced to you alone for the book, the Journal and Tasks. */

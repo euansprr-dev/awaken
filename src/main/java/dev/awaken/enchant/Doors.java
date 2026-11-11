@@ -37,13 +37,13 @@ final class Doors {
         if (tag.kind() == CreatureTag.Kind.BEAST) {
             String who = tag.title().isEmpty() ? "the beast" : tag.title();
             give(p, level, BANE_OF_BEASTS, "hunt:beast", "From " + who + ", brought down",
-                    "A page of Bane of Beasts was caught in " + who + "'s hide. Use it to learn it.");
+                    "A page of Bane of Beasts was caught in " + who + "'s hide.");
         } else if (Hunts.alpha(dead)) {
             give(p, level, HARVEST, "hunt:leader", "From a herd's leader, brought down",
-                    "A page of Harvest was caught in the leader's hide. Use it to learn it.");
+                    "A page of Harvest was caught in the leader's hide.");
         } else if (tag.elite() && dead instanceof Enemy && !EnchantEffects.spared(dead) && deep(p, dead)) {
             give(p, level, BANE_OF_THE_DEEP, "deep:bane", "From an elite of the Deep",
-                    "A page of Bane of the Deep fell from it as it died. Use it to learn it.");
+                    "A page of Bane of the Deep fell from it as it died.");
         }
     }
 
@@ -59,9 +59,9 @@ final class Doors {
         boolean deepBand = Bands.of(e.getPos().getY()) == Bands.Band.DEEP;
         if (deepBand && (!Known.of(p).gatePaid("deep:silk") || level.getRandom().nextBoolean()))
             give(p, level, SILK_TOUCH, "deep:silk", "From a lode's heart in the Deep",
-                    "A page of Silk Touch was pressed into the lode's heart. Use it to learn it.");
+                    "A page of Silk Touch was pressed into the lode's heart.");
         else give(p, level, FORTUNE, "deep:fortune", "From a lode's heart",
-                "A page of Fortune was pressed into the lode's heart. Use it to learn it.");
+                "A page of Fortune was pressed into the lode's heart.");
     }
 
     /** The delve's lode heart blocks, one for each ore ({@code awaken:<ore>_lode_heart}). */
@@ -88,7 +88,9 @@ final class Doors {
         }
         if (!p.getInventory().add(page)) p.drop(page, false, net.minecraft.util.Prediction.SERVER_ONLY);
         Inscriptions.Entry entry = Inscriptions.of(id);
-        p.sendSystemMessage(Component.literal(said).withColor(entry == null ? 0xC9B8FF : entry.colour()), false);
+        Pages.door(p, "page given", entry);
+        p.sendSystemMessage(Component.literal(said + (entry == null ? " Use it to learn it." : " " + Pages.then(entry)))
+                .withColor(entry == null ? 0xC9B8FF : entry.colour()), false);
         return true;
     }
 }
