@@ -24527,3 +24527,127 @@ bell): his pick decides the whole family.
   AUDIT.md are the record.
 - Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
   first values. The listening page is the check, and his marks choose (`apply`, then `build`).
+
+## 69. The Hearth's family: Aya and Dubu (plan docs/family/PLAN.md, page https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN; Euan approved all of it 2026-11-11: "Go ahead with the full plan")
+
+Euan's own cat and dog, drawn from his photos (which are private and never in the repo). His words: "when you place your
+hearth for the first time, they should wander up to the house and be one of the kins, but they don't really do
+anything... if they can come like join you on adventures too and follow you around in a very like natural and awesome
+way... And you can also just make them stay... And also make them immortal." Her name is Aya, spelled A-Y-A.
+Code: `dev.awaken.kin.Family*`, client `kin.client.FamilyRenderer`, art `tools/art/specs/hearth_family.py`.
+
+**69.1 The rule.** Nothing fights for you (§43.4) holds for them without exception: neither ever attacks, blocks,
+distracts or warns. Nothing can hurt one, nothing can take one as its target, and neither can be lost.
+
+**69.2 Family, not kin.** They are their own type beside the kin (`FamilyPet`, entity types `awaken:family_aya` "Cat" and
+`awaken:family_dubu` "Dog"; their names are custom names, Aya and Dubu), not `KinKind`s. They take no nook, have no job,
+want, rumour or Kinship, and do not count for `beasts:N`, the Nook bell or any beast step. The Hundred Peal, the Kinsong,
+the Gnawed and a raid's thefts never touch them. One Aya and one Dubu per Hearth, by its owner, shared by its household;
+a sister home gets no second pair.
+
+**69.3 At home.** Each has a day of small things (`FamilyBrain.day`, a choice every few hundred ticks, by weight):
+- Aya by day: the loaf on a raised spot in good light she can step up to (never a chest's lid; a barrel is fine) 30%,
+  belly up under open sky on a clear day 12%, a stroll 26%, sitting 16%, a nap 16% (on the household's bed if one of
+  them has slept in it, else by the fire); a long stretch after any sleep. By night she sleeps 68%.
+- Dubu by day: shadowing whoever is in (a few steps off, sitting, then chin on his paws) 36% when someone is, a stroll
+  30% (his giraffe in his mouth two times in five), chin on his paws near you or the fire 16%, a nap in the sun 10%,
+  sitting 8%. By night he sleeps by the fire 78%, his giraffe under his chin.
+- With you: at a bench or any open screen within 12 blocks she sits and watches and he lies at your feet; when you sleep
+  she is at the foot of your bed and he beside it.
+- Coming home after more than two minutes and 64 blocks away: Dubu runs to meet you with his giraffe and says hello; Aya
+  follows five to eleven seconds later at a walk.
+- Leaving: until you have once asked one along, Dubu walks you to the yard's edge (within 3 of the radius, having been
+  8 inside it in the last 15 s) and sits, and the System says once: "[Dubu wants to come. Crouch and call him and he will.]"
+- The tower's song (§43.7): he sits and howls along, she sits through it with her ears back. A raid warned or on, or a
+  foe within 10 blocks: both in by the fire, low.
+- Sitting is one of three things each time: plainly (half the time), or she grooms a paw or gazes at something only she
+  can see, and he scratches behind an ear or sniffs along the ground.
+- The two of them: by day Dubu sometimes (4 in 100 of his choices, with her awake within 24 blocks) trots over and
+  play-bows at her; half the time she swats the air at him twice, ears back, never touching him, and half the time she
+  looks the other way. In the evening (clock 11,000 to 13,000) both rest by the same fire.
+- Never in the way of your hands: one that stands on, in or against the block you are aiming at within 4.5 blocks steps
+  two blocks aside.
+- A use pets one (a hello and its sound; not while it sleeps). A hello or a stretch is played through where it stands
+  (40 and 52 ticks; her swat 28) before its day goes on. No food, breeding, leash or hearts. They push nothing
+  and cannot be pushed.
+
+**69.4 Arrival.** Half a minute (600 ticks) after the family's clock first sees a household's Hearth (a Hearthfire or an
+Anchor; an old world's Hearth is first seen when its owner next plays), with one of the household in at it and no raid
+warned or on: Dubu is made 24 to 36 blocks off where a hill or wall hides him (else 12 to 20), runs in with his giraffe
+and says hello; at 14 blocks the System says "[That's Dubu. He must have followed you the whole way.]". Aya follows 220
+to 300 ticks later at a walk, sits six blocks off for 70 ticks to look, then comes to your shin: "[And Aya, taking her
+time. They live here now.]". Once per Hearth (`FamilyWorld.Home.stage`). `/awaken admin family arrive` sends them now.
+
+**69.5 Out with you.** Sneak and use on one asks it along (state WITH, its person recorded); again tells it to stay: at
+home that is home, away from home it waits where it is (WAITING). Only the household may ask, and it answers to one
+person at a time.
+- Manner: Dubu keeps 3.2 blocks ahead and to one side, at your side when you sneak; Aya 2.2 behind and to the other
+  side. When you have stood still 3 s (4 for her) each comes over and sits, and after 16 s (21) rests. Asleep by your bed
+  when you sleep away. Speeds: movement 0.3; walk factor 1.0, 1.25 past 5 blocks, 1.45 when you sprint, 1.55 past 10.
+- Catching up: more than 28 blocks behind, or stuck 4 s more than 10 blocks off, it is put on ground 12 to 20 blocks
+  off behind you (out of your view, or hidden by terrain; else 5 to 11) and runs in. A body that falls out of the loaded
+  world is made again the same way. Never beside you.
+- A boat you are in with a free seat within 4.5 blocks: it hops in. Aya will not path through water; Dubu swims.
+- A fight (something within 16 blocks hunting you, or that hurt you, or a foe you struck, in the last 5 s): each runs
+  straight away from it (measured from the fight, not from you: a foe circles you) until it is 11 (Dubu) or 13 (Aya)
+  blocks off, then turns and watches in its wary pose; 3 s after it ends it comes back and says hello.
+- Thresholds: they exist only in the overworld. When their person leaves it, one that is with them waits where it is
+  (DOOR) and rejoins them if they come back within 64 blocks of that spot; after five minutes, or if they come back
+  somewhere else or log off, it goes home. One told to wait goes home when its person is more than 64 blocks off or
+  gone five minutes. Going home from the wild: it walks off homeward for six seconds, its body leaves, and it is at
+  home when the home is next loaded.
+
+**69.6 The record comes first** (`FamilyWorld`, saved data `family`, schema 1, by the Hearth's owner): for each of the
+two its body's id, name, state (HOME, WITH, WAITING, DOOR), person, waiting spot and deadline, and whether it has
+arrived; the Hearth's arrival stage and the household's bed; and the players who have asked one along or had Dubu's hint.
+A body carries only its owner. Every fifth tick a body checks the record names it, else it removes itself; every second
+(`FamilyService.keep`) a record with no loaded body gets one made: at home once the Anchor stands on entity-ticking ground and the body
+has been gone 200 ticks (at once if it was sent home), behind its person when it is out with them, at its spot when it
+waits. So neither can be lost and neither can be two.
+
+**69.7 Immortal.** `FamilyPet.hurtServer` refuses everything but what bypasses invulnerability; falling out of the world
+puts it back (behind its person, else by the fire); `/kill` takes the body and the record makes it again. Fire immune,
+knockback resistance 1, no pushing either way, never leashed, never despawned. `LivingChangeTargetEvent` onto one is
+cancelled. They implement `OwnableEntity` (the Hearth's owner), so powers and sweeps already count them as yours
+(`Combat.isAlly`, `ArmsServer.foe`), and lock-on takes only hostiles.
+
+**69.8 Words.** The kin plate (§43.17): "yours" (or "Ana's"), then what it is doing ("Coming with you.", "Loafing in the
+light.", "Lying with his chin on his paws."), with "Crouch and use to ask her along." until you have asked one along
+once. The Hearth page: their two cards first under Your beasts ("Aya · Cat"), the Hearth's owner may rename them with the
+naming card (an empty name gives its own back). Tasks, Hearth tab: one optional row until first done, "Take Aya or Dubu
+out with you" (`family/ask`). Counter `awaken:family_asked_along`.
+
+**69.9 Their look and motion.** Bodies of their own on the hero rigs with the life layer, not the game's cat and wolf
+(a 5 by 4 pixel face cannot be hers; a wolf is not his shape). `family_aya`: 13 bones, drawn at 0.45, 0.39 blocks at
+the back, 0.68 long. `family_dubu`: 15 bones (one is his giraffe, in his mouth when he carries it and under his chin
+asleep), drawn at 0.5, 0.38 at the back, 0.9 long. Their coats are painted in body space (`coat(x, y, z)`), so a patch
+runs unbroken from box to box; no band is under two pixels; the chest laps a pixel into the rump a hair smaller, and the
+thighs sit inside the flank, so nothing shares a plane and no crack opens when the back bends. Poses (the synced
+`act`): idle, sit, rest (her loaf, his chin on his paws), sleep, roll, nudge (hello), stretch, hide (wary), carry, song,
+swat, groom, gaze (hers), sniff, scratch (his).
+The renderer plays a walk or run by the ground covered, one stride a cycle (Aya 0.24 and 0.8 blocks, Dubu 0.31 and
+0.85), capped at 3.5 and 3.8 cycles a second. Getting down and getting up are acted, not blended: between standing and a
+held pose the renderer plays a clip made for it once (`to_sit`, `to_rest`, `to_sleep`, her `to_roll`, and `from_` each;
+0.45 to 0.9 seconds), which starts on the standing pose and ends on the held pose's first frame. In them the parts go in
+an order (legs and rump, then the head, the tail last; his front feet slide out before his chest goes down; she goes
+down before she rolls over), each runs a little past its place and settles, and getting up runs the order backwards. A
+change of mind half way picks the other clip up at the matching moment. The server waits for it: asked to walk while
+down, one stands for half a second first (`FamilyPet.upAt`). One-shots (hello, stretch, swat) and changes between two
+held poses blend over 10 ticks, other changes over 5. Standing about is one of three clips (`idle` twice as likely as
+`idle_b`, her look over her shoulder and his shake, and `idle_c`, a paw held up), picked again each time one ends. A
+turn on the spot faster than four degrees a tick plays the walk, a full circle three strides.
+
+**69.10 Sounds, switch, commands, tests.** Sounds are the game's own recordings by name, pitched (rule 1 of §66):
+`family.aya.purr|trill|meow` from `entity.cat.purr|purreow|ambient`, `family.dubu.bark|pant|whine|howl` from
+`entity.wolf_cute.ambient|pant|whine` (the howl is the whine at 0.75). Game rule `awaken:hearth_family` (on): off, their
+bodies leave and nothing runs; the record is kept. `/awaken admin family arrive | use aya|dubu [sneak] | state`, and for a
+body to look at that belongs to nobody `place|pose|walk|clear`. Tour `tools/autopilot/family.txt`. Tests (CI):
+`family_never_lost`, `family_ask_and_stay`. Budget: two entities a Hearth, decisions every fifth tick, a spot search of
+at most fourteen tries when one chooses what to do next.
+
+Their sounds can be heard from the game's own files with `/Volumes/MEDIA/pets-ref/aya-dubu-sounds.html` (a local page
+outside the repo; nothing of the game's is copied).
+
+Not built (each its own decision later): fetch with Dubu, Aya on your shoulder at speed. Not built from the plan:
+coming from the skiff's mooring (the Far Landing is not merged), and the head leading a turn. Not checked by a person:
+nothing here has been played, and no sound has been heard in place.

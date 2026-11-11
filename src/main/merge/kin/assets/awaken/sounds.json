@@ -625,5 +625,82 @@
         "volume": 0.8
       }
     ]
+  },
+  "family.aya.purr": {
+    "subtitle": "subtitles.awaken.family.aya.purr",
+    "sounds": [
+      {
+        "name": "minecraft:entity.cat.purr",
+        "type": "event",
+        "pitch": 1.05,
+        "volume": 0.9
+      }
+    ]
+  },
+  "family.aya.trill": {
+    "subtitle": "subtitles.awaken.family.aya.trill",
+    "sounds": [
+      {
+        "name": "minecraft:entity.cat.purreow",
+        "type": "event",
+        "pitch": 1.1,
+        "volume": 0.8
+      }
+    ]
+  },
+  "family.aya.meow": {
+    "subtitle": "subtitles.awaken.family.aya.meow",
+    "sounds": [
+      {
+        "name": "minecraft:entity.cat.ambient",
+        "type": "event",
+        "pitch": 1.1,
+        "volume": 0.7
+      }
+    ]
+  },
+  "family.dubu.bark": {
+    "subtitle": "subtitles.awaken.family.dubu.bark",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wolf_cute.ambient",
+        "type": "event",
+        "pitch": 1.25,
+        "volume": 0.7
+      }
+    ]
+  },
+  "family.dubu.pant": {
+    "subtitle": "subtitles.awaken.family.dubu.pant",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wolf_cute.pant",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.8
+      }
+    ]
+  },
+  "family.dubu.whine": {
+    "subtitle": "subtitles.awaken.family.dubu.whine",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wolf_cute.whine",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.8
+      }
+    ]
+  },
+  "family.dubu.howl": {
+    "subtitle": "subtitles.awaken.family.dubu.howl",
+    "sounds": [
+      {
+        "name": "minecraft:entity.wolf_cute.whine",
+        "type": "event",
+        "pitch": 0.75,
+        "volume": 0.9
+      }
+    ]
   }
 }
