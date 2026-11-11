@@ -100,7 +100,7 @@ def _hash(*a):
     return R._h(*a)
 
 
-def fur(ramp, base, p, n, part, lock=4, depth=0.35, top=0.8, under=1.4, seed=0, fall=0.12):
+def fur(ramp, base, p, n, part, lock=4, depth=0.35, top=0.4, under=1.0, seed=0, fall=0.12):
     """A fur colour at a point: lit from above, darker underneath and lower down, with a few long soft locks (never
     per-pixel noise: a lock is two or three texels long, staggered from its neighbours)."""
     x, y, z = p
@@ -141,7 +141,7 @@ def game_light(n):
     return min(1.0, 0.4 + 0.6 * tot)
 
 
-def draw(parts, yaw=40.0, pitch=14.0, px=10.0, bounds=None, origin=None, sun=1.0, soft=0.35):
+def draw(parts, yaw=40.0, pitch=14.0, px=10.0, bounds=None, origin=None, sun=1.0, soft=0.5):
     """Draws [(tree, texture image)] as one picture, far texels first. `soft` lifts the game's darkest faces a little,
     as the sky's light does outdoors. bounds/origin as fauna_rig.render."""
     from PIL import Image, ImageDraw
@@ -236,7 +236,8 @@ def aya():
     body = r.bone("body", (0, 14, 1))
     body.cube("rump", -4.5, -4, 0, 9, 8, 8)
     chest = body.bone("chest", (0, 0, 0))
-    chest.cube("ochest", -4.5, -4, -8, 9, 8, 8)
+    # the chest laps a pixel into the rump, a hair smaller, so no crack opens when her back bends and no faces share a plane
+    chest.cube("ochest", -4.5, -4, -8, 9, 8, 9, inflate=-0.02)
     chest.cube("bib", -3.5, -1, -9.5, 7, 6, 2)                       # the white chest ruff
     head = chest.bone("head", (0, -3, -8))
     head.cube("ohead", -5.5, -6, -6, 11, 8, 7)
@@ -245,13 +246,16 @@ def aya():
     head.cube("cheek_r", -6.5, -2, -5, 1, 4, 4)
 
     def side(sd, nm, mir, sh):
-        ear = head.bone("ear_" + nm, (sd * 3.5, -6, -2), (-8, 0, sd * 12))
-        ear.cube("oear_" + nm, -2, -2, -0.5, 4, 2, 1, mirror=mir, share=sh("oear_l"))
-        ear.cube("eartip_" + nm, -1, -3, -0.5, 2, 1, 1, mirror=mir, share=sh("eartip_l"))
+        # ears with depth, turned a little outward, so they read as ears from the side and from behind too
+        ear = head.bone("ear_" + nm, (sd * 3.5, -6, -2), (-8, sd * -26, sd * 12))
+        ear.cube("oear_" + nm, -2, -2, -1, 4, 2, 2, mirror=mir, share=sh("oear_l"))
+        ear.cube("eartip_" + nm, -1, -3, -1, 2, 1, 2, mirror=mir, share=sh("eartip_l"))
         fl = chest.bone("fleg_" + nm, (sd * 2.5, 4, -5.5))
         fl.cube("ofleg_" + nm, -1.5, 0, -1.5, 3, 6, 3, mirror=mir, share=sh("ofleg_l"))
         hl = body.bone("hleg_" + nm, (sd * 2.5, 1, 5))
-        hl.cube("haunch_" + nm, -1.5 if sd > 0 else -2.5, -2, -2.5, 4, 6, 6, mirror=mir, share=sh("haunch_l"))
+        # the thigh sits a quarter-pixel inside her flank and rump: it shows under the belly and when the leg folds,
+        # and leaves no ledge or shared plane on her side
+        hl.cube("haunch_" + nm, -2.25 if sd > 0 else -1.75, -2, -3.25, 4, 6, 6, mirror=mir, share=sh("haunch_l"))
         hl.cube("ohleg_" + nm, -1.5, 3, -1, 3, 6, 3, mirror=mir, share=sh("ohleg_l"))
     sym(side)
     tail = body.bone("tail", (0, -2, 7.5), (18, 0, 0))
@@ -433,7 +437,7 @@ TAILS = ("tail1", "otail2", "otail3", "otail4")
 
 def aya_coat(part, p):
     """True where Aya is black. Body space: x + is her left, y down, z + is back; the torso runs z -7 .. 9, its back
-    is at y 10 and its belly at y 18."""
+    is at y 10 and its belly at y 18. Every band is three pixels or wider, so none reads as a seam."""
     x, y, z = p
     if part in ("oear_l", "eartip_l") or part in TAILS:
         return True
@@ -443,22 +447,17 @@ def aya_coat(part, p):
         return y < 17.0                       # black haunches over white feet
     down = y - 10.0                           # 0 at the spine, 8 at the belly
     left = x > 0
-    if z < -5.0:
-        return False                          # white neck and chest
+    if z < -4.0:
+        return False                          # the white collar behind her head, and her chest
     if z < -1.0:                              # the shoulder patch: over the top, further down on her left
-        reach = (4.0 if left else 2.0) - (1.0 if z < -4.0 else 0.0)
-        return down < reach
-    if z < 1.0:                               # the white streak that cuts down through the black behind her shoulder
-        if left:
-            return z >= 0.0 and down < 1.0
-        return down < 1.0 or (z < 0.0 and 5.0 <= down < 7.0)    # and a black spot low on her right flank
-    if z < 5.0:                               # the saddle
-        if abs(x) > 4.0 and z >= 2.0:
-            return down < 7.0
-        return down < (3.0 if left else 4.0) + (1.0 if z >= 3.0 else 0.0)
-    if abs(x) > 4.0 and z >= 2.0:
+        return down < (4.0 if left else 2.0)
+    if z < 2.0:                               # the white band between the shoulder patch and the saddle
+        return (not left) and z < 1.0 and 5.0 <= down < 7.0      # with one black spot low on her right flank
+    if abs(x) > 4.0 and z >= 3.0:
         return down < 7.0                     # under the haunch the flank is the haunch's colour
-    return down < (6.0 if z >= 7.0 else 5.0)  # the rump, black nearly to the belly at the tail
+    if z < 6.0:                               # the saddle
+        return down < (3.0 if left else 4.0) + (1.0 if z >= 4.0 else 0.0)
+    return down < (6.0 if z >= 7.5 else 5.0)  # the rump, black nearly to the belly at the tail
 
 
 def paint_aya(r, P):
@@ -566,7 +565,7 @@ def dubu():
     body = r.bone("body", (0, 15.5, 2))
     body.cube("rump", -4, -3.5, 0, 8, 7, 10)
     chest = body.bone("chest", (0, 0, 0))
-    chest.cube("ochest", -4, -3.5, -11, 8, 7, 11)
+    chest.cube("ochest", -4, -3.5, -11, 8, 7, 12, inflate=-0.02)     # laps a pixel into the rump, as Aya's
     chest.cube("ruff", -3, -1, -12.5, 6, 6, 2)                       # the feathered chest
     head = chest.bone("head", (0, -3, -10.5))
     head.cube("ohead", -4.5, -6, -5, 9, 7, 7)
@@ -582,7 +581,7 @@ def dubu():
         fl = chest.bone("fleg_" + nm, (sd * 2.5, 3.5, -8.5))
         fl.cube("ofleg_" + nm, -1.5, 0, -1.5, 3, 5, 3, mirror=mir, share=sh("ofleg_l"))
         hl = body.bone("hleg_" + nm, (sd * 2.5, 0.5, 7))
-        hl.cube("haunch_" + nm, -1.5 if sd > 0 else -2.5, -1, -2.5, 4, 5, 6, mirror=mir, share=sh("haunch_l"))
+        hl.cube("haunch_" + nm, -2.75 if sd > 0 else -1.25, -1, -3.25, 4, 5, 6, mirror=mir, share=sh("haunch_l"))
         hl.cube("ohleg_" + nm, -1.5, 3, -1, 3, 5, 3, mirror=mir, share=sh("ohleg_l"))
     sym(side)
     tail = body.bone("tail", (0, -2.5, 9.5), (52, 0, 0))
@@ -602,7 +601,7 @@ def dubu():
 
 
 CREAM = Ramp("#b3a999", "#cfc6b7", "#e4ddd0", "#f2eee4", "#fbf9f3", "#ffffff")
-FAWN = Ramp("#80562f", "#a0703f", "#bd8a52", "#d2a46c", "#e2bd8b", "#eed3ab")
+FAWN = Ramp("#a98b66", "#c2a47e", "#d3b792", "#dfc7a5", "#ead6ba", "#f3e5d0")   # a pale apricot, as his ears are
 DUBU_TAIL = ("tail1", "otail2", "otail3", "otail4", "otail5")
 
 
@@ -613,8 +612,8 @@ def paint_dubu(r, P):
         "FFFWWWFFF",
         "FFFWWWFFF",
         "FEEWWWEEF",
-        "FEEWWWEEF",
-        "fFWWWWWFf",
+        "fEEWWWEEf",
+        "WWWWWWWWW",      # white under his eyes, white cheeks
         "WWWWWWWWW",
         "WWWWWWWWW",
     ]
@@ -633,26 +632,28 @@ def paint_dubu(r, P):
         elif part == "oear_l":
             # fawn, darker toward the tip, a pale feathered fringe along the bottom edge
             down = y - (hy0 + 1)
-            col = fur(FAWN, 2.6 - 0.22 * down, p, n, part, lock=2, depth=0.5, seed=2, fall=0.0)
+            col = fur(FAWN, 2.2 - 0.12 * down, p, n, part, lock=2, depth=0.4, seed=2, fall=0.0)
             if down > 4.9:
-                col = FAWN.at(3.6)                                    # the feathered fringe
+                col = FAWN.at(3.8)                                    # the feathered fringe, paler
         elif part == "ohead":
             c0, row, back = int(math.floor(x - hx0)), int(math.floor(y - hy0)), z - hz0
             if fname == "north":
                 ch = front[row][c0]
-                col = (fur(FAWN, 3.0, p, n, part, lock=3, depth=0.3, seed=4, fall=0.0) if ch in "FE"
-                       else FAWN.at(4.6) if ch == "f" else fur(CREAM, 4.2, p, n, part, lock=5, depth=0.1, seed=4))
+                col = (fur(FAWN, 2.4, p, n, part, lock=3, depth=0.25, seed=4, fall=0.0) if ch in "FE"
+                       else FAWN.at(4.0) if ch == "f" else fur(CREAM, 4.2, p, n, part, lock=5, depth=0.1, seed=4))
             elif fname == "top":
-                col = (fur(CREAM, 4.2, p, n, part, lock=5, depth=0.1, seed=4) if (abs(x) < 1.5 and back < 2) or (abs(x) < 0.5 and back < 4)
-                       else fur(FAWN, 3.0, p, n, part, lock=3, depth=0.3, seed=4, fall=0.0))
+                # a wide white blaze over the crown; fawn over each eye, running back to the ear
+                col = (fur(CREAM, 4.2, p, n, part, lock=5, depth=0.1, seed=4) if abs(x) < 1.5 or back > 5
+                       else fur(FAWN, 2.4, p, n, part, lock=3, depth=0.25, seed=4, fall=0.0))
             elif fname == "south":
-                col = (fur(FAWN, 2.8, p, n, part, lock=3, depth=0.3, seed=4, fall=0.0) if row < 4 and abs(x) > 1.5
-                       else fur(CREAM, 4.0, p, n, part, lock=5, depth=0.1, seed=4))
+                col = fur(CREAM, 4.0, p, n, part, lock=5, depth=0.1, seed=4)
             elif fname == "bottom":
                 col = fur(CREAM, 4.0, p, n, part, seed=4)
             else:
-                fawn = row < 4 or (row < 5 and back < 3)
-                col = (fur(FAWN, 3.0, p, n, part, lock=3, depth=0.3, seed=4, fall=0.0) if fawn
+                # the side of his face is white; the eye's patch wraps a little way round, above the ear
+                fawn = (row < 3 and back < 4) or (row < 1 and back < 6)
+                col = (fur(FAWN, 2.4, p, n, part, lock=3, depth=0.25, seed=4, fall=0.0) if fawn
+                       else FAWN.at(4.2) if row == 3 and back < 3
                        else fur(CREAM, 4.1, p, n, part, lock=5, depth=0.1, seed=4))
         elif part == "muzzle":
             col = fur(CREAM, 4.4, p, n, part, lock=9, depth=0.0, seed=5, fall=0.3)
@@ -664,20 +665,18 @@ def paint_dubu(r, P):
             elif fname in ("west", "east") and my == 2 and z < hz0 - 1.0:
                 col = hexc("#b9a9a0")                                  # the line of his mouth
         elif part in DUBU_TAIL:
-            # a white plume, fawn where it leaves his back
-            root = part == "tail1"
-            col = (fur(FAWN, 3.2, p, n, part, lock=2, depth=0.4, seed=6, fall=0.0) if root
-                   else fur(CREAM, 4.3, p, n, part, lock=2, depth=0.3, seed=6, fall=0.0))
+            col = fur(CREAM, 4.3, p, n, part, lock=2, depth=0.3, seed=6, fall=0.0)     # a white plume
         elif part in ("ofleg_l", "ohleg_l") and fname == "bottom":
             col = hexc("#d9a3a0") if (i + j) % 2 else hexc("#c98c8c")
         else:
             col = fur(CREAM, 4.1, p, n, part, lock=5, depth=0.14, seed=9, fall=0.2)
             if part == "rump":
                 # the fawn at his tail's root spreads a little onto his back, and one faint freckle on a shoulder
-                if y < 12.6 and z > 10.3 and abs(x) < 2.0:
-                    col = FAWN.at(4.2)
-            if part == "ochest" and y < 12.5 and -6.0 < z < -4.0 and 1.0 < x < 3.0:
-                col = FAWN.at(5.0)
+                # a small pale patch on his back where the tail leaves it (the tail itself is white)
+                if y < 13.0 and z > 10.0 and abs(x) < 1.0:
+                    col = FAWN.at(3.4)
+            if part == "ochest" and y < 13.0 and -5.0 < z < -4.0 and 1.0 < x < 2.0:
+                col = FAWN.at(4.4)                                    # and one faint freckle behind a shoulder
             if part == "ruff" and fname == "bottom":
                 col = CREAM.at(2.0)
         P.skin.set(tu, tv, col)
@@ -686,7 +685,7 @@ def paint_dubu(r, P):
         for ex in (1, 6):
             for dj in (0, 1):
                 for di in (0, 1):
-                    f.set(ex + di, 2 + dj, hexc("#1e1512"))
+                    f.set(ex + di, 2 + dj, hexc("#221815"))
             f.set(ex, 2, hexc("#fff7ea"))                              # the wet glint
             f.set(ex + 1, 3, hexc("#3d2a20"))
     return P.skin, P.glow
@@ -1202,8 +1201,9 @@ def page_art(outdir, films=True):
     # ---- 1. each of them from every side
     for rid, (rig, tex, _) in M.items():
         who = "her" if rid == "family_aya" else "his"
-        views = [("from the front", 0.01, 8), (f"front, {who} left", 38, 14), (f"{who} left side", 90, 8), (f"back, {who} left", 142, 14),
-                 ("from behind", 180, 8), (f"{who} right side", -90, 8), (f"front, {who} right", -38, 14), ("as you look down at " + ("her" if who == "her" else "him"), 24, 58)]
+        # the flat views are nearly level, so a sliver of the lit back does not read as a line along it
+        views = [("from the front", 0.01, 3), (f"front, {who} left", 38, 16), (f"{who} left side", 90, 3), (f"back, {who} left", 142, 18),
+                 ("from behind", 180, 3), (f"{who} right side", -90, 3), (f"front, {who} right", -38, 16), ("as you look down at " + ("her" if who == "her" else "him"), 24, 58)]
         st = pose(rig, "idle", 0.0)
         cell = (330, 300)
         sheet_ = Image.new("RGBA", (cell[0] * 4, cell[1] * 2), SKY)
