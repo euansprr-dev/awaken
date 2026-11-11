@@ -1,6 +1,7 @@
 # Awa and Dubu at the Hearth: the plan
 
-Status: **waiting for Euan's approval** (page published 11 Nov 2026; nothing below is built into play).
+Status: **waiting for Euan's approval**. Page (private, it shows his photos): https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN,
+published 11 Nov 2026. Nothing below is built into play.
 Branch `claude/hearth-pets-plan-472c8d`. What exists on it is the preview only: the two bodies, their coats and poses
 (`tools/art/specs/hearth_family.py`), two entity types that only `/awaken admin family` can place, and the look tour
 `tools/autopilot/family.txt`. Nothing spawns them and nothing changes in play.
