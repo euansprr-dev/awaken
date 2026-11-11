@@ -10,6 +10,7 @@ import dev.awaken.caves.life.UnderSites;
 import dev.awaken.caves.skin.CaveSkin;
 import dev.awaken.caves.skin.CaveSkinFeature;
 import dev.awaken.caves.skin.SkinBlocks;
+import dev.awaken.caves.skin.Settle;
 import dev.awaken.caves.skin.SkinRock;
 import dev.awaken.caves.skin.WallGrowth;
 import dev.awaken.core.test.AwakenTests;
@@ -110,6 +111,7 @@ final class CavesTests {
         AwakenTests.register("caves_region_edge", 400, CavesTests::regionEdge);
         AwakenTests.register("caves_wall_growth_whole", 100, CavesTests::wallGrowthWhole);
         AwakenTests.register("caves_region_pieces", 2400, CavesTests::regionPieces);
+        AwakenTests.register("caves_settled", 100, CavesTests::settled);
     }
 
     // ---------------------------------------------------------------- the regions
@@ -881,6 +883,51 @@ final class CavesTests {
         h.assertTrue(UnderSites.onSurface(level, m, o.getX() + 0.5, o.getY() + 6.99, o.getZ() + 0.5, Direction.DOWN), "on the roof");
         h.assertTrue(UnderSites.heldLight(new ItemStack(Items.TORCH)) == 14, "a torch gives 14");
         h.assertTrue(UnderSites.heldLight(new ItemStack(Items.STONE)) == 0, "stone gives none");
+        h.succeed();
+    }
+
+    /**
+     * Nothing in a cave floats (SPEC §42.4 "Settled"): every piece the skin lays that hangs on or stands on something asks for the
+     * world-gen re-check, and the re-check takes off what nothing holds: a lichen whose wall was cut away, a root strand whose roof
+     * was (asked from its tip first, as the pass meets a strand across a section line); a lichen on its rock stays.
+     */
+    private static void settled(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        int pieces = 0;
+        for (Block b : BuiltInRegistries.BLOCK) {
+            BlockState s = b.defaultBlockState();
+            if (!Settle.settles(s)) continue;
+            pieces++;
+            h.assertTrue(s.getPostProcessPos(level, BlockPos.ZERO) != null, BuiltInRegistries.BLOCK.getKey(b) + " is never re-checked");
+        }
+        h.assertTrue(pieces >= 30, "the skin's settling pieces: " + pieces);
+        BlockPos o = h.absolutePos(new BlockPos(1, 2, 1)), held = o.south(2), roof = o.offset(3, 4, 0);
+        BlockState stone = Blocks.STONE.defaultBlockState(), air = Blocks.AIR.defaultBlockState();
+        BlockState lichen = CaveSkin.LICHEN_SHALLOWS.get().defaultBlockState().setValue(MultifaceBlock.getFaceProperty(Direction.WEST), true);
+        level.setBlock(o, stone, Block.UPDATE_CLIENTS);
+        level.setBlock(o.east(), lichen, Block.UPDATE_CLIENTS);
+        level.setBlock(held, stone, Block.UPDATE_CLIENTS);
+        level.setBlock(held.east(), lichen, Block.UPDATE_CLIENTS);
+        level.setBlock(roof, stone, Block.UPDATE_CLIENTS);
+        for (int k = 1; k <= 3; k++) {
+            level.setBlock(roof.below(k), CaveSkin.ROOT_CURTAIN.get().defaultBlockState().setValue(SkinBlocks.RootCurtain.TIP, k == 3), Block.UPDATE_CLIENTS);
+        }
+        // the first wall and the roof cut away with no word to their neighbours, as a neighbour chunk's mineshaft cuts them
+        level.setBlock(o, air, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        level.setBlock(roof, air, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+        h.assertTrue(Floaters.verdict(level, o.east(), level.getBlockState(o.east())) == Floaters.LOOSE, "the cut leaves the lichen floating");
+        // the pass, as when the chunk first ticks: the strand's tip asked first
+        java.util.Set<net.minecraft.world.level.chunk.LevelChunk> chunks = new java.util.LinkedHashSet<>();
+        for (BlockPos p : List.of(roof.below(3), roof.below(2), roof.below(1), o.east(), held.east())) {
+            var chunk = level.getChunkAt(p);
+            net.minecraft.world.level.chunk.ChunkAccess.getOrCreateOffsetList(chunk.getPostProcessing(), chunk.getSectionIndex(p.getY()))
+                    .add(ProtoChunk.packOffsetCoordinates(p));
+            chunks.add(chunk);
+        }
+        for (var chunk : chunks) chunk.postProcessGeneration(level);
+        h.assertTrue(level.getBlockState(o.east()).isAir(), "the lichen with no wall goes");
+        for (int k = 1; k <= 3; k++) h.assertTrue(level.getBlockState(roof.below(k)).isAir(), "the strand with no roof goes, piece " + k);
+        h.assertTrue(level.getBlockState(held.east()).is(CaveSkin.LICHEN_SHALLOWS.get()), "the lichen on its wall stays");
         h.succeed();
     }
 

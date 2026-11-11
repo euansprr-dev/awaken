@@ -16956,7 +16956,8 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
   Deep's deepglass; their logs, planks, dirt and slabs come in through `#logs`, `#planks`, `#dirt` and `#slabs`): it is the
   only Awaken file in that tag, and without them the heightmaps looked straight through those blocks.
 - **The feature** `awaken:cave_skin` (`CaveSkinFeature`, placed `awaken:caves/skin`, every `#minecraft:is_overworld` biome
-  at `top_layer_modification`, so it comes after every structure and feature): per chunk, every column bottom to top below
+  at `top_layer_modification`, so it comes after every structure and feature in its own chunk; the chunks round it are only
+  carved, and theirs come later: see **Settled**): per chunk, every column bottom to top below
   the ground less **6**, section by section from the palettes; only cells where air meets natural rock are looked at.
   - A **floor** (air on rock): rubble against a wall at **0.18**, pebbles in the open at **0.045**; in a dry place (the wet
     field under **-0.3**) a dusty web in a dead end (rock on three sides and over it) at **0.2**. The two cells over a
@@ -16974,6 +16975,34 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
   and throws `awaken:cave_splash` where it lands.
 - **Moved to the regions**: drawn light (glow-worm fields, caustics, mica glints, lava's heat) is the regions' own (Pale
   Halls, Drowned Galleries, Windcleft, Black Vaults) and comes with them in P3; plain caves stay dark (decision 4).
+- **Settled** (Euan's playtest, 11 Nov 2026: a Shallows lichen hanging in the air in his New World V20, "All should be placed
+  intentionally"): nothing in a cave floats. A wall piece sits on a wall, a hanging piece hangs from a roof, a floor piece
+  stands on a floor; nothing hangs in the air or sticks out of a face that was cut away.
+  - **The cause.** The skin dresses a chunk while the eight round it are only carved (26.3 has no carver step of its own:
+    TERRAIN is noise, surface and carvers, and FEATURES needs its neighbours at TERRAIN), so a piece at a chunk's edge may lean
+    on the next chunk's rock, and that chunk's own structures and features cut the rock later: a mineshaft (cave air) or a
+    Delvers' mouth (air). Whether a piece was left floating hung on which chunk was made first. In V20 all 339 floating or
+    half-floating skin overlays in 841 chunks round his spot leaned across a chunk edge onto rock a mineshaft or a mouth had
+    cut (4 amber crystals the same way); outside the skin only a moss carpet over a mouth's carve, and surface vines.
+  - **The rule.** Every skin piece that hangs on or stands on something (every overlay, rubble, pebbles, formations,
+    puddles, glowcaps, root curtains, old rope, ember vines, rust drapes, the regions' floor pieces and crystals; not the
+    dusty web, which holds itself, nor the cave weed in its lake) carries vanilla's own post-process on itself (`Settle.SELF`,
+    as mushrooms do): the world-gen region marks each one where it is set, and when the chunk first ticks (every neighbour
+    FULL by then, before it is sent) the game asks its shape again. A face with no rock behind it comes off (a lichen with
+    none left goes); a heap with no floor, or a formation, root or rope with no rock at the root of its column, goes.
+    Formations, roots and ropes look along their whole column (up to 64) for that rock, so the pass may meet a column's
+    pieces in any order. The same pass catches anything that cuts the skin's rock after it ran, in its chunk or the next.
+  - A stalagmite's puddle lands on its own chunk's side of the foot.
+  - **Old land** is repaired as it loads: the skin marks every chunk it dresses (`awaken:cave_settled`, schemaVersion 1); a
+    chunk that loads without the mark has every settling piece in it put on its post-process list once (the same pass runs
+    as it starts ticking), then takes the mark. A section with none is passed over on its palette.
+  - **The check**: `/awaken caves floaters [r]` (admin) counts every hanging or standing piece under the ground (the ground
+    less 6) that nothing holds, in chunks that tick, by the game's own rule (`canSurvive`; a lichen's faces each, a web or a
+    hanging chain touching nothing), and logs each kind with cells and how many lean across a chunk edge; `look <n>` stands
+    the player where it can see one. `/awaken caves resettle [r]` runs the re-check by hand (sent to the players);
+    `/awaken caves at x y z` goes to a cell through the passage. Tours `caves-floaters-v20.txt` (Euan's spot, a deep
+    mineshaft, two mouths, eight regions on V20's seed) and `caves-floaters-home.txt` (his New World (11)); GameTest
+    `caves_settled`.
 
 ### 42.5 The underlife (P1; client only)
 `caves.client.Underlife` (simulation, flat arrays, nothing allocated after start), `UnderlifeRender` (quads from

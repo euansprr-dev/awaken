@@ -40,6 +40,10 @@ import java.util.Set;
  * where it drips; a dry dead end takes a dusty web. Every choice is a hash of the seed and the cell, so a chunk comes out
  * the same whatever order its neighbours were made in; only this chunk's cells are written.
  * <p>
+ * A piece may lean on the next chunk's rock, read as it is now: that chunk is only carved, and its own structures and features
+ * (a mineshaft, a Delvers' mouth) may yet cut the rock away. Each piece is asked again once the land round it is final, and
+ * goes if nothing holds it (Settle, SPEC §42.4 "Settled").
+ * <p>
  * Never touches anything but natural rock: a piece hangs from or lies on the stone family, deepslate or tuff, and a cell
  * next to anything a structure or a mine put there (planks, rails, bricks, webs, ores...) is left alone.
  * <p>
@@ -133,6 +137,8 @@ public final class CaveSkinFeature implements Feature {
                 return level.getMinY();
             }
         };
+        // its pieces are marked as they're set (Settle.SELF): an old world's chunk that lacks this mark gets them on load
+        Settle.dressed(chunk);
         return dress(cells, cx, cz, level.getSeed(), chunk, regions(chunk)) > 0;
     }
 
@@ -397,8 +403,9 @@ public final class CaveSkinFeature implements Feature {
         if (free >= 1 && chance(seed, x, y, z, 5) < STALAGMITE) {
             int up = Math.min(1 + (int) (chance(seed, x, y, z, 6) * 3), free);
             if (clean(c, x, floor, z)) placed += column(c, x, floor, z, rock(c.get(x, floor - 1, z)), Direction.UP, up);
-            // the drops land round its foot
+            // the drops land round its foot, on this chunk's side (never in a neighbour that isn't made yet)
             Direction d = AROUND[(int) (chance(seed, x, y, z, 7) * 4)];
+            if ((x + d.getStepX() & ~15) != (x & ~15) || (z + d.getStepZ() & ~15) != (z & ~15)) d = d.getOpposite();
             placed += puddle(c, seed, x + d.getStepX(), floor, z + d.getStepZ(), pearls);
         } else {
             placed += puddle(c, seed, x, floor, z, pearls);

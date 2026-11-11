@@ -5,6 +5,7 @@ import dev.awaken.Awaken;
 import dev.awaken.caves.skin.CaveSkin;
 import dev.awaken.caves.skin.CaveSkinFeature;
 import dev.awaken.caves.skin.Drips;
+import dev.awaken.caves.skin.Settle;
 import dev.awaken.delve.api.Lodes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -67,6 +68,8 @@ public final class CavesModule {
         FEATURES.register(modBus);
         SOUNDS.register(modBus);
         CaveSkin.init(modBus);
+        // nothing in a cave floats: every piece re-checked once the land round it is final, old land as it loads (SPEC §42.4)
+        Settle.init(modBus);
         Drips.init(modBus);
         modBus.addListener(AddPackFindersEvent.class, e -> e.addPackFinders(Awaken.id("datapacks/awakened_caves"), PackType.SERVER_DATA,
                 Component.literal("Awakened Caves"), PackSource.BUILT_IN, false, Pack.Position.TOP));
