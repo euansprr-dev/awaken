@@ -12,6 +12,7 @@ import dev.awaken.above.power.EssenceCellItem;
 import dev.awaken.above.power.Power;
 import dev.awaken.above.ruin.RuinBuilder;
 import dev.awaken.above.ruin.RuinKind;
+import dev.awaken.above.ruin.RuinSpacing;
 import dev.awaken.above.scan.Scanning;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.progression.Profile;
@@ -224,11 +225,18 @@ final class AboveTests {
             int i = 0;
             for (RuinKind kind : RuinKind.values()) {
                 var holder = structures.getOrThrow(kind.structure);
-                BlockPos at = base.offset(i++ * 160, 0, 0);
-                var start = holder.value().generate(holder, level.dimension(), level.registryAccess(), gen, gen.getBiomeSource(),
-                        rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.EMPTY_UNCACHED), rs,
-                        level.getStructureTemplateManager(), level.getSeed(), net.minecraft.world.level.ChunkPos.containing(at), 0, level, b -> true);
-                h.assertTrue(start.isValid(), kind.id + " start is valid");
+                BlockPos lane = base.offset(i++ * 160, 0, 0);
+                // Tether Spires and sky platforms keep their distance (RuinSpacing, SPEC §17.11 "Room between them"): a spot
+                // can lose to a nearer one, so walk down this kind's lane, 640 apart, to the first spot the rule keeps
+                var start = net.minecraft.world.level.levelgen.structure.StructureStart.INVALID_START;
+                int tried = 0;
+                while (!start.isValid() && tried < (RuinSpacing.spaced(kind) ? 24 : 1)) {
+                    BlockPos at = lane.offset(0, 0, tried++ * 640);
+                    start = holder.value().generate(holder, level.dimension(), level.registryAccess(), gen, gen.getBiomeSource(),
+                            rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.EMPTY_UNCACHED), rs,
+                            level.getStructureTemplateManager(), level.getSeed(), net.minecraft.world.level.ChunkPos.containing(at), 0, level, b -> true);
+                }
+                h.assertTrue(start.isValid(), kind.id + " start is valid (" + tried + " spots tried)");
                 var box = start.getBoundingBox();
                 for (int cx = box.minX() >> 4; cx <= box.maxX() >> 4; cx++) {
                     for (int cz = box.minZ() >> 4; cz <= box.maxZ() >> 4; cz++) {
