@@ -79,8 +79,10 @@
     "subtitle": "subtitles.awaken.hearth.request_complete",
     "sounds": [
       {
-        "name": "awaken:ui.request_delivered",
-        "type": "event"
+        "name": "minecraft:entity.villager.celebrate",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },

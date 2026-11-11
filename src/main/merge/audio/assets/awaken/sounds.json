@@ -3,7 +3,10 @@
     "subtitle": "subtitles.awaken.ui.answer_yes",
     "sounds": [
       {
-        "name": "awaken:ui_answer_yes"
+        "name": "minecraft:ui.button.click",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.2
       }
     ]
   },
@@ -11,7 +14,10 @@
     "subtitle": "subtitles.awaken.ui.answer_no",
     "sounds": [
       {
-        "name": "awaken:ui_answer_no"
+        "name": "minecraft:ui.button.click",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.8
       }
     ]
   },
@@ -19,7 +25,10 @@
     "subtitle": "subtitles.awaken.ui.story",
     "sounds": [
       {
-        "name": "awaken:ui_story"
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.8
       }
     ]
   },
@@ -27,7 +36,10 @@
     "subtitle": "subtitles.awaken.ui.now",
     "sounds": [
       {
-        "name": "awaken:ui_now"
+        "name": "minecraft:ui.toast.in",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.2
       }
     ]
   },
@@ -35,7 +47,10 @@
     "subtitle": "subtitles.awaken.ui.quest_done",
     "sounds": [
       {
-        "name": "awaken:ui_quest_done"
+        "name": "minecraft:entity.player.levelup",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.2
       }
     ]
   },
@@ -43,7 +58,10 @@
     "subtitle": "subtitles.awaken.ui.request_delivered",
     "sounds": [
       {
-        "name": "awaken:ui_request_delivered"
+        "name": "minecraft:item.bundle.insert",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -653,7 +671,10 @@
     "subtitle": "subtitles.awaken.ui.find",
     "sounds": [
       {
-        "name": "awaken:ui_find"
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.2
       }
     ]
   },
@@ -661,7 +682,10 @@
     "subtitle": "subtitles.awaken.ui.moment",
     "sounds": [
       {
-        "name": "awaken:ui_moment"
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.0
       }
     ]
   },

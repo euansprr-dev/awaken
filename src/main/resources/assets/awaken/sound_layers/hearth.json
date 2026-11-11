@@ -7,6 +7,14 @@
    "volume": 0.5
   }
  ],
+ "awaken:hearth.request_complete": [
+  {
+   "delay": 0,
+   "pitch": 1.0,
+   "sound": "minecraft:entity.experience_orb.pickup",
+   "volume": 0.3
+  }
+ ],
  "awaken:hearth.room": [
   {
    "delay": 0,

@@ -1,6 +1,38 @@
 {
  "base": "5c930ea6d142472633ae670fca1ba81a82672c84",
  "events": {
+  "aim.break": {
+   "sounds": [
+    {
+     "name": "awaken:ui_aim_break"
+    }
+   ],
+   "subtitle": "subtitles.awaken.aim.break"
+  },
+  "aim.lock": {
+   "sounds": [
+    {
+     "name": "awaken:ui_aim_lock"
+    }
+   ],
+   "subtitle": "subtitles.awaken.aim.lock"
+  },
+  "aim.release": {
+   "sounds": [
+    {
+     "name": "awaken:ui_aim_release"
+    }
+   ],
+   "subtitle": "subtitles.awaken.aim.release"
+  },
+  "aim.switch": {
+   "sounds": [
+    {
+     "name": "awaken:ui_aim_switch"
+    }
+   ],
+   "subtitle": "subtitles.awaken.aim.switch"
+  },
   "amb.frost_spires": {
    "sounds": [
     {
@@ -143,6 +175,229 @@
     }
    ],
    "subtitle": "subtitles.awaken.anomaly.rift_open"
+  },
+  "ascent.rappel_catch": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:ascent_rappel_catch"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ascent.rappel_catch"
+  },
+  "ascent.rappel_fit": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:ascent_rappel_fit"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ascent.rappel_fit"
+  },
+  "ascent.rappel_kick": {
+   "sounds": [
+    {
+     "attenuation_distance": 20,
+     "name": "awaken:ascent_rappel_kick"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ascent.rappel_kick"
+  },
+  "ascent.rappel_pay": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:ascent_rappel_pay",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.ascent.rappel_pay"
+  },
+  "ascent.rappel_pay_glass": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:ascent_rappel_pay_glass",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.ascent.rappel_pay_glass"
+  },
+  "ascent.rappel_plant": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:ascent_rappel_plant"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ascent.rappel_plant"
+  },
+  "ascent.rappel_reel": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:ascent_rappel_reel"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ascent.rappel_reel"
+  },
+  "binoculars.eyecup": {
+   "sounds": [
+    {
+     "name": "awaken:ui_binoculars_eyecup"
+    }
+   ],
+   "subtitle": "subtitles.awaken.binoculars.eyecup"
+  },
+  "binoculars.lower": {
+   "sounds": [
+    {
+     "name": "awaken:ui_binoculars_lower"
+    }
+   ],
+   "subtitle": "subtitles.awaken.binoculars.lower"
+  },
+  "binoculars.raise": {
+   "sounds": [
+    {
+     "name": "awaken:ui_binoculars_raise"
+    }
+   ],
+   "subtitle": "subtitles.awaken.binoculars.raise"
+  },
+  "binoculars.step": {
+   "sounds": [
+    {
+     "name": "awaken:ui_binoculars_step"
+    }
+   ],
+   "subtitle": "subtitles.awaken.binoculars.step"
+  },
+  "body.climb": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:body_climb"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.climb"
+  },
+  "body.drop": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:body_drop"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.drop"
+  },
+  "body.grab": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:body_grab"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.grab"
+  },
+  "body.impact": {
+   "sounds": [
+    {
+     "attenuation_distance": 20,
+     "name": "awaken:body_impact"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.impact"
+  },
+  "body.mantle": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:body_mantle"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.mantle"
+  },
+  "body.pipe_brake": {
+   "sounds": [
+    {
+     "attenuation_distance": 14,
+     "name": "awaken:body_pipe_brake"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.pipe_brake"
+  },
+  "body.pipe_slide": {
+   "sounds": [
+    {
+     "attenuation_distance": 14,
+     "name": "awaken:body_pipe_slide"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.pipe_slide"
+  },
+  "body.roll": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:body_roll"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.roll"
+  },
+  "body.shimmy": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:body_shimmy"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.shimmy"
+  },
+  "body.slide": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:body_slide"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.slide"
+  },
+  "body.sprint": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:body_sprint"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.sprint"
+  },
+  "body.vault": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:body_vault"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.vault"
+  },
+  "body.walljump": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:body_walljump"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.walljump"
+  },
+  "body.wallstep": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:body_wallstep"
+    }
+   ],
+   "subtitle": "subtitles.awaken.body.wallstep"
   },
   "caves.bats": {
    "sounds": [
@@ -953,6 +1208,38 @@
    ],
    "subtitle": "subtitles.awaken.delve.vein_gives"
   },
+  "dream.catch": {
+   "sounds": [
+    {
+     "name": "awaken:dream_catch"
+    }
+   ],
+   "subtitle": "subtitles.awaken.dream.catch"
+  },
+  "dream.ring": {
+   "sounds": [
+    {
+     "name": "awaken:dream_ring"
+    }
+   ],
+   "subtitle": "subtitles.awaken.dream.ring"
+  },
+  "dream.tick": {
+   "sounds": [
+    {
+     "name": "awaken:dream_tick"
+    }
+   ],
+   "subtitle": "subtitles.awaken.dream.tick"
+  },
+  "dream.won": {
+   "sounds": [
+    {
+     "name": "awaken:dream_won"
+    }
+   ],
+   "subtitle": "subtitles.awaken.dream.won"
+  },
   "edge.headwind": {
    "sounds": [
     {
@@ -961,6 +1248,247 @@
     }
    ],
    "subtitle": "subtitles.awaken.edge.headwind"
+  },
+  "enchant.book_open": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:enchant/enchant_book_open_0"
+    },
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:enchant/enchant_book_open_1"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.book_open"
+  },
+  "enchant.burin_leather": {
+   "sounds": [
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_burin_leather_0"
+    },
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_burin_leather_1"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.burin_leather"
+  },
+  "enchant.burin_metal": {
+   "sounds": [
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_burin_metal_0"
+    },
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_burin_metal_1"
+    },
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_burin_metal_2"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.burin_metal"
+  },
+  "enchant.cut_leather": {
+   "sounds": [
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_cut_leather_0"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.cut_leather"
+  },
+  "enchant.cut_metal": {
+   "sounds": [
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_cut_metal_0"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.cut_metal"
+  },
+  "enchant.drift": {
+   "sounds": [
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_drift_0"
+    },
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_drift_1"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.drift"
+  },
+  "enchant.flare": {
+   "sounds": [
+    {
+     "attenuation_distance": 24,
+     "name": "awaken:enchant/enchant_flare_0"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.flare"
+  },
+  "enchant.learn": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:enchant/enchant_learn_0"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.learn"
+  },
+  "enchant.note_bane": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:enchant/enchant_note_bane_0"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.note_bane"
+  },
+  "enchant.note_carry": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:enchant/enchant_note_carry_0"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.note_carry"
+  },
+  "enchant.note_keep": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:enchant/enchant_note_keep_0"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.note_keep"
+  },
+  "enchant.note_spoils": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:enchant/enchant_note_spoils_0"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.note_spoils"
+  },
+  "enchant.note_ward": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:enchant/enchant_note_ward_0"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.note_ward"
+  },
+  "enchant.page_turn": {
+   "sounds": [
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_page_turn_0"
+    },
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_page_turn_1"
+    },
+    {
+     "attenuation_distance": 8,
+     "name": "awaken:enchant/enchant_page_turn_2"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.page_turn"
+  },
+  "enchant.scrape": {
+   "sounds": [
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:enchant/enchant_scrape_0"
+    },
+    {
+     "attenuation_distance": 12,
+     "name": "awaken:enchant/enchant_scrape_1"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.scrape"
+  },
+  "enchant.scratch": {
+   "sounds": [
+    {
+     "attenuation_distance": 6,
+     "name": "awaken:enchant/enchant_scratch_0"
+    },
+    {
+     "attenuation_distance": 6,
+     "name": "awaken:enchant/enchant_scratch_1"
+    },
+    {
+     "attenuation_distance": 6,
+     "name": "awaken:enchant/enchant_scratch_2"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.scratch"
+  },
+  "enchant.wake": {
+   "sounds": [
+    {
+     "attenuation_distance": 24,
+     "name": "awaken:enchant/enchant_wake_0"
+    }
+   ],
+   "subtitle": "subtitles.awaken.enchant.wake"
+  },
+  "fault.drop": {
+   "sounds": [
+    {
+     "name": "awaken:ui_fault_drop"
+    }
+   ],
+   "subtitle": "subtitles.awaken.fault.drop"
+  },
+  "fault.flicker": {
+   "sounds": [
+    {
+     "name": "awaken:ui_fault_flicker"
+    }
+   ],
+   "subtitle": "subtitles.awaken.fault.flicker"
+  },
+  "fault.mend": {
+   "sounds": [
+    {
+     "name": "awaken:ui_fault_mend"
+    }
+   ],
+   "subtitle": "subtitles.awaken.fault.mend"
+  },
+  "fault.tear": {
+   "sounds": [
+    {
+     "name": "awaken:ui_fault_tear"
+    }
+   ],
+   "subtitle": "subtitles.awaken.fault.tear"
+  },
+  "fault.tell": {
+   "sounds": [
+    {
+     "name": "awaken:ui_fault_tell"
+    }
+   ],
+   "subtitle": "subtitles.awaken.fault.tell"
+  },
+  "fault.voice": {
+   "sounds": [
+    {
+     "name": "awaken:ui_fault_voice"
+    }
+   ],
+   "subtitle": "subtitles.awaken.fault.voice"
   },
   "fauna.bloom_sprite.ambient": {
    "sounds": [
@@ -3164,6 +3692,15 @@
    ],
    "subtitle": "subtitles.awaken.hearth.lift"
   },
+  "hearth.request_complete": {
+   "sounds": [
+    {
+     "name": "awaken:ui.request_delivered",
+     "type": "event"
+    }
+   ],
+   "subtitle": "subtitles.awaken.hearth.request_complete"
+  },
   "hearth.room": {
    "sounds": [
     {
@@ -3181,6 +3718,97 @@
    ],
    "subtitle": "subtitles.awaken.hearth.take"
   },
+  "holo.card": {
+   "sounds": [
+    {
+     "name": "awaken:ui_holo_card"
+    }
+   ],
+   "subtitle": "subtitles.awaken.holo.card"
+  },
+  "holo.close": {
+   "sounds": [
+    {
+     "name": "awaken:ui_holo_close"
+    }
+   ],
+   "subtitle": "subtitles.awaken.holo.close"
+  },
+  "holo.confirm": {
+   "sounds": [
+    {
+     "name": "awaken:ui_holo_confirm"
+    }
+   ],
+   "subtitle": "subtitles.awaken.holo.confirm"
+  },
+  "holo.hover": {
+   "sounds": [
+    {
+     "name": "awaken:ui_holo_hover_1"
+    },
+    {
+     "name": "awaken:ui_holo_hover_2"
+    }
+   ],
+   "subtitle": "subtitles.awaken.holo.hover"
+  },
+  "holo.open": {
+   "sounds": [
+    {
+     "name": "awaken:ui_holo_open"
+    }
+   ],
+   "subtitle": "subtitles.awaken.holo.open"
+  },
+  "holo.open_quick": {
+   "sounds": [
+    {
+     "name": "awaken:ui_holo_open_quick"
+    }
+   ],
+   "subtitle": "subtitles.awaken.holo.open_quick"
+  },
+  "holo.page": {
+   "sounds": [
+    {
+     "name": "awaken:ui_holo_page"
+    }
+   ],
+   "subtitle": "subtitles.awaken.holo.page"
+  },
+  "holo.spend": {
+   "sounds": [
+    {
+     "name": "awaken:ui_holo_spend"
+    }
+   ],
+   "subtitle": "subtitles.awaken.holo.spend"
+  },
+  "holo.undo": {
+   "sounds": [
+    {
+     "name": "awaken:ui_holo_undo"
+    }
+   ],
+   "subtitle": "subtitles.awaken.holo.undo"
+  },
+  "level_up": {
+   "sounds": [
+    {
+     "name": "awaken:ui_level_up"
+    }
+   ],
+   "subtitle": "subtitles.awaken.level_up"
+  },
+  "living.crit": {
+   "sounds": [
+    {
+     "name": "awaken:ui_living_crit"
+    }
+   ],
+   "subtitle": "subtitles.awaken.living.crit"
+  },
   "living.dread": {
    "sounds": [
     {
@@ -3188,6 +3816,30 @@
     }
    ],
    "subtitle": "subtitles.awaken.living.dread"
+  },
+  "living.level_up": {
+   "sounds": [
+    {
+     "name": "awaken:ui_living_level_up"
+    }
+   ],
+   "subtitle": "subtitles.awaken.living.level_up"
+  },
+  "living.region_enter": {
+   "sounds": [
+    {
+     "name": "awaken:ui_living_region_enter"
+    }
+   ],
+   "subtitle": "subtitles.awaken.living.region_enter"
+  },
+  "living.scan": {
+   "sounds": [
+    {
+     "name": "awaken:ui_living_scan"
+    }
+   ],
+   "subtitle": "subtitles.awaken.living.scan"
   },
   "living.tell.bells": {
    "sounds": [
@@ -3239,6 +3891,221 @@
     }
    ],
    "subtitle": "subtitles.awaken.living.tell.wings"
+  },
+  "living.xp_tick": {
+   "sounds": [
+    {
+     "name": "awaken:ui_living_xp_tick"
+    }
+   ],
+   "subtitle": "subtitles.awaken.living.xp_tick"
+  },
+  "mobs.fights.beam_fire": {
+   "sounds": [
+    {
+     "name": "awaken:fights_beam_fire",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.beam_fire"
+  },
+  "mobs.fights.field_hiss": {
+   "sounds": [
+    {
+     "name": "awaken:fights_field_hiss",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.field_hiss"
+  },
+  "mobs.fights.ground_run": {
+   "sounds": [
+    {
+     "name": "awaken:fights_ground_run",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.ground_run"
+  },
+  "mobs.fights.growl": {
+   "sounds": [
+    {
+     "name": "awaken:fights_growl",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.growl"
+  },
+  "mobs.fights.lock": {
+   "sounds": [
+    {
+     "name": "awaken:fights_lock",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.lock"
+  },
+  "mobs.fights.pull_draw": {
+   "sounds": [
+    {
+     "name": "awaken:fights_pull_draw",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.pull_draw"
+  },
+  "mobs.fights.shot_hum": {
+   "sounds": [
+    {
+     "name": "awaken:fights_shot_hum",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.shot_hum"
+  },
+  "mobs.fights.shot_release": {
+   "sounds": [
+    {
+     "name": "awaken:fights_shot_release",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.shot_release"
+  },
+  "mobs.fights.volley_fall": {
+   "sounds": [
+    {
+     "name": "awaken:fights_volley_fall",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.volley_fall"
+  },
+  "mobs.fights.volley_hit": {
+   "sounds": [
+    {
+     "name": "awaken:fights_volley_hit",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.volley_hit"
+  },
+  "mobs.fights.volley_throw": {
+   "sounds": [
+    {
+     "name": "awaken:fights_volley_throw",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.volley_throw"
+  },
+  "mobs.fights.wave_roll": {
+   "sounds": [
+    {
+     "name": "awaken:fights_wave_roll",
+     "stream": false
+    }
+   ],
+   "subtitle": "subtitles.awaken.mobs.fights.wave_roll"
+  },
+  "rank_up": {
+   "sounds": [
+    {
+     "name": "awaken:ui_rank_up"
+    }
+   ],
+   "subtitle": "subtitles.awaken.rank_up"
+  },
+  "signal.chime": {
+   "sounds": [
+    {
+     "name": "awaken:ui_toast_1"
+    },
+    {
+     "name": "awaken:ui_toast_2"
+    }
+   ],
+   "subtitle": "subtitles.awaken.signal.chime"
+  },
+  "signal.open": {
+   "sounds": [
+    {
+     "name": "awaken:ui_card"
+    }
+   ],
+   "subtitle": "subtitles.awaken.signal.open"
+  },
+  "signal.warning": {
+   "sounds": [
+    {
+     "name": "awaken:ui_warning"
+    }
+   ],
+   "subtitle": "subtitles.awaken.signal.warning"
+  },
+  "ui.answer_no": {
+   "sounds": [
+    {
+     "name": "awaken:ui_answer_no"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ui.answer_no"
+  },
+  "ui.answer_yes": {
+   "sounds": [
+    {
+     "name": "awaken:ui_answer_yes"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ui.answer_yes"
+  },
+  "ui.find": {
+   "sounds": [
+    {
+     "name": "awaken:ui_find"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ui.find"
+  },
+  "ui.moment": {
+   "sounds": [
+    {
+     "name": "awaken:ui_moment"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ui.moment"
+  },
+  "ui.now": {
+   "sounds": [
+    {
+     "name": "awaken:ui_now"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ui.now"
+  },
+  "ui.quest_done": {
+   "sounds": [
+    {
+     "name": "awaken:ui_quest_done"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ui.quest_done"
+  },
+  "ui.request_delivered": {
+   "sounds": [
+    {
+     "name": "awaken:ui_request_delivered"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ui.request_delivered"
+  },
+  "ui.story": {
+   "sounds": [
+    {
+     "name": "awaken:ui_story"
+    }
+   ],
+   "subtitle": "subtitles.awaken.ui.story"
   },
   "wild.chip": {
    "sounds": [

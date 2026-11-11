@@ -3,8 +3,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.shot_release",
     "sounds": [
       {
-        "name": "awaken:fights_shot_release",
-        "stream": false
+        "name": "minecraft:entity.breeze.shoot",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.0
       }
     ]
   },
@@ -12,8 +14,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.shot_hum",
     "sounds": [
       {
-        "name": "awaken:fights_shot_hum",
-        "stream": false
+        "name": "minecraft:entity.bee.loop",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.4
       }
     ]
   },
@@ -21,8 +25,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.volley_throw",
     "sounds": [
       {
-        "name": "awaken:fights_volley_throw",
-        "stream": false
+        "name": "minecraft:entity.snowball.throw",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.7
       }
     ]
   },
@@ -30,8 +36,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.volley_fall",
     "sounds": [
       {
-        "name": "awaken:fights_volley_fall",
-        "stream": false
+        "name": "minecraft:entity.phantom.swoop",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -39,8 +47,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.volley_hit",
     "sounds": [
       {
-        "name": "awaken:fights_volley_hit",
-        "stream": false
+        "name": "minecraft:item.mace.smash_ground",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.1
       }
     ]
   },
@@ -48,8 +58,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.wave_roll",
     "sounds": [
       {
-        "name": "awaken:fights_wave_roll",
-        "stream": false
+        "name": "minecraft:entity.minecart.riding",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.6
       }
     ]
   },
@@ -57,8 +69,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.lock",
     "sounds": [
       {
-        "name": "awaken:fights_lock",
-        "stream": false
+        "name": "minecraft:item.crossbow.loading_end",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.9
       }
     ]
   },
@@ -66,8 +80,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.ground_run",
     "sounds": [
       {
-        "name": "awaken:fights_ground_run",
-        "stream": false
+        "name": "minecraft:entity.evoker_fangs.attack",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
       }
     ]
   },
@@ -75,8 +91,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.beam_fire",
     "sounds": [
       {
-        "name": "awaken:fights_beam_fire",
-        "stream": false
+        "name": "minecraft:entity.guardian.attack",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -84,8 +102,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.pull_draw",
     "sounds": [
       {
-        "name": "awaken:fights_pull_draw",
-        "stream": false
+        "name": "minecraft:entity.breeze.inhale",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.7
       }
     ]
   },
@@ -93,8 +113,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.field_hiss",
     "sounds": [
       {
-        "name": "awaken:fights_field_hiss",
-        "stream": false
+        "name": "minecraft:block.potent_sulfur.noxious_gas",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.0
       }
     ]
   },
@@ -102,8 +124,10 @@
     "subtitle": "subtitles.awaken.mobs.fights.growl",
     "sounds": [
       {
-        "name": "awaken:fights_growl",
-        "stream": false
+        "name": "minecraft:entity.ravager.ambient",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.9
       }
     ]
   }

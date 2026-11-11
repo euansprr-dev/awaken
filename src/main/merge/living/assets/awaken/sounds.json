@@ -3,7 +3,10 @@
     "subtitle": "subtitles.awaken.living.scan",
     "sounds": [
       {
-        "name": "awaken:ui_living_scan"
+        "name": "minecraft:item.spyglass.use",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.2
       }
     ]
   },
@@ -11,7 +14,10 @@
     "subtitle": "subtitles.awaken.living.crit",
     "sounds": [
       {
-        "name": "awaken:ui_living_crit"
+        "name": "minecraft:entity.player.attack.crit",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.1
       }
     ]
   },
@@ -19,7 +25,10 @@
     "subtitle": "subtitles.awaken.living.xp_tick",
     "sounds": [
       {
-        "name": "awaken:ui_living_xp_tick"
+        "name": "minecraft:entity.experience_orb.pickup",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 1.2
       }
     ]
   },
@@ -27,7 +36,10 @@
     "subtitle": "subtitles.awaken.living.level_up",
     "sounds": [
       {
-        "name": "awaken:ui_living_level_up"
+        "name": "minecraft:entity.player.levelup",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.1
       }
     ]
   },
@@ -35,7 +47,10 @@
     "subtitle": "subtitles.awaken.living.region_enter",
     "sounds": [
       {
-        "name": "awaken:ui_living_region_enter"
+        "name": "minecraft:block.bell.resonate",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.9
       }
     ]
   },
@@ -104,10 +119,10 @@
     "subtitle": "subtitles.awaken.living.tell.storm",
     "sounds": [
       {
-        "name": "minecraft:entity.lightning_bolt.thunder",
+        "name": "minecraft:weather.rain.above",
         "type": "event",
-        "volume": 0.3,
-        "pitch": 0.6
+        "volume": 0.5,
+        "pitch": 0.7
       }
     ]
   },

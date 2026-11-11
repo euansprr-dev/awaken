@@ -12,7 +12,7 @@ ore, even vanilla sounds better".
 world, and has no narrow steady high tone at its peak (`docs/powers-aaa/taster/ding_check.py`). A sound built by
 synthesis (sine partials, filtered noise, voiced formants) is below it, however well its loudness and brightness match.
 
-**The count.** 1890 events: 1003 at the bar, 321 remade in this audit, 566 left as they are (each row says why).
+**The count.** 1890 events: 1003 at the bar, 417 remade in this audit, 470 left as they are (each row says why).
 
 **How to read a row.** *Source before* is where the sound came from before the audit. *Fix, as built* is the recipe the
 game plays now: each recording by its name in the game, `×` its volume and `@` its pitch, `+ms` when it starts late.
@@ -151,7 +151,7 @@ Caves, wind, water, far happenings, rifts and fallen stars, the special places, 
 | `living.tell.wings` | A murmuration's wings, far off | living.client.PulseSound: a far happening heard from afar, looped and louder as you near it: a great flock turning (200 blocks) | ours, synthesised (audio_world.py: noise grains) | Below the bar. Synthetic flutter (noise) | A bat's wing loop: many small wings. `entity.bat.loop` ×0.6 @0.9 |
 | `living.tell.tide` | The Deep Tide's drone | living.client.PulseSound: a far happening heard from afar, looped and louder as you near it: the tide rising (320 blocks) | ours, synthesised (audio_world.py: sub sines) | Below the bar. Synthetic drone | The game's own underwater air, slowed. `ambient.underwater.loop` ×0.6 @0.6 |
 | `living.tell.bells` | A caravan's bells, far off | living.client.PulseSound: a far happening heard from afar, looped and louder as you near it: a caravan on the road (160 blocks) | ours, synthesised (audio_world.py: sine bells) | Below the bar. Synthetic bells | The game's bell, raised and quiet, tolling. `block.bell.use` ×0.3 @1.6 |
-| `living.tell.storm` | A storm, far off | living.client.PulseSound: a far happening heard from afar, looped and louder as you near it: a storm front (far) | ours, synthesised (audio_world.py: noise) | Below the bar. Synthetic (noise) | Thunder, slowed and quiet. `entity.lightning_bolt.thunder` ×0.3 @0.6 |
+| `living.tell.storm` | A storm, far off | living.client.PulseSound: a far happening heard from afar, looped and louder as you near it: a storm front (far) | ours, synthesised (audio_world.py: noise) | Below the bar. Synthetic (noise) | Rain on a roof, slowed: a far roar of rain. `weather.rain.above` ×0.5 @0.7 |
 | `living.dread` | Dread: something great is near | living: when a dread creature closes on you | ours, synthesised (audio_world.py: sub sines) | Below the bar. Synthetic drone | A warden near, quiet. `entity.warden.nearby_close` ×0.6 @0.8 |
 | `ambient.storm.roll` | Thunder rolls in a wild storm | living: the Wilds' storms, between the game's own cracks | ours, synthesised (audio_world.py: filtered noise) | Below the bar. Synthetic thunder (noise) | The game's thunder, slowed and softer. `entity.lightning_bolt.thunder` ×0.5 @0.7 |
 | `amb.lands_rustle` | Leaves in the wind | Conductor texture under a canopy, driven by terrain.Wind; only without AmbientSounds | ours, synthesised (audio_lands.py: filtered noise) | Below the bar. Synthetic wind (noise) | The game's own leaves in the wind (poplar leaves). `block.poplar_leaves.ambient` ×1 @1 |
@@ -370,6 +370,123 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 | `fauna.wisp_hound.hurt` | A Wisp Hound is hurt | mobs: when it is hurt | ours, synthesised (tools/art/specs/fauna_sounds.py) | Below the bar. Synthetic voice: a buzz through filters, noise and sine thuds | The big wolf's voice. `entity.wolf.hurt` ×0.9 @0.9 |
 | `fauna.wisp_hound.step` | A Wisp Hound steps | mobs: each step (a flier: each wingbeat) | ours, synthesised (tools/art/specs/fauna_sounds.py) | Below the bar. Synthetic voice: a buzz through filters, noise and sine thuds | The big wolf's voice. `entity.wolf.step` ×0.5 @1 |
 
+## The System's voice
+
+Cues, the Holo UI, the band, lock-on, binoculars, Faults. It was one synthesised struck glass; now the game's own crystal, clicks and toasts.
+
+| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
+|---|---|---|---|---|---|
+| `aim.lock` | Lock taken | aim.client: locking on to a creature | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A lodestone compass locking. `item.lodestone_compass.lock` ×0.6 @1.2 |
+| `aim.switch` | Lock moves | aim.client: moving the lock to another | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A comparator's click, raised. `block.comparator.click` ×0.5 @1.4 |
+| `aim.release` | Lock released | aim.client: letting the lock go | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A comparator's click, lowered. `block.comparator.click` ×0.4 @0.9 |
+| `aim.break` | The locked creature falls | aim.client: the lock's creature dying | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | An amethyst cluster breaking, quiet and raised. `block.amethyst_cluster.break` ×0.4 @1.3 |
+| `ui.answer_yes` | A System answer accepted | core.audio.client.AudioUi: choosing yes in a System window | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The game's button click, raised, with a quiet amethyst chime. `ui.button.click` ×0.5 @1.2; `block.amethyst_block.chime` ×0.35 @1.3 |
+| `ui.answer_no` | A System answer declined | core.audio.client.AudioUi: choosing no | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The game's button click, lowered. `ui.button.click` ×0.5 @0.8 |
+| `ui.story` | The Signal speaks | core.audio.client.AudioUi: a story line from the System | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | Amethyst chiming low, with its ring. `block.amethyst_block.chime` ×0.5 @0.8; `block.amethyst_block.resonate` ×0.3 @0.8 |
+| `ui.now` | The Now tracker updates | core.audio.client.AudioUi: the tracked task changing | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The game's toast arriving, quiet and raised. `ui.toast.in` ×0.5 @1.2 |
+| `ui.quest_done` | A quest complete | core.audio.client.AudioUi: a quest finished | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The game's own level-up, quiet and raised. `entity.player.levelup` ×0.4 @1.2 |
+| `ui.request_delivered` | A request delivered | core.audio.client.AudioUi: handing in what the Hearth asked for | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A bundle filled, with XP arriving. `item.bundle.insert` ×0.6 @1; `entity.experience_orb.pickup` ×0.4 @0.9 +100ms |
+| `ui.find` | A discovery | core.audio.client.AudioUi: the director's cue for something found | ours, synthesised (tools/art/specs/audio_discovery.py) | Below the bar. A synthetic ding: tuned sine partials | Amethyst chiming, with the game's toast. `block.amethyst_block.chime` ×0.5 @1.2; `ui.toast.in` ×0.4 @1 |
+| `ui.moment` | A moment worth stopping for | core.audio.client.AudioUi: the director's cue for a view or a moment | ours, synthesised (tools/art/specs/audio_discovery.py) | Below the bar. A synthetic ding: tuned sine partials | Amethyst ringing, with a bell's hum far under it. `block.amethyst_block.resonate` ×0.5 @1; `block.bell.resonate` ×0.25 @1.2 |
+| `binoculars.raise` | Binoculars raised | binoculars.client: raising them | ours, synthesised (tools/art/specs/binoculars_sounds.py) | Below the bar. Synthetic: noise and a struck sine | The game's own spyglass raised, lowered a little. `item.spyglass.use` ×0.8 @0.9 |
+| `binoculars.eyecup` | Binoculars at the eyes | binoculars.client: the cups settling | ours, synthesised (tools/art/specs/binoculars_sounds.py) | Below the bar. Synthetic | Leather settling, raised and quiet. `item.armor.equip_leather` ×0.4 @1.4 |
+| `binoculars.step` | The focus clicks | binoculars.client: each step of zoom | ours, synthesised (tools/art/specs/binoculars_sounds.py) | Below the bar. Synthetic click | A comparator's click, raised. `block.comparator.click` ×0.4 @1.5 |
+| `binoculars.lower` | Binoculars lowered | binoculars.client: lowering them | ours, synthesised (tools/art/specs/binoculars_sounds.py) | Below the bar. Synthetic | The game's own spyglass lowered. `item.spyglass.stop_using` ×0.8 @0.9 |
+| `signal.chime` | The Signal's chime | core / signal: a System window or line arriving | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | Amethyst chiming. `block.amethyst_block.chime` ×0.6 @1 |
+| `signal.open` | A System window opens | signal.client: a window opening | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The game's toast arriving, with a quiet amethyst chime. `ui.toast.in` ×0.6 @1; `block.amethyst_block.chime` ×0.3 @1.2 |
+| `signal.warning` | The System warns | signal: a warning line | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A trial spawner noticing you. `block.trial_spawner.detect_player` ×0.6 @1 |
+| `level_up` | Level up | progression: a level gained | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The game's own level-up. `entity.player.levelup` ×0.6 @1 |
+| `rank_up` | Rank up | progression: a rank gained | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The game's own challenge-complete. `ui.toast.challenge_complete` ×0.6 @1 |
+| `fault.tell` | A Fault's tell: the world goes quiet | fault: before a Fault | ours, synthesised (tools/art/specs/audio_fault.py) | Below the bar. Synthetic: a reversed breath and a sine bell pitched wrong | A beacon going out, lowered. `block.beacon.deactivate` ×0.6 @0.7 |
+| `fault.tear` | The System breaks up | fault: the tear | ours, synthesised (tools/art/specs/audio_fault.py) | Below the bar. Synthetic: gated sines and noise | A respawn anchor emptying, with an enderman's jump slowed. `block.respawn_anchor.deplete` ×0.6 @0.8; `entity.enderman.teleport` ×0.3 @0.6 |
+| `fault.voice` | The System's broken voice | fault: its voice breaking up | ours, synthesised (tools/art/specs/audio_fault.py) | Below the bar. Synthetic: a chopped sine voice | A sculk sensor clicking, slowed, and an enderman's murmur raised. `block.sculk_sensor.clicking` ×0.5 @0.7; `entity.enderman.ambient` ×0.3 @1.6 +100ms |
+| `fault.drop` | Everything cuts to black | fault: the drop | ours, synthesised (tools/art/specs/audio_fault.py) | Below the bar. Synthetic | A beacon going out, well lowered. `block.beacon.deactivate` ×0.8 @0.6 |
+| `fault.mend` | The System mends | fault: the mend | ours, synthesised (tools/art/specs/audio_fault.py) | Below the bar. Synthetic | A beacon waking. `block.beacon.activate` ×0.6 @1 |
+| `fault.flicker` | The System flickers | fault: a flicker | ours, synthesised (tools/art/specs/audio_fault.py) | Below the bar. Synthetic | A redstone torch burning out, raised and quiet. `block.redstone_torch.burnout` ×0.4 @1.4 |
+| `hearth.request_complete` | The Hearth's request is done | hearth.request: a request completed | ours, synthesised (tools/art/specs/audio_hearth.py) | Below the bar. A synthetic ding: tuned sine partials | A villager celebrating, with XP arriving. `entity.villager.celebrate` ×0.6 @1; `entity.experience_orb.pickup` ×0.3 @1 |
+| `holo.open` | The Holo panel unfolds | holo.client: opening the band's panel | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A vault's shutter opening, raised. `block.vault.open_shutter` ×0.5 @1.3 |
+| `holo.open_quick` | The Holo inventory unfolds | holo.client: opening the bag | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A vault's shutter opening, quick and high. `block.vault.open_shutter` ×0.4 @1.6 |
+| `holo.close` | The Holo panel folds away | holo.client: closing the panel | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A vault's shutter closing, raised. `block.vault.close_shutter` ×0.5 @1.3 |
+| `holo.hover` | A Holo tile under the pointer | holo.client: the pointer moving onto a tile (often) | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A comparator's click, very quiet and high. `block.comparator.click` ×0.2 @1.9 |
+| `holo.card` | A System card projected | holo.client: a card appearing | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A beacon's click, raised. `block.beacon.power_select` ×0.4 @1.4 |
+| `holo.page` | A band page turns | holo.client: changing page | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A page turned. `item.book.page_turn` ×0.6 @1.2 |
+| `holo.spend` | A stat point placed | holo.client: placing a point | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The stonecutter's pick, raised. `ui.stonecutter.select_recipe` ×0.6 @1.2 |
+| `holo.confirm` | Stat points confirmed | holo.client: confirming points | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A beacon waking, quiet and raised. `block.beacon.activate` ×0.4 @1.4 |
+| `holo.undo` | A stat point taken back | holo.client: taking a point back | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The stonecutter's pick, lowered. `ui.stonecutter.select_recipe` ×0.5 @0.8 |
+| `living.scan` | The band reads a creature | living.client: the wrist band's scan | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A spyglass raised, with a sculk sensor's clicks. `item.spyglass.use` ×0.7 @1.2; `block.sculk_sensor.clicking` ×0.3 @1.5 |
+| `living.crit` | A critical hit | living.client: the glyph of a critical hit | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The game's own critical hit. `entity.player.attack.crit` ×0.7 @1.1 |
+| `living.xp_tick` | XP gathers | living.client: XP arriving at the band | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The game's own XP arriving, quiet. `entity.experience_orb.pickup` ×0.35 @1.2 |
+| `living.level_up` | A Wilds level gained | living.client: the Wilds' level-up | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | The game's own level-up, a little raised. `entity.player.levelup` ×0.6 @1.1 |
+| `living.region_enter` | A named region entered | living.client: a region's caption | ours, synthesised (the System's struck glass, tools/art/specs/audio_ui.py and its family) | Below the bar. A synthetic ding: tuned sine partials | A bell's hum. `block.bell.resonate` ×0.4 @0.9 |
+
+## The body, the rope and fights
+
+Moves on ledges, walls and pipes, the rappel, and what a creature sends at you.
+
+| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
+|---|---|---|---|---|---|
+| `ascent.rappel_pay` | Rope runs through a hand | body.ascent: rappelling down | ours, synthesised (tools/art/specs/audio_rappel.py) | Below the bar. Synthetic: filtered noise | A lead let go, lowered, with wool running. `item.lead.untied` ×0.6 @0.8; `block.wool.step` ×0.6 @0.9 |
+| `ascent.rappel_pay_glass` | A glass line runs out | body.ascent: rappelling on a glass line | ours, synthesised (tools/art/specs/audio_rappel.py) | Below the bar. Synthetic | A fishing line reeled, raised, over amethyst underfoot. `entity.fishing_bobber.retrieve` ×0.7 @1.3; `block.amethyst_block.step` ×0.3 @1.2 |
+| `ascent.rappel_catch` | A rope gripped | body.ascent: stopping on the rope | ours, synthesised (tools/art/specs/audio_rappel.py) | Below the bar. Synthetic | A lead tied. `item.lead.tied` ×0.8 @0.9 |
+| `ascent.rappel_kick` | Boots kick off rock | body.ascent: kicking off the face | ours, synthesised (tools/art/specs/audio_rappel.py) | Below the bar. Synthetic | A foot on stone, hard. `block.stone.step` ×0.9 @0.9 |
+| `ascent.rappel_plant` | Boots land on rock | body.ascent: landing back on the face | ours, synthesised (tools/art/specs/audio_rappel.py) | Below the bar. Synthetic | A landing on stone. `block.stone.fall` ×0.8 @0.9 |
+| `ascent.rappel_reel` | A reel winds | body.ascent: reeling up | ours, synthesised (tools/art/specs/audio_rappel.py) | Below the bar. Synthetic | A fishing line reeled. `entity.fishing_bobber.retrieve` ×0.8 @0.9 |
+| `ascent.rappel_fit` | A fitting snaps onto a rope | body.ascent: clipping on | ours, synthesised (tools/art/specs/audio_rappel.py) | Below the bar. Synthetic click | A chain set down, raised. `block.chain.place` ×0.6 @1.2 |
+| `body.roll` | A roll | body: rolling out of a fall | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic: noise and a sine thud | Cloth landing, then leather shifting. `block.wool.fall` ×0.7 @0.8; `item.armor.equip_leather` ×0.5 @0.9 +100ms |
+| `body.sprint` | A push off into a sprint | body: the first stride of a sprint | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic | A short landing, raised and quiet, with gear shifting. `entity.player.small_fall` ×0.3 @1.4; `item.armor.equip_generic` ×0.3 @1.3 |
+| `body.slide` | A slide | body: sliding along the ground | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic: filtered noise | A brush on gravel, lowered: grit under you. `item.brush.brushing.gravel` ×0.6 @0.8 |
+| `body.mantle` | Up onto a ledge | body: mantling | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic | Leather shifting, then a foot on stone. `item.armor.equip_leather` ×0.6 @0.9; `block.stone.step` ×0.5 @0.9 +150ms |
+| `body.impact` | A hard landing | body: landing from height | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic: a sine thud | The game's own big fall, with stone under it. `entity.player.big_fall` ×0.8 @0.9; `block.stone.fall` ×0.6 @0.8 |
+| `body.wallstep` | Steps along a wall | body: wall-running | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic | A foot on stone, raised. `block.stone.step` ×0.6 @1.1 |
+| `body.walljump` | A kick off a wall | body: wall-jumping | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic | A foot on stone, hard, with leather shifting. `block.stone.step` ×0.8 @1; `item.armor.equip_leather` ×0.4 @1.2 |
+| `body.grab` | A ledge caught | body: catching a ledge | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic | Stone knocked, with leather taking the weight. `block.stone.hit` ×0.6 @1; `item.armor.equip_leather` ×0.5 @1 |
+| `body.shimmy` | Hands slide along a ledge | body: shimmying | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic: filtered noise | A brush on stone. `item.brush.brushing.generic` ×0.5 @1 |
+| `body.climb` | Over a ledge | body: climbing over | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic | Leather shifting, lowered, then a foot on stone. `item.armor.equip_leather` ×0.6 @0.8; `block.stone.step` ×0.5 @0.8 +200ms |
+| `body.drop` | Letting go of a ledge | body: dropping | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic | Leather shifting, raised and quiet. `item.armor.equip_leather` ×0.4 @1.2 |
+| `body.pipe_slide` | Hands slide down a pipe | body: sliding a pipe | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic: filtered noise | A brush, lowered: palms on metal. `item.brush.brushing.generic` ×0.6 @0.7 |
+| `body.pipe_brake` | Hands clamp on a pipe | body: braking on a pipe | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic | Copper gripped, with leather. `block.copper.step` ×0.6 @0.8; `item.armor.equip_leather` ×0.5 @1 |
+| `body.vault` | A vault | body: vaulting a low wall | ours, synthesised (tools/art/specs/audio_body.py) | Below the bar. Synthetic | Leather shifting, with a hand on wood. `item.armor.equip_leather` ×0.5 @1.1; `block.wood.step` ×0.5 @1 |
+| `mobs.fights.shot_release` | A shot flies | mobs.client.CarrierView: a creature's shot leaving it | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. Synthetic | A breeze's shot. `entity.breeze.shoot` ×0.7 @1 |
+| `mobs.fights.shot_hum` | A shot hums past | mobs.client.CarrierView: looped at the shot as it travels | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. Synthetic: a sine hum | A bee's flight, raised and quiet. `entity.bee.loop` ×0.4 @1.4 |
+| `mobs.fights.volley_throw` | Something is thrown up | mobs.client.CarrierView: a volley thrown | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. Synthetic | A snowball thrown, lowered. `entity.snowball.throw` ×0.7 @0.7 |
+| `mobs.fights.volley_fall` | Something falls toward you | mobs.client.CarrierView: a volley coming down | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. Synthetic: a sine glide | A phantom's swoop. `entity.phantom.swoop` ×0.6 @1 |
+| `mobs.fights.volley_hit` | Something lands hard | mobs.client.CarrierView: a volley landing | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. Synthetic | The mace's ground blow, a little raised. `item.mace.smash_ground` ×0.6 @1.1 |
+| `mobs.fights.wave_roll` | A wave rolls over the ground | mobs.client.CarrierView: looped at a ground wave | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. Synthetic: sub noise | A minecart's rolling rumble, slowed. `entity.minecart.riding` ×0.6 @0.6 |
+| `mobs.fights.lock` | It locks on | mobs.client.CarrierView: a creature marking you | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. A synthetic ding | A crossbow's catch, lowered. `item.crossbow.loading_end` ×0.7 @0.9 |
+| `mobs.fights.ground_run` | The ground splits toward you | mobs.client.CarrierView: a line running along the ground | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. Synthetic | The evoker's fangs, lowered: the game's own thing running at you. `entity.evoker_fangs.attack` ×0.6 @0.8 |
+| `mobs.fights.beam_fire` | A beam fires | mobs.client.CarrierView: a beam | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. Synthetic: sines | A guardian's beam. `entity.guardian.attack` ×0.6 @1 |
+| `mobs.fights.pull_draw` | Something draws you in | mobs.client.CarrierView: a pull | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. Synthetic: reversed noise | A breeze drawing breath, lowered. `entity.breeze.inhale` ×0.8 @0.7 |
+| `mobs.fights.field_hiss` | A cloud seethes | mobs.client.CarrierView: looped at a harmful cloud | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. Synthetic: filtered noise | The game's own noxious gas. `block.potent_sulfur.noxious_gas` ×0.7 @1 |
+| `mobs.fights.growl` | A beast growls before it moves | mobs: a creature's wind-up growl | ours, synthesised (tools/art/specs/audio_fights.py) | Below the bar. A synthetic voice | A ravager's breath. `entity.ravager.ambient` ×0.7 @0.9 |
+
+## The Inscribing Table and dreams
+
+The burin, the book, each family's note; a trial dream's four sounds.
+
+| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
+|---|---|---|---|---|---|
+| `enchant.book_open` | The book opens | enchant.client: opening the table's book | ours (tools/art/specs/audio_enchant.py) | Below the bar. Synthetic under a CC0 creak | A book taken from a shelf, then a page turned. `block.chiseled_bookshelf.pickup` ×0.8 @0.9; `item.book.page_turn` ×0.6 @0.8 +150ms |
+| `enchant.page_turn` | A page turns | enchant.client: turning a page | ours (tools/art/specs/audio_enchant.py) | Below the bar. Synthetic | The game's own page turn. `item.book.page_turn` ×0.9 @1 |
+| `enchant.burin_metal` | The burin cuts metal | enchant.client: tracing a stroke on metal | ours (tools/art/specs/audio_enchant.py) | Below the bar. Synthetic scrape (noise) | An axe scraping copper, raised: a fine scrape. `item.axe.scrape` ×0.6 @1.3 |
+| `enchant.burin_leather` | The burin cuts leather | enchant.client: tracing a stroke on leather | ours (tools/art/specs/audio_enchant.py) | Below the bar. Synthetic | A brush, raised: a dry drag. `item.brush.brushing.generic` ×0.6 @1.2 |
+| `enchant.cut_metal` | A stroke engraved in metal | enchant.client: a stroke finished on metal | ours (tools/art/specs/audio_enchant.py) | Below the bar. Synthetic | Wax scraped off copper, raised. `item.axe.wax_off` ×0.6 @1.3 |
+| `enchant.cut_leather` | A stroke engraved in leather | enchant.client: a stroke finished on leather | ours (tools/art/specs/audio_enchant.py) | Below the bar. Synthetic | Bark stripped, raised. `item.axe.strip` ×0.5 @1.4 |
+| `enchant.scratch` | The burin leaves the line | enchant.client: a slip | ours (tools/art/specs/audio_enchant.py) | Below the bar. Synthetic | An axe scraping, lowered: a dull scratch. `item.axe.scrape` ×0.4 @0.8 |
+| `enchant.note_ward` | A ward's note | enchant.client: a ward's stroke closing | ours, synthesised (tools/art/specs/audio_enchant.py) | Below the bar. A synthetic ding: tuned sine partials | Amethyst ringing, lowered: a deep bowl. `block.amethyst_block.resonate` ×0.6 @0.7 |
+| `enchant.note_bane` | A bane's note | enchant.client: a bane's stroke closing | ours, synthesised (tools/art/specs/audio_enchant.py) | Below the bar. A synthetic ding: tuned sine partials | Amethyst struck, raised: hard and bright. `block.amethyst_block.hit` ×0.6 @1.4 |
+| `enchant.note_spoils` | A chime of spoils | enchant.client: a spoils stroke closing | ours, synthesised (tools/art/specs/audio_enchant.py) | Below the bar. A synthetic ding: tuned sine partials | Amethyst chiming. `block.amethyst_block.chime` ×0.6 @1.2 |
+| `enchant.note_carry` | A carrying note | enchant.client: a carrying stroke closing | ours, synthesised (tools/art/specs/audio_enchant.py) | Below the bar. A synthetic ding: tuned sine partials | A note block's flute. `block.note_block.flute` ×0.5 @1 |
+| `enchant.note_keep` | A keeping note | enchant.client: a keeping stroke closing | ours, synthesised (tools/art/specs/audio_enchant.py) | Below the bar. A synthetic ding: tuned sine partials | A bell's hum. `block.bell.resonate` ×0.5 @1 |
+| `enchant.wake` | An enchantment wakes | enchant: an inscription finished | ours, synthesised (tools/art/specs/audio_enchant.py) | Below the bar. A synthetic ding: tuned sine partials | The game's own enchanting. `block.enchantment_table.use` ×0.8 @1 |
+| `enchant.learn` | An enchantment learned | enchant: a new inscription known | ours, synthesised (tools/art/specs/audio_enchant.py) | Below the bar. A synthetic ding: tuned sine partials | The game's enchanting, raised, with a quiet level-up. `block.enchantment_table.use` ×0.6 @1.2; `entity.player.levelup` ×0.3 @1.4 |
+| `enchant.flare` | An old table flares | enchant: an old table found | ours, synthesised (tools/art/specs/audio_enchant.py) | Below the bar. Synthetic | A fire catching, with the game's enchanting lowered. `item.firecharge.use` ×0.5 @1.2; `block.enchantment_table.use` ×0.5 @0.8 |
+| `enchant.drift` | Letters drift | enchant.client: letters rising from the page | ours, synthesised (tools/art/specs/audio_enchant.py) | Below the bar. A synthetic ding: tuned sine partials | The game's enchanting, quiet and high. `block.enchantment_table.use` ×0.3 @1.5 |
+| `enchant.scrape` | An enchantment scraped off | enchant: removing an inscription | ours, synthesised (tools/art/specs/audio_enchant.py) | Below the bar. Synthetic | The game's own grindstone. `block.grindstone.use` ×0.7 @1 |
+| `dream.catch` | The dream catches you | lucidium.dream: a fall caught in a trial dream | ours, synthesised (tools/art/specs/audio_dreams.py) | Below the bar. Synthetic | Cloth landing, slowed, with a quiet amethyst chime. `block.wool.fall` ×0.8 @0.7; `block.amethyst_block.chime` ×0.3 @0.8 |
+| `dream.tick` | The dream's clock ticks | lucidium.dream (client, UI): each second of a trial's clock | ours, synthesised (tools/art/specs/audio_dreams.py) | Below the bar. A synthetic tick | A note block's hat: a dry tick. `block.note_block.hat` ×0.4 @1.2 |
+| `dream.ring` | A ring of light passes | lucidium.dream: passing a ring in a Run | ours, synthesised (tools/art/specs/audio_dreams.py) | Below the bar. A synthetic ding: tuned sine partials | Amethyst chiming, raised. `block.amethyst_block.chime` ×0.5 @1.3 |
+| `dream.won` | The dream opens | lucidium.dream: a trial won | ours, synthesised (tools/art/specs/audio_dreams.py) | Below the bar. A synthetic ding: tuned sine partials | Amethyst ringing, with a quiet level-up. `block.amethyst_block.resonate` ×0.7 @1; `entity.player.levelup` ×0.3 @1.3 +100ms |
+
 ## The Halo (above)
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
@@ -388,15 +505,6 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 | `above.jet` | Jet boots | `above/AboveSounds` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `above.module_off` | Frame powers down | `above/AboveSounds` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `above.ui_click` | Click | `above/AboveSounds` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
-
-## Lock-on
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `aim.lock` | Lock taken | `aim/AimSounds` | ours: aim_sounds.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `aim.switch` | Lock moves | `aim/AimSounds` | ours: aim_sounds.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `aim.release` | Lock released | `aim/AimSounds` | ours: aim_sounds.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `aim.break` | Locked creature falls | `aim/AimSounds` | ours: aim_sounds.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
 ## Hands at work
 
@@ -589,18 +697,6 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 | `ascent.vow_call` | A vault hums | `body/ascent/AscentContent` | ours: audio_ascent.py, synthesised | Superseded, not heard by default: every movement sound is now a score of Minecraft's own recordings (SPEC §62). This is the Classic set the scores are keyed off | Left as the Classic option |
 | `ascent.vow_line` | A line of light is given | `body/ascent/AscentContent` | ours: audio_ascent.py, synthesised | Superseded, not heard by default: every movement sound is now a score of Minecraft's own recordings (SPEC §62). This is the Classic set the scores are keyed off | Left as the Classic option |
 
-## Rappel
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `ascent.rappel_pay` | Rope runs through a hand | `body/ascent/AscentContent` | ours: audio_rappel.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ascent.rappel_pay_glass` | A glass line runs out | `body/ascent/AscentContent` | ours: audio_rappel.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ascent.rappel_catch` | A rope is gripped | `body/ascent/AscentContent` | ours: audio_rappel.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ascent.rappel_kick` | Boots kick off rock | `body/ascent/AscentContent` | ours: audio_rappel.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ascent.rappel_plant` | Boots land on rock | `body/ascent/AscentContent` | ours: audio_rappel.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ascent.rappel_reel` | A reel winds | `body/ascent/AscentContent` | ours: audio_rappel.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ascent.rappel_fit` | A fitting snaps onto a rope | `body/ascent/AscentContent` | ours: audio_rappel.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-
 ## Rope and wings (the scores)
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
@@ -676,12 +772,6 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
 |---|---|---|---|---|---|
-| `ui.answer_yes` | System answer accepted | `core/audio/AudioSounds`, `core/audio/client/AudioUi` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ui.answer_no` | System answer declined | `core/audio/AudioSounds`, `core/audio/client/AudioUi` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ui.story` | The Signal speaks | `core/audio/AudioSounds` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ui.now` | Now tracker updates | `core/audio/AudioSounds` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ui.quest_done` | Quest complete | `core/audio/AudioSounds`, `core/audio/client/AudioUi` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ui.request_delivered` | Request delivered | `core/audio/AudioSounds`, `core/audio/client/AudioUi` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `music.cue.awakening` | A rising theme answers you | `core/audio/AudioSounds` | ours: audio_music.py / audio_layers.py, a synthesised score | Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's recordings can replace music | Left. A music pass needs its own plan (real instruments or the game's own music by name) |
 | `music.cue.beast` | Low drums warn of a beast | `audio` | ours: audio_music.py / audio_layers.py, a synthesised score | Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's recordings can replace music | Left. A music pass needs its own plan (real instruments or the game's own music by name) |
 | `music.cue.gate_forming` | Strings tremble as a gate forms | `audio` | ours: audio_music.py / audio_layers.py, a synthesised score | Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's recordings can replace music | Left. A music pass needs its own plan (real instruments or the game's own music by name) |
@@ -716,8 +806,6 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 | `music.layers` | Music shifts | `core/audio/AudioSounds` | ours: audio_music.py / audio_layers.py, a synthesised score | Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's recordings can replace music | Left. A music pass needs its own plan (real instruments or the game's own music by name) |
 | `amb.layers` | Ambience shifts | `core/audio/AudioSounds` | ours: audio_layers.py / audio_world.py, synthesised stems | Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's recordings can replace music | Left. A music pass needs its own plan (real instruments or the game's own music by name) |
 | `amb.world` | The world around you | `core/audio/AudioSounds` | ours: audio_layers.py / audio_world.py, synthesised stems | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ui.find` | Something found | `core/audio/AudioSounds` | ours: audio_discovery.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `ui.moment` | A discovery | `core/audio/AudioSounds` | ours: audio_discovery.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
 ## The hundred bells
 
@@ -776,34 +864,6 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 | `bells.muffled_13` | A lost bell hums | `bells` | ours: audio_bells.py, synthesised bells | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `bells.muffled_14` | A lost bell hums | `bells` | ours: audio_bells.py, synthesised bells | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
-## Binoculars
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `binoculars.raise` | Binoculars raised | `binoculars/BinocularsSounds` | ours: binoculars_sounds.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `binoculars.eyecup` | Binoculars at the eyes | `binoculars/BinocularsSounds` | ours: binoculars_sounds.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `binoculars.step` | Binoculars focus clicks | `binoculars/BinocularsSounds` | ours: binoculars_sounds.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `binoculars.lower` | Binoculars lowered | `binoculars/BinocularsSounds` | ours: binoculars_sounds.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-
-## The body's moves
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `body.roll` | Body rolls | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.sprint` | Body pushes off | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.slide` | Body slides | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.mantle` | Body climbs a ledge | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.impact` | Heavy hit | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.wallstep` | Footsteps along a wall | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.walljump` | Body kicks off a wall | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.grab` | Body catches a ledge | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.shimmy` | Hands slide along a ledge | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.climb` | Body climbs over a ledge | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.drop` | Body lets go of a ledge | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.pipe_slide` | Hands slide down a pipe | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.pipe_brake` | Hands clamp on a pipe | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `body.vault` | Body vaults | `body/BodyContent` | ours: audio_body.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-
 ## Carillon
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
@@ -816,16 +876,6 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 | `city.carillon.dawn` | The Choir's carillon plays | `citizens/CitizensContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
 | `city.carillon.noon` | The Choir's carillon plays | `citizens/CitizensContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
 | `city.carillon.dusk` | The Choir's carillon plays | `citizens/CitizensContent` | ours: audio_city.py: CC0 recordings of real bells (BigSoundBank) | At the bar: recordings of real bells (CC0), their strike and decay kept, no synthetic layer | None needed |
-
-## The System
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `signal.chime` | Signal chimes | `core/CoreModule` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `signal.open` | Signal window opens | `core/CoreModule`, `holo/client/HoloAudio` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `signal.warning` | Signal warning | `core/CoreModule`, `core/audio/client/AudioUi` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `level_up` | Level up | `core` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `rank_up` | Rank up | `core` | ours: audio_ui.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
 ## The Forged Pick
 
@@ -884,39 +934,6 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 | `descent.grave_recover` | Grave Echo recovered | `descent/DescentContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `descent.strain` | The Strain of climbing | `descent/DescentContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `descent.seed` | The Seed beats | `descent/DescentContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
-
-## The Inscribing Table
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `enchant.book_open` | A book opens | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.page_turn` | A page turns | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.burin_metal` | A burin cuts metal | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.burin_leather` | A burin cuts leather | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.cut_metal` | A burin engraves | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.cut_leather` | A burin engraves | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.scratch` | A burin scratches | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.note_ward` | A ward's note | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.note_bane` | A bane's note | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.note_spoils` | A chime of spoils | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.note_carry` | A carrying note | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.note_keep` | A keeping note | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.wake` | An enchantment wakes | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.learn` | An enchantment learned | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.flare` | An old table flares | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.drift` | Letters drift | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `enchant.scrape` | An enchantment scraped off | `enchant` | ours: audio_enchant.py, synthesised with CC0 leather and paper | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-
-## Faults
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `fault.tell` | The world goes quiet | `fault/FaultModule` | ours: audio_fault.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `fault.tear` | The System breaks up | `fault/FaultModule` | ours: audio_fault.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `fault.voice` | The System's broken voice | `fault/FaultModule` | ours: audio_fault.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `fault.drop` | Everything cuts to black | `fault/FaultModule` | ours: audio_fault.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `fault.mend` | The System mends | `fault/FaultModule` | ours: audio_fault.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `fault.flicker` | The System flickers | `fault/FaultModule` | ours: audio_fault.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
 ## Gates and gate worlds
 
@@ -1137,22 +1154,7 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 | `hearth.trial` | Reassessment begins | `hearth/HearthContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `hearth.forge` | Forge rings | `hearth/HearthContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `hearth.request_deliver` | Items stream into the Anchor | `hearth/request/RequestContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
-| `hearth.request_complete` | The Anchor chimes | `core/audio/client/AudioUi`, `hearth/request/RequestContent` | ours: audio_hearth.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `hearth.core_fuse` | Shards fuse | `hearth/request/RequestContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
-
-## The Holo UI
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `holo.open` | Holo panel unfolds | `holo/HoloSounds` | ours: audio_holo.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `holo.open_quick` | Holo inventory unfolds | `holo/HoloSounds` | ours: audio_holo.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `holo.close` | Holo panel folds away | `holo/HoloSounds` | ours: audio_holo.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `holo.hover` | Holo panel ticks | `holo/HoloSounds` | ours: audio_holo.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `holo.card` | System card projected | `holo/HoloSounds` | ours: audio_holo.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `holo.page` | Band page turns | `holo/HoloSounds` | ours: audio_holo.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `holo.spend` | Stat point placed | `holo/HoloSounds` | ours: audio_holo.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `holo.confirm` | Stat points confirmed | `holo/HoloSounds` | ours: audio_holo.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `holo.undo` | Stat point taken back | `holo/HoloSounds` | ours: audio_holo.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
 ## Kin and their works
 
@@ -1220,11 +1222,6 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 
 | Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
 |---|---|---|---|---|---|
-| `living.scan` | Band reads a creature | `living/LivingContent` | ours: audio_living.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.crit` | Critical hit | `living/LivingContent` | ours: audio_living.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.xp_tick` | XP gathers | `living/LivingContent` | ours: audio_living.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.level_up` | Level up | `living/LivingContent` | ours: audio_living.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `living.region_enter` | Region entered | `living/LivingContent` | ours: audio_living.py, synthesised (the System's struck glass) | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 | `ambient.storm.thunder` | Thunder roars | `living/LivingContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `ambient.storm.crack` | Lightning strikes | `living/LivingContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 
@@ -1241,10 +1238,6 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 | `dream.nightmare` | A heartbeat in the dark | `lucidium/LucidiumContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `dream.door` | A door leads elsewhere | `lucidium/LucidiumContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `dream.bell` | Dream Bell rings | `lucidium/LucidiumContent` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
-| `dream.catch` | The dream catches you | `lucidium/LucidiumContent` | ours: audio_dreams.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `dream.tick` | The dream's clock ticks | `lucidium/LucidiumContent` | ours: audio_dreams.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `dream.ring` | A ring of light passes | `lucidium/LucidiumContent` | ours: audio_dreams.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `dream.won` | The dream opens | `lucidium/LucidiumContent` | ours: audio_dreams.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
 ## Monsters' tells
 
@@ -1259,23 +1252,6 @@ Idle voices, hurt, death, steps and the beasts' roars. Each creature takes the n
 | `mobs.rise` | The dead get up | `mobs/MobSounds` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `mobs.cord_bite` | Something bites the cord | `mobs/MobSounds` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
 | `mobs.listener_hear` | A Listener hears you | `mobs/MobSounds` | Minecraft's own, by name | At the bar: Minecraft's own recordings, by name | None needed |
-
-## Carriers (what a creature sends at you)
-
-| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |
-|---|---|---|---|---|---|
-| `mobs.fights.shot_release` | A shot flies | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.shot_hum` | A shot hums past | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.volley_throw` | Something is thrown up | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.volley_fall` | Something falls toward you | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.volley_hit` | Something lands hard | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.wave_roll` | A wave rolls over the ground | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.lock` | It locks on | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.ground_run` | The ground splits toward you | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.beam_fire` | A beam fires | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.pull_draw` | Something draws you in | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.field_hiss` | A cloud seethes | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
-| `mobs.fights.growl` | A beast growls | `mobs/MobSounds` | ours: audio_fights.py, synthesised | Below the bar: synthesised. Not yet remade | Open: to be remade from the game's recordings |
 
 ## Monsters of the gates
 

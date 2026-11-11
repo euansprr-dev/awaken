@@ -109,7 +109,7 @@ ROWS = [
     r("living.tell.bells", "living", "A caravan's bells, far off", TELL + "a caravan on the road (160 blocks)", W + ": sine bells", "Synthetic bells",
       ("The game's bell, raised and quiet, tolling", [E("block.bell.use", 0.3, 1.6)]), ("A chain's jingle", [E("block.chain.step", 0.6, 1.2)]), scene="loop"),
     r("living.tell.storm", "living", "A storm, far off", TELL + "a storm front (far)", W + ": noise", "Synthetic (noise)",
-      ("Thunder, slowed and quiet", [E("entity.lightning_bolt.thunder", 0.3, 0.6)]), ("Rain on a roof, slowed", [E("weather.rain.above", 0.5, 0.7)]), scene="loop"),
+      ("Rain on a roof, slowed: a far roar of rain", [E("weather.rain.above", 0.5, 0.7)]), ("Thunder, slowed and quiet", [E("entity.lightning_bolt.thunder", 0.3, 0.6)]), scene="loop"),
     r("living.tell.horn", "living", "The Wild Hunt's horn", "living.client.PulseSound: the Hunt sounding its horn (400 blocks)", W + ": a synthesised horn", "Synthetic horn",
       ("The game's goat horn, lowered", [F(["item/goat_horn/call0", "item/goat_horn/call1"], 0.8, 0.8, dist=96)]), ("The raid's horn", [E("event.raid.horn", 0.5, 0.9)]),
       ("A lower goat horn call", [F(["item/goat_horn/call5", "item/goat_horn/call6"], 0.8, 0.7, dist=96)])),
