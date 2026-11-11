@@ -285,7 +285,7 @@ final class EnchantTests {
         h.assertTrue(Pages.teaches(got).getFirst().id().getPath().equals("heat_ward"), "the Ember Mines keep Heat Ward");
         h.assertTrue(Pages.where(got).equals("From the Ember Tyrant, the Lord of the Ember Mines"), "it says where it came from: " + Pages.where(got));
         h.assertTrue(Known.of(p).gatePaid("ember_mines"), "the kind of gate is paid");
-        h.assertTrue(Inscriptions.ofGate("awaken:lantern_night_market").id().getPath().equals("looting"), "the night market's theme reads as the Lantern Market");
+        h.assertTrue(Inscriptions.ofGate("awaken:lantern_night_market").id().getPath().equals("lantern"), "the night market's theme reads as the Lantern Market, whose Lord carries Lantern since §45.16");
         h.succeed();
     }
 
