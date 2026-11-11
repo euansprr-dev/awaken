@@ -21,6 +21,7 @@ public final class AudioClient {
 
     public static void init(IEventBus modBus) {
         WorldSound.init(modBus);
+        SoundLayers.init(modBus);
         Conductor.music(() -> LayerPlayer.MUSIC.ownsChannel() ? LayerPlayer.MUSIC.level() : -1, CuePlayer::playingStage);
         Conductor.register(new Conductor.Source() {
             @Override

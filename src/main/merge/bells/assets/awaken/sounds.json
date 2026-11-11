@@ -56,12 +56,12 @@
     ]
   },
   "bells.note_7": {
-    "subtitle": "subtitles.awaken.bells.note_7",
     "sounds": [
       {
         "name": "awaken:bell_note_7"
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.bells.note_7"
   },
   "bells.note_8": {
     "subtitle": "subtitles.awaken.bells.note_8",
@@ -123,25 +123,28 @@
     "subtitle": "subtitles.awaken.bells.gap",
     "sounds": [
       {
-        "name": "awaken:bell_gap"
+        "name": "minecraft:block.wood.hit",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.7
       }
     ]
   },
   "bells.handbell": {
-    "subtitle": "subtitles.awaken.bells.handbell",
     "sounds": [
       {
         "name": "awaken:bell_handbell"
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.bells.handbell"
   },
   "bells.toll": {
-    "subtitle": "subtitles.awaken.bells.toll",
     "sounds": [
       {
         "name": "awaken:bell_toll"
       }
-    ]
+    ],
+    "subtitle": "subtitles.awaken.bells.toll"
   },
   "bells.hum": {
     "subtitle": "subtitles.awaken.bells.hum",
@@ -163,7 +166,10 @@
     "subtitle": "subtitles.awaken.bells.hang",
     "sounds": [
       {
-        "name": "awaken:bell_hang"
+        "name": "minecraft:block.chain.place",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.8
       }
     ]
   },

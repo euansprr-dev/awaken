@@ -6351,6 +6351,31 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     the block map's reading take 0.15 ms a tick where they may take 0.5 (`LensClient.tickBudget`). Nothing drawn
     changes: the maps catch up a little later. Not built: updating the glow and the rays on alternate frames (a
     frame's lag shows on small bright things when the view turns fast) and shedding the far cloud walk (it pops).
+- **Reach and cover** (Euan, playing, 2026-11-11: "the bottom edge and sometimes left edge of my screen has no shaders
+  working ... this changes based on my pace and how I move my head", then of a cave seen from its rim: "some shading
+  issues in this cave as well"). Both are where the Air's deep shade met an older rule that hands a pixel back to the
+  game's own light.
+  - **Reach.** Within arm's reach (the hand and what it holds) a pixel is never darker than the game drew it, eased
+    out from 1.25 to 1.45 blocks as Lens's light eases in. Lens's light measured that by the line of sight; the floor
+    measured it by the depth straight ahead, so with a wide view (sprinting widens it) the ground along the bottom of
+    the screen and a wall at its side, two blocks away, counted as "in reach" and showed the game's raw brightness in
+    a band. The floor uses the line of sight now, the same distance as the light. Swift has no world position: it
+    uses the hand's own distance by the fixed 70 degree view the game draws the hand with. Still open: with the eye
+    low (a slide, a crawl) the ground itself is within 1.45 blocks and keeps the game's light; telling the hand from
+    the ground there needs the hand's own depth (the game keeps it in `hud_3d_depth`), which is Java and not built.
+  - **Cover.** Under solid cover the model stands back and the game's light stays. It stood back by the roof's
+    thickness in the pixel's own column (1 to 7 blocks), so a block one step into a cave or under a cliff's overhang,
+    where the game still draws full sky light, kept the game's brightness beside open ground five times darker in the
+    Air's shade: bright grey blocks against dark blue ones along every roof line. The shade now carries on in from
+    the roof's edge and fades over six blocks, as the game's own sky light does: `skyBeside` in lens_composite.glsl
+    reads the heightfield along the four compass lines from the point for the nearest column open to the sky at the
+    point's height, each line in the two rows it runs between, so it is smooth along and across. It runs only for
+    pixels under a roof (up to 48 heightfield reads there). It reads tops, not walls: a room within six blocks of an
+    outer wall takes some of the street's shade too, which matches the street it is seen from, and dims lamp light
+    there by day. The exact answer is the game's own sky and block light for each block; that needs the light data
+    in a texture (Java) and is not built.
+  - Checked on CI with `tools/autopilot/steady60-cover-ci.txt` (a stone room with a seven-block roof in its own
+    morning shadow; views at 70, 100 and 110 degrees), before and after.
 - **Grades** (Euan 2026-11-10, with three pictures of a vibrant look: "what would it take to add this as an option in
   the Lens setting for the color grading ... defo want to be able to switch back and forth, and that way we also get
   to add more options in the future"; "this is for colors and atmosphere, not shaders or clouds"). A grade is the
@@ -9916,6 +9941,12 @@ the feet.
 - *In the open* it reads like the Ember: a soft pool at the feet under the flame (the city lanterns' profile, radius
   0.55 of the reach, 0.15 strength at level 15 in the dark, scaled by how dark it is there) and a halo at the hand
   (0.6 × √(level/15), half strength in daylight to full in the dark, a near-white core), hidden in your own first person.
+  The pool lies on the ground under the bearer (the first block down within five that can be stood on, by its
+  collision top). It keeps its whole strength up to 1.5 blocks over that ground, so a jump (1.25) never pulses the
+  light, and fades from there, gone five blocks up. It was drawn at the feet's own height: off the
+  ground it hung in the air as a flat disc at your level and lit only what lay under it, a line across every wall
+  and block (Euan, playing, 2026-11-11: "it stays exactly at your level ... weird cut off light effect in caves
+  when you jump"). Tour: `tools/autopilot/heldlight-aloft-ci.txt`.
 - *Mods that already light held items* (LambDynamicLights, Sodium Dynamic Lights, Ryoamic Lights, Dynamic Lights): only
   the pool and the halo are drawn. If the lit pipeline doesn't compile, the surfaces are skipped as the lamp's are.
 - *Cost* (reasoned, not measured): the flood is at most 900 cells × 6 block lookups a frame while it runs (a few frames
@@ -16426,8 +16457,24 @@ in reach 23% of a fight today, 49% with these rules).
   the best 6 get a sight check; the arrays are reused. Strikes steer to it and powers bend to it; its brackets show while a
   weapon is in hand or a fight is on.
 - **The lock key** `key.awaken.lock`, default **middle mouse**, in Awaken's key group. Read before vanilla's keys each tick: it
-  locks the mark (or a creature under the crosshair), or lets go. Sharing pick block's key, a press that locked or let go is
-  the lock's alone; with nothing to lock it picks the block, as always.
+  locks the mark, or lets go. Sharing pick block's key, a press that locked or let go is the lock's alone; with nothing to lock
+  it picks the block, as always.
+- **Calm creatures** (Euan, 11 Nov 2026: "my target lock-on isn't working on sheep"): with nothing marked, the key locks any
+  creature you could strike, calm or not (a sheep, a deer, a villager, a neutral wolf), `Aim.strikable`: never a person,
+  a body, an armour stand, something that can't be hit (not pickable, not attackable, invulnerable), your own pet or beast, or
+  what you ride or ride with. Which one: the creature under the crosshair, else the nearest the middle within `PRESS_CONE`
+  12° (to its box's edge, tighter than the mark's 25° so the key still picks the block you point at) and the mark's 24 blocks,
+  seen, and nearer than a solid block the crosshair rests on (a block you can see through, like grass, is no wall). Before
+  this only the mark (foes) and vanilla's crosshair (3 blocks) could be locked, so a sheep across a meadow never was. The mark
+  itself stays a foe's alone: no brackets hop between grazing animals, and powers don't bend to them unless you lock one.
+- **Calm strikes** (Euan, 11 Nov 2026: hits land on an animal you aren't perfectly on, as on a hostile one, but without the
+  brackets): with nothing locked, marked or under the crosshair, a weapon's press (and a heavy's release) names the calm
+  creature of the wild nearest the look (`Aim.calm`, at the press): within `CALM_CONE` 25° (the mark's) and the weapon's
+  reach (`ArmsRules.markReach`: its longest blow + 0.3 + its step in), seen, scored as the mark is. Nothing is drawn for it.
+  The server takes it as the meant creature like any other (40.1: 35°, reach, seen), so it is struck where the arc would
+  miss it, and the step in goes toward it. Only `Aim.wild` creatures: vanilla's animals and the wild's passive, neutral and
+  ambient creatures and its beasts (by their `CreatureTag`); never a person, a villager or a traveller (`Npc`), a golem,
+  anyone's pet (an owned creature), a kin beast or a story's figure (no such tag): only the crosshair strikes those.
 - **Locked**, the view follows the creature's body (58% up it) every frame: eased (`TURN_EASE` 10: the share of the gap closed a
   second, exponential), never more than 300°/s, the short way round, resting inside 0.6°; pitch at 85% and within ±80°. The
   turn moves `yRotO`/`xRotO` with `yRot`/`xRot` (as `Entity.turn`), so the frame's blend never jumps. The mouse keeps a quarter
@@ -16439,10 +16486,12 @@ in reach 23% of a fight today, 49% with these rules).
 - **Switching**: the wheel (up: the next creature to the left, down: to the right; the hotbar stays) or a flick: the mouse's
   movement summed with a 100 ms fade reaching 60 window pixels, at most one switch per 220 ms. The pick: among foes within 80°
   of the view and 40 blocks, the nearest on the screen (by angles from the locked one) within 60° of the flick's way, seen.
+  Locked onto a calm creature, the pick is among every creature you could strike (sheep to sheep); onto a foe, foes only.
 - **It lets go** on the key, after 1.5 s unseen, past 40 blocks, on a teleport (8+ blocks in a tick) or a new level, death or
   logging out. **When the locked creature dies** the ring breaks, and the lock moves to the nearest foe within 60° of the view and
   12 blocks, seen, else lets go.
-- **What reads it**: a press sends the lock, else the creature under the crosshair, else the mark (`ArmsPredict.pressTarget`);
+- **What reads it**: a press sends the lock, else the creature under the crosshair, else the mark, else the calm strike's
+  creature (`ArmsPredict.pressTarget`);
   the step in (40.1) is the client's own push at the move's start: `min(step, gap - reach + 0.35)` blocks over the ground
   (a push of that / 2.2, vanilla's ground friction), toward the creature, only when the gap is past the move's reach - 0.15
   and within reach + step. A cast's look is bent toward the locked or marked creature's body when it lies within 10° (then
@@ -16541,7 +16590,9 @@ in reach 23% of a fight today, 49% with these rules).
 `enabled` (true), `camera` (FOLLOW / SNAP / OFF), `flick_switch` (true), `show_mark` (true), `threat_arcs` (true), `sounds` (true).
 
 ### 40.9 Tests
-`aim_soft_pick`, `aim_caps`, `aim_power_bend_cap` (the pure rules), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:
+`aim_soft_pick`, `aim_caps`, `aim_power_bend_cap` (the pure rules), `aim_calm_lock` (a levelled sheep and a wild wolf can be
+locked; yourself, an armour stand, your own wolf, a dying sheep can't; the press's 12° cone), `aim_calm_strike` (a strike
+looked 15° past a sheep 3 blocks off takes it; 60° past or out of reach it doesn't; a villager, a golem, a pet never), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:
 meant, struck; a hostile beside it, not meant, out of the band), `aim_step_in`, `aim_no_wall`, `aim_no_player`,
 `aim_flier_brought_down`. The clear screen: `hud_states`, `hud_classic_unchanged`, `hud_now_line_returns`,
 `hud_task_card_teaches`, `hud_thin_plates`, `hud_glance_rows`.
@@ -21540,6 +21591,17 @@ crossing); `LandPrograms` maps a program to its `Land` class, so each great land
 `AwakenConfig.gateRealms` (off) until the E wave is ready; `/awaken gate realm <rank> <id>` forms one anyway, `/awaken gate realm_at
 <kind> <index> <dx> <dy> <dz>` moves you to one of its sites.
 
+**Which Realms a gate in the world can be** (Euan, 11 Nov: he walked into a hive gate in the world, expected a new dungeon and
+got the old kind, because the switch was off; asked whether gates in the world should lead to the finished new ones, "Yes,
+set it up"). A blueprint says `"ready": true` when it is finished. With `gateRealms` on, a new gate whose theme and rank
+have a ready Realm is that Realm (`Blueprints.open` and `pick`: one its finder has not seen first); every other gate is
+floors as before. A blueprint that does not say it is ready is never rolled, only entered by command, so a land still being
+built cannot turn up in play. Ready on 11 Nov: Amber Reach, The Hour Crypt, The Broodwarren and the seventeen rolled kinds
+(§50.9). Not yet: Kingsroot Keep, The Vine Seat, The Quiet Barrow, Saltcomb Flats, The Wax Galleries (their owners set the
+line when they are done) and the blockouts. The switch's default stays off in code until a full suite has run with it on
+(the old gates' tests make gates and expect floors); a world turns it on in `config/awaken-synced.toml`. Gates already
+standing keep what they are.
+
 Cells sit `RealmCells.PITCH` (8,192) apart from 135,168, past the old gate grid, so `Cells.cellAt` and `Where.at` find nothing in a Realm.
 A Realm gate keeps its normal cell, `GatePlan` and `GateLayout` (only the abstract numbers are used: rewards, the Lord's id) and adds
 `GateRecord.realm` (`RealmRef`: blueprint, seed, version, cell). `RealmPlan.of` is a pure function of those, so a restart rebuilds the
@@ -23707,3 +23769,159 @@ played or heard by a person.
 
 Dev-only, for autopilot runs: the pilot's `hover <slot>` (`StationClient.devHover`: the mouse over a slot of the open
 station scene) and `clip <name>|stop` (a body clip on your own body, to film a pose in third person).
+
+## 66. Sound audit (every sound of ours against the best we have; Euan, 11 Nov 2026: "double check basically all the custom sounds we have and do a full audit and make sure they're all on par with the best sounds we have")
+
+The audit is `docs/sound-audit/AUDIT.md`: one row for every sound event of ours, what it is, where it plays, where it
+came from, a verdict and the fix as built. It is written by `python3 tools/art/sound_audit.py audit` from the same
+tables that write the game's files, so it cannot drift from the game. No approval page: the bar was already his.
+
+**66.1 The bar and the rules.**
+- The bar is the armour sounds (§44.12) and the Forged Pick (§49): Minecraft's own recordings, named in `sounds.json`.
+  His words on the pick's first try, built from CC0 impacts matched to vanilla's loudness and brightness: "super
+  synthetic", "forced and fake", "sounds like knocking on a door". Matching numbers says nothing about belonging.
+- **Rule 1, the game's recordings first.** Anything that has to belong in the world (a bird, wings, an animal, stone,
+  water, wind) starts from a recording the game already has, named in `sounds.json` as an event
+  (`"name": "minecraft:entity.parrot.fly", "type": "event"`, so it follows the game's own takes) or as a file
+  (`"minecraft:mob/parrot/fly1"`, when the sound needs its own hearing distance or only some takes). The game plays its
+  own files: nothing of Mojang's is in the repo. An event entry takes the hearing distance of the game's event (16
+  blocks); a far sound names files and sets `attenuation_distance`.
+- **Rule 2, layering in code.** `sounds.json` plays one recording an event. The rest of a recipe is added by the client
+  (66.2). No derived or processed copy of the game's audio is ever committed.
+- **Rule 3, no synthetic ding.** No narrow, steady, high tone at a sound's peak or start
+  (`docs/powers-aaa/taster/ding_check.py`; it only sees above 800 Hz, so his ear is the judge). The check is run on the
+  game's own recordings too before one is used many times a second: the game's copper, iron, chain and amethyst hits
+  ring, so a pick biting ore does not use them.
+- **Real recordings only.** Where the game has no recording of the real thing (a crow, an owl, a gull, a dove), the
+  pack's AmbientSounds has: its recordings are played by their own ids from code that has checked the mod is there
+  (as §16.0 decision 30 already did for the city), never copied, never named in `sounds.json`. Without the mod the
+  sound is the nearest of the game's own (a parrot's squawk lowered) or silence, never synthesis.
+- The game clamps pitch to 0.5..2.0 and gain to 1.0: a recipe stays inside them (`check` says when one does not).
+- A sound made by a tool that nothing plays any more is deleted, and so is its generator once every sound it made is
+  remade (`sound_audit.py prune` removes only files the audit itself replaced: armour's old files still play on its
+  own listening page).
+
+**66.2 How a recipe reaches the game.**
+- `tools/art/specs/audit_kit.py`: a row is an event, its module, where it plays, what it was, the verdict, and up to
+  three picks; a pick is a list of `E(event, volume, pitch, at ms, spread, chance, jitter)`, `F(files, ..., dist)` and
+  `A(AmbientSounds event)`. The tables are `tools/art/specs/audit_<part>.py`.
+- `tools/art/sound_audit.py build` writes each row's first recording into its module's merged `sounds.json` and the
+  rest into `assets/awaken/sound_layers/<module>.json`; a layer that names files gets a helper event
+  `<event>.part<n>` (no subtitle). `check` fails when a named recording is not in this game or the files have drifted
+  from the tables; `snapshot` keeps the events as they were (`specs/sound_audit_before.json`, with the commit they
+  came from); `prune` deletes replaced files; `listen` serves the page; `apply` takes his marks into
+  `specs/sound_audit_picks.json` (row → 1, 2, 3 or `before`). **After any audio generator that rewrites a module's
+  `sounds.json`, run `build`: it puts the audit's rows back.**
+- `core.audio.client.SoundLayers` (client): reads every `assets/awaken/sound_layers/*.json`
+  (`{"awaken:<event>": [{"sound", "volume", "pitch", "delay" ms, "jitter" ms, "spread", "chance"}]}`) and, when an
+  event with layers plays (`PlaySoundEvent`), plays each layer at the same place and source, scaled by the volume and
+  pitch the caller asked for; `spread` lets a layer's pitch wander, `chance` leaves it out some of the time, `jitter`
+  moves it a tick or two, so no two bursts are the same. A layer never brings layers of its own. Armour's own layers
+  (§44.12) stay with armour; an event is never in both.
+- Tests follow the mechanism: `audio_events_resolve` lets a helper `<event>.part<n>` be a name only (unregistered, no
+  subtitle, the game's files), as it does a power score's layers; the city's "every place is mono" check and the
+  bells' "placed" list open our own files only (a recording of the game's is the game's to keep mono;
+  `sound_audit.py check` names it). No GameTest was run in the audit's session.
+- The listening page (`run-autopilot/sound-audit-listen/`, gitignored, served on 127.0.0.1:8768, never hosted) plays
+  the recordings from this machine's own copy of the game and of AmbientSounds: for every row, Before (the old file,
+  taken out of git once it is deleted), the picks, each alone or in its moment (a wood's birdsong under a flush, waves
+  under a gull, the game's own digging under an ore bite), and his marks.
+
+**66.3 Birds and wings, as built** (`audit_birds.py`; all of it was `audio_wild.py` and `audio_city_life.py`
+synthesis: whistles on pitch curves, voiced formants, noise grains).
+- Wings: a small bird's flush is two of a parrot's wingbeats raised (1.3 and 1.5) over a quiet bat's take-off; large
+  wings (crow, duck, heron) three slow wingbeats lowered (0.74 to 0.66) with a soft leathery flap; a flock of pigeons
+  six or seven wingbeats tumbling over a bat's take-off.
+- Small voices: a chip is a parrot's chirp raised (1.7); a song is a phrase of them in code's time (a robin eight to
+  ten wandering notes with a breath, a tit a high and a low back and forth, a chaffinch a run downhill and a flourish,
+  a wren a fast trill), each note free to wander and drop out; the woodpecker's drum thirteen of the game's wooden
+  clicks a tick apart (20 a second, a real drum's speed), swelling and fading.
+- The crow, the owl and the gull (`WildSound.real`), the city's gulls and pigeons (`CityNature.voice`): with
+  AmbientSounds, its recording of the real bird, unplaced (its files are stereo and several seconds long), as loud as
+  the bird's distance allows, one of a kind at a time and well apart (crow 25 s, owl 15 s, gull 30 s at least), so
+  where you see crows you hear crows. Without it: the crow and gull a parrot's cry lowered, the pigeon a hen's low
+  cluck, and the owl silent (`wild.owl.hoot` is gone). The gull's cry used to play from every circling gull every
+  25 s: six gulls over a beach made one synthetic cry every four seconds.
+- Crickets (`WildSound.crickets`) only without AmbientSounds (it sings its own from recordings): the game's own night
+  insects (the firefly bush), a take every 11 to 17 s a spot. A buzzard's call is a fox's scream raised and far off;
+  a duck a hen's cluck lowered; a heron a hen's squawk dropped low; a squirrel a bat's squeaks lowered; a frog's plop
+  the fishing bobber's splash; a rustle leaf litter and grass underfoot. These are the nearest the game has, not the
+  real animal: each has other picks on the page and waits for his ear.
+
+**66.4 Mining, as built** (`audit_mining.py`; Euan, 11 Nov: "I hate the ding ding ding when mining ore, even vanilla
+sounds better"). The dings were `audio_delve.py`'s: each ore's own synthesised note on every bite (every fourth tick:
+iron, lapis, diamond and emerald 80 to 95% one held tone) and the true strike's chime, which climbed two semitones
+with each hit in a row.
+- A bite is now one of the game's own stone and mineral hits, none of them a note, quiet under the game's digging
+  sound: coal tuff, copper and iron the heavy core's dense knock, gold the game's own nether gold ore, redstone
+  cinnabar, lapis and emerald calcite, diamond deepslate raised, Deepglass dripstone with a small crack of glass now
+  and then. The last blow is deepslate splitting with a little rubble.
+- A true strike is the game's critical-hit crack with a split of stone; `StrikeFeel` asks for a small rise only
+  (pitch (0.92 + 0.02 per ore) × (1 + 0.05 per hit in a row)), never a scale. A verse earned, the pick waking and a
+  gift, which borrowed the chime, take the smithing table's and the enchanting table's own sounds.
+- The vein giving, cracks along it, the heavy strike (a crossbow drawn for the strain, its catch for "ready"), a
+  cave-in, a piton, rope paying out, Deepglass and the Deep Ear's two tells: all recipes of the game's recordings.
+  The Tuning Fork, a tone by its nature, rings with the game's own amethyst. `audio_delve.py`'s 26 files are deleted.
+  The Forged Pick's own voice (§49) is untouched.
+
+**66.5 The world's places and ambience, as built** (`audit_world.py`, 74 events; all of it was filtered noise for wind
+and water and sine partials for hums and chimes). Caves: a roost of bats is the game's bat taking off three times
+over with its wing loop; a drip the game's own drip; a far rumble thunder slowed and quiet; wind in the cracks a
+breeze drawing breath; hums a beacon, a conduit or a respawn anchor slowed; the sulfur caves the game's own noxious gas.
+The land's wind (only without AmbientSounds; with it, its recorded wind plays and ours is off): the game's leaves in
+the wind and its wind over sand. Far happenings: a stampede a minecart's rumble slowed, a murmuration a bat's wing
+loop, the Wild Hunt's horn the goat horn, a far storm rain on a roof slowed. Rifts and stars: a portal's hum slowed,
+the elytra's wind raised for the falling star, a smoker for its cooling. The special places' one-shots: amethyst for
+every chime, the game's bell for the far bell, pistons and iron doors for the Halo. The city at work: a minecart for
+a cart, the game's anvil, a villager for a stall, its own water for the fountain and quays, a hearth's crackle for
+the tavern (the synthetic crowd is gone). The Hearth: the game's campfire. A looped bed takes a recording the game
+itself loops; the game's quiet ambient recordings (leaves, sand, the firefly bush) play at full gain and are still
+soft, which is how the game has them.
+
+**66.6 The wild's creatures, as built** (`audit_fauna.py`, 199 events, 46 creatures; all of it was `fauna_sounds.py`'s
+synthesis: a buzz through formants, noise, sine thuds). Each creature takes the nearest real animal the game has,
+re-pitched to its size: the Crag Ram and the Stonehorn the goat (0.9 and 0.6), the Honey Bear the polar bear, the
+toads and the Mire Mother the frog (0.7 down to 0.56), the Gloomstalker a fox's growl, the Wisp Hound the big wolf,
+Old Antler a camel's groan with the screaming goat's cry for his bugle, the Briar Sow the hoglin, the Thornling and
+the Mycelord the Creaking, the Weaver Queen and the Thousandfoot the spider dropped low, the moths a parrot's or a
+phantom's wingbeat, the Dune Wyrm the dragon's growl raised, the Lantern Maw the elder guardian, the Seep Heart the
+warden's heartbeat, sonic boom and roar with glass and amethyst breaking. Where the game has no near animal (an owl,
+a marmot, a ray, an otter) the row says so and has a second idle to choose.
+
+**66.7 The System's voice, the body, the Inscribing Table, dreams, as built** (`audit_rest.py`, 96 events). The System
+spoke in one synthesised struck glass in D major pentatonic (`audio_ui.py`, and holo, aim, living and fault built on
+it): by rule 3 a ding every time. It now speaks in the game's own struck crystal (amethyst chiming or ringing) with
+the game's clicks, toasts, level-up and challenge-complete; the Holo panel opens and closes with a vault's shutter;
+a lock is a lodestone compass locking. Where the game already has the very sound, ours is that sound: a critical hit,
+XP arriving, a spyglass raised and lowered, the enchanting table, the grindstone scraping an inscription off. The
+body's moves and the rappel are cloth, leather, stone, a brush on gravel, a lead and a fishing line. What a creature
+sends at you: a breeze's shot, a phantom's swoop, the evoker's fangs for a line running along the ground, a
+guardian's beam, the game's noxious gas for a cloud.
+
+**66.8 Gate rooms and the bells** (`audit_gates.py`). The Gate Rig's 20 sounds are stone, pistons, glass and fire.
+The bells' plain two (a gap's knock, a bell hung on its hook) are remade. **The tuned bells stay as built**: fifteen
+notes from D3 to B5 are wider than any one of the game's recordings reaches in tune, and a wrong guess would put the
+home's song out of tune. `bells.note_7`, `bells.toll` and `bells.handbell` are on the page as kept rows
+(`keep=True`) with alternatives (a note block's iron xylophone or bell, in tune by the game's own tuning; the game's
+bell): his pick decides the whole family.
+
+**66.9 Left as they are, and why** (each has its row in AUDIT.md).
+- **Gate worlds** (`gate.world.*`, 145 events): below the bar, not remade here. The gates are being rebuilt as
+  worlds (§50) whose rule is already the game's recordings by name; remaking nineteen themes twice would be waste.
+- **Weapons and the War Anvil** (`arms.*`, `anvil.*`, 56): blows, parries and draws already became mixes of the
+  game's recordings on 10 Nov (`fight.*`, `guard.*`, §25) over this kit; that work's own page waits for his marks.
+- **The ritual** (`story.ritual.*`, 38): one staged scene, rebuilt on 2 Nov mostly from CC0 recordings; it needs his
+  ear as a whole before a part changes.
+- **The Classic sets** (`power.*`, `ascent.*`): superseded by the scores of the game's recordings (§50, §62) and
+  heard only with the Classic option.
+- **Music** (`music.*` and its stems): not judged by this bar.
+- **Beds that play from files** (the special places' air, the city's district beds): the Java mixers decode 44.1 kHz
+  only and the game's loops are 48 kHz; naming them needs a resampler in `OggLoop`. A follow-up.
+- Generators retired with their sounds: `audio_wild`, `audio_underlife`, `audio_delve`, `audio_wild_plants`,
+  `audio_edge_hold`, `audio_rappel`, `audio_fights`, `audio_rig`, `audio_enchant`, `aim_sounds`, `binoculars_sounds`.
+  The rest still render live sounds or lend helpers; `audio_build.py` no longer renders a file the audit replaced
+  and runs `sound_audit.py build` after writing its events. Where an older section of this spec names a synthesised
+  generator for a sound the audit remade (§17, §28, §29, §34, §39.5, §40.4, §41, §42, §45.10, §47.2), this section and
+  AUDIT.md are the record.
+- Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
+  first values. The listening page is the check, and his marks choose (`apply`, then `build`).

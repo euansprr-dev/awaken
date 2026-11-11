@@ -3,8 +3,10 @@
     "subtitle": "subtitles.awaken.anomaly.rift_open",
     "sounds": [
       {
-        "name": "awaken:sfx_rift_tear",
-        "attenuation_distance": 128
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.6
       }
     ]
   },

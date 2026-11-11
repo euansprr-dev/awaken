@@ -63,7 +63,7 @@ public final class AscentContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> UPDRAFT = sound("ascent.updraft");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_CALL = sound("ascent.vow_call");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_LINE = sound("ascent.vow_line");
-    // the rappel and the fittings (tools/art/specs/audio_rappel.py)
+    // the rappel and the fittings (the game's own recordings: tools/art/specs/audit_rest.py, SPEC §66.7)
     public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PAY = sound("ascent.rappel_pay");
     public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PAY_GLASS = sound("ascent.rappel_pay_glass");
     public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_CATCH = sound("ascent.rappel_catch");
