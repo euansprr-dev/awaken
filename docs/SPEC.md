@@ -2906,6 +2906,14 @@ Gates in a party:
 - Sealing: when an arena or the Lord's room seals behind someone, party members of the same run on the same floor
   within 48 blocks step through with them; a party member who reaches the bars of a sealed room their party is fighting
   in is let through.
+- Bars never come down in anyone's face (`Rooms.stepInside`, 11 Nov): a room begins at its bars, so whoever set it off
+  may still be standing in the doorway. Everyone of the gate in a doorway as it is barred (from half a block short of
+  the bars' middle to 1.3 past it) is set down two blocks inside before the bars are there. Until then the bars came
+  down in the cell the player stood in, on whichever side their feet were, and a Lord's room could seal with its
+  challenger outside (Euan, in a Bell Crypt: "it basically appeared in front of me instead, and now I'm basically
+  blocked outside"). And bars with nobody behind them keep nobody out: someone at the bars of a sealed room that no
+  living player is past (it sealed empty, or emptied) is let through, "The bars let you through." Standing in the
+  bars' own cell does not count as being in the room.
 - Size: n = players of the gate on that floor (1 to 4). Room groups get +35% monsters per extra player (rounded) and +1
   elite per two extra players; the Lord +50% health per extra player (its hoard is already one per player). Scripted
   gates (the story's) never scale.
