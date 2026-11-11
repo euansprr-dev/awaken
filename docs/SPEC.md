@@ -23123,12 +23123,15 @@ about a thousand columns of the generator's noise answer for all of it (`Terrain
 down, so a monument steps aside from a village or a spire the way it steps off rough ground, and is lost only where
 its whole cell is taken (asked once, of the one best spot, 27 first cards were lost to settlements that a step of fifty
 blocks would have cleared). A spot is clear when: the land it belongs to lies under its middle and at least three of
-four points half way out; nothing else that stands on the land starts within its reach and `Sites.APART` (40), which is
+four points half way out; nothing else that stands on the land starts within its reach and `Sites.APART` (40), nor
+within `Sites.APART_MIDDLE` (120) of its middle however small it is, which is
 every sparse structure set with a biome of its own there, ours and Minecraft's (a spire, a monolith, a temple, a delve's
 mouth: `Terrain.starts`, each set asked one square of its spacing at a time); no settlement starts within its reach
 and 150, ours first (`awaken:settlement_grid`; a walled village is some 80 across from its anchor, which the land may
-move 32), then outposts and mansions, and not the city; and no monument with first say stands within 300, or within
-both their widths and 24, so two never share ground or crowd each other. Found by the first worlds made without a
+move 32), then outposts and mansions, and not the city; and no monument with first say stands within `Sites.NEAR` (640), or
+within both their widths and 24, so two are never in one view (Euan, 12 Nov 2026, on how close things may stand: "it
+should feel natural and still special to find one. Similar to vanilla MC I guess so you're not crossing one every 2
+minutes"; at 300 the middle distance to the next monument was 478, under two minutes at a run). Found by the first worlds made without a
 client (§64.9): a Mooring Mast stood in the middle of a walled village, because only Minecraft's own set of villages
 was asked, which our villages' pack empties; and a Tether Spire stood in a Water Clock's lawn, because only two chunks
 from the monument's middle were asked. The margin from other landmarks is forty and not more because this world has
@@ -23230,10 +23233,11 @@ kinds of later people at its foot: climbers, herders, pilgrims, a hermit, or nob
 
 ### 64.6 Remains
 
-Layer 1 (cells 256, chance 0.8 in lively land): fifteen kinds of `FSet.REMAINS` (`sets/Remains`), small, from the same
+Layer 1 (cells 256, chance 0.4 in lively land): fifteen kinds of `FSet.REMAINS` (`sets/Remains`), small, from the same
 kit: a giant's head, a lone arch, milestones, a pier with no bridge, a fallen column, steps to nothing, a piece of a
 ring, a link, a lamp still lit, a bed in the open, a trough, a door lying down, a piece of a rim, a stone hand, a
-waymark. A remain stands only where a monument stands within 1,000 blocks and outside that monument's own ground, and is
+waymark. A remain stands only where a monument stands within 450 blocks (`Sites.REMAINS_REACH`; at 1,000 and chance 0.8 there
+were four and a half remains to a monument, one every 550 blocks of land) and outside that monument's own ground, and is
 turned to face it. Its one carving has the System say its line, then which way and about how far; that way is kept as a
 lead (Tasks page). No relic.
 
@@ -23331,8 +23335,15 @@ The count of 11 Nov 2026, after those (seed 4242, 2,025 cells, 17 km square, 42%
 (Before monuments kept clear of our own settlements and of everything else on their whole ground: 272 of 49 kinds.
 With `Sites.APART` at 80 instead of 40: 167.)
 
-That is the plan's "about one every 700 blocks through lively land, none for long stretches in quiet land" (0.88 a
-square kilometre over land and sea, about 1.5 over land; `Sites.BASE[2]` 0.85 holds it there). The nine kinds that
+**Spaced out, 12 Nov** (Euan's words above; `Sites.NEAR` 640, `APART_MIDDLE` 120, remains within 450 at chance 0.4). The
+same square counted again: 119 monuments of 37 kinds (E 36, D 28, C 37, B 9, A 5, S 4) and 180 remains (was 555); the
+nearest to the start 216 away, 2 within 1,000, 5 within 2,000; to the next monument least 640, middle 863, most 2,343;
+to the next of the same kind least 3,100, middle 5,717; half the land within 687 of one, nine tenths within 1,215.
+Three second-tier kinds that stood three or four times before stand nowhere in this square (the Fallen Ear, the Fallen
+Count, the Small Door). The table above is the count before this.
+
+That was the plan's "about one every 700 blocks through lively land, none for long stretches in quiet land" (0.88 a
+square kilometre over land and sea, about 1.5 over land; `Sites.BASE[2]` 0.85); it is now about one every 900. The nine kinds that
 did not stand in this square are fourth and fifth tiers, which belong to ranks A and S: this square holds only the
 corners of those bands. Before the rules of this section the same square stood 12 (level ground only), then 122 (the
 first spot that fits, one card, blocks of twelve, discs), then 252 (the best spot, two cards, blocks of eight, discs:

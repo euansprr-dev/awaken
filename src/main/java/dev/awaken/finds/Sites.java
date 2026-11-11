@@ -36,9 +36,24 @@ public final class Sites {
     // The world deals places only (Euan 10 Nov 2026: "actual places, not just single small things"). The small kinds
     // stay in the code as furnishing and for their tests; their layers are off.
     // Layer 1 is the remains (SPEC §64.6): small, and only where a monument stands near.
-    static final double[] BASE = {0, 0.8, 0.85};
+    // (remains at 0.4, not 0.8, and within 450 of their monument, not 1,000: at those a counted world had four and a half
+    // remains to a monument, one every 550 blocks of land, which is not "special to find one")
+    static final double[] BASE = {0, 0.4, 0.85};
     /** How far past its own reach a monument keeps from anything else that stands on the land (a spire, a temple, a ruin). */
     static final int APART = 40;
+    /**
+     * And never nearer its middle than this, however small it is: at forty past its reach a Tether Spire stood eighty
+     * blocks from a Small Ear, at its shoulder. (Eighty past every reach was tried: it kept the small ones and lost the
+     * great, which need a clear disc 150 wide in a world with a landmark every few hundred blocks; the painted Listening
+     * Dish stood nowhere in 17 km square.)
+     */
+    static final int APART_MIDDLE = 120;
+    /**
+     * The nearest two monuments stand (Euan, 12 Nov 2026: "it should feel natural and still special to find one. Similar
+     * to vanilla MC I guess so you're not crossing one every 2 minutes"). At 300, in lively land they stood a cell apart
+     * and one was in sight from the last; at this, the next is at least two minutes' run away and out of view.
+     */
+    static final int NEAR = 640;
     /** The furthest any scene reaches from its heart. */
     public static final int MAX_REACH = 72;
     /** Below this the land is quiet. About three parts in ten of the world. */
@@ -318,9 +333,10 @@ public final class Sites {
         // something standing within 150 of nearly every spot, and at eighty 167 monuments stood where 263 do.)
         // No settlement's start within 150 of
         // its reach (a walled village is some 80 across from its anchor, which the land may move 32), not the city. And
-        // no monument with first say within 300, or within both their widths and 24, so two never share ground.
+        // no monument with first say within NEAR, or within both their widths and 24, so two are never in one view.
         int span = 96 + k.reach();                                  // (spots lie within 80 of the cell's own point)
-        List<int[]> things = a.terrain.starts(x - span - APART, z - span - APART, x + span + APART, z + span + APART, false);
+        int far = span + Math.max(APART, APART_MIDDLE);
+        List<int[]> things = a.terrain.starts(x - far, z - far, x + far, z + far, false);
         List<int[]> towns = a.terrain.starts(x - span - 150, z - span - 150, x + span + 150, z + span + 150, true);
         // (the neighbours with first say are asked what they built only once a spot has got that far: asking is a search
         // of its own, and a cell with no ground at all has no need of it)
@@ -330,19 +346,19 @@ public final class Sites {
             int fits = k.fits(landAt(a, px, pz)) ? 1 : 0;
             for (int q = 0; q < 4 && fits > 0; q++) if (k.fits(landAt(a, px + RX[q] * half, pz + RZ[q] * half))) fits++;
             if (fits < 4) return 5;
-            for (int[] s : things) if (Math.hypot(s[0] - px, s[1] - pz) < k.reach() + APART) return 1;
+            for (int[] s : things) if (Math.hypot(s[0] - px, s[1] - pz) < Math.max(k.reach() + APART, APART_MIDDLE)) return 1;
             for (int[] s : towns) if (Math.hypot(s[0] - px, s[1] - pz) < k.reach() + 150) return 2;
             if (cityNear(a, px, pz, k.reach() + 56)) return 3;
             if (firsts[0] == null) {
                 firsts[0] = new ArrayList<>(2);
-                for (int i = -1; i <= 1; i++)
-                    for (int j = -1; j <= 1; j++) {
+                for (int i = -2; i <= 2; i++)                       // (two cells out: NEAR is wider than a cell)
+                    for (int j = -2; j <= 2; j++) {
                         if ((i == 0 && j == 0) || Long.compareUnsigned(cellHash(a.seed, 2, cx + i, cz + j), h) >= 0 || basePick(a, 2, cx + i, cz + j) < 0) continue;
                         Site o = cell(a, 2, cx + i, cz + j);
                         if (o != null) firsts[0].add(o);
                     }
             }
-            for (Site o : firsts[0]) if (Math.hypot(o.x() - px, o.z() - pz) < Math.max(300, o.kind().reach() + k.reach() + 24)) return 6;
+            for (Site o : firsts[0]) if (Math.hypot(o.x() - px, o.z() - pz) < Math.max(NEAR, o.kind().reach() + k.reach() + 24)) return 6;
             return 0;
         };
         why[0] = 0;
@@ -443,7 +459,7 @@ public final class Sites {
     /** South, west, north, east: where a kind's own south points after 0..3 quarter turns. */
     private static final int[] RX = {0, -1, 0, 1}, RZ = {1, 0, -1, 0};
     /** How far a remain may stand from the monument it belongs to. */
-    public static final int REMAINS_REACH = 1000;
+    public static final int REMAINS_REACH = 450;
 
     /**
      * The nearest monument that stands within {@code max} blocks of a point, or null. Cells are asked ring by ring from
