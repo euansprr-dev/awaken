@@ -42,8 +42,8 @@ public final class RealmCountry {
     static final int CELL = 56;
     /** A haunt fills when someone comes this near and nobody is nearer than UNSEEN, as a den's pack does. */
     private static final int FILL = 92, UNSEEN = 50;
-    /** In a hundred cells this many hold nothing, so the country has quiet stretches and nothing comes at even steps. */
-    private static final int QUIET = 42;
+    /** In a hundred cells this many hold nothing, so the country has quiet stretches and nothing comes at even steps. (42 at first: the Cinder Crown's walk met nine herds of rams for one pack.) */
+    private static final int QUIET = 50;
     /** A herd's ground is looked at again this long after it was last filled, and filled again if most of the herd is gone. */
     private static final int REFILL = 20 * 60 * 6;
     /** The run's packs come first: nothing of the country's stands while the gate holds more monsters than this, or where a pack already stands. */
@@ -229,7 +229,7 @@ public final class RealmCountry {
         }
         int k = (int) (h / 100 % 100), level = slopes[flat], a = flat, b = second;
         // mostly animals: a hostile haunt is an event, not the texture of the land (the run's own dens are that)
-        Kind kind = k < 50 ? Kind.HERD : k < 76 ? Kind.SMALL : k < 88 ? Kind.PROWL : k < 96 ? Kind.WATCH : Kind.LAIR;
+        Kind kind = k < 44 ? Kind.HERD : k < 72 ? Kind.SMALL : k < 86 ? Kind.PROWL : k < 95 ? Kind.WATCH : Kind.LAIR;
         if (kind == Kind.LAIR && (level > 3 || !free(land, xs[flat], zs[flat], 64))) kind = Kind.HERD;
         if (kind == Kind.WATCH) {
             // a perch is a real high point with level ground in earshot behind it; without one the cell's pack is on the prowl
