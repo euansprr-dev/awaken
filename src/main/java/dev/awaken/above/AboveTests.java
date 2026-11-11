@@ -12,6 +12,7 @@ import dev.awaken.above.power.EssenceCellItem;
 import dev.awaken.above.power.Power;
 import dev.awaken.above.ruin.RuinBuilder;
 import dev.awaken.above.ruin.RuinKind;
+import dev.awaken.above.ruin.RuinSpacing;
 import dev.awaken.above.scan.Scanning;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.progression.Profile;
@@ -225,9 +226,18 @@ final class AboveTests {
             for (RuinKind kind : RuinKind.values()) {
                 var holder = structures.getOrThrow(kind.structure);
                 BlockPos at = base.offset(i++ * 160, 0, 0);
-                var start = holder.value().generate(holder, level.dimension(), level.registryAccess(), gen, gen.getBiomeSource(),
-                        rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.EMPTY_UNCACHED), rs,
-                        level.getStructureTemplateManager(), level.getSeed(), net.minecraft.world.level.ChunkPos.containing(at), 0, level, b -> true);
+                // like /place structure this ignores the land (b -> true), but the spacing rule asks the real biome and the
+                // neighbours (RuinSpacing, SPEC §17.11 "Room between them"), so it is set aside while the start is made;
+                // ruins_spacing tests the rule
+                net.minecraft.world.level.levelgen.structure.StructureStart start;
+                RuinSpacing.set(false);
+                try {
+                    start = holder.value().generate(holder, level.dimension(), level.registryAccess(), gen, gen.getBiomeSource(),
+                            rs.createClimateSampler(net.minecraft.world.level.levelgen.densityfunction.SamplerContext.EMPTY_UNCACHED), rs,
+                            level.getStructureTemplateManager(), level.getSeed(), net.minecraft.world.level.ChunkPos.containing(at), 0, level, b -> true);
+                } finally {
+                    RuinSpacing.set(true);
+                }
                 h.assertTrue(start.isValid(), kind.id + " start is valid");
                 var box = start.getBoundingBox();
                 for (int cx = box.minX() >> 4; cx <= box.maxX() >> 4; cx++) {
