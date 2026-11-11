@@ -13666,9 +13666,15 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
   column at lz -1 is laid only where the hill itself stands at the brow's top course (`h + 2`) in that column, the outer
   course (lz -2) only in front of an inner one; the vines down the face hang only under it (or, in the old look, under
   the hill there), the top one hung from the block over it. The approach's shelf fills a dip of one and no more (where
-  the slope falls further the land's own slope is the way up), and an adit's spoil stones lie only on ground. Every test
-  reads only the column it writes, which the mouth leaves alone until then, so the chunks of one mouth agree. New land
-  only: a mouth already written keeps its brow.
+  the slope falls further the land's own slope is the way up), and an adit's spoil stones lie only on ground. (The old
+  shelf, filled over any drop and then worn to scree by the fan, hung as sheets and single stones a block under the lip
+  of 6 hill and cleft mouths in V20 where the land fell away, worst a cleft over a lake at -2472 70 -280.) A doline's
+  ledge runs right out to the rock at every turn: it stopped at R + 0.8 while the rough edge stands up to a block past
+  that, so stones stood off the wall in the air (-1564 58 -803). After the joint, a column of the hole whose floor the
+  bore took loses what lay on it (-drop to -drop + 2): the winding way passes under the hole and broke up through the
+  floor under moss carpets and the ledge's last stones at 4 dolines (-1563 50 -809). Every test reads only the column it
+  writes, which the mouth leaves alone until then, so the chunks of one mouth agree. New land only: a mouth already
+  written keeps its brow, shelf and ledge.
 - **Order by the ground** (P4): an adit, else a cleft, else a hill mouth, else a doline.
 - **Cleft** (P4): a cliff, 9+ of rise in 6 and 14+ in 14, open in front; a slot 2-4 wide (p W), 16-28 long, its floor
   level through the first 4 then falling one in three to the end; open to the sky (p H: the cliff's height over the lip

@@ -183,6 +183,7 @@ final class Mouth {
                     // a bend widens into a landing, so turning back on yourself is a step and not a squeeze
                     if (i > 0) Carve.blob(k, w[i][0], w[i][1] + 1.2, w[i][2], 2.8, 2.0, 2.8, s.seed() + 40 + i, 0.2, 3.0, (int) Math.floor(w[i][1]));
                 }
+                if (s.p(FORM) == DOLINE) settle(s, f, k);
             }
             k.mark("throat", e[0], e[1], e[2]);
             k.mark("goal", s.jx(), s.jy(), s.jz());
@@ -402,6 +403,30 @@ final class Mouth {
         return n;
     }
 
+    /** The hole's rough edge toward angle a: the same all the way down; the turf at the top overhangs by one. */
+    private static double edge(long seed, int r, double a) {
+        return r + 0.5 + (Carve.noise(seed, Math.cos(a) * 3, Math.sin(a) * 3, 0, 2) - 0.5) * 1.2;
+    }
+
+    /**
+     * After the joint: its bore winds down under the hole and can break up through the floor. Where it took a column's
+     * floor, what lay on that floor (moss, the ledge's last stones) goes too, never left hanging over the way down
+     * (SPEC §34.1, "Nothing hangs"). Each column reads only itself, so the chunks of one hole agree.
+     */
+    private static void settle(Spec s, Frame f, Sink k) {
+        int r = s.p(W) / 2, drop = s.p(DROP);
+        if (!f.touches(k, -r - 2, -r - 2, r + 2, r + 2)) return;
+        for (int lx = -r - 2; lx <= r + 2; lx++) {
+            for (int lz = -r - 2; lz <= r + 2; lz++) {
+                if (Math.sqrt(lx * lx + lz * lz) > edge(s.seed(), r, Math.atan2(lz, lx))) continue;
+                if (!f.inside(k, lx, -drop - 1, lz)) continue;
+                BlockState fl = f.get(k, lx, -drop - 1, lz);
+                if (fl.isSolidRender() || !fl.getFluidState().isEmpty()) continue;
+                for (int ly = -drop; ly <= -drop + 2; ly++) if (f.get(k, lx, ly, lz).getFluidState().isEmpty()) f.air(k, lx, ly, lz);
+            }
+        }
+    }
+
     private static void doline(Spec s, Frame f, Sink k) {
         int r = s.p(W) / 2, drop = s.p(DROP), L = s.p(LEN);
         long seed = s.seed();
@@ -411,9 +436,7 @@ final class Mouth {
         double sweep = Math.PI * (2 * n + 1);
         for (int lx = -r - 2; lx <= r + 2; lx++) {
             for (int lz = -r - 2; lz <= r + 2; lz++) {
-                double d = Math.sqrt(lx * lx + lz * lz), a = Math.atan2(lz, lx);
-                // rough round the edge, the same all the way down; the turf at the top overhangs by one
-                double rr = r + 0.5 + (Carve.noise(seed, Math.cos(a) * 3, Math.sin(a) * 3, 0, 2) - 0.5) * 1.2;
+                double d = Math.sqrt(lx * lx + lz * lz), a = Math.atan2(lz, lx), rr = edge(seed, r, a);
                 if (d > rr) continue;
                 for (int ly = -drop; ly <= (s.p(LOOK) > 0 ? TILT + 2 : 3); ly++) {
                     if (ly == -1 && d > rr - 0.9) continue;
@@ -425,14 +448,14 @@ final class Mouth {
                         : q < 0.8 ? Blocks.MOSS_BLOCK.defaultBlockState() : Carve.rock(f.y(-drop - 1));
                 f.put(k, lx, -drop - 1, lz, bed);
                 if (bed.is(Blocks.MOSS_BLOCK) && Carve.rand(seed, lx, lz, 32) < 0.5) f.put(k, lx, -drop, lz, Blocks.MOSS_CARPET.defaultBlockState());
-                // the ledge: one or more turns of fallen rock down the wall from the near side to the way out
+                // the ledge: one or more turns of fallen rock down the wall from the near side to the way out, right out
+                // to the rock at every turn (the rough edge stands up to a block past R + 0.8: a ledge stopped there stood
+                // off the wall in the air; SPEC §34.1, "Nothing hangs"), so the first step down is off solid ground too
                 if (d < R - 0.8) continue;
                 double u = ((a - a0) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
                 for (int t = 0; t <= n; t++) {
                     double th = u + 2 * Math.PI * t;
                     if (th > sweep) break;
-                    // near the top it reaches right out to the lip, so the first step down is off solid ground
-                    if (d > R + 0.8 && th > 1.0) continue;
                     int fy = -(int) Math.round(th / sweep * drop);
                     double g = Carve.rand(seed, lx, fy, lz);
                     f.put(k, lx, fy - 1, lz, g < 0.4 ? Carve.rubble(f.y(fy - 1)) : g < 0.7 ? Blocks.MOSSY_COBBLESTONE.defaultBlockState()
