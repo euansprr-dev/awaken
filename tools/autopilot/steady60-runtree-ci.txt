@@ -1,0 +1,133 @@
+# Euan's recording, replayed (playing, 11 Nov, with a 13 second screen recording: "It's 100% not a cloud lol, and its for
+# ALL trees, not just one"). In the recording he stands some 15 blocks west of a jungle tree under a morning sun, its
+# shadow a wide dark band toward him; he runs at the trunk, and over about a second a straight edge sweeps along the
+# band from his feet to the tree, the ground behind it fully lit, and it stays lit while he is by the trunk.
+# The same here: his world's seed, pack and terrain preset, the tree by the bell stand his save holds (-1533 69 -715;
+# the trunk some eight blocks east of it), the camera standing 18 blocks west of the trunk, then run east at it at 6.4
+# blocks a second with a frame every few ticks, then standing by the trunk for 2 and 12 seconds.
+# Three times: as played; with the lit air off (`lens rays off`: every pixel that might be shaded walks the block map);
+# with the block map's walk off (`lens sunpass off`: the heightfield alone).
+# SPEC §22 "Shadows beyond the block map".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-runtree-ci.txt 2400
+# ci knobs: LENS=cinematic PACK=perf,feel,comfort,world TECTONIC=awakened RD=16
+world steady_playtree creative 3761469094609221698
+waitworld
+window 1440 900
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd awaken opening skip
+wait 400
+screen close
+cmd awaken powers starter 1
+wait 40
+screen close
+cmd gamerule advance_time false
+cmd time set 2300
+cmd gamemode spectator
+cmd tp @s -1543.5 69 -715.5 -90 20
+opt fov 90
+camera first
+hud off
+wait 600
+info
+# --- as played
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 300
+shot a0_still_far
+glide 0.32 0 0 50
+wait 3
+shotnow a1_run_01
+wait 3
+shotnow a1_run_02
+wait 3
+shotnow a1_run_03
+wait 3
+shotnow a1_run_04
+wait 3
+shotnow a1_run_05
+wait 3
+shotnow a1_run_06
+wait 3
+shotnow a1_run_07
+wait 3
+shotnow a1_run_08
+wait 3
+shotnow a1_run_09
+wait 3
+shotnow a1_run_10
+wait 6
+shotnow a2_arrived
+wait 40
+shotnow a2_arrived_2s
+wait 200
+shot a2_arrived_12s
+# --- the lit air off
+lens rays off
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 300
+shot b0_still_far
+glide 0.32 0 0 50
+wait 3
+shotnow b1_run_01
+wait 3
+shotnow b1_run_02
+wait 3
+shotnow b1_run_03
+wait 3
+shotnow b1_run_04
+wait 3
+shotnow b1_run_05
+wait 3
+shotnow b1_run_06
+wait 3
+shotnow b1_run_07
+wait 3
+shotnow b1_run_08
+wait 3
+shotnow b1_run_09
+wait 3
+shotnow b1_run_10
+wait 6
+shotnow b2_arrived
+wait 40
+shotnow b2_arrived_2s
+wait 200
+shot b2_arrived_12s
+lens rays setting
+# --- the walk off: the heightfield alone
+lens sunpass off
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 300
+shot c0_still_far
+glide 0.32 0 0 50
+wait 3
+shotnow c1_run_01
+wait 3
+shotnow c1_run_02
+wait 3
+shotnow c1_run_03
+wait 3
+shotnow c1_run_04
+wait 3
+shotnow c1_run_05
+wait 3
+shotnow c1_run_06
+wait 3
+shotnow c1_run_07
+wait 3
+shotnow c1_run_08
+wait 3
+shotnow c1_run_09
+wait 3
+shotnow c1_run_10
+wait 6
+shotnow c2_arrived
+wait 40
+shotnow c2_arrived_2s
+wait 200
+shot c2_arrived_12s
+lens sunpass setting
+lens cost
+quit

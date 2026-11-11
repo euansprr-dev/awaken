@@ -268,9 +268,14 @@ public final class LensClient {
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, LensParticles::pipelines);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LensClient::extract);
-        // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own)
+        // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own);
+        // /awaken lens sunpass|rays off|on|setting and /awaken lens paths on|off (the Sun Pass's parts one at a time, in
+        // play: which of them a shadow that changes with where you stand comes from)
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
                 net.minecraft.commands.Commands.literal(Awaken.MODID).then(net.minecraft.commands.Commands.literal("lens")
+                        .then(lensSwitch("sunpass", LensClient::sunPass))
+                        .then(lensSwitch("rays", LensClient::rays))
+                        .then(lensSwitch("paths", LensClient::paths))
                         .then(net.minecraft.commands.Commands.literal("projection")
                                 .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
                                         .executes(c -> {
@@ -282,6 +287,33 @@ public final class LensClient {
         NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, e -> {
             if (heightfield != null && e.getLevel().isClientSide()) heightfield.loaded(e.getChunk());
         });
+    }
+
+    /** A client command {@code /awaken lens <name> <what>} that sets one development switch and says what it is now. */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack> lensSwitch(
+            String name, java.util.function.Function<String, String> set) {
+        return net.minecraft.commands.Commands.literal(name)
+                .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
+                        .executes(c -> {
+                            String line = set.apply(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "what"));
+                            Awaken.LOG.info("[lens] {}", line);
+                            Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(line));
+                            return 1;
+                        }));
+    }
+
+    private static boolean showPaths;
+
+    /**
+     * {@code /awaken lens paths on|off}: marks on every lit surface which part of the Sun Pass answered it, over the
+     * answer itself (lens_light.fsh, pathMark): plain where the heightfield found nothing over the ray or a block
+     * stopped the walk, lines across the sun's way where the lit air was sure, lines along it where the walk left the
+     * map in the open, a checker where the walk met a section not read yet. For a shadow that changes with where you
+     * stand: the mark under it says which part changed its mind.
+     */
+    public static String paths(String arg) {
+        showPaths = arg.trim().equals("on");
+        return "sun pass paths " + (showPaths ? "on: lines across the sun's way = lit air, lines along it = walk left the map, checker = not read yet" : "off");
     }
 
     private static void tick() {
@@ -607,7 +639,8 @@ public final class LensClient {
             if (block == null) block = new LensBlock();
             block.write(framed ? lensFrame : null, params);
             if (framed && lensFrame != null && WorldProjection.ready()) {
-                // the world's own matrices and sun over the CPU's estimate (LensFrame's texels 0-11 and 21)
+                // the world's own matrices and sun over the CPU's estimate (LensFrame's texels 0-11 and 21, whole: a
+                // value of the frame's own must never ride in one of them)
                 var encoder = RenderSystem.getDevice().createCommandEncoder();
                 encoder.copyTextureToBuffer(WorldProjection.output(), block.buffer, 0L, LensClient::nothing, 0, 0, 0, 12, 1);
                 encoder.copyTextureToBuffer(WorldProjection.output(), block.buffer, LensFrame.SUN * 16L, LensClient::nothing, 0, WorldProjection.SUN, 0, 1, 1);
@@ -654,6 +687,7 @@ public final class LensClient {
         lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f);
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
                 rays && litAir.valid());
+        lensFrame.paths(showPaths);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
         if (WorldProjection.ready()) {

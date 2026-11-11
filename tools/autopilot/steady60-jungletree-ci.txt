@@ -1,0 +1,90 @@
+# A jungle giant's shadow from every side (Euan, playing, 11 Nov, of his own tree after the first fix: "Same exact glitch
+# with the tree shadow changing based on where I stand ... on one side of the tree the shadow is perfect, then if I go to
+# the other side, the shadow is gone"). The first fix was shown on a thin crown on a bare trunk. This is a giant built
+# as the game grows them, always the same: a 2 by 2 trunk 28 high, a crown at its top, and four side boughs at 11, 15,
+# 19 and 23 blocks up, each a pad of leaves on a log, part under the crown and part out from under it. The sun is where
+# his save had it, 30 degrees up in the east, so the shadows lie 19 to 50 blocks west of the trunk.
+# The lawn stands at y 230, over the cloud layer: the first lawn, at y 120, lay under the Air's block clouds, whose own
+# square shadows drift across it at most of a block a second and hid the tree's (run 43057569594).
+# From straight above at three places 25 blocks apart (the same ground, three places to stand: the three pictures should
+# be one picture moved), each also with the block map's walk off (`lens sunpass off`: the heightfield alone); then from
+# the four sides, a little above the grass and looking down, as a player sees it.
+# SPEC §22 "Shadows beyond the block map".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-jungletree-ci.txt 2400
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1977
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s -20.5 231 60.5 180 10
+cmd forceload add -80 -16 64 112
+wait 300
+cmd fill -75 230 -10 50 230 50 minecraft:grass_block
+cmd fill -75 230 51 50 230 110 minecraft:grass_block
+# the crown, the boughs' pads, then the wood through them
+cmd fill 25 257 45 36 257 56 minecraft:jungle_leaves[persistent=true]
+cmd fill 26 258 46 35 258 55 minecraft:jungle_leaves[persistent=true]
+cmd fill 27 259 47 34 259 54 minecraft:jungle_leaves[persistent=true]
+cmd fill 29 260 49 32 260 52 minecraft:jungle_leaves[persistent=true]
+cmd fill 34 242 47 39 243 53 minecraft:jungle_leaves[persistent=true]
+cmd fill 22 246 48 27 247 54 minecraft:jungle_leaves[persistent=true]
+cmd fill 27 250 54 33 251 59 minecraft:jungle_leaves[persistent=true]
+cmd fill 28 254 41 34 255 46 minecraft:jungle_leaves[persistent=true]
+cmd fill 30 231 50 31 258 51 minecraft:jungle_log
+cmd fill 32 242 50 36 242 50 minecraft:jungle_log[axis=x]
+cmd fill 26 246 51 29 246 51 minecraft:jungle_log[axis=x]
+cmd fill 30 250 52 30 250 56 minecraft:jungle_log[axis=z]
+cmd fill 31 254 45 31 254 49 minecraft:jungle_log[axis=z]
+cmd gamemode spectator
+camera first
+hud off
+lookswitch cinematic
+opt fov 90
+wait 400
+cmd time set 1977
+cmd tp @s -30.5 284 50.5 -90 90
+wait 300
+shot g1_above_west
+lens sunpass off
+wait 80
+shot g1_above_west_walk_off
+lens sunpass setting
+cmd tp @s -5.5 284 50.5 -90 90
+wait 300
+shot g2_above_centre
+lens sunpass off
+wait 80
+shot g2_above_centre_walk_off
+lens sunpass setting
+cmd tp @s 20.5 284 50.5 -90 90
+wait 300
+shot g3_above_east
+lens sunpass off
+wait 80
+shot g3_above_east_walk_off
+lens sunpass setting
+cmd tp @s -2.5 236 68.5 180 25
+wait 300
+shot g4_from_south
+cmd tp @s -2.5 236 32.5 0 25
+wait 300
+shot g5_from_north
+cmd tp @s -40.5 236 50.5 -90 20
+wait 300
+shot g6_from_west
+cmd tp @s 26.5 236 50.5 90 20
+wait 300
+shot g7_from_east
+quit
