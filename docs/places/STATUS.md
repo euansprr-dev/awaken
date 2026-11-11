@@ -1,6 +1,13 @@
 # Places: where they stand (10 Nov 2026)
 
-> **After four rounds of game pictures, 12 Nov (SPEC §64.3, §64.9; the Long World is §64 now, build took 62 and 63).**
+> **Spaced out, 11 Nov (SPEC §64.3, §64.6, §64.9).** Euan on how close things may stand: "it should feel natural and
+> still special to find one. Similar to vanilla MC I guess so you're not crossing one every 2 minutes". No two monuments
+> within 640 blocks, no other landmark within 120 of a monument's middle, remains only within 450 of their monument.
+> Counted (seed 4242, 17 km square): 119 monuments of 37 kinds where there were 263, the next about 860 away, 180
+> remains where there were 555. The fifth round of game pictures (before this change) showed all sixteen toured
+> monuments clean. Unplayed.
+
+> **After four rounds of game pictures, 11 Nov (SPEC §64.3, §64.9; the Long World is §64 now, build took 62 and 63).**
 > 157 pictures looked at. Nine faults in how any monument is written into the land, all fixed: the five below, then the
 > Sleepers' Hall's fifty lawn pits (its own moss mats in the ground), leaves left in the air (a tree is felled whole
 > now), a planted tree's crown left by a village road (scene trees get living leaves), and the tours' own crashes (the
