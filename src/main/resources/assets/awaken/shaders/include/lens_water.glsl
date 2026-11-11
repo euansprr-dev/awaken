@@ -58,6 +58,8 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
     // gives way to its own average beyond (no sparkle of sub-pixel texels far out)
     vec2 tx = floor(w.xz * 16.0), q = (tx + 0.5) / 16.0;
     float fine = 1.0 - smoothstep(0.045, 0.16, foot);
+    // a glint's four arms: only where a texel is small on screen
+    float arms = smoothstep(0.008, 0.022, foot);
 
     // wind lanes: long bands that drift across the water (about nine blocks by three), and the chop that rides them.
     // Their lean tilts the mirror, a texel at a time
@@ -157,12 +159,16 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
     vec3 col = mix(into, refl, fres);
 
     // --- lace: thin broken lines of light drifting on the lanes' crests (texel-wide; gone before a texel is)
-    vec3 lightCol = f16.y > 0.5 ? vec3(0.6, 0.7, 0.95) * 0.7 : mix(vec3(1.0, 0.96, 0.88), P(9).rgb, P(1).a);
+    // (the light's colour is the Air's own for the hour, as its clouds take it: gold toward dusk)
+    vec3 lightCol = f16.y > 0.5 ? vec3(0.6, 0.7, 0.95) * 0.7 : mix(vec3(1.0, 0.97, 0.92), vec3(1.0, 0.62, 0.42), hr.y * (1.0 - 0.6 * hr.x));
     if (fine > 0.0) {
-        float lv = waterNoise(q * 0.9 + vec2(t * 0.060, t * 0.045)) + 0.5 * waterNoise(q * 2.3 - vec2(t * 0.050, -t * 0.070));
-        float line = 1.0 - smoothstep(0.02, 0.07, abs(fract(lv * 2.0) - 0.5));
-        float crest = smoothstep(0.50, 0.78, lane);
-        col += (vec3(0.80, 1.0, 0.96) * hour + lightCol * 0.25 * f14.w) * line * crest * fine * 0.44 * shade;
+        // (long along the lanes and cut into dashes: an even noise's contours closed into loops and triangles that
+        // read as scribbles on the water, run 42988235858)
+        float lv = waterNoise(q * vec2(0.34, 1.25) + vec2(t * 0.070, t * 0.030)) + 0.4 * waterNoise(q * vec2(0.9, 2.6) - vec2(t * 0.050, -t * 0.060));
+        float line = 1.0 - smoothstep(0.015, 0.055, abs(fract(lv * 2.0) - 0.5));
+        float dash = smoothstep(0.38, 0.52, waterNoise(q * vec2(1.3, 0.5) + vec2(-t * 0.09, 3.7)));
+        float crest = smoothstep(0.42, 0.74, lane);
+        col += (vec3(0.80, 1.0, 0.96) * hour + lightCol * 0.25 * f14.w) * line * dash * crest * fine * 0.36 * shade;
     }
 
     // --- the road of the sun, or the moon: texels that catch it and twinkle. Far out they are their own average
@@ -175,12 +181,14 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
         // (each catching texel its own brightness: a field of equal white squares read as a floor of tiles)
         float catches = mix(road * 0.40, step(1.0 - road * 0.62, dice) * (0.45 + 0.55 * waterHash(tx * 0.71 + beat)), fine);
         // a few are four-pointed: a seed texel and the four beside it
+        // (the arms only where a texel is a few screen pixels: at your feet a four-pointed glint was a white cross the
+        // size of a hand)
         float star = 0.0;
         if (fine > 0.3) {
             float beat2 = floor(t * 3.0);
             float rate = 0.012 * smoothstep(0.02, 0.4, road);
-            star = 2.2 * waterSeed(tx, beat2, rate) + waterSeed(tx + vec2(1.0, 0.0), beat2, rate) + waterSeed(tx - vec2(1.0, 0.0), beat2, rate)
-                    + waterSeed(tx + vec2(0.0, 1.0), beat2, rate) + waterSeed(tx - vec2(0.0, 1.0), beat2, rate);
+            star = 2.2 * waterSeed(tx, beat2, rate) + arms * (waterSeed(tx + vec2(1.0, 0.0), beat2, rate) + waterSeed(tx - vec2(1.0, 0.0), beat2, rate)
+                    + waterSeed(tx + vec2(0.0, 1.0), beat2, rate) + waterSeed(tx - vec2(0.0, 1.0), beat2, rate));
         }
         col += lightCol * (catches * 1.25 + star * 1.1) * light * (0.35 + 0.65 * fres);
     }
@@ -188,8 +196,8 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
     float dark = smoothstep(0.06, -0.20, f22.y) * (1.0 - rain);
     if (dark > 0.0 && fine > 0.3) {
         float beat3 = floor(t * 2.0);
-        float s = 2.0 * waterSeed(tx + 31.0, beat3, 0.004) + waterSeed(tx + vec2(32.0, 31.0), beat3, 0.004) + waterSeed(tx + vec2(30.0, 31.0), beat3, 0.004)
-                + waterSeed(tx + vec2(31.0, 32.0), beat3, 0.004) + waterSeed(tx + vec2(31.0, 30.0), beat3, 0.004);
+        float s = 2.0 * waterSeed(tx + 31.0, beat3, 0.004) + arms * (waterSeed(tx + vec2(32.0, 31.0), beat3, 0.004) + waterSeed(tx + vec2(30.0, 31.0), beat3, 0.004)
+                + waterSeed(tx + vec2(31.0, 32.0), beat3, 0.004) + waterSeed(tx + vec2(31.0, 30.0), beat3, 0.004));
         col += vec3(0.62, 0.74, 1.0) * s * 0.60 * dark * (0.3 + 0.7 * fres);
     }
 
