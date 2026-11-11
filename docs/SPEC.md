@@ -24540,15 +24540,19 @@ Module `dev.awaken.together`; switches in `awaken-together.toml`, each stage's o
 exactly as before. **Alone, every rule here is inert** (`alone_plays_the_same`).
 
 **70.1 The party.** Up to four players who chose each other, saved per world (`awaken:together`, schema 1: members,
-who asked, the play-day). `PartyHooks.members` is the party plus, as before, anyone inside your gate run; a shared
-Hearth alone no longer makes one (a household is still asked for by `HearthHooks`, never through the party).
-- Formed by a card, never a command: the band's Status page has a TOGETHER section (it replaces RIDING ALONG) listing
-  players within 48 blocks or of your household with what can be done (`Travel together`, `Share my home`, `Go to`,
-  `Leave`); each is a 30-second card for the other, remembered by the server so a client can't answer one it wasn't
-  asked. Commands (`/awaken together ...`) stay for servers and tests.
+the play-day; `apart`: who left on purpose). `PartyHooks.members` is the party plus, as before, anyone inside your
+gate run. A shared Hearth alone is not a party, but it leads to one: a player with no party is taken into a
+housemate's while it has room (`PartyService.settled`, so one card, "share my home", does both), and someone who left
+on purpose isn't put back. With the switch `party` off the rule is the old one (the run and the household).
+- Formed by a card, never a command: the band's Status page has a TOGETHER section (it replaces RIDING ALONG): the
+  party's members with how far they are, `[ Leave party ]`, anyone within 48 blocks with `[ Travel together ]`, and
+  the My fights switch. Travel together is a 30-second card for the other (`together:join:<asker>:<other>`),
+  remembered by the server so a client can't answer one it wasn't asked; both asking makes it at once. Not in a fight.
+  Commands: `/awaken together status | with <player> | leave | fights full|gentle`. **Not built yet:** `Share my
+  home` and `Go to` on the section (the Hearth's own invite still does the first), and the second keeper below.
 - Players who walk the opening together are a party from the square on.
-- A home for two: a party member placing the Ember within 24 blocks of another member who has no home asks them "Make
-  this your home too?"; a yes makes them the **second keeper** (`HearthRecord` household, optional field): the owner's
+- A home for two (**not built yet**): a party member placing the Ember within 24 blocks of another member who has no
+  home asks them "Make this your home too?"; a yes makes them the **second keeper** (`HearthRecord` household, optional field): the owner's
   rights except ending the household. One second keeper a Hearth.
 - Leaving: either side, out of a fight. A party of one is no party. Logging off keeps it.
 
@@ -24556,41 +24560,56 @@ Hearth alone no longer makes one (a household is still asked for by `HearthHooks
 - The party strip (client, the band's look, off with the HUD, setting small / off): a row per member: name, health,
   one state (in a menu, in a gate with its floor, on Gentle, on a knee, down, far) and an arrow on the screen's edge
   with the distance when out of view. Hidden with no party. Synced on change only: health in twentieths, state,
-  floor; position twice a second only while the client isn't tracking that player.
-- The Atlas draws party members in your dimension as live dots; `Go to <name>` is a destination that follows them.
+  floor, second winds, seconds left while down, and the block they stand on (`TogetherNet.Party`, one message, at
+  most twice a second, only when it differs from the last one sent to that player). A member on a knee or down kneels
+  in third person for the party (`station_kneel` through `PlayerClips`); on your own screen the edges dim and a line
+  says what is happening.
+- The Atlas draws party members in your dimension as live dots; `Go to <name>` is a destination that follows them
+  (**not built yet**).
 - Pings on the lock key (middle click; a lock always wins on a monster, and a lock is shown to the party as their
   target): on anything else a marker in world light for 8 s, on the edge when off screen and on the Atlas, with one
   line chosen by what it is ("Over here", "Ore here", "Let's go in", "Look at this", "On my way", "Help" while down;
-  a double click "Careful here"). Binocular marks are shared. Four in two seconds (`core.Throttle`).
+  a double click "Careful here"). Four in two seconds (`core.Throttle`). In a party the press is the ping's (in
+  creative, pick block still gets it too); alone it is pick block's as always (`AimClient.freePress`). The marker is
+  the band's diamond in the pinger's colour with their name over it and the line and distance under it; it opens for
+  a quarter of a second and then sits still. **Not built yet:** pings on the Atlas, shared binocular marks.
 
 **70.3 Any two in one fight.**
 - A tell carries its target; the full closing ring and any verdict show only for that player, a thin ring for the
   rest; a blow that reaches everyone is everyone's.
-- A boss holds its target for a whole phrase and changes only at an opening, to whoever did most to it since the last
-  change, shown with its notice; `FightMind` keeps a read per player.
+- A boss holds its target for a whole phrase (`AwakenBoss.setTarget` refuses another player while
+  `FightRunner.midPhrase`) and changes only as a phrase is about to start, to whoever of the same party did most to it
+  since it last chose (`Fights.nextTarget`, a ledger per boss filled as blows land); it shows the turn (the notice
+  pose and sound, `NOTICE_TICKS`) before it starts on them. `FightMind` still starts its read again on a new target:
+  with the hold that is once a phrase at most (a read kept per player is **not built yet**).
 - Its back is turned: a blow landing on a creature in the middle of a blow at someone else does a quarter more damage
   and stance. Never alone.
 - Stance grows with fighters as health does (+50% each), once stage 0 has measured the need.
 - Standing back up (gates): a fighter who would die while another of the party stands on the floor goes down instead,
   kneeling and untargetable for 20 s; a partner holding Use on them for 2 s lifts them at 30% health with 2 s of
   grace; once a fighter a floor (twice on Story). Nobody comes, or all down: the death as before. Cheat Death first.
-- After a real death with the party still inside: you wake at the gate's door, and it lets you back in at the last
-  shrine once they are out of a fight. The Satchel and the Fracture are the price as before.
+- After a real death with the party still inside: you wake at the gate's door (within two minutes of the death,
+  on standable ground within five blocks of it), and going back in takes you to the entrance of the floor your party
+  has reached, once they are clear of a fight (`Runs.rejoinFloor`; realms and the story's gates start at their start).
+  The Satchel and the Fracture are the price as before.
 - The finishing blow (§67 of the boss plan, when built): either may take it; everyone in the fight sees the film.
 
 **70.4 My fights: Full or Gentle** (replaces §55's bond, 40% hits, half XP, no rank and the fold).
 One setting per player (attachment `awaken:fights`, schema 1, kept through death and logout; default Full). Changed on
 the TOGETHER section at once out of a fight (in a gate at the next room; never mid-fight). The party sees a mark.
 Gentle, for that player only, all decided on the server by who a thing is aimed at:
-- A boss aiming at them: LIGHT and HEAVY blows only (never PERILOUS or GRAB), strings of two at most, no mind answers,
-  8 more ticks of hold before the blow, the opening after it half as long again. A script with nothing plain to throw
-  uses the body's plain blows; never nothing.
+- A boss aiming at them: LIGHT and HEAVY blows only (never PERILOUS or GRAB) wherever the phase has any, strings of
+  two at most with no red follow-up, no forks, no mind answers, 8 more ticks of hold before the blow, the opening after
+  it half as long again. A phase with nothing plain keeps what it has, with the longer hold: it is never left with
+  nothing to do.
 - A held guard stops HEAVY as well as LIGHT (`ArmsRules.Answer.BLOCK`, not `GUARD_BREAK`); a timed deflect earns as before.
 - Attention: with a Full fighter in sight a boss gives them about one phrase in four; small monsters, two at a time.
 - Half damage taken, after armour, from everything.
-- A killing blow is a **second wind**: thrown back, 2 s on a knee untargetable, up at half health; three a floor,
-  refilled at a shrine (outside gates after a minute of calm). After those, down as anyone.
-- A fall that would kill in a gate sets them back on the last safe ground, two hearts lighter.
+- A killing blow is a **second wind**: thrown back, 2 s on a knee untargetable, up at half health, then 2 s of grace;
+  three, refilled on reaching a new floor of a gate and, outside one, after a minute without a blow given or taken.
+  After those, down as anyone.
+- A fall that would kill in a gate (or out of its world) sets them back on the last safe ground they stood on (noted
+  once a second), two hearts lighter than they were there. It spends no second wind.
 - A death costs what STORY costs (half the Satchel kept, no Fracture), whatever the world's setting.
 - Their hits, stance damage and powers are full. They count as **half a fighter** when a room or a boss is sized: a
   Lord or Warden +25% health and stance (a Full partner +50%), a room a sixth more monsters, no extra elite.
@@ -24599,11 +24618,15 @@ Gentle, for that player only, all decided on the server by who a thing is aimed 
 
 **70.5 Reassessments.** Everyone of the party near the bell comes as a fighter on their own setting (a tied pair is no
 longer skipped). At the level and ready: the rank, whatever the setting. Short of the level: they may come and are
-told this one doesn't count for them yet. The Warden's gift goes to all, as before.
+told this one doesn't count for them yet. The Warden's gift goes to all, as before. A Warden's health and stance
+grow by `FightsHooks.fighters` (a player on Gentle half of one), not by a head count.
 
-**70.6 The joins.** A host is told once when a new player arrives in Carillon. The **Answering Peal**: a partner rings
-their handbell for you; you hear it from its bearing; ring yours back, stand still 5 s and you're beside them (both in
-the overworld, neither in a fight, gate, trial or dream; every 10 minutes; from your first landing on). **Match my
+**70.6 The joins.** Everyone already awakened is told when someone who hasn't awakened logs in. The **Answering Peal**
+(`Answering`, through `BellHooks.onRung`): a handbell rung in the overworld calls to every party member more than 64
+blocks off (they hear a bell 24 blocks out along its bearing and are told); one of them ringing their own handbell
+within a minute answers instead of ringing their peal: stand still 5 s and you're beside the caller (both in the
+overworld, neither in a fight, gate, trial or dream, nor on a knee; every 10 minutes for the one who travels).
+**Not built yet** (each waits on a plan that isn't merged, or is its own stage): the rest of this paragraph. **Match my
 friend** (off by default): within 32 blocks of a party member ten or more levels under you, in land at their level,
 your hits are evened down to their level; the land's dread stays on each player's real level. **Shown the way**: a
 monument a partner opened without you is a lead; touched with them there, it pays you once. A partner's solo finds
