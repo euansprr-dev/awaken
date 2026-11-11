@@ -1,0 +1,18 @@
+{
+ "awaken:dream.catch": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:block.amethyst_block.chime",
+   "volume": 0.3
+  }
+ ],
+ "awaken:dream.won": [
+  {
+   "delay": 100,
+   "pitch": 1.3,
+   "sound": "minecraft:entity.player.levelup",
+   "volume": 0.3
+  }
+ ]
+}

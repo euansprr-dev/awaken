@@ -1,0 +1,26 @@
+{
+ "awaken:enchant.book_open": [
+  {
+   "delay": 150,
+   "pitch": 0.8,
+   "sound": "minecraft:item.book.page_turn",
+   "volume": 0.6
+  }
+ ],
+ "awaken:enchant.flare": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:block.enchantment_table.use",
+   "volume": 0.5
+  }
+ ],
+ "awaken:enchant.learn": [
+  {
+   "delay": 0,
+   "pitch": 1.4,
+   "sound": "minecraft:entity.player.levelup",
+   "volume": 0.3
+  }
+ ]
+}

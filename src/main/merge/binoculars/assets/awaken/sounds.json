@@ -3,7 +3,10 @@
     "subtitle": "subtitles.awaken.binoculars.raise",
     "sounds": [
       {
-        "name": "awaken:ui_binoculars_raise"
+        "name": "minecraft:item.spyglass.use",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9
       }
     ]
   },
@@ -11,7 +14,10 @@
     "subtitle": "subtitles.awaken.binoculars.eyecup",
     "sounds": [
       {
-        "name": "awaken:ui_binoculars_eyecup"
+        "name": "minecraft:item.armor.equip_leather",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.4
       }
     ]
   },
@@ -19,7 +25,10 @@
     "subtitle": "subtitles.awaken.binoculars.step",
     "sounds": [
       {
-        "name": "awaken:ui_binoculars_step"
+        "name": "minecraft:block.comparator.click",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.5
       }
     ]
   },
@@ -27,7 +36,10 @@
     "subtitle": "subtitles.awaken.binoculars.lower",
     "sounds": [
       {
-        "name": "awaken:ui_binoculars_lower"
+        "name": "minecraft:item.spyglass.stop_using",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9
       }
     ]
   }
