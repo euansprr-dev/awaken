@@ -416,7 +416,7 @@ public final class AbilityRunner {
             case SLAM, AURA, PULL, GUST, DARKNESS, HEAL -> Telegraph.ring(level, feet, a.radius() * (1.0F - left / (float) total * 0.5F), 20, colour, heavy);
             case BURST -> {
                 Telegraph.ring(level, feet, a.radius(), 36, colour, heavy);
-                Telegraph.ring(level, feet, a.inner(), 14, 0xFFFFFF, false);
+                Telegraph.safeRing(level, feet, a.inner());
             }
             // what is thrown gathers in the body first; where it falls shows only as it is thrown (at the throw)
             case NOVA, FANGS_RING, GUARD, FRENZY, DECOY, RAIN, LIFT, CLOUD -> Telegraph.gather(level, Abilities.chest(mob), colour);

@@ -62,6 +62,9 @@ public final class BossPlate {
         final long[] markFlash = new long[8];
         /** The kill's start (ms), or 0. */
         long shattered;
+        /** Its stance broke while we watched; the stance hint showed (ms, 0 never: once a fight, SPEC §47.3). */
+        boolean broke;
+        long hintAt;
 
         Bound(UUID bar) {
             this.bar = bar;
@@ -77,7 +80,17 @@ public final class BossPlate {
 
     static final int LORD_BAR = 182, WARDEN_BAR = 140, PAD = 8, GAP = 4, MAX_SHOWN = 2;
     static final long FLY_MS = 450, OPEN_MS = 200, LINE_MS = 3000, SIGNATURE_MS = 1200, SHATTER_MS = 600, NAME_HOLD_MS = 1000, FADE_MS = 300;
-    private static final int BROKEN = 0xFFD060, STANCE = 0xF2A541, STANCE_HOT = 0xFFE6B0;
+    /**
+     * The stance (SPEC §47.3): ivory, not the health's lost amber, white-hot over an ember edge as it nears breaking;
+     * broken, gold. It sits under the health with a caption row beneath it.
+     */
+    private static final int BROKEN = 0xFFD060, STANCE = 0xEDE4CC, STANCE_DEEP = 0xB8AC8E, STANCE_HOT = 0xFFF8EA, STANCE_EMBER = 0xFF8A3D;
+    private static final int STANCE_H = 4, STANCE_GAP = 3, CAPTION_H = 8, FLASH_TICKS = 6;
+    /** The one hint: after this many of our blows land on a duel body with its stance never broken, for this long. */
+    private static final int HINT_BLOWS = 20;
+    private static final long HINT_MS = 9000;
+    /** A duel stance broken by us once this session: the hint has nothing left to teach. */
+    private static boolean everBroke;
 
     private static int shownThisFrame, boundSeenLastFrame, boundSeenThisFrame;
 
@@ -180,8 +193,15 @@ public final class BossPlate {
         int sw = g.guiWidth(), sh = g.guiHeight();
         int barW = b.kind == BossPlates.Kind.WARDEN.ordinal() ? WARDEN_BAR : LORD_BAR;
         b.w = barW + PAD * 2;
-        boolean stance = le != null && (Stances.broken(le) || Stances.share(le) > 0.01F);
-        b.h = 36 + (stance ? 4 : 0);
+        boolean duel = le != null && Stances.duel(le);
+        boolean stance = le != null && (duel || Stances.broken(le) || Stances.share(le) > 0.01F);
+        b.h = 36 + (stance ? STANCE_H + STANCE_GAP + CAPTION_H : 0);
+        if (le != null && Stances.broken(le)) {
+            b.broke = true;
+            if (duel) everBroke = true;
+        }
+        // a fighter chipping at a duel body that never breaks gets one plain hint under its plate, once a fight
+        if (duel && !b.broke && !everBroke && b.hintAt == 0 && Stances.struck(le) >= HINT_BLOWS) b.hintAt = now;
         b.x = sw / 2 - b.w / 2;
         b.y = Math.max(2, e.getY() - 9);
         if (b.born == 0 || now - b.seen > 2000) {
@@ -302,7 +322,7 @@ public final class BossPlate {
             c.fill(mx, by0 - 4, mx + 1, by0 - 1, Glass.a(col, a));
             if (flash) c.fill(mx - 2, by0 - 2, mx + 3, by1 + 2, Glass.a(0xFFFFFF, 0.25F * (1 - since / 1000F) * alpha));
         }
-        if (stance && le != null) stanceStrip(c, font, le, bx0, bx1, by1 + 2, alpha, now);
+        if (stance && le != null) stanceBar(g, c, font, le, bx0, bx1, by1 + STANCE_GAP, alpha, now);
         if (extra > 0) c.text(font, "+" + extra, w + 4, h / 2 - 4, Glass.a(Glass.LABEL, alpha), true);
     }
 
@@ -322,21 +342,56 @@ public final class BossPlate {
         }
     }
 
-    /** Arms' stance: one strip filling from both ends to the middle, gold and BROKEN while broken. */
-    private static void stanceStrip(UiCanvas c, Font font, LivingEntity e, int x0, int x1, int y0, float alpha, long now) {
-        int y1 = y0 + 2;
-        c.fill(x0, y0, x1, y1, Glass.a(0x05080E, 0.7F * alpha));
+    /**
+     * Arms' stance (SPEC §47.3): a bar under the health filling from both ends to the seam in the middle. Each blow's
+     * fill flashes white at its fronts; left alone it ebbs as it drains; near full it burns white over an ember edge.
+     * Broken, it is gold, and the caption says how to finish it.
+     */
+    private static void stanceBar(GuiGraphicsExtractor g, UiCanvas c, Font font, LivingEntity e, int x0, int x1, int y0, float alpha, long now) {
+        int y1 = y0 + STANCE_H, mid = (x0 + x1) / 2, capY = y1 + 2;
+        c.fill(x0 - 1, y0 - 1, x1 + 1, y1 + 1, Glass.a(0x05080E, 0.8F * alpha));
         if (Stances.broken(e)) {
-            float pulse = 0.7F + 0.3F * Mth.sin(now / 110F);
-            c.fill(x0, y0, x1, y1, Glass.a(BROKEN, pulse * alpha));
-            String s = "BROKEN";
-            c.text(font, s, (x0 + x1) / 2 - font.width(s) / 2, y1 + 2, Glass.a(BROKEN, pulse * alpha), true);
+            float pulse = 0.75F + 0.25F * Mth.sin(now / 90F);
+            c.fill(x0 - 1, y0 - 2, x1 + 1, y1 + 2, Glass.a(BROKEN, 0.25F * pulse * alpha));
+            c.gradient(x0, y0, x1, y1, Glass.a(0xFFF4C8, pulse * alpha), Glass.a(BROKEN, pulse * alpha));
+            caption(g, c, font, dev.awaken.signal.client.KeyText.resolve(Component.translatable("awaken.plate.stance.broken").getString()),
+                    mid, capY, BROKEN, pulse * alpha, true);
             return;
         }
         float share = Mth.clamp(Stances.share(e), 0, 1);
-        int half = Math.round((x1 - x0) / 2F * share), col = share > 0.75F ? STANCE_HOT : STANCE;
-        c.fill(x0, y0, x0 + half, y1, Glass.a(col, alpha));
-        c.fill(x1 - half, y0, x1, y1, Glass.a(col, alpha));
+        int half = Math.round((mid - x0) * share);
+        boolean hot = share > 0.75F;
+        float a = alpha * (Stances.draining(e) ? 0.55F + 0.15F * Mth.sin(now / 180F) : 1F);
+        if (half > 0) {
+            if (hot) { // the ember behind it: about to break
+                float glow = (0.30F + 0.15F * Mth.sin(now / 120F)) * a;
+                c.fill(x0, y0 - 1, x0 + half, y1 + 1, Glass.a(STANCE_EMBER, glow));
+                c.fill(x1 - half, y0 - 1, x1, y1 + 1, Glass.a(STANCE_EMBER, glow));
+            }
+            int top = hot ? STANCE_HOT : STANCE, bottom = hot ? STANCE_EMBER : STANCE_DEEP;
+            c.gradient(x0, y0, x0 + half, y1, Glass.a(top, a), Glass.a(bottom, a));
+            c.gradient(x1 - half, y0, x1, y1, Glass.a(top, a), Glass.a(bottom, a));
+            int since = Stances.sinceRise(e);
+            if (since < FLASH_TICKS) { // a blow put that in: its fronts flash
+                float f = (1 - since / (float) FLASH_TICKS) * alpha;
+                c.fill(x0 + half - 2, y0 - 1, x0 + half + 1, y1 + 1, Glass.a(0xFFFFFF, f));
+                c.fill(x1 - half - 1, y0 - 1, x1 - half + 2, y1 + 1, Glass.a(0xFFFFFF, f));
+                c.fill(x0, y0, x1, y1, Glass.a(0xFFFFFF, 0.12F * f));
+            }
+        }
+        // the seam both halves fill toward
+        c.fill(mid, y0 - 2, mid + 1, y1 + 2, Glass.a(hot ? STANCE_HOT : Glass.LABEL, (hot ? 0.95F : 0.6F) * alpha));
+        caption(g, c, font, Component.translatable("awaken.plate.stance").getString(), x0, capY, Glass.LABEL, 0.85F * alpha, false);
+    }
+
+    /** A small caption under the stance bar (three quarters of the font), centred on x or starting at it. */
+    private static void caption(GuiGraphicsExtractor g, UiCanvas c, Font font, String s, int x, int y, int colour, float alpha, boolean centred) {
+        var pose = g.pose();
+        pose.pushMatrix();
+        pose.translate(x, y);
+        pose.scale(0.75F, 0.75F);
+        c.text(font, s, centred ? -font.width(s) / 2 : 0, 0, Glass.a(colour, alpha), centred);
+        pose.popMatrix();
     }
 
     /** The plate's line (3 s) and a signature move's name (1.2 s, small caps) under it; returns the height used. */
@@ -363,6 +418,15 @@ public final class BossPlate {
             if (font.width(s) > maxW) s = font.plainSubstrByWidth(s, maxW - font.width("…")) + "…";
             c.text(font, s, cx - font.width(s) / 2, y + used, Glass.a(line.colour(), a), true);
             used += 11;
+        }
+        if (b.hintAt > 0 && now - b.hintAt < HINT_MS && !b.broke) {
+            float t = (now - b.hintAt) / (float) HINT_MS, a = Math.min(1, Math.min(t * 12, (1 - t) * 8));
+            String s = dev.awaken.signal.client.KeyText.resolve(Component.translatable("awaken.plate.stance.hint").getString());
+            int maxW = Math.max(b.w + 40, 220);
+            for (var row : font.split(Component.literal(s), maxW)) {
+                c.text(font, row, cx - font.width(row) / 2, y + used, Glass.a(Glass.TITLE, a), true);
+                used += 10;
+            }
         }
         return used;
     }
