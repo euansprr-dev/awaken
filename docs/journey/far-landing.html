@@ -1,0 +1,429 @@
+<title>The Far Landing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column with wide map and table blocks; bronze for the bells' goal, holo blue for the band's voice. */
+:root {
+  --bg: #f4f6f7;
+  --surface: #ffffff;
+  --ink: #17212b;
+  --muted: #56636f;
+  --rule: #d5dce1;
+  --bronze: #9a6420;
+  --bronze-soft: #f3e6d2;
+  --holo: #1f6fb8;
+  --holo-soft: #e1eef9;
+  --yes: #2f7a4a;
+  --yes-soft: #e2f1e7;
+  --band0: #dcefd9;
+  --band1: #eef0c9;
+  --band2: #f5dcb5;
+  --band3: #eebfa0;
+  --band4: #dc9d8e;
+  --calm-line: #3d8a55;
+  --map-ink: #24323e;
+  --font-head: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11171d; --surface: #182129; --ink: #e6ecf1; --muted: #9aa8b4; --rule: #2b3843;
+    --bronze: #d9a35c; --bronze-soft: #33281a; --holo: #6fb2ec; --holo-soft: #172b3d;
+    --yes: #7cc794; --yes-soft: #16301f;
+    --band0: #1f3a26; --band1: #34391d; --band2: #4a3720; --band3: #55301f; --band4: #5e2622;
+    --calm-line: #7cc794; --map-ink: #dfe7ee; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11171d; --surface: #182129; --ink: #e6ecf1; --muted: #9aa8b4; --rule: #2b3843;
+  --bronze: #d9a35c; --bronze-soft: #33281a; --holo: #6fb2ec; --holo-soft: #172b3d;
+  --yes: #7cc794; --yes-soft: #16301f;
+  --band0: #1f3a26; --band1: #34391d; --band2: #4a3720; --band3: #55301f; --band4: #5e2622;
+  --calm-line: #7cc794; --map-ink: #dfe7ee; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.6; }
+.page { max-width: 980px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 56px; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--font-head); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.15rem; }
+p { margin: 0; }
+section { display: flex; flex-direction: column; gap: 18px; }
+.eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--bronze); }
+.lede { font-size: 1.15rem; color: var(--ink); }
+.muted { color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--font-mono); font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--rule); background: var(--surface); color: var(--muted); }
+.chip.holo { border-color: var(--holo); color: var(--holo); background: var(--holo-soft); }
+blockquote { margin: 0; padding: 14px 18px; border-left: 3px solid var(--bronze); background: var(--bronze-soft); border-radius: 0 8px 8px 0; font-size: 1rem; }
+blockquote cite { display: block; margin-top: 6px; font-style: normal; font-size: 0.85rem; color: var(--muted); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.two > * { min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+.panel h3 { font-size: 1.05rem; }
+ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 0.93rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; background: var(--bg); }
+tr:last-child td { border-bottom: none; }
+td.k { font-weight: 600; white-space: nowrap; }
+.tag { font-family: var(--font-mono); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+.tag.city { background: var(--bronze-soft); color: var(--bronze); }
+.tag.free { background: var(--yes-soft); color: var(--yes); }
+.mapbox { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px; overflow-x: auto; }
+.mapbox svg { display: block; width: 100%; height: auto; min-width: 560px; }
+.mapcap { font-size: 0.85rem; color: var(--muted); margin-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--rule); display: inline-block; }
+.options { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.opt { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.opt.pick { border: 2px solid var(--holo); }
+.opt .verdict { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.opt.pick .verdict { color: var(--holo); }
+.opt .verdict.no { color: var(--muted); }
+.walk { display: grid; grid-template-columns: 90px 1fr 1fr; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.walk > div { padding: 10px 14px; border-bottom: 1px solid var(--rule); min-width: 0; font-size: 0.93rem; }
+.walk .h { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
+.walk .t { font-family: var(--font-mono); font-size: 0.82rem; color: var(--bronze); }
+.walk > div:nth-last-child(-n+3) { border-bottom: none; }
+@media (max-width: 640px) { .walk { grid-template-columns: 1fr; } .walk .h:not(:first-child) { display: none; } .walk .t { background: var(--bg); } }
+.lines { display: flex; flex-direction: column; gap: 8px; }
+.line { padding: 10px 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; }
+.line b { color: var(--bronze); font-weight: 600; }
+.line.new { border-color: var(--holo); }
+.line .note { display: block; font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+ol.stages { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 10px; }
+.decisions { display: flex; flex-direction: column; gap: 10px; counter-reset: d; }
+.dec { display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: start; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; }
+.dec .n { font-family: var(--font-head); font-size: 1.4rem; font-weight: 700; color: var(--bronze); line-height: 1.1; }
+.dec .q { font-weight: 600; }
+.dec .why { font-size: 0.88rem; color: var(--muted); margin-top: 4px; }
+.dec .rec { font-family: var(--font-mono); font-size: 0.75rem; padding: 4px 10px; border-radius: 999px; background: var(--yes-soft); color: var(--yes); white-space: nowrap; }
+@media (max-width: 560px) { .dec { grid-template-columns: 34px 1fr; } .dec .rec { grid-column: 2; justify-self: start; } }
+.foot { font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 16px; }
+a { color: var(--holo); }
+</style>
+
+<div class="page">
+
+<header style="display:flex;flex-direction:column;gap:16px">
+  <div class="eyebrow">AWAKEN · the journey · plan for your yes or no</div>
+  <h1>The Far Landing</h1>
+  <p class="lede prose">You want survival to feel like real Minecraft, away from the city, and you want to build your home far from Carillon without the land being too dangerous for a starter. My recommendation: keep the city for the first hour, then a skiff takes you from Ilse's fire to a landing about 6 km away. The real game starts there, and danger is measured from the landing instead of from the city. Everything you need comes to you. Carillon asks you back a couple of times for the story, and once at the very end, when you've rung every bell, to thank you.</p>
+  <div class="chips">
+    <span class="chip holo">Plan only: nothing is built until you say yes</span>
+    <span class="chip">New worlds only</span>
+    <span class="chip">Multiplayer-safe</span>
+    <span class="chip">11 decisions below</span>
+  </div>
+</header>
+
+<section>
+  <div class="eyebrow">What you asked for</div>
+  <h2>Two problems with one cause</h2>
+  <blockquote>"I don't necessarily want to go back to the city during the gameplay. I want it to be full on survival ... when I build my base I don't want to be too close to the city, but then if I go too far, the level is way too high for my beginning level."
+    <cite>You, 11 Nov. Then: "some kind of fast travel ... the actual gameplay happens far from it ... you return to it from time to time" for the story, and maybe a leaderboard later.</cite></blockquote>
+  <div class="two">
+    <div class="panel">
+      <h3>1. The city keeps pulling you back</h3>
+      <p>Small errands need you to stand next to someone in Carillon. Each trip breaks the survival feel. Your V20 world has one waiting right now: Bram is holding the handbell you earned for your first gate.</p>
+    </div>
+    <div class="panel">
+      <h3>2. Distance from the city is difficulty</h3>
+      <p>The world measures danger from the city. Your home must sit past the ridge (510 blocks out), and the land stays low level only to about 1,300. That leaves a ring about 790 blocks wide. Your Hearth in V20 is 1,380 blocks out, right where harder land starts mixing in.</p>
+    </div>
+  </div>
+  <p class="prose">Both come from the same place. The game treats the city as the middle of the world, for danger as well as for errands. Fix where the middle is and both problems go away.</p>
+</section>
+
+<section>
+  <div class="eyebrow">What is true today</div>
+  <h2>Where danger comes from now</h2>
+  <p class="prose">When a world is made, it saves one centre point, the city's site, and measures everything from there. Regions whose middles are within 1,300 blocks are all E (levels 3 to 8). Further out the odds shift: at 2,500 blocks, 55% E, 35% D and 10% C; at 4,500, about a quarter each of E, D and C, plus some B and A. Calm valleys of E land wind between everything, so you can always walk anywhere.</p>
+  <div class="mapbox">
+    <svg viewBox="0 0 720 330" role="img" aria-label="Map of today's world: danger rings centred on Carillon, the Ember allowed only past the ridge, and your V20 home at 1,380 blocks">
+      <defs><clipPath id="clipA"><rect x="0" y="0" width="720" height="330"/></clipPath></defs>
+      <g clip-path="url(#clipA)">
+        <circle cx="360" cy="165" r="294" fill="var(--band4)"/>
+        <circle cx="360" cy="165" r="189" fill="var(--band3)"/>
+        <circle cx="360" cy="165" r="105" fill="var(--band2)"/>
+        <circle cx="360" cy="165" r="54.6" fill="var(--band0)"/>
+        <circle cx="360" cy="165" r="21.4" fill="var(--surface)" stroke="var(--map-ink)" stroke-dasharray="3 3" stroke-width="1"/>
+        <circle cx="360" cy="165" r="54.6" fill="none" stroke="var(--bronze)" stroke-width="2"/>
+        <rect x="355" y="160" width="10" height="10" fill="var(--map-ink)"/>
+        <circle cx="360" cy="146.1" r="3" fill="var(--bronze)"/>
+        <circle cx="308.2" cy="138.9" r="5" fill="var(--holo)" stroke="var(--surface)" stroke-width="1.5"/>
+      </g>
+      <g font-family="Inter, system-ui, sans-serif" font-size="12" fill="var(--map-ink)">
+        <text x="372" y="178">Carillon</text>
+        <text x="368" y="143" font-size="11">Last Fire, ridge at 510</text>
+        <text x="214" y="132" fill="var(--holo)" font-weight="600">your V20 Hearth, 1,380 out</text>
+        <text x="420" y="110" font-size="11">all E to 1,300</text>
+        <text x="472" y="70" font-size="11">2,500: E 55 · D 35 · C 10</text>
+        <text x="560" y="28" font-size="11">4,500: E 30 · D 30 · C 25 · B+ 15</text>
+        <text x="18" y="318" font-size="11" fill="var(--muted)">The low-level home ring is the space between the dashed ridge and the bronze line: about 790 blocks wide.</text>
+      </g>
+      <g font-family="JetBrains Mono, monospace" font-size="10" fill="var(--muted)">
+        <line x1="600" y1="300" x2="642" y2="300" stroke="var(--muted)" stroke-width="2"/>
+        <text x="600" y="292">1,000 blocks</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--band0)"></i>all E</span>
+      <span><i class="sw" style="background:var(--band2)"></i>mostly E and D</span>
+      <span><i class="sw" style="background:var(--band3)"></i>E to C, some B</span>
+      <span><i class="sw" style="background:var(--band4)"></i>B, A and S turn up</span>
+    </div>
+    <p class="mapcap">Drawn to scale from the region rules (SPEC §21.12). Your Hearth's place is from your V20 save (read from a copy, never written).</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">What is true today</div>
+  <h2>What the city asks of you during play</h2>
+  <p class="prose">I went through the code for everything that only works with you standing in Carillon. The big ones already don't need it: you rank up at your own Monolith, you wake at your Hearth, the Proving bells are left in your yard by the Registry's wagon, and the Ember Bell's Homeward puts you at your fire from anywhere in the overworld after standing still for five seconds.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Thing</th><th>When</th><th>Today</th><th>With the Far Landing</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Bram's handbell</td><td>your first gate</td><td><span class="tag city">walk to Bram</span> "Bram at the Registry has something for you."</td><td>Left in your yard by the Registry's wagon, with Bram's words as a letter.</td></tr>
+        <tr><td class="k">Bram's 25-gate bell</td><td>your 25th gate</td><td><span class="tag city">walk to Bram</span></td><td>The same: the wagon and a letter.</td></tr>
+        <tr><td class="k">Hale's pattern rack</td><td>every rank</td><td><span class="tag city">at the High Gate</span> buy patterns with essence</td><td>Buy at any Armoury door: K, Powers, The Armoury, or your own Forge. Today only Hale's rack sells.</td></tr>
+        <tr><td class="k">Hale's board</td><td>any time</td><td><span class="tag city">at the High Gate</span> bounties, a part job per tier</td><td>The Association's board at the landing's mooring.</td></tr>
+        <tr><td class="k">Four city bells</td><td>C rank, 20 bells, B rank, 50 bells</td><td><span class="tag city">stand in Carillon</span> Roost, Square, Market, Harbour</td><td>Rung for you when due, wherever you are: you hear Carillon far off and the bell is in your Book. The city invites you to come and hear it.</td></tr>
+        <tr><td class="k">Five village bells</td><td>after the Registry</td><td><span class="tag city">stand by the teller</span> Sun, Oren, Kestrel, Teodor, Mira</td><td>Their stories come as letters in the skiff's hold, in their own words. The villages are found round the landing.</td></tr>
+        <tr><td class="k">Oren's lessons</td><td>early, and the Greatblade</td><td><span class="tag city">hand him iron</span></td><td>Oren writes. You put the iron in the skiff's hold and temper at your own Forge.</td></tr>
+        <tr><td class="k">Stone people's keepsakes</td><td>when found</td><td><span class="tag city">show the family</span></td><td>Send it in the hold. The family writes back and returns it.</td></tr>
+        <tr><td class="k">Vael's scenes</td><td>each rank</td><td><span class="tag free">city or a gate</span></td><td>No change: he finds you in a gate.</td></tr>
+        <tr><td class="k">Rank-ups, respawn, Proving bells, Homeward</td><td>all game</td><td><span class="tag free">already at home</span></td><td>No change.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose muted">Also measured from the city today, and moved to the landing in the plan: the first walled town (1,500 to 2,500 out), the stone people on the road (Aldo and two more), one stone person per square kilometre within 3 km, and the five lost villages (250 to 2,400 out).</p>
+</section>
+
+<section>
+  <div class="eyebrow">The choices</div>
+  <h2>Four ways to answer it</h2>
+  <div class="options">
+    <div class="opt">
+      <div class="verdict no">Smaller fix</div>
+      <h3>Widen the calm ring</h3>
+      <p>Keep today's start. Push the all-E land out to about 2,500 and send the errands to you.</p>
+      <p class="muted">Cheap and quick. But the city stays your neighbour, its spire on your horizon, and walking back is still short. It eases problem 2 and only half solves problem 1.</p>
+    </div>
+    <div class="opt pick">
+      <div class="verdict">Recommended</div>
+      <h3>The Far Landing</h3>
+      <p>The city for the first hour, then the skiff to a landing about 6 km away. Danger is measured from the landing. Errands come to you. A few story visits, and the homecoming at the end.</p>
+      <p class="muted">Fixes both at the root. Most of the pieces exist already (the wagon, Homeward, the gates' crossing look, the windways).</p>
+    </div>
+    <div class="opt">
+      <div class="verdict no">Your first idea</div>
+      <h3>Never go back until the end</h3>
+      <p>The same landing, with no flights back at all.</p>
+      <p class="muted">The purest survival, but you'd lose the city's people for 100 hours, and Hale, Oren and the city bells would still need new homes. Your second message leans toward occasional returns.</p>
+    </div>
+    <div class="opt">
+      <div class="verdict no">Rejected</div>
+      <h3>Danger from your first fire</h3>
+      <p>Measure levels from wherever you light your Ember.</p>
+      <p class="muted">The danger map is made with the land, before you choose. Your fire can't change land that already exists, and on a server two players' fires would disagree.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">The recommendation</div>
+  <h2>The world, after</h2>
+  <div class="mapbox">
+    <svg viewBox="0 0 720 380" role="img" aria-label="Map of the proposed world: Carillon with a small calm ring, the skiff's flight from the ridge to the landing about 6 km away, and danger rings centred on the landing">
+      <defs><clipPath id="clipB"><rect x="0" y="0" width="720" height="380"/></clipPath></defs>
+      <g clip-path="url(#clipB)">
+        <circle cx="480" cy="200" r="315" fill="var(--band4)"/>
+        <circle cx="480" cy="200" r="202.5" fill="var(--band3)"/>
+        <circle cx="480" cy="200" r="112.5" fill="var(--band2)"/>
+        <circle cx="480" cy="200" r="58.5" fill="var(--band0)"/>
+        <circle cx="480" cy="200" r="58.5" fill="none" stroke="var(--bronze)" stroke-width="2"/>
+        <circle cx="210" cy="200" r="45" fill="var(--band0)" stroke="var(--calm-line)" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <path d="M232 196 C 300 150, 360 236, 422 200" fill="none" stroke="var(--calm-line)" stroke-width="2.2" stroke-dasharray="2 5" stroke-linecap="round"/>
+        <path d="M480 258 C 470 300, 520 330, 560 380" fill="none" stroke="var(--calm-line)" stroke-width="2.2" stroke-dasharray="2 5" stroke-linecap="round"/>
+        <path d="M210 155 C 190 110, 150 80, 120 0" fill="none" stroke="var(--calm-line)" stroke-width="2.2" stroke-dasharray="2 5" stroke-linecap="round"/>
+        <path d="M210 177 C 280 60, 420 70, 474 194" fill="none" stroke="var(--holo)" stroke-width="2.5"/>
+        <polygon points="474,194 466,186 478,184" fill="var(--holo)"/>
+        <rect x="205" y="195" width="10" height="10" fill="var(--map-ink)"/>
+        <circle cx="210" cy="177" r="3.5" fill="var(--bronze)"/>
+        <circle cx="480" cy="200" r="6" fill="var(--holo)" stroke="var(--surface)" stroke-width="2"/>
+      </g>
+      <g font-family="Inter, system-ui, sans-serif" font-size="12" fill="var(--map-ink)">
+        <text x="158" y="228">Carillon</text>
+        <text x="132" y="250" font-size="11">calm for the first hour</text>
+        <text x="220" y="172" font-size="11">Ilse's fire, the skiff</text>
+        <text x="300" y="82" fill="var(--holo)" font-weight="600">the skiff, about a minute</text>
+        <text x="492" y="196" font-weight="600">the landing</text>
+        <text x="492" y="212" font-size="11">all E to 1,300: build anywhere here</text>
+        <text x="300" y="300" font-size="11">midway: about half E, a third D</text>
+        <text x="40" y="360" font-size="11">round the city, past its calm ring: a quarter each of E, D, C, and a quarter B or harder</text>
+      </g>
+      <g font-family="JetBrains Mono, monospace" font-size="10" fill="var(--muted)">
+        <line x1="620" y1="350" x2="665" y2="350" stroke="var(--muted)" stroke-width="2"/>
+        <text x="620" y="342">1,000 blocks</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--band0)"></i>all E</span>
+      <span><i class="sw" style="background:var(--band2)"></i>mostly E and D</span>
+      <span><i class="sw" style="background:var(--band3)"></i>E to C, some B</span>
+      <span><i class="sw" style="background:var(--band4)"></i>B, A and S turn up</span>
+      <span><i class="sw" style="background:none;border-color:var(--calm-line);border-style:dashed"></i>calm ways (the lines are illustrative)</span>
+    </div>
+    <p class="mapcap">Drawn to scale with the landing 6 km from the city. The shares between them are worked out from today's odds table, not measured yet; stage 0 measures them on three seeds.</p>
+  </div>
+
+  <div class="two">
+    <div class="panel">
+      <h3>The landing</h3>
+      <ul>
+        <li>One per world, chosen from the seed when the world is made, so everyone lands in the same place. Friends start together, and so would a guild server.</li>
+        <li>Fair ground, not luck: 5,000 to 7,000 blocks from the city; forest, plains, meadow or birch; no ocean, swamp, desert or peaks; fairly flat; a river or lake within 300.</li>
+        <li>Its land is made quietly during the first hour, so you arrive to a finished world.</li>
+        <li>Out of sight of the city. The far view draws real city blocks only about 2 km out.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Levels</h3>
+      <ul>
+        <li>Measured from the landing exactly the way they're measured from the city today: all E to 1,300, harder by distance, calm ways everywhere.</li>
+        <li>The city keeps a calm ring of about 1,000 blocks for the first hour (the run, Hale's yard, the road to Ilse).</li>
+        <li>Between the two the land is as hard as its distance from the landing makes it. Walking back is an expedition, but the calm ways still join them, so you're never walled in.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>The skiff</h3>
+      <ul>
+        <li>An old Precursor skiff on the ridge just past Ilse's fire, beside Aldo's milestone, so you still meet him. It flies itself on the wind.</li>
+        <li>The flight: take off over the road, up into the clouds while the landing loads (a cloud crossing drawn like the gates' crossing screen), then down to its mooring. About a minute, and it can be skipped after the first time.</li>
+        <li>Runs both ways any time. A party within the mooring boards together.</li>
+        <li>Home from the city is already instant with Homeward.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>The landing's mooring</h3>
+      <ul>
+        <li>A mast and a hold. Nobody lives there.</li>
+        <li>The hold is the post both ways: Bram's bells, the townsfolk's letters, Oren's lessons, keepsakes you send home.</li>
+        <li>The Association's board (Hale's bounties) stands beside it.</li>
+        <li>A shared meeting point for a server.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">The recommendation</div>
+  <h2>Going back: for the story only</h2>
+  <div class="two">
+    <div class="panel">
+      <h3>Two invitations</h3>
+      <p>When a city bell is due (around C rank for the Roost and the Square, around B for the Market and the Harbour), the bell is yours wherever you are. Then a letter in the hold says Carillon is ringing it for you and asks you to come and hear it. Going is optional and nothing is lost by waiting. In the city people talk about what you've done, Hale shows his new rack, and Oren looks at your work.</p>
+    </div>
+    <div class="panel">
+      <h3>The homecoming</h3>
+      <p>The morning after the Hundred Peal, the skiff comes for you. This one time it comes to your Hearth. Every bell in Carillon rings, people fill the streets and roofs, and Bram, Kestrel, Oren, Hale and Hettie each thank you in plain words. Ilse walks down from her fire for it. Then the Seed still waits, because the Deep answered. After the Wake, Ilse's visit to your home stays as it's built.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Shown, not promised</div>
+  <h2>The first two hours, before and after</h2>
+  <div class="walk">
+    <div class="h">Time</div><div class="h">Today</div><div class="h">With the Far Landing</div>
+    <div class="t">0:00</div><div>The opening, the run, the Ritual, the Registry. Hale gives you a weapon.</div><div>The same.</div>
+    <div class="t">0:45</div><div>Up the north road with Bram's letters. Ilse's talk, the coal, the Ember Bell.</div><div>The same talk, with a few lines changed (below). She points at the skiff.</div>
+    <div class="t">0:55</div><div>Past the ridge: Aldo, then two more stone people. You look for a home 510 to 1,300 out.</div><div>Aldo on his milestone, then the skiff. The flight. You step off at the landing with the whole wild round you.</div>
+    <div class="t">1:00</div><div>The first night, a Lampwing, the first Kin card.</div><div>The same, at your new home anywhere within 1,300 of the landing, all of it E land.</div>
+    <div class="t">1:30</div><div>The first gate. "Bram at the Registry has something for you." A walk back to town.</div><div>The first gate. Next morning the handbell is in your yard with Bram's note.</div>
+    <div class="t">2:00</div><div>To learn a new style, back to Hale's rack.</div><div>You buy it from the Armoury, standing at your own Forge.</div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Plain speech, read aloud</div>
+  <h2>What changes in Ilse's talk</h2>
+  <p class="prose">Most of her fifteen lines stay. Three change and one is added. These are drafts; they get your ear before they go in.</p>
+  <div class="lines">
+    <div class="line"><b>Ilse:</b> "The first one's on the milestone just past the ridge. That's Aldo. He went back for his dog. Say hello to him for me."<span class="note">Stays. The skiff waits beside his milestone.</span></div>
+    <div class="line new"><b>Ilse:</b> "There's an old skiff up on the ridge. It flies itself, out on the wind to the far country and back again. That's where hunters start now. Nobody from the city can stay out there, so nobody will bother you."<span class="note">New, after Aldo's line.</span></div>
+    <div class="line new"><b>Ilse:</b> "Here. It's a coal from this fire. Put it down wherever you want to live out there, and that's your home."<span class="note">Changed: "out there" added; the line about nobody bothering you moves into the skiff line.</span></div>
+    <div class="line new"><b>Ilse:</b> "Go on, then. Good luck. The skiff will bring you back here whenever you want. Come and tell me what it looks like. I haven't seen past that ridge in eleven years."<span class="note">Changed: she tells you the way back.</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">How we'd know it works</div>
+  <h2>Checks, risks and what it costs</h2>
+  <div class="two">
+    <div class="panel">
+      <h3>Checks before it ships</h3>
+      <ul>
+        <li>The landing on 50 seeds: always on fair ground, 5 to 7 km out, never water or peaks.</li>
+        <li>The danger census round the landing and the city on three seeds: E to 1,300 round the landing, the city's calm ring, calm ways joining the two.</li>
+        <li>The journey test from the landing: at every stop, four open goals, each with something in the world within 200 blocks.</li>
+        <li>Never stuck: everything due in the city has a way to you or waits for you, and each one shows on the Tasks page.</li>
+        <li>The flight never loses anyone: logging out mid-flight, a party, a server stop, a full inventory.</li>
+        <li>CI tours of the flight, the landing and the homecoming, for your eyes.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Risks</h3>
+      <ul>
+        <li>Roads and towns are laid on the region grid. Centred on the landing, the grid has to still link to the city's own north road. Stage 0 checks this first.</li>
+        <li>The skiff and the mooring are new art. They need their own look, not something vanilla. A picture comes to you before they go in.</li>
+        <li>The flight's landing must be ready on arrival. Making the land during the first hour covers it, with the crossing screen as the fallback.</li>
+        <li>Your V20 world doesn't get it. You'd see it in a new world.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>Stages, built whole and tested once at the end</h3>
+    <ol class="stages">
+      <li><b>The landing and the levels:</b> choosing the landing from the seed, danger measured from it, the city's calm ring, saved with the world; the census numbers.</li>
+      <li><b>The skiff and the mooring:</b> the flight both ways, the crossing, the party, the hold and the board.</li>
+      <li><b>Errands come to you:</b> Bram's bells by the wagon, Hale's rack from the Armoury, letters and parcels, the city bells rung from afar.</li>
+      <li><b>The world round the landing:</b> Ilse's lines, Aldo by the skiff, the stone people, the first walled town and the lost villages measured from the landing.</li>
+      <li><b>The story visits and the homecoming.</b></li>
+      <li><b>Checks:</b> the tests above, then the tours.</li>
+    </ol>
+    <p class="muted">Effort at the pace this project builds: about one long day for one builder. The skiff's art and the flight are the least certain parts and could add half a day.</p>
+  </div>
+</section>
+
+<section>
+  <div class="eyebrow">Your call</div>
+  <h2>Decisions</h2>
+  <p class="prose">Each is yes or no. I recommend yes to all eleven. "Go with all" builds the whole plan; anything you change, I'll fold in.</p>
+  <div class="decisions">
+    <div class="dec"><div class="n">1</div><div><div class="q">Do it: in new worlds the real game starts at a far landing, and danger is measured from there.</div><div class="why">Fixes both problems at the root. The smaller fix eases the level trap but keeps the city next door.</div></div><div class="rec">yes</div></div>
+    <div class="dec"><div class="n">2</div><div><div class="q">One landing per world, chosen from the seed, on fair ground 5 to 7 km from the city.</div><div class="why">The same for everyone, so friends and servers start together. Never in the sea or on a peak.</div></div><div class="rec">yes</div></div>
+    <div class="dec"><div class="n">3</div><div><div class="q">The city keeps a calm ring of about 1,000 blocks for the first hour; the land between is as hard as its distance from the landing.</div><div class="why">The opening stays gentle, and walking back becomes a real expedition along the calm ways.</div></div><div class="rec">yes</div></div>
+    <div class="dec"><div class="n">4</div><div><div class="q">The flight is a self-flying Precursor skiff on the ridge past Ilse's fire, about a minute, skippable after the first time.</div><div class="why">Fits the lore (nobody from the city can go out there), keeps Aldo, and borrows the gates' crossing look.</div></div><div class="rec">yes</div></div>
+    <div class="dec"><div class="n">5</div><div><div class="q">The skiff runs both ways any time, not only when the city sends for you.</div><div class="why">Your choice is never taken away, and nothing you need is in the city, so in practice you'd go for the story. Say no if you'd rather it only came when sent for.</div></div><div class="rec">yes</div></div>
+    <div class="dec"><div class="n">6</div><div><div class="q">Errands come to you: Bram's bells by the wagon, Hale's rack from the Armoury, his board at the mooring, letters and parcels in the skiff's hold.</div><div class="why">Removes every errand trip without removing the people.</div></div><div class="rec">yes</div></div>
+    <div class="dec"><div class="n">7</div><div><div class="q">The four city bells are rung for you when due, wherever you are, and the city invites you to come and hear them: two optional visits, around C and B rank.</div><div class="why">"Return from time to time" for the story, with nothing locked behind a visit.</div></div><div class="rec">yes</div></div>
+    <div class="dec"><div class="n">8</div><div><div class="q">The homecoming: the morning after the Hundred Peal the skiff comes for you, the city rings every bell and thanks you.</div><div class="why">Your ending: back to the city when you have all the bells. Ilse's visit to your home after the Wake stays.</div></div><div class="rec">yes</div></div>
+    <div class="dec"><div class="n">9</div><div><div class="q">Aldo stays on his milestone by the skiff; the other stone people, the first walled town and the lost villages are measured from the landing.</div><div class="why">The first hours' discoveries move with you instead of staying behind near the city.</div></div><div class="rec">yes</div></div>
+    <div class="dec"><div class="n">10</div><div><div class="q">Your V20 world and every old world keep today's start.</div><div class="why">Nothing changes under a world you're playing. The new start needs a new world.</div></div><div class="rec">yes</div></div>
+    <div class="dec"><div class="n">11</div><div><div class="q">A picture of the skiff and the mooring comes to you for an OK before they go in.</div><div class="why">New art for a moment everyone sees. It has to look like AWAKEN, not an add-on.</div></div><div class="rec">yes</div></div>
+  </div>
+</section>
+
+<p class="foot">Sources: SPEC §16.4 (the opening), §21.12 (the wide world's danger rules), §43 (the Journey, the bells, the Wake), §63 (the Way Up); the code in bells, arms, living, hearth, story and core.api.TheLull; a read-only copy of your V20 save. Part 1 (more room between the blue rope sites) is separate and is being handed back on its own branch.</p>
+
+</div>
