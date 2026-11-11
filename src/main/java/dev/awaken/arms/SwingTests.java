@@ -182,6 +182,9 @@ final class SwingTests {
                 x = at.x / -at.z * f / (16F / 9F);
                 y = at.y / -at.z * f;
                 h.assertTrue(at.z < -0.2F && Math.abs(x) < 2F && Math.abs(y) < 2.2F, a.id() + "'s charge keeps its hand by the frame (" + x + ", " + y + ")");
+                // the Maul's is held raised, its fist above the middle of the screen (Euan 2026-11-11: "instead of actually
+                // like bringing it up as if you were going to hit down", of the hammer held low and leaning ahead)
+                if (a.id().equals(Arms.MAUL)) h.assertTrue(y > 0F, "the Maul's charge holds it raised (" + x + ", " + y + ")");
             }
             boolean two = TWO_HANDED.contains(a.id());
             h.assertTrue((st.offHand() != null) == two && (st.vanillaOffHand() != null) == two,
