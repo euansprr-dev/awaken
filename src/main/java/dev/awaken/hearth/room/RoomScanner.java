@@ -109,6 +109,11 @@ public final class RoomScanner {
     private final LongArrayList fieldCells = new LongArrayList(), gateCells = new LongArrayList();
     /** The seed being worked on (null between seeds). */
     private Job job;
+    /**
+     * The scan met unloaded land: a chunk of the radius the sweep couldn't read, or a fill or a solid seed's side that ran
+     * into one. Its rooms are then not the whole truth, and the Hearth keeps what it couldn't see (SPEC §28.2, "Read whole").
+     */
+    private boolean partial;
 
     public RoomScanner(ServerLevel level, HearthRecord hearth, Consumer<Scan> onDone) {
         this(level, hearth, List.of(), onDone);
@@ -186,6 +191,8 @@ public final class RoomScanner {
                     }
                 }
             }
+        } else {
+            partial = true; // a room in it would be missed: this scan isn't the whole home
         }
         if (++sy > maxSy) {
             sy = minSy;
@@ -318,7 +325,11 @@ public final class RoomScanner {
         sideClosed = false;
         for (Direction d : DIRS) {
             BlockPos n = seed.relative(d);
-            if (!level.isLoaded(n) || !passable(n)) continue;
+            if (!level.isLoaded(n)) {
+                partial = true;
+                continue;
+            }
+            if (!passable(n)) continue;
             long nl = n.asLong();
             if (claimed.contains(nl)) {
                 inherit(kind, seed, nl);
@@ -370,6 +381,7 @@ public final class RoomScanner {
                 if (j.visited.contains(nl)) continue;
                 if (!level.isLoaded(m)) {
                     j.stopped = Miss.Leak.OPENING;
+                    partial = true; // not a leak we saw: land we couldn't read
                     break;
                 }
                 if (passable(m)) {
@@ -770,7 +782,7 @@ public final class RoomScanner {
         for (int i = 0; i < lights.size(); i++) if (!indoors.contains(lights.getLong(i))) outdoorLights++;
         Scan.Land land = new Scan.Land(farmland, animals, fences, walls, composters, flowers, outdoorLights);
         onDone.accept(new Scan(List.copyOf(found), List.copyOf(misses), furniture.clone(), land, families.clone(),
-                new Scan.Yard(List.copyOf(fields), List.copyOf(gates), List.copyOf(beasts))));
+                new Scan.Yard(List.copyOf(fields), List.copyOf(gates), List.copyOf(beasts)), !partial));
     }
 
     private String mountedTrophy(BlockPos p) {
