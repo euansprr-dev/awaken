@@ -386,6 +386,7 @@ public final class SwingBench {
             cooldown = 2;
             groundTicks = 0;
             waited = 0;
+            work.ahead = -1;
         }
 
         /** One tick with the bot's keys. */
@@ -656,10 +657,12 @@ public final class SwingBench {
                 rope = true;
                 if (sim.travel == 0 && !sim.zip && !sim.sling && assist && AscentSwing.hold) {
                     // the held rope lets go only by the key (SPEC §62): by hand at the window's best, holding as it lights,
-                    // else at the top of the arc; a few ticks later if that would throw the bot into something just ahead
-                    // (a player sees the crown coming), as the rope's own let-go waited before
+                    // else at the top of the arc, or as a wall comes up ahead (a player sees it coming, before the rope
+                    // brakes for it, where the rope used to let go by itself); a few ticks later if that would throw the
+                    // bot into something just ahead (a player sees the crown coming), as the rope's own let-go waited before
                     double q = AscentSwing.windowQuality(sim.k, sim.rope, yaw + sim.rope.bend, sim.work);
-                    if (q > (hold ? AscentSwing.T.winFrom + 0.01 : 0.85) || sim.rope.swung) {
+                    boolean wall = sim.work.ahead >= 0 && sim.work.ahead < 5;
+                    if (q > (hold ? AscentSwing.T.winFrom + 0.01 : 0.85) || sim.rope.swung || wall) {
                         if (sim.waited >= AscentSwing.T.holdOn || AscentSwing.letGoClear(sim.w, sim.k, sim.rope, yaw, sim.work)) rope = false;
                         else sim.waited++;
                     }

@@ -234,6 +234,8 @@ public final class AscentSwing {
         int n;
         /** The last tick bent the swing round something (for the trace); the carry's look found no way round; a held swing braked for a wall. */
         public boolean bent, blocked, braked;
+        /** The tick within the look-ahead the last swing tick saw it would meet something (after any bend), or -1: what a player sees coming. */
+        public int ahead = -1;
 
         public Work() {
             for (int i = 0; i < cands.length; i++) cands[i] = new Pick();
@@ -882,6 +884,7 @@ public final class AscentSwing {
         double fwdSpeed = k.vx * fx(hd) + k.vz * fz(hd);
         boolean top = past && (ang > t.apex || fwdSpeed < 0.15 || k.vy < -0.02 && ang > 8);
         if (!rope.swung && (top || rope.caught && fwdSpeed < -0.05)) rope.swung = true;
+        w.ahead = ahead;
         if (hold) {
             // the held rope: letting go of the key is the only let-go
             if (ahead >= 0 && ahead < 4) {
