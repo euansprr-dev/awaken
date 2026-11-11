@@ -35,6 +35,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -60,6 +61,11 @@ public final class BodyRest {
     static final int DEPTH = 2;
     /** The most a body hanging above its ground is let down (a fall in the air is the server's), its steepest lean. */
     static final float LOWER = 0.5F, LEAN = 20.0F * Mth.DEG_TO_RAD;
+    /**
+     * The most an outlying part (a held weapon, an antler, a wing tip, a tail: anything outside the middle half of the body
+     * each way) may hold the body up above where its middle would lie; deeper, the part goes into the ground instead.
+     */
+    static final float PROP = 3.0F / 16.0F, CORE = 0.5F;
     /** At the foot of a higher step the ground rises over this much (blocks), so a body sweeping onto it never jumps. */
     static final float EDGE = 0.25F;
     /** Bodies further than this (squared, blocks) are left as drawn. */
@@ -148,7 +154,7 @@ public final class BodyRest {
         if (!PROBE.held) {
             up = Math.max(0.0F, HAIR - PROBE.minY); // nothing under it in reach: at least not below its own feet
         } else {
-            up = PROBE.need + HAIR + outer(s);
+            up = PROBE.settle(PROP * Math.max(1.0F, s.scale)) + HAIR + outer(s);
             if (up < 0.0F) up = s.isInWater ? 0.0F : Math.max(up, -LOWER);
         }
         lift = up * k;
@@ -269,25 +275,56 @@ public final class BodyRest {
         return Float.NaN;
     }
 
-    /** Takes the model's vertices: its lowest point, and how far it must rise to clear the ground under each. */
+    /** Takes the model's vertices: its lowest point, and how far each must rise to clear the ground under it. */
     private static final class Probe implements VertexConsumer {
         boolean held;
-        float minY, need;
+        float minY, minX, maxX, minZ, maxZ;
+        private float[] xs = new float[4096], zs = new float[4096], needs = new float[4096];
+        private int n;
 
         void reset() {
             held = false;
-            minY = Float.POSITIVE_INFINITY;
-            need = Float.NEGATIVE_INFINITY;
+            n = 0;
+            minY = minX = minZ = Float.POSITIVE_INFINITY;
+            maxX = maxZ = Float.NEGATIVE_INFINITY;
+        }
+
+        /**
+         * How far the body must rise: enough for its middle half (each way) to clear the ground, and for the rest to clear
+         * it too, but an outlying part holds the middle up by at most {@code prop}.
+         */
+        float settle(float prop) {
+            float cx = (minX + maxX) * 0.5F, cz = (minZ + maxZ) * 0.5F;
+            float hx = (maxX - minX) * 0.5F * CORE, hz = (maxZ - minZ) * 0.5F * CORE;
+            float all = Float.NEGATIVE_INFINITY, core = Float.NEGATIVE_INFINITY;
+            for (int i = 0; i < n; i++) {
+                float need = needs[i];
+                if (Float.isNaN(need)) continue;
+                if (need > all) all = need;
+                if (need > core && Math.abs(xs[i] - cx) <= hx && Math.abs(zs[i] - cz) <= hz) core = need;
+            }
+            if (core == Float.NEGATIVE_INFINITY) return all; // its middle is over no ground: the rest decides
+            return Math.max(core, Math.min(all, core + prop));
         }
 
         @Override
         public VertexConsumer addVertex(float x, float y, float z) {
             if (y < minY) minY = y;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (z < minZ) minZ = z;
+            if (z > maxZ) maxZ = z;
             float t = top(x, z);
-            if (!Float.isNaN(t)) {
-                held = true;
-                if (t - y > need) need = t - y;
+            if (!Float.isNaN(t)) held = true;
+            if (n == xs.length) {
+                xs = Arrays.copyOf(xs, n * 2);
+                zs = Arrays.copyOf(zs, n * 2);
+                needs = Arrays.copyOf(needs, n * 2);
             }
+            xs[n] = x;
+            zs[n] = z;
+            needs[n] = Float.isNaN(t) ? Float.NaN : t - y;
+            n++;
             return this;
         }
 
