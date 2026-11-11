@@ -101,6 +101,7 @@ final class GateEvents {
         dev.awaken.gates.run.Twists.resetAll();
         dev.awaken.gates.run.RigDirector.resetAll();
         dev.awaken.gates.worlds.WorldLive.clear();
+        dev.awaken.gates.realms.RealmLive.resetAll();
     }
 
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
@@ -173,6 +174,11 @@ final class GateEvents {
             return;
         }
         if (e.getLevel() instanceof ServerLevel gl && staleInCell(gl, e.getEntity(), e.loadedFromDisk())) {
+            e.setCanceled(true);
+            return;
+        }
+        // a Realm Lord whose fight was put to rest while its chunk was away: its hall wakes a fresh one (SPEC §50.8)
+        if (e.loadedFromDisk() && e.getLevel() instanceof ServerLevel rl && dev.awaken.gates.realms.RealmLive.strayLord(rl.getServer(), e.getEntity())) {
             e.setCanceled(true);
             return;
         }

@@ -22356,8 +22356,8 @@ in this land, so no block of it can ever flow.
 **The heart of a Realm** (`Land.inHeart`, `Land.change(moment)`, `RealmState.doorShut, heartStage`): the Lord sleeps until someone comes in. The door
 is wax as thick as a wall until the last Warden falls (`heart_open`); it shuts behind whoever's fighting once nobody's lingering at it (`heart_shut`);
 the room answers the fight at two thirds and one third of the Lord's life (`heart_weeps`, `heart_winds`), and stills when it dies (`heart_still`).
-Nobody left inside: the Lord goes, the hall resets, the door opens again. Moments are block edits sent with `Block.UPDATE_CLIENTS`, computed by the
-land so a restart redraws the same thing.
+Nobody left in the fight (`RealmState.fighters`, §68.6 "The fight holds"): the Lord goes, the hall resets, the door opens again, and
+everyone in the gate is told so. Moments are block edits sent with `Block.UPDATE_CLIENTS`, computed by the land so a restart redraws the same thing.
 
 **Life** (`RealmLife`, spawned from a blueprint's `life` and `folk`): kept up by density around each player, once every two seconds, always at least
 28 blocks from anyone. A herd of 3-5 where fewer than 5 are within 64; 6 flies within 40; up to 9 folk round a village once a player is within 130. All
@@ -24862,6 +24862,39 @@ Execution), `opening` (the camera), `living` (the plate's words).
 - Counter-hits (decision 13) are not built. The Journal picture of a finishing blow (decision 14) is later.
 - Known and not changed here: `ServerPace.now` is a float of game time, so in a world past about a hundred hours a kit
   body's own animation clock steps by a tick or more; the ring uses `ServerPace.since`.
+
+**68.6 Three things from the Ember Tyrant (Euan's playtest 2026-11-11 on c90fc5791, a Realm with `gateRealms` on).** His
+words: the Lord reset in the middle of the fight, his parries didn't feel like they landed, and its kneel was over before
+his charged heavy came down. Modules `gates` (the hall), `mobs` (the lonely heal, the log), `arms` (the guard, the
+charge), `aim` (the ring).
+- **The fight holds (gates, `RealmLive.heart`).** *Why:* the hall decided "nobody left inside" from one look every half
+  second: a single sample with nobody standing in `Land.inHeart` while the door was shut discarded the Lord and woke a
+  whole new one. `inHeart` ends before a hall's walls (`GeneratedCrawl`: `lordHall.out < 0.96`, four blocks under its
+  floor), so a leap off a ledge, a dodge into the wall's last stretch, a rope swing or a fall into a pit ended the fight
+  with nobody having left. *The rule now:* who is in the fight is a saved list (`RealmState.fighters`, codec field
+  `fighters`). Everyone alive and not a spectator who stands in the heart while the Lord is awake joins it (everyone in
+  it when it wakes, at once). A fighter is out (`RealmLive.outOfFight`, pure) when they fall (die), leave the Realm (the
+  arch, a respawn at the Hearth), or are away from the hall for longer than `AWAY_TICKS` 200 (10 s): "at the hall" is
+  within `HALL_REACH` 68 blocks of the Lord's place across and 48 up or down, the same reach that keeps the door from
+  shutting; a fighter offline that long has left the game. The time each fighter was last at the hall is kept in memory
+  only, and a fighter loaded from a save counts as just seen, so a pause (the server stands still), a save, a quit and a
+  reload, a step out of the door and a leap never put the Lord to rest. Only when the list is empty and the door is shut
+  does the Lord go back to rest, whole, the hall reset and the door open (so nobody is ever locked out), and every
+  player in the gate and every fighter just out is told: "Nobody is left in the fight. The Ember Tyrant has gone back to
+  rest, whole again. The door to its hall is open." A Lord whose fight was put to rest while its chunk was away leaves as
+  it loads (`RealmLive.strayLord`, from `GateEvents.onJoin`), so a fresh one never stands beside it. The log says each
+  step (`[realms] gate N: ... joined the fight`, `... is out of the fight with the Lord (fell)`, `... stood past the
+  heart's line (x y z, d blocks from the Lord); the fight held` once a fighter a fight, `nobody is left fighting ...`).
+  Tour commands: `/awaken gate realm_edge` (onto the hall's floor just past the heart's line) and `/awaken gate
+  realm_lord` (the Lord's health, the door and how many are in the fight, said and logged).
+- **Left alone (mobs, `AwakenBoss.arena`).** The other rule that heals a Lord, unchanged: no player out of creative
+  within its home radius + 16 (38 blocks for the Tyrant) for 600 ticks (30 s) heals it in place and starts its fight
+  over, so it can't be worn down from out of its reach. It now says so: the log (`[fights] ... had nobody within 38
+  blocks for 30s: healed from h/max and starts over`) and a line to every player within its radius + 96: "The Ember
+  Tyrant had nobody to fight for half a minute, so it has healed and the fight starts over."
+- Tests: `realm_fight_holds` (the rule's pure parts: who is out and why; a fighter who leaps past the heart's line, a
+  pause and a save keep the Lord, the last fighter out puts it to rest).
+  Tour: `tools/autopilot/realm-lord-holds.txt` (the autopilot's new `pause <ticks>` opens the pause menu as Esc does).
 
 ## 69. The Hearth's family: Aya and Dubu (plan docs/family/PLAN.md, page https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN; Euan approved all of it 2026-11-11: "Go ahead with the full plan")
 
