@@ -25,54 +25,73 @@ cmd effect give @s minecraft:resistance 100000 4 true
 cmd effect give @s minecraft:saturation 100000 10 true
 cmd awaken frontier status
 cmd awaken frontier ready
-# the landing first, once, so its land is made and its mooring built: the flight out then times the way it does in play
-# (a new world's far land can take most of WAIT_MAX to generate on the runner, and every shot would land in the cloud).
-# A shot waits for the land to be drawn, which a wait on the runner doesn't: so a picture is taken to wait on.
+# A runner's server can be far behind its client, so nothing here trusts a count of ticks to mean a command has landed:
+# "frontier mark" then "frontier moved" waits until the player has been put somewhere else, "frontier descent" until the
+# skiff on screen is coming down, "frontier down" until the flight is over.
+# The landing first, once, so its land is made and its mooring built before the flight out.
+frontier mark
 cmd awaken frontier goto landing
-shot fl_a_landing_land_loading
+frontier moved
+wait 200
+frontier mark
+cmd awaken frontier goto landing
+frontier moved
+wait 60
 cmd awaken frontier goto landing
 wait 40
-cmd awaken frontier goto landing
-shot fl_b_landing_helm_first_sight
 # the ridge: its land loads, the mooring is built, then we stand at its helm
+frontier mark
 cmd awaken frontier goto ridge
-shot fl_c_ridge_land_loading
+frontier moved
+wait 200
+frontier mark
 cmd awaken frontier goto ridge
-wait 40
+frontier moved
+wait 60
 cmd awaken frontier goto ridge
 wait 40
 cmd awaken frontier status
 cmd gamemode spectator
-cmd awaken frontier look ridge 0
-wait 60
 hud off
-# a settled picture first: the look views after it then have their land drawn
-shot fl_00_ridge_settle
+frontier mark
 cmd awaken frontier look ridge 0
-wait 30
+frontier moved
+wait 60
 shot fl_01_ridge_bow_quarter
+frontier mark
 cmd awaken frontier look ridge 1
-wait 30
+frontier moved
+wait 24
 shot fl_02_ridge_stern_and_pier
+frontier mark
 cmd awaken frontier look ridge 2
-wait 30
+frontier moved
+wait 24
 shot fl_03_ridge_from_above
+frontier mark
 cmd awaken frontier look ridge 3
-wait 30
+frontier moved
+wait 24
 shot fl_04_ridge_under_the_wing
+frontier mark
 cmd awaken frontier look ridge 4
-wait 30
+frontier moved
+wait 24
 shot fl_05_ridge_from_the_steps
+frontier mark
 cmd awaken frontier look ridge 5
-wait 30
+frontier moved
+wait 24
 shot fl_06_ridge_from_ahead
 cmd gamemode survival
+frontier mark
 cmd awaken frontier goto ridge
+frontier moved
 wait 30
 shot fl_07_at_the_helm
 hud on
 # out: the wake watched from off the bow (40 ticks), the lift at the helm (to 120), the cloud closing over (from 98),
-# the name in the cloud, then the cloud parts and the descent
+# the name in the cloud; then, whenever the far land is there, the cloud parts and the skiff comes down (110 ticks)
 cmd awaken frontier fly
 wait 14
 shotnow fl_08_waking
@@ -90,85 +109,76 @@ wait 22
 shotnow fl_14_crossing_name
 wait 25
 shotnow fl_15_crossing_held
-# the cloud holds until the far land is drawn, which the runner does in its own time: a picture every 28 ticks across
-# the whole wait, so the descent (110 ticks) is in four of them whenever it comes
-wait 28
-shotnow fl_16_coming_down_a
-wait 28
-shotnow fl_16_coming_down_b
-wait 28
-shotnow fl_16_coming_down_c
-wait 28
-shotnow fl_16_coming_down_d
-wait 28
-shotnow fl_16_coming_down_e
-wait 28
-shotnow fl_16_coming_down_f
-wait 28
-shotnow fl_16_coming_down_g
-wait 28
-shotnow fl_16_coming_down_h
-wait 28
-shotnow fl_16_coming_down_i
-wait 28
-shotnow fl_16_coming_down_j
-wait 28
-shotnow fl_16_coming_down_k
-wait 28
-shotnow fl_16_coming_down_l
-wait 28
-shotnow fl_16_coming_down_m
-wait 28
-shotnow fl_16_coming_down_n
-wait 28
-shotnow fl_16_coming_down_o
-wait 28
-shotnow fl_16_coming_down_p
-wait 28
-shotnow fl_16_coming_down_q
-wait 28
-shotnow fl_16_coming_down_r
-wait 160
+frontier descent
+wait 8
+shotnow fl_16_cloud_parting
+wait 20
+shotnow fl_17_descent_early
+wait 20
+shotnow fl_18_descent_mid
+wait 20
+shotnow fl_19_descent_flare
+wait 18
+shotnow fl_20_descent_late
+wait 14
+shotnow fl_21_settling
+frontier down
+wait 40
 shot fl_22_set_down
 cmd awaken frontier status
 # the landing's mooring and the land round it
 cmd gamemode spectator
-cmd awaken frontier look landing 0
-wait 60
 hud off
-shot fl_23_landing_settle
+frontier mark
 cmd awaken frontier look landing 0
-wait 30
+frontier moved
+wait 60
 shot fl_24_landing_bow_quarter
+frontier mark
 cmd awaken frontier look landing 1
-wait 30
+frontier moved
+wait 24
 shot fl_25_landing_stern_and_pier
+frontier mark
 cmd awaken frontier look landing 2
-wait 30
+frontier moved
+wait 24
 shot fl_26_landing_from_above
+frontier mark
 cmd awaken frontier look landing 3
-wait 30
+frontier moved
+wait 24
 shot fl_27_landing_under_the_wing
+frontier mark
 cmd awaken frontier look landing 4
-wait 30
+frontier moved
+wait 24
 shot fl_28_landing_from_the_steps
 # dusk: the lamps and the core
 cmd time set 13200
 wait 40
+frontier mark
 cmd awaken frontier look landing 0
+frontier moved
 wait 40
 shot fl_29_landing_at_dusk
+frontier mark
 cmd awaken frontier look landing 1
-wait 30
+frontier moved
+wait 24
 shot fl_30_landing_at_dusk_pier
 cmd time set 1500
 wait 40
+frontier mark
 cmd tp @s ~ ~90 ~ ~ 20
-wait 120
+frontier moved
+wait 100
 shot fl_31_the_land_round_it
 hud on
 cmd gamemode survival
+frontier mark
 cmd awaken frontier goto landing
+frontier moved
 wait 40
 cmd awaken frontier letter
 wait 30
@@ -182,7 +192,11 @@ wait 30
 shotnow fl_34_home_crossing
 wait 40
 shotnow fl_35_home_crossing_name
-wait 300
-shot fl_36_home_at_the_ridge
+frontier descent
+wait 24
+shotnow fl_36_home_coming_down
+frontier down
+wait 40
+shot fl_37_home_at_the_ridge
 cmd awaken frontier status
 quit
