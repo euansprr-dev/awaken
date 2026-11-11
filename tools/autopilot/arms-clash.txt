@@ -1,0 +1,72 @@
+# The clash (SPEC §25 "The clash"; the boss plan's part three; Euan 2026-11-11 of today's parry: "Sometimes I parry
+# perfectly and it's a very small ding, and the screen barely moves"). With the Longsword's guard up, the server answers
+# a deflect of each size from the studio's husk (/awaken arms clash, the guard's rules aside), filmed at 2 ticks a second,
+# a picture a half tick:
+#   clips/clash_light  110 ms freeze, kick 2.6 up / 1.6 roll, a 4-tick shake, the frame in 4.5%, white-gold sparks
+#   clips/clash_heavy  160 ms, 4.0 / 2.4, 6 ticks, 6%, the sparks wider
+#   clips/clash_break  200 ms, 4.5 / 2.8, 8 ticks, 8%, and the frame's edges flash white-gold
+#   clips/clash_third  the break seen from behind: the sparks before the body, sized
+# ci knobs: PACK=perf,feel,comfort,world
+world armsclash creative 781
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+camera first
+arms studio awaken:gatewrought_longsword
+arms waitserver 100
+look 0 6
+wait 20
+cmd tp @e[type=minecraft:husk] 0.5 200 3.5 180 0
+arms waitserver 20
+shot clash_rest
+arms guard on
+wait 20
+arms rate 2
+wait 2
+arms film clash_light 20 0.5 2
+wait 3
+cmd awaken arms clash light
+wait 20
+arms film clash_heavy 20 0.5 2
+wait 3
+cmd awaken arms clash heavy
+wait 20
+arms film clash_break 24 0.5 2
+wait 3
+cmd awaken arms clash break
+wait 24
+arms rate 20
+arms guard off
+wait 30
+camera back
+wait 20
+arms guard on
+wait 20
+arms rate 2
+wait 2
+arms film clash_third 20 1 2
+wait 3
+cmd awaken arms clash break
+wait 20
+arms rate 20
+arms guard off
+camera first
+wait 30
+quit

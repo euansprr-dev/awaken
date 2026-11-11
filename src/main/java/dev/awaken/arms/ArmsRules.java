@@ -244,6 +244,36 @@ public final class ArmsRules {
         return d.distance() * (1 - tick / n) / sum;
     }
 
+    // ---- the clash (SPEC §25 "The clash"; the boss plan's part three) -----------------------------------------------
+
+    /** A deflect's size, sent in its answer's aux: a light blow turned aside, a heavy one, the one that broke its stance. */
+    public static final int CLASH_LIGHT = 0, CLASH_HEAVY = 1, CLASH_BREAK = 2;
+
+    /**
+     * What a deflect of each size does to the fighter (client): the freeze on the hands and the struck body (ms), the
+     * view's kick (degrees up and of roll, settling over {@code kickTicks}), the view's shake (degrees, over
+     * {@code shakeTicks}), the field of view's snap (a fraction, over {@code fovTicks}), the white-gold light's size (0:
+     * none) and the frame's edges flashing. {@link #TODAY} is the deflect before it, kept for the switch.
+     */
+    public record Clash(int freezeMs, float kickPitch, float kickRoll, int kickTicks, float shake, int shakeTicks, float fov, int fovTicks,
+                        float light, boolean edges) {}
+
+    public static final Clash TODAY = new Clash(100, 1.8F, 1.2F, 7, 0F, 0, -0.035F, 9, 0F, false);
+    private static final Clash[] CLASHES = {
+            new Clash(110, 2.6F, 1.6F, 7, 0.35F, 4, -0.045F, 9, 1.9F, false),
+            new Clash(160, 4.0F, 2.4F, 8, 0.55F, 6, -0.06F, 11, 2.4F, false),
+            new Clash(200, 4.5F, 2.8F, 9, 0.75F, 8, -0.08F, 14, 2.4F, true)};
+
+    /** The clash of this size (CLASH_*); anything else is {@link #TODAY}. */
+    public static Clash clash(int size) {
+        return size >= 0 && size < CLASHES.length ? CLASHES[size] : TODAY;
+    }
+
+    /** The size of a deflect: the blow that broke its stance outranks a heavy, a heavy outranks a light. */
+    public static int clashSize(Strikes.Kind kind, boolean broke) {
+        return broke ? CLASH_BREAK : kind == Strikes.Kind.HEAVY ? CLASH_HEAVY : CLASH_LIGHT;
+    }
+
     // ---- posture -----------------------------------------------------------------------------------------------------
 
     /** What a creature's stance holds, by what the band says it is. */

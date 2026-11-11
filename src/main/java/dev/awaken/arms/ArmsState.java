@@ -84,6 +84,8 @@ final class ArmsState {
     long guardedAt = -1;
     long deflectAt = Long.MIN_VALUE / 2;
     int deflected = -1;
+    /** The size of the last deflect's clash (ArmsRules.CLASH_*), -1 before any. */
+    int lastClash = -1;
     // dodge
     long dodgeAt = Long.MIN_VALUE / 2;
     float dodgeX, dodgeZ;

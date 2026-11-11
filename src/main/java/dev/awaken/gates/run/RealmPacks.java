@@ -156,6 +156,26 @@ public final class RealmPacks {
         return w;
     }
 
+    /** How many of a gate's own monsters are alive within reach of a place. */
+    public static int near(ServerLevel level, BlockPos center, double reach) {
+        return level.getEntitiesOfClass(Mob.class, new AABB(center).inflate(reach, 24, reach), m -> m.isAlive() && !packOf(m).isEmpty()).size();
+    }
+
+    /**
+     * A wandering pack in an open land (SPEC §50.9 "The right amount"): a den's worth of the theme's own, more with rank,
+     * standing together thirty to forty-four blocks off from a player, waiting as a den's do. Returns how many came.
+     */
+    public static int wander(ServerLevel level, GateRecord g, FloorLayout f, ServerPlayer p, int k) {
+        var rnd = level.getRandom();
+        double turn = rnd.nextDouble() * Math.PI * 2;
+        for (int i = 0; i < 10; i++) {
+            double a = turn + i * 2.4, r = 30 + rnd.nextDouble() * 14;
+            BlockPos at = settle(level, p.blockPosition().offset((int) Math.round(Math.cos(a) * r), 0, (int) Math.round(Math.sin(a) * r)));
+            if (at != null) return den(level, g, f, at, 700 + k, List.of(), null);
+        }
+        return 0;
+    }
+
     /** Whether any of a pack is still alive near its place. Only asked while someone is near, so the pack is in the world to be found. */
     public static boolean alive(ServerLevel level, BlockPos center, String pack) {
         return !level.getEntitiesOfClass(Mob.class, new AABB(center).inflate(56, 28, 56), m -> m.isAlive() && pack.equals(packOf(m))).isEmpty();

@@ -81,6 +81,10 @@ public final class ArmsSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> DRAW_BLADE = named("fight.draw_blade"), DRAW_HAFT = named("fight.draw_haft"),
             DRAW_CHAIN = named("fight.draw_chain"), DRAW_GAUNTLETS = named("fight.draw_gauntlets"), DRAW_PRECURSOR = named("fight.draw_precursor");
 
+    /** The clash's own recordings (SPEC §25 "The clash"): Minecraft's metal and what met the blade, each its own event. */
+    static final DeferredHolder<SoundEvent, SoundEvent> TRIDENT_GROUND = named("fight.trident_ground"), MACE_GROUND = named("fight.mace_ground"),
+            HEAVY_CORE = named("fight.heavy_core"), BONE = named("fight.bone"), BELL = named("fight.bell");
+
     /** One recording in a sound's mix: an event at its own level and pitch against the sound's. */
     public record Voice(java.util.function.Supplier<SoundEvent> sound, float volume, float pitch) {}
 
@@ -122,6 +126,91 @@ public final class ArmsSounds {
             mixes = m;
         }
         return m.get(sound);
+    }
+
+    // ---- the clash (SPEC §25 "The clash"; Euan 2026-11-11 of today's parry: "a very small ding") ----------------------
+
+    /** What met the blade in a clash: the boss's weapon when it holds one, else what its body is made of. */
+    public enum Edge { STEEL, BELL, STONE, BONE, WOOD, SPIRIT, BEAST }
+
+    /** Bodies that strike with a bell (the Ringer, the Bell Warden, the Toller): their clash rings. */
+    public static final net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> CLASH_BELL =
+            net.minecraft.tags.TagKey.create(Registries.ENTITY_TYPE, Awaken.id("clash_bell"));
+
+    /** What met the blade: a bell-armed body's bell, a held weapon's make, else the body's own material. Both sides. */
+    public static Edge edge(@Nullable Entity by) {
+        if (by == null) return Edge.STEEL;
+        if (by.getType().builtInRegistryHolder().is(CLASH_BELL)) return Edge.BELL;
+        if (by instanceof net.minecraft.world.entity.LivingEntity l) {
+            net.minecraft.world.item.ItemStack held = l.getMainHandItem();
+            if (!held.isEmpty() && (held.has(net.minecraft.core.component.DataComponents.WEAPON) || held.is(net.minecraft.tags.ItemTags.SWORDS)
+                    || held.is(net.minecraft.tags.ItemTags.AXES))) {
+                String path = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(held.getItem()).getPath();
+                return path.startsWith("wooden_") ? Edge.WOOD : path.startsWith("stone_") ? Edge.STONE : Edge.STEEL;
+            }
+        }
+        return switch (BodyMaterial.of(by)) {
+            case ARMOR -> Edge.STEEL;
+            case STONE -> Edge.STONE;
+            case BONE -> Edge.BONE;
+            case WOOD -> Edge.WOOD;
+            case SPIRIT -> Edge.SPIRIT;
+            case FLESH, SLIME -> Edge.BEAST;
+        };
+    }
+
+    /** The highest pitch any layer of a clash plays at (Euan: the old parry was a small ding; his rule: no layer above 1.2). */
+    public static final float CLASH_PITCH_MAX = 1.2F;
+
+    private static volatile Voice[][] clashes;
+
+    /**
+     * A clash's recordings (null with the recorded sounds off: the first kit's parry alone): our steel meeting theirs by
+     * size, lower and longer as it grows (an anvil landing, a trident or the mace on the ground, the shield's knock),
+     * and what it met over it, lower as it grows. First picks; the listening page (tools/art/weapon_listen.py, rows
+     * clash_*) is where Euan's ear replaces them.
+     */
+    public static Voice @Nullable [] clash(int size, Edge edge) {
+        if (!recorded) return null;
+        Voice[][] all = clashes;
+        if (all == null) {
+            all = new Voice[3 * Edge.values().length][];
+            for (int z = 0; z < 3; z++) {
+                Voice[] blade = switch (z) {
+                    case ArmsRules.CLASH_LIGHT -> new Voice[] {new Voice(TRIDENT_GROUND, 1.0F, 1.0F), new Voice(ANVIL, 0.8F, 1.15F), new Voice(BLOCK_STRUCK, 0.8F, 1.0F)};
+                    case ArmsRules.CLASH_HEAVY -> new Voice[] {new Voice(ANVIL, 1.0F, 0.9F), new Voice(MACE_GROUND, 0.8F, 1.0F), new Voice(BLOCK_STRUCK, 0.9F, 0.95F)};
+                    default -> new Voice[] {new Voice(ANVIL, 1.0F, 0.8F), new Voice(MACE_HEAVY, 0.9F, 1.0F), new Voice(BLOCK_STRUCK, 0.9F, 0.85F)};
+                };
+                float low = z == ArmsRules.CLASH_LIGHT ? 1F : z == ArmsRules.CLASH_HEAVY ? 0.9F : 0.85F;
+                for (Edge e : Edge.values()) {
+                    Voice[] met = switch (e) {
+                        case STEEL -> new Voice[] {new Voice(BLOCK_STEEL, 1.0F, low)};
+                        case BELL -> new Voice[] {new Voice(BELL, 1.0F, low)};
+                        case STONE -> new Voice[] {new Voice(HEAVY_CORE, 1.0F, low), new Voice(GLANCE_STONE, 0.6F, 0.8F * low)};
+                        case BONE -> new Voice[] {new Voice(BONE, 1.0F, low)};
+                        case WOOD -> new Voice[] {new Voice(GLANCE_WOOD, 1.0F, 0.9F * low)};
+                        case SPIRIT -> new Voice[] {new Voice(BREEZE_DEFLECT, 0.8F, low)};
+                        case BEAST -> new Voice[] {new Voice(KNOCK, 0.8F, 0.85F * low)};
+                    };
+                    Voice[] v = java.util.Arrays.copyOf(blade, blade.length + met.length);
+                    System.arraycopy(met, 0, v, blade.length, met.length);
+                    all[z * Edge.values().length + e.ordinal()] = v;
+                }
+            }
+            clashes = all;
+        }
+        return all[Math.clamp(size, 0, 2) * Edge.values().length + edge.ordinal()];
+    }
+
+    /** A clash for those near (the fighter's own hands play theirs): its recordings, or the first kit's parry. */
+    public static void playClash(net.minecraft.world.level.Level level, net.minecraft.world.entity.player.@Nullable Player except, double x, double y, double z,
+                                 int size, Edge edge) {
+        Voice[] v = clash(size, edge);
+        if (v == null) {
+            level.playSound(except, x, y, z, DEFLECT.get(), net.minecraft.sounds.SoundSource.PLAYERS, 1F, 1F);
+            return;
+        }
+        for (Voice one : v) level.playSound(except, x, y, z, one.sound().get(), net.minecraft.sounds.SoundSource.PLAYERS, one.volume(), one.pitch());
     }
 
     /** The Katana's drawn cut, over its swish: a rasp off the scabbard's mouth and a steel ring (stage 4). */

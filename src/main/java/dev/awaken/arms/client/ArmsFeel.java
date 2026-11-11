@@ -166,6 +166,43 @@ final class ArmsFeel implements CombatFeedback.Sink {
         fov(-0.035F, 9);
     }
 
+    /**
+     * A deflect's clash (SPEC §25 "The clash"): the frame snaps in by its size, the view shakes for its ticks (with the
+     * kicks: the camera-shake and view-kick settings), and the blow that broke its stance flashes the frame's edges
+     * white-gold (a moment). The freeze and the kick are the caller's, through {@link CombatFeedback}.
+     */
+    static void clash(dev.awaken.arms.ArmsRules.Clash c) {
+        fov(c.fov(), c.fovTicks());
+        float k = ArmsComfort.kick();
+        if (c.shakeTicks() > 0 && k > 0) {
+            shakeAmp = c.shake() * k;
+            shakeTotal = c.shakeTicks() * TICK_NANOS;
+            shakeFrom = nanos();
+        }
+        if (c.edges() && ArmsComfort.moments() > 0) flashWas = flash = ArmsComfort.moments();
+    }
+
+    // the clash's shake: two quick sines on the feel's clock, so a slowed film shakes as long in ticks as play does
+    private static float shakeAmp, shakeTotal;
+    private static long shakeFrom;
+    private static final float SHAKE_HZ_A = 23F, SHAKE_HZ_B = 31F;
+    /** The frame's edges flashing white-gold (0..1, fading over six ticks), for {@link ArmsHud}. */
+    static float flash, flashWas;
+    private static final float FLASH_FADE = 1F / 6F;
+
+    private static void shake(ViewportEvent.ComputeCameraAngles e) {
+        if (shakeAmp <= 0) return;
+        long now = nanos();
+        float u = (now - shakeFrom) / shakeTotal;
+        if (u >= 1F || u < 0F) {
+            shakeAmp = 0;
+            return;
+        }
+        float w = (1 - u) * (1 - u) * shakeAmp, t = (now - shakeFrom) / 1e9F;
+        e.setPitch(e.getPitch() + w * Mth.sin(t * SHAKE_HZ_A * Mth.TWO_PI));
+        e.setYaw(e.getYaw() + w * 0.7F * Mth.sin(t * SHAKE_HZ_B * Mth.TWO_PI + 1.3F));
+    }
+
     /** A shot glances off the guard: the same snap, smaller (nothing in reach was answered). */
     static void glanced() {
         fov(-0.02F, 7);
@@ -269,6 +306,8 @@ final class ArmsFeel implements CombatFeedback.Sink {
             holdUntil = 0;
         }
         if (kickTicks > 0) kickTicks--;
+        flashWas = flash;
+        if (flash > 0) flash = Math.max(0, flash - FLASH_FADE);
         if (!FROZEN.isEmpty()) for (Iterator<Freeze> it = FROZEN.values().iterator(); it.hasNext(); ) if (it.next().until + RELEASE < now) it.remove();
     }
 
@@ -277,6 +316,7 @@ final class ArmsFeel implements CombatFeedback.Sink {
     static void onCameraAngles(ViewportEvent.ComputeCameraAngles e) {
         if (Minecraft.getInstance().level == null) return;
         lean(e);
+        shake(e);
         if (kickTicks <= 0) return;
         // eased out, never past where it came from (a critically damped settle)
         float t = (kickTicks - (float) e.getPartialTick()) / kickTotal;
@@ -396,6 +436,8 @@ final class ArmsFeel implements CombatFeedback.Sink {
         pausedTotal = 0;
         kickTicks = 0;
         fovTicks = 0;
+        shakeAmp = 0;
+        flash = flashWas = 0;
         low = false;
         edge = edgeWas = pulse = 0;
         if (breathTicks > 0 && BREATH.equals(LensClient.overriding())) LensClient.clearOverride(4);

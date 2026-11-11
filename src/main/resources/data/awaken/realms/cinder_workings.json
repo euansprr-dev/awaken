@@ -6,7 +6,11 @@
   "theme": "ember_mines",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
   "ready": true,
   "land": {

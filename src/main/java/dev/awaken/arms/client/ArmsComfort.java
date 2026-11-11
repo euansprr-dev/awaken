@@ -65,6 +65,11 @@ final class ArmsComfort {
     static final ModConfigSpec.BooleanValue GLANCE = B
             .comment("A strike that meets a wall glances off it: the block's sound, sparks, the blade knocked back. Off: nothing.")
             .define("glance", true);
+    // The clash (SPEC §25 "The clash"): a deflect's answer by the blow's size; each of its layers also obeys the switches above
+    static final ModConfigSpec.BooleanValue CLASH = B
+            .comment("A deflect answers by the blow it turned aside: a light one, a heavy one, the one that breaks its stance, each with",
+                    "its own freeze, kick, shake, light and metal. Off: every deflect is the small one from before.")
+            .define("clashSizes", true);
     // Swing Studio (SPEC §25 "Swing Studio"): the swings read from a tuning folder while tuning is on (/awaken swing tune)
     static final ModConfigSpec.BooleanValue SWING_TUNING = B
             .comment("Swing Studio: read the first-person swings from the tuning folder as the lab writes them (/awaken swing tune on|off).")
@@ -151,6 +156,10 @@ final class ArmsComfort {
 
     static boolean glance() {
         return on(GLANCE);
+    }
+
+    static boolean clash() {
+        return on(CLASH);
     }
 
     /** Flips every layer of the polish pass at once (/awaken swing weight): the quick A/B against the picture before it. */
