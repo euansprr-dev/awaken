@@ -230,6 +230,12 @@ public final class CaveSkinFeature implements Feature {
                             } else if (rockHere != null) {
                                 placed += ceiling(c, seed, x, y - 1, z, here, regions.at(x, y - 1, z), wet[i], crystal, sites);
                             }
+                        } else if (below[i].liquid() && !here.liquid() && ((i & 15) == 0 || w == below[i]) && below[i].getFluidState().isSource()
+                                && (rock(here) != null || crumb(here)) && drowned(c, x, y, z, below[i])) {
+                            // a crumb wholly in a flooded cave's water or lava: it goes to the same, so no rock hangs in the flood
+                            c.set(x, y, z, below[i]);
+                            here = below[i];
+                            west = here;
                         }
                     }
                     below[i] = here;
@@ -735,6 +741,13 @@ public final class CaveSkinFeature implements Feature {
 
     private static boolean open(BlockState s) {
         return s.isAir() || !s.canOcclude() && skin(s.getBlock());
+    }
+
+    /** The same still water or lava ({@code flood}, a source) over a cell and on its four sides, as under it. */
+    private static boolean drowned(Cells c, int x, int y, int z, BlockState flood) {
+        if (c.get(x, y + 1, z) != flood) return false;
+        for (Direction d : AROUND) if (c.get(x + d.getStepX(), y, z + d.getStepZ()) != flood) return false;
+        return true;
     }
 
     /** Natural ground, the skin's own pieces, or a cave's water: what a skin cell may sit among. */

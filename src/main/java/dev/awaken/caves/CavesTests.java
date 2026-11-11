@@ -945,7 +945,8 @@ final class CavesTests {
 
     /**
      * A crumb with air all round it in a cave goes as the skin dresses (SPEC §42.4 "Settled", lone blocks): a stone one and a
-     * gravel one in the middle of a room; a spur on the wall, a crumb beside water and the room's roof and floor stay.
+     * gravel one in the middle of a room, and one wholly in water turns to water; a spur on the wall, a crumb beside water and
+     * the room's roof and floor stay.
      */
     private static void loneCrumb(GameTestHelper h) {
         ServerLevel level = h.getLevel();
@@ -965,6 +966,11 @@ final class CavesTests {
         chunk.setBlockState(spur, stone, 0);
         chunk.setBlockState(wet, stone, 0);
         chunk.setBlockState(wet.east(), Blocks.WATER.defaultBlockState(), 0);
+        BlockPos drowned = new BlockPos(cx + 10, 17, cz + 5);
+        for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) for (int z = -1; z <= 1; z++) {
+            chunk.setBlockState(drowned.offset(x, y, z), Blocks.WATER.defaultBlockState(), 0);
+        }
+        chunk.setBlockState(drowned, stone, 0);
         CaveSkinFeature.Cells cells = new CaveSkinFeature.Cells() {
             @Override
             public BlockState get(int x, int y, int z) {
@@ -992,6 +998,7 @@ final class CavesTests {
         h.assertTrue(cells.get(gravel.getX(), gravel.getY(), gravel.getZ()).isAir(), "the crumb of gravel goes");
         h.assertTrue(cells.get(spur.getX(), spur.getY(), spur.getZ()).is(Blocks.STONE), "the spur on the wall stays");
         h.assertTrue(cells.get(wet.getX(), wet.getY(), wet.getZ()).is(Blocks.STONE), "the crumb beside water stays");
+        h.assertTrue(cells.get(drowned.getX(), drowned.getY(), drowned.getZ()).is(Blocks.WATER), "the crumb wholly in water turns to water");
         h.assertTrue(cells.get(cx + 7, 21, cz + 7).is(Blocks.STONE) && cells.get(cx + 7, 9, cz + 7).is(Blocks.STONE), "the roof and the floor stay");
         h.succeed();
     }

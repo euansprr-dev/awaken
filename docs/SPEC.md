@@ -17086,10 +17086,12 @@ The style sheet: https://claude.ai/artifact/RDhd1JDBSDt8s31LFiB2Wu (`docs/caves/
     a roof's pieces) and nothing but air or the skin's own pieces over it and on its four sides goes, and nothing is
     laid on it or hung from it: the host rocks and the regions', gravel, dirt, rooted dirt, clay, sand, calcite, smooth
     basalt, dripstone, moss, magma, sculk, cobblestone, cobbled deepslate, blackstone, bedrock (its fringe at the floor)
-    and ores. A crumb beside water stays (the water would stand beside air); a lichen another cell hung on it goes in
-    the first-tick pass. The cell before it in the row, as already read, must be open before anything more is read, so a
-    roof cell costs two field reads more and only a roof's open edge reads its neighbours. A crumb that a later chunk's
-    lake or structure cuts round after the skin ran stays, and the census names it. GameTest `caves_lone_crumb`.
+    and ores. A crumb wholly in a flooded cave's still water or lava (the same source over it, under it and on its four
+    sides) turns to that water or lava. A crumb beside water and air stays (the water would stand beside air); a lichen
+    another cell hung on it goes in the first-tick pass. The cell before it in the row, as already read, must be open
+    before anything more is read, so a roof cell costs two field reads more and only a roof's open edge reads its
+    neighbours. A crumb that a later chunk's lake or structure cuts round after the skin ran stays, and the census names
+    it. GameTest `caves_lone_crumb`.
   - **The underlife** (Euan, the same day: two rust beetles half off an Ochre Deep ledge, "floating bugs"). A crawler's whole
     body lies on its face, not only its middle: the square its quad covers at any heading (half its size times the root of
     two) has rock behind every corner and open air in front, where it is made and at every step, so it turns short of an
