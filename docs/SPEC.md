@@ -21522,6 +21522,17 @@ crossing); `LandPrograms` maps a program to its `Land` class, so each great land
 `AwakenConfig.gateRealms` (off) until the E wave is ready; `/awaken gate realm <rank> <id>` forms one anyway, `/awaken gate realm_at
 <kind> <index> <dx> <dy> <dz>` moves you to one of its sites.
 
+**Which Realms a gate in the world can be** (Euan, 11 Nov: he walked into a hive gate in the world, expected a new dungeon and
+got the old kind, because the switch was off; asked whether gates in the world should lead to the finished new ones, "Yes,
+set it up"). A blueprint says `"ready": true` when it is finished. With `gateRealms` on, a new gate whose theme and rank
+have a ready Realm is that Realm (`Blueprints.open` and `pick`: one its finder has not seen first); every other gate is
+floors as before. A blueprint that does not say it is ready is never rolled, only entered by command, so a land still being
+built cannot turn up in play. Ready on 11 Nov: Amber Reach, The Hour Crypt, The Broodwarren and the seventeen rolled kinds
+(§50.9). Not yet: Kingsroot Keep, The Vine Seat, The Quiet Barrow, Saltcomb Flats, The Wax Galleries (their owners set the
+line when they are done) and the blockouts. The switch's default stays off in code until a full suite has run with it on
+(the old gates' tests make gates and expect floors); a world turns it on in `config/awaken-synced.toml`. Gates already
+standing keep what they are.
+
 Cells sit `RealmCells.PITCH` (8,192) apart from 135,168, past the old gate grid, so `Cells.cellAt` and `Where.at` find nothing in a Realm.
 A Realm gate keeps its normal cell, `GatePlan` and `GateLayout` (only the abstract numbers are used: rewards, the Lord's id) and adds
 `GateRecord.realm` (`RealmRef`: blueprint, seed, version, cell). `RealmPlan.of` is a pure function of those, so a restart rebuilds the

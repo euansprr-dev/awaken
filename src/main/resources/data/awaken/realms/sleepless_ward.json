@@ -8,6 +8,7 @@
     "C",
     "B"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:sleepless_ward",
     "water": 0
