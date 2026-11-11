@@ -3,6 +3,7 @@ package dev.awaken.world.stilled;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
@@ -101,6 +102,7 @@ public final class StilledContent {
     static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
+        Tabs.fill(Tabs.Shelf.KEEPSAKES, LETTER_ITEM, KEY_ITEM, KEEPSAKE_ITEM);
         BLOCK_ENTITIES.register(modBus);
         COMPONENTS.register(modBus);
     }

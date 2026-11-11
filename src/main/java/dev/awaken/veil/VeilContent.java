@@ -2,7 +2,7 @@ package dev.awaken.veil;
 
 import com.mojang.serialization.MapCodec;
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.veil.block.CloudBlock;
 import dev.awaken.veil.block.GhostDoorBlock;
 import dev.awaken.veil.block.GhostLeverBlock;
@@ -33,7 +33,6 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -193,18 +192,11 @@ public final class VeilContent {
         TICKETS.register(modBus);
         CHUNK_GENERATORS.register(modBus);
         modBus.addListener(VeilContent::onAttributes);
-        modBus.addListener(VeilContent::creativeTab);
+        Tabs.fill(Tabs.Shelf.VEIL_BLOCKS, SHRINE_ITEM, GHOST_LEVER_ITEM, GHOST_DOOR_ITEM, VEIL_CACHE_ITEM, VEIL_GLYPH_ITEM, VEIL_STONE_ITEM,
+                VEIL_MARK_ITEM, DOOR_OUT_ITEM, DOOR_IN_ITEM, CLOUD_ITEM);
     }
 
     private static void onAttributes(EntityAttributeCreationEvent event) {
         event.put(VEIL_SPIRIT.get(), VeilSpirit.createAttributes().build());
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (!event.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (var item : List.of(SHRINE_ITEM, GHOST_LEVER_ITEM, GHOST_DOOR_ITEM, VEIL_CACHE_ITEM, VEIL_GLYPH_ITEM, VEIL_STONE_ITEM,
-                VEIL_MARK_ITEM, DOOR_OUT_ITEM, DOOR_IN_ITEM, CLOUD_ITEM)) {
-            event.accept(item.get());
-        }
     }
 }

@@ -1,11 +1,10 @@
 package dev.awaken.shaping;
 
-import dev.awaken.core.CoreModule;
 import dev.awaken.core.api.Sources;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -18,7 +17,7 @@ public final class ShapingModule {
         ShapingContent.register(modBus);
         ShapingConfig.register(modBus);
         modBus.addListener(ShapingModule::registerPayloads);
-        modBus.addListener(ShapingModule::creativeTab);
+        Tabs.fill(Tabs.Shelf.GEAR, ShapingContent.MALLET);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener((ServerTickEvent.Post e) -> Shaping.tick(e.getServer()));
         bus.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
@@ -27,10 +26,6 @@ public final class ShapingModule {
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> Shaping.forget(e.getEntity().getUUID()));
         Sources.neverHeld("a block the Mallet has cut: it drops what it really is (shaping.ShapedBlock)", "shaped");
         ShapingTests.register();
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent e) {
-        if (e.getTabKey().equals(CoreModule.TAB_KEY)) e.accept(ShapingContent.MALLET.get());
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {

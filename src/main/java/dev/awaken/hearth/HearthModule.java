@@ -1,9 +1,10 @@
 package dev.awaken.hearth;
 
-import dev.awaken.core.CoreModule;
 import dev.awaken.core.api.CoreApi;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.core.api.MobRole;
+import dev.awaken.core.api.Tabs;
+import dev.awaken.hearth.echo.EchoRole;
 import dev.awaken.hearth.town.Town;
 import dev.awaken.hearth.town.TownNpc;
 import dev.awaken.hearth.town.Townsfolk;
@@ -20,11 +21,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,7 +42,16 @@ public final class HearthModule {
         HearthContent.register(modBus);
         dev.awaken.hearth.kit.HomeKit.init(modBus);
         modBus.addListener(HearthModule::attributes);
-        modBus.addListener(HearthModule::creativeTab);
+        // the home's stations (the pads in role order), the courses' pieces, and the trophies the Hearth makes
+        Tabs.fill(Tabs.Shelf.HEARTH, (p, out) -> {
+            for (var item : List.of(HearthContent.HEARTH_ANCHOR_ITEM, HearthContent.EMBER_ITEM, HearthContent.MEDITATION_MAT_ITEM,
+                    HearthContent.FORGE_ITEM, HearthContent.TROPHY_MOUNT_ITEM, HearthContent.MONOLITH_ITEM)) out.accept(item.get());
+            for (EchoRole r : EchoRole.values()) out.accept(HearthContent.ROLE_PAD_ITEMS.get(r).get());
+        });
+        Tabs.fill(Tabs.Shelf.COURSES, HearthContent.START_GATE_ITEM, HearthContent.CHECKPOINT_RING_ITEM, HearthContent.FINISH_GATE_ITEM,
+                HearthContent.SPIRE_BOARD_ITEM, HearthContent.TARGET_DUMMY_ITEM);
+        Tabs.fill(Tabs.Shelf.BOSS_TROPHIES, HearthContent.TROPHY_ITEM);
+        Tabs.icon(Tabs.Tab.STATIONS, () -> HearthContent.HEARTH_ANCHOR_ITEM.get().getDefaultInstance());
         modBus.addListener(dev.awaken.hearth.net.HomeNet::register);
 
         var bus = NeoForge.EVENT_BUS;
@@ -202,11 +212,6 @@ public final class HearthModule {
     private static void attributes(EntityAttributeCreationEvent e) {
         e.put(HearthContent.TOWNSFOLK.get(), TownNpc.createAttributes().build());
         e.put(HearthContent.TRAINING_GHOST.get(), TrainingGhost.createAttributes().build());
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent e) {
-        if (!e.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (var item : HearthContent.tabItems()) e.accept(item.get());
     }
 
     private static void onServerTick(ServerTickEvent.Post e) {

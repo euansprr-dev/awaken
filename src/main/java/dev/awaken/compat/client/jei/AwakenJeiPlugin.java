@@ -6,6 +6,7 @@ import dev.awaken.above.MachineType;
 import dev.awaken.arms.anvil.AnvilContent;
 import dev.awaken.compat.Discovered;
 import dev.awaken.core.api.CoreApi;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.hearth.HearthContent;
 import dev.awaken.hearth.request.RequestContent;
 import mezz.jei.api.IModPlugin;
@@ -16,6 +17,7 @@ import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
+import mezz.jei.api.registration.ISubtypeRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.CraftingMenu;
@@ -40,6 +42,16 @@ public final class AwakenJeiPlugin implements IModPlugin {
     @Override
     public Identifier getPluginUid() {
         return UID;
+    }
+
+    /**
+     * Items the creative tabs show in several kinds (a bell of each number, a page of each inscription, a core of each
+     * power, a window box of each bloom): JEI keeps each kind as its own entry instead of folding them into the first
+     * (SPEC §14). The kinds are what the module declared ({@link Tabs#variants}).
+     */
+    @Override
+    public void registerItemSubtypes(ISubtypeRegistration r) {
+        Tabs.variants().forEach((item, kind) -> r.registerSubtypeInterpreter(item, (stack, context) -> kind.apply(stack)));
     }
 
     @Override
