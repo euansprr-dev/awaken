@@ -4,6 +4,7 @@ import dev.awaken.Awaken;
 import dev.awaken.citizens.block.CityFireBlock;
 import dev.awaken.citizens.block.LaundryBlock;
 import dev.awaken.citizens.block.StreetLampBlock;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
@@ -112,6 +113,9 @@ public final class CitizensContent {
         ENTITIES.register(modBus);
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
+        // what the townsfolk carry at work (creative only: in play they're never yours to hold), and the stolen bag
+        Tabs.fill(Tabs.Shelf.TOWNSFOLK, LAMPLIGHTER_POLE, SMITH_HAMMER, MASON_TROWEL, CRIER_SCROLL, WATCH_HALBERD, HAND_LANTERN, BREAD_BASKET,
+                LAUNDRY_BASKET, LEDGER_BOOK, COURIER_SATCHEL, PORTER_CRATE, CARCASS_POLE, SHEPHERD_CROOK, STOLEN_BAG);
         PARTICLES.register(modBus);
         SOUNDS.register(modBus);
     }

@@ -1,6 +1,7 @@
 package dev.awaken.kin.works;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.BlockItem;
@@ -85,6 +86,8 @@ public final class WorksContent {
     static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
+        Tabs.fill(Tabs.Shelf.KIN_WORKS, VENT_STONE_ITEM, CHIME_PERCH_ITEM, WOKEN_CLAPPER, CRUCIBLE_ITEM, GRANARY_KEYSTONE_ITEM, DROP_ITEM,
+                LEDGER_ITEM, WORK_PLAN_ITEM);
         BLOCK_ENTITIES.register(modBus);
         SOUNDS.register(modBus);
     }

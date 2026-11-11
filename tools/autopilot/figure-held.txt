@@ -1,0 +1,172 @@
+# Bodies in screens hold what they hold whole (SPEC §57.1 "Bodies in screens", Euan 11 Nov: "The weapon in the K menu is
+# glitched out"). His case first: the Wildhide Maul in the hand on K's Status page, opened from first person. Then the
+# longest weapons (spear, glaive, greatblade), a katana, gauntlets (their first-person sleeve must not show on a figure),
+# daggers, a scythe, a forged pick and plain tools on Status; the Hall's looks and the bag with the maul; last, the same
+# weapons in third person in the world. Facing east, so a gem's glow turned to the world's camera would show edge-on.
+# Run on CI: tools/tour-ci.sh tools/autopilot/figure-held.txt 1500
+world autopilot_figure_held creative 11112026
+waitworld
+window 1708 960
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd awaken admin levels 6
+wait 40
+key dismiss
+wait 10
+screen close
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 6000
+cmd tp @s ~ 200 ~ -90 0
+cmd fill ~-12 ~-1 ~-12 ~12 ~-1 ~12 minecraft:smooth_stone
+wait 40
+camera first
+look -90 0
+# ---- Status, in first person: his maul ----
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_maul
+wait 10
+screen band status
+wait 60
+shot s01_status_wildhide_maul
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_spear
+wait 10
+screen band status
+wait 40
+shot s02_status_spear
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_glaive
+wait 10
+screen band status
+wait 40
+shot s03_status_glaive
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_greatblade
+wait 10
+screen band status
+wait 40
+shot s04_status_greatblade
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_katana
+wait 10
+screen band status
+wait 40
+shot s05_status_katana
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_gauntlets
+wait 10
+screen band status
+wait 40
+shot s06_status_gauntlets
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_daggers
+wait 10
+screen band status
+wait 40
+shot s07_status_daggers
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_scythe
+wait 10
+screen band status
+wait 40
+shot s08_status_scythe
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 10
+screen band status
+wait 40
+shot s09_status_forged_pick
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with minecraft:stone_pickaxe
+cmd item replace entity @s weapon.offhand with minecraft:shield
+wait 10
+screen band status
+wait 40
+shot s10_status_pickaxe_shield
+screen close
+wait 5
+cmd item replace entity @s weapon.offhand with minecraft:air
+cmd item replace entity @s weapon.mainhand with minecraft:trident
+wait 10
+screen band status
+wait 40
+shot s11_status_trident
+screen close
+wait 5
+cmd item replace entity @s weapon.mainhand with minecraft:copper_axe
+wait 10
+screen band status
+wait 40
+shot s12_status_copper_axe
+screen close
+wait 5
+# ---- the Hall's looks and the bag, with his maul ----
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_maul
+wait 10
+cmd awaken hall wall 0
+wait 80
+cmd awaken hall view looks 0
+wait 60
+shot h01_looks_maul
+screen close
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_gauntlets
+wait 10
+cmd awaken hall wall 0
+wait 80
+cmd awaken hall view looks 0
+wait 60
+shot h02_looks_gauntlets
+screen close
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_maul
+cmd gamemode survival
+wait 10
+holo inv open
+wait 60
+shot b01_bag_maul
+screen close
+wait 10
+cmd gamemode creative
+wait 10
+# ---- the same in the world, third person from the front ----
+hud off
+camera front
+look -90 0
+wait 20
+shot w01_world_maul
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_spear
+wait 20
+shot w02_world_spear
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_gauntlets
+wait 20
+shot w03_world_gauntlets
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 20
+shot w04_world_forged_pick
+cmd item replace entity @s weapon.mainhand with minecraft:stone_pickaxe
+wait 20
+shot w05_world_pickaxe
+camera first
+hud on
+quit

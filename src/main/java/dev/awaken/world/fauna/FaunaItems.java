@@ -1,11 +1,10 @@
 package dev.awaken.world.fauna;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -47,19 +46,14 @@ public final class FaunaItems {
 
     static void init(IEventBus modBus) {
         ITEMS.register(modBus);
-        modBus.addListener(FaunaItems::tab);
+        // the beasts' materials family by family; the bridle and the whistle with the gear
+        Tabs.fill(Tabs.Shelf.BEAST_PARTS, BY_ID.values());
+        Tabs.fill(Tabs.Shelf.GEAR, BRIDLE, WHISTLE);
     }
 
     public static Item get(String id) {
         DeferredItem<Item> h = BY_ID.get(id);
         if (h == null) throw new IllegalArgumentException("not a fauna material: " + id);
         return h.get();
-    }
-
-    private static void tab(BuildCreativeModeTabContentsEvent e) {
-        if (!e.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (DeferredItem<Item> item : BY_ID.values()) e.accept(item.get());
-        e.accept(BRIDLE.get());
-        e.accept(WHISTLE.get());
     }
 }

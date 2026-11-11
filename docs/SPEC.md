@@ -72,6 +72,45 @@ Rules for builders:
   section's palette holds one of our tagged blocks), before it reaches the client, and is marked; bump `HEIGHTS`
   whenever blocks join the tags. Every reader of those heightmaps (citizens' footing, room scans, village growth,
   spawns, Far Sight, Delve's sense) now sees Awaken roofs and walls the way it sees vanilla's.
+- **Creative tabs** (`core.api.Tabs`; Euan 2026-11-11: "everything in Awaken is in a single tab for creative, so let's
+  put it in multiple tabs and all, like, correctly organized"). The creative menu has ten Awaken tabs after vanilla's,
+  owned by core: Awaken Weapons, Armour, Tools and Gear, Stations and Machines, Materials, Building Blocks, Gate World
+  Blocks, Nature and Food, Relics and Keepsakes, Creatures (titles `itemGroup.awaken.<id>` in core's lang). Each tab is a
+  run of shelves in browsing order (`Tabs.Shelf`). A module never registers a tab or listens for
+  `BuildCreativeModeTabContentsEvent`: from its init it fills its shelves (`Tabs.fill(shelf, items...)`, or a filler
+  given the menu's parameters for registry-made stacks), sets together and tiers in order, and the module that owns a
+  tab's icon item sets it (`Tabs.icon`). The shelves:
+  - Weapons: the forged weapons (a style at a time, E to S, the Lords' own after), the Hunter blades and foci, the
+    Blueprints.
+  - Armour: the forged sets (helmet to boots, then the set's pattern), the Hunter armour, the Frames and their modules.
+  - Tools and Gear: picks (the Waking Pick, the Delver's old head and the forged picks form by form, the Delver's pick),
+    the Hunter mattocks, climbing (rope fittings, pitons, runner rope), gear (binoculars, the band, lamps, the lode map,
+    the Burin, the Mallet, the handbell, the bridle and whistle, the Dream Journal, the Scanner).
+  - Stations and Machines: the Hearth (Anchor, Ember, mat, Forge, trophy mount, monolith, the role pads), workshops and
+    stands (War Anvil, Inscribing Table, Fitting Stand, pattern stand), bell hooks (the frame and both beams), the
+    beasts' works, the Precursor machines, courses and the movement blocks.
+  - Materials: essence (shard, Lord Heart, dream residue, core shard), a power core of every power the menu shows, a
+    page of every inscription, Precursor parts, the deep's metals, what gate creatures and Lords leave (and the Hearth's
+    trophy), what the wild's beasts leave, and Unsorted.
+  - Building Blocks: Precursor blocks, monuments (the Olden stone, the finds' props), the home kit (every bloom of the
+    window box), the Descent's strata, the Veil's and the Stillpoint's blocks, the dream's blocks.
+  - Gate World Blocks: a gate's own pieces (frames, shrine, seal, cache, set pieces, the rig), then every world's blocks,
+    each with the slabs, stairs and drifts cut from it beside it.
+  - Nature and Food: the Awakened Lands, the ground (cover, wild plants, soft slabs), caves (deepglass and the lode
+    hearts, then the caves' rock and growths), herbs and meals.
+  - Relics and Keepsakes: relics (the wayfarers' and the finds'), the bells (the hundred in number order, the heart
+    clapper, the Sovereign's relic, a village's bell), keepsakes (the licence, letters, keys, the Delver's logs, a
+    village's keepsake and token), the townsfolk's things.
+  - Creatures: the gates' creatures and bosses in bestiary order (and Vael), the wild's beasts.
+  Every Awaken item sits in exactly one tab. JEI lists exactly what the tabs hold (§14), so an item no shelf places would
+  be lost there: it lands on Materials' Unsorted shelf instead and the check names it. A stack a shelf gives twice is
+  kept once (vanilla throws and the whole tab goes empty), and a filler that throws loses only its own shelf (logged).
+  An item shown in several kinds says what tells them apart (`Tabs.variants`), so JEI keeps each kind. The check
+  (`Tabs.audit`): `/awaken core tabs` (admin; to chat and to the log as `[core] creative tabs`) and GameTest
+  `core_creative_tabs` fail on an item in no tab or in two, a stack placed twice, an item in several kinds undeclared or
+  not told apart, and a filler that throws. `BlockSet` takes its shelf. `CoreModule.TAB_KEY` (the old single tab,
+  `awaken:awaken`) stays, deprecated, so older branches still compile; no tab has that key, so what they add lands on
+  Unsorted and the check names it.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -807,6 +846,11 @@ of `AwakenConfig.Client`.
   `path`, `priority` (50), `optional`, `choice`, `covers`), the path's places `PATH_START` .. `PATH_TRIAL` and `NO_PATH`;
   `register(Source)`, `all(ServerPlayer)` (a source that throws is skipped and logged), `count(Inventory, Item | TagKey)`.
   Server side. What a step says is done must leave it (§27.12).
+- `dev.awaken.core.api.Tabs` (§1 "Creative tabs"; 2026-11-11) — the creative menu: `Tab` (the ten), `Shelf` (each
+  tab's shelves in order), `fill(Shelf, ItemLike...)`, `fill(Shelf, Collection)` (read each time the menu is made),
+  `fill(Shelf, DisplayItemsGenerator)`, `variants(item, component types...)` or `variants(item, stack -> kind)`,
+  `variants()` (for JEI), `icon(Tab, Supplier<ItemStack>)`, `tab(Tab)`, `audit(ItemDisplayParameters)` → `Report`
+  (`clean()`, `summary()`). Called from a module's init; fillers run on either side.
 - `dev.awaken.core.api.Passage` (§28.9, "Arrivals"; 2026-10-29) — Awaken's own teleports wait for their land off the
   server thread: `go(player, level, x, z, move)` runs `move` at once when every chunk within `EdgeHold.BODY` of (x, z)
   is loaded at FULL, else puts the `awaken:arrival` ticket on the 3×3 round it and runs `move` once those are made (no
@@ -1916,6 +1960,22 @@ Tours (autopilot screenshot runs, `dev.awaken.core.client.dev.Autopilot`, `tools
   anvil, other mods') until any of their Awaken outputs is; a category whose stations are all hidden hides itself.
   Applied on the client tick only when the record, the game mode or the setting changes; a new client player (respawn,
   another dimension) keeps the current view up to 40 ticks until the server re-sends its record, which never shrinks.
+- What JEI lists (2026-11-11; Euan: "the bell frame can't be found"). JEI makes its item list from the creative tabs
+  only (and from the registry only with its own `showHiddenIngredients` on, off by default), so an item in no tab can't
+  be found at all, guard or not. Before the tabs were split, 101 of 1,706 Awaken items were in no tab (tour run
+  42952993353): the Bell Frame, both beams, the bells, the handbell, the heart clapper and the Sovereign's relic,
+  binoculars, the Holo band, the Burin, the pattern stand, the role pads and the trophy, the Ascent's movement blocks,
+  the Delve's deepglass, lode hearts, metals, Waking Pick, lamps, pitons and runner rope, the Delver's log, lode map and
+  pick, the beasts' works, the Living Wilds' herbs, meals, relics and letters, the villages' and the Stilled's keys and
+  keepsakes, the licence, blackberries and the townsfolk's things. The guard was never the cause for the frame: its
+  recipe unlocks from planks or logs and that discovers it. Every item now sits in a tab (§1 "Creative tabs"). Items
+  shown in several kinds folded into one entry; the plugin's `registerItemSubtypes` now registers each module's
+  `Tabs.variants` (a bell by `BELL_NO`, a page by its stored enchantment, a power core by its power alone, a window box
+  by its bloom), and the guard looks up each kind's recipes. The guard still hides and shows by item: discovering one
+  bell shows all hundred, one core every core. What no survival player ever holds (the townsfolk's things, the carved
+  token) shows in creative and in JEI with the guard off, and stays hidden with it on. Autopilot: `compat jei missing`
+  logs the registered Awaken items JEI has no entry for and those it lists in several kinds; `compat creative <tab>`
+  opens a creative tab and logs the menu's pages; tour `tools/autopilot/jei-tabs.txt`.
 - Jade (`compat.jade` server data, `compat.client.jade`): Awaken targets wear the Jade theme `awaken:system` (the
   System's glass as a nine-slice sprite, `tools/art/compat_ui.py`) and an accent bar in the target's colour (setting
   `jade_system_style`). Gate cores: "D-rank gate", state, break clock, omen, then exactly what the gate card shows that
@@ -9619,7 +9679,7 @@ dandelion/golden dandelion/sunflower/orange tulip, blue cornflower/blue orchid, 
 oxeye/lily of the valley/white tulip/azure bluet, herbs fern/the land's herbs; no flower, a bare box); wall ivy 3 from 2 vines;
 hoist beam 4 from two logs and an iron nugget. A piece a player breaks drops itself (`BlockDropsEvent`; a box keeps its
 bloom) unless it is Carillon's: inside the walls (`CityHooks.inCity`) or the city reserve (`CityBasin.reserved`), where
-nothing ever drops. Items sit in the shared AWAKEN creative tab (every bloom of the box). Client: `items/<id>.json` with
+nothing ever drops. Items sit on Building Blocks' home kit shelf (every bloom of the box; §1 "Creative tabs"). Client: `items/<id>.json` with
 item models `home_kit_*` that wrap the block models with a block's display transforms (the box picks its model from its
 bloom). Not done: pieces do not pop when their wall goes (the blocks have no survival rule, and `city/` is Carillon's).
 
@@ -22053,6 +22113,17 @@ correct and the names are actually correct").
   the kit draws a picture of its own. What stands in for something not found is a dark diamond that gives nothing away.
 - **What can be clicked** (`Hot`): each part that draws something clickable adds its rectangle and what a click does, in the same
   pass, so drawing and clicking can't disagree.
+- **Bodies in screens** (`Figure`, 11 Nov 2026): every figure an AWAKEN screen draws (you on Status, in the bag, in the Hall's
+  looks, at the Forge, the Tasks picks and the set preview; a creature on a card through `Kit.creature`) goes through
+  `Figure.followsMouse` / `followsAngle`, vanilla's inventory figure turned the same way, never `InventoryScreen`'s own. Two rules:
+  - **As deep as it is big.** Vanilla draws a figure into a picture with 1000 pixels of depth in front of the body and 1000 behind;
+    at Status's size (about 600 pixels a block on a 4K screen) that cut through anything held out past 1.6 blocks, and a maul or a
+    spear (59 of the 81 hand-held weapon meshes reach further; spears 2.4 blocks) came apart round the body, its head's front sliced
+    off (Euan, 11 Nov: "The weapon in the K menu is glitched out"). The figure's picture keeps 4 blocks each way (a creature bigger
+    than a player twice its longest side); one small enough to fit vanilla's depth is drawn exactly as vanilla draws it.
+  - **Seen from in front.** While a figure is read or drawn, `Figure.drawing()` is true: a weapon takes it as seen from outside
+    whatever the camera (no first-person part: a gauntlet's sleeve stayed on the figure, two blocks up out of its arm, when the
+    menu was opened in first person) and a gem's glow faces the picture, not the world's camera.
 
 ### 57.2 The band's stage (`holo.client.BandStage`, geometry `holo.ui.StageLayout`)
 - K opens the stage: the band's glass as one plate (152,40 to 1680,884) with you (level, rank, XP) and the six places down the wrist
@@ -22096,9 +22167,9 @@ correct and the names are actually correct").
   second each). Materials get none.
 
 ### 57.4 Status on the stage (`progression.client.StatusPlace`)
-- **You.** The real player stands at the left on the band's lit floor, drawn as the bag draws you
-  (`InventoryScreen.extractEntityInInventoryFollowsMouse`): your body is under your armour, and you turn to the pointer as in
-  vanilla's inventory (Euan, 10 Nov). Your name and title under it.
+- **You.** The real player stands at the left on the band's lit floor, drawn as the bag draws you (`Figure.followsMouse`, §57.1):
+  your body is under your armour, what you hold is whole in your hand, and you turn to the pointer as in vanilla's inventory
+  (Euan, 10 Nov). Your name and title under it.
 - **Level and rank as numbers**, when the next rank comes (the rank's tip says what it opens for you), your path; XP as 32 segments.
 - **What comes next:** the level road's next three stops as tiles (level, name; the long line is the tip).
 - **Stats:** the six as columns. A click (or arrows and Space) places a point; nothing is sent until **Hold to confirm** (Enter held

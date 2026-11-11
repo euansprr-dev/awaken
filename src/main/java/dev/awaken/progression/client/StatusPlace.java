@@ -2,6 +2,7 @@ package dev.awaken.progression.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.core.client.ui.BandPlaces;
+import dev.awaken.core.client.ui.Figure;
 import dev.awaken.core.client.ui.Hot;
 import dev.awaken.core.client.ui.Kit;
 import dev.awaken.core.client.ui.Sheet;
@@ -13,7 +14,6 @@ import dev.awaken.progression.content.Defs;
 import dev.awaken.signal.client.Glass;
 import dev.awaken.signal.client.Journal;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.Nullable;
@@ -98,7 +98,7 @@ public final class StatusPlace implements BandPlaces.Place {
         Kit.floor(s, (x0 + x1) / 2F, (y0 + y1) / 2F + scale * .9F + 8, 190);
         boolean on = mx > -9000;
         float gx = on ? s.ox + mx * s.k : s.gx((x0 + x1) / 2F), gy = on ? s.oy + my * s.k : s.gy(y0 + 150);
-        InventoryScreen.extractEntityInInventoryFollowsMouse(s.g, s.gx(x0), s.gy(y0), s.gx(x1), s.gy(y1), Math.round(scale * s.k), .0625F, gx, gy,
+        Figure.followsMouse(s.g, s.gx(x0), s.gy(y0), s.gx(x1), s.gy(y1), Math.round(scale * s.k), .0625F, gx, gy,
                 mc.player);
     }
 

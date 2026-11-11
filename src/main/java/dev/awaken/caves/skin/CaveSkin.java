@@ -1,6 +1,7 @@
 package dev.awaken.caves.skin;
 
 import dev.awaken.caves.CaveRegion;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.terrain.block.BlockSet;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.util.valueproviders.UniformInt;
@@ -37,7 +38,7 @@ import java.util.function.Supplier;
 public final class CaveSkin {
     private CaveSkin() {}
 
-    private static final BlockSet SET = new BlockSet();
+    private static final BlockSet SET = new BlockSet(Tabs.Shelf.CAVES);
 
     public record Kit(DeferredBlock<SkinBlocks.Rubble> rubble, DeferredBlock<SkinBlocks.Pebbles> pebbles,
                       DeferredBlock<SkinBlocks.Formation> formation) {}

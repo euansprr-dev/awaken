@@ -3,6 +3,7 @@ package dev.awaken.living.quest;
 import dev.awaken.Awaken;
 import dev.awaken.core.PlayDays;
 import dev.awaken.core.api.CreatureTag;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.progression.Progression;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -71,6 +72,10 @@ public final class Relics {
 
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
+        // the wayfarers' relics; their letters with the keepsakes
+        Tabs.fill(Tabs.Shelf.RELICS, SHEPHERDS_LANTERN, LUMEN_TONIC, WRENS_HOOK, CARAVAN_WRIT, HERDCALLER_HORN, PELLS_SPURS, COURIERS_KNOT,
+                ORENS_MARK);
+        Tabs.fill(Tabs.Shelf.KEEPSAKES, PELLS_LETTER, ILSE_LETTERS);
         Progression.addPerkSource(Relics::perk);
     }
 
