@@ -16429,14 +16429,21 @@ in reach 23% of a fight today, 49% with these rules).
   locks the mark, or lets go. Sharing pick block's key, a press that locked or let go is the lock's alone; with nothing to lock
   it picks the block, as always.
 - **Calm creatures** (Euan, 11 Nov 2026: "my target lock-on isn't working on sheep"): with nothing marked, the key locks any
-  creature you could strike, calm or not (a sheep, a deer, a villager, a neutral wolf), `AimRules.strikable`: never a person,
+  creature you could strike, calm or not (a sheep, a deer, a villager, a neutral wolf), `Aim.strikable`: never a person,
   a body, an armour stand, something that can't be hit (not pickable, not attackable, invulnerable), your own pet or beast, or
   what you ride or ride with. Which one: the creature under the crosshair, else the nearest the middle within `PRESS_CONE`
   12° (to its box's edge, tighter than the mark's 25° so the key still picks the block you point at) and the mark's 24 blocks,
   seen, and nearer than a solid block the crosshair rests on (a block you can see through, like grass, is no wall). Before
   this only the mark (foes) and vanilla's crosshair (3 blocks) could be locked, so a sheep across a meadow never was. The mark
-  itself stays a foe's alone: no brackets hop between grazing animals, strikes don't step toward them and powers don't bend
-  to them unless you lock one.
+  itself stays a foe's alone: no brackets hop between grazing animals, and powers don't bend to them unless you lock one.
+- **Calm strikes** (Euan, 11 Nov 2026: hits land on an animal you aren't perfectly on, as on a hostile one, but without the
+  brackets): with nothing locked, marked or under the crosshair, a weapon's press (and a heavy's release) names the calm
+  creature of the wild nearest the look (`Aim.calm`, at the press): within `CALM_CONE` 25° (the mark's) and the weapon's
+  reach (`ArmsRules.markReach`: its longest blow + 0.3 + its step in), seen, scored as the mark is. Nothing is drawn for it.
+  The server takes it as the meant creature like any other (40.1: 35°, reach, seen), so it is struck where the arc would
+  miss it, and the step in goes toward it. Only `Aim.wild` creatures: vanilla's animals and the wild's passive, neutral and
+  ambient creatures and its beasts (by their `CreatureTag`); never a person, a villager or a traveller (`Npc`), a golem,
+  anyone's pet (an owned creature), a kin beast or a story's figure (no such tag): only the crosshair strikes those.
 - **Locked**, the view follows the creature's body (58% up it) every frame: eased (`TURN_EASE` 10: the share of the gap closed a
   second, exponential), never more than 300°/s, the short way round, resting inside 0.6°; pitch at 85% and within ±80°. The
   turn moves `yRotO`/`xRotO` with `yRot`/`xRot` (as `Entity.turn`), so the frame's blend never jumps. The mouse keeps a quarter
@@ -16452,7 +16459,8 @@ in reach 23% of a fight today, 49% with these rules).
 - **It lets go** on the key, after 1.5 s unseen, past 40 blocks, on a teleport (8+ blocks in a tick) or a new level, death or
   logging out. **When the locked creature dies** the ring breaks, and the lock moves to the nearest foe within 60° of the view and
   12 blocks, seen, else lets go.
-- **What reads it**: a press sends the lock, else the creature under the crosshair, else the mark (`ArmsPredict.pressTarget`);
+- **What reads it**: a press sends the lock, else the creature under the crosshair, else the mark, else the calm strike's
+  creature (`ArmsPredict.pressTarget`);
   the step in (40.1) is the client's own push at the move's start: `min(step, gap - reach + 0.35)` blocks over the ground
   (a push of that / 2.2, vanilla's ground friction), toward the creature, only when the gap is past the move's reach - 0.15
   and within reach + step. A cast's look is bent toward the locked or marked creature's body when it lies within 10° (then
@@ -16552,7 +16560,8 @@ in reach 23% of a fight today, 49% with these rules).
 
 ### 40.9 Tests
 `aim_soft_pick`, `aim_caps`, `aim_power_bend_cap` (the pure rules), `aim_calm_lock` (a levelled sheep and a wild wolf can be
-locked; yourself, an armour stand, your own wolf, a dying sheep can't; the press's 12° cone), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:
+locked; yourself, an armour stand, your own wolf, a dying sheep can't; the press's 12° cone), `aim_calm_strike` (a strike
+looked 15° past a sheep 3 blocks off takes it; 60° past or out of reach it doesn't; a villager, a golem, a pet never), `aim_flier_locked_hits` (a creature 3.2 blocks over the feet:
 meant, struck; a hostile beside it, not meant, out of the band), `aim_step_in`, `aim_no_wall`, `aim_no_player`,
 `aim_flier_brought_down`. The clear screen: `hud_states`, `hud_classic_unchanged`, `hud_now_line_returns`,
 `hud_task_card_teaches`, `hud_thin_plates`, `hud_glance_rows`.
