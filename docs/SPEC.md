@@ -4272,8 +4272,9 @@ Held at the edge of the land the client has (the edge hold, §28.9): Skyborn's f
   behind them, in a column of light from the core's top to the roof (a sheet turned to face the eye, bright down its
   middle and at its foot, breathing with them) and with their light on the core's top, inside a case of light glass: four panes from the rail to the roof (a
   faint tint, brighter at the foot, a bright line up each corner and round the top, a band of sheen crossing one pane
-  after another every ten seconds). One pair, drawn within 80 blocks (the far forms past 48), nothing allocated in a
-  frame. What a player sees is their own truth: without wings, the case shut and the pair inside; with them, the case
+  after another every ten seconds). Every motion is a cycle of whole ticks (the turn 760, the breath 289, the sway 195,
+  the bob 145, the sheen 200), never a float of time. One pair, drawn within 80 blocks (the far forms past 48), nothing
+  allocated in a frame. What a player sees is their own truth: without wings, the case shut and the pair inside; with them, the case
   open and empty over a low light.
   - *The gift at the case*: as the gift's scene begins the glass sinks into the rail (22 ticks; the vault's shutter
     opening, Minecraft's own recording, under the wings' opening) and the pair opens right out and crosses to between
