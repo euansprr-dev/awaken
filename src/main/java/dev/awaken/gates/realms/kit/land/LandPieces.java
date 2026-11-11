@@ -589,4 +589,94 @@ public final class LandPieces {
 
         private static final int WATER_LINE = GeneratedLand.WATER;
     }
+    /**
+     * One of the great builders: a ruined hall with no roof. A round floor, lit at its heart and flagged in rings; a wall
+     * round it that still stands to twice a man's height everywhere and to four times that in places, its top broken; twelve
+     * piers in the wall, half of them still at their full height with the stub of an arch springing from each; and on the
+     * far side from the door a tower, square, lit from inside at every third storey, its head gone.
+     */
+    public static final class Hall extends Piece<Kit> {
+        final int cx, cz, feet, tall;
+        final double radius;
+        final long salt;
+        final GeneratedLand land;
+
+        Hall(int cx, int cz, int feet, double radius, long salt, GeneratedLand land) {
+            this.cx = cx;
+            this.cz = cz;
+            this.feet = feet;
+            this.radius = radius;
+            this.salt = salt;
+            this.land = land;
+            tall = 54 + (int) (N.rnd(salt, 1, 2) * 10);
+            box(cx, cz, (int) radius + 12, (int) radius + 12);
+            mayOverlap = true;
+            startsWay = true;
+            label = "the hall";
+        }
+
+        @Override
+        public void draw(V v, Kit m) {
+            Dress d = land.dress();
+            for (int x = ax(v); x <= bx(v); x++) for (int z = az(v); z <= bz(v); z++) {
+                int dx = x - cx, dz = z - cz;
+                double far = Math.hypot(dx, dz), a = Math.atan2(dz, dx);
+                if (far < radius - 0.5) {
+                    floor(v, d, x, z, far, a);
+                    continue;
+                }
+                tower(v, d, x, z, dx, dz);
+                if (far > radius + 3.2) continue;
+                // the way in is on the south side, five wide: nothing of the wall stands in it
+                if (dz > 0 && Math.abs(dx) <= 2) continue;
+                // twelve piers, three thick and proud of the wall either side; the wall between them one thick
+                double twelfth = Math.PI / 6, off = a - Math.floor(a / twelfth) * twelfth - twelfth / 2, alongWall = Math.abs(off) * radius;
+                int bay = (int) Math.floor(a / twelfth);
+                boolean pier = alongWall > twelfth * radius / 2 - 1.6, whole = N.rnd(bay + (off > 0 ? 1 : 0), 3, salt) < 0.55;
+                if (!pier && (far < radius + 0.4 || far > radius + 1.6)) continue;
+                int gy = Math.min(feet - 1, land.ground(x, z));
+                int top = pier ? (whole ? 19 : 6 + (int) (N.rnd(bay + (off > 0 ? 1 : 0), 4, salt) * 8)) : 4 + (int) (N.rnd(Math.floorDiv(x, 3), Math.floorDiv(z, 3), salt + 9) * 7);
+                v.foot(x, gy, z, d.rock());
+                for (int k = 1; k <= top; k++) {
+                    int y = feet - 1 + k;
+                    BlockState b = k == 1 ? d.dark() : pier && k == top - 2 ? d.ore() : !pier && k == 3 && Math.floorMod(x + z, 5) == 0 ? d.seam() : k % 6 == 0 ? d.dark() : d.rock();
+                    v.set(x, y, z, b);
+                }
+                // what is left of the arch: a corbel stepping in toward the hall from the head of a whole pier
+                if (pier && whole && far < radius + 0.9) {
+                    int ix = x - (int) Math.signum(Math.round(Math.cos(a) * 1.5)), iz = z - (int) Math.signum(Math.round(Math.sin(a) * 1.5));
+                    if (v.get(ix, feet + top - 1, iz) == null) v.set(ix, feet + top - 1, iz, d.rockSlab());
+                } else if (!pier && v.get(x, feet + top, z) == null && N.rnd(x, z, salt + 5) < 0.4) v.set(x, feet + top, z, d.rockSlab());
+            }
+        }
+
+        private void floor(V v, Dress d, int x, int z, double far, double a) {
+            if (v.get(x, feet - 1, z) == null || v.get(x, feet, z) != null) return;
+            BlockState b;
+            if (far < 2.5) b = d.seam();
+            else if (Math.abs(far - radius * 0.45) < 0.6 || Math.abs(far - radius * 0.8) < 0.6) b = N.rnd(x, z, salt + 6) < 0.7 ? d.dark() : d.seam();
+            else if (far > 3 && Math.abs(Math.sin(a * 3)) * far < 0.55) b = d.dark();
+            else {
+                Hex t = N.hex(x, z, 2.6);
+                b = t.edge() > 0.8 ? d.dark() : N.rnd(t.q(), t.r(), salt + 7) < 0.55 ? d.stone() : d.rock();
+            }
+            v.set(x, feet - 1, z, b);
+        }
+
+        /** The tower, on the north side, its foot in the wall: nine square, a block narrower every sixteen up, lit at every third storey. */
+        private void tower(V v, Dress d, int x, int z, int dx, int dz) {
+            int tz = (int) -Math.round(radius + 4), far = Math.max(Math.abs(dx), Math.abs(dz - tz));
+            if (far > 4) return;
+            int gy = Math.min(feet - 1, land.ground(x, z));
+            v.foot(x, gy, z, d.rock());
+            for (int k = 0; k < tall; k++) {
+                int half = 4 - k / 16, y = feet + k;
+                if (far > half) break;
+                // the head is broken: the corner toward the lake stands highest
+                if (k > tall - 9 && (dx + (dz - tz)) * 1.2 + (tall - k) < N.rnd(x, z, salt + 8) * 3) break;
+                boolean face = far == half, lit = face && k % 12 >= 5 && k % 12 <= 7 && Math.min(Math.abs(dx), Math.abs(dz - tz)) <= 1;
+                v.set(x, y, z, lit ? d.seam() : k % 12 == 0 ? d.dark() : face && k % 12 == 11 ? d.ore() : d.rock());
+            }
+        }
+    }
 }

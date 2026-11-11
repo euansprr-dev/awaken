@@ -36,13 +36,13 @@
           "particle": {
             "type": "minecraft:ash"
           },
-          "probability": 0.02
+          "probability": 0.004
         },
         {
           "particle": {
             "type": "minecraft:white_ash"
           },
-          "probability": 0.008
+          "probability": 0.02
         }
       ]
     },

@@ -21970,8 +21970,20 @@ think we should build all the 88 gates by hand... What about some kind of really
 feel very different and still feel just as immersive... Sometimes maybe you have to walk up to the top of a mountain." A
 rolled land is the open-sky twin of a rolled crawl: one generator rolls a whole outdoor world from the gate's seed, a
 **landform** gives it its big shape and lays the run through it, and a **skin** (one class in `realms/land`, as a crawl's
-skin is) says what it is made of. Built so far: one landform, The Ascent, and one skin, the Ember Mines' country; their
-first land is The Cinder Crown (`awaken:cinder_crown`, program `awaken:ember_country`, every rank from E, not yet `ready`).
+skin is) says what it is made of. Built so far, none yet `ready`: The Ascent in the Ember Mines' country (The Cinder
+Crown, `awaken:cinder_crown`, program `awaken:ember_country`, every rank from E), The Valley in the Overgrown Temple's
+(Fallwater Vale, `awaken:fallwater_vale`, `awaken:temple_country`, from E), The Basin in the Frost Monastery's (The Hush
+Tarn, `awaken:hush_tarn`, `awaken:frost_country`, from C). `land.params.landform` names the landform by its place in
+`Landform.Kind` (0 Ascent, 1 Valley, 2 Basin, 3 Causeway, 4 Isles); the last two are not built and fail loudly.
+
+- **Each land has its own sky and atmosphere** (Euan, 11 Nov: "Each should have its own sky and atmosphere. That
+  matches."). No two lands share an hour, a light colour, a grade or an air. A land's biome chooses the hour
+  (`sun_angle`), the light (`sky_light_color`, `sky_light_factor`), the sky overhead (`sky_color`) and the far colour
+  (`fog_color`), chosen brighter than they should look because the hour darkens them, its particles and its sound; its
+  Lens look chooses the grade and what the far colour is tinted with (`hazeTint`, `hazeTintMix`); its blueprint lists
+  what is in the air. Mist is laid on water or on the ground it belongs to, never at eye height along the way: a land's
+  great thing has to be seen from the way in, and a layer you look along for three hundred blocks hides it (Fallwater
+  Vale's first walk). A land grows with rank only so far that the great thing stays in sight from the way in.
 
 - **The ground is shaped to the way.** A landform lays its run as *stations*: a point, the height of your feet there, a
   radius the ground is level over, and a width over which the land comes back to its own shape (`GeneratedLand.station`).
@@ -22003,7 +22015,15 @@ first land is The Cinder Crown (`awaken:cinder_crown`, program `awaken:ember_cou
   (`herd`, `ambushPack`, `wardenPack`), gone round so no two neighbours match; the wandering packs of "The right
   amount" fill the country between. A skin stands its own things once the run is laid (`furnish`, `denPlace`, `scatter`).
 - **The Lord's door** (`heartDoor`) is a grate across the way in to the Lord's place, drawn as part of the land, opened
-  by `heart_open` and shut again by `heart_shut` as in any Realm.
+  by `heart_open` and shut again by `heart_shut` as in any Realm. A skin says what each cell of it is (`door`; the plain
+  answer is its `bars`): a thicket of leaf with roots through it in the temple's country, a wall of ice in the frost's.
+- **Water that is ice.** Where a skin's `water` is a body, the lake is ground: `ground` answers the ice's top, the kit's
+  pieces stand on it, the skin's `scatter` is asked for every column of it (told `wet`), and the air's still water is
+  left out.
+- **What a country built** (`Landform.built`, `Spot.built`): a landform may raise part of the ground as building (a
+  temple's tiers); a skin dresses those columns as masonry in `cap` and `face`, and grows nothing on them. And where a
+  landform wants a hall at its heart it asks the skin (`hall`): the plain answer is a roofless ruin of the land's own
+  rock (`LandPieces.Hall`), a skin with builders of its own answers with their work.
 - **The kit's pieces** (`LandPieces`, each drawn in the skin's `Dress`): the way in (a round floor with a lit heart,
   the arch home three deep, two broken pillars to look between), a cache, a Waystone, a ring of standing stones open
   toward the way, a lamp on a post, a broken bridge (deck from lip to lip with spans gone; a free span stands on a
@@ -22029,9 +22049,7 @@ Waystone; a stair of five flights of fourteen treads cut along the crag's face, 
 balcony with a cache off the middle one; a notch through the crest, the Lord's door across it; the crater. About 120
 blocks of climb and 500 of way. A seed turns east to west, bends the way in, moves the dens and re-rolls every surface.
 A higher rank widens the island by 64 a rank (246 to the water at E) and so lengthens the way in, with a den every
-sixty blocks of it; the mountain itself is the same height. Wardens do not yet grow with rank, and the four other
-landforms of the brief (the Valley, the Basin, the Causeway, the Isles) are not built: `land.params.landform` names one
-by its place in `Landform.Kind`, and anything but 0 fails loudly.
+sixty blocks of it; the mountain itself is the same height. Wardens do not yet grow with rank.
 
 **The Ember Mines' country** (`land/EmberCountry`). No new blocks. The ground is dark and quiet: slag underfoot
 everywhere, black `ember_basalt` wherever the land stands steep (in columns, with beds of slag and smooth basalt and
@@ -22048,10 +22066,69 @@ degrees, because under Lens's Air (§22, on by default in Cinematic and Ultra wh
 Realm's `sky_color`, `fog_color` and its look's haze are never seen, and the one thing a biome still chooses is where
 the sun stands; 79 puts the Air in its dusk band (gold toward the sun, violet away, long shadows). The biome's brown
 sky and fog from 48 to 560 show only with the Air off. Client air: embers, wind, smoke, dust (the `ash` kind's flakes
-draw too large near the eye; the biome's own ash particles fall instead). Rule: none yet.
+draw too large near the eye; the biome's own ash particles fall instead, mostly the pale kind: a dark one near the eye
+reads as a black block against the sky). Rule: none yet. Its sky is red: `sky_color` #c2482e, `fog_color` #e87c48, a
+low red light (#ffb48c), a grade that leans red (warmth 0.6, red highlights over brown-red shadows) and a red-orange
+haze tint at one half; Lens shows a land's own sky and far colour from the Steady Light branch on, and until that is
+in the build the Air's dusk is violet and pink (the walks of 11 Nov).
 
-Tests `realm_cinder_crown_walks_to_everything` (seeds 1 and 2: the walk, the route check, the door) and
-`realm_cinder_crown_nothing_floats` (`kit/land/LandTests`). Tour `tools/autopilot/realm-cinder_crown.txt`.
+**The Valley** (`kit/land/Valley`). A long valley between walls 58 blocks high, a river down it, and at its head the
+country's temple with the river's fall coming down the wall behind it. The way in is a terrace 22 blocks up the south
+wall, so the first look is down the whole length; a stair of 22 treads goes down from it. The floor rolls, swings from
+side to side and widens round the temple; two spurs of the hills lie across the banks; crags stand up out of the
+floor. The temple is ground, not a piece: five tiers of six blocks, each five back from the one under it, a stair of
+thirty treads straight up its south face to a top 24.5 in radius, which is the Lord's. The wall at the head stands
+sheer over its pool (everywhere else a bank comes down to the water at eight in five), and the fall is thirteen wide
+and the wall's whole height. The run at E rank, 10 legs: the way in; a den by the river; a den in a hollow of the west
+wall, off the way, with a track in from below and out above (the way round); an ambush on a rise; the river's gorge
+crossed dead level on a broken bridge; a den on the east bank; a hidden pocket in the east wall, with a lamp; a second
+ambush; the temple's forecourt, where the Warden stands, behind a gate; the stair, the Lord's door across its head,
+the top. A higher rank lengthens the valley by 12 a rank (400 long at E): at 44 a rank the temple was out of sight
+from the way in at any rank above D.
+
+**The Overgrown Temple's country** (`land/TempleCountry`). No new blocks: the Fane family and the temple's own plants.
+One green: moss underfoot lying in layers, rooted earth in patches under it, cliffs of pale stone in courses with a
+dark course every ninth row and moss on every ledge, an old flagged road half taken back. Great trees in stands with
+clearings between (lower near the way in, so the valley is seen over them), a trunk on buttress roots, a crown in two
+or three masses lit on top and dark underneath, vines from its rim; ferns in clumps, moss creeping over stone, fallen
+leaves. Ruined pillars round the dens, an idol between braziers at every other one, braziers along the road. What a
+country built (the temple's tiers) is the same stone dressed, a dark plinth and a band of brick to every tier. The
+Lord's door is a thicket. Fallwater Vale's hour is the morning after rain: the sun at 328, a clear yellow-green
+light (#f2ffd6), `sky_color` #8fc4b0, `fog_color` #b4d2a2, a grade of teal shade under yellow-green leaf light, mist
+on the river only, fireflies, moths, dust and spores in the air, frogs. Lord: the Root Saint.
+
+**The Basin** (`kit/land/Basin`). A wide bowl among peaks, its sides in three benches stepping down twelve blocks at
+a time to a lake 88 in radius, and on an island in the lake the country's hall. The way in stands on a prow at the
+very lip of the top bench (from a bench's middle its own edge hides the lake). The way goes down bench by bench and
+turns back on itself at the foot of each ramp, so the island is always in front: along the top bench, a ramp cut in
+the cliff, a hairpin; back along the second and over a crevasse that splits the bench from the cliff behind it to its
+edge, on a broken bridge; a ramp, a hairpin; back along the third; a last ramp to the shore, where the Warden holds a
+court behind a gate; then straight out across the lake to the island, whose round floor (radius 23.5) is the Lord's,
+with rock raised out of the lake behind it for the hall to stand on. A steep track cuts the first corner by a ledge
+(the way round), and a pocket is cut into the cliff behind the third bench. 14 legs. A bench is 24 wide plus 9 a
+rank, so the way in is 183 blocks from the island's middle at E and 318 at S.
+
+**The Frost Monastery's country** (`land/FrostCountry`). No new blocks. One white: snow over everything in layers,
+grey only where it is too steep to lie, along the middle of the road and on what was built. Every cliff is one of the
+monks' old walls: cut stone, a dark course every eighth row, ice hanging down it in falls two blocks wide, snow
+clinging in patches; a crevasse's walls are ice lit from inside. Water is ice: the lake is swept bare in lanes, snow
+lying in swells between, here and there a light under it, its bed dark so it looks deep; the road crosses it flush,
+butter lamps on red posts either side all the way. Masts of prayer flags stand off the road, a chorten at every other
+den and a few on the benches, ice crystals where the wind leaves them. The Lord's door is a wall of ice. Its hall
+(`Dzong`) is the one thing still whole: the Lord's court in front, a round floor inside a low white wall with twelve
+piers, a lamp on each, a gate under a red beam hung with flags; behind it the keep in three tiers, 73, 53 and 31
+blocks wide, each set back from the one under it, every wall leaning in a block in ten, a foot of the old stone, white
+above with windows two rows high, a red storey under each eave with a lamp in most of its windows, a dark eave a block
+proud all round with ice under it and snow on the terrace over it, a turret on each front corner of the first
+terrace, a dark roof stepping in to a ridge 90 blocks over the court, and a lamp on the ridge. The Hush Tarn's hour
+is the first light of a clear winter morning: the sun at 292, a cold white light (#eef6ff), `sky_color` #5e9fe6,
+`fog_color` #dcecff, a cold grade (warmth -0.22, deep blue shadows under faintly gold highlights), block light a warm
+gold so the lamps are the only warm thing in it, a knee-deep breath of mist on the ice, fine snow in the air, wind.
+Lord: the Abbot of Frost.
+
+Tests, for each land at the lowest rank it opens at (`kit/land/LandTests`): `realm_<land>_walks_to_everything` (seeds 1
+and 2: the walk, the route check, the door) and `realm_<land>_nothing_floats`, for `cinder_crown`, `fallwater_vale` and
+`hush_tarn`. Tours `tools/autopilot/realm-<land>.txt`, each ending with the first look again with the Air off.
 
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 

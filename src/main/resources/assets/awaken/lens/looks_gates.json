@@ -1948,9 +1948,50 @@
       "light": 0.0,
       "ao": 0.9,
       "filmic": 1.0,
-      "mist": 0.6,
-      "mistHeight": 66.0,
+      "mist": 0.22,
+      "mistHeight": 64.0,
       "fogGlow": 0.5,
+      "skyGlow": 0.0
+    },
+    "biome:awaken:realm/hush_tarn": {
+      "_name": "The Hush Tarn: first light of a clear winter morning in a bowl of snow. A low cold sun, the lit snow faintly gold and every shadow a deep clean blue, the far rim sharp, the monastery's lamps the only warm thing in it",
+      "exposure": 0.96,
+      "contrast": 1.1,
+      "saturation": 1.08,
+      "warmth": -0.22,
+      "shadowTint": [
+        0.34,
+        0.5,
+        0.9
+      ],
+      "highlightTint": [
+        1.0,
+        0.96,
+        0.88
+      ],
+      "splitTone": 0.5,
+      "vignette": 0.22,
+      "bloom": 0.7,
+      "bloomThreshold": 0.82,
+      "skyBloom": 0.15,
+      "shafts": 0.6,
+      "haze": 0.3,
+      "hazeStart": 0.3,
+      "hazeTint": [
+        0.84,
+        0.92,
+        1.0
+      ],
+      "hazeTintMix": 0.4,
+      "hazeDesaturate": 0.05,
+      "sunsetWarmth": 0.15,
+      "sunGlow": 0.5,
+      "light": 0.0,
+      "ao": 0.85,
+      "filmic": 1.0,
+      "mist": 0.12,
+      "mistHeight": 63.0,
+      "fogGlow": 0.4,
       "skyGlow": 0.0
     }
   }

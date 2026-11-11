@@ -88,9 +88,18 @@ public final class TempleCountry extends GeneratedLand {
         return "Roots have grown across the head of the stair, as thick as your arm. Something down in the valley is holding them there.";
     }
 
+    /** The Lord's door is a thicket: leaf, with roots as thick as an arm through it. */
+    @Override
+    protected BlockState door(int x, int y, int z) {
+        Own o = own();
+        double k = N.rnd(x * 31L + y, z, seed + 41);
+        return N.rnd(Math.floorDiv(x + y, 2), z, seed + 42) < 0.3 ? dress.bars() : k < 0.3 ? o.leafLit : k < 0.65 ? o.leaf : o.leafDeep;
+    }
+
     @Override
     public dev.awaken.gates.world.FloorAir air() {
-        return airOf(new AirPlan().mist(WATER + 2, 5, 0xb8d8a8, 0.5F).mist(WATER + 18, 6, 0xd0e8c0, 0.25F));
+        // mist on the water only: any higher and the length of the valley is looked at through it, and its head is lost
+        return airOf(new AirPlan().mist(WATER + 1, 4, 0xc8e4c0, 0.4F));
     }
 
     /**

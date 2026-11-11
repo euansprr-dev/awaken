@@ -42,7 +42,8 @@ final class Valley extends Landform {
 
     Valley(GeneratedLand land) {
         super(land, 0x7A11E7L);
-        lh = 200 + 44 * rank;
+        // a higher rank's valley is longer, but never so long that the temple is out of sight from the way in
+        lh = 200 + 12 * rank;
         nWide = N.noise(seed + 811);
         nFloor = N.noise(seed + 812);
         nCrag = N.noise(seed + 813);
@@ -122,8 +123,8 @@ final class Valley extends Landform {
             boolean chute = v < -lh - 24 && Math.abs(u) < 13, slot = v > lh && Math.abs(u - river(v)) < 9;
             if (!slot) y += chute ? 64 : 58 * N.smooth(0, 24, e) + 6 * N.smooth(24, 70, e) + 5 * N.fbm(nTop, u, v, 1 / 40.0, 2) * N.smooth(24, 50, e);
         }
-        // the banks come down to the water
-        return Math.min(y, WATER + 0.7 + dw * 1.6) + 0.4 * nFine.get(u / 6.1, v / 6.1);
+        // the banks come down to the water; but the wall at the valley's head stands sheer over its pool, for the fall to come down
+        return (v < -lh - 24 ? y : Math.min(y, WATER + 0.7 + dw * 1.6)) + 0.4 * nFine.get(u / 6.1, v / 6.1);
     }
 
     @Override
@@ -268,7 +269,8 @@ final class Valley extends Landform {
         land.must(new LandPieces.Gate(0, fz + 10, 9, true, land));
         stone(lx(7), fz + 5, "the temple's foot");
         land.must(new LandPieces.Temple(0, li(zv), zBase, TIERS, TIER_H, TIER_RUN, TOP, seed + 95, land));
-        land.must(new LandPieces.Falls(-4, 4, li(-lh - 24), land));
+        land.must(new LandPieces.Falls(-6, 6, li(-lh - 24), land));
+        land.maybe(new LandPieces.LampPost(lx(ku - 2), li(vK) + 4, 2, land));
         land.heartDoor(-4, zs - TIERS * TIER_H - 1, 4, zs - TIERS * TIER_H - 1, zTop, 6, 0, li(zv), TOP + 0.4);
 
         // ---- the run

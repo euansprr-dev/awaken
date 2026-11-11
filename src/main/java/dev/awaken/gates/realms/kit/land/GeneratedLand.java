@@ -125,6 +125,8 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
 
     private final SimplexNoise fine, patch, strata, vein, slow;
     protected Dress dress;
+    /** Whether this country's water is a body (ice): then it is ground, a lake is somewhere to walk, and a skin's growth lies on it. */
+    private boolean frozen;
     Landform form;
     private final List<Edit> heartOpen = new ArrayList<>(), heartShut = new ArrayList<>();
     private int[] heart;
@@ -160,6 +162,20 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
 
     /** What a skin stands in the land once the run is laid out: its trees or what stands in for them, its lamps, its ruins. */
     protected void furnish() {}
+
+    /**
+     * The great hall a landform stands at its heart (the Basin's island): a round floor {@code radius} across the middle at
+     * {@code feet}, its way in on the south side five wide, and whatever the country builds round and behind it. A skin
+     * with builders of its own answers with their work; the plain answer is a ruin of the land's own rock.
+     */
+    protected Piece<? super Kit> hall(int cx, int cz, int feet, double radius, long salt) {
+        return new LandPieces.Hall(cx, cz, feet, radius, salt, this);
+    }
+
+    /** One cell of the Lord's door while it is shut: a body, whatever this country closes a way with. */
+    protected BlockState door(int x, int y, int z) {
+        return dress.bars();
+    }
 
     /** A den's place, as the landform asks for it: what holds it (stones, a camp, a wall). {@code kind} goes round 0, 1, 2... */
     protected void denPlace(int x, int feet, int z, int radius, int kind, double wayX, double wayZ) {}
@@ -300,10 +316,9 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
      * until the last Warden falls, shuts again behind whoever goes in, and opens when nobody is left inside.
      */
     final void heartDoor(int x0, int z0, int x1, int z1, int feet, int high, int cx, int cz, double radius) {
-        BlockState bars = dress.bars();
         for (int x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) for (int z = Math.min(z0, z1); z <= Math.max(z0, z1); z++) {
             for (int y = Math.max(feet, ground(x, z) + 1); y < feet + high; y++) {
-                heartShut.add(new Edit(x, y, z, bars));
+                heartShut.add(new Edit(x, y, z, door(x, y, z)));
                 heartOpen.add(new Edit(x, y, z, AIR));
             }
         }
@@ -348,6 +363,7 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
     /** Lays the whole land out. Call once, last thing in the skin's constructor. */
     protected final void generate(Landform.Kind kind) {
         dress = makeDress();
+        frozen = V.holds(dress.water());
         form = Landform.make(kind, this);
         form.lay();
         if (grid == null) throw new IllegalStateException(kind + " laid no ways");
@@ -430,7 +446,8 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
 
     @Override
     public final int ground(int x, int z) {
-        return (halves(height(x, z, NEAR.get())) >> 1) - 1;
+        int y = (halves(height(x, z, NEAR.get())) >> 1) - 1;
+        return frozen && y < WATER ? WATER : y;
     }
 
     /** Where your feet are, standing at a column: the first cell over the ground. */
@@ -595,7 +612,12 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
     /** What goes on a column once the pieces stand: falls where what burns goes over a ledge, rubble at a wall's foot, the skin's growth. */
     private void finish(V v, Kit m, Scratch q, int a, int c) {
         int x = v.x0 - 2 + a, z = v.z0 - 2 + c, i = a * G + c, y = (q.h2[i] >> 1) - 1;
-        if (y < WATER || v.get(x, y, z) != q.cap[i]) return;
+        if (y < WATER) {
+            // a frozen lake is ground too: whatever the skin lays on open ground it may lay on the ice
+            if (frozen && v.get(x, WATER, z) == dress.water() && v.get(x, WATER + 1, z) == null) scatter(v, m, spot(q, a, c, x, z, false), WATER + 1);
+            return;
+        }
+        if (v.get(x, y, z) != q.cap[i]) return;
         BlockState over = v.get(x, y + 1, z);
         if (over != q.top[i]) return; // something was built here
         Spot s = spot(q, a, c, x, z, false);
@@ -633,7 +655,7 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
     /** The air every rolled land has, on top of what its skin asked for: still water at the sea, and the heart's own light. */
     protected final dev.awaken.gates.world.FloorAir airOf(dev.awaken.gates.realms.kit.AirPlan air) {
         int h = form.half();
-        air.water(WATER, -h, -h, h, h);
+        if (!frozen) air.water(WATER, -h, -h, h, h);
         if (heart != null) air.light(heart[0], heart[2] + 6, heart[1], airTint(), 30, 0.8F);
         return air.build();
     }

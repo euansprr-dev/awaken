@@ -40,6 +40,7 @@ public abstract class Landform {
     static Landform make(Kind kind, GeneratedLand land) {
         if (kind == Kind.ASCENT) return new Ascent(land);
         if (kind == Kind.VALLEY) return new Valley(land);
+        if (kind == Kind.BASIN) return new Basin(land);
         throw new IllegalArgumentException("the " + kind + " landform is not built yet");
     }
 

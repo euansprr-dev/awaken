@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * The rolled lands' own tests (SPEC §50.9, "Rolled lands"): a land rolled from a seed has to play whatever the seed, so
  * each is walked from the way in to every site and leg, held to the same route check a designed run is, and scanned for
- * anything floating. The seeds are the ones the suite uses.
+ * anything floating, at the lowest rank its gate opens at. The seeds are the ones the suite uses.
  */
 public final class LandTests {
     private LandTests() {}
@@ -28,9 +28,9 @@ public final class LandTests {
         return LandPrograms.make(new Land.Ctx(bp, program, rank, seed, 1));
     }
 
-    private static void walks(net.minecraft.gametest.framework.GameTestHelper h, String program, String theme, Landform.Kind kind, String lord) {
+    private static void walks(net.minecraft.gametest.framework.GameTestHelper h, String program, String theme, Landform.Kind kind, String lord, Rank rank) {
         for (long seed : new long[]{1, 2}) {
-            Land land = land(program, theme, kind, lord, Rank.E, seed);
+            Land land = land(program, theme, kind, lord, rank, seed);
             WalkCheck.Walk walk = WalkCheck.walk(land);
             if (!walk.unreachable().isEmpty()) h.fail("seed " + seed + ": can't reach " + walk.unreachable());
             RouteCheck.Report route = RouteCheck.check(land, walk);
@@ -40,8 +40,8 @@ public final class LandTests {
         h.succeed();
     }
 
-    private static void floats(net.minecraft.gametest.framework.GameTestHelper h, String program, String theme, Landform.Kind kind, String lord) {
-        Land land = land(program, theme, kind, lord, Rank.E, 1);
+    private static void floats(net.minecraft.gametest.framework.GameTestHelper h, String program, String theme, Landform.Kind kind, String lord, Rank rank) {
+        Land land = land(program, theme, kind, lord, rank, 1);
         int half = land.halfSize();
         FloatCheck.Report r = FloatCheck.scan(land, -half, -half, half, half);
         if (!r.clean()) h.fail(r.summary());
@@ -49,9 +49,11 @@ public final class LandTests {
     }
 
     public static void register() {
-        AwakenTests.register("realm_cinder_crown_walks_to_everything", 4800, h -> walks(h, "awaken:ember_country", "ember_mines", Landform.Kind.ASCENT, "ember_tyrant"));
-        AwakenTests.register("realm_cinder_crown_nothing_floats", 4800, h -> floats(h, "awaken:ember_country", "ember_mines", Landform.Kind.ASCENT, "ember_tyrant"));
-        AwakenTests.register("realm_fallwater_vale_walks_to_everything", 4800, h -> walks(h, "awaken:temple_country", "overgrown_temple", Landform.Kind.VALLEY, "root_saint"));
-        AwakenTests.register("realm_fallwater_vale_nothing_floats", 4800, h -> floats(h, "awaken:temple_country", "overgrown_temple", Landform.Kind.VALLEY, "root_saint"));
+        AwakenTests.register("realm_cinder_crown_walks_to_everything", 4800, h -> walks(h, "awaken:ember_country", "ember_mines", Landform.Kind.ASCENT, "ember_tyrant", Rank.E));
+        AwakenTests.register("realm_cinder_crown_nothing_floats", 4800, h -> floats(h, "awaken:ember_country", "ember_mines", Landform.Kind.ASCENT, "ember_tyrant", Rank.E));
+        AwakenTests.register("realm_fallwater_vale_walks_to_everything", 4800, h -> walks(h, "awaken:temple_country", "overgrown_temple", Landform.Kind.VALLEY, "root_saint", Rank.E));
+        AwakenTests.register("realm_fallwater_vale_nothing_floats", 4800, h -> floats(h, "awaken:temple_country", "overgrown_temple", Landform.Kind.VALLEY, "root_saint", Rank.E));
+        AwakenTests.register("realm_hush_tarn_walks_to_everything", 4800, h -> walks(h, "awaken:frost_country", "frost_monastery", Landform.Kind.BASIN, "abbot_of_frost", Rank.C));
+        AwakenTests.register("realm_hush_tarn_nothing_floats", 4800, h -> floats(h, "awaken:frost_country", "frost_monastery", Landform.Kind.BASIN, "abbot_of_frost", Rank.C));
     }
 }

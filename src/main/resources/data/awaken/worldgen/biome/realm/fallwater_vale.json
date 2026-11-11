@@ -46,7 +46,7 @@
     "minecraft:visual/sky_light_factor": 1.0,
     "minecraft:audio/ambient_sounds": {
       "mood": {
-        "sound": "minecraft:ambient.basalt_deltas.mood",
+        "sound": "minecraft:ambient.cave",
         "tick_delay": 6000,
         "block_search_extent": 8,
         "offset": 2.0
