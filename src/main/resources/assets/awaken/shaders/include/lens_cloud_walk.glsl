@@ -17,6 +17,11 @@ vec4 cloudNear(vec3 v, float scene) {
     if (!cloudBlocks() || cp.x <= 0.0 || f16.w <= 0.0) return vec4(0.0, 0.0, 0.0, 1.0);
     vec3 l = f14.xyz;
     float camY = f12.y;
+    // (Lite, SPEC §22 "Lite", has no far clouds' pass behind this walk, so here it goes as far as that pass does: only
+    // the low band of sky between the two reaches walks farther, some twenty cells at most, and a block twelve wide is
+    // still a dozen pixels at a thousand blocks)
+    bool lite = P(25).r > 0.5;
+    float reach = lite ? CLOUD_NEAR + 600.0 : CLOUD_NEAR;
     // the layer on this ray, as far as the near walk goes
     float oy = camY - (cp.x - cloudUnder()), thick = cloudThick(), t0 = 0.0, t1 = 0.0;
     if (abs(v.y) > 1.0e-4) {
@@ -24,9 +29,9 @@ vec4 cloudNear(vec3 v, float scene) {
         t0 = max(min(a, b), 0.0);
         t1 = max(a, b);
     } else if (oy > 0.0 && oy < thick) {
-        t1 = CLOUD_NEAR;
+        t1 = reach;
     }
-    t1 = min(min(t1, scene), CLOUD_NEAR);
+    t1 = min(min(t1, scene), reach);
     if (t1 <= t0) return vec4(0.0, 0.0, 0.0, 1.0);
 
     // the walk (lens_clouds.fsh's blockPiece, with the light kept as two sums until a cloud is met)
@@ -114,12 +119,8 @@ vec4 cloudNear(vec3 v, float scene) {
     // into the haze with distance, as the far ones go
     float at = tHit > 0.0 ? tHit : t0;
     float far = smoothstep(260.0, 1500.0, at), gone = smoothstep(520.0, 1500.0, at) * 0.6;
-    // (Lite has no far clouds behind these, SPEC §22 "Lite": they are gone into the haze before the walk's end, where
-    // the layer would stop at a line across the sky)
-    if (P(25).r > 0.5) {
-        far = max(far, smoothstep(240.0, 600.0, at));
-        gone = max(gone, smoothstep(330.0, 620.0, at));
-    }
+    // (and in Lite the last of them go before the walk's end, where the layer would stop at a line across the sky)
+    if (lite) gone = max(gone, smoothstep(reach - 280.0, reach - 20.0, at));
     L = mix(L, airFog(v, f22.xyz, f16.z) * (1.0 - T), far * 0.9) * (1.0 - gone);
     T = 1.0 - (1.0 - T) * (1.0 - gone);
     return vec4(L, T);

@@ -6447,8 +6447,10 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
   - **What it leaves out**: everything that reads the world a second time. Sun shadows, contact shadows, ambient
     occlusion, the warm and cool light, wet ground, water reflections, the lit air's mist and its beams between
     trees, the light's motes (`LensParticles`), and the far clouds' pass with the soft rain it draws under a storm.
-    With no far clouds behind them the near ones are gone into the haze by 620 blocks (`cloudNear`), where the layer
-    would otherwise stop at a line across the sky.
+    The clouds keep their reach all the same: with no far pass behind it, Lite's walk of the blocks (`cloudNear`) goes
+    1,240 blocks where Cinematic's goes 640 and hands over, so the horizon keeps its band of cloud (the first tour, run
+    42955395926, ended them at 620 and the horizon stood empty beside Cinematic's). Only the low band of sky between
+    the two reaches walks farther, and the last of them fade before the walk's end.
   - **How**: `lens_lite.json` is ten passes where Cinematic's is fourteen and Swift's eight: the far probe and its
     copy, the Air's sky, the bloom prefilter (with the cloud walk at half size), three blur steps, the shafts, the
     composite, the copy out (which straight out skips, "The trim"). It runs Cinematic's own prefilter and composite
