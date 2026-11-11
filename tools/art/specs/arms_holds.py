@@ -85,18 +85,22 @@ EDGES = {
     ("daggers", "E"): 1,     # the skinning knife, its straight back to -x
     ("daggers", "D"): -1,    # the boar's tusk, honed along its inside (it curves to -x)
     ("daggers", "B"): 1,     # the talon, curving forward to +x, cutting on its inside
-    # one weapon's own, by its id: a head that works one way in a style whose forged weapons work both ways (Euan
-    # 2026-11-11, the Toll: "facing the wrong way and hitting with the wrong end"; arms_weapons.check holds each design to it)
+    # heads that work one way in a style whose forged weapons work both ways (Euan 2026-11-11, the Toll: "facing the
+    # wrong way and hitting with the wrong end"; FACES below; arms_weapons.check holds the Maul's, Axe's and Scythe's)
+    ("chainblade", "D"): -1,  # the tusk hook, curling to -x, its horn barb on its back
+    ("chainblade", "B"): -1,  # the Veil sickle, curling to -x
+    "lantern_broker_chainblade": -1,  # the hooked blade from the lantern, curling to -x
     "bell_warden_maul": -1,  # the bell's mouth, its one striking face; its crown and hanging loop to +x
 }
 
-# The face a style's one-faced weapons are held with, where its forged weapons strike with either (a hammer's two
-# faces), in design terms: the Maul's +x, the face its hold turns to the front, which most of its baked blows land with
-# (its backhands land with -x: strike_2, strike_4, riposte, slipcut, undercut in first person; anim_lab.py audit). A
-# one-faced weapon of the style (its own entry in EDGES) is turned in both holds so its face is that one, and turned
-# half round about its length in the fist through each blow that lands with the other (anim_lab.faced: first person's
-# turn, third person's turned wrists).
-FACES = {"maul": 1}
+# The side a style's one-sided heads are held with, where its forged weapons strike with either (a hammer's two faces,
+# the Chainblade's dart), in design terms: the side its hold turns to the front, which most of its baked blows land
+# with. The Maul's +x (its backhands land with -x: strike_2, strike_4, riposte, slipcut, undercut in first person;
+# anim_lab.py audit); the Chainblade's -x, where its hooks curl (its plunge and execution land with +x, a hook's back).
+# A one-sided head of the style (its entry in EDGES) is turned in both holds so its working side is that one, and
+# turned half round about its length in the fist through each blow that lands with the other (anim_lab.faced: first
+# person's turn, third person's turned wrists).
+FACES = {"maul": 1, "chainblade": -1}
 
 
 def edge_of(style, tier=None, wid=None):

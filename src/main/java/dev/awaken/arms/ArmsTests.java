@@ -497,12 +497,15 @@ final class ArmsTests {
                 h.assertTrue(turned > 15F, a.id() + "'s first strike turns the blade into the cut on its hit (" + turned + " degrees)");
             }
         }
-        // a one-faced head (SPEC §25 "Working parts"; Euan 2026-11-11, the Toll "facing the wrong way and hitting with the
-        // wrong end"): its own turns, turned over in third person's hold like a weapon whose working side is its style's
-        // other, and the Toll's bell mouth (its design's -x, the item's upper left) away from the eye in either first-person
-        // hand, as the engine applies the hold (ItemTransform.apply: rotationXYZ, a left hand's y and z turned back)
-        h.assertTrue(FpSwings.faced3("bell_warden_maul"), "the Toll strikes with its bell's one face (fp_swings faced3)");
-        for (String wid : FpSwings.current().faced()) h.assertTrue(FpSwings.flipped3(wid), wid + " is one-faced: turned over in third person too");
+        // a one-sided head (SPEC §25 "One-faced heads"; Euan 2026-11-11, the Toll "facing the wrong way and hitting with the
+        // wrong end"): its own turns; the Toll, its mouth the other side from the forged mauls' front face, turned over in
+        // third person's hold too; and its bell mouth (its design's -x, the item's upper left) away from the eye in either
+        // first-person hand, as the engine applies the hold (ItemTransform.apply: rotationXYZ, a left hand's y and z turned back)
+        h.assertTrue(FpSwings.faced3("bell_warden_maul") && FpSwings.flipped3("bell_warden_maul"),
+                "the Toll strikes with its bell's one face (fp_swings faced3), turned over in third person (flipped3)");
+        for (String hook : new String[]{"beastbound_chainblade", "veilwoven_chainblade", "lantern_broker_chainblade"}) {
+            h.assertTrue(FpSwings.faced3(hook), hook + " cuts with its hook's inside only (fp_swings faced3)");
+        }
         com.google.gson.JsonObject display = json("/assets/awaken/models/item/bell_warden_maul_in_hand.json").getAsJsonObject("display");
         for (String side : new String[]{"firstperson_righthand", "firstperson_lefthand"}) {
             com.google.gson.JsonArray r = display.getAsJsonObject(side).getAsJsonArray("rotation");

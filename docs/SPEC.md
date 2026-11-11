@@ -7832,22 +7832,27 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
   (tools/arms/forms.py writes the shared moves' too, read from their path as the lab always read them), so first and
   third person do the same thing (a spear's Art is a thrust in both).
 - **One-faced heads** (Euan 2026-11-11, the Bell Warden's Toll: "facing the wrong way and hitting with the wrong end"):
-  a head that works one way, in a style whose forged weapons strike with either face (the Maul's two hammer faces),
-  declares its side by its own id like a single edge (arms_holds.EDGES: the Toll's bell mouth -x, its crown and
-  hanging loop +x). Undeclared, the Toll was held as drawn and its mouth faced the eye in the right hand.
-  `arms_weapons.py check` holds every Axe, Maul and Scythe head to it from its boxes: a head not mirrored about its
-  haft must declare a side, and the side it declares is the one its mass leans to. Its holds turn that face to the
-  front (arms_holds.FACES: the face a style's one-faced weapons are held with), and on each blow the style's baked keys
-  land with the other face (the backhands) the weapon turns half round about its own length in the fist on the way in,
-  whole just before the hit, and back as it comes home; the hand and the arm never turn. First person: FpSwings' per-move
-  `turn` (half turns a key, signed the way round that keeps the head away from the eye; the Maul's strike_2, strike_4,
-  riposte, slipcut and undercut), played by WeaponRenderer about the item's diagonal through its grip on the hands' own
-  clock and carried across a change of source like the hands (ArmsHands.roll). Third person: `wrist3t` and `wrist3st`,
-  the move's wrist keys with the turn in them (strike_2, strike_4, slipcut, undercut: the carry onto the body lands the
-  riposte square), for the weapons `faced3` names, which are also turned over in their hold (`flipped3`).
-  `anim_lab.py faced` writes both from the keys as they stand, and bake, splice, rerig and the rig's inject run it; the
-  audit counts a one-faced head's own face only. GameTest `arms_fp_swings` holds the Toll's mouth away from the eye in
-  both first-person hands and every turn home by its move's end.
+  a head that works one way, in a style whose forged weapons strike with either side (the Maul's two hammer faces, the
+  Chainblade's dart), declares its side like a single edge (arms_holds.EDGES: the Toll's bell mouth -x, its crown and
+  hanging loop +x; the Beastbound tusk hook, the Veilwoven sickle and the Lantern Broker's Due, each hook curling to -x
+  with its back, and the tusk's barb, to +x). Undeclared, each was held as drawn and the audit took either side as a
+  hit: the Toll's mouth faced the eye in the right hand and its backhands landed with the crown; the hooks' plunge and
+  execution landed with the hook's back, and in third person their three chain strikes and riposte. `arms_weapons.py
+  check` holds every Axe, Maul and Scythe head to it from its boxes: a head not mirrored about its haft must declare a
+  side, and the side it declares is the one its mass leans to. Its holds turn that side to the front
+  (arms_holds.FACES: the side a style's one-sided heads are held with, the Maul's +x and the Chainblade's -x), and on
+  each blow the style's baked keys land with the other side the weapon turns half round about its own length in the
+  fist on the way in, whole just before the hit, and back as it comes home; the hand and the arm never turn. First
+  person: FpSwings' per-move `turn` (half turns a key, signed the way round that keeps the head away from the eye; the
+  Maul's strike_2, strike_4, riposte, slipcut and undercut, the Chainblade's plunge and execution), played by
+  WeaponRenderer about the item's diagonal through its grip on the hands' own clock and carried across a change of
+  source like the hands (ArmsHands.roll). Third person: `wrist3t` and `wrist3st`, the move's wrist keys with the turn
+  in them (the Maul's strike_2, strike_4, slipcut, undercut, the carry onto the body landing its riposte square; the
+  Chainblade's strike_1 to 3 and riposte), for the weapons `faced3` names; the Toll, its mouth the other side from the
+  forged mauls' front face, is turned over in its hold too (`flipped3`). `anim_lab.py faced` writes both from the keys
+  as they stand, and bake, splice, rerig and the rig's inject run it; the audit counts a one-sided head's own side
+  only. GameTest `arms_fp_swings` holds the Toll's mouth away from the eye in both first-person hands, names the four
+  in faced3 and holds every turn home by its move's end.
 - **Third person, the wrist** (Euan 2026-10-26: "hold third person to the same working parts"; then "it's
   literally going through his body"): vanilla's third-person hold sets a weapon across the fist, square to the
   forearm, and a vanilla arm has no wrist, so the forearm's roll swings the blade round rather than turning its edge,
