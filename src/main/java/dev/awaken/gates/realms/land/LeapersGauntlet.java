@@ -20,7 +20,7 @@ import static dev.awaken.gates.realms.kit.N.rnd;
  * stand. No hall before the Long Run has a clock or costs anything to fall in.
  *
  * <p>Built so far: the way in, the first stand, the hall "Twice" (the double jump), the second stand, the hall "Through"
- * (the dash: a gap of nine, three presses over the way that still turn over, a gap of eight round a corner, a gulf of
+ * (the dash: a gap of nine, two presses over the way that still turn over, a gap of eight round a corner, a gulf of
  * twelve), the third stand and "Down" (the slam: a cracked deck under a gantry, three castings stood in a doorway, a ram
  * stuck down in the way with its plate in a sunk bay), the Long Run (three halls on three levels, a well between each
  * two, five rings, a clock) and the tally floor. Sizes are the plan's targets until the walk check runs on the leap's
@@ -365,10 +365,11 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         String[] moves = {"double", "dash", "slam"};
         for (int i = 0; i < 3; i++) stands.add(new Stand(moves[i], rounds[i].cx, rounds[i].plate(), rounds[i].cz, rounds[i].head()));
 
-        // three presses over the long deck of "Through", each a beat later than the one before, so a dash rides the beat
-        // down the line; set between the hall's beams
+        // two presses over the long deck of "Through", the second a beat later than the first, so a dash rides the beat
+        // down the line; set between the hall's beams, and clear of the turn at the deck's far end (a third there could
+        // be walked round by its corner)
         int n = 0;
-        for (int z : new int[]{-7, 1, 9}) rams.add(new Ram(-2, z, 2, z + 2, Y2, RAM_TALL, RAM_LIFT, RAM_BEAT, -RAM_LAG * n++, "", RAM, mats().iron));
+        for (int z : new int[]{-5, 3}) rams.add(new Ram(-2, z, 2, z + 2, Y2, RAM_TALL, RAM_LIFT, RAM_BEAT, -RAM_LAG * n++, "", RAM, mats().iron));
         // the ram stuck down in the way out of "Down": four deep, lifted for good by a slam on its plate
         rams.add(new Ram(125, 9, 127, 13, Y, 4, 4, 0, 0, "hammer", RAM, mats().iron));
         // two more on the Long Run's second level, on the same beat
@@ -387,7 +388,7 @@ public final class LeapersGauntlet extends CrawlLand<StoppedWorks.M> {
         int[] count = new int[2];
         for (Leap l : taught) {
             // the presses are the second place the dash is asked for
-            if (l.move().equals("dash") && count[1] == 1) spots.add(new Spot("use/dash/" + ++count[1], 0, Y2, -9, 0, Y2, 13));
+            if (l.move().equals("dash") && count[1] == 1) spots.add(new Spot("use/dash/" + ++count[1], 0, Y2, -8, 0, Y2, 8));
             int k = l.move().equals("double") ? 0 : 1;
             spots.add(new Spot("use/" + l.move() + "/" + ++count[k], l.x0(), l.y0(), l.z0(), l.x1(), l.y1(), l.z1()));
         }

@@ -9,7 +9,6 @@ import dev.awaken.gates.block.GateBlocks;
 import dev.awaken.gates.net.RigPayloads;
 import dev.awaken.gates.net.TrialPayloads;
 import dev.awaken.gates.run.GateMemory;
-import dev.awaken.gates.run.RigGauntletLive;
 import dev.awaken.gates.run.Runs;
 import dev.awaken.progression.Curve;
 import dev.awaken.progression.Progression;
@@ -281,7 +280,7 @@ public final class RealmTrial {
 
     /** The far line: the clock stops, the medal is struck, the trial pays what it pays, and the tally is sent to be shown. */
     private static void finish(ServerLevel level, ServerPlayer p, GateRecord g, Run run, Land.Timed t, long now) {
-        int ticks = (int) (now - run.started), medal = RigGauntletLive.medal(ticks, t.par());
+        int ticks = (int) (now - run.started), medal = RigPayloads.Run.medalFor(ticks, t.par());
         run.started = -1;
         run.done = true;
         GateMemory mem = p.getData(GatesRegistry.MEMORY.get());

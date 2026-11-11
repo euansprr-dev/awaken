@@ -26249,7 +26249,7 @@ plan with `leaperTrial` once it says it is ready, which it does not until someon
 - **Halls.** A hall is a machine hall 17 wide with a way of decks 5 wide down its middle over a casting pit 18 down
   (piers every eighth cell, a beam between each pair, press heads stopped over the pit, a lit casting floor). The way in:
   a gap of 2, a step, a gap of 3, then the gulf (6 wide, the far side 2 higher) with the first stand's room off its lip.
-  "Twice": that gulf, a step 3 up, a gap of 4 onto a ledge 2 higher, a gap of 11 beside a wall. "Through": a gap of 9, three
+  "Twice": that gulf, a step 3 up, a gap of 4 onto a ledge 2 higher, a gap of 11 beside a wall. "Through": a gap of 9, two
   presses over a deck 28 long, a turn with a gap of 8, a gulf of 12. "Down" is rooms, not a hall: a gantry over a well
   with a cracked deck across it 5 down and the way on 3 under that; three castings stood in a doorway with a brass plate
   before them; a room with a bay sunk 4 and a ram stuck down in its way out.
@@ -26261,8 +26261,9 @@ plan with `leaperTrial` once it says it is ready, which it does not until someon
   it opens its bars all the same, with no stroke.
 - **The presses of "Through"** (`Land.Ram`, run every tick by `RealmTrial.tickServer` for gates someone is near): a
   head 5 by 3 and 3 deep on a rod, real blocks, always in view: up 5 over the deck, a puff of dust 12 ticks before it
-  falls, down in 3 ticks, down for 34, up at a cell a tick; a beat of 64 ticks, each press 10 ticks after the one before
-  it, so a dash rides the beat down the line and a runner on foot takes them one beat each. A press never hurts: whoever
+  falls, down in 3 ticks, down for 34, up at a cell a tick; a beat of 64 ticks, the second press 10 ticks after the
+  first, so a dash rides the beat down the line and a runner on foot takes them one beat each. Two in "Through" (a third
+  at the deck's turn could be walked round by its corner) and two on the Long Run. A press never hurts: whoever
   it would come down on is set clear of it on the nearer side.
 - **What a slam moves** (`Land.Slam`, `TrialHooks.onSlam`): a slam landing on the cracked deck breaks it; one landing
   near the castings clears them out of their doorway (from either side); one landing on the bay's plate lifts the stuck
