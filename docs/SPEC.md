@@ -4420,20 +4420,22 @@ Held at the edge of the land the client has (the edge hold, §28.9): a windway's
     travels (visible a little over half the way). About a quarter of the body's gusts and an eighth of the outer
     ones **curl**: over a few blocks the line runs on ahead, rises, comes back over itself and carries on (a loop
     two to three and a half blocks tall). Brighter round you while the lane holds you (1.3 times, within 40).
-  - A gust is a ribbon turned to face you. Across its width its strength falls from the middle to nothing ((1 - x²)²
-    over seven columns of vertices within 44 blocks, five to 130, three beyond), so it has no edge; its width and
-    strength taper to nothing at its tail and its head; it is a quarter to a half block wide, wider with distance
-    so a far gust stays a line. It fades out over a lane's first 40 blocks and its last 48 (nothing begins or ends
+  - A gust is a ribbon turned to face you. Across its width its strength falls from the middle to nothing (seven
+    columns of vertices within 44 blocks, five beyond), so it has no edge; its width and strength taper to nothing
+    at its tail and its head; it is a third to two thirds of a block wide, wider with distance so a far gust stays
+    a line. Two tones across: a pale core and a soft blue-grey flank. Pale air has to read on a blue sky, which the
+    core does, and on white haze and cloud, where a white line is no line at all (the first build's streaks showed
+    by day only where its slab stood behind them): there the flank carries it, and on the blue sky the flank is lost. It fades out over a lane's first 40 blocks and its last 48 (nothing begins or ends
     at an island), with distance from 176 to 320, and within 5 blocks of the eye, so none smears across the view.
-    Pale mint-white by day (244, 255, 250), a dimmer sea-green by night (138, 198, 192) where white lines would
-    glare.
+    The core is pale mint-white by day (244, 255, 250), a dimmer sea-green by night (138, 198, 192) where white
+    lines would glare; the flank (104, 146, 204) by day, a faint teal glow by night (48, 90, 106).
   - Drawn after the level in one pass of its own (`RenderLevelStageEvent.AfterLevel`, as the gate pillars are):
     the game's plain position-and-colour quads, alpha-blended, tested against the world's depth and writing none,
     no fog (they fade themselves). With the updrafts' columns (§17.6) in the same pass. Under Lite, Cinematic and
     Ultra the pass goes into Lens's layer for light, laid over the finished picture (§22 "Light over the Air");
     otherwise straight onto the frame. No lane or vent near: no buffer mapped, no pass. Cost: the vertices are
     written straight into a mapped buffer (16 bytes each, at most 12,288 quads, 0.8 MB; a lane in full view is
-    some 1,500), nothing allocated per frame; the pass itself is a load and store of the frame's depth, as a gate
+    some 2,000), nothing allocated per frame; the pass itself is a load and store of the frame's depth, as a gate
     pillar's is. Frame times not measured yet (the Mac is his while he plays).
   - A rush of air as a lane takes you, its breath every 3.5 s while it carries you (unchanged).
 - Dev: `/awaken ascent windway` (the lanes known, the nearest), `/awaken ascent windway goto` (onto the deck of the

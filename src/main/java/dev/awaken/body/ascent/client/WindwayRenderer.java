@@ -47,7 +47,7 @@ public final class WindwayRenderer {
     /** How far along a lane it's drawn either side of you. */
     static final double VIEW = 320;
     private static final double TAU = Math.PI * 2;
-    /** Room for every gust's quads (a near one takes up to 160, a far one 10); past it the rest are left out. */
+    /** Room for every gust's quads (a near one takes up to 170, a far one 20); past it the rest are left out. */
     private static final int MAX_QUADS = 12288, QUAD_BYTES = 64;
 
     /**
@@ -66,20 +66,15 @@ public final class WindwayRenderer {
             new Stream(1.65, 19.0, 9, 15, 0.3, 4.6, 0.18, 0.24, 0.75, 0.0, 41.77),
     };
 
-    // the falloff across a ribbon, (1 - x²)² from the middle out: nothing at the edge, so no edge shows. Fewer columns
-    // further off, where a ribbon is a few pixels wide
-    private static final float[] X_NEAR = {-1F, -2 / 3F, -1 / 3F, 0F, 1 / 3F, 2 / 3F, 1F}, W_NEAR = bell(X_NEAR);
-    private static final float[] X_MID = {-1F, -0.5F, 0F, 0.5F, 1F}, W_MID = bell(X_MID);
-    private static final float[] X_FAR = {-1F, 0F, 1F}, W_FAR = bell(X_FAR);
-
-    private static float[] bell(float[] xs) {
-        float[] w = new float[xs.length];
-        for (int i = 0; i < xs.length; i++) {
-            float v = 1F - xs[i] * xs[i];
-            w[i] = v * v;
-        }
-        return w;
-    }
+    // Across a ribbon, from one edge to the other: where each column of vertices stands, how strong it is, and how much
+    // of it is the pale core (the rest is the air's shade, a soft blue-grey flank). Nothing at the edge, so no edge
+    // shows; and two tones, because pale air has to read on a blue sky (the core does) and on white haze and cloud
+    // alike (the flank does: a white line there is no line at all). Fewer columns further off
+    private static final float[] X_NEAR = {-1F, -2 / 3F, -1 / 3F, 0F, 1 / 3F, 2 / 3F, 1F}, W_NEAR = {0F, 0.34F, 0.74F, 1F, 0.74F, 0.34F, 0F},
+            K_NEAR = {0F, 0F, 0.55F, 1F, 0.55F, 0F, 0F};
+    private static final float[] X_FAR = {-1F, -0.5F, 0F, 0.5F, 1F}, W_FAR = {0F, 0.46F, 1F, 0.46F, 0F}, K_FAR = {0F, 0.12F, 1F, 0.12F, 0F};
+    /** This frame's colour for each column (r, g, b in the low bytes, as the vertex holds them). */
+    private static final int[] RGB_NEAR = new int[X_NEAR.length], RGB_FAR = new int[X_FAR.length];
 
     // one gust's line, camera-relative: its points, their strength and half width, and the ribbon's side at each
     private static final int MAX_POINTS = 48;
@@ -98,8 +93,7 @@ public final class WindwayRenderer {
     private static double cx, cy, cz, time;
     /** The way the camera looks. */
     private static double fx, fy, fz;
-    /** The air's colour this hour (r, g, b, 0-255) and how strong it is drawn. */
-    private static int tintR, tintG, tintB;
+    /** How strong the air is drawn this hour. */
     private static float tintA;
     private static Windways.@Nullable Way riding;
     private static boolean broken;
@@ -161,11 +155,13 @@ public final class WindwayRenderer {
         fx = -view.m02();
         fy = -view.m12();
         fz = -view.m22();
-        // pale mint-white by day, a dimmer sea-green by night, when white lines on a dark sky would glare
+        // the core pale mint-white by day, a dimmer sea-green by night, when white lines on a dark sky would glare; its
+        // flank a blue-grey by day (darker than haze and cloud, lost on the blue sky), a faint teal glow by night
         float dark = Math.clamp(mc.level.getSkyDarken() / 11F, 0F, 1F);
-        tintR = Math.round(244 - 106 * dark);
-        tintG = Math.round(255 - 57 * dark);
-        tintB = Math.round(250 - 58 * dark);
+        float cr = 244 - 106 * dark, cg = 255 - 57 * dark, cb = 250 - 58 * dark;
+        float sr = 104 - 56 * dark, sg = 146 - 56 * dark, sb = 204 - 98 * dark;
+        for (int i = 0; i < K_NEAR.length; i++) RGB_NEAR[i] = rgb(sr, sg, sb, cr, cg, cb, K_NEAR[i]);
+        for (int i = 0; i < K_FAR.length; i++) RGB_FAR[i] = rgb(sr, sg, sb, cr, cg, cb, K_FAR[i]);
         tintA = 1F - 0.18F * dark;
 
         if (ring == null) {
@@ -243,7 +239,7 @@ public final class WindwayRenderer {
                 int lod = dist < 44 ? 0 : dist < 130 ? 1 : 2;
                 int n = lod == 0 ? 14 : lod == 1 ? 8 : 5;
                 // wider with distance, so a far gust is still a line and not a shimmer
-                double half = (st.halfMin + (st.halfMax - st.halfMin) * h6) * (1 + dist / 110);
+                double half = (st.halfMin + (st.halfMax - st.halfMin) * h6) * 1.3 * (1 + dist / 110);
                 double twist = (h3 - 0.5) * 0.06, wob = 0.25 + 0.45 * h2, phase = h6 * TAU + time * 0.045;
                 // a curl: over a short stretch the line runs on ahead, rises, comes back over itself and carries on
                 boolean curl = lod < 2 && h5 > 1 - st.curls;
@@ -311,7 +307,7 @@ public final class WindwayRenderer {
             double length = 7 + 6 * h3, speed = 0.3 + 0.2 * h2;
             double y0 = ((time * speed + h5 * (top + length)) % (top + length)) - length;
             double ang0 = h1 * TAU + time * 0.006 * (k % 2 == 0 ? 1 : -1), rad0 = Updrafts.RADIUS * 0.8 * Math.sqrt(0.06 + 0.94 * h2);
-            double wind = (k % 2 == 0 ? 1 : -1) * (0.10 + 0.08 * h5), half = (0.20 + 0.12 * h3) * (1 + flat / 110);
+            double wind = (k % 2 == 0 ? 1 : -1) * (0.10 + 0.08 * h5), half = (0.20 + 0.12 * h3) * 1.3 * (1 + flat / 110);
             for (int i = 0; i <= n; i++) {
                 double f = i / (double) n, y = y0 + length * f;
                 double ang = ang0 + wind * y, rad = rad0 * (1 - 0.25 * Math.max(0, y) / top);
@@ -335,7 +331,8 @@ public final class WindwayRenderer {
      */
     private static void ribbon(int count, int lod) {
         if (count < 2) return;
-        float[] xs = lod == 0 ? X_NEAR : lod == 1 ? X_MID : X_FAR, ws = lod == 0 ? W_NEAR : lod == 1 ? W_MID : W_FAR;
+        float[] xs = lod == 0 ? X_NEAR : X_FAR, ws = lod == 0 ? W_NEAR : W_FAR;
+        int[] rgbs = lod == 0 ? RGB_NEAR : RGB_FAR;
         float lx = 0F, ly = 1F, lz = 0F;
         for (int i = 0; i < count; i++) {
             int a = Math.max(0, i - 1), b = Math.min(count - 1, i + 1);
@@ -357,23 +354,30 @@ public final class WindwayRenderer {
             if (PA[i] <= 0.004F && PA[i + 1] <= 0.004F) continue;
             if (at + (long) (xs.length - 1) * QUAD_BYTES > end) return;
             for (int c = 0; c + 1 < xs.length; c++) {
-                vertex(i, xs[c], ws[c]);
-                vertex(i, xs[c + 1], ws[c + 1]);
-                vertex(i + 1, xs[c + 1], ws[c + 1]);
-                vertex(i + 1, xs[c], ws[c]);
+                vertex(i, xs[c], ws[c], rgbs[c]);
+                vertex(i, xs[c + 1], ws[c + 1], rgbs[c + 1]);
+                vertex(i + 1, xs[c + 1], ws[c + 1], rgbs[c + 1]);
+                vertex(i + 1, xs[c], ws[c], rgbs[c]);
             }
         }
     }
 
-    /** One vertex: point i of the line, moved across the ribbon by x of its half width, at w of its strength. */
-    private static void vertex(int i, float x, float w) {
+    /** One vertex: point i of the line, moved across the ribbon by x of its half width, at w of its strength, in its column's colour. */
+    private static void vertex(int i, float x, float w, int rgb) {
         MemoryUtil.memPutFloat(at, PX[i] + SX[i] * x);
         MemoryUtil.memPutFloat(at + 4, PY[i] + SY[i] * x);
         MemoryUtil.memPutFloat(at + 8, PZ[i] + SZ[i] * x);
         int alpha = Math.clamp(Math.round(PA[i] * w * 255F), 0, 255);
         // r, g, b, a bytes
-        MemoryUtil.memPutInt(at + 12, alpha << 24 | tintB << 16 | tintG << 8 | tintR);
+        MemoryUtil.memPutInt(at + 12, alpha << 24 | rgb);
         at += 16;
+    }
+
+    /** The shade's colour to the core's by k, packed as a vertex holds it (r in the low byte). */
+    private static int rgb(float sr, float sg, float sb, float cr, float cg, float cb, float k) {
+        int r = Math.clamp(Math.round(sr + (cr - sr) * k), 0, 255), g = Math.clamp(Math.round(sg + (cg - sg) * k), 0, 255),
+                b = Math.clamp(Math.round(sb + (cb - sb) * k), 0, 255);
+        return b << 16 | g << 8 | r;
     }
 
     /** 0 to 1, eased at both ends. */

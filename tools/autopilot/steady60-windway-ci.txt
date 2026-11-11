@@ -57,9 +57,9 @@ shot w2_side_dusk
 cmd time set 5500
 wait 120
 shot w2_side_day
-# --- inside the lane, looking along it
+# --- inside the lane, on its heart, looking along it (the rim spot is 2 to the left of the lane and 10 over it)
 cmd tp @s ~ ~ ~ ~-90 0
-cmd tp @s ^-40 ^-8 ^40
+cmd tp @s ^-42 ^-1 ^40
 wait 100
 shot w3_inside_day
 cmd time set 12700
@@ -77,7 +77,7 @@ wait 120
 shot w4_start_day
 # --- by night under Lite and under Swift, from the side again
 cmd tp @s ~ ~ ~ ~180 0
-cmd tp @s ^40 ^8 ^
+cmd tp @s ^42 ^1 ^
 cmd tp @s ~ ~ ~ ~90 6
 cmd time set 18000
 lookswitch lite
