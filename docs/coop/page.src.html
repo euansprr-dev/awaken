@@ -1,0 +1,466 @@
+<title>Together, All the Way</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: one reading column (max 62rem); game-screen drawings take the full column and are always dark, like a
+   screenshot. Two people run through the page: Full in band blue, Gentle in rose. */
+:root {
+  --bg: #f3f2f0; --panel: #ffffff; --ink: #17181c; --muted: #5d626d; --line: #d9d8d4; --soft: #eae9e5;
+  --fighter: #1f6f9c; --rider: #a8553a; --ok: #2c7a4b; --warn: #8a5a00; --bad: #ad3535;
+  --display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #101114; --panel: #181a1f; --ink: #e8e8ea; --muted: #9c9fa8; --line: #2b2d34; --soft: #1f2127;
+  --fighter: #7fd4ff; --rider: #f0b79c; --ok: #74c493; --warn: #e2b659; --bad: #e58585; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #101114; --panel: #181a1f; --ink: #e8e8ea; --muted: #9c9fa8; --line: #2b2d34; --soft: #1f2127;
+  --fighter: #7fd4ff; --rider: #f0b79c; --ok: #74c493; --warn: #e2b659; --bad: #e58585; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px }
+.wrap { max-width: 62rem; margin: 0 auto; display: flex; flex-direction: column; gap: 60px }
+section, header { display: flex; flex-direction: column; gap: 18px; min-width: 0 }
+h1, h2, h3, h4 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15 }
+h1 { font-size: clamp(2.1rem, 6vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em }
+h2 { font-size: clamp(1.45rem, 3.5vw, 1.9rem); font-weight: 600; letter-spacing: -0.01em }
+h3 { font-size: 1.14rem; font-weight: 600; margin-top: 10px }
+h4 { font-size: 1rem; font-weight: 600 }
+p, ul, ol { margin: 0; max-width: 68ch }
+ul, ol { padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted) }
+.lead { font-size: 1.14rem; max-width: 62ch }
+.muted { color: var(--muted) }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums }
+q { font-style: italic }
+code { font-family: var(--mono); font-size: 0.85em; background: var(--soft); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere }
+.f { color: var(--fighter) } .r { color: var(--rider) }
+.answer { border-left: 3px solid var(--rider); padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 8px }
+.tag { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap }
+.tag.ok { color: var(--ok) } .tag.warn { color: var(--warn) } .tag.bad { color: var(--bad) } .tag.new { color: var(--rider) } .tag.keep { color: var(--fighter) }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel) }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line) }
+tr:last-child td { border-bottom: 0 }
+th { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--soft) }
+td.num, th.num { text-align: right; white-space: nowrap }
+td.plan { color: var(--rider); font-weight: 600 }
+td strong { font-weight: 600 }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+figcaption { font-size: 0.86rem; color: var(--muted); max-width: 74ch }
+.shot { overflow-x: auto; border-radius: 8px; border: 1px solid var(--line); background: #090c11 }
+.shot svg { display: block; width: 100%; height: auto }
+.pair { display: flex; flex-direction: column; gap: 22px }
+.board { display: flex; flex-direction: column; gap: 14px }
+.beat { display: grid; grid-template-columns: 11rem repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; padding-top: 14px; border-top: 1px solid var(--line) }
+.beat-head { display: flex; flex-direction: column; gap: 4px }
+.beat-head p { font-size: 0.9rem; color: var(--muted) }
+.beat-head .num { font-size: 0.78rem; color: var(--muted) }
+.pane { position: relative; border-radius: 6px; overflow: hidden; background: #090c11; border: 1px solid var(--line) }
+.pane svg { display: block; width: 100%; height: auto }
+.who { position: absolute; top: 6px; left: 8px; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; background: #0d1219; padding: 2px 6px; border-radius: 3px }
+.who.f { color: #7fd4ff } .who.r { color: #f0b79c }
+@media (max-width: 760px) { .beat { grid-template-columns: repeat(2, minmax(0, 1fr)) } .beat-head { grid-column: 1 / -1 } }
+@media (max-width: 480px) { .beat { grid-template-columns: minmax(0, 1fr) } }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px }
+.step svg { display: block; width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--line) }
+@media (max-width: 860px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 480px) { .steps { grid-template-columns: minmax(0, 1fr) } }
+.finding { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 4px 14px; padding-top: 16px; border-top: 1px solid var(--line) }
+.finding .big { font-family: var(--display); font-weight: 700; font-size: 1.5rem; color: var(--rider); line-height: 1.1 }
+.finding > div { display: flex; flex-direction: column; gap: 6px; min-width: 0 }
+.finding .ev { font-size: 0.84rem; color: var(--muted) }
+@media (max-width: 560px) { .finding { grid-template-columns: minmax(0, 1fr) } }
+.decisions { list-style: none; padding: 0; counter-reset: d; display: flex; flex-direction: column; gap: 0; max-width: none }
+.decisions li { counter-increment: d; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 4px 14px; padding: 14px 0; border-top: 1px solid var(--line); align-items: start }
+.decisions li::before { content: counter(d); font-family: var(--display); font-weight: 700; font-size: 1.25rem; color: var(--muted); line-height: 1.3 }
+.decisions .q { display: flex; flex-direction: column; gap: 4px }
+.decisions .q span { font-size: 0.9rem; color: var(--muted) }
+.decisions .rec { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ok); border: 1px solid currentColor; border-radius: 3px; padding: 2px 7px; white-space: nowrap; margin-top: 3px }
+@media (max-width: 560px) { .decisions li { grid-template-columns: 2rem minmax(0, 1fr) } .decisions .rec { grid-column: 2; justify-self: start } }
+a { color: var(--fighter) }
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">AWAKEN · a plan for your approval · nothing here is built · 11 Nov 2026</span>
+  <h1>Together, All the Way</h1>
+  <p class="lead">Co-op from the first bell to the last, for two people who always know where the other is, are never
+  split up by a rule, and fight the same fight at the difficulty each of them enjoys.</p>
+  <div class="answer">
+    <p><strong>Changed after your answer.</strong> You said no to the support job: she shouldn't become a healer, she
+    keeps her weapons and powers, and it's really two people on different difficulty. This version does that. The
+    thread powers, the light and the thread's rank are gone.</p>
+    <ul>
+      <li>The rules for sharing are already in the game and mostly sound. The <em>experience</em> of being two people
+      isn't: you can't see your partner, point at anything or share a home without typing a command, and a death or
+      a Reassessment splits you up.</li>
+      <li><strong>Her own difficulty.</strong> Each player has a switch, <strong>My fights: Full or Gentle</strong>. On
+      Gentle she fights the same Lord beside you with her own weapon and powers at full strength. What the fight throws
+      at <em>her</em> is plainer, slower and softer. Nothing aimed at you changes.</li>
+      <li>No tether, no card at the door, no penalties: the same XP, loot and rank. It's hers to switch any time out of
+      a fight.</li>
+      <li>Around that: fixes for two fighters, and the things a couple needs outside the fights. Alone, the game plays
+      exactly as it does today.</li>
+    </ul>
+  </div>
+  <p class="muted">The two players in the drawings are Euan and "Ana", an example name. The drawings are mockups I made
+  for this page, not screenshots.</p>
+</header>
+
+<section>
+  <span class="eyebrow">1 · What you asked for, and how we'll know it worked</span>
+  <h2>My reading of your brief</h2>
+  <ul>
+    <li><strong>Everything from A to Z works with two.</strong> The story, the first boss scene, every gate, the
+    Reassessments, levels, discovery, the end.</li>
+    <li><strong>Two ways to play a gate and a Reassessment.</strong> Both at full difficulty, or one of you on an easier
+    one: <q>two people having a different difficulty mode</q>, <q>simpler</q> but <q>still obviously action-based and
+    fun</q>, with <q>their weapons, their powers</q>, and <q>revertible</q>. It <q>doesn't need to be so fair</q> for her.</li>
+    <li><strong>Whatever is missing</strong> that would make co-op <q>20 times better</q> for a couple or friends,
+    <q>extremely smooth</q>.</li>
+  </ul>
+  <div class="scroll"><table>
+    <tr><th>Your words</th><th>What it has to look like</th><th>Not good enough</th></tr>
+    <tr><td>"works in co-op"</td><td>Every step of the journey has a two-player test and a two-player picture</td><td>It runs, but one of you waits or watches</td></tr>
+    <tr><td>"can't die as much as you"</td><td>On Gentle she's fully down no more than once in ten floors; the two of you are split by a death less than once a gate</td><td>Can't fail at all, or your fight gets easier because she came</td></tr>
+    <tr><td>"action-based and fun", "simpler"</td><td>She fights the whole fight with her own weapon and powers. Blows come at her about one phrase in four, each one she can read and answer by holding guard or stepping away</td><td>A job that isn't fighting; or your fight, only weaker</td></tr>
+    <tr><td>"doesn't need to be so fair"</td><td>Full hits, the same XP, loot and rank. Only titles for hard feats ask for Full</td><td>Penalties that make her a passenger</td></tr>
+    <tr><td>"revertible"</td><td>Her own switch, changed any time out of a fight</td><td>Chosen once, or only at a gate's door</td></tr>
+    <tr><td>"extremely smooth"</td><td>The two screens never disagree; nothing is told to only one of you</td><td>Anything either of you would call a bug</td></tr>
+    <tr><td>"20 times better"</td><td>An evening together with no typed command, no chat, and no "where are you?"</td><td>Today</td></tr>
+  </table></div>
+  <p class="muted">Rules of yours I've held to: nothing fights for you and a support player is a person; no new key and
+  none taken over; no timing layer on everything; direction through the world, never a list; bosses are never
+  announced; plain words; one side decides anything predicted; single player unchanged.</p>
+</section>
+
+<section>
+  <span class="eyebrow">2 · What I found in the game as it is</span>
+  <h2>The rules exist. The pair doesn't.</h2>
+  <p>I read the code and the SPEC of the current build. Co-op was laid down on 24 October, before most of the game
+  existed. Each plan since added a line about "members", and none of them owned what it's like to be two.</p>
+
+  <h3>Already there, and kept</h3>
+  <div class="scroll"><table>
+    <tr><th>Piece</th><th>What it does with two today</th><th>Where</th></tr>
+    <tr><td>The opening and the first boss scene</td><td>The square holds for the group. The Ritual waits for every new player, the Seated One kills you all at once, and each of you answers "Will you accept?" alone</td><td><code>OpeningDirector</code>, <code>RitualTests</code></td></tr>
+    <tr><td>Gates</td><td>Arena doors bring your partner through. 35% more monsters and 50% more Lord health per extra fighter. A hoard and a bell each</td><td><code>Rooms.java:63-86</code></td></tr>
+    <tr><td>Kills and loot</td><td>A partner within 32 blocks shares the XP through their own budget and rolls their own loot</td><td><code>Parties.java</code></td></tr>
+    <tr><td>Reassessments</td><td>Fighters near you at the level come too; the Warden stands longer; all down and it starts over</td><td><code>Provings.java</code></td></tr>
+    <tr><td>Home, bells, the Peal</td><td>One home with members; bells hang there and ring for every member</td><td>SPEC "Together", §43</td></tr>
+    <tr><td>Monuments and finds</td><td>Everyone near when it opens is paid</td><td><code>finds/Reward.java</code></td></tr>
+    <tr><td>Powers</td><td>No power ever hurts another player</td><td><code>powers/Combat.java:42</code></td></tr>
+    <tr><td>Riding Along (9 Nov, never seen in a game)</td><td>A thread between two players; the rider can't go down near the other, hits for 40%, earns half XP and no rank. Three of its mechanisms are reused; its rules are retired</td><td>SPEC §55, 13 tests</td></tr>
+    <tr><td>The Far Landing (being built)</td><td>Everyone on the skiff's deck flies together; it runs both ways</td><td>its SPEC §67.5</td></tr>
+  </table></div>
+
+  <h3>Wrong or missing with two players</h3>
+  <div class="finding"><span class="big">1</span><div><p><strong>You can't see your partner or point at anything.</strong>
+    No health, no direction, no dot on the Atlas, no ping. The Atlas shares waypoints, and that's all.</p>
+    <p class="ev">No party HUD or ping class exists anywhere in the code; the Atlas draws no other players.</p></div></div>
+  <div class="finding"><span class="big">2</span><div><p><strong>Your party is a side effect.</strong> It's whoever shares
+    your Hearth, your gate or your thread. Sharing a Hearth is <code>/awaken hearth invite</code>. Two people walking the
+    wilds on the first day share nothing.</p><p class="ev"><code>gates/GateParty.java</code>, <code>hearth/HearthCommands.java:42-52</code></p></div></div>
+  <div class="finding"><span class="big">3</span><div><p><strong>A death in a gate sends one of you home.</strong> The one
+    who falls loses the Satchel, takes a Fracture, leaves the run and wakes at the Hearth, perhaps kilometres away,
+    while the other is still inside.</p><p class="ev"><code>gates/run/Runs.java:651-704</code></p></div></div>
+  <div class="finding"><span class="big">4</span><div><p><strong>A Reassessment leaves your partner at the bell.</strong>
+    It takes only fighters at the level, and skips a tied pair without a word. The rider, or a friend a few levels
+    short, watches you vanish into the game's best fight.</p><p class="ev"><code>hearth/trial/Provings.java:167-171</code></p></div></div>
+  <div class="finding"><span class="big">5</span><div><p><strong>The warning ring closes for the wrong person.</strong> A
+    boss's tell doesn't say who the blow is for, and the ring is drawn for whoever is locked on. With the new boss
+    plan's "Too early / Too late", your partner would be marked on a blow that was aimed at you.</p>
+    <p class="ev"><code>FightRunner.java:864,935</code>, <code>aim/client/Reticle.java:157-177</code></p></div></div>
+  <div class="finding"><span class="big">6</span><div><p><strong>Bosses flick between two fighters.</strong> They turn to
+    whoever hit them last, on every hit, and their read of you starts over each time. "Fights That Read You" ends up
+    reading nobody.</p><p class="ev"><code>AwakenMob.java:201</code>; SPEC §48.1. Read in the code, not seen in a game.</p></div></div>
+  <div class="finding"><span class="big">7</span><div><p><strong>The fights have one difficulty.</strong> The world's
+    difficulty setting only decides what a death costs. Two people who want different fights can't have them. Riding
+    Along's answer was to make her safe by making her weak and poor, on a tether.</p><p class="ev"><code>core/AwakenConfig.java:9-16</code>; SPEC §55. At half XP she'd be about level 40 when you reach 100 (<code>docs/coop/harness/rider_pace.py</code>), so you could never rank up the same day.</p></div></div>
+  <div class="finding"><span class="big">8</span><div><p><strong>A friend who joins later is alone for half an hour</strong>,
+    and can never earn a monument you've already opened. Levels far apart have no rule except the thread.</p>
+    <p class="ev"><code>OpeningDirector</code>, §67.5, <code>finds/Reward.java:39-50</code></p></div></div>
+  <div class="finding"><span class="big">9</span><div><p><strong>Nothing has been seen with two real players.</strong>
+    All 544 tour scripts are one client. The thread, the fold and the party doors are unseen.</p>
+    <p class="ev">One more to measure before believing it: a party raises a boss's health but not its stance, so two
+    fighters may break it twice as often (<code>ArmsRules.java:250</code>).</p></div></div>
+
+  <h3>The journey, step by step</h3>
+  <div class="scroll"><table>
+    <tr><th>Step</th><th>With two, today</th><th>What changes</th></tr>
+    <tr><td>The sky, the run, the square</td><td><span class="tag ok">works</span> built for a group, tested with four</td><td>Those who start together are a party without asking</td></tr>
+    <tr><td>The Ritual (first boss scene)</td><td><span class="tag ok">works</span> waits for everyone</td><td>Nothing</td></tr>
+    <tr><td>Infirmary and Registry</td><td><span class="tag ok">works</span> each on their own clock</td><td>The party strip appears when the band boots</td></tr>
+    <tr><td>Ilse's fire and the first home</td><td><span class="tag warn">clumsy</span> two coals make two homes unless one types a command</td><td class="plan">"Make this your home too?" Two keepers</td></tr>
+    <tr><td>The skiff to the far country</td><td><span class="tag ok">works</span> everyone on deck flies, with or without Ilse's coal, and each sees the whole film</td><td>A passenger without the coal can't fly home alone today: anyone who has flown once may take the helm home</td></tr>
+    <tr><td>Gate floors</td><td><span class="tag warn">works blind</span> shared credit, no sight of each other</td><td class="plan">Strip, pings, standing back up, her own difficulty</td></tr>
+    <tr><td>The Lord</td><td><span class="tag bad">wrong</span> the ring and the target (findings 5, 6)</td><td class="plan">The right ring, a held target, a shared finishing film</td></tr>
+    <tr><td>Reassessment</td><td><span class="tag bad">splits you</span> (finding 4)</td><td class="plan">Each fights it on their own setting; one fight ranks you both</td></tr>
+    <tr><td>Home, beasts, bells, the Peal</td><td><span class="tag ok">works</span> per home, every member</td><td>Nothing</td></tr>
+    <tr><td>Monuments, finds, dreams</td><td><span class="tag ok">works</span> for whoever is there</td><td>A partner's solo finds become leads</td></tr>
+    <tr><td>The Seed and the ending</td><td><span class="tag ok">works</span> one ending per world, told to later arrivals</td><td>Nothing</td></tr>
+    <tr><td>The homecoming</td><td><span class="tag ok">works</span> "you, and anyone beside you"</td><td>Nothing</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">3 · The directions I weighed</span>
+  <h2>A second difficulty in the same fight</h2>
+  <div class="scroll"><table>
+    <tr><th>The tag-along</th><th>What she does</th><th>What you get</th><th>Verdict</th></tr>
+    <tr><td>Riding Along as built</td><td>Fights at 40%, on a tether</td><td>Your fight</td><td>Safe, but weak and penalised</td></tr>
+    <tr><td>A support job (this page's first version)</td><td>Gathers, mends, binds</td><td>Your fight, made survivable</td><td><strong>You said no</strong>: "just become a healer"</td></tr>
+    <tr><td class="plan">Her own difficulty</td><td>Fights with her own weapon and powers, at full strength</td><td>Your fight, unchanged wherever it's aimed at you</td><td>Reuses three pieces of Riding Along. Bosses already decide by who they're aiming at</td></tr>
+    <tr><td>One easier setting for the whole world</td><td>Fights</td><td>An easier fight you don't want</td><td>Fails "I love very difficult fights"</td></tr>
+  </table></div>
+  <p>Gears of War has let each co-op player pick their own difficulty since its second game. Theirs changes damage and
+  aim. Ours also changes what the boss chooses to throw, because your bosses already decide blow by blow who they're
+  aiming at.</p>
+  <p>For being together, one small module owns the party, the strip and the pings, behind the hook every system already
+  asks. The other way was patching six systems one by one, which is how today's gaps happened.</p>
+  <p class="muted">Looked at and left out: split screen, one shared level, chat features, scaling the land to the weaker
+  player (the world-moods plan owns the land's danger), a third step above Full (the setting is data, so one can be
+  added later).</p>
+</section>
+
+<section>
+  <span class="eyebrow">4 · Being together</span>
+  <h2>See each other, point, share a home</h2>
+  <figure>{{M5}}<figcaption><strong>The band's Status page gets a Together section</strong> (it replaces Riding
+  Along's). It lists who's near or shares your home, with what you can do, and holds your own <strong>My fights</strong>
+  switch. A party is up to four, saved with the world. Players who walk the opening together are one from the square
+  on, with nothing to accept. Commands stay for servers and tests.</figcaption></figure>
+  <ul>
+    <li><strong>A home for two.</strong> When one of you places the Ember near the other: "Make this your home too?"
+    A home has an owner and may have one second keeper with the same rights, so neither of a couple is a guest.</li>
+    <li><strong>The party strip</strong> (top left in the drawings below): your partner's name, health and what they're
+    doing, and an arrow on the screen's edge with the distance when they're out of view. It's hidden when you're alone.</li>
+    <li><strong>The Atlas</strong> shows your party as live dots, and "Go to Ana" is a destination that follows her.</li>
+  </ul>
+  <figure>{{M2}}<figcaption><strong>Pings, on the key you already use to lock on</strong> (middle click). On a monster it
+  locks as today, and your partner sees what you've locked. On anything else it points: a marker for eight seconds
+  with one plain line chosen by what you're looking at. A double click says "Careful here". Your binoculars' mark is
+  shared the same way. Apex Legends showed that one context button can replace a microphone.</figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">5 · Two in one fight</span>
+  <h2>Fixes for any two fighters</h2>
+  <div class="scroll"><table>
+    <tr><th>Part</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td>Whose blow it is</td><td>The ring closes for whoever is locked on</td><td class="plan">The full ring shows only for the one the blow is for. Their partner sees a thin ring with no verdict. A wide sweep is everyone's</td></tr>
+    <tr><td>The boss's attention</td><td>Flicks to whoever hit last</td><td class="plan">Holds one of you for a whole phrase, changes at an opening, and shows the change with a head turn. It keeps a read of each of you</td></tr>
+    <tr><td>Its back is turned</td><td>No reason to split up around a boss</td><td class="plan">A blow that lands while it's in the middle of a blow at someone else does a quarter more damage and stance. For anyone, on either setting</td></tr>
+    <tr><td>Stance</td><td>Health grows with a party; stance doesn't</td><td class="plan">Stance grows the same way, once stage 0 has measured it</td></tr>
+    <tr><td>Falling in a gate</td><td>Out of the run, home, Satchel gone</td><td class="plan">You go down for 20 seconds. Your partner holds Use on you for 2 seconds and you're up at 30% health. Once per floor each. Nobody comes, or both down: today's death</td></tr>
+    <tr><td>After a real death</td><td>You wake at home</td><td class="plan">You wake at the gate's door, and it lets you back in at the last shrine. The Satchel and the Fracture are still the price</td></tr>
+    <tr><td>The finishing blow (boss plan)</td><td>Only the striker gets the film</td><td class="plan">Everyone in the fight sees it, both of you in the shot. Either of you may take it, on either setting</td></tr>
+  </table></div>
+  <p class="muted">Standing back up is how Minecraft Dungeons, Minecraft's own co-op game, handles it. Nothing here
+  lowers a boss's damage, health or speed.</p>
+</section>
+
+<section>
+  <span class="eyebrow">6 · Her own difficulty</span>
+  <h2>My fights: Full or Gentle</h2>
+  <p>One switch per player. <strong>Full</strong> is the game as it is. <strong>Gentle</strong> is the same fight asked
+  more simply. She keeps her weapon, her powers, her loot and her progress, and nothing ties the two of you together.
+  Everything Gentle changes is decided by who a thing is aimed at, so a blow aimed at you is exactly today's.</p>
+
+  <h3>The same second, on both screens</h3>
+  <div class="pair">
+    <figure>{{M1}}<figcaption><strong class="f">Euan, on Full.</strong> A red blow, and the ring is his. Ana is off to the
+    right behind the Lord: the strip and the edge arrow say where.</figcaption></figure>
+    <figure>{{M4}}<figcaption><strong class="r">Ana, on Gentle.</strong> Her own blade and her own powers. The Lord is
+    swinging at him, so its back is turned to her and this blow counts a quarter more. The ring is thin: it isn't her
+    blow. Bottom left: her setting and her three second winds.</figcaption></figure>
+  </div>
+
+  <h3>What the fight asks of each of you</h3>
+  <div class="scroll"><table>
+    <tr><th></th><th class="f">Full (today)</th><th class="r">Gentle</th></tr>
+    <tr><td>Blows a boss aims at you</td><td>White-gold, amber, red and grabs; strings up to four; feints; answers to what you do</td><td class="plan">White-gold and amber only; two in a row at most; no feints; it doesn't punish drinking or casting</td></tr>
+    <tr><td>Warning</td><td>The move's own</td><td class="plan">The same move holds almost half a second longer before it comes</td></tr>
+    <tr><td>Holding guard</td><td>Stops white-gold; amber breaks it</td><td class="plan">Stops both. A well-timed deflect still earns its reward</td></tr>
+    <tr><td>The opening after it attacks you</td><td>The move's own</td><td class="plan">Half as long again</td></tr>
+    <tr><td>How often it turns to you</td><td>By what you do to it</td><td class="plan">About one phrase in four while someone on Full is in sight. Alone, as normal</td></tr>
+    <tr><td>Small monsters</td><td>As many as reach you</td><td class="plan">Two on you at a time; the rest hold back or go for someone on Full</td></tr>
+    <tr><td>Damage you take</td><td>Full</td><td class="plan">Half, from everything</td></tr>
+    <tr><td>A killing blow</td><td>Down, or death</td><td class="plan">A second wind: thrown back, two seconds on a knee where nothing can touch you, up at half health. Three a floor, refilled at a shrine. After those, down like anyone</td></tr>
+    <tr><td>A fall into a pit in a gate</td><td>Death</td><td class="plan">Set back on the last safe ground, two hearts lighter</td></tr>
+    <tr><td>What a death costs</td><td>The world's setting</td><td class="plan">Story's rules: half the Satchel kept, no Fracture</td></tr>
+    <tr><td>Your hits, stance damage and powers</td><td>Full</td><td>Full</td></tr>
+    <tr><td>XP, loot, boss pieces, bells, rank</td><td>Yours</td><td>The same</td></tr>
+    <tr><td>Titles and records for hard feats</td><td>Earned</td><td class="plan">Not earned on Gentle</td></tr>
+  </table></div>
+  <ul>
+    <li><strong>Your fight stays yours.</strong> Her full-strength hits would shorten it, so she counts as half a
+    fighter when a room or a boss is sized: a Lord gains a quarter more health and stance for her (half for a partner
+    on Full), a room a sixth more monsters, and no extra elite.</li>
+    <li><strong>Still a fight for her.</strong> The boss does turn to her. What it throws can always be read, and
+    holding guard is always an answer. She breaks stance, lands heavies, casts, and takes the finishing blow if she's
+    the one there.</li>
+    <li><strong>Hers to switch.</strong> On the band, any time out of a fight; inside a gate it takes hold at the next
+    room. Your strip shows a small mark by her name. It stays hers when you log off, so the world doesn't turn on her.</li>
+    <li><strong>No thread.</strong> No tether, no reach to stay inside, no both-must-agree, no card at a gate's door.
+    The thread's look that Riding Along built stays in the code, unused.</li>
+    <li><strong>The numbers are first guesses.</strong> Every value in the table is data. The first evening you two
+    play is the tuning session.</li>
+  </ul>
+
+  <h3>Ninety seconds of a Lord fight, both screens</h3>
+  {{S1}}
+</section>
+
+<section>
+  <span class="eyebrow">7 · A Reassessment, two ways</span>
+  <h2>She comes too, and it counts</h2>
+  <p><strong>Both on Full</strong> stays as it is. <strong>One on Gentle</strong> is new: today a tied pair is skipped
+  at the bell and Riding Along earned no rank.</p>
+  {{S2}}
+  <ul>
+    <li><strong>The same rank.</strong> If she's at the level and ready, she takes it, with nothing written on it. She
+    earns the same XP as you, so a pair who play together reach the level together.</li>
+    <li><strong>A friend a few levels short</strong>, on either setting, may come along and fight. They're told plainly
+    that this one doesn't count for them yet. Nobody is skipped in silence.</li>
+    <li><strong>Losing</strong> is as today: no fail day, you wake at the door, you go again.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">8 · The rest of what makes it 20 times better</span>
+  <h2>Around the fights</h2>
+  <div class="scroll"><table>
+    <tr><th>The moment</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td>"Where are you?"</td><td>Nothing on screen</td><td class="plan">The strip, the edge arrow, the Atlas dot, a ping</td></tr>
+    <tr><td>"Come here"</td><td>Walk, or go home with Homeward</td><td class="plan"><strong>The Answering Peal.</strong> Your partner rings their handbell for you. You hear it from its bearing, ring yours back, stand still five seconds, and you're beside them. Not in a fight, a gate, a trial or a dream; every ten minutes</td></tr>
+    <tr><td>A friend joins your world later</td><td>Half an hour alone, then a long walk</td><td class="plan">They still get the opening (it's theirs). You're told "Ana has arrived in Carillon". After the Registry she's offered your party, the skiff takes her out, and the Peal does the rest</td></tr>
+    <tr><td>Levels far apart</td><td>One of you is one-shot, or one-shots everything</td><td class="plan">In the stronger one's land, Gentle softens it for the weaker (half damage, second winds). In the weaker one's land, <strong>Match my friend</strong>: a switch, off by default, that evens your hits down to their level while you're near them</td></tr>
+    <tr><td>A monument your partner opened without you</td><td>Gone for you</td><td class="plan"><strong>Shown the way.</strong> It's a lead in your Journal. Go there with them, touch the cache, and you're paid once</td></tr>
+    <tr><td>Exploring apart</td><td>Each finds for themselves</td><td class="plan">What one of you finds alone becomes a lead for the other, never a completion. You bring each other things</td></tr>
+    <tr><td>A jump one of you keeps missing in a gate</td><td>A fall is a death</td><td class="plan">On Gentle a fall sets her back on the last safe ground, two hearts lighter</td></tr>
+    <tr><td>What you did together</td><td>Not kept</td><td class="plan"><strong>Ours.</strong> One Journal page of firsts you did together, each with its day. A record, never a list of orders</td></tr>
+    <tr><td>The Tasks page</td><td>Knows only you</td><td class="plan">A step you both have open carries a small mark. One optional row when it's true: "Ana is ready for her Reassessment"</td></tr>
+    <tr><td>Lag and disagreement</td><td>Not measured with two</td><td class="plan">Everything Gentle changes is decided on the server by who a blow is for; the ring knows its owner; the wire is measured before and after every stage</td></tr>
+  </table></div>
+  <p class="muted">Couples and friends differ in one thing: a couple is a party of two with one home, often with one of them on Gentle,
+  and the defaults are tuned for that. Three or four friends get the same strip, pings and party, and each their own setting.</p>
+</section>
+
+<section>
+  <span class="eyebrow">9 · The same evening, before and after</span>
+  <h2>Four cases</h2>
+  <div class="scroll"><table>
+    <tr><th>Case</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td><strong>Ordinary.</strong> Two fighters, a D gate</td><td>You can't see each other's health. The Lord flicks between you. One of you dies on floor 2 and wakes at home, 900 blocks away. The other finishes alone</td><td>The strip shows she's low. The Lord holds on you for a phrase. She goes down and you lift her. You both walk out</td></tr>
+    <tr><td><strong>The one you asked about.</strong> You love hard fights; she wants a simpler one</td><td>One difficulty for both. Or she rides: tethered, 40% hits, half XP, no rank, left outside at the Reading Bell</td><td>She sets My fights to Gentle. Same Lord, her own blade: it throws her plain blows she can guard, and she hits its back while it's busy with you. You get every red blow and grab as today. One Reassessment ranks you both</td></tr>
+    <tr><td><strong>Hard.</strong> Levels 8 and 35</td><td>In your land she's one-shot. In hers you kill everything before she arrives</td><td>In your land Gentle halves what hits her and gives her second winds. In hers you turn on Match my friend and it's a fight for both</td></tr>
+    <tr><td><strong>Something goes wrong.</strong> Her three second winds are spent and she's hit again</td><td>(No second winds today.) She dies and wakes at home</td><td>She goes down. You have 20 seconds to reach her and lift her. If you don't, it costs her what Story costs: half her Satchel kept, no Fracture, and she wakes at the gate's door</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">10 · How it gets tested</span>
+  <h2>Two players in every check</h2>
+  <ul>
+    <li><strong>A pair kit for the game's tests.</strong> Two real survival test players in a party, with each one's
+    network messages readable (the helper exists today, for one). About forty tests, one per mechanism, and five
+    longer ones that walk the journey as a pair: the opening to the Registry, Ilse to the landing, a whole gate with one on
+    Full and one on Gentle, a Reassessment the same way, a home founded by two.</li>
+    <li><strong>Tours with a partner, on GitHub.</strong> One client films while the server plays a second player from
+    a short script (go, look, strike, cast, use, fall). The client is on Full in one tour and on Gentle in the
+    next, so both screens are photographed, on the same runners as today.</li>
+    <li><strong>Two real clients, once.</strong> A probe on a Linux runner: a server and two clients for five scripted
+    minutes, then the logs are read for kicks and errors. If the clients won't draw there, the probe is dropped and
+    nothing else changes. Never two clients on your Mac.</li>
+    <li><strong>The wire.</strong> Messages per player per second, alone against two, before and after each stage.
+    Budget: under 12 a second in a fight for everything in this plan.</li>
+    <li><strong>Your fight is the same.</strong> From the fight recorder: with a Gentle partner, every blow aimed at
+    the player on Full is the same move with the same timings as alone, and at least three phrases in four are theirs.</li>
+    <li><strong>Alone plays the same.</strong> One player with every switch on gets the same numbers and the same
+    messages as today. The old-save test stays.</li>
+    <li><strong>The real test</strong> is the two of you: the opening, a gate with her on Gentle, and a Reassessment the same way.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">11 · Building it</span>
+  <h2>Six stages, each with a switch</h2>
+  <div class="scroll"><table>
+    <tr><th>Stage</th><th>What</th><th class="num">Builder hours</th></tr>
+    <tr><td>0</td><td>The pair kit, the tour partner, the wire's baseline, the stance measurement, the two-client probe. Changes nothing in the game</td><td class="num">2 to 3</td></tr>
+    <tr><td>1</td><td>See and say: the party, the Together section, a home for two, the strip, Atlas dots, pings</td><td class="num">5 to 7</td></tr>
+    <tr><td>2</td><td>Two fighters: the ring's owner, the held target, stance, its back is turned, standing back up, the door</td><td class="num">5 to 7</td></tr>
+    <tr><td>3</td><td>Gentle, first half: the switch, half damage, second winds, caught falls, Story's death cost, half a fighter, the strip's mark. Riding Along's rules retired</td><td class="num">4 to 6</td></tr>
+    <tr><td>4</td><td>Gentle, second half: a boss chooses by who a blow is for (no red, no grabs, the longer warning and opening), the held guard, one phrase in four, Reassessments on Gentle</td><td class="num">5 to 7</td></tr>
+    <tr><td>5</td><td>The joins: late friends, the Answering Peal, the skiff's rules, shown the way, leads, Ours, Match my friend, the shared finishing film</td><td class="num">5 to 8</td></tr>
+    <tr><td>6</td><td>You two play; fixes from both play logs</td><td class="num">as found</td></tr>
+  </table></div>
+  <p>About 26 to 38 builder hours, one builder, in order. Every stage's switch off is exactly today, and every saved
+  field is optional, so a world loads on a build without them.</p>
+  <h3>What could go wrong</h3>
+  <ul>
+    <li><strong>Gentle is too soft, or not soft enough.</strong> It's the part most likely to need the two of you.
+    Every number is data, and both play logs are read after your first evening.</li>
+    <li><strong>Gentle bleeds into your fight.</strong> The recorder check above, on all 47 fight scripts.</li>
+    <li><strong>A boss with nothing plain to throw.</strong> Every body has plain blows; a test walks every script to
+    prove a Gentle target always gets one.</li>
+    <li><strong>An easy mode in solo play.</strong> Gentle is each player's own choice and Full is the default. Decision
+    5 asks whether it may be used alone.</li>
+    <li><strong>Three other plans move the same ground.</strong> The boss plan's ring, the Far Landing's skiff and the
+    pets. The Far Landing, the pets and the world-moods sessions have answered and nothing clashes: a couple can take
+    one pet each, and sister homes stay the one rule for a second home. The boss plan's session hasn't answered yet.
+    None of their files is touched before they merge.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">12 · Yours to decide</span>
+  <h2>Twenty-one decisions</h2>
+  <p>"Go with all recommendations" works, or tell me the numbers you'd change. The first seven are new or changed since
+  your answer.</p>
+  <ol class="decisions">
+    <li><div class="q"><strong>The tag-along is her own difficulty: a switch per player, My fights, Full or Gentle.</strong><span>She keeps her weapon, powers and everything else. No support job.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>What Gentle changes is the table in section 6.</strong><span>Plainer and slower blows at her, a guard that holds, half damage, three second winds, caught falls, Story's death cost. Numbers tuned after you two play.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Her hits count in full, and the fight grows by half a fighter for her.</strong><span>So your fight is about as long as alone. The other choices: no growth (easier for you), or a whole fighter's growth (harder).</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>On Gentle she earns the same XP, loot, bells and rank. Only titles and records for hard feats need Full.</strong><span>This drops the 9 Nov rules of half XP and no rank credit. The other choice: three-quarters XP.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The setting is each player's own, alone or together, changed any time out of a fight.</strong><span>So anyone, you included, could play alone on Gentle. The other choice: it only works while someone on Full is in your party.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>No thread between you.</strong><span>The other choice: keep the built thread as a faint look only, for you to judge from tour pictures.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A Reassessment fought on Gentle counts for her rank.</strong><span>Today a tied pair is skipped at the bell.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Any pair: go down and be lifted once a floor; a real death wakes you at the gate's door.</strong><span>Gates only. Nobody comes, or both down, is today's death.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The ring shows only for the player a blow is for, and a boss keeps its target for a whole phrase.</strong><span>Worked out with the boss plan's session.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Its back is turned: a quarter more for a blow that lands while it's attacking someone else.</strong><span>For anyone, on either setting. Never alone, so solo fights don't change.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A boss's stance grows with the number of fighters, if stage 0 measures that it breaks too fast.</strong><span>Health already does.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The finishing film plays for everyone in the fight, both of you in the shot.</strong><span>Own-eyes stays each player's setting. Either of you may take the blow.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A party you form with a card on the band, up to four; those who start the story together are one already.</strong><span>A shared home alone no longer makes a party.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A home can have two keepers.</strong><span>The second has the owner's rights except ending the household.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The party strip and the Atlas dots are on by default and hidden when you're alone.</strong><span>A setting makes the strip small or turns it off.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Pings go on the lock key: a monster locks and shares your target, anything else points.</strong><span>No new key.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The Answering Peal: handbell travel to a partner who rings for you.</strong><span>From your first landing on; every ten minutes; never into a fight or a gate.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Match my friend, as a switch that's off by default.</strong><span>The stronger player chooses to be evened down near a much weaker friend.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A partner's finds become leads, a solved monument can be shown to a partner once, and the Ours page.</strong><span>Records and directions, never a list.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Test it as described: pair tests, tours with a scripted partner on GitHub, one two-client probe, then the two of you.</strong><span>Nothing with two clients on your Mac.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Build all six stages in one run and test at the end, as your rule says.</strong><span>The other choice is to stop after stage 4 so you two can try Gentle before the rest.</span></div><span class="rec">Yes</span></li>
+  </ol>
+</section>
+
+<section>
+  <span class="eyebrow">Sources and limits</span>
+  <h2>What this rests on</h2>
+  <ul>
+    <li>Code and SPEC of <code>build/awaken-v1</code> at f47c3cff2, read on 11 Nov. File names above are where each fact was read. Nothing was run on your Mac.</li>
+    <li>Each co-op player on their own difficulty, in Gears of War: <a href="https://www.co-optimus.com/article/132/New_Gears_of_War_2_Co-Op_Info.html">co-optimus.com (Gears 2)</a>, <a href="https://co-optimus.com/review/851/page/2/gears-of-war-3-co-op-review.html">co-optimus.com (Gears 3)</a>.</li>
+    <li>A helper role beside the real game reads as thin, in Mario Galaxy's second-player mode: <a href="https://www.mariowiki.com/Co-Star_Luma">mariowiki.com/Co-Star_Luma</a>, <a href="https://www.imore.com/super-mario-3d-all-stars-how-turn-two-player-co-star-mode-super-mario-galaxy">imore.com</a>.</li>
+    <li>Apex Legends' ping, tested with microphones banned: <a href="https://gamedeveloper.com/design/respawn-played-with-muted-mics-to-get-i-apex-legends-i-smart-comms-system-just-right">gamedeveloper.com</a>, <a href="https://www.pcgamer.com/apex-legends-ping-system-is-a-tiny-miracle-for-fps-teamwork-and-communication">pcgamer.com</a>.</li>
+    <li>Minecraft Dungeons' revive and scaling: <a href="https://minecraftdungeons.wiki.fextralife.com/Multiplayer">fextralife wiki</a>, <a href="https://gamewith.net/minecraft-dungeons/article/show/18508">gamewith.net</a>.</li>
+    <li>Guild Wars 2's level matching: <a href="https://wiki.guildwars2.com/wiki/Dynamic_level_adjustment">wiki.guildwars2.com</a>.</li>
+    <li>Not known yet: whether two clients run on one CI runner; how fast stance breaks with two; whether power
+    reactions already cross between two players; what the pack ships for inviting a friend over the internet; and the
+    boss plan session's answer on the ring and the finishing film.</li>
+    <li>Long form: <code>docs/coop/PLAN.md</code> on branch <code>claude/coop-plan-630b2d</code>.</li>
+  </ul>
+</section>
+
+</div>

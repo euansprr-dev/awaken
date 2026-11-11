@@ -121,6 +121,26 @@ public final class Runs {
 
     // ---- entering ---------------------------------------------------------------------------------------------------
 
+    /**
+     * The floor a player enters on: the first, or, coming back in to a party of theirs that is still inside a gate they
+     * have been in before, the floor that party has reached (SPEC §70.3). -1 while that party is in a fight: the gate
+     * waits for them to be clear of it. Realms and the story's gates always start at their start.
+     */
+    static int rejoinFloor(ServerPlayer p, GateRecord g) {
+        if (!dev.awaken.core.api.FightsHooks.pair() || g.scripted || g.realm.isPresent() || !g.entries.containsKey(p.getUUID())) return 1;
+        int floor = 1;
+        boolean fighting = false;
+        for (java.util.UUID u : g.inside) {
+            ServerPlayer o = p.level().getServer().getPlayerList().getPlayer(u);
+            if (o == null || o == p || !o.isAlive() || !dev.awaken.core.api.PartyHooks.sameParty(p, o)) continue;
+            RunState r = run(o);
+            if (r.gateId != g.id || r.area != 0) continue;
+            if (r.floor > floor) floor = r.floor;
+            fighting |= dev.awaken.powers.Powers.inCombat(o);
+        }
+        return floor > 1 && fighting ? -1 : floor;
+    }
+
     public static boolean enter(ServerPlayer p, GateRecord g) {
         MinecraftServer server = p.level().getServer();
         dev.awaken.core.api.TipHooks.done(p, dev.awaken.Awaken.id("first/gate"));
@@ -146,6 +166,12 @@ public final class Runs {
                 return false;
             }
         }
+        // coming back in to a party still inside (SPEC §70.3): to the floor they've reached, once they're clear of a fight
+        int rejoin = rejoinFloor(p, g);
+        if (rejoin < 0) {
+            Signal.toast(p, Component.literal("Your party is in a fight in there. The gate will take you back in to them once they're clear of it."));
+            return false;
+        }
         boolean rider = dev.awaken.core.api.RidingHooks.rider(p);
         if (rider && dev.awaken.gates.Gates.hasRider(g.id)) {
             Signal.toast(p, Component.literal("Someone is already riding along in this gate. It only holds one."));
@@ -155,7 +181,7 @@ public final class Runs {
         run.riding = rider;
         run.gateId = g.id;
         run.area = 0;
-        run.floor = 1;
+        run.floor = rejoin;
         run.startedAt = now(server);
         run.runIndex = g.entries.merge(p.getUUID(), 1, Integer::sum) - 1;
         run.scoutedAtEntry = p.getData(GatesRegistry.MEMORY.get()).scouted.contains(g.id);
@@ -166,12 +192,12 @@ public final class Runs {
         if (g.inside.size() > 1) company(server, g);
         GateService.setState(server, g, GateState.ACTIVE);
         GateRegistry.get(server).setDirty();
-        BlockPos e = GateService.entrance(g, 0, 1);
+        BlockPos e = GateService.entrance(g, 0, rejoin);
         // the first floor's level: the open sky's when it's an open land
-        ServerLevel to = GateService.levelOf(server, g, 0, 1);
+        ServerLevel to = GateService.levelOf(server, g, 0, rejoin);
         if (to == null) to = gl;
         if (!storyGate(g)) crossing(p, g, true, -1);
-        p.teleport(new TeleportTransition(to, GateService.center(e), Vec3.ZERO, GateService.entranceYaw(g, 0, 1), 0F,
+        p.teleport(new TeleportTransition(to, GateService.center(e), Vec3.ZERO, GateService.entranceYaw(g, 0, rejoin), 0F,
                 TeleportTransition.PLAY_PORTAL_SOUND));
         to.playSound(null, e, GatesRegistry.SND_ENTER.get(), SoundSource.PLAYERS, 1F, 1F);
         GatePlan plan = g.plan;
@@ -191,7 +217,7 @@ public final class Runs {
             return true;
         }
         var w = SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal(plan.rank().label + "-rank · " + plan.theme().displayName))
-                .row("Floor", "1 of " + plan.floors())
+                .row("Floor", rejoin + " of " + plan.floors())
                 .row("Layout", plan.layout().displayName + " · " + plan.layout().hint);
         if (!plan.modifiers().isEmpty()) w.row("Modifiers", String.join(", ", plan.modifiers().stream().map(m -> m.displayName).toList()));
         String twistLine = Twists.entryLine(plan);
@@ -205,7 +231,7 @@ public final class Runs {
         w.footer(Component.literal(plan.friendly() ? "No one here wants to fight you." : "Find the Rest Shrine."));
         Signal.send(p, w.priority(4).ttl(20 * 8).build());
         DirectorLog.log(p, "gate", "entered gate " + g.id + " (run " + run.runIndex + ")");
-        arrive(p, g, 0, 1);
+        arrive(p, g, 0, rejoin);
         return true;
     }
 
@@ -665,7 +691,12 @@ public final class Runs {
             DirectorLog.log(p, "gate", "cheat death used in gate " + run.gateId);
             return;
         }
-        AwakenConfig.Difficulty diff = AwakenConfig.DIFFICULTY.get();
+        if (g != null && dev.awaken.core.api.FightsHooks.goesDown(p)) {
+            // someone of their party still stands on this floor: down, to be lifted, not dead yet (SPEC §70.3)
+            e.setCanceled(true);
+            return;
+        }
+        AwakenConfig.Difficulty diff = dev.awaken.core.api.FightsHooks.deathCost(p); // Story's rules on Gentle (SPEC §70.4)
         if (g != null && run.riding) {
             // past the thread's reach, so nothing caught them (SPEC §55): they go home, but riders never lose the Satchel
             bankSatchel(p, g, run, "r" + label(run.area, run.floor), "recover", "You were too far from your partner for the thread to catch you. You kept what you carried.");

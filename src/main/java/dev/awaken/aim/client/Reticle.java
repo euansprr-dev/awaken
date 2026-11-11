@@ -167,14 +167,17 @@ final class Reticle {
             tellOf = -1;
         }
 
-        int base = tellColour >= 0 ? mix(HOLO, tellColour, 0.65F) : HOLO;
+        // whose blow it is (SPEC §70.3): yours closes in full and colours the ring; someone else's is a thin, still ring
+        boolean mine = tell == null || tell.aimedAt(p.getId());
+        int base = tellColour >= 0 && mine ? mix(HOLO, tellColour, 0.65F) : HOLO;
         if (locked) lockRing(g, sx, sy, r, base, now, reduced);
         else brackets(g, sx, sy, r, base, now, reduced);
         if (tellColour >= 0) {
             // the closing ring: from twice the ring's size down onto it as the blow lands
             float tr = r * (1F + 1.15F * tellLeft);
-            float pulse = 0.75F + 0.25F * Mth.sin(now / 1.0E9F * 18F);
-            glowed(g, TELL, TELL_G, 128, 128, sx, sy, tr * 2.3F, tr * 2.3F, 0F, tellColour, (0.45F + 0.55F * (1F - tellLeft)) * pulse);
+            float pulse = mine ? 0.75F + 0.25F * Mth.sin(now / 1.0E9F * 18F) : 1F;
+            float size = mine ? 2.3F : 2.1F;
+            glowed(g, TELL, TELL_G, 128, 128, sx, sy, tr * size, tr * size, 0F, tellColour, (0.45F + 0.55F * (1F - tellLeft)) * pulse * (mine ? 1F : 0.3F));
         }
         ANCHOR[0] = sx;
         ANCHOR[1] = sy;
@@ -279,7 +282,7 @@ final class Reticle {
             if (!(e instanceof LivingEntity le) || le == p || !le.isAlive()) continue;
             if (le.distanceToSqr(p) > AimRules.THREAT_RANGE * AimRules.THREAT_RANGE) continue;
             Strikes.Tell tell = Strikes.tell(le);
-            if (tell == null || tell.kind() == Strikes.Kind.NONE || tell.ticks() <= 0) continue;
+            if (tell == null || tell.kind() == Strikes.Kind.NONE || tell.ticks() <= 0 || !tell.aimedAt(p.getId())) continue; // someone else's blow is no threat to you
             AABB b = le.getBoundingBox();
             Vec3 c = b.getCenter();
             if (project(c.x, c.y, c.z, w, h, 0.92F)) continue; // in view: its own tell (and the ring) say it

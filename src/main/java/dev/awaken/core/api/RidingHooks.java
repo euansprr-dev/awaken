@@ -7,9 +7,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Riding Along (SPEC §55): one player rides along with another, can't go down near them, and neither makes the run harder
- * nor earns rank by it. Other modules ask here; the riding module installs the real thing, and until then nobody rides.
- * Server side.
+ * Riding Along (SPEC §55), retired by §70.4: nobody rides any more, so {@link #rider}, {@link #bonded} and
+ * {@link #partner} always answer that nobody does, and the branches that ask them are inert. {@link #folded} lives on:
+ * the together module answers it for a player on a knee (a second wind, or down and waiting for a hand), which is what
+ * powers ask before a cast. Server side.
  */
 public final class RidingHooks {
     private RidingHooks() {}

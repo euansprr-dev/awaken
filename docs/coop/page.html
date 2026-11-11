@@ -1,0 +1,773 @@
+<title>Together, All the Way</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: one reading column (max 62rem); game-screen drawings take the full column and are always dark, like a
+   screenshot. Two people run through the page: Full in band blue, Gentle in rose. */
+:root {
+  --bg: #f3f2f0; --panel: #ffffff; --ink: #17181c; --muted: #5d626d; --line: #d9d8d4; --soft: #eae9e5;
+  --fighter: #1f6f9c; --rider: #a8553a; --ok: #2c7a4b; --warn: #8a5a00; --bad: #ad3535;
+  --display: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #101114; --panel: #181a1f; --ink: #e8e8ea; --muted: #9c9fa8; --line: #2b2d34; --soft: #1f2127;
+  --fighter: #7fd4ff; --rider: #f0b79c; --ok: #74c493; --warn: #e2b659; --bad: #e58585; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #101114; --panel: #181a1f; --ink: #e8e8ea; --muted: #9c9fa8; --line: #2b2d34; --soft: #1f2127;
+  --fighter: #7fd4ff; --rider: #f0b79c; --ok: #74c493; --warn: #e2b659; --bad: #e58585; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px }
+.wrap { max-width: 62rem; margin: 0 auto; display: flex; flex-direction: column; gap: 60px }
+section, header { display: flex; flex-direction: column; gap: 18px; min-width: 0 }
+h1, h2, h3, h4 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15 }
+h1 { font-size: clamp(2.1rem, 6vw, 3.4rem); font-weight: 700; letter-spacing: -0.02em }
+h2 { font-size: clamp(1.45rem, 3.5vw, 1.9rem); font-weight: 600; letter-spacing: -0.01em }
+h3 { font-size: 1.14rem; font-weight: 600; margin-top: 10px }
+h4 { font-size: 1rem; font-weight: 600 }
+p, ul, ol { margin: 0; max-width: 68ch }
+ul, ol { padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px }
+.eyebrow { font-family: var(--mono); font-size: 0.74rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted) }
+.lead { font-size: 1.14rem; max-width: 62ch }
+.muted { color: var(--muted) }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums }
+q { font-style: italic }
+code { font-family: var(--mono); font-size: 0.85em; background: var(--soft); padding: 1px 5px; border-radius: 3px; overflow-wrap: anywhere }
+.f { color: var(--fighter) } .r { color: var(--rider) }
+.answer { border-left: 3px solid var(--rider); padding: 4px 0 4px 18px; display: flex; flex-direction: column; gap: 8px }
+.tag { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap }
+.tag.ok { color: var(--ok) } .tag.warn { color: var(--warn) } .tag.bad { color: var(--bad) } .tag.new { color: var(--rider) } .tag.keep { color: var(--fighter) }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel) }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line) }
+tr:last-child td { border-bottom: 0 }
+th { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--soft) }
+td.num, th.num { text-align: right; white-space: nowrap }
+td.plan { color: var(--rider); font-weight: 600 }
+td strong { font-weight: 600 }
+figure { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+figcaption { font-size: 0.86rem; color: var(--muted); max-width: 74ch }
+.shot { overflow-x: auto; border-radius: 8px; border: 1px solid var(--line); background: #090c11 }
+.shot svg { display: block; width: 100%; height: auto }
+.pair { display: flex; flex-direction: column; gap: 22px }
+.board { display: flex; flex-direction: column; gap: 14px }
+.beat { display: grid; grid-template-columns: 11rem repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; padding-top: 14px; border-top: 1px solid var(--line) }
+.beat-head { display: flex; flex-direction: column; gap: 4px }
+.beat-head p { font-size: 0.9rem; color: var(--muted) }
+.beat-head .num { font-size: 0.78rem; color: var(--muted) }
+.pane { position: relative; border-radius: 6px; overflow: hidden; background: #090c11; border: 1px solid var(--line) }
+.pane svg { display: block; width: 100%; height: auto }
+.who { position: absolute; top: 6px; left: 8px; font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; background: #0d1219; padding: 2px 6px; border-radius: 3px }
+.who.f { color: #7fd4ff } .who.r { color: #f0b79c }
+@media (max-width: 760px) { .beat { grid-template-columns: repeat(2, minmax(0, 1fr)) } .beat-head { grid-column: 1 / -1 } }
+@media (max-width: 480px) { .beat { grid-template-columns: minmax(0, 1fr) } }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px }
+.step svg { display: block; width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--line) }
+@media (max-width: 860px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 480px) { .steps { grid-template-columns: minmax(0, 1fr) } }
+.finding { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 4px 14px; padding-top: 16px; border-top: 1px solid var(--line) }
+.finding .big { font-family: var(--display); font-weight: 700; font-size: 1.5rem; color: var(--rider); line-height: 1.1 }
+.finding > div { display: flex; flex-direction: column; gap: 6px; min-width: 0 }
+.finding .ev { font-size: 0.84rem; color: var(--muted) }
+@media (max-width: 560px) { .finding { grid-template-columns: minmax(0, 1fr) } }
+.decisions { list-style: none; padding: 0; counter-reset: d; display: flex; flex-direction: column; gap: 0; max-width: none }
+.decisions li { counter-increment: d; display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 4px 14px; padding: 14px 0; border-top: 1px solid var(--line); align-items: start }
+.decisions li::before { content: counter(d); font-family: var(--display); font-weight: 700; font-size: 1.25rem; color: var(--muted); line-height: 1.3 }
+.decisions .q { display: flex; flex-direction: column; gap: 4px }
+.decisions .q span { font-size: 0.9rem; color: var(--muted) }
+.decisions .rec { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ok); border: 1px solid currentColor; border-radius: 3px; padding: 2px 7px; white-space: nowrap; margin-top: 3px }
+@media (max-width: 560px) { .decisions li { grid-template-columns: 2rem minmax(0, 1fr) } .decisions .rec { grid-column: 2; justify-self: start } }
+a { color: var(--fighter) }
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">AWAKEN · a plan for your approval · nothing here is built · 11 Nov 2026</span>
+  <h1>Together, All the Way</h1>
+  <p class="lead">Co-op from the first bell to the last, for two people who always know where the other is, are never
+  split up by a rule, and fight the same fight at the difficulty each of them enjoys.</p>
+  <div class="answer">
+    <p><strong>Changed after your answer.</strong> You said no to the support job: she shouldn't become a healer, she
+    keeps her weapons and powers, and it's really two people on different difficulty. This version does that. The
+    thread powers, the light and the thread's rank are gone.</p>
+    <ul>
+      <li>The rules for sharing are already in the game and mostly sound. The <em>experience</em> of being two people
+      isn't: you can't see your partner, point at anything or share a home without typing a command, and a death or
+      a Reassessment splits you up.</li>
+      <li><strong>Her own difficulty.</strong> Each player has a switch, <strong>My fights: Full or Gentle</strong>. On
+      Gentle she fights the same Lord beside you with her own weapon and powers at full strength. What the fight throws
+      at <em>her</em> is plainer, slower and softer. Nothing aimed at you changes.</li>
+      <li>No tether, no card at the door, no penalties: the same XP, loot and rank. It's hers to switch any time out of
+      a fight.</li>
+      <li>Around that: fixes for two fighters, and the things a couple needs outside the fights. Alone, the game plays
+      exactly as it does today.</li>
+    </ul>
+  </div>
+  <p class="muted">The two players in the drawings are Euan and "Ana", an example name. The drawings are mockups I made
+  for this page, not screenshots.</p>
+</header>
+
+<section>
+  <span class="eyebrow">1 · What you asked for, and how we'll know it worked</span>
+  <h2>My reading of your brief</h2>
+  <ul>
+    <li><strong>Everything from A to Z works with two.</strong> The story, the first boss scene, every gate, the
+    Reassessments, levels, discovery, the end.</li>
+    <li><strong>Two ways to play a gate and a Reassessment.</strong> Both at full difficulty, or one of you on an easier
+    one: <q>two people having a different difficulty mode</q>, <q>simpler</q> but <q>still obviously action-based and
+    fun</q>, with <q>their weapons, their powers</q>, and <q>revertible</q>. It <q>doesn't need to be so fair</q> for her.</li>
+    <li><strong>Whatever is missing</strong> that would make co-op <q>20 times better</q> for a couple or friends,
+    <q>extremely smooth</q>.</li>
+  </ul>
+  <div class="scroll"><table>
+    <tr><th>Your words</th><th>What it has to look like</th><th>Not good enough</th></tr>
+    <tr><td>"works in co-op"</td><td>Every step of the journey has a two-player test and a two-player picture</td><td>It runs, but one of you waits or watches</td></tr>
+    <tr><td>"can't die as much as you"</td><td>On Gentle she's fully down no more than once in ten floors; the two of you are split by a death less than once a gate</td><td>Can't fail at all, or your fight gets easier because she came</td></tr>
+    <tr><td>"action-based and fun", "simpler"</td><td>She fights the whole fight with her own weapon and powers. Blows come at her about one phrase in four, each one she can read and answer by holding guard or stepping away</td><td>A job that isn't fighting; or your fight, only weaker</td></tr>
+    <tr><td>"doesn't need to be so fair"</td><td>Full hits, the same XP, loot and rank. Only titles for hard feats ask for Full</td><td>Penalties that make her a passenger</td></tr>
+    <tr><td>"revertible"</td><td>Her own switch, changed any time out of a fight</td><td>Chosen once, or only at a gate's door</td></tr>
+    <tr><td>"extremely smooth"</td><td>The two screens never disagree; nothing is told to only one of you</td><td>Anything either of you would call a bug</td></tr>
+    <tr><td>"20 times better"</td><td>An evening together with no typed command, no chat, and no "where are you?"</td><td>Today</td></tr>
+  </table></div>
+  <p class="muted">Rules of yours I've held to: nothing fights for you and a support player is a person; no new key and
+  none taken over; no timing layer on everything; direction through the world, never a list; bosses are never
+  announced; plain words; one side decides anything predicted; single player unchanged.</p>
+</section>
+
+<section>
+  <span class="eyebrow">2 · What I found in the game as it is</span>
+  <h2>The rules exist. The pair doesn't.</h2>
+  <p>I read the code and the SPEC of the current build. Co-op was laid down on 24 October, before most of the game
+  existed. Each plan since added a line about "members", and none of them owned what it's like to be two.</p>
+
+  <h3>Already there, and kept</h3>
+  <div class="scroll"><table>
+    <tr><th>Piece</th><th>What it does with two today</th><th>Where</th></tr>
+    <tr><td>The opening and the first boss scene</td><td>The square holds for the group. The Ritual waits for every new player, the Seated One kills you all at once, and each of you answers "Will you accept?" alone</td><td><code>OpeningDirector</code>, <code>RitualTests</code></td></tr>
+    <tr><td>Gates</td><td>Arena doors bring your partner through. 35% more monsters and 50% more Lord health per extra fighter. A hoard and a bell each</td><td><code>Rooms.java:63-86</code></td></tr>
+    <tr><td>Kills and loot</td><td>A partner within 32 blocks shares the XP through their own budget and rolls their own loot</td><td><code>Parties.java</code></td></tr>
+    <tr><td>Reassessments</td><td>Fighters near you at the level come too; the Warden stands longer; all down and it starts over</td><td><code>Provings.java</code></td></tr>
+    <tr><td>Home, bells, the Peal</td><td>One home with members; bells hang there and ring for every member</td><td>SPEC "Together", §43</td></tr>
+    <tr><td>Monuments and finds</td><td>Everyone near when it opens is paid</td><td><code>finds/Reward.java</code></td></tr>
+    <tr><td>Powers</td><td>No power ever hurts another player</td><td><code>powers/Combat.java:42</code></td></tr>
+    <tr><td>Riding Along (9 Nov, never seen in a game)</td><td>A thread between two players; the rider can't go down near the other, hits for 40%, earns half XP and no rank. Three of its mechanisms are reused; its rules are retired</td><td>SPEC §55, 13 tests</td></tr>
+    <tr><td>The Far Landing (being built)</td><td>Everyone on the skiff's deck flies together; it runs both ways</td><td>its SPEC §67.5</td></tr>
+  </table></div>
+
+  <h3>Wrong or missing with two players</h3>
+  <div class="finding"><span class="big">1</span><div><p><strong>You can't see your partner or point at anything.</strong>
+    No health, no direction, no dot on the Atlas, no ping. The Atlas shares waypoints, and that's all.</p>
+    <p class="ev">No party HUD or ping class exists anywhere in the code; the Atlas draws no other players.</p></div></div>
+  <div class="finding"><span class="big">2</span><div><p><strong>Your party is a side effect.</strong> It's whoever shares
+    your Hearth, your gate or your thread. Sharing a Hearth is <code>/awaken hearth invite</code>. Two people walking the
+    wilds on the first day share nothing.</p><p class="ev"><code>gates/GateParty.java</code>, <code>hearth/HearthCommands.java:42-52</code></p></div></div>
+  <div class="finding"><span class="big">3</span><div><p><strong>A death in a gate sends one of you home.</strong> The one
+    who falls loses the Satchel, takes a Fracture, leaves the run and wakes at the Hearth, perhaps kilometres away,
+    while the other is still inside.</p><p class="ev"><code>gates/run/Runs.java:651-704</code></p></div></div>
+  <div class="finding"><span class="big">4</span><div><p><strong>A Reassessment leaves your partner at the bell.</strong>
+    It takes only fighters at the level, and skips a tied pair without a word. The rider, or a friend a few levels
+    short, watches you vanish into the game's best fight.</p><p class="ev"><code>hearth/trial/Provings.java:167-171</code></p></div></div>
+  <div class="finding"><span class="big">5</span><div><p><strong>The warning ring closes for the wrong person.</strong> A
+    boss's tell doesn't say who the blow is for, and the ring is drawn for whoever is locked on. With the new boss
+    plan's "Too early / Too late", your partner would be marked on a blow that was aimed at you.</p>
+    <p class="ev"><code>FightRunner.java:864,935</code>, <code>aim/client/Reticle.java:157-177</code></p></div></div>
+  <div class="finding"><span class="big">6</span><div><p><strong>Bosses flick between two fighters.</strong> They turn to
+    whoever hit them last, on every hit, and their read of you starts over each time. "Fights That Read You" ends up
+    reading nobody.</p><p class="ev"><code>AwakenMob.java:201</code>; SPEC §48.1. Read in the code, not seen in a game.</p></div></div>
+  <div class="finding"><span class="big">7</span><div><p><strong>The fights have one difficulty.</strong> The world's
+    difficulty setting only decides what a death costs. Two people who want different fights can't have them. Riding
+    Along's answer was to make her safe by making her weak and poor, on a tether.</p><p class="ev"><code>core/AwakenConfig.java:9-16</code>; SPEC §55. At half XP she'd be about level 40 when you reach 100 (<code>docs/coop/harness/rider_pace.py</code>), so you could never rank up the same day.</p></div></div>
+  <div class="finding"><span class="big">8</span><div><p><strong>A friend who joins later is alone for half an hour</strong>,
+    and can never earn a monument you've already opened. Levels far apart have no rule except the thread.</p>
+    <p class="ev"><code>OpeningDirector</code>, §67.5, <code>finds/Reward.java:39-50</code></p></div></div>
+  <div class="finding"><span class="big">9</span><div><p><strong>Nothing has been seen with two real players.</strong>
+    All 544 tour scripts are one client. The thread, the fold and the party doors are unseen.</p>
+    <p class="ev">One more to measure before believing it: a party raises a boss's health but not its stance, so two
+    fighters may break it twice as often (<code>ArmsRules.java:250</code>).</p></div></div>
+
+  <h3>The journey, step by step</h3>
+  <div class="scroll"><table>
+    <tr><th>Step</th><th>With two, today</th><th>What changes</th></tr>
+    <tr><td>The sky, the run, the square</td><td><span class="tag ok">works</span> built for a group, tested with four</td><td>Those who start together are a party without asking</td></tr>
+    <tr><td>The Ritual (first boss scene)</td><td><span class="tag ok">works</span> waits for everyone</td><td>Nothing</td></tr>
+    <tr><td>Infirmary and Registry</td><td><span class="tag ok">works</span> each on their own clock</td><td>The party strip appears when the band boots</td></tr>
+    <tr><td>Ilse's fire and the first home</td><td><span class="tag warn">clumsy</span> two coals make two homes unless one types a command</td><td class="plan">"Make this your home too?" Two keepers</td></tr>
+    <tr><td>The skiff to the far country</td><td><span class="tag ok">works</span> everyone on deck flies, with or without Ilse's coal, and each sees the whole film</td><td>A passenger without the coal can't fly home alone today: anyone who has flown once may take the helm home</td></tr>
+    <tr><td>Gate floors</td><td><span class="tag warn">works blind</span> shared credit, no sight of each other</td><td class="plan">Strip, pings, standing back up, her own difficulty</td></tr>
+    <tr><td>The Lord</td><td><span class="tag bad">wrong</span> the ring and the target (findings 5, 6)</td><td class="plan">The right ring, a held target, a shared finishing film</td></tr>
+    <tr><td>Reassessment</td><td><span class="tag bad">splits you</span> (finding 4)</td><td class="plan">Each fights it on their own setting; one fight ranks you both</td></tr>
+    <tr><td>Home, beasts, bells, the Peal</td><td><span class="tag ok">works</span> per home, every member</td><td>Nothing</td></tr>
+    <tr><td>Monuments, finds, dreams</td><td><span class="tag ok">works</span> for whoever is there</td><td>A partner's solo finds become leads</td></tr>
+    <tr><td>The Seed and the ending</td><td><span class="tag ok">works</span> one ending per world, told to later arrivals</td><td>Nothing</td></tr>
+    <tr><td>The homecoming</td><td><span class="tag ok">works</span> "you, and anyone beside you"</td><td>Nothing</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">3 · The directions I weighed</span>
+  <h2>A second difficulty in the same fight</h2>
+  <div class="scroll"><table>
+    <tr><th>The tag-along</th><th>What she does</th><th>What you get</th><th>Verdict</th></tr>
+    <tr><td>Riding Along as built</td><td>Fights at 40%, on a tether</td><td>Your fight</td><td>Safe, but weak and penalised</td></tr>
+    <tr><td>A support job (this page's first version)</td><td>Gathers, mends, binds</td><td>Your fight, made survivable</td><td><strong>You said no</strong>: "just become a healer"</td></tr>
+    <tr><td class="plan">Her own difficulty</td><td>Fights with her own weapon and powers, at full strength</td><td>Your fight, unchanged wherever it's aimed at you</td><td>Reuses three pieces of Riding Along. Bosses already decide by who they're aiming at</td></tr>
+    <tr><td>One easier setting for the whole world</td><td>Fights</td><td>An easier fight you don't want</td><td>Fails "I love very difficult fights"</td></tr>
+  </table></div>
+  <p>Gears of War has let each co-op player pick their own difficulty since its second game. Theirs changes damage and
+  aim. Ours also changes what the boss chooses to throw, because your bosses already decide blow by blow who they're
+  aiming at.</p>
+  <p>For being together, one small module owns the party, the strip and the pings, behind the hook every system already
+  asks. The other way was patching six systems one by one, which is how today's gaps happened.</p>
+  <p class="muted">Looked at and left out: split screen, one shared level, chat features, scaling the land to the weaker
+  player (the world-moods plan owns the land's danger), a third step above Full (the setting is data, so one can be
+  added later).</p>
+</section>
+
+<section>
+  <span class="eyebrow">4 · Being together</span>
+  <h2>See each other, point, share a home</h2>
+  <figure><div class="shot"><svg viewBox="0 0 640 430" role="img" style="min-width:560px" xmlns="http://www.w3.org/2000/svg"><rect width="640" height="430" fill="#090c11"/><rect x="20" y="16" width="600" height="388" rx="8" fill="#0d141d" stroke="#2c4763"/><text x="40" y="44" font-size="9" fill="#93a0b3" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">STATUS</text><text x="100" y="44" font-size="9" fill="#7fd4ff" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">TOGETHER</text><line x1="100" y1="50" x2="158" y2="50" stroke="#7fd4ff" stroke-width="2"/><line x1="40" y1="58" x2="600" y2="58" stroke="#1e2a3a"/><rect x="36" y="74" width="568" height="82" rx="6" fill="#10161f" stroke="#1e2a3a"/><circle cx="60" cy="100" r="10" fill="#f0b79c" opacity="0.9"/><text x="80" y="98" font-size="14" fill="#e9edf3" text-anchor="start" font-weight="600" font-family="Inter, system-ui, sans-serif">Ana</text><text x="80" y="114" font-size="10" fill="#93a0b3" text-anchor="start" font-weight="500" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">Level 7 · E rank · Gentle</text><text x="596" y="98" font-size="10" fill="#93a0b3" text-anchor="end" font-weight="500" font-family="Inter, system-ui, sans-serif">In your party · shares your home · 12 blocks away</text><rect x="80" y="126" width="69.6" height="22" rx="4" fill="#0d141d" stroke="#7fd4ff"/><text x="114.8" y="141" font-size="10" fill="#7fd4ff" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">Go to Ana</text><rect x="157.6" y="126" width="82.4" height="22" rx="4" fill="#0d141d" stroke="#93a0b3"/><text x="198.8" y="141" font-size="10" fill="#93a0b3" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">Leave party</text><rect x="36" y="166" width="568" height="82" rx="6" fill="#10161f" stroke="#1e2a3a"/><circle cx="60" cy="192" r="10" fill="#b9d47a" opacity="0.9"/><text x="80" y="190" font-size="14" fill="#e9edf3" text-anchor="start" font-weight="600" font-family="Inter, system-ui, sans-serif">Tomas</text><text x="80" y="206" font-size="10" fill="#93a0b3" text-anchor="start" font-weight="500" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">Level 22 · D rank · Full</text><text x="596" y="190" font-size="10" fill="#93a0b3" text-anchor="end" font-weight="500" font-family="Inter, system-ui, sans-serif">48 blocks away · not in your party</text><rect x="80" y="218" width="108.0" height="22" rx="4" fill="#0d141d" stroke="#7fd4ff"/><text x="134.0" y="233" font-size="10" fill="#7fd4ff" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">Travel together</text><rect x="36" y="258" width="568" height="52" rx="6" fill="#10161f" stroke="#1e2a3a"/><text x="52" y="279" font-size="11" fill="#e9edf3" text-anchor="start" font-weight="600" font-family="Inter, system-ui, sans-serif">My fights</text><text x="52" y="296" font-size="10" fill="#93a0b3" text-anchor="start" font-weight="500" font-family="Inter, system-ui, sans-serif">Yours alone. It changes out of a fight; your party sees which you're on.</text><rect x="452" y="272" width="136" height="24" rx="12" fill="#0d141d" stroke="#2c4763"/><rect x="454" y="274" width="66" height="20" rx="10" fill="#17304a" stroke="#7fd4ff"/><text x="487" y="288" font-size="10" fill="#7fd4ff" text-anchor="middle" font-weight="700" font-family="Inter, system-ui, sans-serif">Full</text><text x="553" y="288" font-size="10" fill="#93a0b3" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">Gentle</text><rect x="36" y="318" width="568" height="52" rx="6" fill="#10161f" stroke="#1e2a3a"/><text x="52" y="339" font-size="11" fill="#e9edf3" text-anchor="start" font-weight="600" font-family="Inter, system-ui, sans-serif">Your home</text><text x="52" y="356" font-size="10" fill="#93a0b3" text-anchor="start" font-weight="500" font-family="Inter, system-ui, sans-serif">Kept by you and Ana. Tomas isn't a member.</text><rect x="452" y="333" width="136" height="22" rx="4" fill="#0d141d" stroke="#7fd4ff"/><text x="520" y="348" font-size="10" fill="#7fd4ff" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">Share with Tomas</text><text x="320" y="392" font-size="9.5" fill="#93a0b3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">A button that concerns someone else sends them a card. Nothing here is a typed command.</text><rect x="478" y="408" width="154" height="15" rx="3" fill="#0d1219" opacity="0.8"/><text x="555" y="419" font-size="8.5" fill="#93a0b3" text-anchor="middle" font-weight="500" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">MOCKUP · THE BAND, STATUS PAGE</text></svg></div><figcaption><strong>The band's Status page gets a Together section</strong> (it replaces Riding
+  Along's). It lists who's near or shares your home, with what you can do, and holds your own <strong>My fights</strong>
+  switch. A party is up to four, saved with the world. Players who walk the opening together are one from the square
+  on, with nothing to accept. Commands stay for servers and tests.</figcaption></figure>
+  <ul>
+    <li><strong>A home for two.</strong> When one of you places the Ember near the other: "Make this your home too?"
+    A home has an owner and may have one second keeper with the same rights, so neither of a couple is a guest.</li>
+    <li><strong>The party strip</strong> (top left in the drawings below): your partner's name, health and what they're
+    doing, and an arrow on the screen's edge with the distance when they're out of view. It's hidden when you're alone.</li>
+    <li><strong>The Atlas</strong> shows your party as live dots, and "Go to Ana" is a destination that follows her.</li>
+  </ul>
+  <figure><div class="shot"><svg viewBox="0 0 640 220" role="img" style="min-width:560px" xmlns="http://www.w3.org/2000/svg"><rect width="640" height="220" fill="#090c11"/><rect x="8" y="8" width="202" height="204" rx="6" fill="#0e131b" stroke="#1e2633"/><polygon points="8,212 210,212 158,130 60,130" fill="#141a24"/><rect x="219" y="8" width="202" height="204" rx="6" fill="#0e131b" stroke="#1e2633"/><polygon points="219,212 421,212 369,130 271,130" fill="#141a24"/><rect x="430" y="8" width="202" height="204" rx="6" fill="#0e131b" stroke="#1e2633"/><polygon points="430,212 632,212 580,130 482,130" fill="#141a24"/><path d="M110,168 L103,152 L117,152 Z" fill="#f0b79c"/><circle cx="110" cy="144" r="9" fill="none" stroke="#f0b79c" stroke-width="2"/>
+<circle cx="110" cy="168" r="14" fill="none" stroke="#f0b79c" stroke-width="1" opacity="0.45"/>
+<text x="110" y="124" font-size="9.5" fill="#f0b79c" text-anchor="middle" font-weight="700" font-family="Inter, system-ui, sans-serif">ANA</text><text x="110" y="198" font-size="10.5" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Over here · 24 blocks</text><text x="110" y="28" font-size="9" fill="#93a0b3" text-anchor="middle" font-weight="500" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">middle click on the ground</text><rect x="290" y="62" width="62" height="88" rx="30" fill="#17202e" stroke="#3a5a86" stroke-width="2"/><ellipse cx="321" cy="106" rx="20" ry="34" fill="#22406a" opacity="0.7"/><path d="M321,150 L314,134 L328,134 Z" fill="#7fd4ff"/><circle cx="321" cy="126" r="9" fill="none" stroke="#7fd4ff" stroke-width="2"/>
+<circle cx="321" cy="150" r="14" fill="none" stroke="#7fd4ff" stroke-width="1" opacity="0.45"/>
+<text x="321" y="106" font-size="9.5" fill="#7fd4ff" text-anchor="middle" font-weight="700" font-family="Inter, system-ui, sans-serif">EUAN</text><text x="321" y="180" font-size="10.5" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Let's go in · D-rank gate</text><text x="321" y="28" font-size="9" fill="#93a0b3" text-anchor="middle" font-weight="500" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">middle click on a gate</text><path d="M514.0,166 L511.0,121.0 Q532,100.0 553.0,121.0 L550.0,166 Z" fill="#2a3140"/><circle cx="526.0" cy="121.0" r="2.4000000000000004" fill="#ff8f6b"/><circle cx="538.0" cy="121.0" r="2.4000000000000004" fill="#ff8f6b"/><circle cx="532" cy="126" r="26" fill="none" stroke="#7fd4ff" stroke-width="1.6" opacity="0.9"/><path d="M532,86 l-6,-10 h12 z" fill="#7fd4ff"/><text x="532" y="70" font-size="9" fill="#7fd4ff" text-anchor="middle" font-weight="700" font-family="Inter, system-ui, sans-serif">EUAN'S TARGET</text><text x="532" y="198" font-size="10" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">a lock is shared, no extra press</text><text x="532" y="28" font-size="9" fill="#93a0b3" text-anchor="middle" font-weight="500" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">middle click on a monster</text></svg></div><figcaption><strong>Pings, on the key you already use to lock on</strong> (middle click). On a monster it
+  locks as today, and your partner sees what you've locked. On anything else it points: a marker for eight seconds
+  with one plain line chosen by what you're looking at. A double click says "Careful here". Your binoculars' mark is
+  shared the same way. Apex Legends showed that one context button can replace a microphone.</figcaption></figure>
+</section>
+
+<section>
+  <span class="eyebrow">5 · Two in one fight</span>
+  <h2>Fixes for any two fighters</h2>
+  <div class="scroll"><table>
+    <tr><th>Part</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td>Whose blow it is</td><td>The ring closes for whoever is locked on</td><td class="plan">The full ring shows only for the one the blow is for. Their partner sees a thin ring with no verdict. A wide sweep is everyone's</td></tr>
+    <tr><td>The boss's attention</td><td>Flicks to whoever hit last</td><td class="plan">Holds one of you for a whole phrase, changes at an opening, and shows the change with a head turn. It keeps a read of each of you</td></tr>
+    <tr><td>Its back is turned</td><td>No reason to split up around a boss</td><td class="plan">A blow that lands while it's in the middle of a blow at someone else does a quarter more damage and stance. For anyone, on either setting</td></tr>
+    <tr><td>Stance</td><td>Health grows with a party; stance doesn't</td><td class="plan">Stance grows the same way, once stage 0 has measured it</td></tr>
+    <tr><td>Falling in a gate</td><td>Out of the run, home, Satchel gone</td><td class="plan">You go down for 20 seconds. Your partner holds Use on you for 2 seconds and you're up at 30% health. Once per floor each. Nobody comes, or both down: today's death</td></tr>
+    <tr><td>After a real death</td><td>You wake at home</td><td class="plan">You wake at the gate's door, and it lets you back in at the last shrine. The Satchel and the Fracture are still the price</td></tr>
+    <tr><td>The finishing blow (boss plan)</td><td>Only the striker gets the film</td><td class="plan">Everyone in the fight sees it, both of you in the shot. Either of you may take it, on either setting</td></tr>
+  </table></div>
+  <p class="muted">Standing back up is how Minecraft Dungeons, Minecraft's own co-op game, handles it. Nothing here
+  lowers a boss's damage, health or speed.</p>
+</section>
+
+<section>
+  <span class="eyebrow">6 · Her own difficulty</span>
+  <h2>My fights: Full or Gentle</h2>
+  <p>One switch per player. <strong>Full</strong> is the game as it is. <strong>Gentle</strong> is the same fight asked
+  more simply. She keeps her weapon, her powers, her loot and her progress, and nothing ties the two of you together.
+  Everything Gentle changes is decided by who a thing is aimed at, so a blow aimed at you is exactly today's.</p>
+
+  <h3>The same second, on both screens</h3>
+  <div class="pair">
+    <figure><div class="shot"><svg viewBox="0 0 640 360" role="img" style="min-width:560px" xmlns="http://www.w3.org/2000/svg"><rect width="640" height="360" fill="#090c11"/>
+<polygon points="0,360 640,360 460.79999999999995,201.60000000000002 179.20000000000002,201.60000000000002" fill="#141a24"/>
+<rect x="179.20000000000002" y="57.6" width="281.6" height="144.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="64.0" y1="360" x2="230.39999999999998" y2="201.60000000000002"/><line x1="192.0" y1="360" x2="275.2" y2="201.60000000000002"/>
+<line x1="320.0" y1="360" x2="320.0" y2="201.60000000000002"/><line x1="448.0" y1="360" x2="364.79999999999995" y2="201.60000000000002"/>
+<line x1="576.0" y1="360" x2="409.6" y2="201.60000000000002"/>
+<line x1="108.80000000000001" y1="280.8" x2="531.1999999999999" y2="280.8"/><line x1="150.39999999999998" y1="237.60000000000002" x2="489.6" y2="237.60000000000002"/>
+</g>
+<rect x="128.0" y="28.8" width="32.0" height="198.00000000000003" fill="#111722"/>
+<rect x="480.0" y="28.8" width="32.0" height="198.00000000000003" fill="#111722"/><g>
+<path d="M277.16,250 L260.64,136.72 Q322,84.80000000000001 383.36,136.72 L366.84,250 Z" fill="#333c4e"/><path d="M369.2,127.28 L430.56,42.32000000000002 L444.72,51.76000000000002 L390.44,143.8 Z" fill="#3a4458"/>
+<path d="M300.76,115.48 L296.04,84.80000000000001 L281.88,58.84000000000001 L310.2,75.36000000000001 L333.8,75.36000000000001 L362.12,58.84000000000001 L347.96,84.80000000000001 L343.24,115.48 Z" fill="#3a4458"/>
+<circle cx="312.56" cy="96.60000000000001" r="3.068" fill="#ffb45e"/><circle cx="331.44" cy="96.60000000000001" r="3.068" fill="#ffb45e"/>
+</g><circle cx="322" cy="150" r="44" fill="none" stroke="#7fd4ff" stroke-width="1.6" opacity="0.9"/><circle cx="322" cy="150" r="68.2" fill="none" stroke="#ff5b5b" stroke-width="3" opacity="1" /><text x="320" y="22" font-size="10" fill="#e9edf3" text-anchor="middle" font-weight="600" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">LORD OF THE AMBER REACH</text>
+<rect x="195.0" y="29" width="250" height="7" rx="1.5" fill="#1b212c"/><rect x="195.0" y="29" width="155.0" height="7" rx="1.5" fill="#d9584f"/>
+<rect x="195.0" y="39" width="250" height="3" rx="1" fill="#1b212c"/><rect x="195.0" y="39" width="185.0" height="3" rx="1" fill="#ffe9a8"/><path d="M470,360 L400,236 L408,231 L500,360 Z" fill="#cfd8e6"/><path d="M462,360 L452,340 L488,326 L506,360 Z" fill="#5a4630"/><polygon points="632,214 620,207 620,221" fill="#f0b79c"/>
+<text x="615" y="213" font-size="10" fill="#e9edf3" text-anchor="end" font-weight="600" font-family="Inter, system-ui, sans-serif">Ana</text><text x="615" y="225" font-size="9" fill="#93a0b3" text-anchor="end" font-weight="500" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">9 blocks</text><rect x="12" y="44" width="214" height="25" rx="4" fill="#0d1219" opacity="0.86" stroke="#243042"/>
+<circle cx="24" cy="56.5" r="4" fill="#f0b79c"/><text x="34" y="55" font-size="10.5" fill="#e9edf3" text-anchor="start" font-weight="600" font-family="Inter, system-ui, sans-serif">Ana</text>
+<rect x="34" y="59" width="74" height="4" rx="1" fill="#1b212c"/><rect x="34" y="59" width="66.60000000000001" height="4" rx="1" fill="#7bd69a"/>
+<text x="220" y="60" font-size="9" fill="#93a0b3" text-anchor="end" font-weight="500" font-family="Inter, system-ui, sans-serif">Gentle · behind it</text><text x="322" y="232" font-size="10" fill="#ff5b5b" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">red: nothing stops it, dash through</text><rect x="193.0" y="318" width="46" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b4a60"/>
+<text x="199.0" y="330" font-size="9" fill="#7fd4ff" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">Z</text><text x="216.0" y="342" font-size="9" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Haymaker</text><rect x="245.0" y="318" width="46" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b4a60"/>
+<text x="251.0" y="330" font-size="9" fill="#7fd4ff" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">X</text><text x="268.0" y="342" font-size="9" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Dash</text><rect x="297.0" y="318" width="46" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#222a36"/>
+<text x="303.0" y="330" font-size="9" fill="#93a0b3" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">C</text><text x="320.0" y="342" font-size="9" fill="#93a0b3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Brace</text><rect x="349.0" y="318" width="46" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b4a60"/>
+<text x="355.0" y="330" font-size="9" fill="#7fd4ff" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">V</text><text x="372.0" y="342" font-size="9" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Shot</text><rect x="401.0" y="318" width="46" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b4a60"/>
+<text x="407.0" y="330" font-size="9" fill="#7fd4ff" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">R</text><text x="424.0" y="342" font-size="9" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Barrier</text><rect x="478" y="338" width="154" height="15" rx="3" fill="#0d1219" opacity="0.8"/><text x="555" y="349" font-size="8.5" fill="#93a0b3" text-anchor="middle" font-weight="500" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">MOCKUP · HIS SCREEN, ON FULL</text></svg></div><figcaption><strong class="f">Euan, on Full.</strong> A red blow, and the ring is his. Ana is off to the
+    right behind the Lord: the strip and the edge arrow say where.</figcaption></figure>
+    <figure><div class="shot"><svg viewBox="0 0 640 360" role="img" style="min-width:560px" xmlns="http://www.w3.org/2000/svg"><rect width="640" height="360" fill="#090c11"/>
+<polygon points="0,360 640,360 460.79999999999995,201.60000000000002 179.20000000000002,201.60000000000002" fill="#141a24"/>
+<rect x="179.20000000000002" y="57.6" width="281.6" height="144.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="64.0" y1="360" x2="230.39999999999998" y2="201.60000000000002"/><line x1="192.0" y1="360" x2="275.2" y2="201.60000000000002"/>
+<line x1="320.0" y1="360" x2="320.0" y2="201.60000000000002"/><line x1="448.0" y1="360" x2="364.79999999999995" y2="201.60000000000002"/>
+<line x1="576.0" y1="360" x2="409.6" y2="201.60000000000002"/>
+<line x1="108.80000000000001" y1="280.8" x2="531.1999999999999" y2="280.8"/><line x1="150.39999999999998" y1="237.60000000000002" x2="489.6" y2="237.60000000000002"/>
+</g>
+<rect x="128.0" y="28.8" width="32.0" height="198.00000000000003" fill="#111722"/>
+<rect x="480.0" y="28.8" width="32.0" height="198.00000000000003" fill="#111722"/><g><path d="M207.2,236 L205.5,202.0 L222.5,202.0 L220.8,236 Z" fill="#3a4658"/>
+<circle cx="214" cy="195.2" r="5.95" fill="#3a4658"/>
+<rect x="204.65" y="201.15" width="18.7" height="2.55" fill="#7fd4ff" opacity="0.85"/><path d="M222.5,213.9 L227.6,186.7 L230.15,187.55 L225.9,214.75 Z" fill="#cfd8e6"/></g><g>
+<path d="M309.44,258 L293.76,150.48 Q352,101.19999999999999 410.24,150.48 L394.56,258 Z" fill="#333c4e"/><path d="M396.8,141.51999999999998 L455.04,60.879999999999995 L468.48,69.83999999999997 L416.96000000000004,157.2 Z" fill="#3a4458"/>
+<path d="M331.84,130.32 L327.36,101.19999999999999 L313.92,76.55999999999997 L340.8,92.23999999999998 L363.2,92.23999999999998 L390.08,76.55999999999997 L376.64,101.19999999999999 L372.16,130.32 Z" fill="#3a4458"/>
+<circle cx="343.04" cy="112.39999999999999" r="2.9120000000000004" fill="#ffb45e"/><circle cx="360.96" cy="112.39999999999999" r="2.9120000000000004" fill="#ffb45e"/>
+</g><circle cx="352" cy="160" r="40" fill="none" stroke="#7fd4ff" stroke-width="1" opacity="0.5"/><circle cx="352" cy="160" r="62.0" fill="none" stroke="#ff5b5b" stroke-width="1.2" opacity="0.55" stroke-dasharray="3 5"/><text x="320" y="22" font-size="10" fill="#e9edf3" text-anchor="middle" font-weight="600" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">LORD OF THE AMBER REACH</text>
+<rect x="195.0" y="29" width="250" height="7" rx="1.5" fill="#1b212c"/><rect x="195.0" y="29" width="155.0" height="7" rx="1.5" fill="#d9584f"/>
+<rect x="195.0" y="39" width="250" height="3" rx="1" fill="#1b212c"/><rect x="195.0" y="39" width="185.0" height="3" rx="1" fill="#ffe9a8"/><path d="M470,360 L400,236 L408,231 L500,360 Z" fill="#cfd8e6"/><path d="M462,360 L452,340 L488,326 L506,360 Z" fill="#5a4630"/><path d="M372,196 q26,-30 58,-18" fill="none" stroke="#fbf0dc" stroke-width="3" stroke-linecap="round"/><text x="470" y="168" font-size="10.5" fill="#fbf0dc" text-anchor="start" font-weight="600" font-family="Inter, system-ui, sans-serif">its back is turned</text><text x="470" y="182" font-size="9.5" fill="#93a0b3" text-anchor="start" font-weight="500" font-family="Inter, system-ui, sans-serif">a quarter more for this blow</text><text x="352" y="244" font-size="9.5" fill="#93a0b3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">thin ring: his blow, not yours</text><rect x="12" y="44" width="214" height="25" rx="4" fill="#0d1219" opacity="0.86" stroke="#243042"/>
+<circle cx="24" cy="56.5" r="4" fill="#7fd4ff"/><text x="34" y="55" font-size="10.5" fill="#e9edf3" text-anchor="start" font-weight="600" font-family="Inter, system-ui, sans-serif">Euan</text>
+<rect x="34" y="59" width="74" height="4" rx="1" fill="#1b212c"/><rect x="34" y="59" width="40.7" height="4" rx="1" fill="#7bd69a"/>
+<text x="220" y="60" font-size="9" fill="#93a0b3" text-anchor="end" font-weight="500" font-family="Inter, system-ui, sans-serif">Full · red is on him</text><rect x="12" y="318" width="118" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b3027"/><text x="20" y="330" font-size="8" fill="#f0b79c" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">GENTLE</text><text x="20" y="342" font-size="8.5" fill="#93a0b3" text-anchor="start" font-weight="500" font-family="Inter, system-ui, sans-serif">second winds</text><circle cx="90" cy="338" r="4" fill="#fbf0dc" stroke="#f0b79c" stroke-width="0.8"/><circle cx="103" cy="338" r="4" fill="#fbf0dc" stroke="#f0b79c" stroke-width="0.8"/><circle cx="116" cy="338" r="4" fill="#fbf0dc" stroke="#f0b79c" stroke-width="0.8"/><rect x="209.0" y="318" width="46" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b4a60"/>
+<text x="215.0" y="330" font-size="9" fill="#7fd4ff" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">Z</text><text x="232.0" y="342" font-size="9" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Lash</text><rect x="261.0" y="318" width="46" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b4a60"/>
+<text x="267.0" y="330" font-size="9" fill="#7fd4ff" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">X</text><text x="284.0" y="342" font-size="9" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Dash</text><rect x="313.0" y="318" width="46" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b4a60"/>
+<text x="319.0" y="330" font-size="9" fill="#7fd4ff" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">C</text><text x="336.0" y="342" font-size="9" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Frost</text><rect x="365.0" y="318" width="46" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#222a36"/>
+<text x="371.0" y="330" font-size="9" fill="#93a0b3" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">V</text><text x="388.0" y="342" font-size="9" fill="#93a0b3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Shot</text><rect x="417.0" y="318" width="46" height="30" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b4a60"/>
+<text x="423.0" y="330" font-size="9" fill="#7fd4ff" text-anchor="start" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">R</text><text x="440.0" y="342" font-size="9" fill="#e9edf3" text-anchor="middle" font-weight="500" font-family="Inter, system-ui, sans-serif">Dome</text><rect x="478" y="338" width="154" height="15" rx="3" fill="#0d1219" opacity="0.8"/><text x="555" y="349" font-size="8.5" fill="#93a0b3" text-anchor="middle" font-weight="500" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">MOCKUP · HER SCREEN, ON GENTLE</text></svg></div><figcaption><strong class="r">Ana, on Gentle.</strong> Her own blade and her own powers. The Lord is
+    swinging at him, so its back is turned to her and this blow counts a quarter more. The ring is thin: it isn't her
+    blow. Bottom left: her setting and her three second winds.</figcaption></figure>
+  </div>
+
+  <h3>What the fight asks of each of you</h3>
+  <div class="scroll"><table>
+    <tr><th></th><th class="f">Full (today)</th><th class="r">Gentle</th></tr>
+    <tr><td>Blows a boss aims at you</td><td>White-gold, amber, red and grabs; strings up to four; feints; answers to what you do</td><td class="plan">White-gold and amber only; two in a row at most; no feints; it doesn't punish drinking or casting</td></tr>
+    <tr><td>Warning</td><td>The move's own</td><td class="plan">The same move holds almost half a second longer before it comes</td></tr>
+    <tr><td>Holding guard</td><td>Stops white-gold; amber breaks it</td><td class="plan">Stops both. A well-timed deflect still earns its reward</td></tr>
+    <tr><td>The opening after it attacks you</td><td>The move's own</td><td class="plan">Half as long again</td></tr>
+    <tr><td>How often it turns to you</td><td>By what you do to it</td><td class="plan">About one phrase in four while someone on Full is in sight. Alone, as normal</td></tr>
+    <tr><td>Small monsters</td><td>As many as reach you</td><td class="plan">Two on you at a time; the rest hold back or go for someone on Full</td></tr>
+    <tr><td>Damage you take</td><td>Full</td><td class="plan">Half, from everything</td></tr>
+    <tr><td>A killing blow</td><td>Down, or death</td><td class="plan">A second wind: thrown back, two seconds on a knee where nothing can touch you, up at half health. Three a floor, refilled at a shrine. After those, down like anyone</td></tr>
+    <tr><td>A fall into a pit in a gate</td><td>Death</td><td class="plan">Set back on the last safe ground, two hearts lighter</td></tr>
+    <tr><td>What a death costs</td><td>The world's setting</td><td class="plan">Story's rules: half the Satchel kept, no Fracture</td></tr>
+    <tr><td>Your hits, stance damage and powers</td><td>Full</td><td>Full</td></tr>
+    <tr><td>XP, loot, boss pieces, bells, rank</td><td>Yours</td><td>The same</td></tr>
+    <tr><td>Titles and records for hard feats</td><td>Earned</td><td class="plan">Not earned on Gentle</td></tr>
+  </table></div>
+  <ul>
+    <li><strong>Your fight stays yours.</strong> Her full-strength hits would shorten it, so she counts as half a
+    fighter when a room or a boss is sized: a Lord gains a quarter more health and stance for her (half for a partner
+    on Full), a room a sixth more monsters, and no extra elite.</li>
+    <li><strong>Still a fight for her.</strong> The boss does turn to her. What it throws can always be read, and
+    holding guard is always an answer. She breaks stance, lands heavies, casts, and takes the finishing blow if she's
+    the one there.</li>
+    <li><strong>Hers to switch.</strong> On the band, any time out of a fight; inside a gate it takes hold at the next
+    room. Your strip shows a small mark by her name. It stays hers when you log off, so the world doesn't turn on her.</li>
+    <li><strong>No thread.</strong> No tether, no reach to stay inside, no both-must-agree, no card at a gate's door.
+    The thread's look that Riding Along built stays in the code, unused.</li>
+    <li><strong>The numbers are first guesses.</strong> Every value in the table is data. The first evening you two
+    play is the tuning session.</li>
+  </ul>
+
+  <h3>Ninety seconds of a Lord fight, both screens</h3>
+  <div class="board"><div class="beat"><div class="beat-head"><span class="num">0:00</span><h4>The Lord wakes</h4><p>It goes for Euan first. With him in sight it gives Ana about one phrase in four.</p></div>
+<figure class="pane f"><span class="who f">Euan · Full</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M132.64,132 L122.56,62.879999999999995 Q160,31.200000000000003 197.44,62.879999999999995 L187.36,132 Z" fill="#333c4e"/><path d="M191.68,61.44 L213.28,110.4 L204.64,113.28 L185.92,68.64 Z" fill="#3a4458"/>
+<path d="M147.04,49.92 L144.16,31.200000000000003 L135.52,15.360000000000003 L152.8,25.440000000000005 L167.2,25.440000000000005 L184.48,15.360000000000003 L175.84,31.200000000000003 L172.96,49.92 Z" fill="#3a4458"/>
+<circle cx="154.24" cy="38.400000000000006" r="1.8719999999999999" fill="#ffb45e"/><circle cx="165.76" cy="38.400000000000006" r="1.8719999999999999" fill="#ffb45e"/>
+</g><circle cx="160" cy="70" r="26" fill="none" stroke="#7fd4ff" stroke-width="1.6" opacity="0.9"/><path d="M240,190 L206,128 L211,125 L256,190 Z" fill="#cfd8e6"/><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#7fd4ff" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">it looks at you first</text></svg></figure>
+<figure class="pane r"><span class="who r">Ana · Gentle</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M172.44,132 L163.76,72.48 Q196,45.2 228.24,72.48 L219.56,132 Z" fill="#333c4e"/><path d="M223.28,71.24000000000001 L241.88,113.4 L234.44,115.88 L218.32,77.44 Z" fill="#3a4458"/>
+<path d="M184.84,61.32 L182.36,45.2 L174.92000000000002,31.560000000000002 L189.8,40.24 L202.2,40.24 L217.07999999999998,31.560000000000002 L209.64,45.2 L207.16,61.32 Z" fill="#3a4458"/>
+<circle cx="191.04" cy="51.4" r="1.612" fill="#ffb45e"/><circle cx="200.96" cy="51.4" r="1.612" fill="#ffb45e"/>
+</g><g><path d="M120.8,142 L119.0,106.0 L137.0,106.0 L135.2,142 Z" fill="#3a4658"/>
+<circle cx="128" cy="98.8" r="6.3" fill="#3a4658"/>
+<rect x="118.1" y="105.1" width="19.8" height="2.7" fill="#7fd4ff" opacity="0.85"/><path d="M137.0,118.6 L142.4,89.8 L145.1,90.69999999999999 L140.6,119.5 Z" fill="#cfd8e6"/></g><path d="M300,190 L262,132 L267,129 L316,190 Z" fill="#cfd8e6"/><path d="M250,176 q-10,-40 -30,-58" fill="none" stroke="#f0b79c" stroke-width="1.4" stroke-dasharray="4 4"/><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#f0b79c" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">it's watching him: get round behind it</text></svg></figure></div><div class="beat"><div class="beat-head"><span class="num">0:15</span><h4>Its back is turned</h4><p>While it swings at him, her blows on it count a quarter more. So do his, when it's on her.</p></div>
+<figure class="pane f"><span class="who f">Euan · Full</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M132.64,132 L122.56,62.879999999999995 Q160,31.200000000000003 197.44,62.879999999999995 L187.36,132 Z" fill="#333c4e"/><path d="M188.8,57.120000000000005 L226.24,5.280000000000001 L234.88,11.040000000000006 L201.76,67.2 Z" fill="#3a4458"/>
+<path d="M147.04,49.92 L144.16,31.200000000000003 L135.52,15.360000000000003 L152.8,25.440000000000005 L167.2,25.440000000000005 L184.48,15.360000000000003 L175.84,31.200000000000003 L172.96,49.92 Z" fill="#3a4458"/>
+<circle cx="154.24" cy="38.400000000000006" r="1.8719999999999999" fill="#ffb45e"/><circle cx="165.76" cy="38.400000000000006" r="1.8719999999999999" fill="#ffb45e"/>
+</g><circle cx="160" cy="70" r="26" fill="none" stroke="#7fd4ff" stroke-width="1.6" opacity="0.9"/><circle cx="160" cy="70" r="40.300000000000004" fill="none" stroke="#ffab3d" stroke-width="3" opacity="1" /><path d="M240,190 L206,128 L211,125 L256,190 Z" fill="#cfd8e6"/><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#ffab3d" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">amber, at you: dodge to the side</text></svg></figure>
+<figure class="pane r"><span class="who r">Ana · Gentle</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M172.44,132 L163.76,72.48 Q196,45.2 228.24,72.48 L219.56,132 Z" fill="#333c4e"/><path d="M220.8,67.52 L253.04,22.879999999999995 L260.48,27.840000000000003 L231.96,76.2 Z" fill="#3a4458"/>
+<path d="M184.84,61.32 L182.36,45.2 L174.92000000000002,31.560000000000002 L189.8,40.24 L202.2,40.24 L217.07999999999998,31.560000000000002 L209.64,45.2 L207.16,61.32 Z" fill="#3a4458"/>
+<circle cx="191.04" cy="51.4" r="1.612" fill="#ffb45e"/><circle cx="200.96" cy="51.4" r="1.612" fill="#ffb45e"/>
+</g><g><path d="M120.8,142 L119.0,106.0 L137.0,106.0 L135.2,142 Z" fill="#3a4658"/>
+<circle cx="128" cy="98.8" r="6.3" fill="#3a4658"/>
+<rect x="118.1" y="105.1" width="19.8" height="2.7" fill="#7fd4ff" opacity="0.85"/><path d="M137.0,118.6 L142.4,89.8 L145.1,90.69999999999999 L140.6,119.5 Z" fill="#cfd8e6"/></g><path d="M300,190 L262,132 L267,129 L316,190 Z" fill="#cfd8e6"/><path d="M206,96 q14,-18 32,-10" fill="none" stroke="#fbf0dc" stroke-width="3" stroke-linecap="round"/><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#fbf0dc" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">its back is turned: a quarter more</text></svg></figure></div><div class="beat"><div class="beat-head"><span class="num">0:35</span><h4>It turns to her</h4><p>On Gentle it throws her only white-gold and amber, with a longer warning, and a held guard stops both.</p></div>
+<figure class="pane f"><span class="who f">Euan · Full</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M132.64,132 L122.56,62.879999999999995 Q160,31.200000000000003 197.44,62.879999999999995 L187.36,132 Z" fill="#333c4e"/><path d="M191.68,61.44 L213.28,110.4 L204.64,113.28 L185.92,68.64 Z" fill="#3a4458"/>
+<path d="M147.04,49.92 L144.16,31.200000000000003 L135.52,15.360000000000003 L152.8,25.440000000000005 L167.2,25.440000000000005 L184.48,15.360000000000003 L175.84,31.200000000000003 L172.96,49.92 Z" fill="#3a4458"/>
+<circle cx="154.24" cy="38.400000000000006" r="1.8719999999999999" fill="#ffb45e"/><circle cx="165.76" cy="38.400000000000006" r="1.8719999999999999" fill="#ffb45e"/>
+</g><circle cx="160" cy="70" r="26" fill="none" stroke="#7fd4ff" stroke-width="1" opacity="0.5"/><circle cx="160" cy="70" r="40.300000000000004" fill="none" stroke="#ffe9a8" stroke-width="1.2" opacity="0.55" stroke-dasharray="3 5"/><path d="M240,190 L206,128 L211,125 L256,190 Z" fill="#cfd8e6"/><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#7fd4ff" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">it's on her now: that's your opening</text></svg></figure>
+<figure class="pane r"><span class="who r">Ana · Gentle</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M129.6,140 L118.4,63.19999999999999 Q160,28.0 201.6,63.19999999999999 L190.4,140 Z" fill="#333c4e"/><path d="M192.0,56.8 L233.60000000000002,-0.8000000000000114 L243.2,5.599999999999994 L206.4,68.0 Z" fill="#3a4458"/>
+<path d="M145.6,48.8 L142.4,27.999999999999993 L132.8,10.399999999999991 L152.0,21.599999999999994 L168.0,21.599999999999994 L187.2,10.399999999999991 L177.6,27.999999999999993 L174.4,48.8 Z" fill="#3a4458"/>
+<circle cx="153.6" cy="35.99999999999999" r="2.08" fill="#ffb45e"/><circle cx="166.4" cy="35.99999999999999" r="2.08" fill="#ffb45e"/>
+</g><circle cx="160" cy="68" r="28" fill="none" stroke="#7fd4ff" stroke-width="1.6" opacity="0.9"/><circle cx="160" cy="68" r="43.4" fill="none" stroke="#ffe9a8" stroke-width="3" opacity="1" /><path d="M300,190 L262,132 L267,129 L316,190 Z" fill="#cfd8e6"/><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#ffe9a8" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">one plain blow, a long warning: hold guard</text></svg></figure></div><div class="beat"><div class="beat-head"><span class="num">0:55</span><h4>Red on him</h4><p>His fight is untouched: red blows, grabs, long strings. A blast that reaches her does half.</p></div>
+<figure class="pane f"><span class="who f">Euan · Full</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M132.64,132 L122.56,62.879999999999995 Q160,31.200000000000003 197.44,62.879999999999995 L187.36,132 Z" fill="#333c4e"/><path d="M188.8,57.120000000000005 L226.24,5.280000000000001 L234.88,11.040000000000006 L201.76,67.2 Z" fill="#3a4458"/>
+<path d="M147.04,49.92 L144.16,31.200000000000003 L135.52,15.360000000000003 L152.8,25.440000000000005 L167.2,25.440000000000005 L184.48,15.360000000000003 L175.84,31.200000000000003 L172.96,49.92 Z" fill="#3a4458"/>
+<circle cx="154.24" cy="38.400000000000006" r="1.8719999999999999" fill="#ffb45e"/><circle cx="165.76" cy="38.400000000000006" r="1.8719999999999999" fill="#ffb45e"/>
+</g><circle cx="160" cy="70" r="26" fill="none" stroke="#7fd4ff" stroke-width="1.6" opacity="0.9"/><circle cx="160" cy="70" r="40.300000000000004" fill="none" stroke="#ff5b5b" stroke-width="3" opacity="1" /><path d="M240,190 L206,128 L211,125 L256,190 Z" fill="#cfd8e6"/><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#ff5b5b" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">red, at you: dash through it</text></svg></figure>
+<figure class="pane r"><span class="who r">Ana · Gentle</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M172.44,132 L163.76,72.48 Q196,45.2 228.24,72.48 L219.56,132 Z" fill="#333c4e"/><path d="M220.8,67.52 L253.04,22.879999999999995 L260.48,27.840000000000003 L231.96,76.2 Z" fill="#3a4458"/>
+<path d="M184.84,61.32 L182.36,45.2 L174.92000000000002,31.560000000000002 L189.8,40.24 L202.2,40.24 L217.07999999999998,31.560000000000002 L209.64,45.2 L207.16,61.32 Z" fill="#3a4458"/>
+<circle cx="191.04" cy="51.4" r="1.612" fill="#ffb45e"/><circle cx="200.96" cy="51.4" r="1.612" fill="#ffb45e"/>
+</g><circle cx="196" cy="76" r="20" fill="none" stroke="#7fd4ff" stroke-width="1" opacity="0.5"/><circle cx="196" cy="76" r="31.0" fill="none" stroke="#ff5b5b" stroke-width="1.2" opacity="0.55" stroke-dasharray="3 5"/><g><path d="M120.8,142 L119.0,106.0 L137.0,106.0 L135.2,142 Z" fill="#3a4658"/>
+<circle cx="128" cy="98.8" r="6.3" fill="#3a4658"/>
+<rect x="118.1" y="105.1" width="19.8" height="2.7" fill="#7fd4ff" opacity="0.85"/><path d="M137.0,118.6 L142.4,89.8 L145.1,90.69999999999999 L140.6,119.5 Z" fill="#cfd8e6"/></g><path d="M300,190 L262,132 L267,129 L316,190 Z" fill="#cfd8e6"/><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#e9edf3" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">his blow. What reaches you is halved</text></svg></figure></div><div class="beat"><div class="beat-head"><span class="num">1:10</span><h4>A sweep catches her</h4><p>A blow that would kill her is a second wind instead. She has three a floor.</p></div>
+<figure class="pane f"><span class="who f">Euan · Full</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M132.64,132 L122.56,62.879999999999995 Q160,31.200000000000003 197.44,62.879999999999995 L187.36,132 Z" fill="#333c4e"/><path d="M191.68,61.44 L213.28,110.4 L204.64,113.28 L185.92,68.64 Z" fill="#3a4458"/>
+<path d="M147.04,49.92 L144.16,31.200000000000003 L135.52,15.360000000000003 L152.8,25.440000000000005 L167.2,25.440000000000005 L184.48,15.360000000000003 L175.84,31.200000000000003 L172.96,49.92 Z" fill="#3a4458"/>
+<circle cx="154.24" cy="38.400000000000006" r="1.8719999999999999" fill="#ffb45e"/><circle cx="165.76" cy="38.400000000000006" r="1.8719999999999999" fill="#ffb45e"/>
+</g><circle cx="160" cy="70" r="26" fill="none" stroke="#7fd4ff" stroke-width="1.6" opacity="0.9"/><path d="M240,190 L206,128 L211,125 L256,190 Z" fill="#cfd8e6"/><rect x="196" y="24" width="116" height="24" rx="4" fill="#0d1219" opacity="0.9" stroke="#3b3027"/><circle cx="208" cy="36" r="4" fill="#f0b79c"/><text x="218" y="40" font-size="9.5" fill="#e9edf3" text-anchor="start" font-weight="600" font-family="Inter, system-ui, sans-serif">Ana · on a knee</text><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#f0b79c" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">her second wind: she's up in two seconds</text></svg></figure>
+<figure class="pane r"><span class="who r">Ana · Gentle</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M172.44,132 L163.76,72.48 Q196,45.2 228.24,72.48 L219.56,132 Z" fill="#333c4e"/><path d="M223.28,71.24000000000001 L241.88,113.4 L234.44,115.88 L218.32,77.44 Z" fill="#3a4458"/>
+<path d="M184.84,61.32 L182.36,45.2 L174.92000000000002,31.560000000000002 L189.8,40.24 L202.2,40.24 L217.07999999999998,31.560000000000002 L209.64,45.2 L207.16,61.32 Z" fill="#3a4458"/>
+<circle cx="191.04" cy="51.4" r="1.612" fill="#ffb45e"/><circle cx="200.96" cy="51.4" r="1.612" fill="#ffb45e"/>
+</g><g><path d="M120.8,142 L119.0,106.0 L137.0,106.0 L135.2,142 Z" fill="#3a4658"/>
+<circle cx="128" cy="98.8" r="6.3" fill="#3a4658"/>
+<rect x="118.1" y="105.1" width="19.8" height="2.7" fill="#7fd4ff" opacity="0.85"/><path d="M137.0,118.6 L142.4,89.8 L145.1,90.69999999999999 L140.6,119.5 Z" fill="#cfd8e6"/></g><path d="M300,190 L262,132 L267,129 L316,190 Z" fill="#cfd8e6"/><rect x="3" y="3" width="314" height="184" rx="10" fill="none" stroke="#fbf0dc" stroke-width="3" opacity="0.8"/><circle cx="142" cy="34" r="6" fill="#fbf0dc" stroke="#f0b79c"/><circle cx="160" cy="34" r="6" fill="#fbf0dc" stroke="#f0b79c"/><circle cx="178" cy="34" r="6" fill="#2a241f" stroke="#f0b79c"/><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#fbf0dc" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">a second wind: on a knee, then up at half</text></svg></figure></div><div class="beat"><div class="beat-head"><span class="num">1:30</span><h4>It kneels</h4><p>Either of them may take the finishing blow. Her hits counted in full all the way.</p></div>
+<figure class="pane f"><span class="who f">Euan · Full</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M131.2,132 L126.88,94.56 Q152.8,62.879999999999995 184.48,81.6 L196.0,110.4 L191.68,132 Z" fill="#333c4e"/><path d="M181.6,88.80000000000001 L210.4,117.6 L204.64,123.36 L175.84,97.44 Z" fill="#3a4458"/>
+<path d="M162.88,83.04 L160.0,64.32000000000001 L151.36,48.480000000000004 L168.64000000000001,58.56000000000001 L183.04,58.56000000000001 L200.32,48.480000000000004 L191.68,64.32000000000001 L188.8,83.04 Z" fill="#3a4458"/>
+<circle cx="170.08" cy="71.52000000000001" r="1.8719999999999999" fill="#ffb45e"/><circle cx="181.6" cy="71.52000000000001" r="1.8719999999999999" fill="#ffb45e"/>
+</g><g><path d="M103.6,146 L102.0,114.0 L118.0,114.0 L116.4,146 Z" fill="#3a4658"/>
+<circle cx="110" cy="107.6" r="5.6000000000000005" fill="#3a4658"/>
+<rect x="101.2" y="113.19999999999999" width="17.6" height="2.4000000000000004" fill="#f0b79c" opacity="0.85"/><path d="M118.0,118.8 L142.0,96.4 L143.6,99.6 L120.4,122.0 Z" fill="#cfd8e6"/></g><path d="M240,190 L206,128 L211,125 L256,190 Z" fill="#cfd8e6"/><rect x="0" y="0" width="320" height="16" fill="#000"/><rect x="0" y="174" width="320" height="16" fill="#000"/><text x="160" y="168" font-size="10.5" fill="#ffe9a8" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">either of you may finish it</text></svg></figure>
+<figure class="pane r"><span class="who r">Ana · Gentle</span><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#141a24"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M171.2,132 L167.48,99.75999999999999 Q189.8,72.48 217.07999999999998,88.6 L227.0,113.4 L223.28,132 Z" fill="#333c4e"/><path d="M214.6,94.8 L239.4,119.6 L234.44,124.56 L209.64,102.24000000000001 Z" fill="#3a4458"/>
+<path d="M198.48,89.84 L196.0,73.72 L188.56,60.08 L203.44,68.75999999999999 L215.83999999999997,68.75999999999999 L230.71999999999997,60.08 L223.27999999999997,73.72 L220.79999999999998,89.84 Z" fill="#3a4458"/>
+<circle cx="204.67999999999998" cy="79.92" r="1.612" fill="#ffb45e"/><circle cx="214.6" cy="79.92" r="1.612" fill="#ffb45e"/>
+</g><g><path d="M229.6,140 L228.0,108.0 L244.0,108.0 L242.4,140 Z" fill="#3a4658"/>
+<circle cx="236" cy="101.6" r="5.6000000000000005" fill="#3a4658"/>
+<rect x="227.2" y="107.19999999999999" width="17.6" height="2.4000000000000004" fill="#7fd4ff" opacity="0.85"/><path d="M228.0,119.2 L223.2,93.6 L220.8,94.4 L224.8,120.0 Z" fill="#cfd8e6"/></g><g><path d="M142.4,146 L140.5,108.0 L159.5,108.0 L157.6,146 Z" fill="#3a4658"/>
+<circle cx="150" cy="100.4" r="6.6499999999999995" fill="#3a4658"/>
+<rect x="139.55" y="107.05000000000001" width="20.9" height="2.8499999999999996" fill="#f0b79c" opacity="0.85"/><path d="M159.5,113.7 L188.0,87.1 L189.9,90.9 L162.35,117.5 Z" fill="#cfd8e6"/></g><rect x="0" y="0" width="320" height="16" fill="#000"/><rect x="0" y="174" width="320" height="16" fill="#000"/><text x="160" y="168" font-size="10.5" fill="#ffe9a8" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">this one's yours: both of you in the shot</text></svg></figure></div></div>
+</section>
+
+<section>
+  <span class="eyebrow">7 · A Reassessment, two ways</span>
+  <h2>She comes too, and it counts</h2>
+  <p><strong>Both on Full</strong> stays as it is. <strong>One on Gentle</strong> is new: today a tied pair is skipped
+  at the bell and Riding Along earned no rank.</p>
+  <div class="steps"><figure class="step"><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#15161f"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><rect x="146" y="70" width="28" height="60" fill="#232a36"/><path d="M140,70 q20,-34 40,0 z" fill="#3a3222"/><circle cx="160" cy="62" r="4" fill="#ffe9a8"/><g><path d="M110.4,150 L108.5,112.0 L127.5,112.0 L125.6,150 Z" fill="#3a4658"/>
+<circle cx="118" cy="104.4" r="6.6499999999999995" fill="#3a4658"/>
+<rect x="107.55" y="111.05000000000001" width="20.9" height="2.8499999999999996" fill="#7fd4ff" opacity="0.85"/><path d="M127.5,125.3 L133.2,94.9 L136.05,95.85 L131.3,126.25 Z" fill="#cfd8e6"/></g><g><path d="M198.8,150 L197.0,114.0 L215.0,114.0 L213.2,150 Z" fill="#3a4658"/>
+<circle cx="206" cy="106.8" r="6.3" fill="#3a4658"/>
+<rect x="196.1" y="113.1" width="19.8" height="2.7" fill="#f0b79c" opacity="0.85"/><path d="M197.0,126.6 L191.6,97.8 L188.9,98.69999999999999 L193.4,127.5 Z" fill="#cfd8e6"/></g><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#e9edf3" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">both hands on the Reading Bell</text></svg><figcaption><strong>You go in together.</strong> Today a tied pair is skipped. Here she comes as a fighter like anyone, on her own setting.</figcaption></figure><figure class="step"><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#15161f"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M150.92,132 L141.68,68.64 Q176,39.599999999999994 210.32,68.64 L201.08,132 Z" fill="#333c4e"/><path d="M202.4,63.36 L236.72,15.83999999999999 L244.64,21.11999999999999 L214.28,72.6 Z" fill="#3a4458"/>
+<path d="M164.12,56.76 L161.48,39.599999999999994 L153.56,25.079999999999995 L169.4,34.31999999999999 L182.6,34.31999999999999 L198.44,25.079999999999995 L190.52,39.599999999999994 L187.88,56.76 Z" fill="#3a4458"/>
+<circle cx="170.72" cy="46.199999999999996" r="1.7160000000000002" fill="#b0c8ff"/><circle cx="181.28" cy="46.199999999999996" r="1.7160000000000002" fill="#b0c8ff"/>
+</g><circle cx="176" cy="72" r="22" fill="none" stroke="#7fd4ff" stroke-width="1.6" opacity="0.9"/><circle cx="176" cy="72" r="34.1" fill="none" stroke="#ff5b5b" stroke-width="3" opacity="1" /><g><path d="M88.8,144 L87.0,108.0 L105.0,108.0 L103.2,144 Z" fill="#3a4658"/>
+<circle cx="96" cy="100.8" r="6.3" fill="#3a4658"/>
+<rect x="86.1" y="107.1" width="19.8" height="2.7" fill="#7fd4ff" opacity="0.85"/><path d="M105.0,113.4 L132.0,88.19999999999999 L133.8,91.8 L107.7,117.0 Z" fill="#cfd8e6"/></g><path d="M300,190 L262,132 L267,129 L316,190 Z" fill="#cfd8e6"/><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#e9edf3" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">red for him, never for her</text></svg><figcaption><strong>One Warden, two fights.</strong> Yours is the whole thing. What it aims at her is plainer and slower, and it stands a quarter longer for her.</figcaption></figure><figure class="step"><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#15161f"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><g>
+<path d="M163.6,132 L159.64,97.68 Q183.4,68.64 212.44,85.8 L223.0,112.2 L219.04,132 Z" fill="#333c4e"/><path d="M209.8,92.4 L236.2,118.8 L230.92000000000002,124.08 L204.52,100.32 Z" fill="#3a4458"/>
+<path d="M192.64000000000001,87.11999999999999 L190.0,69.96 L182.08,55.44 L197.92000000000002,64.67999999999999 L211.12,64.67999999999999 L226.96,55.44 L219.04000000000002,69.96 L216.4,87.11999999999999 Z" fill="#3a4458"/>
+<circle cx="199.24" cy="76.56" r="1.7160000000000002" fill="#b0c8ff"/><circle cx="209.8" cy="76.56" r="1.7160000000000002" fill="#b0c8ff"/>
+</g><g><path d="M112.8,144 L111.0,108.0 L129.0,108.0 L127.2,144 Z" fill="#3a4658"/>
+<circle cx="120" cy="100.8" r="6.3" fill="#3a4658"/>
+<rect x="110.1" y="107.1" width="19.8" height="2.7" fill="#7fd4ff" opacity="0.85"/><path d="M129.0,113.4 L156.0,88.19999999999999 L157.8,91.8 L131.7,117.0 Z" fill="#cfd8e6"/></g><g><path d="M85.6,148 L84.0,116.0 L100.0,116.0 L98.4,148 Z" fill="#3a4658"/>
+<circle cx="92" cy="109.6" r="5.6000000000000005" fill="#3a4658"/>
+<rect x="83.2" y="115.19999999999999" width="17.6" height="2.4000000000000004" fill="#f0b79c" opacity="0.85"/><path d="M100.0,120.8 L124.0,98.4 L125.6,101.6 L102.4,124.0 Z" fill="#cfd8e6"/></g><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#ffe9a8" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">it's beaten</text></svg><figcaption><strong>You win.</strong> Whatever the Warden leaves goes to both of you. The Ringer's chain is the rope, and she gets hers too.</figcaption></figure><figure class="step"><svg viewBox="0 0 320 190" role="img" xmlns="http://www.w3.org/2000/svg"><rect width="320" height="190" fill="#090c11"/>
+<polygon points="0,190 320,190 230.39999999999998,106.4 89.60000000000001,106.4" fill="#15161f"/>
+<rect x="89.60000000000001" y="30.400000000000002" width="140.8" height="76.0" fill="#0e131b"/>
+<g stroke="#1e2633" stroke-width="1">
+<line x1="32.0" y1="190" x2="115.19999999999999" y2="106.4"/><line x1="96.0" y1="190" x2="137.6" y2="106.4"/>
+<line x1="160.0" y1="190" x2="160.0" y2="106.4"/><line x1="224.0" y1="190" x2="182.39999999999998" y2="106.4"/>
+<line x1="288.0" y1="190" x2="204.8" y2="106.4"/>
+<line x1="54.400000000000006" y1="148.20000000000002" x2="265.59999999999997" y2="148.20000000000002"/><line x1="75.19999999999999" y1="125.4" x2="244.8" y2="125.4"/>
+</g>
+<rect x="64.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/>
+<rect x="240.0" y="15.200000000000001" width="16.0" height="104.50000000000001" fill="#111722"/><rect x="62" y="34" width="88" height="112" rx="5" fill="#ede3cc"/><rect x="62" y="34" width="88" height="16" rx="5" fill="#cbbd9b"/><text x="106" y="46" font-size="6.5" fill="#5c5037" text-anchor="middle" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">HUNTER'S LICENCE</text><circle cx="106" cy="90" r="22" fill="none" stroke="#3d6fa8" stroke-width="2.5"/><text x="106" y="100" font-size="26" fill="#3d6fa8" text-anchor="middle" font-weight="700" font-family="Inter, system-ui, sans-serif">D</text><text x="106" y="134" font-size="9.5" fill="#3a3324" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">Euan</text><rect x="172" y="34" width="88" height="112" rx="5" fill="#ede3cc"/><rect x="172" y="34" width="88" height="16" rx="5" fill="#cbbd9b"/><text x="216" y="46" font-size="6.5" fill="#5c5037" text-anchor="middle" font-weight="700" font-family="JetBrains Mono, ui-monospace, Menlo, monospace">HUNTER'S LICENCE</text><circle cx="216" cy="90" r="22" fill="none" stroke="#3d6fa8" stroke-width="2.5"/><text x="216" y="100" font-size="26" fill="#3d6fa8" text-anchor="middle" font-weight="700" font-family="Inter, system-ui, sans-serif">D</text><text x="216" y="134" font-size="9.5" fill="#3a3324" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">Ana</text><rect x="0" y="166" width="320" height="24" fill="#090c11" opacity="0.82"/><text x="160" y="181" font-size="11" fill="#e9edf3" text-anchor="middle" font-weight="600" font-family="Inter, system-ui, sans-serif">the same rank, the same letter</text></svg><figcaption><strong>Both licences.</strong> She earns the same XP, so she's at the level when you are. One fight ranks you both.</figcaption></figure></div>
+  <ul>
+    <li><strong>The same rank.</strong> If she's at the level and ready, she takes it, with nothing written on it. She
+    earns the same XP as you, so a pair who play together reach the level together.</li>
+    <li><strong>A friend a few levels short</strong>, on either setting, may come along and fight. They're told plainly
+    that this one doesn't count for them yet. Nobody is skipped in silence.</li>
+    <li><strong>Losing</strong> is as today: no fail day, you wake at the door, you go again.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">8 · The rest of what makes it 20 times better</span>
+  <h2>Around the fights</h2>
+  <div class="scroll"><table>
+    <tr><th>The moment</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td>"Where are you?"</td><td>Nothing on screen</td><td class="plan">The strip, the edge arrow, the Atlas dot, a ping</td></tr>
+    <tr><td>"Come here"</td><td>Walk, or go home with Homeward</td><td class="plan"><strong>The Answering Peal.</strong> Your partner rings their handbell for you. You hear it from its bearing, ring yours back, stand still five seconds, and you're beside them. Not in a fight, a gate, a trial or a dream; every ten minutes</td></tr>
+    <tr><td>A friend joins your world later</td><td>Half an hour alone, then a long walk</td><td class="plan">They still get the opening (it's theirs). You're told "Ana has arrived in Carillon". After the Registry she's offered your party, the skiff takes her out, and the Peal does the rest</td></tr>
+    <tr><td>Levels far apart</td><td>One of you is one-shot, or one-shots everything</td><td class="plan">In the stronger one's land, Gentle softens it for the weaker (half damage, second winds). In the weaker one's land, <strong>Match my friend</strong>: a switch, off by default, that evens your hits down to their level while you're near them</td></tr>
+    <tr><td>A monument your partner opened without you</td><td>Gone for you</td><td class="plan"><strong>Shown the way.</strong> It's a lead in your Journal. Go there with them, touch the cache, and you're paid once</td></tr>
+    <tr><td>Exploring apart</td><td>Each finds for themselves</td><td class="plan">What one of you finds alone becomes a lead for the other, never a completion. You bring each other things</td></tr>
+    <tr><td>A jump one of you keeps missing in a gate</td><td>A fall is a death</td><td class="plan">On Gentle a fall sets her back on the last safe ground, two hearts lighter</td></tr>
+    <tr><td>What you did together</td><td>Not kept</td><td class="plan"><strong>Ours.</strong> One Journal page of firsts you did together, each with its day. A record, never a list of orders</td></tr>
+    <tr><td>The Tasks page</td><td>Knows only you</td><td class="plan">A step you both have open carries a small mark. One optional row when it's true: "Ana is ready for her Reassessment"</td></tr>
+    <tr><td>Lag and disagreement</td><td>Not measured with two</td><td class="plan">Everything Gentle changes is decided on the server by who a blow is for; the ring knows its owner; the wire is measured before and after every stage</td></tr>
+  </table></div>
+  <p class="muted">Couples and friends differ in one thing: a couple is a party of two with one home, often with one of them on Gentle,
+  and the defaults are tuned for that. Three or four friends get the same strip, pings and party, and each their own setting.</p>
+</section>
+
+<section>
+  <span class="eyebrow">9 · The same evening, before and after</span>
+  <h2>Four cases</h2>
+  <div class="scroll"><table>
+    <tr><th>Case</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td><strong>Ordinary.</strong> Two fighters, a D gate</td><td>You can't see each other's health. The Lord flicks between you. One of you dies on floor 2 and wakes at home, 900 blocks away. The other finishes alone</td><td>The strip shows she's low. The Lord holds on you for a phrase. She goes down and you lift her. You both walk out</td></tr>
+    <tr><td><strong>The one you asked about.</strong> You love hard fights; she wants a simpler one</td><td>One difficulty for both. Or she rides: tethered, 40% hits, half XP, no rank, left outside at the Reading Bell</td><td>She sets My fights to Gentle. Same Lord, her own blade: it throws her plain blows she can guard, and she hits its back while it's busy with you. You get every red blow and grab as today. One Reassessment ranks you both</td></tr>
+    <tr><td><strong>Hard.</strong> Levels 8 and 35</td><td>In your land she's one-shot. In hers you kill everything before she arrives</td><td>In your land Gentle halves what hits her and gives her second winds. In hers you turn on Match my friend and it's a fight for both</td></tr>
+    <tr><td><strong>Something goes wrong.</strong> Her three second winds are spent and she's hit again</td><td>(No second winds today.) She dies and wakes at home</td><td>She goes down. You have 20 seconds to reach her and lift her. If you don't, it costs her what Story costs: half her Satchel kept, no Fracture, and she wakes at the gate's door</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">10 · How it gets tested</span>
+  <h2>Two players in every check</h2>
+  <ul>
+    <li><strong>A pair kit for the game's tests.</strong> Two real survival test players in a party, with each one's
+    network messages readable (the helper exists today, for one). About forty tests, one per mechanism, and five
+    longer ones that walk the journey as a pair: the opening to the Registry, Ilse to the landing, a whole gate with one on
+    Full and one on Gentle, a Reassessment the same way, a home founded by two.</li>
+    <li><strong>Tours with a partner, on GitHub.</strong> One client films while the server plays a second player from
+    a short script (go, look, strike, cast, use, fall). The client is on Full in one tour and on Gentle in the
+    next, so both screens are photographed, on the same runners as today.</li>
+    <li><strong>Two real clients, once.</strong> A probe on a Linux runner: a server and two clients for five scripted
+    minutes, then the logs are read for kicks and errors. If the clients won't draw there, the probe is dropped and
+    nothing else changes. Never two clients on your Mac.</li>
+    <li><strong>The wire.</strong> Messages per player per second, alone against two, before and after each stage.
+    Budget: under 12 a second in a fight for everything in this plan.</li>
+    <li><strong>Your fight is the same.</strong> From the fight recorder: with a Gentle partner, every blow aimed at
+    the player on Full is the same move with the same timings as alone, and at least three phrases in four are theirs.</li>
+    <li><strong>Alone plays the same.</strong> One player with every switch on gets the same numbers and the same
+    messages as today. The old-save test stays.</li>
+    <li><strong>The real test</strong> is the two of you: the opening, a gate with her on Gentle, and a Reassessment the same way.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">11 · Building it</span>
+  <h2>Six stages, each with a switch</h2>
+  <div class="scroll"><table>
+    <tr><th>Stage</th><th>What</th><th class="num">Builder hours</th></tr>
+    <tr><td>0</td><td>The pair kit, the tour partner, the wire's baseline, the stance measurement, the two-client probe. Changes nothing in the game</td><td class="num">2 to 3</td></tr>
+    <tr><td>1</td><td>See and say: the party, the Together section, a home for two, the strip, Atlas dots, pings</td><td class="num">5 to 7</td></tr>
+    <tr><td>2</td><td>Two fighters: the ring's owner, the held target, stance, its back is turned, standing back up, the door</td><td class="num">5 to 7</td></tr>
+    <tr><td>3</td><td>Gentle, first half: the switch, half damage, second winds, caught falls, Story's death cost, half a fighter, the strip's mark. Riding Along's rules retired</td><td class="num">4 to 6</td></tr>
+    <tr><td>4</td><td>Gentle, second half: a boss chooses by who a blow is for (no red, no grabs, the longer warning and opening), the held guard, one phrase in four, Reassessments on Gentle</td><td class="num">5 to 7</td></tr>
+    <tr><td>5</td><td>The joins: late friends, the Answering Peal, the skiff's rules, shown the way, leads, Ours, Match my friend, the shared finishing film</td><td class="num">5 to 8</td></tr>
+    <tr><td>6</td><td>You two play; fixes from both play logs</td><td class="num">as found</td></tr>
+  </table></div>
+  <p>About 26 to 38 builder hours, one builder, in order. Every stage's switch off is exactly today, and every saved
+  field is optional, so a world loads on a build without them.</p>
+  <h3>What could go wrong</h3>
+  <ul>
+    <li><strong>Gentle is too soft, or not soft enough.</strong> It's the part most likely to need the two of you.
+    Every number is data, and both play logs are read after your first evening.</li>
+    <li><strong>Gentle bleeds into your fight.</strong> The recorder check above, on all 47 fight scripts.</li>
+    <li><strong>A boss with nothing plain to throw.</strong> Every body has plain blows; a test walks every script to
+    prove a Gentle target always gets one.</li>
+    <li><strong>An easy mode in solo play.</strong> Gentle is each player's own choice and Full is the default. Decision
+    5 asks whether it may be used alone.</li>
+    <li><strong>Three other plans move the same ground.</strong> The boss plan's ring, the Far Landing's skiff and the
+    pets. The Far Landing, the pets and the world-moods sessions have answered and nothing clashes: a couple can take
+    one pet each, and sister homes stay the one rule for a second home. The boss plan's session hasn't answered yet.
+    None of their files is touched before they merge.</li>
+  </ul>
+</section>
+
+<section>
+  <span class="eyebrow">12 · Yours to decide</span>
+  <h2>Twenty-one decisions</h2>
+  <p>"Go with all recommendations" works, or tell me the numbers you'd change. The first seven are new or changed since
+  your answer.</p>
+  <ol class="decisions">
+    <li><div class="q"><strong>The tag-along is her own difficulty: a switch per player, My fights, Full or Gentle.</strong><span>She keeps her weapon, powers and everything else. No support job.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>What Gentle changes is the table in section 6.</strong><span>Plainer and slower blows at her, a guard that holds, half damage, three second winds, caught falls, Story's death cost. Numbers tuned after you two play.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Her hits count in full, and the fight grows by half a fighter for her.</strong><span>So your fight is about as long as alone. The other choices: no growth (easier for you), or a whole fighter's growth (harder).</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>On Gentle she earns the same XP, loot, bells and rank. Only titles and records for hard feats need Full.</strong><span>This drops the 9 Nov rules of half XP and no rank credit. The other choice: three-quarters XP.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The setting is each player's own, alone or together, changed any time out of a fight.</strong><span>So anyone, you included, could play alone on Gentle. The other choice: it only works while someone on Full is in your party.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>No thread between you.</strong><span>The other choice: keep the built thread as a faint look only, for you to judge from tour pictures.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A Reassessment fought on Gentle counts for her rank.</strong><span>Today a tied pair is skipped at the bell.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Any pair: go down and be lifted once a floor; a real death wakes you at the gate's door.</strong><span>Gates only. Nobody comes, or both down, is today's death.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The ring shows only for the player a blow is for, and a boss keeps its target for a whole phrase.</strong><span>Worked out with the boss plan's session.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Its back is turned: a quarter more for a blow that lands while it's attacking someone else.</strong><span>For anyone, on either setting. Never alone, so solo fights don't change.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A boss's stance grows with the number of fighters, if stage 0 measures that it breaks too fast.</strong><span>Health already does.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The finishing film plays for everyone in the fight, both of you in the shot.</strong><span>Own-eyes stays each player's setting. Either of you may take the blow.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A party you form with a card on the band, up to four; those who start the story together are one already.</strong><span>A shared home alone no longer makes a party.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A home can have two keepers.</strong><span>The second has the owner's rights except ending the household.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The party strip and the Atlas dots are on by default and hidden when you're alone.</strong><span>A setting makes the strip small or turns it off.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Pings go on the lock key: a monster locks and shares your target, anything else points.</strong><span>No new key.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>The Answering Peal: handbell travel to a partner who rings for you.</strong><span>From your first landing on; every ten minutes; never into a fight or a gate.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Match my friend, as a switch that's off by default.</strong><span>The stronger player chooses to be evened down near a much weaker friend.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>A partner's finds become leads, a solved monument can be shown to a partner once, and the Ours page.</strong><span>Records and directions, never a list.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Test it as described: pair tests, tours with a scripted partner on GitHub, one two-client probe, then the two of you.</strong><span>Nothing with two clients on your Mac.</span></div><span class="rec">Yes</span></li>
+    <li><div class="q"><strong>Build all six stages in one run and test at the end, as your rule says.</strong><span>The other choice is to stop after stage 4 so you two can try Gentle before the rest.</span></div><span class="rec">Yes</span></li>
+  </ol>
+</section>
+
+<section>
+  <span class="eyebrow">Sources and limits</span>
+  <h2>What this rests on</h2>
+  <ul>
+    <li>Code and SPEC of <code>build/awaken-v1</code> at f47c3cff2, read on 11 Nov. File names above are where each fact was read. Nothing was run on your Mac.</li>
+    <li>Each co-op player on their own difficulty, in Gears of War: <a href="https://www.co-optimus.com/article/132/New_Gears_of_War_2_Co-Op_Info.html">co-optimus.com (Gears 2)</a>, <a href="https://co-optimus.com/review/851/page/2/gears-of-war-3-co-op-review.html">co-optimus.com (Gears 3)</a>.</li>
+    <li>A helper role beside the real game reads as thin, in Mario Galaxy's second-player mode: <a href="https://www.mariowiki.com/Co-Star_Luma">mariowiki.com/Co-Star_Luma</a>, <a href="https://www.imore.com/super-mario-3d-all-stars-how-turn-two-player-co-star-mode-super-mario-galaxy">imore.com</a>.</li>
+    <li>Apex Legends' ping, tested with microphones banned: <a href="https://gamedeveloper.com/design/respawn-played-with-muted-mics-to-get-i-apex-legends-i-smart-comms-system-just-right">gamedeveloper.com</a>, <a href="https://www.pcgamer.com/apex-legends-ping-system-is-a-tiny-miracle-for-fps-teamwork-and-communication">pcgamer.com</a>.</li>
+    <li>Minecraft Dungeons' revive and scaling: <a href="https://minecraftdungeons.wiki.fextralife.com/Multiplayer">fextralife wiki</a>, <a href="https://gamewith.net/minecraft-dungeons/article/show/18508">gamewith.net</a>.</li>
+    <li>Guild Wars 2's level matching: <a href="https://wiki.guildwars2.com/wiki/Dynamic_level_adjustment">wiki.guildwars2.com</a>.</li>
+    <li>Not known yet: whether two clients run on one CI runner; how fast stance breaks with two; whether power
+    reactions already cross between two players; what the pack ships for inviting a friend over the internet; and the
+    boss plan session's answer on the ring and the finishing film.</li>
+    <li>Long form: <code>docs/coop/PLAN.md</code> on branch <code>claude/coop-plan-630b2d</code>.</li>
+  </ul>
+</section>
+
+</div>
