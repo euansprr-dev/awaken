@@ -13628,6 +13628,16 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
 - **Hill mouth**: 8+ of rise in 16, open front, arch 5/7/9 wide and 6-11 high (an ellipse, a rough top, roots and vines
   over the lip), throat 16-40 falling about one in two (a drop of two where the hash says), ground over the end, dry; a
   joint to natural cave air is required.
+- **Nothing hangs** (11 Nov; Euan's V20, "floating blocks at a cave entrance again, exactly like the camp", by The Capped
+  Well): the hill mouth's rule asks for its rise 16 in, so on a gentle slope the hill at the lip stands a block or two over
+  the floor and an arch 11 high is open to the sky. Its brow (two courses of rock at arch top + 1 and + 2 out over the
+  lip, the new look's collar) was laid anyway and hung 12 over the grass (his mouth at -1656 88 -136). Now each brow
+  column at lz -1 is laid only where the hill itself stands at the brow's top course (`h + 2`) in that column, the outer
+  course (lz -2) only in front of an inner one; the vines down the face hang only under it (or, in the old look, under
+  the hill there), the top one hung from the block over it. The approach's shelf fills a dip of one and no more (where
+  the slope falls further the land's own slope is the way up), and an adit's spoil stones lie only on ground. Every test
+  reads only the column it writes, which the mouth leaves alone until then, so the chunks of one mouth agree. New land
+  only: a mouth already written keeps its brow.
 - **Order by the ground** (P4): an adit, else a cleft, else a hill mouth, else a doline.
 - **Cleft** (P4): a cliff, 9+ of rise in 6 and 14+ in 14, open in front; a slot 2-4 wide (p W), 16-28 long, its floor
   level through the first 4 then falling one in three to the end; open to the sky (p H: the cliff's height over the lip

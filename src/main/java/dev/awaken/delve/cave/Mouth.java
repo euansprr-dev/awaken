@@ -233,9 +233,12 @@ final class Mouth {
                 Carve.roots(k, f.x(lx, 0), f.y(ly), f.z(lx, 0));
                 Carve.roots(k, f.x(lx, 1), f.y(ly), f.z(lx, 1));
             }
-            if (Carve.rand(seed, lx, 0, 9) < 0.55) {
-                int len = 2 + (int) (Carve.rand(seed, lx, 1, 9) * 4);
-                for (int ly = h + 2; ly > h + 2 - len; ly--) Carve.vine(k, f.x(lx, -1), f.y(ly), f.z(lx, -1), f.dir(Direction.SOUTH));
+            // the vines hang from the brow (the new look) or the hill over the lip: only where the hill stands that high
+            // in front of the arch, never in the air of a mouth cut into a gentle slope (SPEC §34.1, "Nothing hangs")
+            if (Carve.rand(seed, lx, 0, 9) < 0.55 && overLip(f, k, lx, h, -1)) {
+                int len = 2 + (int) (Carve.rand(seed, lx, 1, 9) * 4), top = s.p(LOOK) > 0 ? h : h + 1;
+                for (int ly = top; ly > top - len; ly--)
+                    Carve.vine(k, f.x(lx, -1), f.y(ly), f.z(lx, -1), f.dir(Direction.SOUTH), ly == top);
             }
         }
         for (int lz = 0; lz <= PORTAL + 3; lz++) {
@@ -256,7 +259,9 @@ final class Mouth {
         approach(s, f, k, 3, 5);
         // spoil heaps beside the cutting
         for (int side = -1; side <= 1; side += 2) {
-            for (int i = 0; i < 3; i++) f.put(k, side * (4 + i), 0, -3 - i, i == 0 ? Blocks.GRAVEL.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState());
+            // each stone on ground (or the shelf) right under it, never hung over a fall in the slope
+            for (int i = 0; i < 3; i++)
+                if (firm(f, k, side * (4 + i), -1, -3 - i)) f.put(k, side * (4 + i), 0, -3 - i, i == 0 ? Blocks.GRAVEL.defaultBlockState() : Blocks.COBBLESTONE.defaultBlockState());
         }
         if (f.touches(k, -3, -1, 3, L + 1)) {
             for (int lz = -1; lz < L; lz++) {
@@ -515,10 +520,13 @@ final class Mouth {
                 }
             }
         }
-        // the brow: two courses of rock out over the arch's top, roots under it
+        // the brow: two courses of rock out over the arch's top, roots under it. Only where the hill itself stands at the
+        // brow's top course in that column: on a gentle slope the arch's top is in the open and a brow there hung a dozen
+        // blocks over the grass (SPEC §34.1, "Nothing hangs"); the outer course only in front of an inner one.
         for (int lx = -(w / 2 + 1); lx <= w / 2 + 1; lx++) {
             for (int lz = -1; lz >= -2; lz--) {
                 if (lz == -2 && Carve.rand(seed, lx, lz, 5) < 0.45) continue;
+                if (!overLip(f, k, lx, h, lz)) break;
                 for (int ly = h + 1; ly <= h + 2; ly++) f.put(k, lx, ly, lz, rockFace(seed, f.x(lx, lz), f.y(ly), f.z(lx, lz)));
                 Carve.roots(k, f.x(lx, lz), f.y(h), f.z(lx, lz));
             }
@@ -613,9 +621,25 @@ final class Mouth {
                 if (!f.inside(k, lx, -1, lz)) continue;
                 // the shelf's outer edge breaks up: spoil that spilled out, not a slab laid down
                 if (s.p(LOOK) > 0 && Math.abs(lx) >= w - 1 && Carve.rand(s.seed(), lx, lz, 44) < 0.45) continue;
-                if (!f.get(k, lx, -1, lz).isSolidRender()) f.put(k, lx, -1, lz, Blocks.COARSE_DIRT.defaultBlockState());
+                // a dip of one is filled; where the slope falls away further the land's own slope is the way up, not a
+                // shelf over the drop (SPEC §34.1, "Nothing hangs")
+                if (!f.get(k, lx, -1, lz).isSolidRender() && firm(f, k, lx, -2, lz)) f.put(k, lx, -1, lz, Blocks.COARSE_DIRT.defaultBlockState());
             }
         }
+    }
+
+    /**
+     * Whether the hill itself stands at a brow's top course (local height {@code h + 2}, over an arch {@code h} high) in
+     * the column (lx, lz) in front of the lip. Read from that column alone, which the mouth leaves alone until the brow:
+     * the chunk that writes the column decides, so every chunk agrees.
+     */
+    private static boolean overLip(Frame f, Sink k, int lx, int h, int lz) {
+        return firm(f, k, lx, h + 2, lz);
+    }
+
+    /** A whole block at (lx, ly, lz) in this chunk: something laid there rests on it. */
+    private static boolean firm(Frame f, Sink k, int lx, int ly, int lz) {
+        return f.inside(k, lx, ly, lz) && f.get(k, lx, ly, lz).isSolidRender();
     }
 
     /** Rock under the feet at (lx, fl, lz) where the carving or a natural hole left none. */
