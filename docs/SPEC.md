@@ -24517,8 +24517,9 @@ improving the design and experience of it"): the first look was a plank box with
   built when its chunk loads. Each faces the other end (snapped). The exact spot is the best of a ±20 search on a step of
   4 (height spread ×3, water ×6, road ×8, distance/6, and 2 a block where the ground astern drops more than 3 below
   the pad, so the steps reach the ground soon; a tree's trunk is not the ground). A glade of 6 round the footprint is
-  cleared of logs and leaves, and in a fringe of 6 more any leaves with no trunk left within 4 of them come down too
-  (with the snow that lay on them), so a mooring in a forest stands in the open with nothing left hanging. Both are guarded: breaking, placing and explosions there are refused except for
+  cleared of logs and leaves, and in a fringe of 6 more any leaves with no trunk left within 4 of them and 2 of their
+  height come down too (with the snow that lay on them), so a mooring in a forest stands in the open with nothing
+  left hanging. Both are guarded: breaking, placing and explosions there are refused except for
   creative players and operators. Saved in `FrontierData` (`awaken:frontier`, schema 1); a mooring's `look` (2 now, 1
   when absent) lets one of an older look be taken down and built again where it stood.
 - Rotations: WEST (−z, x), NORTH (−x, −z), EAST (z, −x), with `Rotation` CW 90, 180, CCW 90 for the block states (the
@@ -24549,7 +24550,9 @@ improving the design and experience of it"): the first look was a plank box with
     (`textures/gui/frontier/crossing_out.png` / `crossing_home.png`, a sky gradient without it), "OUT ON THE WIND" or
     "HOME ON THE WIND", the name surfacing from its middle, a gold rule, how far and which way, a hair of light that
     fills as the land arrives. It is the film's own layer, so it is kept through the shot's hidden HUD
-    (`Cinema.keepLayer`). It holds at least 3 s and until the far land is drawn (or 20 s).
+    (`Cinema.keepLayer`). It holds at least 3 s and until the far land is drawn (or 20 s): drawn means nothing is
+    left to draw anywhere, or the land round the mooring is (its own nine chunks and 38 of the 49 round it), since
+    the far land can go on arriving for a long while and the skiff can come down as it does.
   - **It comes down** over 110 ticks, in from 190 back and 120 up, out of thinning cloud: the wings flare to 24 degrees
     as it brakes and fold flat as it settles, the wheel runs down to rest exactly as it stood (three turns, eased), two
     bells, dust off the pad, the hull onto its cradle with a dip. The real far skiff returns six ticks before the end.
@@ -24559,8 +24562,9 @@ improving the design and experience of it"): the first look was a plank box with
   ear that follow the skiff's speed and go close and quiet inside the cloud.
 - Watchers within 160 of a mooring see the skiff wake and lift away with its party (their bodies hidden once it
   lifts); it comes back empty to its berth 15 s later, wings and wheel moving the same way.
-- The homecoming's skiff (67.8) is drawn beside you, its core just off the ground and its bow toward the city
-  (`Flights.BESIDE`); the view goes from your own eyes up to its helm over 26 ticks, and it has no outside shot.
+- The homecoming's skiff (67.8) is drawn beside you, its bow toward the city and its core just clear of the highest
+  ground under it, so on a slope it hangs over the low side and is never in the hill (`Flights.BESIDE`); the view goes
+  from your own eyes up to its helm over 26 ticks, and it has no outside shot.
 
 **67.6 Errands come to you (`core.api.FarPost`).**
 - Letters: a card in the writer's words wherever you are (`FarPost.letter`), a copy kept in the hold (16 kept a player,

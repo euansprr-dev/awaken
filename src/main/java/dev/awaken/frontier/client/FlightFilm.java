@@ -562,7 +562,10 @@ public final class FlightFilm {
         }
     }
 
-    /** The far end's land is here and drawn. */
+    /**
+     * The far end's land is here and drawn: either nothing is left to draw anywhere, or the land round the mooring is
+     * (the far land can go on arriving while the skiff comes down; waiting for all of it can hold the cloud for long).
+     */
     static boolean landHere(Minecraft mc) {
         Flight f = cur;
         LocalPlayer p = mc.player;
@@ -572,7 +575,15 @@ public final class FlightFilm {
         for (int dx = -3; dx <= 3; dx++)
             for (int dz = -3; dz <= 3; dz++)
                 if (!mc.level.hasChunk(cx + dx, cz + dz)) return false;
-        return mc.levelRenderer.hasRenderedAllSections();
+        if (mc.levelRenderer.hasRenderedAllSections()) return true;
+        int drawn = 0;
+        for (int dx = -3; dx <= 3; dx++)
+            for (int dz = -3; dz <= 3; dz++) {
+                boolean here = mc.levelRenderer.isSectionCompiledAndVisible(f.to.offset(dx * 16, 0, dz * 16), 0L);
+                if (here) drawn++;
+                else if (Math.abs(dx) <= 1 && Math.abs(dz) <= 1) return false;
+            }
+        return drawn >= 38;
     }
 
     /** The flight is over on this client: both skiffs back, the bars up, the cloud gone. */

@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import org.jspecify.annotations.Nullable;
 
@@ -128,9 +129,18 @@ final class Flights {
             if (spot == null) return false;
             there = new FrontierData.Mooring(new BlockPos(spot.getX(), level.getSeaLevel() + 8, spot.getZ()), Moorings.facing(server, Moorings.Which.RIDGE), false, Moorings.LOOK);
         }
-        // it has come down beside you, its bow toward the city and its core just off the ground; its helm is a few steps away
+        // it has come down beside you, its bow toward the city, its core just clear of the highest ground under it (on a
+        // slope that leaves it hanging over the low side, never in the hill); its helm is a few steps away
         Direction facing = Direction.fromYRot(bearing(at, there.origin()));
-        BlockPos origin = at.subtract(rotated(facing, BESIDE)).above(-Skiff.KEEL);
+        BlockPos beside = at.subtract(rotated(facing, BESIDE));
+        int top = at.getY();
+        for (int x = -Skiff.DECK_X - 6; x <= Skiff.DECK_X + 6; x += 2)
+            for (int z = Skiff.DECK_Z0 - 2; z <= Skiff.DECK_Z1 + 2; z += 2) {
+                BlockPos c = Skiff.at(beside, facing, x, 0, z);
+                if (level.hasChunk(c.getX() >> 4, c.getZ() >> 4))
+                    top = Math.max(top, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, c.getX(), c.getZ()));
+            }
+        BlockPos origin = new BlockPos(beside.getX(), top - Skiff.KEEL, beside.getZ());
         List<ServerPlayer> party = new ArrayList<>();
         for (ServerPlayer p : level.players()) {
             if (p.isSpectator() || flying(p.getUUID())) continue;

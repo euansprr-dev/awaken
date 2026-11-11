@@ -66,8 +66,10 @@ wait 100
 cmd tp @s ~12 ~ ~12
 wait 40
 cmd awaken frontier homecoming
-wait 30
-shotnow fh_07_skiff_came_for_you
+wait 8
+shotnow fh_07a_skiff_came_for_you
+wait 22
+shotnow fh_07_at_its_helm
 wait 45
 shotnow fh_08_lifted_from_home
 wait 70
