@@ -6012,7 +6012,8 @@ magic.
     on the Mac, not on CI). Where the pipeline doesn't compile, or the bound projection isn't perspective, each user's
     CPU estimate stands, as before. Development: client command `/awaken lens projection off|on|check` (off: every
     user's CPU estimate, for A/B; check: the latest roll read back).
-- **Heightfield** `awaken:lens_height` (`LensHeightfield`, 1024×1024 RG16F, mips 1-4 hold the max of their 2×2; about
+- **Heightfield** `awaken:lens_height` (`LensHeightfield`, 1024×1024 RGBA16F since "Shadows beyond the block map"
+  (b a roof's underside, a the floor under it), mips 1-4 hold the max of their 2×2 (the min for b); about
   5.6 MB on the GPU and the same off-heap mirror): from the client chunks' own heightmaps (26.3 sends MOTION_BLOCKING
   and MOTION_BLOCKING_NO_LEAVES to the client): r the top of everything that blocks motion (leaves included), g
   without leaves. **The heightfield sees every solid block** (`LensHeights`, Euan 2026-10-29: "in a closed room the
@@ -6747,11 +6748,26 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     it, as the map finds for the same tree near by. Inside the map nothing is lost: a point is called lit without
     a walk only when nothing at all stands over its ray, leaves at any height included (`leafy`), so the walk still
     has its say wherever the old curtain did, at the same cost.
+  - **Roofs with air under them** (the same day; the tour's stone table still threw a slab's shadow from its feet at
+    78 blocks, in both runs): a solid thing with open air under it (a bridge, an arch, a market roof, a table) was
+    a solid pillar to the heightfield. The heightfield now holds two more heights a column (RGBA16F): where the
+    solid at its top has open air under it within six blocks, the underside of that solid (b) and the top of
+    whatever stands under the air, found within 64 blocks (a). Elsewhere b is far above anything (4096) and a is
+    the solid top, so one test serves every column: solid under a, and from b up to the top. `heightRay` tests a
+    ray's whole span through each near column against that, and a point under such a roof marches on if its ray
+    leaves its own column below the underside (before, anything under a solid top was simply out of the sun). The
+    coarse levels hold the least b and the most a of their columns, so a far step never lets light through where
+    one column would stop it (a leg in a 4×4 cell makes the cell a pillar: thicker than it is, never thinner).
+    - Read with the chunk (`LensHeightfield.roofs`): only when a chunk's tops changed, so the steady rescan
+      costs what it did; a new chunk costs up to six block reads a column more. A hollow dug under a roof that
+      leaves every top as it was shows when a top next changes. The texture and its mirror are twice the size
+      (11 MB each from 5.6). Tick time not measured.
+    - Not held: a roof thicker than six blocks (a floating island: still a pillar to the ground), air deeper than
+      64 under a roof (solid from there down), a third layer under the floor. The CPU's own marches (the lit
+      air, the sun map, the dust) still take a column for solid under its top; they only ever spare a walk or
+      colour the air, never shade a surface.
   - **What still differs with distance**: leaves lower than a crown's top seven (a spruce's skirt, a bush under a
-    giant) shade only inside the map; and a solid thing with open air under it (a bridge, an arch, a table) is a
-    solid pillar to the heightfield, so beyond 46 blocks its shadow is the pillar's and nearer it is the thing's
-    own. Telling those apart needs the underside of each column's top run in the heightfield (a third channel and
-    a scan at chunk load): not built.
+    giant) shade only inside the map.
   - Tour: `tools/autopilot/steady60-treeshadow-ci.txt` (a built jungle giant and a stone table from 16, 42 and 78
     blocks, and from the ground).
 - **Shade on creatures** (Euan, playing, 2026-11-11, with a cow at arm's length: "the shadows on animals are a bit
