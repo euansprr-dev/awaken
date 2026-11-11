@@ -3,24 +3,10 @@
     "subtitle": "subtitles.awaken.wild.song.robin",
     "sounds": [
       {
-        "name": "awaken:wild/robin1",
-        "attenuation_distance": 32
-      },
-      {
-        "name": "awaken:wild/robin2",
-        "attenuation_distance": 32
-      },
-      {
-        "name": "awaken:wild/robin3",
-        "attenuation_distance": 32
-      },
-      {
-        "name": "awaken:wild/robin4",
-        "attenuation_distance": 32
-      },
-      {
-        "name": "awaken:wild/robin5",
-        "attenuation_distance": 32
+        "name": "minecraft:entity.parrot.ambient",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.6
       }
     ]
   },
@@ -28,19 +14,9 @@
     "subtitle": "subtitles.awaken.wild.song.tit",
     "sounds": [
       {
-        "name": "awaken:wild/tit1",
-        "attenuation_distance": 28
-      },
-      {
-        "name": "awaken:wild/tit2",
-        "attenuation_distance": 28
-      },
-      {
-        "name": "awaken:wild/tit3",
-        "attenuation_distance": 28
-      },
-      {
-        "name": "awaken:wild/tit4",
+        "name": "minecraft:mob/parrot/idle4",
+        "volume": 0.42,
+        "pitch": 1.8,
         "attenuation_distance": 28
       }
     ]
@@ -49,19 +25,9 @@
     "subtitle": "subtitles.awaken.wild.song.finch",
     "sounds": [
       {
-        "name": "awaken:wild/finch1",
-        "attenuation_distance": 32
-      },
-      {
-        "name": "awaken:wild/finch2",
-        "attenuation_distance": 32
-      },
-      {
-        "name": "awaken:wild/finch3",
-        "attenuation_distance": 32
-      },
-      {
-        "name": "awaken:wild/finch4",
+        "name": "minecraft:mob/parrot/idle2",
+        "volume": 0.42,
+        "pitch": 2.0,
         "attenuation_distance": 32
       }
     ]
@@ -70,19 +36,9 @@
     "subtitle": "subtitles.awaken.wild.song.wren",
     "sounds": [
       {
-        "name": "awaken:wild/wren1",
-        "attenuation_distance": 36
-      },
-      {
-        "name": "awaken:wild/wren2",
-        "attenuation_distance": 36
-      },
-      {
-        "name": "awaken:wild/wren3",
-        "attenuation_distance": 36
-      },
-      {
-        "name": "awaken:wild/wren4",
+        "name": "minecraft:mob/parrot/idle1",
+        "volume": 0.42,
+        "pitch": 1.9,
         "attenuation_distance": 36
       }
     ]
@@ -91,28 +47,10 @@
     "subtitle": "subtitles.awaken.wild.chip",
     "sounds": [
       {
-        "name": "awaken:wild/chip1",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:wild/chip2",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:wild/chip3",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:wild/chip4",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:wild/chip5",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:wild/chip6",
-        "attenuation_distance": 16
+        "name": "minecraft:entity.parrot.ambient",
+        "type": "event",
+        "volume": 0.55,
+        "pitch": 1.7
       }
     ]
   },
@@ -120,19 +58,51 @@
     "subtitle": "subtitles.awaken.wild.flush",
     "sounds": [
       {
-        "name": "awaken:wild/flush1",
+        "name": "minecraft:mob/parrot/fly1",
+        "volume": 1.0,
+        "pitch": 1.3,
         "attenuation_distance": 20
       },
       {
-        "name": "awaken:wild/flush2",
+        "name": "minecraft:mob/parrot/fly2",
+        "volume": 1.0,
+        "pitch": 1.3,
         "attenuation_distance": 20
       },
       {
-        "name": "awaken:wild/flush3",
+        "name": "minecraft:mob/parrot/fly3",
+        "volume": 1.0,
+        "pitch": 1.3,
         "attenuation_distance": 20
       },
       {
-        "name": "awaken:wild/flush4",
+        "name": "minecraft:mob/parrot/fly4",
+        "volume": 1.0,
+        "pitch": 1.3,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:mob/parrot/fly5",
+        "volume": 1.0,
+        "pitch": 1.3,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:mob/parrot/fly6",
+        "volume": 1.0,
+        "pitch": 1.3,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:mob/parrot/fly7",
+        "volume": 1.0,
+        "pitch": 1.3,
+        "attenuation_distance": 20
+      },
+      {
+        "name": "minecraft:mob/parrot/fly8",
+        "volume": 1.0,
+        "pitch": 1.3,
         "attenuation_distance": 20
       }
     ]
@@ -141,15 +111,51 @@
     "subtitle": "subtitles.awaken.wild.wings.big",
     "sounds": [
       {
-        "name": "awaken:wild/wings_big1",
+        "name": "minecraft:mob/parrot/fly1",
+        "volume": 1.0,
+        "pitch": 0.74,
         "attenuation_distance": 28
       },
       {
-        "name": "awaken:wild/wings_big2",
+        "name": "minecraft:mob/parrot/fly2",
+        "volume": 1.0,
+        "pitch": 0.74,
         "attenuation_distance": 28
       },
       {
-        "name": "awaken:wild/wings_big3",
+        "name": "minecraft:mob/parrot/fly3",
+        "volume": 1.0,
+        "pitch": 0.74,
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/parrot/fly4",
+        "volume": 1.0,
+        "pitch": 0.74,
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/parrot/fly5",
+        "volume": 1.0,
+        "pitch": 0.74,
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/parrot/fly6",
+        "volume": 1.0,
+        "pitch": 0.74,
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/parrot/fly7",
+        "volume": 1.0,
+        "pitch": 0.74,
+        "attenuation_distance": 28
+      },
+      {
+        "name": "minecraft:mob/parrot/fly8",
+        "volume": 1.0,
+        "pitch": 0.74,
         "attenuation_distance": 28
       }
     ]
@@ -158,20 +164,10 @@
     "subtitle": "subtitles.awaken.wild.woodpecker.drum",
     "sounds": [
       {
-        "name": "awaken:wild/woodpecker_drum1",
-        "attenuation_distance": 56
-      },
-      {
-        "name": "awaken:wild/woodpecker_drum2",
-        "attenuation_distance": 56
-      },
-      {
-        "name": "awaken:wild/woodpecker_drum3",
-        "attenuation_distance": 56
-      },
-      {
-        "name": "awaken:wild/woodpecker_drum4",
-        "attenuation_distance": 56
+        "name": "minecraft:random/wood_click",
+        "volume": 0.375,
+        "pitch": 0.95,
+        "attenuation_distance": 48
       }
     ]
   },
@@ -179,15 +175,9 @@
     "subtitle": "subtitles.awaken.wild.woodpecker.tap",
     "sounds": [
       {
-        "name": "awaken:wild/woodpecker_tap1",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:wild/woodpecker_tap2",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:wild/woodpecker_tap3",
+        "name": "minecraft:random/wood_click",
+        "volume": 0.3,
+        "pitch": 1.15,
         "attenuation_distance": 20
       }
     ]
@@ -196,24 +186,28 @@
     "subtitle": "subtitles.awaken.wild.crow.caw",
     "sounds": [
       {
-        "name": "awaken:wild/crow1",
-        "attenuation_distance": 56
+        "name": "minecraft:mob/parrot/death1",
+        "volume": 0.7,
+        "pitch": 0.6,
+        "attenuation_distance": 48
       },
       {
-        "name": "awaken:wild/crow2",
-        "attenuation_distance": 56
+        "name": "minecraft:mob/parrot/death2",
+        "volume": 0.7,
+        "pitch": 0.6,
+        "attenuation_distance": 48
       },
       {
-        "name": "awaken:wild/crow3",
-        "attenuation_distance": 56
+        "name": "minecraft:mob/parrot/death3",
+        "volume": 0.7,
+        "pitch": 0.6,
+        "attenuation_distance": 48
       },
       {
-        "name": "awaken:wild/crow4",
-        "attenuation_distance": 56
-      },
-      {
-        "name": "awaken:wild/crow5",
-        "attenuation_distance": 56
+        "name": "minecraft:mob/parrot/death4",
+        "volume": 0.7,
+        "pitch": 0.6,
+        "attenuation_distance": 48
       }
     ]
   },
@@ -221,37 +215,28 @@
     "subtitle": "subtitles.awaken.wild.raptor.call",
     "sounds": [
       {
-        "name": "awaken:wild/buzzard1",
-        "attenuation_distance": 110
+        "name": "minecraft:mob/fox/screech1",
+        "volume": 0.32,
+        "pitch": 1.45,
+        "attenuation_distance": 96
       },
       {
-        "name": "awaken:wild/buzzard2",
-        "attenuation_distance": 110
+        "name": "minecraft:mob/fox/screech2",
+        "volume": 0.32,
+        "pitch": 1.45,
+        "attenuation_distance": 96
       },
       {
-        "name": "awaken:wild/buzzard3",
-        "attenuation_distance": 110
-      }
-    ]
-  },
-  "wild.owl.hoot": {
-    "subtitle": "subtitles.awaken.wild.owl.hoot",
-    "sounds": [
-      {
-        "name": "awaken:wild/owl1",
-        "attenuation_distance": 72
+        "name": "minecraft:mob/fox/screech3",
+        "volume": 0.32,
+        "pitch": 1.45,
+        "attenuation_distance": 96
       },
       {
-        "name": "awaken:wild/owl2",
-        "attenuation_distance": 72
-      },
-      {
-        "name": "awaken:wild/owl3",
-        "attenuation_distance": 72
-      },
-      {
-        "name": "awaken:wild/owl4",
-        "attenuation_distance": 72
+        "name": "minecraft:mob/fox/screech4",
+        "volume": 0.32,
+        "pitch": 1.45,
+        "attenuation_distance": 96
       }
     ]
   },
@@ -259,24 +244,10 @@
     "subtitle": "subtitles.awaken.wild.duck.quack",
     "sounds": [
       {
-        "name": "awaken:wild/duck1",
-        "attenuation_distance": 36
-      },
-      {
-        "name": "awaken:wild/duck2",
-        "attenuation_distance": 36
-      },
-      {
-        "name": "awaken:wild/duck3",
-        "attenuation_distance": 36
-      },
-      {
-        "name": "awaken:wild/duck4",
-        "attenuation_distance": 36
-      },
-      {
-        "name": "awaken:wild/duck5",
-        "attenuation_distance": 36
+        "name": "minecraft:entity.chicken.ambient",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.78
       }
     ]
   },
@@ -284,11 +255,15 @@
     "subtitle": "subtitles.awaken.wild.heron.croak",
     "sounds": [
       {
-        "name": "awaken:wild/heron1",
+        "name": "minecraft:mob/chicken/hurt1",
+        "volume": 0.55,
+        "pitch": 0.55,
         "attenuation_distance": 48
       },
       {
-        "name": "awaken:wild/heron2",
+        "name": "minecraft:mob/chicken/hurt2",
+        "volume": 0.55,
+        "pitch": 0.55,
         "attenuation_distance": 48
       }
     ]
@@ -297,16 +272,10 @@
     "subtitle": "subtitles.awaken.wild.squirrel.chatter",
     "sounds": [
       {
-        "name": "awaken:wild/squirrel1",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:wild/squirrel2",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:wild/squirrel3",
-        "attenuation_distance": 20
+        "name": "minecraft:entity.bat.ambient",
+        "type": "event",
+        "volume": 0.1,
+        "pitch": 0.62
       }
     ]
   },
@@ -314,16 +283,10 @@
     "subtitle": "subtitles.awaken.wild.frog.plop",
     "sounds": [
       {
-        "name": "awaken:wild/frog_plop1",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:wild/frog_plop2",
-        "attenuation_distance": 16
-      },
-      {
-        "name": "awaken:wild/frog_plop3",
-        "attenuation_distance": 16
+        "name": "minecraft:entity.fishing_bobber.splash",
+        "type": "event",
+        "volume": 0.22,
+        "pitch": 1.4
       }
     ]
   },
@@ -331,20 +294,10 @@
     "subtitle": "subtitles.awaken.wild.cricket",
     "sounds": [
       {
-        "name": "awaken:wild/cricket1",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:wild/cricket2",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:wild/cricket3",
-        "attenuation_distance": 20
-      },
-      {
-        "name": "awaken:wild/cricket4",
-        "attenuation_distance": 20
+        "name": "minecraft:block.firefly_bush.idle",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.0
       }
     ]
   },
@@ -352,16 +305,110 @@
     "subtitle": "subtitles.awaken.wild.rustle",
     "sounds": [
       {
-        "name": "awaken:wild/rustle1",
-        "attenuation_distance": 14
+        "name": "minecraft:block.leaf_litter.step",
+        "type": "event",
+        "volume": 1.2,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "wild.song.tit.part1": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/parrot/idle2",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "wild.song.tit.part2": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/parrot/idle4",
+        "attenuation_distance": 28
+      }
+    ]
+  },
+  "wild.song.finch.part1": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/parrot/idle2",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "wild.song.finch.part2": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/parrot/idle6",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "wild.song.finch.part3": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/parrot/idle4",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "wild.song.wren.part1": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/parrot/idle1",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "wild.song.wren.part2": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/parrot/idle5",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "wild.song.wren.part3": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/parrot/idle4",
+        "attenuation_distance": 36
+      }
+    ]
+  },
+  "wild.woodpecker.drum.part1": {
+    "sounds": [
+      {
+        "name": "minecraft:random/wood_click",
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "wild.woodpecker.tap.part1": {
+    "sounds": [
+      {
+        "name": "minecraft:random/wood_click",
+        "attenuation_distance": 20
+      }
+    ]
+  },
+  "wild.crow.caw.part1": {
+    "sounds": [
+      {
+        "name": "minecraft:mob/parrot/death1",
+        "attenuation_distance": 48
       },
       {
-        "name": "awaken:wild/rustle2",
-        "attenuation_distance": 14
+        "name": "minecraft:mob/parrot/death2",
+        "attenuation_distance": 48
       },
       {
-        "name": "awaken:wild/rustle3",
-        "attenuation_distance": 14
+        "name": "minecraft:mob/parrot/death3",
+        "attenuation_distance": 48
+      },
+      {
+        "name": "minecraft:mob/parrot/death4",
+        "attenuation_distance": 48
       }
     ]
   }

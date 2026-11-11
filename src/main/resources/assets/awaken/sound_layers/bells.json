@@ -1,0 +1,16 @@
+{
+ "awaken:bells.hang": [
+  {
+   "delay": 100,
+   "pitch": 1.2,
+   "sound": "minecraft:block.anvil.place",
+   "volume": 0.3
+  },
+  {
+   "delay": 250,
+   "pitch": 0.7,
+   "sound": "minecraft:block.wood.hit",
+   "volume": 0.7
+  }
+ ]
+}

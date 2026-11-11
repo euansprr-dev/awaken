@@ -3,10 +3,10 @@
     "subtitle": "subtitles.awaken.signal.chime",
     "sounds": [
       {
-        "name": "awaken:ui_toast_1"
-      },
-      {
-        "name": "awaken:ui_toast_2"
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -14,7 +14,10 @@
     "subtitle": "subtitles.awaken.signal.open",
     "sounds": [
       {
-        "name": "awaken:ui_card"
+        "name": "minecraft:ui.toast.in",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -22,7 +25,10 @@
     "subtitle": "subtitles.awaken.signal.warning",
     "sounds": [
       {
-        "name": "awaken:ui_warning"
+        "name": "minecraft:block.trial_spawner.detect_player",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -30,7 +36,10 @@
     "subtitle": "subtitles.awaken.level_up",
     "sounds": [
       {
-        "name": "awaken:ui_level_up"
+        "name": "minecraft:entity.player.levelup",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -38,7 +47,10 @@
     "subtitle": "subtitles.awaken.rank_up",
     "sounds": [
       {
-        "name": "awaken:ui_rank_up"
+        "name": "minecraft:ui.toast.challenge_complete",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   }

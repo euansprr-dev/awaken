@@ -3,7 +3,10 @@
     "subtitle": "subtitles.awaken.holo.open",
     "sounds": [
       {
-        "name": "awaken:ui_holo_open"
+        "name": "minecraft:block.vault.open_shutter",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.3
       }
     ]
   },
@@ -11,7 +14,10 @@
     "subtitle": "subtitles.awaken.holo.open_quick",
     "sounds": [
       {
-        "name": "awaken:ui_holo_open_quick"
+        "name": "minecraft:block.vault.open_shutter",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.6
       }
     ]
   },
@@ -19,7 +25,10 @@
     "subtitle": "subtitles.awaken.holo.close",
     "sounds": [
       {
-        "name": "awaken:ui_holo_close"
+        "name": "minecraft:block.vault.close_shutter",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.3
       }
     ]
   },
@@ -27,10 +36,10 @@
     "subtitle": "subtitles.awaken.holo.hover",
     "sounds": [
       {
-        "name": "awaken:ui_holo_hover_1"
-      },
-      {
-        "name": "awaken:ui_holo_hover_2"
+        "name": "minecraft:block.comparator.click",
+        "type": "event",
+        "volume": 0.2,
+        "pitch": 1.9
       }
     ]
   },
@@ -38,7 +47,10 @@
     "subtitle": "subtitles.awaken.holo.card",
     "sounds": [
       {
-        "name": "awaken:ui_holo_card"
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.4
       }
     ]
   },
@@ -46,7 +58,10 @@
     "subtitle": "subtitles.awaken.holo.page",
     "sounds": [
       {
-        "name": "awaken:ui_holo_page"
+        "name": "minecraft:item.book.page_turn",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2
       }
     ]
   },
@@ -54,7 +69,10 @@
     "subtitle": "subtitles.awaken.holo.spend",
     "sounds": [
       {
-        "name": "awaken:ui_holo_spend"
+        "name": "minecraft:ui.stonecutter.select_recipe",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2
       }
     ]
   },
@@ -62,7 +80,10 @@
     "subtitle": "subtitles.awaken.holo.confirm",
     "sounds": [
       {
-        "name": "awaken:ui_holo_confirm"
+        "name": "minecraft:block.beacon.activate",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.4
       }
     ]
   },
@@ -70,7 +91,10 @@
     "subtitle": "subtitles.awaken.holo.undo",
     "sounds": [
       {
-        "name": "awaken:ui_holo_undo"
+        "name": "minecraft:ui.stonecutter.select_recipe",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.8
       }
     ]
   }

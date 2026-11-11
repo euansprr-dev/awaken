@@ -3,8 +3,10 @@
     "subtitle": "subtitles.awaken.delve.strike.coal",
     "sounds": [
       {
-        "name": "awaken:delve_strike_coal",
-        "attenuation_distance": 16
+        "name": "minecraft:block.tuff.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.85
       }
     ]
   },
@@ -12,8 +14,10 @@
     "subtitle": "subtitles.awaken.delve.strike.copper",
     "sounds": [
       {
-        "name": "awaken:delve_strike_copper",
-        "attenuation_distance": 16
+        "name": "minecraft:block.heavy_core.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.15
       }
     ]
   },
@@ -21,8 +25,10 @@
     "subtitle": "subtitles.awaken.delve.strike.iron",
     "sounds": [
       {
-        "name": "awaken:delve_strike_iron",
-        "attenuation_distance": 16
+        "name": "minecraft:block.heavy_core.hit",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.9
       }
     ]
   },
@@ -30,8 +36,10 @@
     "subtitle": "subtitles.awaken.delve.strike.gold",
     "sounds": [
       {
-        "name": "awaken:delve_strike_gold",
-        "attenuation_distance": 16
+        "name": "minecraft:block.nether_gold_ore.hit",
+        "type": "event",
+        "volume": 0.3,
+        "pitch": 1.0
       }
     ]
   },
@@ -39,8 +47,10 @@
     "subtitle": "subtitles.awaken.delve.strike.redstone",
     "sounds": [
       {
-        "name": "awaken:delve_strike_redstone",
-        "attenuation_distance": 16
+        "name": "minecraft:block.cinnabar.hit",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 1.0
       }
     ]
   },
@@ -48,8 +58,10 @@
     "subtitle": "subtitles.awaken.delve.strike.lapis",
     "sounds": [
       {
-        "name": "awaken:delve_strike_lapis",
-        "attenuation_distance": 16
+        "name": "minecraft:block.calcite.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.1
       }
     ]
   },
@@ -57,8 +69,10 @@
     "subtitle": "subtitles.awaken.delve.strike.emerald",
     "sounds": [
       {
-        "name": "awaken:delve_strike_emerald",
-        "attenuation_distance": 16
+        "name": "minecraft:block.calcite.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.4
       }
     ]
   },
@@ -66,8 +80,10 @@
     "subtitle": "subtitles.awaken.delve.strike.diamond",
     "sounds": [
       {
-        "name": "awaken:delve_strike_diamond",
-        "attenuation_distance": 16
+        "name": "minecraft:block.deepslate.hit",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.5
       }
     ]
   },
@@ -75,8 +91,10 @@
     "subtitle": "subtitles.awaken.delve.strike.deepglass",
     "sounds": [
       {
-        "name": "awaken:delve_strike_deepglass",
-        "attenuation_distance": 16
+        "name": "minecraft:block.dripstone_block.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
       }
     ]
   },
@@ -84,8 +102,10 @@
     "subtitle": "subtitles.awaken.delve.strike_last",
     "sounds": [
       {
-        "name": "awaken:delve_strike_last",
-        "attenuation_distance": 16
+        "name": "minecraft:block.deepslate.break",
+        "type": "event",
+        "volume": 0.55,
+        "pitch": 0.9
       }
     ]
   },
@@ -93,8 +113,10 @@
     "subtitle": "subtitles.awaken.delve.vein_gives",
     "sounds": [
       {
-        "name": "awaken:delve_vein_gives",
-        "attenuation_distance": 48
+        "name": "minecraft:block.deepslate.break",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 0.6
       }
     ]
   },
@@ -102,8 +124,10 @@
     "subtitle": "subtitles.awaken.delve.vein_crack",
     "sounds": [
       {
-        "name": "awaken:delve_vein_crack",
-        "attenuation_distance": 24
+        "name": "minecraft:block.tuff.break",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.3
       }
     ]
   },
@@ -111,8 +135,10 @@
     "subtitle": "subtitles.awaken.delve.cave_creak",
     "sounds": [
       {
-        "name": "awaken:delve_cave_creak",
-        "attenuation_distance": 32
+        "name": "minecraft:block.piston.extend",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.5
       }
     ]
   },
@@ -120,8 +146,10 @@
     "subtitle": "subtitles.awaken.delve.cave_fall",
     "sounds": [
       {
-        "name": "awaken:delve_cave_fall",
-        "attenuation_distance": 48
+        "name": "minecraft:item.mace.smash_ground_heavy",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.7
       }
     ]
   },
@@ -129,8 +157,10 @@
     "subtitle": "subtitles.awaken.delve.heavy_charge",
     "sounds": [
       {
-        "name": "awaken:delve_heavy_charge",
-        "attenuation_distance": 12
+        "name": "minecraft:item.crossbow.loading_start",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.6
       }
     ]
   },
@@ -138,8 +168,10 @@
     "subtitle": "subtitles.awaken.delve.heavy_glint",
     "sounds": [
       {
-        "name": "awaken:delve_heavy_glint",
-        "attenuation_distance": 12
+        "name": "minecraft:item.crossbow.loading_end",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.1
       }
     ]
   },
@@ -147,8 +179,10 @@
     "subtitle": "subtitles.awaken.delve.heavy_strike",
     "sounds": [
       {
-        "name": "awaken:delve_heavy_strike",
-        "attenuation_distance": 32
+        "name": "minecraft:item.mace.smash_ground",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9
       }
     ]
   },
@@ -156,8 +190,10 @@
     "subtitle": "subtitles.awaken.delve.fork_tune",
     "sounds": [
       {
-        "name": "awaken:delve_fork_tune",
-        "attenuation_distance": 12
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 1.0
       }
     ]
   },
@@ -165,8 +201,10 @@
     "subtitle": "subtitles.awaken.delve.fork_strike",
     "sounds": [
       {
-        "name": "awaken:delve_fork_strike",
-        "attenuation_distance": 16
+        "name": "minecraft:block.stone.hit",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.2
       }
     ]
   },
@@ -174,8 +212,10 @@
     "subtitle": "subtitles.awaken.delve.true_strike",
     "sounds": [
       {
-        "name": "awaken:delve_true_strike",
-        "attenuation_distance": 12
+        "name": "minecraft:entity.player.attack.crit",
+        "type": "event",
+        "volume": 0.45,
+        "pitch": 1.0
       }
     ]
   },
@@ -183,8 +223,10 @@
     "subtitle": "subtitles.awaken.delve.fork_ring",
     "sounds": [
       {
-        "name": "awaken:delve_fork_ring",
-        "attenuation_distance": 12
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.0
       }
     ]
   },
@@ -192,8 +234,10 @@
     "subtitle": "subtitles.awaken.delve.piton_set",
     "sounds": [
       {
-        "name": "awaken:delve_piton_set",
-        "attenuation_distance": 16
+        "name": "minecraft:block.chain.place",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.9
       }
     ]
   },
@@ -201,8 +245,10 @@
     "subtitle": "subtitles.awaken.delve.rope_pay",
     "sounds": [
       {
-        "name": "awaken:delve_rope_pay",
-        "attenuation_distance": 16
+        "name": "minecraft:entity.fishing_bobber.retrieve",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.7
       }
     ]
   },
@@ -210,8 +256,10 @@
     "subtitle": "subtitles.awaken.delve.deepglass_hum",
     "sounds": [
       {
-        "name": "awaken:delve_deepglass_hum",
-        "attenuation_distance": 8
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event",
+        "volume": 0.35,
+        "pitch": 1.4
       }
     ]
   },
@@ -219,8 +267,10 @@
     "subtitle": "subtitles.awaken.delve.deep_ear_cave",
     "sounds": [
       {
-        "name": "awaken:delve_deep_ear_cave",
-        "attenuation_distance": 16
+        "name": "minecraft:entity.breeze.inhale",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.6
       }
     ]
   },
@@ -228,8 +278,10 @@
     "subtitle": "subtitles.awaken.delve.deep_ear_glass",
     "sounds": [
       {
-        "name": "awaken:delve_deep_ear_glass",
-        "attenuation_distance": 16
+        "name": "minecraft:block.amethyst_block.resonate",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.55
       }
     ]
   }

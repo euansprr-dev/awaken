@@ -211,6 +211,8 @@ final class CityLifeTests {
             if (!en.getKey().startsWith("city.")) continue;
             for (var snd : en.getValue().getAsJsonObject().getAsJsonArray("sounds")) {
                 Identifier f = Identifier.parse(snd.isJsonPrimitive() ? snd.getAsString() : snd.getAsJsonObject().get("name").getAsString());
+                // one of the game's own recordings by name (SPEC §66): not ours to open; tools/art/sound_audit.py check names it
+                if (!f.getNamespace().equals("awaken")) continue;
                 int ch = channels("/assets/" + f.getNamespace() + "/sounds/" + f.getPath() + ".ogg");
                 if (ch != 1) problems.add(en.getKey() + ": " + f + (ch < 0 ? " missing" : " has " + ch + " channels (a place's sound must be mono)"));
             }

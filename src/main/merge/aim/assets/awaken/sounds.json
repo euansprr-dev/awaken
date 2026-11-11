@@ -3,7 +3,10 @@
     "subtitle": "subtitles.awaken.aim.lock",
     "sounds": [
       {
-        "name": "awaken:ui_aim_lock"
+        "name": "minecraft:item.lodestone_compass.lock",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2
       }
     ]
   },
@@ -11,7 +14,10 @@
     "subtitle": "subtitles.awaken.aim.switch",
     "sounds": [
       {
-        "name": "awaken:ui_aim_switch"
+        "name": "minecraft:block.comparator.click",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.4
       }
     ]
   },
@@ -19,7 +25,10 @@
     "subtitle": "subtitles.awaken.aim.release",
     "sounds": [
       {
-        "name": "awaken:ui_aim_release"
+        "name": "minecraft:block.comparator.click",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.9
       }
     ]
   },
@@ -27,7 +36,10 @@
     "subtitle": "subtitles.awaken.aim.break",
     "sounds": [
       {
-        "name": "awaken:ui_aim_break"
+        "name": "minecraft:block.amethyst_cluster.break",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.3
       }
     ]
   }
