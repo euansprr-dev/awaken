@@ -21,6 +21,7 @@ public final class AscentContent {
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
     static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
     static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Awaken.MODID);
+    static final DeferredRegister.Entities ENTITIES = DeferredRegister.createEntities(Awaken.MODID);
     static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
     static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>> BLOCK_ENTITIES =
             DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Awaken.MODID);
@@ -88,6 +89,11 @@ public final class AscentContent {
             BLOCK_ENTITIES.register("wing_core", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(WingCoreBlockEntity::new,
                     WING_CORE.get()));
 
+    /** The Lesson's figure of light (SPEC §71): made by a client for itself, never summoned, sent or saved. */
+    public static final DeferredHolder<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<LessonFigure>> FIGURE =
+            ENTITIES.registerEntityType("lesson_figure", LessonFigure::new, net.minecraft.world.entity.MobCategory.MISC,
+                    b -> b.sized(0.6F, 1.8F).eyeHeight(1.62F).clientTrackingRange(8).updateInterval(1).noSave().noSummon());
+
     /** A stand of the Leaper's Gauntlet (SPEC §71.3): a low plate that gives one of the leap's moves; unbreakable, alight. */
     public static final net.neoforged.neoforge.registries.DeferredBlock<LeapStandBlock> LEAP_STAND = BLOCKS.registerBlock("leap_stand",
             LeapStandBlock::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_ORANGE).strength(-1F, 3600000F)
@@ -139,8 +145,11 @@ public final class AscentContent {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
+        ENTITIES.register(modBus);
+        modBus.addListener((net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent e) -> e.put(FIGURE.get(), LessonFigure.createAttributes().build()));
         // the rope's fittings with the climbing gear; the movement blocks with the courses
         dev.awaken.core.api.Tabs.fill(dev.awaken.core.api.Tabs.Shelf.CLIMBING, IRON_LINE, GOLD_REEL, DEEPGLASS_LINE);
-        dev.awaken.core.api.Tabs.fill(dev.awaken.core.api.Tabs.Shelf.COURSES, ANCHOR_RING_ITEM, UPDRAFT_VENT_ITEM, SPIRE_CROWN_ITEM, WING_CORE_ITEM);
+        dev.awaken.core.api.Tabs.fill(dev.awaken.core.api.Tabs.Shelf.COURSES, ANCHOR_RING_ITEM, UPDRAFT_VENT_ITEM, SPIRE_CROWN_ITEM, WING_CORE_ITEM,
+                LEAP_STAND_ITEM);
     }
 }

@@ -5,8 +5,8 @@ import dev.awaken.body.ascent.WayUp;
 import dev.awaken.core.client.AwakenKeys;
 import dev.awaken.core.client.ui.Kit;
 import dev.awaken.core.client.ui.Sheet;
-import dev.awaken.gates.GatesRegistry;
-import dev.awaken.gates.entity.GauntletGhost;
+import dev.awaken.body.ascent.AscentContent;
+import dev.awaken.body.ascent.LessonFigure;
 import dev.awaken.signal.client.Glass;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
@@ -514,14 +514,12 @@ final class Lesson {
 
     // ---- the gold figure ---------------------------------------------------------------------------------------------
 
-    private static @Nullable GauntletGhost ghost;
+    private static @Nullable LessonFigure ghost;
     private static Vec3 @Nullable [] path;
     private static int ghostAge;
     private static int nextId = -0x6B0000;
     /** Ticks between two points of a figure's path. */
     private static final int STEP = 3;
-    /** The figure's light (ARGB, multiplied into your skin): the Lesson's gold, a little over half there. */
-    private static final int GOLD = 0x8CFFD257;
 
     /** A run and two jumps ahead of the player, along their look: the leap, shown. */
     static Vec3[] hopPath(LocalPlayer p, double far) {
@@ -611,12 +609,10 @@ final class Lesson {
         if (level == null || mc.player == null) return;
         endGhost();
         path = pts;
-        ghost = new GauntletGhost(GatesRegistry.GHOST.get(), level);
+        // its own body and its own drawing (SPEC §71): a shape of gold light. The Gauntlet's ghost in this role was a
+        // solid copy of the player's skin, and on open ground read as another player standing in your way
+        ghost = new LessonFigure(AscentContent.FIGURE.get(), level);
         ghost.setId(nextId--);
-        ghost.route(mc.player.getUUID(), List.of(), List.of());
-        // gold, and half there: the Gauntlet's own pale tint leaves the skin's colours as they are, and on open ground
-        // the figure read as another player standing in your way (the fourth look tour's first clear picture of it)
-        ghost.tint(GOLD);
         ghost.snapTo(pts[0].x, pts[0].y, pts[0].z, yaw(pts, 0), 0);
         level.addEntity(ghost);
         ghostAge = 0;
@@ -628,7 +624,7 @@ final class Lesson {
     }
 
     private static void ghostTick(Minecraft mc) {
-        GauntletGhost g = ghost;
+        LessonFigure g = ghost;
         Vec3[] pts = path;
         if (g == null || pts == null) return;
         if (mc.level == null || g.level() != mc.level) {

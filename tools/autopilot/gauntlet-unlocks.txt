@@ -1,0 +1,141 @@
+# The Unlock title and the stand (SPEC §71), as far as they can be seen before the new course exists.
+# A: the old course's edge, run as Euan ran it (a sprint, no second jump): the Double Jump title with the body held
+#    where it last stood, then the prompt and the figure of light; the leap made; the far landing's two titles (Air
+#    Dash, Slam) one after the other, then the card.
+# B: a stand set by command in the room past the course: its light and prompt, stepping onto it, Use held for a second,
+#    the stroke and its title. C: the K rows.
+#   "[unlock] ... shows" in latest.log names each title as it begins.
+# Run on CI: tools/tour-ci.sh tools/autopilot/gauntlet-unlocks.txt 1800
+world gauntlet_unlocks survival 20261025
+waitworld
+gui 0
+window 1708 960
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd tick sprint 6200
+wait 2400
+cmd tick sprint stop
+wait 40
+cmd gamerule advance_time false
+cmd time set 6000
+cmd tp @s 3000 120 3000
+wait 200
+cmd awaken gate hop
+wait 120
+cmd awaken ascent grant tether
+wait 20
+hud on
+camera first
+cmd awaken ascent trial leaper
+wait 300
+cmd awaken gate enter 1
+wait 200
+cmd awaken gate interior goto rig
+wait 100
+cmd awaken gate rig at start
+wait 30
+cmd awaken gate rig at first
+wait 12
+# ---- A: the edge, as he ran it ----
+cmd awaken gate rig at runup
+wait 20
+shotnow unl_01_runup
+cmd awaken ascent pilot hold forward,sprint 80
+wait 3
+shotnow unl_02a_edge
+wait 3
+shotnow unl_02b_edge
+wait 3
+shotnow unl_02c_edge
+wait 4
+shotnow unl_02d_edge
+wait 4
+shotnow unl_02e_edge
+wait 6
+shotnow unl_02f_edge
+wait 8
+shotnow unl_02g_edge
+wait 10
+shotnow unl_02h_edge
+wait 14
+shotnow unl_02i_edge
+cmd awaken ascent pilot stop
+wait 20
+shotnow unl_02j_title_held
+wait 40
+shotnow unl_02k_title_fading
+# after the title: the prompt and the figure of light
+wait 30
+shotnow unl_03a_prompt
+wait 6
+shotnow unl_03b_figure
+wait 6
+shotnow unl_03c_figure
+wait 6
+shotnow unl_03d_figure
+wait 8
+shotnow unl_03e_figure
+# ---- the leap made, and the far landing's two titles ----
+cmd awaken gate rig at runup
+wait 20
+cmd awaken ascent pilot run leap
+wait 50
+cmd awaken ascent pilot stop
+cmd awaken gate rig at last
+wait 30
+shotnow unl_04a_far_landing
+wait 40
+shotnow unl_04b_air_dash
+wait 60
+shotnow unl_04c_air_dash
+wait 60
+shotnow unl_04d_slam
+wait 60
+shotnow unl_04e_slam
+wait 80
+shotnow unl_04f_card
+wait 60
+# ---- B: a stand, set here by command ----
+cmd tp @s ~ ~ ~ ~ 20
+cmd setblock ~ ~ ~4 awaken:leap_stand[move=dash]
+wait 40
+shotnow unl_05a_stand_lit
+wait 20
+shotnow unl_05b_stand_prompt
+cmd tp @s ~ ~ ~4
+wait 20
+shotnow unl_06a_on_the_stand
+cmd awaken ascent pilot usehold 34
+wait 8
+shotnow unl_06b_holding
+wait 8
+shotnow unl_06c_holding
+wait 10
+shotnow unl_07a_stroke
+wait 6
+shotnow unl_07b_stroke
+wait 8
+shotnow unl_07c_title
+wait 20
+shotnow unl_07d_title
+wait 60
+shotnow unl_07e_title
+wait 80
+shotnow unl_08_after
+# ---- C: the K rows ----
+screen band powers
+wait 30
+shotnow unl_09_k_rows
+screen close
+info
+quit

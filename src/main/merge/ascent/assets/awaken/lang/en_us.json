@@ -73,5 +73,6 @@
   "awaken.ascent.crown.colossus": "The Elder Colossus's crown%s",
   "awaken.ascent.crown.lumen": "The Lumen Spire's crown%s",
   "block.awaken.spire_crown": "Spire Crown",
-  "block.awaken.leap_stand": "Leaper's Stand"
+  "block.awaken.leap_stand": "Leaper's Stand",
+  "entity.awaken.lesson_figure": "Figure of Light"
 }
