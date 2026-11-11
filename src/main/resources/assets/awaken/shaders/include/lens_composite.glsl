@@ -146,16 +146,16 @@ float farDistance(float depth, float zNear, float zFar, int flags, bool deviceZe
 // this surface's distance (so a near silhouette doesn't bleed onto the far side), else the closest match
 vec3 upsampleAt(sampler2D buf, vec2 uv, float want, out float got) {
     vec2 size = vec2(textureSize(buf, 0));
-    vec2 lp = uv * size - 0.5;
+    LENS_P vec2 lp = uv * size - 0.5;
     ivec2 b = ivec2(floor(lp));
-    vec2 fr = lp - vec2(b);
+    LENS_P vec2 fr = lp - vec2(b);
     float bestDiff = 2.0, wsum = 0.0;
     vec3 acc = vec3(0.0), best = vec3(1.0, 1.0, 0.0);
     for (int k = 0; k < 4; k++) {
         ivec2 o = ivec2(k & 1, k >> 1);
         vec4 L = texelFetch(buf, clamp(b + o, ivec2(0), ivec2(size) - 1), 0);
-        float diff = abs(L.a - want);
-        float w = (o.x == 1 ? fr.x : 1.0 - fr.x) * (o.y == 1 ? fr.y : 1.0 - fr.y) * (1.0 - smoothstep(1.5 / 255.0, 2.5 / 255.0, diff));
+        LENS_P float diff = abs(L.a - want);
+        LENS_P float w = (o.x == 1 ? fr.x : 1.0 - fr.x) * (o.y == 1 ? fr.y : 1.0 - fr.y) * (1.0 - smoothstep(1.5 / 255.0, 2.5 / 255.0, diff));
         acc += L.rgb * w;
         wsum += w;
         if (diff < bestDiff) {
@@ -294,7 +294,7 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     if (f16.w <= 0.0) return c;
     bool z01 = f16.x > 0.5;
     mat4 inv = frameMat(0);
-    float dist = length(p);
+    LENS_P float dist = length(p);
     // Lens's light is for the world: the hand and what it holds keep the game's (their place in the world can't be
     // told from the depth the game draws them with). The hand is known by its own depth where Lens has it (parameter
     // texel 26 r, HandSampler: 0 where no hand is), and then the world is lit right up to the eye. Without it the

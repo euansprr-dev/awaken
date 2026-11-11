@@ -14,6 +14,9 @@ tools/lens/walkcompare.py (shots named t_*.png).
   lens_probe_<tier>_twincheck_notlite  the twin against the twin without Lite's paths (two programs, A and B both new)
   lens_probe_<tier>_twincheck_calm     the twin's own composite against its calm one (lens_composite_lit_tiles_calm),
                                        for calm frames (the only ones it draws)
+  lens_probe_<tier>_twincheck_precise_twin, _both, _self  PROBE_PRECISE (lens_frame.glsl): the twin with the sums that
+                                       lead to the neighbour pick in source order, against the composite as written; both
+                                       so; the composite as written so against itself
 Run from anywhere: tools/lens/twincheck.py"""
 import copy, json
 from pathlib import Path
@@ -31,7 +34,13 @@ VARIANTS = {"twincheck": "awaken:post/lens_composite_lit_tiles", "twincheck_cont
             "twincheck_nudge": "awaken:post/lens_composite_probe_nudge",
             # against the twin rather than the composite as written: the twin without Lite's paths (regs.py)
             "twincheck_notlite": ("awaken:post/lens_composite_lit_tiles", "awaken:post/lens_composite_probe_u_nodbg_notlite"),
-            "twincheck_calm": ("awaken:post/lens_composite_lit_tiles", "awaken:post/lens_composite_lit_tiles_calm")}
+            "twincheck_calm": ("awaken:post/lens_composite_lit_tiles", "awaken:post/lens_composite_lit_tiles_calm"),
+            # can the twin's rounding be pinned? the sums that lead to the light buffer's neighbour pick in source order
+            # (PROBE_PRECISE): the twin so against the composite as written, both so, and the composite as written so
+            # against itself as it is
+            "twincheck_precise_twin": "awaken:post/lens_composite_probe_twin_precise",
+            "twincheck_precise_both": ("awaken:post/lens_composite_probe_precise", "awaken:post/lens_composite_probe_twin_precise"),
+            "twincheck_precise_self": "awaken:post/lens_composite_probe_precise"}
 
 for tier in ("cinematic", "ultra"):
     base = json.loads((FX / f"lens_{tier}.json").read_text())

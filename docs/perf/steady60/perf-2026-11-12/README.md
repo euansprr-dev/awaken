@@ -17,8 +17,8 @@ decides the frame here: the game with Lens off is 2.8 ms of it. Data: `data/` (e
 `report.txt`, tools/steady60-report.py; twin checks in `twincheck.txt`, tools/lens/walkcompare.py).
 
 How it was measured: tours 1 to 3 ran fullscreen on the Dell while he was up. His Mac's screen locked when he went to
-bed, and macOS gives a locked session no fullscreen Space (tours 4 and 5 stayed in an 854x480 window), so tours 6 to 9
-(`perf12-f` to `perf12-i`) put the game on the Dell's whole 3840x2160 without a border (autopilot
+bed, and macOS gives a locked session no fullscreen Space (tours 4 and 5 stayed in an 854x480 window), so tours 6 to 11
+(`perf12-f` to `perf12-k`) put the game on the Dell's whole 3840x2160 without a border (autopilot
 `display DELL borderless`): the same pixels. Two things differ there. The game with Lens as written measured about
 0.6 ms more GPU than fullscreen had (18.4 against 17.7 ms where he stood; a warmer machine or the window being
 composited), and the window never went past 60 fps, vsync or not (the locked screen's compositor), so above 60 the
@@ -40,13 +40,66 @@ off`) against this branch (the twin with its calm composite, the walk's skips), 
 | running, as he plays | 45.0 fps, GPU 19.99 (p99 23.77) | 57.3 fps, GPU 14.61 (p99 18.83) |
 
 Standing and turning: 60, with the GPU at 13 to 14.5 ms of the 16.7 a frame has. Running: 57.3, not a steady 60 in
-this setup. Two things to know about that number. Running costs the game's own terrain 0.6 ms more than standing (Lens
-off: 5.27 against 4.63 ms, tour 7) and makes its slow frames slower (p99 18 to 19 ms against a p50 of 14.6 to 15); Lens
-itself costs the same running as standing. And this tour ran in the borderless window his locked screen left (see "How it
+this setup. Two things to know about that number. Its slow frames (p99 18 to 19 ms against a p50 of 14.6 to 15) are
+the stretches of the run that look west, away from the morning sun, where the game and Lens both draw more: not
+anything Lens does now and then, which tour 10 checked frame by frame (next section). And this tour ran in the borderless window his locked screen left (see "How it
 was measured"), where a frame took about 2.5 ms more than the GPU's world pass; in fullscreen, tour 1, it took about
 1.3. So in his own fullscreen game, running should land nearer 60 than 57.3, but I could not measure that tonight:
 please run through those trees and look at the fps. If it still dips, the choices below are what is left, each with
 what it costs.
+
+## Running's slow frames (tour 10)
+
+Tour 10 (`data/perf12-j`, tools/autopilot/steady60-perf12-j.txt): the same four running legs (east, west, east, west,
+28 blocks each at running speed, from -1560 69 -715) with this branch's Lens and with Lens off, alternating, raw and as
+he plays, each frame's GPU time written down with what Lens did in that frame (`perf-traces/gpu_*.txt`, read by
+tools/lens/slowframes.py; the marks are set where LensLit, LensSunMap, LensHeightfield and LensBlocks upload or start a
+sweep, and in LensClient's tick).
+
+| GPU p50 / p95 / p99 | Lens on (this branch) | Lens off |
+|---|---|---|
+| running, raw (two windows) | 14.64 / 17.37 / 17.82, 14.47 / 17.06 / 17.89 | 5.34 / 7.73 / 9.27, 5.35 / 7.68 / 8.96 |
+| running, as he plays | 13.87 / 16.88 / 18.17 | 5.47 / 7.65 / 8.67 |
+| standing at the start of the run | 13.39 / 14.40 / 14.52 | 5.20 / 7.56 / 9.05 |
+
+Frames over 16.7 ms by frame time say nothing here: with Lens off, the GPU at 5.3 ms, 36 to 38% of frames still took
+over 16.7 ms in the locked screen's borderless window (its compositor paces them), against 47 to 51% with Lens on. The
+GPU time is the measure.
+
+**Lens's periodic work is not on the slow frames.** For each thing Lens does now and then: its share of all frames
+against its share of the slowest 5%, and the mean GPU time of the frames that carried it against those that didn't
+(running raw 1, raw 2, as he plays):
+
+| Lens's work in that frame | of all frames | of the slowest 5% | mean with / without, ms |
+|---|---|---|---|
+| the lit air's upload (`LensLit`, 2 MB each time it re-sweeps) | 4.4 to 4.5% | 3.3, 3.4, 4.9% | 14.50 / 14.85, 14.27 / 14.43, 14.10 / 14.28 |
+| the lit air's sweep starting | 4.3 to 4.5% | 3.3, 1.7, 3.3% | 14.54 / 14.85, 14.23 / 14.44, 13.97 / 14.29 |
+| the sun map's rolling rows | 34.2 to 34.7% | 28.3, 33.9, 34.4% | 14.85 / 14.83, 14.52 / 14.38, 14.29 / 14.27 |
+| the sun map's sweep starting | 4.2 to 4.4% | 0, 3.4, 8.2% | 14.69 / 14.84, 14.52 / 14.42, 14.28 / 14.28 |
+| a heightfield upload (chunks crossed) | 0.7 to 2.4% | 0, 0, 1.6% | 13.85 / 14.86, 14.27 / 14.43, 14.39 / 14.28 |
+| a block map upload | 5.2 to 5.6% | 6.7, 3.4, 3.3% | 15.02 / 14.82, 14.62 / 14.41, 14.36 / 14.27 |
+| block map sections read | 5.1 to 5.4% | 6.7, 3.4, 3.3% | 15.07 / 14.82, 14.60 / 14.42, 14.37 / 14.27 |
+| a tick, in `tickBudget()`'s 150 µs mode | 34.2 to 34.7% | 28.3, 33.9, 34.4% | 14.85 / 14.83, 14.52 / 14.38, 14.29 / 14.27 |
+
+A frame with any of them is within 0.3 ms of a frame without, as often faster as slower, and none is over-represented
+among the slow ones beyond a frame or two of chance. The 150 µs mode was on for every tick of every window (the
+borderless window's paced frames look late to the governor), so it can't single out a frame either. `lens cost` for
+the same windows: Lens's tick work is 0.12 to 0.22 ms of CPU for the heightfield, 0.20 for the block map, 0.02 for the
+lit air; the sweeps run on their worker (9 to 11 ms and 5 to 7 ms, off the render thread).
+
+**The slow frames are where the run looks west.** 95 to 98% of running's slowest 5% fall in the two legs facing west
+(yaw 90, the morning sun behind the camera):
+
+| GPU p50 / p95 / p99 | looking east | looking west |
+|---|---|---|
+| Lens on (three windows) | 12.98 to 13.41 / 14.98 to 15.18 / 16.01 to 16.82 | 15.62 to 16.23 / 17.39 to 17.63 / 18.11 to 18.52 |
+| Lens off | 4.45 to 4.66 / 6.77 to 6.94 / 7.63 to 8.64 | 5.62 to 6.00 / 8.00 to 8.22 / 8.88 to 9.76 |
+
+Looking west the game's own work is 1.2 ms more and Lens's 1.5 ms more (8.4 to 8.8 ms east, 9.6 to 10.4 west): the
+view is sunlit leaves and ground from the eye out to the far trees, and Lens's light works on every lit pixel. That is
+the same cost on every frame of that view, the picture itself, so there is nothing to spread or move off those frames.
+Looking east the run holds 60 (p99 16.0 to 16.8); looking west its median is already 15.6 to 16.2 and frames go past
+16.7. Only the choices further down would buy that back.
 
 ## What cost what (before)
 
@@ -144,6 +197,29 @@ with both.
   - The control: the composite as written, with every one of its values nudged one bit (`_nudge`), marks 0.4 to 1.8%
     of the shot, more than the twin does (fewer of them big). The picture as written already turns on its last bit
     there, and in play the sun moves every tick, which shifts every one of those values by far more than a bit.
+  - Can it be pinned? (tour 11, `data/perf12-k/twincheck.txt`, tools/autopilot/steady60-perf12-k.txt) GLSL's
+    `precise` on every sum that leads to that pick (the unprojection, the distance, its one-byte code, the bilinear
+    weights and the distance match; PROBE_PRECISE in lens_frame.glsl and lens_composite.glsl, which keeps each of
+    those in source order, none fused) does not make the twin exact. Each against the composite as written on one
+    frame, marked share of the 4K shot:
+
+    | view | the twin as it is | the twin with `precise` | both with `precise` | the composite as written with `precise`, against itself without |
+    |---|---|---|---|---|
+    | the tree | 0.215% | 0.215% | 0.207% | 0 |
+    | where he stood | 0.385% | 0.391% | 0.393% | 0.0008% |
+    | looking west | 0.148% | 0.142% | 0.131% | 0.0008% |
+    | the sky | 0.450% | 0.456% | 0.447% | 0.0024% |
+    | Ultra, the tree | 0.206% | 0.208% | 0.208% | 0.0003% |
+    | Ultra, where he stood | 0.384% | 0.376% | 0.383% | 0.0003% |
+
+    `precise` is honoured (it moves a handful of pixels in the composite as written), but the twin's marks stay where
+    and what they were, so its rounding is not in those sums: it comes in wherever a value from the block meets
+    arithmetic, all through the composite. Pinning all of it would mean `precise` on nearly every line, or Metal's fast
+    math off for every shader in the game (MoltenVK's own setting, untried), which would also move the picture as
+    written's rounding and cost time across the board. Not a cheap way, so the twin stays as it is: Euan decides from
+    the numbers above whether a frame where 0.13 to 0.53% of the shot is marked (some 1,200 to 4,900 pixels of 8.3
+    million differ, chiefly far leaves), a fraction of what one tick of the scene changes, counts as the same picture. (The control, the crisp light left out: 8.4% of the shot marked;
+    the composite as written against itself: 0.)
   - The twin's two halves alone (tour 5, `data/perf12-e`, 1708x960): without the development views alone is exact,
     **0 pixels** in every view; from the block alone is where the rounding comes in. The composite as written against
     itself: 0 (the check of the check).
@@ -177,7 +253,8 @@ the first and last window taken out):
 Where running's extra time goes (tour 7, the start of the run, standing against running the same legs): Lens costs the
 same 9.7 ms either way (with it 14.36 standing, 14.99 running; without it 4.63 and 5.27). The extra 0.6 ms is the game's
 own terrain while moving, which this branch does not touch. The composite is 6.9 ms of Lens's 9.7, the light pass 1.75
-(the Sun Pass's walk about 1.0), everything else together 1.05.
+(the Sun Pass's walk about 1.0), everything else together 1.05. Tour 10 splits the run by where it looks: Lens costs
+8.4 to 8.8 ms looking east and 9.6 to 10.4 looking west, the game 4.5 against 5.8 ("Running's slow frames" above).
 
 ## Choices that would cost something (not applied)
 
@@ -209,4 +286,7 @@ the base. A day-only composite (the calm one without the night sky's code, which
 - Autopilot `lens twin off|setting` (the chain as written, or the twin), `lens calm off|setting` (the twin's own
   composite every frame, or the calm one on calm frames; says which the last frame was) and `display <name> borderless`.
 - Tours `tools/autopilot/steady60-perf12.txt`, `-b`, `-c`, `-d`, `-f`, `-g`, `-h` (the calm composite), `-i` (the final
-  before and after, and the choices).
+  before and after, and the choices), `-j` (running's slow frames, Lens on and off), `-k` (`precise` and the twin).
+- `pixels gpu` now also writes each frame's GPU time with what Lens did in that frame (`perf-traces/gpu_<window>.txt`;
+  `Pixels.mark` in LensLit, LensSunMap, LensHeightfield, LensBlocks and LensClient's tick, a no-op unless timing is on),
+  read by `tools/lens/slowframes.py`; `tools/lens/twincheck.py` has `_precise_twin`, `_precise_both`, `_precise_self`.

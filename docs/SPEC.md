@@ -6513,7 +6513,10 @@ optimise for macOS"; docs/perf/LENS-APPLE.md):
     shot marked (marks three pixels wide: about 1,200 to 4,900 pixels of 8.3 million differ). The composite as
     written with its own values one bit up (`_nudge`) marks 0.4-1.8%; two frames of the scene as written one tick
     apart differ in 76-80% of pixels, by over 4 steps in 24-32%. Without the development views alone it is bit for
-    bit (0 pixels; `_nodbg`).
+    bit (0 pixels; `_nodbg`). GLSL's `precise` on every sum leading to that pick (PROBE_PRECISE, twin check
+    `_precise_twin`, `_both`, `_self`; tour steady60-perf12-k, six views) leaves the twin's marks as they were
+    (0.13-0.46% against 0.15-0.45%) while it moves the composite as written by at most 0.0024%: the rounding comes
+    in wherever a block value meets arithmetic, not in one sum, so there is no cheap way to pin it. Left as it is.
     In a frame that loses the block mid-way (Tiles off on a failure) the twin draws the game's own picture, and the
     next tick runs the chain as written.
   - Never edit a twin: edit its chain and run block.py. probes.py builds the probe chains from the twins (the twin's
@@ -6543,7 +6546,13 @@ optimise for macOS"; docs/perf/LENS-APPLE.md):
     docs/perf/steady60/perf-2026-11-12): the chain as written against the twin with its calm composite, GPU world pass:
     where he stood 18.66 → 13.7 ms (49 → 60 fps, the cap), the tree 18.24 → 12.83, turning 19.62 → 14.45 (47 → 59.8
     fps), running 19.98 → 14.99 (45 → 57.5 fps; the terrain itself costs 0.6 ms more running). What is left would cost
-    quality and is not applied (the report's list: Pixels 0.80 or 0.75, the Sun Pass off).
+    quality and is not applied (the report's list: Pixels 0.80 or 0.75, the Sun Pass off). Running's slow frames (tour
+    steady60-perf12-j, each frame's GPU time beside what Lens did in it, tools/lens/slowframes.py) are the stretches
+    looking west, the morning sun behind: there the game costs 1.2 ms more (Lens off 4.5 → 5.8) and Lens 1.5 more
+    (8.6 → 10.2), every frame of that view; 95-98% of the slowest 5% fall there. None of Lens's periodic work (the lit
+    air's upload and sweep, the sun map's rows and sweep, heightfield and block map uploads and reads, the 150 µs tick
+    budget) is more common on the slow frames than on the rest, and frames with it are within 0.3 ms of those
+    without, so there is nothing to spread.
 - **Together, measured** (GPU world pass, old path → new; frame p50):
 
   | Look | GPU world pass | frame p50 |
