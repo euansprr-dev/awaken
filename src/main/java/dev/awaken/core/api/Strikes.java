@@ -114,7 +114,17 @@ public final class Strikes {
     // ---- tells (both sides: the client draws them, the server's rules may read them) --------------------------------
 
     /** A body winding up a blow: ticks left until it lands, and its class. */
-    public record Tell(int ticks, Kind kind) {}
+    public record Tell(int ticks, Kind kind, int target) {
+        /** A tell for everyone (a body that doesn't say whom it aims at). */
+        public Tell(int ticks, Kind kind) {
+            this(ticks, kind, -1);
+        }
+
+        /** Whether this blow is this entity's to answer: aimed at them, or at nobody in particular (SPEC §70.3). */
+        public boolean aimedAt(int entityId) {
+            return target < 0 || target == entityId;
+        }
+    }
 
     public interface TellSource {
         @Nullable Tell tell(Entity e);

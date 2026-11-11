@@ -54,6 +54,26 @@ public final class TogetherModule {
             public int stance(net.minecraft.world.entity.LivingEntity target, int amount, Player by) {
                 return by instanceof ServerPlayer sp ? Fights.stance(target, amount, sp) : amount;
             }
+
+            @Override
+            public boolean pair() {
+                return TogetherConfig.pair();
+            }
+
+            @Override
+            public net.minecraft.world.entity.LivingEntity nextTarget(net.minecraft.world.entity.Mob boss, net.minecraft.world.entity.LivingEntity current) {
+                return Fights.nextTarget(boss, current);
+            }
+
+            @Override
+            public int gentleHold() {
+                return TogetherConfig.gentleHold();
+            }
+
+            @Override
+            public double gentleOpening() {
+                return TogetherConfig.gentleOpening();
+            }
         });
         // on a knee nothing can be cast: powers already ask this of the hook Riding Along left behind
         RidingHooks.install(new RidingHooks.Access() {

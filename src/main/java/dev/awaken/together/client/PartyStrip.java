@@ -63,7 +63,7 @@ final class PartyStrip {
     static void render(GuiGraphicsExtractor g, DeltaTracker dt) {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer me = mc.player;
-        if (me == null || mc.level == null || mc.options.hideGui || !TogetherClientConfig.strip()) return;
+        if (me == null || mc.level == null || !TogetherClientConfig.strip()) return; // a hidden HUD draws no layers at all
         float pt = dt.getGameTimeDeltaPartialTick(false);
         int w = g.guiWidth(), h = g.guiHeight();
         Font font = mc.font;

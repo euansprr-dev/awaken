@@ -27,6 +27,22 @@ public final class FightsHooks {
          */
         default boolean goesDown(Player p) { return false; }
 
+        /** Whether the rules for any two in one fight are on (a boss holds its target through a phrase). */
+        default boolean pair() { return false; }
+
+        /**
+         * Asked by a boss as it is about to start a phrase: whom it goes for now. The answer is {@code current} unless
+         * someone else of that player's party has earned its attention (SPEC §70.3) or is owed a phrase (§70.4).
+         */
+        default net.minecraft.world.entity.@org.jspecify.annotations.Nullable LivingEntity nextTarget(net.minecraft.world.entity.Mob boss,
+                net.minecraft.world.entity.@org.jspecify.annotations.Nullable LivingEntity current) { return current; }
+
+        /** Ticks a blow aimed at a player on Gentle holds longer before it comes. */
+        default int gentleHold() { return 0; }
+
+        /** How much longer the opening is after a phrase aimed at a player on Gentle. */
+        default double gentleOpening() { return 1.0; }
+
         /** What a blow's stance damage counts for (its back turned: a quarter more). Asked by Arms. */
         default int stance(net.minecraft.world.entity.LivingEntity target, int amount, Player by) { return amount; }
     }
@@ -67,6 +83,28 @@ public final class FightsHooks {
 
     public static int stance(net.minecraft.world.entity.LivingEntity target, int amount, Player by) {
         return access.stance(target, amount, by);
+    }
+
+    public static boolean pair() {
+        return access.pair();
+    }
+
+    public static net.minecraft.world.entity.@org.jspecify.annotations.Nullable LivingEntity nextTarget(net.minecraft.world.entity.Mob boss,
+            net.minecraft.world.entity.@org.jspecify.annotations.Nullable LivingEntity current) {
+        return access.nextTarget(boss, current);
+    }
+
+    /** On Gentle, for a boss choosing what to throw at whoever it's aiming at. */
+    public static boolean gentle(net.minecraft.world.entity.@org.jspecify.annotations.Nullable LivingEntity target) {
+        return target instanceof Player p && access.gentle(p);
+    }
+
+    public static int gentleHold() {
+        return access.gentleHold();
+    }
+
+    public static double gentleOpening() {
+        return access.gentleOpening();
     }
 
     /** How many fighters these players count for together: never under one. */

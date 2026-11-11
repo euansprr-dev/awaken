@@ -43,7 +43,7 @@ final class ClientParty {
         return members;
     }
 
-    static @Nullable TogetherNet.Member self() {
+    static TogetherNet.@Nullable Member self() {
         for (TogetherNet.Member m : members) if (m.is(TogetherNet.F_SELF)) return m;
         return null;
     }

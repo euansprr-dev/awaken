@@ -93,6 +93,10 @@ final class Fights {
     private static final Set<UUID> DYING = new HashSet<>();
     /** Small monsters on each Gentle player right now (their entity ids), rebuilt once a second. */
     private static final Map<UUID, Set<Integer>> ON = new HashMap<>();
+    /** What each player has done to each boss since it last chose whom to fight (boss entity id, then player). */
+    private static final Map<Integer, Map<UUID, Float>> LEDGER = new HashMap<>();
+    /** Phrases each boss has started since a player on Gentle last had one. */
+    private static final Map<Integer, Integer> SINCE_GENTLE = new HashMap<>();
 
     static void forget() {
         KNEELING.clear();
@@ -105,6 +109,8 @@ final class Fights {
         LIFTS.clear();
         DYING.clear();
         ON.clear();
+        LEDGER.clear();
+        SINCE_GENTLE.clear();
     }
 
     static void forget(UUID id) {
@@ -190,6 +196,7 @@ final class Fights {
         if (by instanceof ServerPlayer p) {
             LAST_FIGHT.put(p.getUUID(), p.level().getGameTime());
             if (backTurned(hit, p)) e.setNewDamage((float) (e.getNewDamage() * (1 + TogetherConfig.backTurned())));
+            if (hit instanceof Mob mob && !small(mob)) LEDGER.computeIfAbsent(mob.getId(), k -> new HashMap<>()).merge(p.getUUID(), e.getNewDamage(), Float::sum);
         }
     }
 
@@ -213,6 +220,11 @@ final class Fights {
 
     /** HIGHEST: before a gate counts the death or Cheat Death is spent. A Gentle player's fall, or their second wind. */
     static void onDeath(LivingDeathEvent e) {
+        if (!(e.getEntity() instanceof Player)) { // a creature's gone: what was owed it goes too
+            LEDGER.remove(e.getEntity().getId());
+            SINCE_GENTLE.remove(e.getEntity().getId());
+            return;
+        }
         if (!(e.getEntity() instanceof ServerPlayer p) || e.getSource().is(DamageTypes.GENERIC_KILL) || !gentle(p)) return;
         DamageSource src = e.getSource();
         if ((src.is(DamageTypes.FALL) || src.is(DamageTypes.FELL_OUT_OF_WORLD)) && caughtFall(p)) {
@@ -407,6 +419,59 @@ final class Fights {
     private static void shakeOff(ServerPlayer p) {
         AABB box = p.getBoundingBox().inflate(SWEEP_RANGE);
         for (Mob m : p.level().getEntitiesOfClass(Mob.class, box, x -> x.getTarget() == p)) m.setTarget(p);
+    }
+
+    // ---- whom a boss fights ---------------------------------------------------------------------------------------------
+
+    /**
+     * {@link FightsHooks.Access#nextTarget}: a boss is about to start a phrase. It keeps the one it is fighting unless
+     * someone else of their party has done more to it since it last chose (SPEC §70.3). With players on Full and on
+     * Gentle both in sight, a Gentle player gets one phrase in so many, whatever anyone has done (§70.4). Alone, it
+     * answers what it was asked.
+     */
+    static @Nullable LivingEntity nextTarget(Mob boss, @Nullable LivingEntity current) {
+        if (!(current instanceof ServerPlayer now) || !(TogetherConfig.pair() || TogetherConfig.gentle())) return current;
+        AttributeInstance sight = boss.getAttribute(Attributes.FOLLOW_RANGE);
+        double range = Mth.clamp(sight == null ? MIN_SIGHT : sight.getValue(), MIN_SIGHT, MAX_SIGHT);
+        Map<UUID, Float> did = LEDGER.get(boss.getId());
+        ServerPlayer bestFull = null, bestGentle = null;
+        float bestFullDid = -1, bestGentleDid = -1;
+        int others = 0;
+        for (ServerPlayer o : ((ServerLevel) boss.level()).players()) {
+            if (!o.isAlive() || o.isSpectator() || o.isCreative() || kneeling(o.getUUID())) continue;
+            if (o != now && (!PartyHooks.sameParty(now, o) || o.distanceToSqr(boss) > range * range || !boss.canAttack(o) || !GateHooks.mayTarget(boss, o))) continue;
+            if (o != now) others++;
+            // what they have done to it; the one it is on now wins a tie, so nothing turns it for nothing
+            float d = (did == null ? 0F : did.getOrDefault(o.getUUID(), 0F)) + (o == now ? 0.001F : 0F);
+            if (gentle(o)) {
+                if (d > bestGentleDid) {
+                    bestGentle = o;
+                    bestGentleDid = d;
+                }
+            } else if (d > bestFullDid) {
+                bestFull = o;
+                bestFullDid = d;
+            }
+        }
+        if (others == 0) return current;
+        ServerPlayer pick;
+        if (TogetherConfig.gentle() && bestFull != null && bestGentle != null) {
+            int since = SINCE_GENTLE.getOrDefault(boss.getId(), 0);
+            if (since >= TogetherConfig.onePhraseIn() - 1) {
+                pick = bestGentle;
+                SINCE_GENTLE.put(boss.getId(), 0);
+            } else {
+                pick = TogetherConfig.pair() || bestFull == now ? bestFull : gentle(now) ? bestFull : now;
+                SINCE_GENTLE.put(boss.getId(), since + 1);
+            }
+        } else if (TogetherConfig.pair()) {
+            pick = bestFull != null && bestFullDid >= bestGentleDid ? bestFull : bestGentle;
+        } else {
+            return current;
+        }
+        if (pick == null) return current;
+        if (pick != now) LEDGER.remove(boss.getId()); // it has chosen: the count starts again
+        return pick;
     }
 
     // ---- the clock ----------------------------------------------------------------------------------------------------

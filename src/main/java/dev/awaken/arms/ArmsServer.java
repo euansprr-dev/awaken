@@ -962,6 +962,8 @@ final class ArmsServer {
         boolean inArc = from != null ? inFront(p, from, g.angle()) : e.getOriginalBlockedDamage() > 0;
         boolean untold = Arms.untold(src);
         ArmsRules.Answer a = ArmsRules.guard(g, kind, p.getTicksUsingItem(), heldTicks, grace, s.lockedOut, inArc, untold);
+        // on Gentle a held guard stops an amber blow as it stops a white-gold one (SPEC §70.4); a timed deflect earns as before
+        if (a == ArmsRules.Answer.GUARD_BREAK && dev.awaken.core.api.FightsHooks.gentle(p)) a = ArmsRules.Answer.BLOCK;
         float incoming = e.getDamageContainer().getNewDamage();
         Entity by = src.getEntity();
         long now = now(p);
