@@ -6351,6 +6351,31 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     the block map's reading take 0.15 ms a tick where they may take 0.5 (`LensClient.tickBudget`). Nothing drawn
     changes: the maps catch up a little later. Not built: updating the glow and the rays on alternate frames (a
     frame's lag shows on small bright things when the view turns fast) and shedding the far cloud walk (it pops).
+- **Reach and cover** (Euan, playing, 2026-11-11: "the bottom edge and sometimes left edge of my screen has no shaders
+  working ... this changes based on my pace and how I move my head", then of a cave seen from its rim: "some shading
+  issues in this cave as well"). Both are where the Air's deep shade met an older rule that hands a pixel back to the
+  game's own light.
+  - **Reach.** Within arm's reach (the hand and what it holds) a pixel is never darker than the game drew it, eased
+    out from 1.25 to 1.45 blocks as Lens's light eases in. Lens's light measured that by the line of sight; the floor
+    measured it by the depth straight ahead, so with a wide view (sprinting widens it) the ground along the bottom of
+    the screen and a wall at its side, two blocks away, counted as "in reach" and showed the game's raw brightness in
+    a band. The floor uses the line of sight now, the same distance as the light. Swift has no world position: it
+    uses the hand's own distance by the fixed 70 degree view the game draws the hand with. Still open: with the eye
+    low (a slide, a crawl) the ground itself is within 1.45 blocks and keeps the game's light; telling the hand from
+    the ground there needs the hand's own depth (the game keeps it in `hud_3d_depth`), which is Java and not built.
+  - **Cover.** Under solid cover the model stands back and the game's light stays. It stood back by the roof's
+    thickness in the pixel's own column (1 to 7 blocks), so a block one step into a cave or under a cliff's overhang,
+    where the game still draws full sky light, kept the game's brightness beside open ground five times darker in the
+    Air's shade: bright grey blocks against dark blue ones along every roof line. The shade now carries on in from
+    the roof's edge and fades over six blocks, as the game's own sky light does: `skyBeside` in lens_composite.glsl
+    reads the heightfield along the four compass lines from the point for the nearest column open to the sky at the
+    point's height, each line in the two rows it runs between, so it is smooth along and across. It runs only for
+    pixels under a roof (up to 48 heightfield reads there). It reads tops, not walls: a room within six blocks of an
+    outer wall takes some of the street's shade too, which matches the street it is seen from, and dims lamp light
+    there by day. The exact answer is the game's own sky and block light for each block; that needs the light data
+    in a texture (Java) and is not built.
+  - Checked on CI with `tools/autopilot/steady60-cover-ci.txt` (a stone room with a seven-block roof in its own
+    morning shadow; views at 70, 100 and 110 degrees), before and after.
 - **Grades** (Euan 2026-11-10, with three pictures of a vibrant look: "what would it take to add this as an option in
   the Lens setting for the color grading ... defo want to be able to switch back and forth, and that way we also get
   to add more options in the future"; "this is for colors and atmosphere, not shaders or clouds"). A grade is the
@@ -9916,6 +9941,12 @@ the feet.
 - *In the open* it reads like the Ember: a soft pool at the feet under the flame (the city lanterns' profile, radius
   0.55 of the reach, 0.15 strength at level 15 in the dark, scaled by how dark it is there) and a halo at the hand
   (0.6 × √(level/15), half strength in daylight to full in the dark, a near-white core), hidden in your own first person.
+  The pool lies on the ground under the bearer (the first block down within five that can be stood on, by its
+  collision top). It keeps its whole strength up to 1.5 blocks over that ground, so a jump (1.25) never pulses the
+  light, and fades from there, gone five blocks up. It was drawn at the feet's own height: off the
+  ground it hung in the air as a flat disc at your level and lit only what lay under it, a line across every wall
+  and block (Euan, playing, 2026-11-11: "it stays exactly at your level ... weird cut off light effect in caves
+  when you jump"). Tour: `tools/autopilot/heldlight-aloft-ci.txt`.
 - *Mods that already light held items* (LambDynamicLights, Sodium Dynamic Lights, Ryoamic Lights, Dynamic Lights): only
   the pool and the halo are drawn. If the lit pipeline doesn't compile, the surfaces are skipped as the lamp's are.
 - *Cost* (reasoned, not measured): the flood is at most 900 cells × 6 block lookups a frame while it runs (a few frames

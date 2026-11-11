@@ -19,6 +19,7 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent;
@@ -64,6 +65,13 @@ public final class TorchGlow {
     static final float BRIGHT = 1.15F, FADE = 0.3F;
     /** The pool at the feet (its radius a share of the reach, its strength at a level 15 light in the dark) and the halo. */
     static final float POOL_R = 0.55F, POOL_A = 0.15F, HALO = 0.6F, HALO_A = 0.5F, CORE = 0.055F;
+    /**
+     * How far under the feet the pool looks for ground to lie on (blocks), and the height over that ground up to which
+     * it keeps its whole strength: a jump's top is 1.25, so jumping never pulses the light. From there it fades, gone
+     * at POOL_DROP.
+     */
+    static final int POOL_DROP = 5;
+    static final float POOL_FREE = 1.5F;
 
     /** Mods that already light the world round held items: with one in, only the halo and pool are drawn. */
     private static final String[] DYNAMIC_LIGHTS = {"lambdynlights", "sodiumdynamiclights", "ryoamiclights", "dynamiclights"};
@@ -85,6 +93,8 @@ public final class TorchGlow {
         boolean seen, own, fixed;
         HeldLight.Kind kind = HeldLight.NONE;
         double x, y, z, feet;
+        double poolY;           // the ground under the bearer, where the pool lies
+        float aloft;            // how far off that ground the bearer is: 0 up to POOL_FREE, 1 from POOL_DROP up (no pool)
         float flicker, dark;
         boolean dim;            // as bright where it stands as its own light: nothing drawn but the halo
         boolean stale;          // one of its blocks was broken or built over since its flood: redo it now
@@ -205,6 +215,8 @@ public final class TorchGlow {
             l.y = y;
             l.z = z;
             l.feet = BlockPos.getY(at[i]);
+            l.poolY = l.feet;
+            l.aloft = 0F;
             l.flicker = 0.9F + 0.06F * Mth.sin(t * 7.3F + i * 1.7F) + 0.04F * Mth.sin(t * 19.1F + i * 0.6F);
             M.set(Mth.floor(x), Mth.floor(y), Mth.floor(z));
             int here = existing(level.getBrightness(LightLayer.BLOCK, M), level.getBrightness(LightLayer.SKY, M));
@@ -244,6 +256,14 @@ public final class TorchGlow {
         double x = Mth.lerp(pt, p.xo, p.getX()), y = Mth.lerp(pt, p.yo, p.getY()), z = Mth.lerp(pt, p.zo, p.getZ());
         double side = (!off == (p.getMainArm() == HumanoidArm.RIGHT)) ? -1 : 1;
         l.feet = y;
+        // The pool lies on the ground under the bearer, not at their feet. At the feet, a jump or a fall made it a flat
+        // disc of light hanging in the air at your own height: it lit what lay under it and nothing over it, so a line
+        // ran across every wall and block at the level of your feet (Euan, playing, 11 Nov: "it stays exactly at your
+        // level so it creates this weird cut off light effect in caves when you jump"). Whole through a jump, then it
+        // fades with height.
+        double ground = groundUnder(x, y, z);
+        l.poolY = Double.isNaN(ground) ? y : ground;
+        l.aloft = Double.isNaN(ground) ? 1F : Mth.clamp(((float) (y - ground) - POOL_FREE) / (POOL_DROP - POOL_FREE), 0F, 1F);
         if (l.own && p == mc.getCameraEntity() && mc.options.getCameraType().isFirstPerson()) {
             float yaw = p.getViewYRot(pt) * Mth.DEG_TO_RAD;
             double fx = -Mth.sin(yaw), fz = Mth.cos(yaw), lx = Mth.cos(yaw), lz = Mth.sin(yaw);
@@ -266,6 +286,25 @@ public final class TorchGlow {
     }
 
     private static final double[] OUT = new double[3];
+
+    /**
+     * The top of the ground under a point: the first block down from it, within {@link #POOL_DROP}, with a body to stand
+     * on (its collision shape's top: a slab's half, a full block's whole), or NaN when there is none that near. Grass,
+     * flowers and water are passed through.
+     */
+    private static double groundUnder(double x, double y, double z) {
+        int bx = Mth.floor(x), bz = Mth.floor(z);
+        for (int by = Mth.floor(y + 0.05), i = 0; i <= POOL_DROP; i++, by--) {
+            M.set(bx, by, bz);
+            BlockState s = level.getBlockState(M);
+            if (s.isAir()) continue;
+            VoxelShape shape = s.getCollisionShape(level, M);
+            if (shape.isEmpty()) continue;
+            double top = by + shape.max(Direction.Axis.Y);
+            if (top <= y + 0.05) return top;
+        }
+        return Double.NaN;
+    }
 
     // ---- the flood -----------------------------------------------------------------------------------------------------
 
@@ -481,8 +520,8 @@ public final class TorchGlow {
                 if (l.id < 0 || !l.seen) continue;
                 float lvl = l.kind.emission() / 15F;
                 // the pool on the ground under the flame: only where it is dark enough to see it
-                float pool = l.fixed ? 0F : POOL_A * lvl * l.dark * l.flicker;
-                DelveRender.softPool(vc, (float) (l.x - cx), (float) (l.feet + 0.03 - cy), (float) (l.z - cz), l.kind.reach() * POOL_R, l.kind.rgb(), pool);
+                float pool = l.fixed ? 0F : POOL_A * lvl * l.dark * l.flicker * (1F - l.aloft);
+                DelveRender.softPool(vc, (float) (l.x - cx), (float) (l.poolY + 0.03 - cy), (float) (l.z - cz), l.kind.reach() * POOL_R, l.kind.rgb(), pool);
                 if (l.own && firstPerson) continue;
                 float x = (float) (l.x - cx), y = (float) (l.y - cy), z = (float) (l.z - cz);
                 float a = HALO_A * (0.35F + 0.65F * l.dark) * l.flicker, r = HALO * Mth.sqrt(lvl) * l.flicker;
