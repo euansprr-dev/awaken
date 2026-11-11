@@ -83,8 +83,9 @@ public class FamilyPet extends PathfinderMob implements OwnableEntity {
     /** Down on the ground and asked to walk: it gets up first (its own age, in ticks, when it is up). */
     public int upAt;
     public Vec3 lastAt = Vec3.ZERO;
-    /** Petting has a moment's rest between two. */
-    public long pettedAt;
+    /** Petting has a moment's rest between two. (Never petted is well before any tick: at 0 a world's first 30 ticks
+     *  counted as "petted a moment ago"; and never Long.MIN_VALUE, which a subtraction wraps.) */
+    public long pettedAt = -1000L;
     /** Told to walk somewhere by an admin ({@code /awaken admin family walk}); null once there. */
     public @Nullable Vec3 walkTo;
     public double walkSpeed = 1.0;
