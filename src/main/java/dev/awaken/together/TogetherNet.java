@@ -160,6 +160,11 @@ public final class TogetherNet {
         }
     }
 
+    /** A ping made on the server for {@code by} (the tour partner, who has no client): to the rest of their party in their level. */
+    static void pingFrom(ServerPlayer by, net.minecraft.world.phys.Vec3 at, String line) {
+        onPing(by, new Ping(by.getUUID(), by.getGameProfile().name(), HERE, -1, at.x, at.y, at.z, line));
+    }
+
     // ---- the party's state ----------------------------------------------------------------------------------------------
 
     private static boolean dirty = true;

@@ -78,6 +78,23 @@ final class PartyStrip {
             }
         }
         for (ClientParty.Live l : ClientParty.pings()) ping(g, font, me, l, pt, w, h);
+        veil(g, font, w, h);
+    }
+
+    /** On a knee the screen dims at its edges and says what's happening; down, it says how long a partner has. */
+    private static void veil(GuiGraphicsExtractor g, Font font, int w, int h) {
+        TogetherNet.Member self = ClientParty.self();
+        if (self == null || !(self.is(TogetherNet.F_DOWN) || self.is(TogetherNet.F_KNEEL))) return;
+        boolean down = self.is(TogetherNet.F_DOWN);
+        int edge = down ? 0xC0100608 : 0x80100608, middle = down ? 0x40100608 : 0x00100608;
+        g.fillGradient(0, 0, w, h / 2, edge, middle);
+        g.fillGradient(0, h / 2, w, h, middle, edge);
+        if (down) {
+            g.centeredText(font, "You're down.", w / 2, h / 2 - 24, INK);
+            g.centeredText(font, self.down() > 0 ? "Your partner has " + self.down() + " seconds to reach you and lift you." : "Hold on.", w / 2, h / 2 - 12, 0xFFF0B79C);
+        } else {
+            g.centeredText(font, "A second wind." + (self.winds() > 0 ? " " + self.winds() + " left." : " That was the last for now."), w / 2, h / 2 - 24, 0xFFF0B79C);
+        }
     }
 
     private static String state(TogetherNet.Member m) {

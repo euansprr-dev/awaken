@@ -1,0 +1,62 @@
+# Together (SPEC §70), the Gentle side: you on Gentle, and a partner the server plays ("Sam") on Full. The band with
+# Gentle lit, a blow at half, a second wind from inside (the screen dims at its edges and says so), the last one, and
+# the same four monsters let at you: two on you, the rest on him. First person, the HUD on.
+world coopgentle survival 20261112
+waitworld
+window 1440 900
+gui 0
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule keep_inventory true
+cmd weather clear 100000
+cmd time set 6000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+hud on
+camera first
+cmd awaken together partner spawn Sam
+wait 20
+cmd awaken as Sam admin awaken
+wait 60
+cmd awaken as Sam powers starter 1
+wait 20
+cmd awaken together partner join Sam
+wait 20
+cmd tp Sam ^2 ^ ^4
+wait 10
+# your own switch
+cmd awaken together fights gentle
+wait 40
+screen band status
+wait 40
+shot coop_gentle_01_band_gentle
+screen close
+wait 20
+shot coop_gentle_02_strip
+# a blow that would kill you: a second wind
+cmd damage @s 1000
+wait 6
+shotnow coop_gentle_03_second_wind
+wait 90
+shot coop_gentle_04_up_again
+cmd awaken together status
+wait 10
+# four monsters let at you with him beside you: two stay on you
+cmd difficulty normal
+cmd summon minecraft:zombie ^-3 ^ ^7
+cmd summon minecraft:zombie ^-1 ^ ^7
+cmd summon minecraft:zombie ^1 ^ ^7
+cmd summon minecraft:zombie ^3 ^ ^7
+wait 80
+shot coop_gentle_05_two_at_a_time
+cmd kill @e[type=minecraft:zombie]
+wait 20
+info
+quit

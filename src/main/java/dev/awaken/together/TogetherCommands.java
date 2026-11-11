@@ -64,6 +64,13 @@ final class TogetherCommands {
                             TourPartner.face(p, me.getEyePosition());
                             return 1;
                         })))
+                        .then(Commands.literal("ping").then(Commands.argument("name", StringArgumentType.word()).executes(c -> {
+                            // the partner points at the ground three blocks ahead of where they stand
+                            ServerPlayer p = partner(c.getSource(), StringArgumentType.getString(c, "name"));
+                            if (p == null) return 0;
+                            TogetherNet.pingFrom(p, p.position().add(p.getLookAngle().multiply(1, 0, 1).normalize().scale(3)), "Over here");
+                            return 1;
+                        })))
                         .then(Commands.literal("hurt").then(Commands.argument("name", StringArgumentType.word())
                                 .then(Commands.argument("amount", FloatArgumentType.floatArg(0)).executes(c -> {
                                     ServerPlayer p = partner(c.getSource(), StringArgumentType.getString(c, "name"));

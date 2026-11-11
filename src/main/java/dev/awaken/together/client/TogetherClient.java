@@ -22,10 +22,14 @@ public final class TogetherClient {
         modBus.addListener(TogetherClient::layers);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ExtractLevelRenderStateEvent.class, PartyStrip::extract);
-        bus.addListener(ClientTickEvent.Post.class, e -> Pings.tick());
+        bus.addListener(ClientTickEvent.Post.class, e -> {
+            Pings.tick();
+            Kneeling.tick();
+        });
         bus.addListener(ClientPlayerNetworkEvent.LoggingOut.class, e -> {
             ClientParty.clear();
             Pings.clear();
+            Kneeling.clear();
         });
         AimClient.freePress = Pings::press;
         StatusSections.add(StatusSections.Tab.STATUS, new TogetherSection());
