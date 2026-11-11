@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "awaken:block/skiff_helm"
+    },
+    "facing=east": {
+      "model": "awaken:block/skiff_helm",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "awaken:block/skiff_helm",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "awaken:block/skiff_helm",
+      "y": 270
+    }
+  }
+}

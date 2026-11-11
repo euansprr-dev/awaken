@@ -174,6 +174,15 @@ public final class StilledText {
                 + " Thank you for bringing it this far. You keep it. It should be out there with someone who's still walking.";
     }
 
+    /** The same, written back after the skiff brought it home (SPEC §67): their words, without a name in front. */
+    static String letterReaction(int keepsake, String[] rel) {
+        Keepsake k = KEEPSAKES[Math.floorMod(keepsake, KEEPSAKES.length)];
+        String why = k.why.replace("{They}", cap(rel[1])).replace("{they}", rel[1]).replace("{their}", rel[2]).replace("{them}", rel[3]);
+        return "The skiff brought my " + rel[0] + "'s " + k.thing + " home. I knew it the second I opened the parcel. " + why
+                + " I sat up half the night holding it. Thank you for sending it this far. I've put it back in the hold for you. Keep it."
+                + " It should be out there with someone who's still walking.";
+    }
+
     static String family(String surname) {
         return surname.toUpperCase(Locale.ROOT);
     }

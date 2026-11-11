@@ -24928,6 +24928,188 @@ bell): his pick decides the whole family.
 - Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
   first values. The listening page is the check, and his marks choose (`apply`, then `build`).
 
+## 67. The Far Landing (a journey played far from the city; page https://claude.ai/artifact/449tuDbGGVgmuAP2LAHRs2, copy `docs/journey/far-landing.html`, build plan `docs/journey/BUILD-PLAN.md`; Euan approved all eleven decisions 2026-11-11: "Go ahead with the full plan and recommendations")
+
+The first hour stays in and around Carillon as built. Then an old Precursor skiff on the ridge flies you out on the wind to
+a landing about 6 km away, and the real game starts there: danger is measured from the landing, and the city's errands
+come to you by letter and through the skiff's hold. You can go back any time (the skiff runs both ways), the city asks
+you back twice to hear a bell rung for you, and the morning after the Hundred Peal it fetches you home. New worlds only.
+
+**67.1 The switch: rules 4.**
+- `RegionMap.RULES` is 4. A world keeps the rules it was made under (`living_regions` saves `rules`); one with no record
+  is new and gets 4. Old worlds (V20 is 3) are untouched. The GameTest server keeps `TEST_RULES` (2).
+- Everything of this section asks `TheLull.farLanding(server)` (true only under rules ≥ 4 with Carillon standing) or
+  `TheLull.landing(server)` (null otherwise). With it false the game behaves exactly as before.
+
+**67.2 The landing (`core.api.FarLanding`, pure).**
+- 48 bearings (turned by the seed) × radii 5,000, 5,500, 6,000, 6,500, 7,000 round the city. Each spot scores its land
+  (3: plains, sunflower plains, meadow, flower forest, cherry grove, birch; 2: other forest, taiga, savanna, plains;
+  −2: snowy, slopes, windswept, stony, grove, dark forest, pale garden; −5: ocean, river, beach, shore, swamp, mangrove,
+  desert, badlands, peaks, jungle, bamboo, mushroom, ice, frozen, deep dark, dripstone, lush), then the 28 best by land
+  are measured for flatness (a cross of nine points 48 apart: 2 − spread/6, never under the sea: −3) and water (a river
+  or lake biome at 150 or 300 in eight directions: +1). Ties break on the seed. Cached per session; saved in the region
+  record as `landing_x`/`landing_z`.
+
+**67.3 The land under rules 4 (`RegionMap`).**
+- `cx, cz` stay the city (TheLull, the Commons, its ramp, its name); `lx, lz` (the landing) is where danger is measured.
+- `wideLevelAt`: the Commons' ramp to 700, 8–9 to 1,000 round the city as before; past that each region's level with its
+  odds and calm ways measured from the landing. Round the landing the land is capped at 9 (E) to the safe line (1,300)
+  and eases into the field over `LANDING_EASE` 300 more; round the city the ring eases from 8–9 at `CITY_CALM` 1,000 to
+  the field at `CITY_EASE` 1,600.
+- `makeWideLevel`: a heart within the safe line of the landing, or within 1,000 of the city, is E; the odds by distance
+  are from the landing. A calm region is named like a shelter only when it is over 2,000 from both.
+- Roads, `FirstTown`, `Holdfasts` and the stone people's places measure from the landing (§28, §43.3), keeping their old
+  clearance from the city. Aldo stays on his milestone by the ridge.
+
+**67.4 The skiff and its moorings (`dev.awaken.frontier`).** Redesigned 11 Nov 2026 at Euan's word ("massively
+improving the design and experience of it"): the first look was a plank box with a mast in the helm's view.
+- **The skiff is an old Precursor wind-skiff that people have kept flying**, in its own blocks (`SkiffBlocks`, none with
+  an item, all declared to the ledger): Precursor navy plating (`skiff_hull`, with stairs for the flared shoulders), a
+  planked deck whose side carries the gold sheer line (`skiff_deck`, an axis so the planks always run along the keel),
+  low gold-capped gunwales on any edges of their block (`skiff_gunwale`), thin spars (`skiff_spar`), canvas two texels
+  thick in three planes with dyed tip panels (`skiff_sail`), brass (`skiff_brass`), the helm with its wheel
+  (`skiff_helm`) and a caged lamp, blue on the skiff and amber on its mooring (`skiff_lamp`). Navy, gold, warm planks,
+  cream canvas, Precursor blue: nothing else in the world looks like it. Art, models and blockstates come from
+  `tools/art/skiff_art.py`; every shape is a box on the texel grid.
+- **The shape is a plan**, `tools/art/skiff_plan.py`: it checks the plan (no two blocks in one place, all in the
+  footprint, the helm's stand free), draws it from outside and from the helm without the game, and writes
+  `SkiffPlan.java`, which `Skiff` reads (state words like `awaken:skiff_sail[band=true,plane=flat]`). Drawn facing
+  south, the origin the berth's middle at the main deck's height.
+  - Hull: five wide and fourteen long, narrowing to a two-block beak; plating one deep with flared shoulders, a gold
+    keel (`precursor_trim`) and the lift core (a glow panel) in a fin under it (`KEEL` −3).
+  - A quarterdeck a step up at the stern (z −6..−3). The helm stands at its front edge (`HELM` 0,2,−3; you stand at
+    `STAND` 0,2,−4), so the eye is 2.6 over the main deck and sees over the whole skiff: nothing on the centre line
+    rises to eye height. Ahead of it: the deck, cargo lashed either side of the middle, the gunwales running to the
+    beak, a bowsprit and the blue bow light under the horizon.
+  - Two wings: a boom from a king post on a brass mount at each shoulder of the hull (z 3) with canvas swept back from
+    it, six out and five deep at the root, at y 3 (clear over a head on the deck and on the pier).
+  - Nothing hangs in the air by a few texels: a thin spar is centred in its block, so a lamp stands on an upright one
+    (the sprit's end, the sternpost, the mast's top) or hangs from a whole block (the mast's crossarm, the bay's ridge).
+  - The wind-wheel behind the stern: a brass hub (`HUB` 0,4,−7) with four canvas blades three long, the same from
+    every quarter turn, on a sternpost with the stern light.
+  - Each block names what it moves with in flight (`Part.rig`): the hull, a wing, the wheel.
+- **The mooring is a place** (`Skiff.jetty`, `Moorings.build`): the old Precursor landing ring (trim, plating, a glow
+  panel under the core, three glow studs) set in a stone pad, a disc of 6.5 whose top is the highest ground under the
+  mooring (`PAD` −4; `LIFT` 4) and whose every column is filled down to the land, kerbed in stone brick, so on a slope
+  it stands as a terrace and never hangs. On it a timber cradle holds the hull. A spruce pier runs along the −x side
+  on log posts down to whatever is under them, with a kerb beam, a rail, amber lamps on its end posts and goods
+  waiting at its bow end; on its outer side a bay under a slate roof (a bench; at the landing the hold, a barrel at
+  `HOLD` −8,1,−6, and the Association's notice board at `BOARD` −8,1,−5; at the ridge just goods). By the bay stands
+  the mooring mast: a top light and two hung from a crossarm, to find your way back by, and a pennant. Steps three
+  wide go down from the pier's stern end on stone until they reach the ground. Footprint ±8 × −9..9, the pad to 12
+  clear above.
+- The ridge mooring: city centre + (22, −ridge − 30), beside Aldo; built once a player is within 160. The landing's:
+  built when its chunk loads. Each faces the other end (snapped). The exact spot is the best of a ±20 search on a step of
+  4 (height spread ×3, water ×6, road ×8, distance/6, and 2 a block where the ground astern drops more than 3 below
+  the pad, so the steps reach the ground soon; a tree's trunk is not the ground). A glade of 6 round the footprint is
+  cleared of logs and leaves, and in a fringe of 6 more every leaf no longer joined to a log (through other leaves,
+  within six, the way the game itself counts) comes down too, with the snow that lay on it, so a mooring in a forest
+  stands in the open with nothing left hanging. Both are guarded: breaking, placing and explosions there are refused except for
+  creative players and operators. Saved in `FrontierData` (`awaken:frontier`, schema 1); a mooring's `look` (2 now, 1
+  when absent) lets one of an older look be taken down and built again where it stood.
+- Rotations: WEST (−z, x), NORTH (−x, −z), EAST (z, −x), with `Rotation` CW 90, 180, CCW 90 for the block states (the
+  canvas swaps its two upright planes on a quarter turn, the gunwale turns its edges).
+
+**67.5 The flight (`Flights`, `client.FlightFilm`, `client.CloudCrossing`, `client.SkiffFx`, `client.FlightAir`).**
+- The helm takes you once Ilse has given you her coal (`FarPost.ready`: The Last Delivery past its talk-to-Ilse step, or
+  the story off; `/awaken frontier ready` for tours). Everyone on the deck flies together. Overworld only.
+- The server: a lift of 120 ticks (a sneak-use after your first flight: 14, straight into the cloud); the far land loads
+  under a `frontier_flight` ticket (radius 3, 90 s); the move happens once the lift is over and the land is loaded, or
+  after 40 s more. `teleportTo` keeps the client's camera. No damage from the helm until the client says it has set down
+  (`Landed`) or 30 s after the move. A logout or a server stop mid-air puts you on the far deck before you are saved; a
+  crash does on your next login (`pending`).
+- The client films it as one `OpeningCamera` shot through `Cinema`. The resting skiff is swapped on that client for
+  barriers (unseen, still solid) and drawn block by block with its own models (`submitMovingBlock`), each block turned
+  with its rig: the wings about their roots, the wind-wheel about its hub.
+  - **It wakes** (`WAKE`, 40 ticks; not on a quick flight): watched from outside, low off the open bow quarter,
+    drifting in (lifted clear of any land in the way). The mooring is let go, the core hums up, the wings rise 15
+    degrees on their booms, the wheel spins up to 30 degrees a tick, dust blows out across the pad with motes of the
+    core's light, the bell rings once. The skiff only stirs on its cradle, so everyone aboard is seen where they
+    really stand.
+  - **It lifts** (to tick 120), at the helm: a surge off the cradle, speed gathered along the bow (3 blocks a tick),
+    the turn toward the far end leaning into it, 140 up when the cloud closes. The wings beat slowly, the view opens a
+    little with speed and sways with the hull, streaks of wind and then cloud come past (`FlightAir`: sprites that hang
+    in the air ahead and off the line of flight, so the skiff's own speed carries them by; a streak lies along the
+    flight and turns about that line to face the eye).
+  - **The crossing** is an overlay drawn like the gates' crossing: the painting of where you're going
+    (`textures/gui/frontier/crossing_out.png` / `crossing_home.png`, a sky gradient without it), "OUT ON THE WIND" or
+    "HOME ON THE WIND", the name surfacing from its middle, a gold rule, how far and which way, a hair of light that
+    fills as the land arrives. It is the film's own layer, so it is kept through the shot's hidden HUD
+    (`Cinema.keepLayer`). It holds at least 3 s and until the far land is drawn (or 20 s): drawn means nothing is
+    left to draw anywhere, or the land round the mooring is (its own nine chunks and 38 of the 49 round it), since
+    the far land can go on arriving for a long while and the skiff can come down as it does.
+  - **It comes down** over 110 ticks, in from 190 back and 120 up, out of thinning cloud: the wings flare to 24 degrees
+    as it brakes and fold flat as it settles, the wheel runs down to rest exactly as it stood (three turns, eased), two
+    bells, dust off the pad, the hull onto its cradle with a dip. The real far skiff returns six ticks before the end.
+- Sound (`merge/frontier` `sounds.json`, each an event of the game's own recordings): the mooring let go (a chain), the
+  core waking, humming and going quiet (the beacon), canvas filling (wing beats), the skiff's bell, timbers creaking
+  (doors and gates, low), the wind (the elytra's), the hull settling (wood). The hum and the wind are two beds in the
+  ear that follow the skiff's speed and go close and quiet inside the cloud.
+- Watchers within 160 of a mooring see the skiff wake and lift away with its party (their bodies hidden once it
+  lifts); it comes back empty to its berth 15 s later, wings and wheel moving the same way.
+- **Lit by the open sky in the air.** A drawn block is lit by the world's light where it is; past three blocks from
+  its berth the skiff takes the light of the open sky over that berth instead, because where it flies the land may
+  not have come yet and a place with no land has no light (CI run 43001781354: the hull black early in the descent).
+- **The descent is onto the mooring as built.** A far mooring that isn't built when the skiff lifts is only a spot
+  (the seed's, at sea level + 8); the server's ARRIVED carries where it really stands, and the film comes down there
+  (`Flight.to`). Before 11 Nov the film kept the spot, so a first flight came down beside the mooring, in whatever
+  land was there, and jumped to the helm at the end.
+- **Held at the far helm.** 26.3's client lets a player sink a tenth of a block a tick where it has no chunk yet, so
+  after the move they would come to rest inside whatever land arrived, or fall through it into a cave, and see the
+  descent from the dark (CI runs 42989684224 and 42996376582: landed at y 13 and y 20 under a helm at 85). The client
+  holds the traveller where the server put them (`FlightFilm.holdAtHelm`) until the film has set them down and there
+  is land under them, a minute at most.
+- The homecoming's skiff (67.8) is drawn beside you, its bow toward the city and its core just clear of the highest
+  ground under it, so on a slope it hangs over the low side and is never in the hill (`Flights.BESIDE`); the view goes
+  from your own eyes up to its helm over 26 ticks, and it has no outside shot.
+
+**67.6 Errands come to you (`core.api.FarPost`).**
+- Letters: a card in the writer's words wherever you are (`FarPost.letter`), a copy kept in the hold (16 kept a player,
+  the newest three read out when the hold has nothing else to do).
+- The hold: a keepsake held at it goes home (world: its family writes back; you keep it; counts as shown); else each
+  waiting step of a city person's (Oren, Hale, Hettie, Kestrel, Bram; never Ilse's, which stays at her fire) is handed
+  over, up to six steps a chain a use (a talk is a note sent; a delivery is the things put in; a short delivery says
+  what's missing); else Oren's offer again if it can be taken; else the letters.
+- Hale's board stands beside it (`Bounties.board`). Hale's rack sells patterns at every Armoury door
+  (`ArmsArmoury.rackHere`, the view's `rack`).
+- Bram's bells (the Registry's handbell for the first gate, its tolling bell for the twenty-fifth) go on the Registry's
+  wagon to your yard, with his letter. Village bells are told by letter, the villages measured from the landing, and
+  their thanks come by letter.
+- Oren writes once you're out on the land with his offer on the letter (Help takes the chain); his loads go in the hold.
+
+**67.7 Going back: two invitations (`Invitations`).**
+- A city bell that's due while you're away from Carillon is yours at once, hanging where it always has. Its letter: the
+  Roost's from Kestrel, the Square's from the Choir, the market's from Hettie, the Quay's from the dockers. The first of
+  the Roost and the Square (round 1, about C rank) and the first of the market and the Quay (round 2, about B) also ask
+  you to come and hear it. While one stands it is an optional row under Out there on the Tasks page.
+- Standing in Carillon with one standing: the bell rings out over you, and people come: round 1 Kestrel and Hale (his
+  new rack), round 2 Hettie and Oren (he looks at your work). Nothing waits on it.
+
+**67.8 The homecoming (`Homecoming`).**
+- The morning after your Hundred Peal (before noon of the next play day, or any time once a morning has passed), under
+  the open sky, a card: the skiff has come for you. Go home: it is drawn where you stand (nothing built there, nobody
+  else sees it) and takes you, and anyone beside you, to the ridge. There you hear every city bell from far off and Ilse
+  says she's walking down behind you. Walking into Carillon after the peal, by skiff or not: every bell over you, and
+  Bram, Kestrel, Oren, Hale, Hettie and Ilse thank you in plain words. Once. A Tasks row says "Go home to Carillon"
+  until then. Ilse's visit to your home after the Wake stays as built (§43.14).
+
+**67.9 Ilse's talk.** In a far world her lines are the same with three changes: after Aldo, "There's an old skiff up
+on the ridge. It flies itself, out on the wind to the far country and back again. That's where hunters start now. Nobody
+from the city can stay out there, so nobody will bother you."; the coal is for wherever you want to live "in the far
+country"; her goodbye tells you the skiff brings you back whenever you want.
+
+**67.10 Tasks.** "Take the skiff to the far country" (main path, between your first power and your fire, at the helm,
+until you've landed); "Go and hear the … rung for you" (optional); "Go home to Carillon" (after the peal).
+
+**67.11 Commands and checks.**
+- `/awaken frontier status | goto ridge|landing | look ridge|landing [0-5] | fly [quick] | ready | letter | invite <bell> | homecoming`.
+- GameTests (`FrontierTests`, pure): `frontier_landing_fair` (20 seeds, 5–7 km, fair ground, the same every time),
+  `frontier_levels_rules_four` (E to 1,300 round the landing, the city's ring, rules 3 unchanged, harder past it),
+  `frontier_skiff_shape` (every facing: no two parts in one block, all in the footprint, the stand on the deck, the bow
+  the way it faces).
+- Tours: `far-landing-flight`, `far-landing-world`, `far-landing-homecoming` (seed 4245).
+- Nothing here has been played by a person. The skiff and mooring picture goes to Euan before merge.
+
 ## 68. The Whole Boss Fight (plan docs/boss-experience/PLAN.md, page https://claude.ai/artifact/VDXqPTJJxktRgDLiJJRdH7; Euan approved all fourteen decisions 2026-11-11: "Go with all")
 
 Euan fought the Ringer on build 69fee63de with a longsword (11 Nov 2026): the E sword broke mid-fight, the closing ring was

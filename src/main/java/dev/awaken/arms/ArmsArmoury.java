@@ -96,6 +96,14 @@ public final class ArmsArmoury {
         return o != null && o.door() == ANVIL && p.level().getGameTime() - o.at() < DOOR_TICKS ? o.pos() : null;
     }
 
+    /**
+     * Whether Hale's rack sells patterns at this door: at Hale's own, and in a world played far from Carillon at every door,
+     * since the city's rack comes to you there (SPEC §67).
+     */
+    static boolean rackHere(ServerPlayer p, int door) {
+        return door == HALE || dev.awaken.core.api.TheLull.farLanding(p.level().getServer());
+    }
+
     static ArmsPayloads.ArmouryView view(ServerPlayer p, int door, boolean open) {
         Rank rank = Progression.rank(p);
         int essence = ArmsForge.count(p, CoreApi.ESSENCE_SHARD.get());
@@ -120,7 +128,7 @@ public final class ArmsArmoury {
         }
         // Raise is a reforging at a War Anvil now (SPEC §46.8): the Forge's door no longer offers it
         return new ArmsPayloads.ArmouryView(door, essence, out, hidden, lowest == null ? "" : lowest.label, ArmsProgress.of(p).tracked, open,
-                "", finds(p));
+                "", finds(p), rackHere(p, door));
     }
 
     /** What the fighter has found: the Lord-forged weapons they hold of the fifteen, and when the next Lord is certain to carry one. */
@@ -276,7 +284,7 @@ public final class ArmsArmoury {
         switch (a.op()) {
             case DETAIL -> sendDetail(p, st.id(), a.tier().isEmpty() ? null : a.tier());
             case BUY -> {
-                if (door == HALE && buy(p, st.id())) {
+                if (rackHere(p, door) && buy(p, st.id())) {
                     OPEN.put(p.getUUID(), new Opened(door, p.level().getGameTime(), null));
                     sendView(p);
                     sendDetail(p, st.id(), null);
