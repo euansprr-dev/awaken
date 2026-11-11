@@ -195,14 +195,23 @@ public final class Strikes {
 
     // ---- how a guard answered (client, SPEC §68.2) --------------------------------------------------------------------
 
-    /** What became of a blow at the local player's guard: turned aside, blocked, the guard broken, or struck. */
-    public enum Answer { DEFLECT, BLOCK, GUARD_BREAK, STRUCK }
+    /**
+     * What became of a blow at the local player's guard: turned aside, blocked, the guard broken, struck, or gone past a
+     * guard that was up (PASSED: from outside its front, or a blow no guard stops).
+     */
+    public enum Answer { DEFLECT, BLOCK, GUARD_BREAK, STRUCK, PASSED }
+
+    /**
+     * Why a guard that was up didn't turn the blow aside (SPEC §68.6): raised too early, too late, again too soon after
+     * lowering it, the blow came from the side, or it can't be guarded (dodge it). NONE where there is nothing to say.
+     */
+    public enum Why { NONE, EARLY, LATE, TOO_SOON, SIDE, UNGUARDABLE }
 
     public interface AnswerSink {
-        void answered(Answer answer, int attackerId);
+        void answered(Answer answer, int attackerId, Why why);
     }
 
-    private static AnswerSink answers = (a, id) -> {};
+    private static AnswerSink answers = (a, id, why) -> {};
 
     /** The ring's side (aim): it bursts on a deflect and says why a guard missed. */
     public static void installAnswers(AnswerSink sink) {
@@ -211,7 +220,12 @@ public final class Strikes {
 
     /** Arms' client says how the local player's guard answered a blow of {@code attackerId}'s (-1 unknown). */
     public static void answered(Answer answer, int attackerId) {
-        answers.answered(answer, attackerId);
+        answers.answered(answer, attackerId, Why.NONE);
+    }
+
+    /** The same, with why a guard that was up missed. */
+    public static void answered(Answer answer, int attackerId, Why why) {
+        answers.answered(answer, attackerId, why);
     }
 
     // ---- stagger (server) -------------------------------------------------------------------------------------------

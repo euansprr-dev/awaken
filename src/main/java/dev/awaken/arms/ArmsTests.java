@@ -42,6 +42,7 @@ final class ArmsTests {
     static void register() {
         AwakenTests.register("arms_timeline", 20, ArmsTests::timeline);
         AwakenTests.register("arms_defence_rules", 20, ArmsTests::defenceRules);
+        AwakenTests.register("arms_kneel_full", 20, ArmsTests::kneelFull);
         AwakenTests.register("arms_strike_arc", 60, ArmsTests::strikeArc);
         HitNowTests.register(); // SPEC §47.1: the client's sweep and the server's
         WeightTests.register(); // SPEC §25 "Weight in the Hand": the blow's direction, the hands' word, the layers, walls, grass
@@ -763,6 +764,23 @@ final class ArmsTests {
         h.succeed();
     }
 
+    /** SPEC §68.6: against a kneeling body every heavy is full at its min. */
+    static void kneelFull(GameTestHelper h) {
+        for (Archetypes.Loaded a : Archetypes.all()) {
+            Archetype.MoveDef heavy = a.move(Archetype.Move.HEAVY);
+            if (heavy == null || heavy.charge().isEmpty()) continue;
+            Archetype.Charge c = heavy.charge().get();
+            h.assertTrue(ArmsRules.fullAt(c, false) == c.glint(), a.id() + ": a charge is full at its glint");
+            h.assertTrue(ArmsRules.fullAt(c, true) == c.min(), a.id() + ": against a kneeling body, full the moment it is a charge");
+            Archetype.MoveDef exec = a.move(Archetype.Move.EXECUTION);
+            // press to hit on a kneel: the charge's min, the release, the Execution's windup
+            int pressToHit = c.min() + 1 + (exec == null ? 0 : exec.windup());
+            h.assertTrue(pressToHit + 20 <= ArmsRules.BROKEN_TICKS_LORD, a.id() + ": a heavy begun as a Lord kneels lands with time to spare ("
+                    + pressToHit + " ticks of " + ArmsRules.BROKEN_TICKS_LORD + ")");
+        }
+        h.succeed();
+    }
+
     static void defenceRules(GameTestHelper h) {
         Archetype.Guard g = longsword().def().guard();
         h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 0, 0, false, true) == ArmsRules.Answer.DEFLECT, "the raise's first tick deflects");
@@ -776,6 +794,11 @@ final class ArmsTests {
         // the grace: a raise that arrived after the blow, within the grace, still deflects as the player saw it
         h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 2, 2, false, true) == ArmsRules.Answer.DEFLECT, "held 2 ticks, grace 2: a deflect");
         h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 3, 2, false, true) == ArmsRules.Answer.BLOCK, "beyond the grace: a block");
+        // why a guard only blocked, for the ring's word (SPEC §68.6)
+        h.assertTrue(ArmsRules.missWhy(g, g.deflect() + 2, 0, 0, false, false) == ArmsRules.MISS_EARLY, "raised too early");
+        h.assertTrue(ArmsRules.missWhy(g, 1, 0, 0, true, false) == ArmsRules.MISS_TOO_SOON, "raised again too soon: the lockout");
+        h.assertTrue(ArmsRules.missWhy(g, g.deflect() + 2, 0, 0, true, false) == ArmsRules.MISS_EARLY, "locked out, but early anyway");
+        h.assertTrue(ArmsRules.missWhy(g, 0, 3, 2, false, false) == ArmsRules.MISS_LATE, "raised after the blow, past the grace");
         h.assertTrue(ArmsRules.grace(20) == 0 && ArmsRules.grace(150) == 2 && ArmsRules.grace(300) == 3 && ArmsRules.grace(900) == ArmsRules.GRACE_MAX,
                 "grace: none near, 2 ticks at 150 ms, capped at 3");
         Archetype.Dodge d = longsword().def().dodge();

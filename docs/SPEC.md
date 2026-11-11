@@ -1002,8 +1002,10 @@ of `AwakenConfig.Client`.
   mobs module grounds normal and elite fliers, never a kit flier).
 - `dev.awaken.core.api.Strikes` additions (§68): `Coming` / `installComing` with `left(entity, partialTick)` (ticks until its
   told blow reaches you, a double on one clock, NaN when none), `reaches(entity)`, `comingKind(entity)`, `lands(entity)`
-  (client; the mobs module's `TellClock`); `Answer {DEFLECT, BLOCK, GUARD_BREAK, STRUCK}`, `installAnswers`, `answered`
-  (client: how the local guard answered, told to the ring); `Duel.reeling`, `Duel.atLastStand` (`reeling(entity)`,
+  (client; the mobs module's `TellClock`); `Answer {DEFLECT, BLOCK, GUARD_BREAK, STRUCK, PASSED}`, `Why {NONE, EARLY,
+  LATE, TOO_SOON, SIDE, UNGUARDABLE}`, `installAnswers(AnswerSink)` (`answered(answer, attackerId, why)`), `answered(answer,
+  attackerId)` and `answered(answer, attackerId, why)` (client: how the local guard answered and why a guard that was up
+  missed, told to the ring, §68.6); `Duel.reeling`, `Duel.atLastStand` (`reeling(entity)`,
   `atLastStand(entity)`); `Postures.beaten(target, ticks, by)` and `Postures.executing(source)` (`beaten`, `executing`: a
   body held broken for its last stand, and whether a blow now landing is an Execution's).
 - `dev.awaken.core.api.Lasting` (§68.1) — an interface an item class of ours names to be never destroyed by wear:
@@ -22526,8 +22528,8 @@ in this land, so no block of it can ever flow.
 **The heart of a Realm** (`Land.inHeart`, `Land.change(moment)`, `RealmState.doorShut, heartStage`): the Lord sleeps until someone comes in. The door
 is wax as thick as a wall until the last Warden falls (`heart_open`); it shuts behind whoever's fighting once nobody's lingering at it (`heart_shut`);
 the room answers the fight at two thirds and one third of the Lord's life (`heart_weeps`, `heart_winds`), and stills when it dies (`heart_still`).
-Nobody left inside: the Lord goes, the hall resets, the door opens again. Moments are block edits sent with `Block.UPDATE_CLIENTS`, computed by the
-land so a restart redraws the same thing.
+Nobody left in the fight (`RealmState.fighters`, §68.6 "The fight holds"): the Lord goes, the hall resets, the door opens again, and
+everyone in the gate is told so. Moments are block edits sent with `Block.UPDATE_CLIENTS`, computed by the land so a restart redraws the same thing.
 
 **Life** (`RealmLife`, spawned from a blueprint's `life` and `folk`): kept up by density around each player, once every two seconds, always at least
 28 blocks from anyone. A herd of 3-5 where fewer than 5 are within 64; 6 flies within 40; up to 9 folk round a village once a player is within 130. All
@@ -25517,8 +25519,17 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
   press needs to reach the server, which sees the guard a tick after the press and counts whole ticks.
 - **After** (`Strikes.answered`, from the server's own DEFLECT / BLOCK / GUARD_BREAK / HURT replies through
   `arms.client.ArmsAnswers`, one line at the top of `ArmsPredict.onResult`): a deflect bursts the ring outward (300 ms); a
-  block or a broken guard says "Too early" under it, and a guard raised within 5 ticks after being struck says "Too late"
-  (650 ms; `timing_words` in `awaken-aim-client.toml`).
+  guard that missed snaps it shut, dull grey, and says why under it: a block or a broken guard "Too early", "Too late" or
+  "Raised again too soon" (from the server's reason, §68.6 "A parry you can read"), a blow that went past a raised guard
+  "It came from the side" or "Dodge that one", and a guard raised within 5 ticks after being struck "Too late"
+  (650 ms). The words teach, then go quiet: each shows its first `AimConfig.TAUGHT` 3 times only, counted per word in
+  `timing_words_seen` in `awaken-aim-client.toml`, so the count holds through restarts (empty it to be taught again).
+  Why 3, and per word: Euan 11 Nov, "I definitely don't want that to be every single time ... just the first few
+  times, so you understand, you need to like time it better"; each word names a different mistake (early, late, the
+  lockout, the side, an unguardable blow), so each gets its own few, and three is enough to tie a word to the feel of
+  the miss without becoming the thing the eye waits for. After that the ring's white burst and its dull grey snap
+  (every time) carry the timing. `timing_words` is `FIRST_FEW` (the default), `ALWAYS` (every time, for good) or `OFF`
+  (never, from the start); an old `true` / `false` from before is read as `FIRST_FEW`.
 - **On a boss without a lock:** the duel body nearest its blow within 32 blocks shows its ring with no brackets
   (`boss_ring`). The out-of-view arcs brighten on the same clock.
 - **The glint** (`ArmsTells`): fires once as the ring enters the band, on the same clock; a body with no clock keeps the
@@ -25610,6 +25621,75 @@ Execution), `opening` (the camera), `living` (the plate's words).
 - Counter-hits (decision 13) are not built. The Journal picture of a finishing blow (decision 14) is later.
 - Known and not changed here: `ServerPace.now` is a float of game time, so in a world past about a hundred hours a kit
   body's own animation clock steps by a tick or more; the ring uses `ServerPace.since`.
+
+**68.6 Three things from the Ember Tyrant (Euan's playtest 2026-11-11 on c90fc5791, a Realm with `gateRealms` on).** His
+words: the Lord reset in the middle of the fight, his parries didn't feel like they landed, and its kneel was over before
+his charged heavy came down. Modules `gates` (the hall), `mobs` (the lonely heal, the log), `arms` (the guard, the
+charge), `aim` (the ring).
+- **The fight holds (gates, `RealmLive.heart`).** *Why:* the hall decided "nobody left inside" from one look every half
+  second: a single sample with nobody standing in `Land.inHeart` while the door was shut discarded the Lord and woke a
+  whole new one. `inHeart` ends before a hall's walls (`GeneratedCrawl`: `lordHall.out < 0.96`, four blocks under its
+  floor), so a leap off a ledge, a dodge into the wall's last stretch, a rope swing or a fall into a pit ended the fight
+  with nobody having left. *The rule now:* who is in the fight is a saved list (`RealmState.fighters`, codec field
+  `fighters`). Everyone alive and not a spectator who stands in the heart while the Lord is awake joins it (everyone in
+  it when it wakes, at once). A fighter is out (`RealmLive.outOfFight`, pure) when they fall (die), leave the Realm (the
+  arch, a respawn at the Hearth), or are away from the hall for longer than `AWAY_TICKS` 200 (10 s): "at the hall" is
+  within `HALL_REACH` 68 blocks of the Lord's place across and 48 up or down, the same reach that keeps the door from
+  shutting; a fighter offline that long has left the game. The time each fighter was last at the hall is kept in memory
+  only, and a fighter loaded from a save counts as just seen, so a pause (the server stands still), a save, a quit and a
+  reload, a step out of the door and a leap never put the Lord to rest. Only when the list is empty and the door is shut
+  does the Lord go back to rest, whole, the hall reset and the door open (so nobody is ever locked out), and every
+  player in the gate and every fighter just out is told: "Nobody is left in the fight. The Ember Tyrant has gone back to
+  rest, whole again. The door to its hall is open." A Lord whose fight was put to rest while its chunk was away leaves as
+  it loads (`RealmLive.strayLord`, from `GateEvents.onJoin`), so a fresh one never stands beside it. The log says each
+  step (`[realms] gate N: ... joined the fight`, `... is out of the fight with the Lord (fell)`, `... stood past the
+  heart's line (x y z, d blocks from the Lord); the fight held` once a fighter a fight, `nobody is left fighting ...`).
+  Tour commands: `/awaken gate realm_edge` (onto the hall's floor just past the heart's line) and `/awaken gate
+  realm_lord` (the Lord's health, the door and how many are in the fight, said and logged).
+- **Left alone (mobs, `AwakenBoss.arena`).** The other rule that heals a Lord, unchanged: no player out of creative
+  within its home radius + 16 (38 blocks for the Tyrant) for 600 ticks (30 s) heals it in place and starts its fight
+  over, so it can't be worn down from out of its reach. It now says so: the log (`[fights] ... had nobody within 38
+  blocks for 30s: healed from h/max and starts over`) and a line to every player within its radius + 96: "The Ember
+  Tyrant had nobody to fight for half a minute, so it has healed and the fight starts over."
+- **A parry you can read (arms, aim).** *What his log shows:* no guard of his was logged (the ring's `[fights] ring:`
+  count runs in development builds only, and the black box ended at 18:07:38, before the fight), so whether each guard
+  deflected, blocked or went unregistered can't be read back. It does show the Tyrant's blows missing him about 35
+  times (`[fights] missed`), the Maul's deflect window of 3 ticks (the tightest of all), and a build with the old,
+  jumpy ring (§68.2 is the fix for the timing read). *Added, without repeating §68.2:* every guard a creature's blow
+  meets is logged on the server in any build (`[arms] guard: BLOCK ember_tyrant's LIGHT blow, raised 5 ticks before it
+  (deflect window 3, grace 0) (early)`, with "raised again too soon after lowering it" and "from outside the guard"),
+  and a missed blow's line says whether the guard was up (`, guard up 7 ticks`). The server now says why a guard only
+  blocked or broke (`ArmsRules.missWhy`, in the BLOCK and GUARD_BREAK replies' `aux`: `MISS_EARLY`, `MISS_TOO_SOON` for a
+  guard raised again within the lockout's 8 ticks of lowering it without a deflect, `MISS_LATE` for one raised after a
+  held blow's grace), and when a blow goes past a guard that was up (`GUARD_PASS`, to the fighter only: `PASS_SIDE`, it
+  came from outside the guard's front; `PASS_UNGUARDABLE`, a red or violet blow no guard stops). The ring answers every
+  miss the same way every time: it snaps shut, dull grey, 0.3 smaller over 260 ms (`MISS` 0x8C929C), against a
+  deflect's white burst outward; the block's thud and the hurt are as before. Its words: "Too early", "Too late",
+  "Raised again too soon", "It came from the side", "Dodge that one", each its first 3 times only (§68.2). A
+  block called "Too early" because it was really the lockout or a late raise was the old ring's wrong word. Windows,
+  lockout and grace are unchanged: nothing in the log says they were the cause (open: the lockout turns a second raise into a block with no word on the
+  old build; the play log will now say how often).
+- **A kneel you can punish (arms).** *Measured* (`archetypes.json`; a charge begins at `min` 6 held ticks, a release on
+  the ting starts an Execution, windup 2): press to hit, released on the ting, was the glint + 3 ticks: Maul 23 (held
+  to its full 30, 33), Axe, Greatblade, Scythe 21, Glaive 20, Longsword, War-staff, Precursor, Chainblade 19, Spear,
+  Katana, Twinblades, Shieldblade 18, Rapier, Gauntlets 17, Daggers 16; against a Lord's kneel of 40 ticks
+  (`BROKEN_TICKS_LORD`; 50 for anything else), less the reaction to the break. The Execution never needed more than
+  `min`, but nothing said so: the ting, the charge's fill and the hands all waited for the glint. *The rule:* against a
+  body that kneels a charge is full the moment it is one (`ArmsRules.fullAt(charge, kneeling)`: `min`, else the glint).
+  The ting rings on that tick (once a charge, also when a kneel begins mid-charge), the fill is full, and a draw begun
+  on a kneeling body takes `ChargeDraw.ticks(min)` (3.6 ticks; the draw's length is fixed as it begins, so a kneel that
+  starts mid-draw never jumps the hands). Press to hit is 9 ticks for every weapon (min 6, the release, windup 2),
+  which leaves 31 of a Lord's 40 (21 after a half-second's reaction). The server is unchanged (it already chose the
+  Execution on any release while the body kneels), so are the kneel lengths: a longer kneel was the other way, and the
+  combat sim (`tools/sim/combat_sim.py --override rules.BROKEN_TICKS_LORD=50`) shortens the Tyrant's time to kill by
+  10 to 13%, an easier boss for players who already land it; this keeps the challenge in breaking the stance. The log
+  says each break (`[arms] stance broken: ember_tyrant kneels 40 ticks (by Euan)`) and each heavy let go on or just after
+  a kneel (`[arms] heavy let go after 7 ticks held on ember_tyrant: kneeling with 22 ticks left, an Execution`).
+- Tests: `realm_fight_holds` (the rule's pure parts: who is out and why; a fighter who leaps past the heart's line, a
+  pause and a save keep the Lord, the last fighter out puts it to rest), `arms_defence_rules` (now also `missWhy`),
+  `arms_kneel_full` (`fullAt` for every weapon, and press to hit on a kneel within a Lord's 40 ticks with 20 to spare).
+  Tours: `tools/autopilot/realm-lord-holds.txt` (the autopilot's new `pause <ticks>` opens the pause menu as Esc does),
+  `tools/autopilot/tyrant-parry-kneel.txt` (the Tyrant on the duel stage with a Maul: early guards, parries, a kneel).
 
 ## 69. The Hearth's family: Aya and Dubu (plan docs/family/PLAN.md, page https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN; Euan approved all of it 2026-11-11: "Go ahead with the full plan")
 
