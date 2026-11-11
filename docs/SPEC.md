@@ -23737,3 +23737,65 @@ with each hit in a row.
   cave-in, a piton, rope paying out, Deepglass and the Deep Ear's two tells: all recipes of the game's recordings.
   The Tuning Fork, a tone by its nature, rings with the game's own amethyst. `audio_delve.py`'s 26 files are deleted.
   The Forged Pick's own voice (§49) is untouched.
+
+**66.5 The world's places and ambience, as built** (`audit_world.py`, 74 events; all of it was filtered noise for wind
+and water and sine partials for hums and chimes). Caves: a roost of bats is the game's bat taking off three times
+over with its wing loop; a drip the game's own drip; a far rumble thunder slowed and quiet; wind in the cracks a
+breeze drawing breath; hums a beacon, a conduit or a respawn anchor slowed; the sulfur caves the game's own noxious gas.
+The land's wind (only without AmbientSounds; with it, its recorded wind plays and ours is off): the game's leaves in
+the wind and its wind over sand. Far happenings: a stampede a minecart's rumble slowed, a murmuration a bat's wing
+loop, the Wild Hunt's horn the goat horn, a far storm rain on a roof slowed. Rifts and stars: a portal's hum slowed,
+the elytra's wind raised for the falling star, a smoker for its cooling. The special places' one-shots: amethyst for
+every chime, the game's bell for the far bell, pistons and iron doors for the Halo. The city at work: a minecart for
+a cart, the game's anvil, a villager for a stall, its own water for the fountain and quays, a hearth's crackle for
+the tavern (the synthetic crowd is gone). The Hearth: the game's campfire. A looped bed takes a recording the game
+itself loops; the game's quiet ambient recordings (leaves, sand, the firefly bush) play at full gain and are still
+soft, which is how the game has them.
+
+**66.6 The wild's creatures, as built** (`audit_fauna.py`, 199 events, 46 creatures; all of it was `fauna_sounds.py`'s
+synthesis: a buzz through formants, noise, sine thuds). Each creature takes the nearest real animal the game has,
+re-pitched to its size: the Crag Ram and the Stonehorn the goat (0.9 and 0.6), the Honey Bear the polar bear, the
+toads and the Mire Mother the frog (0.7 down to 0.56), the Gloomstalker a fox's growl, the Wisp Hound the big wolf,
+Old Antler a camel's groan with the screaming goat's cry for his bugle, the Briar Sow the hoglin, the Thornling and
+the Mycelord the Creaking, the Weaver Queen and the Thousandfoot the spider dropped low, the moths a parrot's or a
+phantom's wingbeat, the Dune Wyrm the dragon's growl raised, the Lantern Maw the elder guardian, the Seep Heart the
+warden's heartbeat, sonic boom and roar with glass and amethyst breaking. Where the game has no near animal (an owl,
+a marmot, a ray, an otter) the row says so and has a second idle to choose.
+
+**66.7 The System's voice, the body, the Inscribing Table, dreams, as built** (`audit_rest.py`, 96 events). The System
+spoke in one synthesised struck glass in D major pentatonic (`audio_ui.py`, and holo, aim, living and fault built on
+it): by rule 3 a ding every time. It now speaks in the game's own struck crystal (amethyst chiming or ringing) with
+the game's clicks, toasts, level-up and challenge-complete; the Holo panel opens and closes with a vault's shutter;
+a lock is a lodestone compass locking. Where the game already has the very sound, ours is that sound: a critical hit,
+XP arriving, a spyglass raised and lowered, the enchanting table, the grindstone scraping an inscription off. The
+body's moves and the rappel are cloth, leather, stone, a brush on gravel, a lead and a fishing line. What a creature
+sends at you: a breeze's shot, a phantom's swoop, the evoker's fangs for a line running along the ground, a
+guardian's beam, the game's noxious gas for a cloud.
+
+**66.8 Gate rooms and the bells** (`audit_gates.py`). The Gate Rig's 20 sounds are stone, pistons, glass and fire.
+The bells' plain two (a gap's knock, a bell hung on its hook) are remade. **The tuned bells stay as built**: fifteen
+notes from D3 to B5 are wider than any one of the game's recordings reaches in tune, and a wrong guess would put the
+home's song out of tune. `bells.note_7`, `bells.toll` and `bells.handbell` are on the page as kept rows
+(`keep=True`) with alternatives (a note block's iron xylophone or bell, in tune by the game's own tuning; the game's
+bell): his pick decides the whole family.
+
+**66.9 Left as they are, and why** (each has its row in AUDIT.md).
+- **Gate worlds** (`gate.world.*`, 145 events): below the bar, not remade here. The gates are being rebuilt as
+  worlds (§50) whose rule is already the game's recordings by name; remaking nineteen themes twice would be waste.
+- **Weapons and the War Anvil** (`arms.*`, `anvil.*`, 56): blows, parries and draws already became mixes of the
+  game's recordings on 10 Nov (`fight.*`, `guard.*`, §25) over this kit; that work's own page waits for his marks.
+- **The ritual** (`story.ritual.*`, 38): one staged scene, rebuilt on 2 Nov mostly from CC0 recordings; it needs his
+  ear as a whole before a part changes.
+- **The Classic sets** (`power.*`, `ascent.*`): superseded by the scores of the game's recordings (§50, §62) and
+  heard only with the Classic option.
+- **Music** (`music.*` and its stems): not judged by this bar.
+- **Beds that play from files** (the special places' air, the city's district beds): the Java mixers decode 44.1 kHz
+  only and the game's loops are 48 kHz; naming them needs a resampler in `OggLoop`. A follow-up.
+- Generators retired with their sounds: `audio_wild`, `audio_underlife`, `audio_delve`, `audio_wild_plants`,
+  `audio_edge_hold`, `audio_rappel`, `audio_fights`, `audio_rig`, `audio_enchant`, `aim_sounds`, `binoculars_sounds`.
+  The rest still render live sounds or lend helpers; `audio_build.py` no longer renders a file the audit replaced
+  and runs `sound_audit.py build` after writing its events. Where an older section of this spec names a synthesised
+  generator for a sound the audit remade (§17, §28, §29, §34, §39.5, §40.4, §41, §42, §45.10, §47.2), this section and
+  AUDIT.md are the record.
+- Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
+  first values. The listening page is the check, and his marks choose (`apply`, then `build`).

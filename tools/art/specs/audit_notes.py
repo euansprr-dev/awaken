@@ -100,6 +100,24 @@ RULES = [
                                                         "(SPEC §62). This is the Classic set the scores are keyed off",
                                   fix="Left as the Classic option")),
 
+    # ---- left, each with its reason ----------------------------------------------------------------------------------------
+    (r"^bells\.", dict(state="left", verdict="Synthetic bells (sine partials), kept for now: they are the home's tuned song, fifteen notes from D3 to B5, wider "
+                                              "than any one of the game's recordings reaches in tune. The family changes together or not at all",
+                       fix="Left. `bells.note_7`, `bells.toll` and `bells.handbell` are on the listening page with alternatives; his pick decides the family",
+                       group="gates")),
+    (r"^story\.ritual\.", dict(state="left", verdict="Not changed: the opening ritual is one staged scene, rebuilt on 2 Nov mostly from recordings of the real thing "
+                                                       "(stone, thunder, wind, a welding arc, a church bell: CC0, tools/art/sources/ritual), unheard in game. "
+                                                       "The System's and the void's tones in it are still synthesised",
+                               fix="Left for his ear as a whole scene (tools/art/audio_listen_ritual.py). Remaking single cues blind would break its mix")),
+    (r"^gate\.world\.", dict(state="left", verdict="Below the bar: synthesis over CC0 impacts and bells (beds, events and stings of the nineteen gate-world themes). "
+                                                     "Not remade here: the gates are being rebuilt as worlds, whose rule is already 'every sound one of Minecraft's "
+                                                     "own recordings by name' (SPEC §50), and remaking 145 theme sounds twice would be waste",
+                              fix="Left with the gates' rebuild. `tools/art/sound_audit.py` takes a table for them (audit_gates.py) when their worlds are settled")),
+    (r"^(arms|anvil)\.", dict(state="left", verdict="Partly remade already: on 10 Nov the blows, parries and draws became mixes of the game's own recordings "
+                                                     "(`fight.*`, `guard.*`, SPEC §25 stage 2) over this kit, which is CC0 impact recordings (Kenney) under synthesis. "
+                                                     "That work has its own listening page and waits for his marks",
+                              fix="Left until he has marked the weapons' page (run-autopilot/weapon-listen): changing the kit under it now would change what he is asked to judge")),
+    (r"^amb\.world$", dict(state="left", verdict="The air mixer's stream (the places' air beds, see 'Beds that are not events' below)", fix="See below")),
     # ---- music --------------------------------------------------------------------------------------------------------------
     (r"^music\.|^amb\.layers$", dict(state="left", verdict="Not judged by this bar: a synthesised score, not a sound of the world. Nothing in the game or the repo's "
                                                            "recordings can replace music", fix="Left. A music pass needs its own plan (real instruments or the game's own music by name)")),
@@ -114,3 +132,22 @@ def note(id, module, entry):
     if not ours:
         return dict(state="bar", verdict=BAR)
     return dict(state="left", verdict="Below the bar: synthesised. Not yet remade", fix="Open: to be remade from the game's recordings")
+
+
+# Beds and stems that play from files, not from sound events (the audit's last table).
+STEMS = [
+    ("`amb_world_stillpoint_*`, `halo_*`, `dream_*`, `elder_groan`, `lumen_hum`, `veil_choir` (10 files)",
+     "The air of the special places and the Veil: `core.audio.client.AirMixer`, named in `assets/awaken/soundscape/place|state/*.json`",
+     "audio_world.py, synthesised drones",
+     "Below the bar where the place is of this world (the Elderwood's groan, the Lumen Forest's hum); unreal places (the Stillpoint, the Halo, the dream, the Veil) have no real thing to record",
+     "Left. The mixer decodes 44.1 kHz files only and the game's own loops are 48 kHz, so naming them needs a resampler in `OggLoop` first: a follow-up"),
+    ("`amb_world_greenwood_*`, `amb_world_hollows_*` (6 files)",
+     "The Conductor's own nature air, only without AmbientSounds (with the pack, its recordings play and these are off)",
+     "audio_world.py, synthesised", "Below the bar, and not heard with the pack", "Left with the same follow-up"),
+    ("`layers/layer_city_*` (city air, murmur, bustle, water, birds, crickets)",
+     "Carillon's district beds: `LayerPlayer.AMBIENCE`, named in `assets/awaken/music_layers/city|village/**.json`. With AmbientSounds the server already leaves the birds and crickets stems out",
+     "audio_city_life.py, synthesised (a murmur of voices from formants, noise for water and air)",
+     "Below the bar: the synthetic crowd most of all", "Left: the same 44.1 kHz limit, and a crowd needs recordings the game does not have. A follow-up with its own plan"),
+    ("`layers/layer_<gate theme>_*` and `music_*`", "Gate and cue music stems (`LayerPlayer.MUSIC`)", "audio_layers.py / audio_music.py, a synthesised score",
+     "Not judged by this bar: music", "Left"),
+]

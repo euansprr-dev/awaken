@@ -36,7 +36,7 @@ ROOT = os.path.abspath(os.path.join(HERE, "../.."))
 sys.path.insert(0, os.path.join(HERE, "specs"))
 import audit_kit  # noqa: E402
 
-SPECS = ["audit_birds", "audit_mining", "audit_world", "audit_fauna", "audit_rest"]
+SPECS = ["audit_birds", "audit_mining", "audit_world", "audit_fauna", "audit_rest", "audit_gates"]
 OUT = os.path.join(ROOT, "run-autopilot/sound-audit-listen")
 ASSETS = os.environ.get("MC_ASSETS", os.path.join(os.environ.get("GRADLE_USER_HOME", "/Volumes/MEDIA/.gradle-home"),
                                                   "caches/neoformruntime/assets"))
@@ -359,7 +359,11 @@ def audit():
         r = BY_ID.get(k)
         where_auto = ", ".join(f"`{p}`" for p in refs.get(k, []))
         what = subs.get(entry.get("subtitle", ""), "")
-        if r and not r["keep"]:
+        if r and r["keep"]:
+            row = (k, r["name"], r["where"], r["was"], "Kept as built for now. " + r["why"],
+                   "On the listening page with " + str(len(r["picks"])) + " alternatives, first: " + r["picks"][0]["say"])
+            section, verdict = r["group"], "left"
+        elif r:
             p = pick[k]
             recipe = r["picks"][0] if p == "before" else r["picks"][int(p) - 1]
             written = next((q for q in r["picks"] if not q["code"]), recipe) if recipe["code"] else recipe
@@ -399,6 +403,11 @@ def audit():
         lines += ["| Event | What it is | Where and when it plays | Source before | Verdict | Fix, as built |", "|---|---|---|---|---|---|"]
         for k, what, where, src, verdict, fix in groups[s]:
             lines.append("| `" + k + "` | " + " | ".join(str(x).replace("|", "/").replace("\n", " ") for x in (what, where, src, verdict, fix)) + " |")
+    lines += ["", "## Beds that are not events", "",
+              "These play from files through the Java mixers, so no `sounds.json` entry names them and the tables cannot replace them.", "",
+              "| Files | What and where | Source | Verdict | Fix |", "|---|---|---|---|---|"]
+    for files, what, src, verdict, fix in audit_notes.STEMS:
+        lines.append("| " + " | ".join((files, what, src, verdict, fix)) + " |")
     os.makedirs(os.path.dirname(AUDIT_MD), exist_ok=True)
     with open(AUDIT_MD, "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -437,6 +446,19 @@ def unplayed():
         return "awaken:" + f in blob or "sounds/" + f in blob or ("/" in f and f in blob)
 
     return sorted(f for f in was - used if os.path.exists(os.path.join(OURS, f + ".ogg")) and not named(f))
+
+
+def replaced_files():
+    """Our old files (paths under sounds/, no extension) that the audit's rows remade: audio_build.py skips them."""
+    out = set()
+    pick = chosen()
+    for r in ROWS:
+        if pick[r["id"]] == "before":
+            continue
+        for n in names_of(before()["events"].get(r["id"], {})):
+            if n.startswith("awaken:"):
+                out.add(n[7:])
+    return out
 
 
 def prune(go):

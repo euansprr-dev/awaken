@@ -241,6 +241,46 @@
    ],
    "subtitle": "subtitles.awaken.ascent.rappel_reel"
   },
+  "bells.gap": {
+   "sounds": [
+    {
+     "name": "awaken:bell_gap"
+    }
+   ],
+   "subtitle": "subtitles.awaken.bells.gap"
+  },
+  "bells.handbell": {
+   "sounds": [
+    {
+     "name": "awaken:bell_handbell"
+    }
+   ],
+   "subtitle": "subtitles.awaken.bells.handbell"
+  },
+  "bells.hang": {
+   "sounds": [
+    {
+     "name": "awaken:bell_hang"
+    }
+   ],
+   "subtitle": "subtitles.awaken.bells.hang"
+  },
+  "bells.note_7": {
+   "sounds": [
+    {
+     "name": "awaken:bell_note_7"
+    }
+   ],
+   "subtitle": "subtitles.awaken.bells.note_7"
+  },
+  "bells.toll": {
+   "sounds": [
+    {
+     "name": "awaken:bell_toll"
+    }
+   ],
+   "subtitle": "subtitles.awaken.bells.toll"
+  },
   "binoculars.eyecup": {
    "sounds": [
     {
@@ -3673,6 +3713,186 @@
     }
    ],
    "subtitle": "subtitles.awaken.fauna.step"
+  },
+  "gate.rig.burn": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:gate_rig_burn"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.burn"
+  },
+  "gate.rig.cave": {
+   "sounds": [
+    {
+     "attenuation_distance": 24,
+     "name": "awaken:gate_rig_cave"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.cave"
+  },
+  "gate.rig.crack": {
+   "sounds": [
+    {
+     "attenuation_distance": 20,
+     "name": "awaken:gate_rig_crack"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.crack"
+  },
+  "gate.rig.fall": {
+   "sounds": [
+    {
+     "attenuation_distance": 24,
+     "name": "awaken:gate_rig_fall"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.fall"
+  },
+  "gate.rig.flip_down": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:gate_rig_flip_down"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.flip_down"
+  },
+  "gate.rig.flip_up": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:gate_rig_flip_up"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.flip_up"
+  },
+  "gate.rig.hum": {
+   "sounds": [
+    {
+     "attenuation_distance": 14,
+     "name": "awaken:gate_rig_hum"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.hum"
+  },
+  "gate.rig.ignite": {
+   "sounds": [
+    {
+     "attenuation_distance": 32,
+     "name": "awaken:gate_rig_ignite"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.ignite"
+  },
+  "gate.rig.knit": {
+   "sounds": [
+    {
+     "attenuation_distance": 20,
+     "name": "awaken:gate_rig_knit"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.knit"
+  },
+  "gate.rig.lift": {
+   "sounds": [
+    {
+     "attenuation_distance": 20,
+     "name": "awaken:gate_rig_lift"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.lift"
+  },
+  "gate.rig.medal": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:gate_rig_medal"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.medal"
+  },
+  "gate.rig.pit": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:gate_rig_pit"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.pit"
+  },
+  "gate.rig.press": {
+   "sounds": [
+    {
+     "attenuation_distance": 32,
+     "name": "awaken:gate_rig_press"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.press"
+  },
+  "gate.rig.ring": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:gate_rig_ring"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.ring"
+  },
+  "gate.rig.rubble": {
+   "sounds": [
+    {
+     "attenuation_distance": 24,
+     "name": "awaken:gate_rig_rubble"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.rubble"
+  },
+  "gate.rig.run": {
+   "sounds": [
+    {
+     "attenuation_distance": 32,
+     "name": "awaken:gate_rig_run"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.run"
+  },
+  "gate.rig.shatter": {
+   "sounds": [
+    {
+     "attenuation_distance": 28,
+     "name": "awaken:gate_rig_shatter"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.shatter"
+  },
+  "gate.rig.surge": {
+   "sounds": [
+    {
+     "attenuation_distance": 32,
+     "name": "awaken:gate_rig_surge"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.surge"
+  },
+  "gate.rig.turn": {
+   "sounds": [
+    {
+     "attenuation_distance": 16,
+     "name": "awaken:gate_rig_turn"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.turn"
+  },
+  "gate.rig.windup": {
+   "sounds": [
+    {
+     "attenuation_distance": 24,
+     "name": "awaken:gate_rig_windup"
+    }
+   ],
+   "subtitle": "subtitles.awaken.gate.rig.windup"
   },
   "hearth.fire": {
    "sounds": [

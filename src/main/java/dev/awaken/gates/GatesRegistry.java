@@ -412,7 +412,7 @@ public final class GatesRegistry {
         return h == null ? null : h.get();
     }
 
-    // the Gate Rig (tools/art/specs/audio_rig.py): the collapse, the mirrors and the light, the wells, the cave-in
+    // the Gate Rig (the game's own recordings: tools/art/specs/audit_gates.py, SPEC §66.8): the collapse, the mirrors and the light, the wells, the cave-in
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_CRACK = sound("gate.rig.crack");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_FALL = sound("gate.rig.fall");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_KNIT = sound("gate.rig.knit");

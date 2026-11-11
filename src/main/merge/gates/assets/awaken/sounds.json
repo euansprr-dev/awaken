@@ -312,8 +312,10 @@
     "subtitle": "subtitles.awaken.gate.rig.crack",
     "sounds": [
       {
-        "name": "awaken:gate_rig_crack",
-        "attenuation_distance": 20
+        "name": "minecraft:block.deepslate_tiles.hit",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.0
       }
     ]
   },
@@ -321,8 +323,10 @@
     "subtitle": "subtitles.awaken.gate.rig.fall",
     "sounds": [
       {
-        "name": "awaken:gate_rig_fall",
-        "attenuation_distance": 24
+        "name": "minecraft:block.stone.break",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.7
       }
     ]
   },
@@ -330,8 +334,10 @@
     "subtitle": "subtitles.awaken.gate.rig.knit",
     "sounds": [
       {
-        "name": "awaken:gate_rig_knit",
-        "attenuation_distance": 20
+        "name": "minecraft:block.stone.place",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.9
       }
     ]
   },
@@ -339,8 +345,10 @@
     "subtitle": "subtitles.awaken.gate.rig.run",
     "sounds": [
       {
-        "name": "awaken:gate_rig_run",
-        "attenuation_distance": 32
+        "name": "minecraft:block.deepslate.hit",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2
       }
     ]
   },
@@ -348,8 +356,10 @@
     "subtitle": "subtitles.awaken.gate.rig.pit",
     "sounds": [
       {
-        "name": "awaken:gate_rig_pit",
-        "attenuation_distance": 16
+        "name": "minecraft:entity.wind_charge.wind_burst",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.8
       }
     ]
   },
@@ -357,8 +367,10 @@
     "subtitle": "subtitles.awaken.gate.rig.turn",
     "sounds": [
       {
-        "name": "awaken:gate_rig_turn",
-        "attenuation_distance": 16
+        "name": "minecraft:block.grindstone.use",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.5
       }
     ]
   },
@@ -366,8 +378,10 @@
     "subtitle": "subtitles.awaken.gate.rig.hum",
     "sounds": [
       {
-        "name": "awaken:gate_rig_hum",
-        "attenuation_distance": 14
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 0.8
       }
     ]
   },
@@ -375,8 +389,10 @@
     "subtitle": "subtitles.awaken.gate.rig.burn",
     "sounds": [
       {
-        "name": "awaken:gate_rig_burn",
-        "attenuation_distance": 16
+        "name": "minecraft:block.fire.ambient",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.9
       }
     ]
   },
@@ -384,8 +400,10 @@
     "subtitle": "subtitles.awaken.gate.rig.ignite",
     "sounds": [
       {
-        "name": "awaken:gate_rig_ignite",
-        "attenuation_distance": 32
+        "name": "minecraft:item.firecharge.use",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.9
       }
     ]
   },
@@ -393,8 +411,10 @@
     "subtitle": "subtitles.awaken.gate.rig.shatter",
     "sounds": [
       {
-        "name": "awaken:gate_rig_shatter",
-        "attenuation_distance": 28
+        "name": "minecraft:block.glass.break",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.8
       }
     ]
   },
@@ -402,8 +422,10 @@
     "subtitle": "subtitles.awaken.gate.rig.flip_up",
     "sounds": [
       {
-        "name": "awaken:gate_rig_flip_up",
-        "attenuation_distance": 16
+        "name": "minecraft:block.piston.extend",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.9
       }
     ]
   },
@@ -411,8 +433,10 @@
     "subtitle": "subtitles.awaken.gate.rig.flip_down",
     "sounds": [
       {
-        "name": "awaken:gate_rig_flip_down",
-        "attenuation_distance": 16
+        "name": "minecraft:block.piston.contract",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.9
       }
     ]
   },
@@ -420,8 +444,10 @@
     "subtitle": "subtitles.awaken.gate.rig.surge",
     "sounds": [
       {
-        "name": "awaken:gate_rig_surge",
-        "attenuation_distance": 32
+        "name": "minecraft:entity.breeze.inhale",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.7
       }
     ]
   },
@@ -429,8 +455,10 @@
     "subtitle": "subtitles.awaken.gate.rig.cave",
     "sounds": [
       {
-        "name": "awaken:gate_rig_cave",
-        "attenuation_distance": 24
+        "name": "minecraft:block.piston.extend",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.5
       }
     ]
   },
@@ -438,8 +466,10 @@
     "subtitle": "subtitles.awaken.gate.rig.rubble",
     "sounds": [
       {
-        "name": "awaken:gate_rig_rubble",
-        "attenuation_distance": 24
+        "name": "minecraft:block.gravel.break",
+        "type": "event",
+        "volume": 0.9,
+        "pitch": 0.8
       }
     ]
   },
@@ -447,8 +477,10 @@
     "subtitle": "subtitles.awaken.gate.rig.windup",
     "sounds": [
       {
-        "name": "awaken:gate_rig_windup",
-        "attenuation_distance": 24
+        "name": "minecraft:item.crossbow.loading_start",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.6
       }
     ]
   },
@@ -456,8 +488,10 @@
     "subtitle": "subtitles.awaken.gate.rig.press",
     "sounds": [
       {
-        "name": "awaken:gate_rig_press",
-        "attenuation_distance": 32
+        "name": "minecraft:block.piston.extend",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.6
       }
     ]
   },
@@ -465,8 +499,10 @@
     "subtitle": "subtitles.awaken.gate.rig.lift",
     "sounds": [
       {
-        "name": "awaken:gate_rig_lift",
-        "attenuation_distance": 20
+        "name": "minecraft:block.piston.contract",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.7
       }
     ]
   },
@@ -474,8 +510,10 @@
     "subtitle": "subtitles.awaken.gate.rig.ring",
     "sounds": [
       {
-        "name": "awaken:gate_rig_ring",
-        "attenuation_distance": 16
+        "name": "minecraft:block.amethyst_block.chime",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.1
       }
     ]
   },
@@ -483,8 +521,10 @@
     "subtitle": "subtitles.awaken.gate.rig.medal",
     "sounds": [
       {
-        "name": "awaken:gate_rig_medal",
-        "attenuation_distance": 16
+        "name": "minecraft:entity.player.levelup",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 1.2
       }
     ]
   },
