@@ -42,9 +42,13 @@ cmd spreadplayers ~-800 ~ 0 40 false @s
 wait 400
 cmd summon minecraft:marker ~ ~ ~ {Tags:["yard"]}
 cmd awaken admin kin yard
-wait 140
+# the YOUR GROUND card opens once the fire's warmth has run out over the land, which a slow machine draws late: it is
+# closed well after, and again before the first picture
+wait 400
 screen close
-wait 20
+wait 60
+screen close
+wait 60
 screen close
 cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-5 ~-1 ~1 ~5 ~-1 ~9 minecraft:grass_block
 cmd execute at @e[type=marker,tag=yard,limit=1] run fill ~-5 ~ ~1 ~5 ~4 ~9 minecraft:air
@@ -52,6 +56,7 @@ cmd kill @e[type=item]
 wait 20
 
 # ---- A. they arrive: Dubu first, running in; Aya after him, taking her time ----
+screen close
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~0.5 ~ ~3.5 180 0
 cmd awaken admin family arrive
 camera back
@@ -149,6 +154,7 @@ camera first
 wait 40
 
 # ---- 1. in front of the fire: her loaf, his chin on his paws ----
+screen close
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~-1.5 ~0.1 ~2.3
 cmd awaken admin family place aya rest 18
 cmd execute at @e[type=marker,tag=yard,limit=1] run tp @s ~1.5 ~0.1 ~2.5
