@@ -24918,12 +24918,30 @@ charge), `aim` (the ring).
   miss the same way every time: it snaps shut, dull grey, 0.3 smaller over 260 ms (`MISS` 0x8C929C), against a
   deflect's white burst outward; the block's thud and the hurt are as before. Its words: "Too early", "Too late",
   "Raised again too soon", "It came from the side", "Dodge that one", each its first 3 times only (§68.2). A
-  block called "Too early" because it was really the lockout or a late raise was the old ring's wrong word. Windows, lockout and grace are unchanged:
-  nothing in the log says they were the cause (open: the lockout turns a second raise into a block with no word on the
+  block called "Too early" because it was really the lockout or a late raise was the old ring's wrong word. Windows,
+  lockout and grace are unchanged: nothing in the log says they were the cause (open: the lockout turns a second raise into a block with no word on the
   old build; the play log will now say how often).
+- **A kneel you can punish (arms).** *Measured* (`archetypes.json`; a charge begins at `min` 6 held ticks, a release on
+  the ting starts an Execution, windup 2): press to hit, released on the ting, was the glint + 3 ticks: Maul 23 (held
+  to its full 30, 33), Axe, Greatblade, Scythe 21, Glaive 20, Longsword, War-staff, Precursor, Chainblade 19, Spear,
+  Katana, Twinblades, Shieldblade 18, Rapier, Gauntlets 17, Daggers 16; against a Lord's kneel of 40 ticks
+  (`BROKEN_TICKS_LORD`; 50 for anything else), less the reaction to the break. The Execution never needed more than
+  `min`, but nothing said so: the ting, the charge's fill and the hands all waited for the glint. *The rule:* against a
+  body that kneels a charge is full the moment it is one (`ArmsRules.fullAt(charge, kneeling)`: `min`, else the glint).
+  The ting rings on that tick (once a charge, also when a kneel begins mid-charge), the fill is full, and a draw begun
+  on a kneeling body takes `ChargeDraw.ticks(min)` (3.6 ticks; the draw's length is fixed as it begins, so a kneel that
+  starts mid-draw never jumps the hands). Press to hit is 9 ticks for every weapon (min 6, the release, windup 2),
+  which leaves 31 of a Lord's 40 (21 after a half-second's reaction). The server is unchanged (it already chose the
+  Execution on any release while the body kneels), so are the kneel lengths: a longer kneel was the other way, and the
+  combat sim (`tools/sim/combat_sim.py --override rules.BROKEN_TICKS_LORD=50`) shortens the Tyrant's time to kill by
+  10 to 13%, an easier boss for players who already land it; this keeps the challenge in breaking the stance. The log
+  says each break (`[arms] stance broken: ember_tyrant kneels 40 ticks (by Euan)`) and each heavy let go on or just after
+  a kneel (`[arms] heavy let go after 7 ticks held on ember_tyrant: kneeling with 22 ticks left, an Execution`).
 - Tests: `realm_fight_holds` (the rule's pure parts: who is out and why; a fighter who leaps past the heart's line, a
-  pause and a save keep the Lord, the last fighter out puts it to rest), `arms_defence_rules` (now also `missWhy`).
-  Tour: `tools/autopilot/realm-lord-holds.txt` (the autopilot's new `pause <ticks>` opens the pause menu as Esc does).
+  pause and a save keep the Lord, the last fighter out puts it to rest), `arms_defence_rules` (now also `missWhy`),
+  `arms_kneel_full` (`fullAt` for every weapon, and press to hit on a kneel within a Lord's 40 ticks with 20 to spare).
+  Tours: `tools/autopilot/realm-lord-holds.txt` (the autopilot's new `pause <ticks>` opens the pause menu as Esc does),
+  `tools/autopilot/tyrant-parry-kneel.txt` (the Tyrant on the duel stage with a Maul: early guards, parries, a kneel).
 
 ## 69. The Hearth's family: Aya and Dubu (plan docs/family/PLAN.md, page https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN; Euan approved all of it 2026-11-11: "Go ahead with the full plan")
 

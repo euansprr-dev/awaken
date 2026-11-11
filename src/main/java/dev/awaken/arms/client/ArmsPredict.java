@@ -490,10 +490,26 @@ public final class ArmsPredict {
         return underAt + (ArmsFeel.nanos() - ArmsFeel.paused() - underFrom) / ArmsFeel.TICK_NANOS;
     }
 
-    /** This weapon's draw, in ticks, from its charge's glint. */
+    /**
+     * This weapon's draw, in ticks, from the tick its charge is full on: the glint, or its min against a body that kneels
+     * (SPEC §68.6). Fixed as the draw begins, so a kneel that starts mid-draw never jumps the hands.
+     */
     static float drawTicks() {
+        if (drawSeen) return drawLen;
         Archetype.MoveDef heavy = style == null ? null : style.move(Archetype.Move.HEAVY);
-        return ChargeDraw.ticks(heavy == null || heavy.charge().isEmpty() ? 14 : heavy.charge().get().glint());
+        return ChargeDraw.ticks(heavy == null || heavy.charge().isEmpty() ? 14 : ArmsRules.fullAt(heavy.charge().get(), meantKneels(Minecraft.getInstance())));
+    }
+
+    private static float drawLen = ChargeDraw.ticks(14);
+    /** The charge's ting has rung for this charge (once, on the tick it is full). */
+    private static boolean glintRung;
+
+    /** Whether the creature a release now would mean (as {@link #pressTarget} picks it, but for the calm) kneels, its stance broken. */
+    private static boolean meantKneels(Minecraft mc) {
+        if (BROKEN.isEmpty()) return false;
+        int id = dev.awaken.core.api.Aim.locked() ? dev.awaken.core.api.Aim.target()
+                : mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : dev.awaken.core.api.Aim.target();
+        return id >= 0 && BROKEN.containsKey(id);
     }
 
     /** How far the hands have come along this press's draw (0..1). */
@@ -509,6 +525,7 @@ public final class ArmsPredict {
     /** The draw's first frame: when it began, and the body starting into the same form (third person). */
     private static void drawBegins(LocalPlayer p) {
         if (drawSeen || !drawing()) return;
+        drawLen = drawTicks();
         drawSeen = true;
         drawFrom = ArmsFeel.nanos() - ArmsFeel.paused();
         ArmsBodies.charge(p, (int) drawTicks());
@@ -634,6 +651,7 @@ public final class ArmsPredict {
                 played("charge");
                 ArmsFilm.event("charge");
                 chargeStart = ticks;
+                glintRung = false;
                 move = Archetype.Move.HEAVY;
                 moveStart = ticks;
                 moveNanos = ArmsFeel.nanos();
@@ -643,7 +661,11 @@ public final class ArmsPredict {
                 ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_CHARGE, p.getYRot(), p.getXRot(), -1));
                 ArmsAudio.charge(p);
             }
-            if (charging && c.min() + (ticks - chargeStart) == c.glint()) ArmsAudio.glint(p);
+            // the ting on the tick it is full: the glint, or at once against a body that kneels (SPEC §68.6)
+            if (charging && !glintRung && c.min() + (ticks - chargeStart) >= ArmsRules.fullAt(c, meantKneels(mc))) {
+                glintRung = true;
+                ArmsAudio.glint(p);
+            }
             return; // held at full charge for as long as the key is down: it goes only when let go (Euan 2026-10-26)
         }
         pressHeld = false;
@@ -691,7 +713,8 @@ public final class ArmsPredict {
         if (heavy == null || heavy.charge().isEmpty()) return -1;
         Archetype.Charge c = heavy.charge().get();
         int held = charging ? c.min() + (ticks - chargeStart) : heldTicks;
-        return Mth.clamp((held - ChargeDraw.GRACE) / (c.glint() - ChargeDraw.GRACE), 0, 1); // full at the glint
+        int full = ArmsRules.fullAt(c, meantKneels(Minecraft.getInstance()));
+        return Mth.clamp((held - ChargeDraw.GRACE) / Math.max(1F, full - ChargeDraw.GRACE), 0, 1); // full at the glint, or at its min on a kneel
     }
 
     /** Whether a held heavy is on its glint right now (a release would be perfect). */

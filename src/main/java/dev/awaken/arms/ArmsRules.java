@@ -234,6 +234,15 @@ public final class ArmsRules {
         return MISS_EARLY;
     }
 
+    /**
+     * The held tick a heavy's charge is full on (SPEC §68.6 "A kneel you can punish"): its glint, but against a body that
+     * kneels (its stance broken) the moment it is a charge at all, its {@code min}, since an Execution needs no more and a
+     * kneel is 40 ticks on a Lord while a Maul's glint is 20.
+     */
+    public static int fullAt(Archetype.Charge c, boolean kneeling) {
+        return kneeling ? c.min() : c.glint();
+    }
+
     /** The latency grace for a player: half the round trip, in ticks, at most {@link #GRACE_MAX}; none on a near connection. */
     public static int grace(int latencyMs) {
         if (latencyMs < 50) return 0;

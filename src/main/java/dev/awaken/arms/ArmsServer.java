@@ -291,7 +291,18 @@ final class ArmsServer {
     static void heavy(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.MoveDef heavy, int held, long now, int seq) {
         LivingEntity target = target(p, s.aimed);
         Archetype.MoveDef exec = style.move(Archetype.Move.EXECUTION);
-        if (exec != null && target != null && Arms.broken(target) && p.distanceTo(target) <= exec.reach() + target.getBbWidth()) {
+        boolean reach = exec != null && target != null && p.distanceTo(target) <= exec.reach() + target.getBbWidth();
+        if (target != null && !(target instanceof Player)) {
+            // a heavy let go on a body that kneels, or just got up: in the play log, to read a fight's kneels back (SPEC §68.6)
+            Posture tp = posture(target);
+            if (tp.brokenUntil > now - 20) {
+                dev.awaken.Awaken.LOG.info("[arms] heavy let go after {} ticks held on {}: {}, {}", held,
+                        net.minecraft.world.entity.EntityType.getKey(target.getType()).getPath(),
+                        tp.brokenUntil > now ? "kneeling with " + (tp.brokenUntil - now) + " ticks left" : "up again " + (now - tp.brokenUntil) + " ticks ago",
+                        exec != null && Arms.broken(target) && reach ? "an Execution" : !reach ? "out of the Execution's reach" : "a plain heavy");
+            }
+        }
+        if (exec != null && target != null && Arms.broken(target) && reach) {
             begin(p, s, style, Archetype.Move.EXECUTION, -1, 0, now, seq);
             return;
         }
@@ -1386,6 +1397,8 @@ final class ArmsServer {
         if (breaks) {
             int ticks = lord ? ArmsRules.BROKEN_TICKS_LORD : ArmsRules.BROKEN_TICKS;
             p.brokenUntil = now + ticks;
+            dev.awaken.Awaken.LOG.info("[arms] stance broken: {} kneels {} ticks (by {})",
+                    net.minecraft.world.entity.EntityType.getKey(target.getType()).getPath(), ticks, by.getName().getString());
             p.nextBreakAt = now + ArmsRules.BREAK_COOLDOWN;
             p.value = 0;
             stance(target, p, now);
