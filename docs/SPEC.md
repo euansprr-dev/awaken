@@ -26129,7 +26129,7 @@ and re-run: the gates session.
   `pending`); the System sends `signal_unlock` and draws it in `signal.client.UnlockMoment`: the spaced label in the
   unlock's colour, a line of light out to 120 px and more, the name at 3 times text (2.4, 2, 1.5 when it would not fit
   with 12 px either side), the how-line with `{key.x}` and `{hold}` drawn as the player's own caps (an unbound key reads
-  "Not set"), a feathered dark band behind. 14 ticks in, 98 held, 18 out; reduced motion (`FirstPerson.reducedMotion`):
+  "Not set"), a dark band behind that fades out over ten thin steps. 14 ticks in, 98 held, 18 out; reduced motion (`FirstPerson.reducedMotion`):
   no rise and no sweep. Sound: `ui.moment` at 0.8 under Minecraft's `ui.toast.challenge_complete` at 0.9. It starts only
   with no screen, no choice card, no discovery up, and `SystemHud.inCombat()` false, and waits however long; the same
   unlock twice is one. While it shows: the director and tips are held, `SystemHud.tickToasts` and `tickPanel` hold new

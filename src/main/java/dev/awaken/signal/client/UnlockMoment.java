@@ -79,7 +79,10 @@ final class UnlockMoment {
     }
 
     static boolean active() {
-        return shown != null;
+        // also through the short rest between two titles that follow each other, so nothing slips in between them (a
+        // card came up under a rank's stratum, the titles tour); a title that is only waiting for a fight to end holds
+        // nothing
+        return shown != null || rest > 0 && !QUEUE.isEmpty();
     }
 
     static void clear() {
@@ -170,10 +173,11 @@ final class UnlockMoment {
         int top = Math.max(22, (int) (sh * 0.15F));
         int ly = top + 12, ny = ly + 7, hy = ny + nameH + 6;
         int half = Math.max(nameW, howW) / 2 + 18;
-        // a soft dark band so the words read over a bright sky or a busy wall (three steps for a feathered edge)
-        for (int i = 0; i < 3; i++) {
-            int grow = 6 * (2 - i);
-            g.fill(cx - half - grow * 2, top - 6 - grow / 2, cx + half + grow * 2, hy + 14 + grow / 2, Sheet.argb(0x05080F, (0.12F + 0.07F * i) * a));
+        // a soft dark band so the words read over a bright sky or a busy wall: ten thin steps, so its edge is a fade
+        // (three steps read as stacked panels over the open sky, the titles tour)
+        for (int i = 0; i < 10; i++) {
+            int gx = 4 * (9 - i), gy = (9 - i) * 3 / 2;
+            g.fill(cx - half - gx, top - 6 - gy, cx + half + gx, hy + 14 + gy, Sheet.argb(0x05080F, 0.058F * a));
         }
         // the label, spaced out, in the unlock's colour
         HudLook.centered(g, font, spaced(s.label().toUpperCase(java.util.Locale.ROOT)), cx, top, Glass.a(s.colour(), 0.95F * a), true);
