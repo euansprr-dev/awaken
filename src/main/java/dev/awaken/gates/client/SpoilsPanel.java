@@ -1,5 +1,6 @@
 package dev.awaken.gates.client;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.awaken.gates.net.GatePayloads;
 import dev.awaken.gates.net.GatePayloads.SpoilsView;
 import dev.awaken.signal.client.Glass;
@@ -355,7 +356,8 @@ public final class SpoilsPanel {
         Box b = boxUnder(e.getScreen(), mx, my);
         if (b == null) return;
         e.setCanceled(true); // never through to the inventory: a click here doesn't throw what's on the cursor
-        if (!b.full() || e.getButton() != 0) return;
+        // 26.3's buttons are SDL's, 1-based: the left button is 1 (a 0 here ate every click and did nothing)
+        if (!b.full() || e.getButton() != InputConstants.MOUSE_BUTTON_LEFT) return;
         Minecraft mc = Minecraft.getInstance();
         Font font = mc.font;
         SpoilsView v = ClientGates.spoils;

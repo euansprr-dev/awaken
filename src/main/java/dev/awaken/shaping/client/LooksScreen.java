@@ -151,11 +151,13 @@ final class LooksScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() != 0 && event.button() != 1) return false;
+        // 26.3's buttons are SDL's: left is 1, right is 3
+        boolean all = event.button() == InputConstants.MOUSE_BUTTON_RIGHT;
+        if (event.button() != InputConstants.MOUSE_BUTTON_LEFT && !all) return false;
         int at = slotAt((int) event.x(), (int) event.y());
         if (at < 0) return true;
         Identifier id = BuiltInRegistries.BLOCK.getKey(shown().get(at));
-        ClientPacketDistributor.sendToServer(new ShapingPayloads.SetLook(this.target, id, event.button() == 1));
+        ClientPacketDistributor.sendToServer(new ShapingPayloads.SetLook(this.target, id, all));
         onClose();
         return true;
     }
