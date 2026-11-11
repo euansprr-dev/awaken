@@ -36,7 +36,8 @@ import java.util.List;
  * body tilts with its swim, nose down as it dives), a drip lurker hanging upside down from the roof, and the held
  * poses and bridle the entity reports ({@link WildPose}).
  */
-public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, WildModel> {
+public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, WildModel>
+        implements dev.awaken.mobs.client.BodyRest.Posed<WildRenderState> {
     private static final float HOLD = 1.0F, FADE = 0.3F;
     /**
      * A gate monster's blow lands as its tell ends (SPEC §60.9): the wind-up is gathered this many seconds before the
@@ -405,6 +406,16 @@ public final class WildRenderer extends MobRenderer<AwakenMob, WildRenderState, 
             pose.rotateDegrees(Axis.XP, -s.pitch);
             pose.translate(0.0F, -h, 0.0F);
         }
+    }
+
+    /** The transforms submit makes before the model, so a lying body can be rested on the ground (SPEC §47.12). */
+    @Override
+    public void bodyChain(WildRenderState s, PoseStack pose) {
+        pose.scale(s.scale, s.scale, s.scale);
+        setupRotations(s, pose, s.bodyRot, s.scale);
+        pose.scale(-1.0F, -1.0F, 1.0F);
+        scale(s, pose);
+        pose.translate(0.0F, -1.501F, 0.0F);
     }
 
     private static AwLook look(WildRenderState s) {

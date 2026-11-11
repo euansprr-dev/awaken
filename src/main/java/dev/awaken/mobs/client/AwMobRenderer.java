@@ -32,7 +32,8 @@ import java.util.function.Supplier;
  * bodies ({@link LifeModel}) get the life layer (SPEC §23); a boss on a vanilla body gets its root-level part (a blow's
  * stagger, a provocation, a weighty fall), leaving the body's own animation to vanilla or Fresh Animations.
  */
-class AwMobRenderer<S extends LivingEntityRenderState, M extends EntityModel<? super S>> extends MobRenderer<AwakenMob, S, M> {
+class AwMobRenderer<S extends LivingEntityRenderState, M extends EntityModel<? super S>> extends MobRenderer<AwakenMob, S, M>
+        implements BodyRest.Posed<S> {
     protected final MobDef def;
     private final Identifier base;
     private final Supplier<S> factory;
@@ -123,6 +124,16 @@ class AwMobRenderer<S extends LivingEntityRenderState, M extends EntityModel<? s
         super.setupRotations(state, pose, bodyRot, entityScale);
         state.deathTime = death;
         lf.rootPose(pose, state);
+    }
+
+    /** The transforms submit makes before the model, so a lying body can be rested on the ground (SPEC §47.12). */
+    @Override
+    public void bodyChain(S s, PoseStack pose) {
+        pose.scale(s.scale, s.scale, s.scale);
+        setupRotations(s, pose, s.bodyRot, s.scale);
+        pose.scale(-1.0F, -1.0F, 1.0F);
+        scale(s, pose);
+        pose.translate(0.0F, -1.501F, 0.0F);
     }
 
     @Override

@@ -21027,6 +21027,49 @@ both sides; `Life.lies`). A beast is the hunt's quarry only as the world brings 
   of Jade's ray trace (`JadeClient.body`), the mark and the lock (`Lock.foe`, and the creature under the crosshair) and the
   server's check of a press (`Aim.meant`). You can still use it to carve it. A creature lying fallen that will get up is
   alive: it keeps its card and its lock. Test `aim_bodies`.
+- A body rests on the ground, never in it (Euan's playtest 2026-11-11, a Plumed Coil's carcass on jungle grass: "the body
+  of a beast fell through the floor here and is also glitchy visually, like the texture is shimmering"). Three causes.
+  Vanilla's sideways flip (and the life layer's topple, which replaced it for our creature renderer) turns a body about
+  the middle of its feet, so half its width went under the ground; several of our death clips ended low (the Coil's
+  dropped its head 9.5 px and rolled it 80 degrees, so the coil stood on end into the ground, 27 of its cubes below it);
+  and a flier killed on the wing kept its no-gravity while it died and its carcass was laid where it hung (a carcass has
+  no mind, so nothing brings it down). The shimmer was the ground's own face cutting through the sunken body, and the
+  body's flat plumes and faces lying in or across it.
+  - `mobs.client.BodyRest`: every dying or lying body (`deathTime` above 0: a fall, a carcass, a fallen or toppled
+    creature) within 64 blocks is measured each frame as it will be drawn: its renderer's own chain (`BodyRest.Posed` on
+    the hero, wild, kit, creature, humanoid, skinned and forms' renderers; vanilla's flip for vanilla's, 180 degrees for
+    spiders, silverfish and endermites; cube mobs, fish, squid, phantoms, shulkers, the wither and armour stands are left as
+    they are), posed and drawn into a probe that keeps every vertex. It is leaned along the lie of the land under it (read
+    at half its size each way from the feet, at most 20 degrees, eased in over half a second; read where it lies, not where
+    its pose reaches, so the lean never jumps), then raised until its lowest point lies 1/64 block above the ground under
+    that point, plus a sheep's wool (1.75 px) or worn armour (1 px). Its middle (the middle half of its spread each way)
+    rests on the ground; a part outside it (a weapon, an antler, a wing, a pole, a feeler) holds the middle up at most
+    3/16 block times its size, and past that goes into the ground, so a duelist's blade or a lamplighter's pole never
+    stands the body on end. It may be let down at most half a block onto ground it floats above (never in water). The
+    ground is the top of the first block down each column from 9/16 above the feet to
+    2 below, where it stops a body or, if its outline spans the whole block, where it is seen (snow layers, soul sand,
+    mud); grass and flowers are no ground; ground higher than a step is a wall and holds nothing; and within a quarter
+    block of a higher column the ground rises to meet it, so a body sweeping onto a step rises, never jumps. Nothing under
+    it in reach (in the air, mid-water): its lowest point stays at least at its feet. Eased in over its first three ticks.
+    It pushes in `RenderLivingEvent.Pre` at the lowest priority and pops in `Post` at the highest; a renderer whose model
+    can't be measured is left as drawn from then on.
+  - A flier killed in the air (not in water, not a kit boss's scripted fight) falls through its death throes
+    (`AwakenMob.die`: gravity back on; dead, its server step no longer turns it off). A carcass whose fall ended off the
+    ground is laid on the ground under it, or on water it would fall into, at most 64 blocks down (`Carcass.restY`). A
+    cave creature hanging from the roof already lets go when struck.
+  - The death clips that ended in the ground were re-authored so the body itself lies on it, measured with the rule
+    above (`tools/art/specs`): the Plumed Coil lies in a flat S on its side, head on its cheek, jaw slack, plumes and
+    streamers lying back, its wings folding over it; the Old Antler goes down on its side with its neck stretched
+    along the ground instead of its antlers dug in; the Mire Mother's reeds fold flat both ways; the Hollow Owl's
+    under wing folds under its body and the other sprawls; the Empress Moth's wings close over its back; the
+    Thousandfoot's legs give, it sinks onto its belly, tips onto its side with its body riding up over its edge, the
+    legs it lies on held up until it lands and then flopping out flat past its belly, and it curls belly in, flat on the
+    ground (its old sideways curl stood it on end); the Mycelord's cap hits first and tips back onto its rim, top up,
+    instead of standing in the ground like a wheel (a body on a cap that size rests on rim and root, its stem a little
+    above the ground); the Briar Sow's head lolls level instead of burying chin and tusks; the Brook Otter on its back
+    rests its head on its cheek; the Hushling's arms fall forward; the Pollen Grazer's under wings lie back along the
+    ground. The Weaver Queen still kneels, as authored; water creatures (Lantern Maw, Tidesteed, Breathbell,
+    Glimmerfin) mostly die in water and keep their clips.
 
 **47.13 Beasts at range (Euan's playtest 2026-11-03: the Briar Sow, "when I saw it at a distance, it was shaking a ton
 for some reason and glitching").** Each guess was checked against film and a frame-by-frame trace: the client's smoothing

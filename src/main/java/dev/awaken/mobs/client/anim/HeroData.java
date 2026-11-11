@@ -285,7 +285,7 @@ public final class HeroData {
                 clip death 1.8 0
                 track body rot 5 0 0 0 0 1 0.25 -8 0 0 1 0.7 18 0 10 1 1.2 8 0 78 1 1.8 6 0 84 1
                 track body pos 5 0 0 0 0 1 0.25 0 1 0 1 0.7 0 -4 0 1 1.2 0 -6 0 1 1.8 0 -7 0 1
-                track head rot 5 0 0 0 0 1 0.25 -30 0 0 1 0.7 20 0 0 1 1.3 30 0 -10 1 1.8 32 0 -12 1
+                track head rot 5 0 0 0 0 1 0.25 -30 0 0 1 0.7 16 0 0 1 1.3 4 0 -10 1 1.8 0 0 -12 1
                 track jaw rot 4 0 0 0 0 1 0.25 30 0 0 1 1 18 0 0 1 1.8 22 0 0 1
                 track leg_fl rot 3 0 0 0 0 1 0.7 -60 0 0 1 1.8 -50 0 0 1
                 track shin_fl rot 3 0 0 0 0 1 0.7 80 0 0 1 1.8 70 0 0 1
@@ -890,19 +890,30 @@ public final class HeroData {
                 track seg3 rot 3 0 0 0 0 1 0.16 0 18 0 1 0.45 0 0 0 1
                 track seg4 rot 3 0 0 0 0 1 0.19 0 -18 0 1 0.45 0 0 0 1
                 clip death 1.8 0
-                track head pos 4 0 0 0 0 1 0.3 0 3 0 1 1.2 0 -9 0 1 1.8 0 -9.5 0 1
-                track head rot 4 0 0 0 0 1 0.3 -36 0 0 1 1.1 14 0 -50 1 1.8 10 0 -80 1
-                track jaw rot 3 0 0 0 0 1 0.3 44 0 0 1 1.8 30 0 0 1
-                track seg0 rot 4 0 0 0 0 1 0.4 6 -12 0 1 1.2 2 -30 0 1 1.8 0 -28 0 1
-                track seg1 rot 4 0 0 0 0 1 0.4 6 12 0 1 1.2 2 34 0 1 1.8 0 30 0 1
-                track seg2 rot 4 0 0 0 0 1 0.4 6 -12 0 1 1.2 2 -30 0 1 1.8 0 -28 0 1
-                track seg3 rot 4 0 0 0 0 1 0.4 6 12 0 1 1.2 2 34 0 1 1.8 0 30 0 1
-                track seg4 rot 4 0 0 0 0 1 0.4 6 -12 0 1 1.2 2 -30 0 1 1.8 0 -28 0 1
-                track seg5 rot 4 0 0 0 0 1 0.4 6 12 0 1 1.2 2 34 0 1 1.8 0 30 0 1
-                track seg6 rot 4 0 0 0 0 1 0.4 6 -12 0 1 1.2 2 -30 0 1 1.8 0 -28 0 1
-                track seg7 rot 4 0 0 0 0 1 0.4 6 12 0 1 1.2 2 34 0 1 1.8 0 30 0 1
-                track seg8 rot 4 0 0 0 0 1 0.4 6 -12 0 1 1.2 2 -30 0 1 1.8 0 -28 0 1
-                track seg9 rot 4 0 0 0 0 1 0.4 6 12 0 1 1.2 2 34 0 1 1.8 0 30 0 1
+                track head pos 4 0 0 0 0 1 0.3 0 3 0 1 1.2 0 -5.5 0 1 1.8 0 -5.5 0 1
+                track head rot 4 0 0 0 0 1 0.3 -36 0 0 1 1.1 -8 0 -10 1 1.8 -7 0 -14 1
+                track seg0 rot 4 0 0 0 0 1 0.4 6 -12 0 1 1.2 8 -26 12 1 1.8 7 -28 14 1
+                track jaw rot 4 0 0 0 0 1 0.3 44 0 0 1 1.1 10 0 0 1 1.8 6 0 0 1
+                track seg1 rot 4 0 0 0 0 1 0.4 6 12 0 1 1.2 0 34 0 1 1.8 0 30 0 1
+                track seg2 rot 4 0 0 0 0 1 0.4 6 -12 0 1 1.2 -3 -32 0 1 1.8 -3 -28 0 1
+                track seg3 rot 4 0 0 0 0 1 0.4 6 12 0 1 1.2 0 34 0 1 1.8 0 30 0 1
+                track seg4 rot 4 0 0 0 0 1 0.4 6 -12 0 1 1.2 0 -32 0 1 1.8 0 -28 0 1
+                track seg5 rot 4 0 0 0 0 1 0.4 6 12 0 1 1.2 0 34 0 1 1.8 0 30 0 1
+                track seg6 rot 4 0 0 0 0 1 0.4 6 -12 0 1 1.2 0 -32 0 1 1.8 0 -28 0 1
+                track seg7 rot 4 0 0 0 0 1 0.4 6 12 0 1 1.2 0 34 0 1 1.8 0 30 0 1
+                track seg8 rot 4 0 0 0 0 1 0.4 6 -12 0 1 1.2 0 -32 0 1 1.8 0 -28 0 1
+                track seg9 rot 4 0 0 0 0 1 0.4 6 12 0 1 1.2 0 34 0 1 1.8 0 30 0 1
+                track wing2_l rot 4 0 0 0 0 1 0.5 0 0 -16.2 1 1.3 0 0 56.7 1 1.8 0 0 54 1
+                track wing2_r rot 4 0 0 0 0 1 0.5 0 0 18.6 1 1.3 0 0 -65.1 1 1.8 0 0 -62 1
+                track wing5_l rot 4 0 0 0 0 1 0.5 0 0 -15 1 1.3 0 0 52.5 1 1.8 0 0 50 1
+                track wing5_r rot 4 0 0 0 0 1 0.5 0 0 16.2 1 1.3 0 0 -56.7 1 1.8 0 0 -54 1
+                track streamer0 rot 3 0 0 0 0 1 1.3 -8 0 0 1 1.8 -5 0 0 1
+                track streamer1 rot 3 0 0 0 0 1 1.3 -8 0 0 1 1.8 -5 0 0 1
+                track streamer2 rot 3 0 0 0 0 1 1.3 -8 0 0 1 1.8 -5 0 0 1
+                track plume0 rot 2 0 0 0 0 1 1.8 16 0 0 1
+                track plume1 rot 2 0 0 0 0 1 1.8 16 0 0 1
+                track plume2 rot 2 0 0 0 0 1 1.8 16 0 0 1
+                track plume3 rot 2 0 0 0 0 1 1.8 16 0 0 1
                 track ruff0 rot 2 0 0 0 0 1 1.8 30 0 0 1
                 track ruff1 rot 2 0 0 0 0 1 1.8 30 0 0 1
                 track ruff2 rot 2 0 0 0 0 1 1.8 30 0 0 1
@@ -1155,8 +1166,8 @@ public final class HeroData {
                 clip death 1.8 0
                 track body rot 5 0 0 0 0 1 0.3 -10 0 0 1 0.75 14 0 6 1 1.25 6 0 80 1 1.8 4 0 86 1
                 track body pos 5 0 0 0 0 1 0.3 0 2 0 1 0.75 0 -6 0 1 1.25 0 -10 0 1 1.8 0 -11 0 1
-                track neck rot 4 0 0 0 0 1 0.3 -24 0 0 1 0.9 40 0 0 1 1.8 50 0 10 1
-                track head rot 4 0 0 0 0 1 0.3 -30 0 0 1 1.2 20 0 0 1 1.8 24 0 0 1
+                track neck rot 4 0 0 0 0 1 0.3 -24 0 0 1 0.9 40 8 0 1 1.8 55 20 10 1
+                track head rot 4 0 0 0 0 1 0.3 -30 0 0 1 1.2 26 0 -6 1 1.8 32 0 -10 1
                 track leg_fl rot 3 0 0 0 0 1 0.75 -70 0 0 1 1.8 -40 0 0 1
                 track shin_fl rot 3 0 0 0 0 1 0.75 90 0 0 1 1.8 60 0 0 1
                 track leg_fr rot 3 0 0 0 0 1 0.75 -70 0 0 1 1.8 -40 0 0 1
@@ -1377,7 +1388,12 @@ public final class HeroData {
                 track lid_r pos 4 0 0 0 0 0 0.04 0 -2.5 0 0 0.3 0 -2.5 0 0 0.4 0 0 0 0
                 clip death 1.8 0
                 track body rot 5 0 0 0 0 1 0.3 -10 0 0 1 1 6 0 30 1 1.5 2 0 160 1 1.8 0 0 178 1
-                track body pos 5 0 0 0 0 1 0.3 0 3 0 1 1 0 0 0 1 1.5 0 4 0 1 1.8 0 6 0 1
+                track body pos 5 0 0 0 0 1 0.3 0 3 0 1 1 0 0 0 1 1.5 0 3 0 1 1.8 0 4 0 1
+                track reed0 rot 4 0 0 0 0 1 1.2 0 0 0 1 1.6 -69.7 0 0 1 1.8 -82 0 0 1
+                track reed1 rot 4 0 0 0 0 1 1.2 0 0 0 1 1.6 69.7 0 0 1 1.8 82 0 0 1
+                track reed2 rot 4 0 0 0 0 1 1.2 0 0 0 1 1.6 -69.7 0 0 1 1.8 -82 0 0 1
+                track reed3 rot 4 0 0 0 0 1 1.2 0 0 0 1 1.6 69.7 0 0 1 1.8 82 0 0 1
+                track reed4 rot 4 0 0 0 0 1 1.2 0 0 0 1 1.6 -69.7 0 0 1 1.8 -82 0 0 1
                 track jaw rot 3 0 0 0 0 1 0.3 30 0 0 1 1.8 14 0 0 1
                 track sac scale 4 0 1 1 1 1 0.3 1.4 2.6 1.4 1 1 0.8 0.6 0.8 1 1.8 0.8 0.6 0.8 1
                 track arm_l rot 3 0 0 0 0 1 1.5 -30 0 0 1 1.8 -50 0 0 1
@@ -1905,9 +1921,9 @@ public final class HeroData {
                 track wing_hr rot 4 0 0 0 14 1 0.06 0 0 50 1 0.25 0 0 0 1 0.45 0 0 14 1
                 track body rot 4 0 0 0 0 1 0.06 -10 8 10 1 0.25 4 -3 -4 1 0.45 0 0 0 1
                 clip death 1.8 0
-                track wing_fl rot 5 0 0 0 -14 1 0.3 0 0 -60 1 0.9 0 0 20 1 1.4 0 10 70 1 1.8 0 10 80 1
+                track wing_fl rot 5 0 0 0 -14 1 0.3 0 0 -60 1 0.9 0 0 20 1 1.4 0 10 80 1 1.8 0 10 90 1
                 track wing_fr rot 5 0 0 0 14 1 0.3 0 0 60 1 0.9 0 0 -20 1 1.4 0 -10 -70 1 1.8 0 -10 -80 1
-                track wing_hl rot 5 0 0 0 -14 1 0.3 0 0 -60 1 0.9 0 0 20 1 1.4 0 10 70 1 1.8 0 10 80 1
+                track wing_hl rot 5 0 0 0 -14 1 0.3 0 0 -60 1 0.9 0 0 20 1 1.4 0 10 80 1 1.8 0 10 90 1
                 track wing_hr rot 5 0 0 0 14 1 0.3 0 0 60 1 0.9 0 0 -20 1 1.4 0 -10 -70 1 1.8 0 -10 -80 1
                 track body rot 4 0 0 0 0 1 0.4 -20 0 20 1 1.2 30 0 70 1 1.8 20 0 90 1
                 track body pos 4 0 0 0 0 1 0.4 0 2 0 1 1.4 0 -8 0 1 1.8 0 -9 0 1
@@ -2288,7 +2304,7 @@ public final class HeroData {
                 clip death 1.8 0
                 track body rot 4 0 0 0 0 1 0.4 8 0 0 1 1.3 -86 0 6 1 1.8 -88 0 8 1
                 track body pos 4 0 0 0 0 1 0.4 0 -1 0 1 1.3 0 -8 0 1 1.8 0 -9 0 1
-                track cap rot 4 0 0 0 0 1 1.3 -10 0 0 1 1.6 6 0 0 1 1.8 4 0 0 1
+                track cap rot 5 0 0 0 0 1 1 -8 0 0 1 1.3 40 0 0 1 1.55 66 0 0 1 1.8 62 0 0 1
                 track arm_l rot 4 0 0 0 0 1 0.4 -30 0 -20 1 1.3 -100 0 -50 1 1.8 -100 0 -60 1
                 track arm_r rot 4 0 0 0 0 1 0.4 -30 0 20 1 1.3 -100 0 50 1 1.8 -100 0 60 1
                 track cap scale 2 0 1 1 1 1 1.8 1.02 0.85 1.02 1
@@ -2384,8 +2400,8 @@ public final class HeroData {
                 track wing_r rot 3 0 0 0 0 1 0.06 0 0 40 1 0.3 0 0 0 1
                 clip death 1 0
                 track body rot 4 0 0 0 0 1 0.25 -16 0 0 1 0.7 0 0 88 1 1 0 0 90 1
-                track body pos 4 0 0 0 0 1 0.25 0 1 0 1 0.7 0 -2.5 0 1 1 0 -2.5 0 1
-                track wing_l rot 3 0 0 0 0 1 0.5 0 0 -70 1 1 0 0 -50 1
+                track body pos 4 0 0 0 0 1 0.25 0 1.5 0 1 0.7 0 0.5 0 1 1 0 1 0 1
+                track wing_l rot 5 0 0 0 0 1 0.2 0 0 -36 1 0.45 0 0 12 1 0.7 0 0 26 1 1 0 0 30 1
                 track wing_r rot 3 0 0 0 0 1 0.5 0 0 70 1 1 0 0 50 1
                 track head rot 3 0 0 0 0 1 0.7 20 0 0 1 1 24 0 0 1
                 track disc scale 3 0 1 1 1 1 0.8 1 1 1 1 1 1 0.3 1 1
