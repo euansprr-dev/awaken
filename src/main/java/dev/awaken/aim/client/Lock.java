@@ -145,7 +145,7 @@ final class Lock {
         for (Entity e : mc.level.entitiesForRendering()) {
             if (!(e instanceof LivingEntity le) || le == p) continue;
             boolean fights = foe(le);
-            if (!fights && !(calmLock && AimRules.strikable(p, le))) continue;
+            if (!fights && !(calmLock && Aim.strikable(p, le))) continue;
             AABB b = le.getBoundingBox();
             double dist = Aim.gap(eye, b);
             if (dist > AimRules.LOCK_RANGE) continue;
@@ -224,7 +224,7 @@ final class Lock {
      * the meadow needs this. -1 when none.
      */
     private static int calm(Minecraft mc, LocalPlayer p) {
-        if (mc.hitResult instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity le && AimRules.strikable(p, le)) return le.getId();
+        if (mc.hitResult instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity le && Aim.strikable(p, le)) return le.getId();
         Vec3 eye = p.getEyePosition();
         double wall = Double.MAX_VALUE;
         // grass, flowers and the like are no wall: a block the eye sees through doesn't hide the sheep beyond it
@@ -235,7 +235,7 @@ final class Lock {
         int best = -1;
         float bestScore = Float.NaN;
         for (Entity e : mc.level.entitiesForRendering()) {
-            if (!(e instanceof LivingEntity le) || !AimRules.strikable(p, le)) continue;
+            if (!(e instanceof LivingEntity le) || !Aim.strikable(p, le)) continue;
             AABB b = le.getBoundingBox();
             double dist = Aim.gap(eye, b);
             if (dist >= wall) continue;
