@@ -223,7 +223,11 @@ final class Words {
     /** A Lord or a named beast fell to you: the weapon in your hand and each piece you wear that carries the word keep its name. */
     static void onDeath(LivingDeathEvent e) {
         LivingEntity dead = e.getEntity();
-        if (!(e.getSource().getEntity() instanceof ServerPlayer p) || dead instanceof Player || !EnchantEffects.spared(dead)) return;
+        if (!(e.getSource().getEntity() instanceof ServerPlayer p) || dead instanceof Player) return;
+        // a bane's kill goes out in its red (a bane never bites what is spared, so this is never a Lord)
+        int bane = EnchantEffects.baneNo(p, p.getMainHandItem(), dead);
+        if (bane > 0) EnchantFx.banedOut(p, dead, bane);
+        if (!EnchantEffects.spared(dead)) return;
         String name = nameOf(dead);
         ItemStack first = ItemStack.EMPTY;
         int kept = 0;

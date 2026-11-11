@@ -148,6 +148,12 @@ final class EnchantFx {
                 orb.getX(), orb.getY() + 0.15, orb.getZ(), Family.KEEPING.colour, 1F, slot == null ? 0 : slot.ordinal(), Float.NaN));
     }
 
+    /** A creature a bane killed goes out in the bane's red: a ring of it over the ground where it fell, motes lifting off. */
+    static void banedOut(ServerPlayer p, LivingEntity dead, int no) {
+        near((ServerLevel) p.level(), dead.getX(), dead.getY(), dead.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_PUFF, dead.getId(),
+                dead.getX(), dead.getY(), dead.getZ(), Family.BANE.colour, 0.9F, no, Float.NaN));
+    }
+
     /** Gather: a gold thread from where a thing fell into the hand that took it. */
     static void gathered(ServerPlayer p, double x, double y, double z) {
         near((ServerLevel) p.level(), p.getX(), p.getY(), p.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_MEND, p.getId(),
