@@ -1,0 +1,40 @@
+# The kit's sample blockout (data/awaken/realm_blockouts/sample.json), seen from its own cameras and nothing else.
+# The shot lines below are Blockout.tourShots() for that file: change a camera there, change it here.
+# tools/preview/preview.sh tools/autopilot/realm-blockout_sample.txt draws it without the game.
+world autopilot_realm_blockout_sample creative 20261112
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+hud off
+
+cmd tp @s 6000 200 6000
+wait 600
+cmd awaken gate hop
+wait 400
+cmd awaken gate realm E awaken:blockout_sample
+wait 400
+cmd awaken gate interior enter
+wait 340
+
+cmd awaken gate realm_at MOUTH 0 0 8 -15
+look 0 -4
+wait 200
+shot sample_painting
+cmd awaken gate realm_at MOUTH 0 60 10 110
+look -27 -15
+wait 200
+shot sample_tower
+cmd awaken gate realm_at MOUTH 0 120 4 275
+look 0 15
+wait 200
+shot sample_pond
+quit

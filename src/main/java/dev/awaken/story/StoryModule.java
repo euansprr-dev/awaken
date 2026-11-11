@@ -4,8 +4,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.awaken.Awaken;
 import dev.awaken.core.AwakenCommands;
 import dev.awaken.core.AwakenNet;
-import dev.awaken.core.CoreModule;
 import dev.awaken.core.api.StoryHooks;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.progression.Progression;
 import dev.awaken.progression.RankHooks;
 import dev.awaken.signal.Signal;
@@ -21,7 +21,6 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -67,7 +66,7 @@ public final class StoryModule {
         ITEMS.register(modBus);
         modBus.addListener(StoryModule::attributes);
         modBus.addListener(StoryModule::payloads);
-        modBus.addListener(StoryModule::tab);
+        Tabs.fill(Tabs.Shelf.GATE_CREATURES, VAEL_EGG);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(StoryModule::reload);
         bus.addListener(PlayerTickEvent.Post.class, Prologue::onTick);
@@ -149,10 +148,6 @@ public final class StoryModule {
 
     private static void attributes(EntityAttributeCreationEvent e) {
         e.put(VAEL.get(), VaelEntity.createAttributes().build());
-    }
-
-    private static void tab(BuildCreativeModeTabContentsEvent e) {
-        if (e.getTabKey().equals(CoreModule.TAB_KEY)) e.accept(VAEL_EGG.get());
     }
 
     private static void payloads(RegisterPayloadHandlersEvent e) {

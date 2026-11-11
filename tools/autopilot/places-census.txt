@@ -1,0 +1,19 @@
+# Counts every place within 10,000 blocks of the spawn into the log (which kinds stand, how near, what lands there are).
+# Not a look tour: no pictures worth keeping. Read "[finds] census" in the log.
+# ci knobs: RD=6
+world places creative 4242
+waitworld
+camera first
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+cmd awaken finds census
+wait 600
+shot census_done
+quit

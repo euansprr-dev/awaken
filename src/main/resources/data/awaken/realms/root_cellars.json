@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "name": "The Root Cellars",
+  "line": "These are the cellars under an old temple, and the roots got down here a long time before you did.",
+  "form": "dungeon",
+  "theme": "overgrown_temple",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:root_cellars",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/root_cellars"
+    ],
+    "lens": "root_cellars",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "spores",
+      "drips",
+      "moths",
+      "fireflies",
+      "petals"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "root_saint",
+    "seat": "under_the_roads"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

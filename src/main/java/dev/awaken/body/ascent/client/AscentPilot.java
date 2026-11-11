@@ -103,12 +103,23 @@ public final class AscentPilot {
             }
             case "use" -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
             case "station" -> dev.awaken.anims.client.station.StationClient.devClick(Integer.parseInt(a[1]), a.length > 2 ? Integer.parseInt(a[2]) : 0);
+            case "hover" -> dev.awaken.anims.client.station.StationClient.devHover(Integer.parseInt(a[1]));
+            // clip <name>|stop: a body clip on your own body, so a tour can film a pose in third person (SPEC §65.5)
+            case "clip" -> {
+                if (a[1].equals("stop")) dev.awaken.core.api.PlayerClips.stop(p.getId());
+                else Awaken.LOG.info("[ascent] pilot clip {} {}", a[1], dev.awaken.core.api.PlayerClips.play(p.getId(), a[1], a.length > 2 ? Integer.parseInt(a[2]) : 2));
+            }
             case "attack" -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey());
             case "usehold" -> {
                 useHold = Integer.parseInt(a[1]);
                 mc.options.keyUse.setDown(true);
             }
             case "aether" -> AscentMoves.aether = Math.max(0, Math.min(1, Double.parseDouble(a[1])));
+            // the wings' studio (SPEC §62): "wings <state|off> [rung]" holds your wings in a state; "wingset <key> <value>" a number
+            case "wings" -> {
+                if (mc.player != null) WingLayer.studio(mc.player.getId(), a[1], a.length > 2 ? a[2] : "");
+            }
+            case "wingset" -> WingLayer.tune(a[1], Float.parseFloat(a[2]));
             case "stop" -> stop();
             default -> Awaken.LOG.warn("[ascent] pilot: unknown line {}", line);
         }

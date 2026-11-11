@@ -1,0 +1,205 @@
+# Measurement only (the look-steady-60 plan; Euan, 10 Nov: "You can tour on my Dell 4k screen btw for FPS data").
+# A copy of his own world, fullscreen on the Dell with his settings (tools/steady60-tour.sh copies his config in):
+# the VFX Look as he plays it (vsync on, 60 cap), then uncapped with one ImmersiveVFX feature off at a time, then
+# Lens's tiers at the same spot, then flights. Every perf window also writes its frames, in order, to
+# run-autopilot/perf-traces/<label>.txt; pixels gpu gives the GPU's world pass.
+#   tools/steady60-tour.sh tools/autopilot/steady60-dell.txt
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+display DELL fullscreen
+wait 200
+info
+pixels state
+vfx dump
+walk 1
+camera first
+hud on
+# ---- 1. VFX as he plays it: vsync on, capped at 60
+opt vsync 1
+opt maxFps 60
+wait 100
+pixels gpu on
+pixels gpu reset
+perf vfx_played_still 15
+pixels gpu vfx_played_still
+shot s1_vfx_morning_a
+turn 1.5 240
+pixels gpu reset
+perf vfx_played_turn 12
+pixels gpu vfx_played_turn
+# ---- 2. VFX uncapped: what a frame really costs, then a feature off at a time
+opt vsync 0
+opt maxFps 260
+wait 60
+pixels gpu reset
+perf vfx_raw_still 12
+pixels gpu vfx_raw_still
+turn 1.5 240
+pixels gpu reset
+perf vfx_raw_turn 12
+pixels gpu vfx_raw_turn
+vfx shadows=false
+wait 40
+pixels gpu reset
+perf vfx_noshadow 10
+pixels gpu vfx_noshadow
+vfx shadows=true;shadowDistance=96
+wait 40
+pixels gpu reset
+perf vfx_shadow96 10
+pixels gpu vfx_shadow96
+vfx shadowDistance=256;waterReflections=false;iceReflections=false
+wait 40
+pixels gpu reset
+perf vfx_noreflect 10
+pixels gpu vfx_noreflect
+vfx waterReflections=true;iceReflections=true;lightRays=false;underwaterLightRays=false
+wait 40
+pixels gpu reset
+perf vfx_norays 10
+pixels gpu vfx_norays
+vfx lightRays=true;underwaterLightRays=true;fogRenderingMode=OFF;atmosphericFog=false;dynamicFog=false;groundMist=false;lowLyingFog=false;weatherMist=false
+wait 40
+pixels gpu reset
+perf vfx_nofog 10
+pixels gpu vfx_nofog
+shot s2_vfx_nofog
+vfx fogRenderingMode=IMMERSIVE_EXTENDED;atmosphericFog=true;dynamicFog=true;groundMist=true;lowLyingFog=true;weatherMist=true;bloom=false;enhancedLight=false
+wait 40
+pixels gpu reset
+perf vfx_nobloom 10
+pixels gpu vfx_nobloom
+vfx bloom=true;enhancedLight=true;particleRate=NONE;fireflies=false;specks=false;windGusts=false;leaves=false;pollenAndSpores=false
+wait 40
+pixels gpu reset
+perf vfx_noparticles 10
+pixels gpu vfx_noparticles
+vfx particleRate=MAXIMUM;fireflies=true;specks=true;windGusts=true;leaves=true;pollenAndSpores=true;cloudRendering=OFF;customSkies=false;skyMode=VANILLA
+wait 40
+pixels gpu reset
+perf vfx_nosky 10
+pixels gpu vfx_nosky
+vfx cloudRendering=FANCY;customSkies=true;skyMode=REALISTIC;shadows=false;waterReflections=false;iceReflections=false;lightRays=false;underwaterLightRays=false;bloom=false;enhancedLight=false
+wait 40
+pixels gpu reset
+perf vfx_fogsky_only 10
+pixels gpu vfx_fogsky_only
+shot s3_vfx_fogsky_only
+vfx shadows=true;waterReflections=true;iceReflections=true;lightRays=true;underwaterLightRays=true;bloom=true;enhancedLight=true
+wait 60
+vfx dump
+# ---- 3. Lens's tiers at the same spot, uncapped (the mod asleep)
+lookswitch swift
+wait 120
+pixels gpu reset
+perf swift_raw_still 10
+pixels gpu swift_raw_still
+shot s4_swift_morning_a
+lookswitch cinematic
+wait 120
+pixels gpu reset
+perf cine_raw_still 12
+pixels gpu cine_raw_still
+shot s5_cine_morning_a
+turn 1.5 240
+pixels gpu reset
+perf cine_raw_turn 12
+pixels gpu cine_raw_turn
+lookswitch ultra
+wait 120
+pixels gpu reset
+perf ultra_raw_still 10
+pixels gpu ultra_raw_still
+shot s6_ultra_morning_a
+lens off
+wait 80
+pixels gpu reset
+perf off_raw_still 10
+pixels gpu off_raw_still
+shot s7_off_morning_a
+# ---- 4. Cinematic as he would play it
+lookswitch cinematic
+opt vsync 1
+opt maxFps 60
+wait 120
+pixels gpu reset
+perf cine_played_still 12
+pixels gpu cine_played_still
+turn 1.5 240
+pixels gpu reset
+perf cine_played_turn 12
+pixels gpu cine_played_turn
+# ---- 5. golden hour: long shadows
+opt vsync 0
+opt maxFps 260
+cmd time set 11800
+wait 100
+pixels gpu reset
+perf cine_golden_raw 10
+pixels gpu cine_golden_raw
+shot s8_cine_golden_a
+lookswitch vfx
+wait 160
+pixels gpu reset
+perf vfx_golden_raw 10
+pixels gpu vfx_golden_raw
+shot s9_vfx_golden_a
+cmd time set 3000
+wait 60
+# ---- 6. flights east and back, 16 blocks a second, 45 up: first over land not seen yet, then the same land again
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+look -90 12
+wait 60
+glide 0.8 0 0 400
+pixels gpu reset
+perf vfx_fly_newland 20
+pixels gpu vfx_fly_newland
+look 90 12
+glide -0.8 0 0 400
+pixels gpu reset
+perf vfx_fly_back_raw 20
+pixels gpu vfx_fly_back_raw
+opt vsync 1
+opt maxFps 60
+look -90 12
+wait 40
+glide 0.8 0 0 400
+pixels gpu reset
+perf vfx_fly_played 20
+pixels gpu vfx_fly_played
+shot s10_vfx_flight
+lookswitch cinematic
+wait 100
+look 90 12
+glide -0.8 0 0 400
+pixels gpu reset
+perf cine_fly_played 20
+pixels gpu cine_fly_played
+opt vsync 0
+opt maxFps 260
+look -90 12
+wait 40
+glide 0.8 0 0 400
+pixels gpu reset
+perf cine_fly_raw 20
+pixels gpu cine_fly_raw
+shot s11_cine_flight
+lookswitch swift
+wait 100
+look 90 12
+glide -0.8 0 0 400
+pixels gpu reset
+perf swift_fly_raw 20
+pixels gpu swift_fly_raw
+pixels config
+quit

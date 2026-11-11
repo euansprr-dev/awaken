@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf8"><style>
+body{margin:0;background:#111;color:#ddd;font:14px system-ui}
+#wingview{width:100%;height:560px}
+button{margin:4px;padding:6px 10px}button[aria-pressed=true]{background:#7cf;color:#000}
+</style></head><body>
+<div id="wingview"></div><div id="wingcap"></div>
+<div>
+<button data-wing-which="both">Side by side</button><button data-wing-which="old">Today</button><button data-wing-which="new">Proposed</button> |
+<button data-wing-tier="wings">Wings</button><button data-wing-tier="skyborn">Skyborn</button><button data-wing-tier="sovereign">Sovereign</button> |
+<button data-wing-state="folded">Folded</button><button data-wing-state="unfold">Open</button><button data-wing-state="glide">Glide</button><button data-wing-state="beat">Fly</button><button data-wing-state="dive">Dive</button><button data-wing-state="hover">Hover</button><button data-wing-state="land">Land</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="wing_today.js"></script>
+<script src="wings.js"></script>
+</body></html>

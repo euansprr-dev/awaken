@@ -32,8 +32,11 @@ public final class FightMindTests {
 
     static final String[] PILOTS = {"hive_regent", "gearwright_colossus"};
     private static final int ROOM = FightRecorder.ROOM;
-    /** A potion's drink, and how far apart the drink test starts them (farther than the longest answer rests). */
-    private static final int DRINK_TICKS = 32, DRINK_EVERY = 300, DRINKS = 56;
+    /**
+     * A potion's drink, how far apart the drink test starts them (farther than the longest answer rests), and how many:
+     * enough that one run's fight doesn't decide the share.
+     */
+    private static final int DRINK_TICKS = 32, DRINK_EVERY = 300, DRINKS = 448;
     private static final int SWIG = DRINKS * (DRINK_EVERY + 40);
     /** Each pilot's answers: tests register before data loads, so the count is pinned and checked in {@link #answer}. */
     private static final int ANSWERS = 6;
@@ -101,7 +104,11 @@ public final class FightMindTests {
         };
     }
 
-    /** A real drink is seen only after the reaction time; a new target starts the read again. */
+    /**
+     * A real drink is seen only after the reaction time; a new target starts the read again. Timed from the first tick
+     * the mind reads each target, not from when the test set it: the boss's own target goal can put it back on the
+     * nearer player for a tick before the mind looks (1 copy in 25), and a read of the old target then isn't the new one's.
+     */
     private static void reaction(GameTestHelper h) {
         Scene s = scene(h, "hive_regent");
         ServerLevel level = h.getLevel();
@@ -113,27 +120,28 @@ public final class FightMindTests {
         }
         s.run.idleFor(level, 100);
         s.mind.sure = true;
-        long started = level.getGameTime();
-        long[] switched = {-1};
+        long[] since = {-1};
         boolean[] saw = {false, false};
         int[] tick = {0};
         h.onEachTick(() -> {
             tick[0]++;
             long now = level.getGameTime();
-            s.boss.setTarget(switched[0] >= 0 ? q : p);
-            boolean sees = s.mind.seen(FightScripts.Fact.DRINK, 0, now) >= 0;
-            if (switched[0] < 0) {
-                if (sees) {
-                    h.assertTrue(now - started >= s.mind.react, "seen after " + (now - started) + " ticks, sooner than its " + s.mind.react);
-                    saw[0] = true;
-                    switched[0] = now + 1; // from next tick its target is someone else, who has been drinking all along
+            ServerPlayer who = saw[0] ? q : p;
+            // the boss ticks before the test: what it read this tick was for the target set last tick
+            if (s.mind.reading() != who.getId()) since[0] = -1;
+            else if (since[0] < 0) since[0] = now;
+            if (since[0] >= 0 && s.mind.seen(FightScripts.Fact.DRINK, 0, now) >= 0) {
+                h.assertTrue(now - since[0] >= s.mind.react, (saw[0] ? "a new target" : "a drink") + " read after " + (now - since[0]) + " ticks, sooner than its " + s.mind.react);
+                if (saw[0]) {
+                    saw[1] = true;
+                    s.boss.discard();
+                    h.succeed();
+                    return;
                 }
-            } else if (now > switched[0] && sees) {
-                h.assertTrue(now - switched[0] >= s.mind.react - 1, "a new target read after " + (now - switched[0]) + " ticks");
-                saw[1] = true;
-                s.boss.discard();
-                h.succeed();
+                saw[0] = true; // from next tick its target is someone else, who has been drinking all along
+                since[0] = -1;
             }
+            s.boss.setTarget(saw[0] ? q : p);
             h.assertTrue(tick[0] < 100, "never saw the drink: " + saw[0] + ", then " + saw[1]);
         });
     }
@@ -313,18 +321,34 @@ public final class FightMindTests {
         });
     }
 
-    /** A real fight with someone in reach, near and further off in turn, drinking now and then: most drinks are answered. */
+    /**
+     * A real fight with someone in reach, near and further off in turn, drinking now and then: most drinks in reach are
+     * answered (SPEC §48.5), and every one it was free to answer is. The bar is over drinks in reach, as §48.5 has it,
+     * and over enough of them to be a measure: with 56 a run's own fight moved the share by 6% either way, so the Regent
+     * (about 70% since the Stinger Volley waits for phase 2, c6270a8c8) passed or failed on the dice; fifteen fights of
+     * 224 still ran from 65% to 79%. A drink it can't answer by §48.2 (one that comes and goes inside its own blow, or
+     * when only the move it just made reaches) is still counted when one of its answers could land.
+     */
     private static void drinks(GameTestHelper h, String id) {
         Scene s = scene(h, id);
+        // standing, as a player stands: a test player is never ticked onto the ground, and a kit flier follows anyone
+        // three seconds off it to a block under their feet (§47.15), here into the floor
+        s.player.setOnGround(true);
+        FightScripts.Answer drink = s.kit.fight().mind().orElseThrow().answers().stream().filter(a -> a.on() == FightScripts.Fact.DRINK).findFirst().orElse(null);
+        h.assertTrue(drink != null, id + " answers a drink");
         double[] edges = {2.0, 7.0};
         Vec3[] stand = {s.at(edges[0])};
         s.player.setPos(stand[0]);
         s.boss.getRandom().setSeed(id.hashCode() * 17L);
         net.minecraft.util.RandomSource dice = net.minecraft.util.RandomSource.create(id.hashCode());
-        int[] tick = {0}, next = {60}, drinkEnd = {-1}, drinks = {0}, noticeWas = {0};
-        int[][] answered = {{0, 0}, {0, 0}}; // answered and drunk, near and further off
-        boolean[] done = {false};
-        h.onEachTick(() -> {
+        int[] tick = {0}, next = {60}, drinkStart = {-1}, drinkEnd = {-1}, drinks = {0}, noticeWas = {0};
+        int[][] answered = {{0, 0}, {0, 0}}; // answered and in reach, near and further off
+        int[] free = {0};
+        boolean[] done = {false}, reach = {false}, couldHave = {false};
+        StringBuilder missed = new StringBuilder();
+        // a sequence's step, not onEachTick: that books one run per tick up to the timeout and walks them all every
+        // tick, which over this many ticks is minutes of the suite
+        h.startSequence().thenExecuteFor(SWIG, () -> {
             int t = ++tick[0];
             s.boss.setTarget(s.player);
             s.player.setHealth(s.player.getMaxHealth());
@@ -333,25 +357,39 @@ public final class FightMindTests {
             // from the room's middle: a boss drops a target that leaves its arena
             if (t == next[0] - 40) stand[0] = s.home.add(0, 0, edges[where] + s.boss.getBbWidth() * 0.5 + s.player.getBbWidth() * 0.5);
             if (t == next[0] && drinks[0] < DRINKS) {
+                drinkStart[0] = t;
                 drinkEnd[0] = t + DRINK_TICKS;
-                answered[where][1]++;
                 drinks[0]++;
-                done[0] = false;
+                done[0] = reach[0] = couldHave[0] = false;
                 next[0] = t + DRINK_EVERY + dice.nextInt(40);
                 Watch.stage(s.player, Watch.DRINK);
             }
-            if (t == drinkEnd[0]) Watch.stage(s.player, 0);
             boolean noticing = s.boss.kitPose() == AwakenBoss.KIT_POSE_NOTICE;
-            if (noticing && noticeWas[0] == 0 && t <= drinkEnd[0] && !done[0]) {
-                done[0] = true;
-                answered[(drinks[0] - 1) & 1][0]++;
-            }
+            if (noticing && noticeWas[0] == 0 && t <= drinkEnd[0] && !done[0]) done[0] = true;
             noticeWas[0] = noticing ? 1 : 0;
+            // once it can believe the drink: could an answer land, and was it free to give one (in time to be seen)?
+            if (drinkStart[0] >= 0 && !done[0] && t >= drinkStart[0] + s.mind.react && t <= drinkEnd[0]) {
+                if (s.run.inReach(drink, s.player)) reach[0] = true;
+                if (t <= drinkEnd[0] - 3 && s.run.betweenBlows() && s.run.couldAnswer(drink, s.player)) couldHave[0] = true;
+            }
+            if (t == drinkEnd[0]) Watch.stage(s.player, 0);
+            if (t == drinkEnd[0] + 1) {
+                int was = (drinks[0] - 1) & 1;
+                if (reach[0] || done[0]) answered[was][1]++;
+                if (done[0]) answered[was][0]++;
+                if (couldHave[0]) {
+                    free[0]++;
+                    if (!done[0]) missed.append(' ').append(drinks[0]);
+                }
+            }
         });
         h.runAfterDelay(SWIG, () -> {
-            int yes = answered[0][0] + answered[1][0];
-            Awaken.LOG.info("[mind] {}: {} of {} drinks answered ({} of {} near, {} of {} further off)", id, yes, drinks[0], answered[0][0], answered[0][1], answered[1][0], answered[1][1]);
-            h.assertTrue(yes * 100 >= drinks[0] * 60, id + " answered " + yes + " of " + drinks[0] + " drinks");
+            int yes = answered[0][0] + answered[1][0], inReach = answered[0][1] + answered[1][1];
+            Awaken.LOG.info("[mind] {}: {} of {} drinks in reach answered ({} of {} near, {} of {} further off; {} drinks), every one of {} it was free to answer{}",
+                    id, yes, inReach, answered[0][0], answered[0][1], answered[1][0], answered[1][1], drinks[0], free[0], missed.isEmpty() ? "" : " but" + missed);
+            h.assertTrue(inReach * 4 >= drinks[0] * 3, id + ": only " + inReach + " of " + drinks[0] + " drinks were in reach of an answer (the stands are wrong)");
+            h.assertTrue(yes * 100 >= inReach * 60, id + " answered " + yes + " of " + inReach + " drinks in reach");
+            h.assertTrue(missed.isEmpty(), id + " was free to answer drinks" + missed + " and didn't");
             Watch.stage(s.player, 0);
             s.boss.discard();
             h.succeed();

@@ -1,0 +1,144 @@
+{
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ]
+    }
+  },
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#gold"
+        },
+        "east": {
+          "texture": "#gold"
+        },
+        "north": {
+          "texture": "#gold"
+        },
+        "south": {
+          "texture": "#gold"
+        },
+        "up": {
+          "texture": "#gold"
+        },
+        "west": {
+          "texture": "#gold"
+        }
+      },
+      "from": [
+        5,
+        5,
+        0
+      ],
+      "to": [
+        11,
+        10,
+        4
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#gold"
+        },
+        "east": {
+          "texture": "#gold"
+        },
+        "north": {
+          "texture": "#gold"
+        },
+        "south": {
+          "texture": "#gold"
+        },
+        "up": {
+          "texture": "#gold"
+        },
+        "west": {
+          "texture": "#gold"
+        }
+      },
+      "from": [
+        6,
+        6,
+        4
+      ],
+      "to": [
+        10,
+        9,
+        6
+      ]
+    }
+  ],
+  "textures": {
+    "gold": "minecraft:block/gold_block",
+    "particle": "minecraft:block/gold_block"
+  }
+}

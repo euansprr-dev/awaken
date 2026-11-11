@@ -1,0 +1,122 @@
+# Armour polish audit (stage 3's B, A and S plates: each set on three stands (back three-quarter, back, side)). Written by docs/armour/polish/tours.py: edit that, not this.
+# A studio at y 150 (under the clouds), noon, a mid-grey wall behind, Euan's window size.
+# ci knobs: LENS=cinematic
+world armouraudit8 creative 5158
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+cmd gamemode creative
+cmd tp @s 0.5 150 0.5 0 0
+cmd forceload add -16 -16 104 16
+wait 300
+cmd fill -8 149 0 104 149 12 minecraft:smooth_stone
+cmd fill -8 150 11 104 158 11 minecraft:light_gray_concrete
+wait 20
+cmd summon minecraft:armor_stand -1.8 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:deepcarapace_helmet"},chest:{id:"awaken:deepcarapace_chestplate"},legs:{id:"awaken:deepcarapace_leggings"},feet:{id:"awaken:deepcarapace_boots"}}}
+cmd summon minecraft:armor_stand 0.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:deepcarapace_helmet"},chest:{id:"awaken:deepcarapace_chestplate"},legs:{id:"awaken:deepcarapace_leggings"},feet:{id:"awaken:deepcarapace_boots"}}}
+cmd summon minecraft:armor_stand 2.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:deepcarapace_helmet"},chest:{id:"awaken:deepcarapace_chestplate"},legs:{id:"awaken:deepcarapace_leggings"},feet:{id:"awaken:deepcarapace_boots"}}}
+cmd summon minecraft:armor_stand 6.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:cloudrunner_helmet"},chest:{id:"awaken:cloudrunner_chestplate"},legs:{id:"awaken:cloudrunner_leggings"},feet:{id:"awaken:cloudrunner_boots"}}}
+cmd summon minecraft:armor_stand 8.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:cloudrunner_helmet"},chest:{id:"awaken:cloudrunner_chestplate"},legs:{id:"awaken:cloudrunner_leggings"},feet:{id:"awaken:cloudrunner_boots"}}}
+cmd summon minecraft:armor_stand 10.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:cloudrunner_helmet"},chest:{id:"awaken:cloudrunner_chestplate"},legs:{id:"awaken:cloudrunner_leggings"},feet:{id:"awaken:cloudrunner_boots"}}}
+cmd summon minecraft:armor_stand 14.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:tidebreaker_helmet"},chest:{id:"awaken:tidebreaker_chestplate"},legs:{id:"awaken:tidebreaker_leggings"},feet:{id:"awaken:tidebreaker_boots"}}}
+cmd summon minecraft:armor_stand 16.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:tidebreaker_helmet"},chest:{id:"awaken:tidebreaker_chestplate"},legs:{id:"awaken:tidebreaker_leggings"},feet:{id:"awaken:tidebreaker_boots"}}}
+cmd summon minecraft:armor_stand 18.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:tidebreaker_helmet"},chest:{id:"awaken:tidebreaker_chestplate"},legs:{id:"awaken:tidebreaker_leggings"},feet:{id:"awaken:tidebreaker_boots"}}}
+cmd summon minecraft:armor_stand 22.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:hollowheart_helmet"},chest:{id:"awaken:hollowheart_chestplate"},legs:{id:"awaken:hollowheart_leggings"},feet:{id:"awaken:hollowheart_boots"}}}
+cmd summon minecraft:armor_stand 24.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:hollowheart_helmet"},chest:{id:"awaken:hollowheart_chestplate"},legs:{id:"awaken:hollowheart_leggings"},feet:{id:"awaken:hollowheart_boots"}}}
+cmd summon minecraft:armor_stand 26.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:hollowheart_helmet"},chest:{id:"awaken:hollowheart_chestplate"},legs:{id:"awaken:hollowheart_leggings"},feet:{id:"awaken:hollowheart_boots"}}}
+cmd summon minecraft:armor_stand 30.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:leviathan_helmet"},chest:{id:"awaken:leviathan_chestplate"},legs:{id:"awaken:leviathan_leggings"},feet:{id:"awaken:leviathan_boots"}}}
+cmd summon minecraft:armor_stand 32.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:leviathan_helmet"},chest:{id:"awaken:leviathan_chestplate"},legs:{id:"awaken:leviathan_leggings"},feet:{id:"awaken:leviathan_boots"}}}
+cmd summon minecraft:armor_stand 34.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:leviathan_helmet"},chest:{id:"awaken:leviathan_chestplate"},legs:{id:"awaken:leviathan_leggings"},feet:{id:"awaken:leviathan_boots"}}}
+cmd summon minecraft:armor_stand 38.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:galewing_helmet"},chest:{id:"awaken:galewing_chestplate"},legs:{id:"awaken:galewing_leggings"},feet:{id:"awaken:galewing_boots"}}}
+cmd summon minecraft:armor_stand 40.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:galewing_helmet"},chest:{id:"awaken:galewing_chestplate"},legs:{id:"awaken:galewing_leggings"},feet:{id:"awaken:galewing_boots"}}}
+cmd summon minecraft:armor_stand 42.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:galewing_helmet"},chest:{id:"awaken:galewing_chestplate"},legs:{id:"awaken:galewing_leggings"},feet:{id:"awaken:galewing_boots"}}}
+cmd summon minecraft:armor_stand 46.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:halo_choir_helmet"},chest:{id:"awaken:halo_choir_chestplate"},legs:{id:"awaken:halo_choir_leggings"},feet:{id:"awaken:halo_choir_boots"}}}
+cmd summon minecraft:armor_stand 48.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:halo_choir_helmet"},chest:{id:"awaken:halo_choir_chestplate"},legs:{id:"awaken:halo_choir_leggings"},feet:{id:"awaken:halo_choir_boots"}}}
+cmd summon minecraft:armor_stand 50.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:halo_choir_helmet"},chest:{id:"awaken:halo_choir_chestplate"},legs:{id:"awaken:halo_choir_leggings"},feet:{id:"awaken:halo_choir_boots"}}}
+cmd summon minecraft:armor_stand 54.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:dreamsteel_helmet"},chest:{id:"awaken:dreamsteel_chestplate"},legs:{id:"awaken:dreamsteel_leggings"},feet:{id:"awaken:dreamsteel_boots"}}}
+cmd summon minecraft:armor_stand 56.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:dreamsteel_helmet"},chest:{id:"awaken:dreamsteel_chestplate"},legs:{id:"awaken:dreamsteel_leggings"},feet:{id:"awaken:dreamsteel_boots"}}}
+cmd summon minecraft:armor_stand 58.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:dreamsteel_helmet"},chest:{id:"awaken:dreamsteel_chestplate"},legs:{id:"awaken:dreamsteel_leggings"},feet:{id:"awaken:dreamsteel_boots"}}}
+cmd summon minecraft:armor_stand 62.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:starfall_helmet"},chest:{id:"awaken:starfall_chestplate"},legs:{id:"awaken:starfall_leggings"},feet:{id:"awaken:starfall_boots"}}}
+cmd summon minecraft:armor_stand 64.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:starfall_helmet"},chest:{id:"awaken:starfall_chestplate"},legs:{id:"awaken:starfall_leggings"},feet:{id:"awaken:starfall_boots"}}}
+cmd summon minecraft:armor_stand 66.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:starfall_helmet"},chest:{id:"awaken:starfall_chestplate"},legs:{id:"awaken:starfall_leggings"},feet:{id:"awaken:starfall_boots"}}}
+cmd summon minecraft:armor_stand 70.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:riftwalker_helmet"},chest:{id:"awaken:riftwalker_chestplate"},legs:{id:"awaken:riftwalker_leggings"},feet:{id:"awaken:riftwalker_boots"}}}
+cmd summon minecraft:armor_stand 72.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:riftwalker_helmet"},chest:{id:"awaken:riftwalker_chestplate"},legs:{id:"awaken:riftwalker_leggings"},feet:{id:"awaken:riftwalker_boots"}}}
+cmd summon minecraft:armor_stand 74.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:riftwalker_helmet"},chest:{id:"awaken:riftwalker_chestplate"},legs:{id:"awaken:riftwalker_leggings"},feet:{id:"awaken:riftwalker_boots"}}}
+cmd summon minecraft:armor_stand 78.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:nightcourt_helmet"},chest:{id:"awaken:nightcourt_chestplate"},legs:{id:"awaken:nightcourt_leggings"},feet:{id:"awaken:nightcourt_boots"}}}
+cmd summon minecraft:armor_stand 80.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:nightcourt_helmet"},chest:{id:"awaken:nightcourt_chestplate"},legs:{id:"awaken:nightcourt_leggings"},feet:{id:"awaken:nightcourt_boots"}}}
+cmd summon minecraft:armor_stand 82.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:nightcourt_helmet"},chest:{id:"awaken:nightcourt_chestplate"},legs:{id:"awaken:nightcourt_leggings"},feet:{id:"awaken:nightcourt_boots"}}}
+cmd summon minecraft:armor_stand 86.2 150 7.5 {ShowArms:1b,Rotation:[40f,0f],equipment:{head:{id:"awaken:signals_echo_helmet"},chest:{id:"awaken:signals_echo_chestplate"},legs:{id:"awaken:signals_echo_leggings"},feet:{id:"awaken:signals_echo_boots"}}}
+cmd summon minecraft:armor_stand 88.5 150 7.5 {ShowArms:1b,Rotation:[0f,0f],equipment:{head:{id:"awaken:signals_echo_helmet"},chest:{id:"awaken:signals_echo_chestplate"},legs:{id:"awaken:signals_echo_leggings"},feet:{id:"awaken:signals_echo_boots"}}}
+cmd summon minecraft:armor_stand 90.8 150 7.5 {ShowArms:1b,Rotation:[270f,0f],equipment:{head:{id:"awaken:signals_echo_helmet"},chest:{id:"awaken:signals_echo_chestplate"},legs:{id:"awaken:signals_echo_leggings"},feet:{id:"awaken:signals_echo_boots"}}}
+hud off
+camera first
+opt fov 40
+wait 260
+cmd tp @s 0.5 150 2.4 0 2
+wait 14
+shot p_deepcarapace
+cmd tp @s 8.5 150 2.4 0 2
+wait 14
+shot p_cloudrunner
+cmd tp @s 16.5 150 2.4 0 2
+wait 14
+shot p_tidebreaker
+cmd tp @s 24.5 150 2.4 0 2
+wait 14
+shot p_hollowheart
+cmd tp @s 32.5 150 2.4 0 2
+wait 14
+shot p_leviathan
+cmd tp @s 40.5 150 2.4 0 2
+wait 14
+shot p_galewing
+cmd tp @s 48.5 150 2.4 0 2
+wait 14
+shot p_halo_choir
+cmd tp @s 56.5 150 2.4 0 2
+wait 14
+shot p_dreamsteel
+cmd tp @s 64.5 150 2.4 0 2
+wait 14
+shot p_starfall
+cmd tp @s 72.5 150 2.4 0 2
+wait 14
+shot p_riftwalker
+cmd tp @s 80.5 150 2.4 0 2
+wait 14
+shot p_nightcourt
+cmd tp @s 88.5 150 2.4 0 2
+wait 14
+shot p_signals_echo
+cmd item replace entity @s armor.head with awaken:signals_echo_helmet
+cmd item replace entity @s armor.chest with awaken:signals_echo_chestplate
+cmd item replace entity @s armor.legs with awaken:signals_echo_leggings
+cmd item replace entity @s armor.feet with awaken:signals_echo_boots
+opt fov 50
+cmd tp @s -4.5 150 5.5 0 0
+camera back
+look 0 10
+wait 20
+shotnow p_glitch_rest
+cmd awaken armour kick
+wait 2
+shotnow p_glitch_a
+wait 2
+shotnow p_glitch_b
+wait 2
+shotnow p_glitch_c
+wait 2
+shotnow p_glitch_d
+quit

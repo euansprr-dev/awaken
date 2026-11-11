@@ -1,0 +1,73 @@
+# Two faults Euan found playing (11 Nov; SPEC §22 "Steady Light", cover and reach), shown on CI:
+# 1. the edges: with a wide view, the ground at the bottom of the screen and a wall at its side lost their shade (the
+#    "within arm's reach" floor was measured straight ahead, not along the line of sight);
+# 2. the cave: blocks under a thick roof beside open sky stood bright against the deep open-air shade.
+# A stone room with a seven-block roof and its mouth toward the camera, in its own long morning shadow.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-cover-ci.txt 1800
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 0.5 -90 20
+cmd forceload add -32 -32 32 32
+wait 200
+cmd fill -20 120 -20 24 120 20 minecraft:grass_block
+cmd fill -8 120 -7 23 120 7 minecraft:stone
+cmd fill 10 121 -8 24 131 -8 minecraft:stone
+cmd fill 10 121 8 24 131 8 minecraft:stone
+cmd fill 24 121 -8 24 131 8 minecraft:stone
+cmd fill 10 125 -8 24 131 8 minecraft:stone
+cmd setblock 21 121 4 minecraft:torch
+cmd fill -3 121 -9 2 124 -9 minecraft:stone_bricks
+cmd tp @s 0.5 121 0.5 -90 5
+camera first
+hud on
+lookswitch cinematic
+wait 400
+cmd time set 2000
+wait 200
+opt fov 70
+look -90 5
+wait 60
+shot v1_fov70_level
+look -90 30
+wait 40
+shot v2_fov70_down
+opt fov 100
+look -90 12
+wait 60
+shot v3_fov100
+look -60 22
+wait 40
+shot v4_fov100_side
+opt fov 110
+look -90 5
+wait 60
+shot v5_fov110_level
+opt fov 70
+cmd tp @s 5.5 121 0.5 -90 4
+wait 100
+shot v6_mouth
+cmd tp @s 12.5 121 0.5 -90 8
+wait 100
+shot v7_inside
+cmd tp @s 20.5 121 0.5 90 4
+wait 100
+shot v8_looking_out
+cmd tp @s 9.5 121 5.5 -40 20
+wait 100
+shot v9_edge_of_roof
+quit

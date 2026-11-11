@@ -11,7 +11,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
  * Wild life, the common half (SPEC "Wild life"): the client-only body every wild animal is drawn with, the voices they
- * call with (tools/art/specs/audio_wild.py), the density tables ({@link Density}) and the module's GameTests. Everything
+ * call with (Minecraft's own recordings by name: tools/art/specs/audit_birds.py, SPEC §66.3), the density tables ({@link Density}) and the module's GameTests. Everything
  * that moves lives on the client ({@code wildlife.client}); the server registers the type and never makes one.
  */
 public final class WildlifeModule {
@@ -29,7 +29,7 @@ public final class WildlifeModule {
             SONG_FINCH = sound("wild.song.finch"), SONG_WREN = sound("wild.song.wren"), CHIP = sound("wild.chip"),
             FLUSH = sound("wild.flush"), WINGS_BIG = sound("wild.wings.big"), DRUM = sound("wild.woodpecker.drum"),
             TAP = sound("wild.woodpecker.tap"), CAW = sound("wild.crow.caw"), RAPTOR = sound("wild.raptor.call"),
-            HOOT = sound("wild.owl.hoot"), QUACK = sound("wild.duck.quack"), CROAK_HERON = sound("wild.heron.croak"),
+            QUACK = sound("wild.duck.quack"), CROAK_HERON = sound("wild.heron.croak"),
             CHATTER = sound("wild.squirrel.chatter"), PLOP = sound("wild.frog.plop"), CRICKET = sound("wild.cricket"),
             RUSTLE = sound("wild.rustle");
 

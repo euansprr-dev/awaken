@@ -4,6 +4,7 @@ import dev.awaken.Awaken;
 import dev.awaken.core.AwakenCommands;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.api.HoloBand;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -56,6 +57,7 @@ public final class BandModule {
 
     public static void init(IEventBus modBus) {
         ITEMS.register(modBus);
+        Tabs.fill(Tabs.Shelf.GEAR, HOLO_BAND);
         ATTACHMENTS.register(modBus);
         modBus.addListener(RegisterPayloadHandlersEvent.class, BandNet::register);
         var bus = NeoForge.EVENT_BUS;

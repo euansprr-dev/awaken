@@ -59,6 +59,18 @@ public final class ArmourContent {
             EDGE = ability("edge"), RUNE = ability("rune"), OVERCHANNEL = ability("overchannel"), RING = ability("ring"),
             ROOTED = ability("rooted"), GORE = ability("gore");
 
+    /** A piece going on and one stride in a set, by what the set is made of ({@link ArmourSounds.Family}'s order), and a
+     * blow landing on it (SPEC §44.12). */
+    public static final java.util.List<DeferredHolder<SoundEvent, SoundEvent>> EQUIP = family("equip_"), MOVE = family("move_");
+    public static final DeferredHolder<SoundEvent, SoundEvent> STRUCK_SOFT = ability("struck_soft"), STRUCK_PLATE = ability("struck_plate"),
+            STRUCK_CRYSTAL = ability("struck_crystal"), STRUCK_BONE = ability("struck_bone");
+
+    private static java.util.List<DeferredHolder<SoundEvent, SoundEvent>> family(String prefix) {
+        var out = new java.util.ArrayList<DeferredHolder<SoundEvent, SoundEvent>>();
+        for (ArmourSounds.Family f : ArmourSounds.Family.values()) out.add(ability(prefix + f.id));
+        return java.util.List.copyOf(out);
+    }
+
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String name) {
         return SOUNDS.register("forge." + name, () -> SoundEvent.createVariableRangeEvent(Awaken.id("forge." + name)));
     }

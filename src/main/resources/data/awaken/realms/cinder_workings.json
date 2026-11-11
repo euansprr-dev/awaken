@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "name": "The Cinder Workings",
+  "line": "This mine was worked until it caught fire, and it has been burning ever since.",
+  "form": "dungeon",
+  "theme": "ember_mines",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:cinder_workings",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/cinder_workings"
+    ],
+    "lens": "cinder_workings",
+    "air": [
+      "shaft_dust",
+      "smoke",
+      "ash",
+      "embers",
+      "dust",
+      "steam"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "ember_tyrant",
+    "seat": "under_the_roads"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

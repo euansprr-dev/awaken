@@ -1,0 +1,186 @@
+{
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ]
+    }
+  },
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#wood"
+        },
+        "east": {
+          "texture": "#wood"
+        },
+        "north": {
+          "texture": "#wood"
+        },
+        "south": {
+          "texture": "#wood"
+        },
+        "up": {
+          "texture": "#wood"
+        },
+        "west": {
+          "texture": "#wood"
+        }
+      },
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        7,
+        9
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#rope"
+        },
+        "east": {
+          "texture": "#rope"
+        },
+        "north": {
+          "texture": "#rope"
+        },
+        "south": {
+          "texture": "#rope"
+        },
+        "up": {
+          "texture": "#rope"
+        },
+        "west": {
+          "texture": "#rope"
+        }
+      },
+      "from": [
+        6.5,
+        4,
+        6.5
+      ],
+      "to": [
+        9.5,
+        5.5,
+        9.5
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#rope"
+        },
+        "east": {
+          "texture": "#rope"
+        },
+        "north": {
+          "texture": "#rope"
+        },
+        "south": {
+          "texture": "#rope"
+        },
+        "up": {
+          "texture": "#rope"
+        },
+        "west": {
+          "texture": "#rope"
+        }
+      },
+      "from": [
+        7.5,
+        5,
+        7.5
+      ],
+      "rotation": {
+        "angle": -22.5,
+        "axis": "x",
+        "origin": [
+          8,
+          5,
+          8
+        ]
+      },
+      "to": [
+        8.5,
+        16,
+        8.5
+      ]
+    }
+  ],
+  "textures": {
+    "particle": "minecraft:block/stripped_oak_log",
+    "rope": "minecraft:block/stripped_oak_log",
+    "wood": "minecraft:block/spruce_log"
+  }
+}

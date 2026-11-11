@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/fane_bed"
+      },
+      {
+        "model": "awaken:block/fane_bed",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/fane_bed",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/fane_bed",
+        "y": 270
+      }
+    ]
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "pools": [
+    {
+      "entries": [
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 3,
+                "min": 1,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:iron_ingot",
+          "type": "minecraft:item",
+          "weight": 6
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 3,
+                "min": 1,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:emerald",
+          "type": "minecraft:item",
+          "weight": 5
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 3,
+                "min": 1,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:golden_carrot",
+          "type": "minecraft:item",
+          "weight": 4
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 14,
+                "min": 6,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:arrow",
+          "type": "minecraft:item",
+          "weight": 4
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 2,
+                "min": 1,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:lantern",
+          "type": "minecraft:item",
+          "weight": 3
+        },
+        {
+          "functions": [
+            {
+              "count": {
+                "max": 6,
+                "min": 2,
+                "type": "minecraft:uniform"
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:copper_ingot",
+          "type": "minecraft:item",
+          "weight": 5
+        }
+      ],
+      "rolls": 3
+    },
+    {
+      "conditions": [
+        {
+          "chance": 0.2,
+          "condition": "minecraft:random_chance"
+        }
+      ],
+      "entries": [
+        {
+          "name": "minecraft:saddle",
+          "type": "minecraft:item",
+          "weight": 2
+        },
+        {
+          "name": "minecraft:name_tag",
+          "type": "minecraft:item",
+          "weight": 2
+        },
+        {
+          "name": "minecraft:music_disc_13",
+          "type": "minecraft:item",
+          "weight": 1
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:finds/e_big",
+  "type": "minecraft:chest"
+}

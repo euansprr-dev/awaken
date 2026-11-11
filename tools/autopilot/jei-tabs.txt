@@ -1,0 +1,121 @@
+# JEI finds everything, and the creative menu in tabs (11 Nov 2026, SPEC §1 "Creative tabs", §14 JEI).
+#   tools/tour-ci.sh tools/autopilot/jei-tabs.txt 1800
+# ci knobs: PACK=comfort
+# Survival first, so the spoiler guard is on. Shots:
+#   01-02  a fresh player holding planks and logs: the Bell Frame's recipe unlocks, so JEI shows the frame and its recipe
+#   03-10  everything discovered: JEI searches for things that were missing or folded into one (bells, power cores,
+#          enchantment pages, flower boxes, binoculars, lode hearts, meals, the townsfolk's things)
+#   11-    creative: every Awaken tab in turn (a long tab once more, scrolled down), JEI's list beside it
+# Read the log for "[compat] JEI lists" (registered Awaken items JEI has no entry for, and those it lists in several
+# kinds), "[compat] creative menu" (every tab, its page and its size) and "[core] creative tabs" (the check).
+world autopilot_jeitabs survival 4242
+waitworld
+gui 0
+window 1440 900
+cmd weather clear 1000000
+cmd time set 6000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule mob_griefing false
+cmd awaken admin awaken
+wait 100
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance infinite 4 true
+cmd effect give @s minecraft:saturation infinite 1 true
+info
+cmd awaken core tabs
+compat jei missing
+
+# ---- the Bell Frame on a fresh player: its recipe unlocks from planks and logs, and that discovers it ----------------
+cmd clear @s
+cmd awaken compat discovered reset
+wait 60
+cmd give @s minecraft:oak_planks 8
+cmd give @s minecraft:oak_log 4
+wait 100
+compat discovered
+compat inventory
+wait 20
+compat jei search bell frame
+wait 10
+shot jeitabs_01_bell_frame_fresh_player
+compat jei recipes awaken:bell_frame
+wait 20
+shot jeitabs_02_bell_frame_recipe
+screen close
+compat jei search
+
+# ---- everything discovered: what JEI couldn't show before ---------------------------------------------------------
+cmd awaken compat discovered all
+wait 60
+compat inventory
+wait 20
+compat jei search @awaken bell
+wait 10
+shot jeitabs_03_bells
+compat jei search power core
+wait 10
+shot jeitabs_04_power_cores
+compat jei search page
+wait 10
+shot jeitabs_05_enchantment_pages
+compat jei search flower box
+wait 10
+shot jeitabs_06_flower_boxes
+compat jei search binoculars
+wait 10
+shot jeitabs_07_binoculars
+compat jei search lode heart
+wait 10
+shot jeitabs_08_lode_hearts
+compat jei search @awaken stew
+wait 10
+shot jeitabs_09_meals
+compat jei search @awaken basket
+wait 10
+shot jeitabs_10_townsfolk
+compat jei search
+screen close
+
+# ---- creative: every tab ------------------------------------------------------------------------------------------
+cmd gamemode creative
+wait 40
+compat creative awaken
+wait 10
+shot jeitabs_11_tab_awaken_old
+compat creative weapons
+wait 10
+shot jeitabs_12_tab_weapons
+compat creative armour
+wait 10
+shot jeitabs_13_tab_armour
+compat creative tools
+wait 10
+shot jeitabs_14_tab_tools
+compat creative stations
+wait 10
+shot jeitabs_15_tab_stations
+compat creative materials
+wait 10
+shot jeitabs_16_tab_materials
+compat creative building
+wait 10
+shot jeitabs_17_tab_building
+compat creative gate_worlds
+wait 10
+shot jeitabs_18_tab_gate_worlds
+scroll -40
+wait 5
+shot jeitabs_19_tab_gate_worlds_further
+compat creative nature
+wait 10
+shot jeitabs_20_tab_nature
+compat creative relics
+wait 10
+shot jeitabs_21_tab_relics
+compat creative creatures
+wait 10
+shot jeitabs_22_tab_creatures
+screen close
+quit

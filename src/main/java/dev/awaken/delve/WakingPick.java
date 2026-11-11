@@ -77,7 +77,7 @@ public final class WakingPick {
         }
         give(p);
         p.level().playSound(null, at, SoundEvents.TRIAL_SPAWNER_EJECT_ITEM, SoundSource.PLAYERS, 0.7F, 0.6F);
-        p.level().playSound(null, at, DelveContent.TRUE_STRIKE.get(), SoundSource.PLAYERS, 0.5F, 0.7F);
+        p.level().playSound(null, at, SoundEvents.SMITHING_TABLE_USE, SoundSource.PLAYERS, 0.5F, 1.2F);
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("The Delver's Old Head"))
                 .body(Component.literal("The haft has rotted away, but the head is good. Take it to a War Anvil with a log and some string, and you can hang it on a new haft yourself."))
                 .moment().ttl(20 * 14).build());

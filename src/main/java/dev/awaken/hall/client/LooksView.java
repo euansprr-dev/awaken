@@ -9,9 +9,9 @@ import dev.awaken.armour.Forged;
 import dev.awaken.armour.ForgeSong;
 import dev.awaken.armour.client.ForgeClient;
 import dev.awaken.armour.net.ArmourPayloads;
+import dev.awaken.core.client.ui.Figure;
 import dev.awaken.hall.HallNet;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
@@ -83,7 +83,7 @@ final class LooksView extends CloseView {
         var player = Minecraft.getInstance().player;
         if (player != null && e > .3F) {
             int x0 = Math.round(s.ox + 180F * s.k), y0 = Math.round(s.oy + 40F * s.k), x1 = Math.round(s.ox + 940F * s.k), y1 = Math.round(s.oy + 900F * s.k);
-            InventoryScreen.extractEntityInInventoryFollowsMouse(s.g, x0, y0, x1, y1, Math.round(360F * s.k), .0625F, (float) mouseX, (float) mouseY, player);
+            Figure.followsMouse(s.g, x0, y0, x1, y1, Math.round(360F * s.k), .0625F, (float) mouseX, (float) mouseY, player);
         }
         float slide = (1F - e) * (1F - e);
         s.g.nextStratum();

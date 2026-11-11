@@ -74,9 +74,13 @@ neoForge {
             gameDirectory = project.file('run-autopilot')
             systemProperty 'awaken.autopilot', project.file('run-autopilot/script.txt').absolutePath
             // open behind the owner's work: SDL neither activates the app nor focuses the window when it shows
-            environment 'SDL_MAC_BACKGROUND_APP', '1'
-            environment 'SDL_WINDOW_ACTIVATE_WHEN_SHOWN', '0'
-            systemProperty 'apple.awt.UIElement', 'true'
+            // -Pforeground (tools/autopilot.sh FOREGROUND=1; measurement only, with the owner's OK): an ordinary app
+            // that takes the front, for a fullscreen tour on the screen he plays on
+            if (!project.hasProperty('foreground')) {
+                environment 'SDL_MAC_BACKGROUND_APP', '1'
+                environment 'SDL_WINDOW_ACTIVATE_WHEN_SHOWN', '0'
+                systemProperty 'apple.awt.UIElement', 'true'
+            }
             // frame-time experiments (tools/autopilot.sh with XMX=6G ZGC=1): the client's heap and garbage collector
             if (project.hasProperty('xmx')) jvmArgument "-Xmx${project.property('xmx')}"
             if (project.hasProperty('zgc')) jvmArgument '-XX:+UseZGC'
@@ -276,6 +280,31 @@ publishing {
         maven {
             url "file://${project.projectDir}/repo"
         }
+    }
+}
+
+// tools/bench/bench.sh: what javac needs to rebuild one gate's land, and what plain java needs to start the GameTest
+// server outside Gradle (the same classpath, JVM arguments and main class as runGameTestServer), in build/bench/.
+tasks.register('benchClasspath') {
+    def run = tasks.named('runGameTestServer', JavaExec).get()
+    dependsOn run.dependsOn, tasks.named('classes')
+    def compileCp = sourceSets.main.compileClasspath + sourceSets.main.output.classesDirs
+    def runCp = run.classpathProvider // the plugin's task only hands its classpath to JavaExec as it starts
+    inputs.files(runCp)
+    def launch = [
+            'run.main'   : run.mainClass.get(),
+            'run.jvmargs': run.allJvmArgs.join('\n'),
+            'run.args'   : run.args.join('\n'),
+            'run.java'   : run.javaLauncher.get().executablePath.asFile.absolutePath,
+            'run.env'    : run.environmentProperty.get().collect { k, v -> "${k}=${v}" }.join('\n'),
+    ]
+    def out = layout.buildDirectory.dir('bench').get().asFile
+    outputs.dir(out)
+    doLast {
+        out.mkdirs()
+        new File(out, 'compile.classpath').text = compileCp.asPath
+        new File(out, 'run.classpath').text = runCp.asPath
+        launch.each { k, v -> new File(out, k).text = v }
     }
 }
 

@@ -1,0 +1,194 @@
+# Measurement only (the look-steady-60 plan), second Dell tour: what the first one left open.
+# A. Cinematic with Far Sight on, as he played it on 8 Nov (run with FARSIGHT=near).  B. how frames are paced: vsync and
+# the cap, four ways.  C. which part of ImmersiveVFX's fog costs, a lighter shadow mode, and a trimmed set.  D. Carillon
+# from the Runners' Roost, the heaviest view.
+#   FARSIGHT=near tools/steady60-tour.sh tools/autopilot/steady60-dell-2.txt dell-2
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+# the first tour had a Rolling Storm cell over the spot: its shadow took Lens's sun away. End it, for a fair look at shadows
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+display DELL fullscreen
+wait 200
+info
+camera first
+hud on
+opt vsync 0
+opt maxFps 260
+pixels gpu on
+# ---- A. Cinematic with Far Sight (near reach): its rings need most of a minute
+lookswitch cinematic
+wait 1100
+farsight status
+pixels gpu reset
+perf cine_fs_raw_still 12
+pixels gpu cine_fs_raw_still
+turn 1.5 240
+pixels gpu reset
+perf cine_fs_raw_turn 12
+pixels gpu cine_fs_raw_turn
+shot t1_cine_farsight
+opt vsync 1
+opt maxFps 60
+wait 60
+pixels gpu reset
+perf cine_fs_played_still 12
+pixels gpu cine_fs_played_still
+turn 1.5 240
+pixels gpu reset
+perf cine_fs_played_turn 12
+pixels gpu cine_fs_played_turn
+farsight off
+wait 60
+shot t1b_cine_clear_sky
+# ---- B. pacing on Cinematic without Far Sight: vsync and the cap
+opt vsync 1
+opt maxFps 120
+wait 60
+turn 1.5 240
+perf cine_v1_c120_turn 12
+opt maxFps 260
+wait 60
+turn 1.5 240
+perf cine_v1_unl_turn 12
+opt vsync 0
+opt maxFps 60
+wait 60
+turn 1.5 240
+perf cine_v0_c60_turn 12
+# ---- C. ImmersiveVFX: the fog's parts, a lighter shadow mode, a trimmed set
+opt maxFps 260
+lookswitch vfx
+wait 200
+pixels gpu reset
+perf vfx2_raw_still 10
+pixels gpu vfx2_raw_still
+shot t2a_vfx_clear_sky
+vfx shadowMode=NORMAL
+wait 40
+pixels gpu reset
+perf vfx2_shadow_normal 10
+pixels gpu vfx2_shadow_normal
+shot t2_vfx_shadow_normal
+vfx shadowMode=ENHANCED;fogRenderingMode=IMMERSIVE
+wait 40
+pixels gpu reset
+perf vfx2_fog_immersive 10
+pixels gpu vfx2_fog_immersive
+vfx fogRenderingMode=CHUNK_DISTANCE
+wait 40
+pixels gpu reset
+perf vfx2_fog_chunk 10
+pixels gpu vfx2_fog_chunk
+vfx fogRenderingMode=IMMERSIVE_EXTENDED;atmosphericFog=false
+wait 40
+pixels gpu reset
+perf vfx2_no_atmofog 10
+pixels gpu vfx2_no_atmofog
+vfx atmosphericFog=true;groundMist=false;lowLyingFog=false;weatherMist=false;dynamicFog=false
+wait 40
+pixels gpu reset
+perf vfx2_no_mists 10
+pixels gpu vfx2_no_mists
+vfx groundMist=true;lowLyingFog=true;weatherMist=true;dynamicFog=true;shadowMode=NORMAL;waterReflections=false;iceReflections=false
+wait 40
+pixels gpu reset
+perf vfx2_trim_raw_still 12
+pixels gpu vfx2_trim_raw_still
+shot t3_vfx_trim
+opt vsync 1
+opt maxFps 60
+wait 60
+turn 1.5 240
+pixels gpu reset
+perf vfx2_trim_played_turn 12
+pixels gpu vfx2_trim_played_turn
+vfx shadowMode=ENHANCED;waterReflections=true;iceReflections=true
+wait 60
+opt maxFps 260
+wait 40
+turn 1.5 240
+perf vfx2_v1_unl_turn 12
+opt vsync 0
+# ---- E. flights east and back (16 blocks a second, 45 up): the open view, where the first tour's VFX fell under 60
+cmd gamemode spectator
+cmd tp @s ~ ~45 ~
+lookswitch cinematic
+wait 120
+look -90 12
+glide 0.8 0 0 400
+pixels gpu reset
+perf cine_fly_newland 20
+pixels gpu cine_fly_newland
+lookswitch vfx
+wait 160
+vfx shadows=false
+wait 40
+look 90 12
+glide -0.8 0 0 400
+pixels gpu reset
+perf vfx2_fly_noshadow 20
+pixels gpu vfx2_fly_noshadow
+vfx shadows=true;shadowMode=NORMAL;waterReflections=false;iceReflections=false
+wait 40
+look -90 12
+glide 0.8 0 0 400
+pixels gpu reset
+perf vfx2_fly_trim 20
+pixels gpu vfx2_fly_trim
+vfx shadows=false;lightRays=false;underwaterLightRays=false;bloom=false;enhancedLight=false
+wait 40
+look 90 12
+glide -0.8 0 0 400
+pixels gpu reset
+perf vfx2_fly_fogsky 20
+pixels gpu vfx2_fly_fogsky
+shot t7_fly_vfx_fogsky
+vfx shadows=true;shadowMode=ENHANCED;waterReflections=true;iceReflections=true;lightRays=true;underwaterLightRays=true;bloom=true;enhancedLight=true
+wait 60
+cmd gamemode creative
+# ---- D. Carillon from the Runners' Roost
+cmd awaken city view studio_roost
+wait 500
+pixels gpu reset
+perf roost_vfx_raw 12
+pixels gpu roost_vfx_raw
+shot t4_roost_vfx
+opt vsync 1
+opt maxFps 60
+wait 40
+pixels gpu reset
+perf roost_vfx_played 12
+pixels gpu roost_vfx_played
+opt vsync 0
+opt maxFps 260
+lookswitch cinematic
+wait 160
+pixels gpu reset
+perf roost_cine_raw 12
+pixels gpu roost_cine_raw
+shot t5_roost_cine
+opt vsync 1
+opt maxFps 60
+wait 40
+pixels gpu reset
+perf roost_cine_played 12
+pixels gpu roost_cine_played
+opt vsync 0
+opt maxFps 260
+lookswitch swift
+wait 120
+pixels gpu reset
+perf roost_swift_raw 10
+pixels gpu roost_swift_raw
+shot t6_roost_swift
+pixels config
+quit

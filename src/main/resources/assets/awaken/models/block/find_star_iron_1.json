@@ -1,0 +1,178 @@
+{
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ]
+    }
+  },
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#coal"
+        },
+        "east": {
+          "texture": "#coal"
+        },
+        "north": {
+          "texture": "#coal"
+        },
+        "south": {
+          "texture": "#coal"
+        },
+        "up": {
+          "texture": "#coal"
+        },
+        "west": {
+          "texture": "#coal"
+        }
+      },
+      "from": [
+        5,
+        0,
+        5
+      ],
+      "to": [
+        11,
+        4,
+        11
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#iron"
+        },
+        "east": {
+          "texture": "#iron"
+        },
+        "north": {
+          "texture": "#iron"
+        },
+        "south": {
+          "texture": "#iron"
+        },
+        "up": {
+          "texture": "#iron"
+        },
+        "west": {
+          "texture": "#iron"
+        }
+      },
+      "from": [
+        6,
+        4,
+        6
+      ],
+      "to": [
+        10,
+        6,
+        10
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#glow"
+        },
+        "east": {
+          "texture": "#glow"
+        },
+        "north": {
+          "texture": "#glow"
+        },
+        "south": {
+          "texture": "#glow"
+        },
+        "up": {
+          "texture": "#glow"
+        },
+        "west": {
+          "texture": "#glow"
+        }
+      },
+      "from": [
+        7,
+        6,
+        7
+      ],
+      "to": [
+        9,
+        7,
+        9
+      ]
+    }
+  ],
+  "textures": {
+    "coal": "minecraft:block/coal_block",
+    "glow": "minecraft:block/ochre_froglight_side",
+    "iron": "minecraft:block/anvil",
+    "particle": "minecraft:block/coal_block"
+  }
+}

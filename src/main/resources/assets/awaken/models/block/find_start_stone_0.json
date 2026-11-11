@@ -1,0 +1,145 @@
+{
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ]
+    }
+  },
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#smooth"
+        },
+        "east": {
+          "texture": "#smooth"
+        },
+        "north": {
+          "texture": "#smooth"
+        },
+        "south": {
+          "texture": "#smooth"
+        },
+        "up": {
+          "texture": "#smooth"
+        },
+        "west": {
+          "texture": "#smooth"
+        }
+      },
+      "from": [
+        2,
+        0,
+        2
+      ],
+      "to": [
+        14,
+        3,
+        14
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#dark"
+        },
+        "east": {
+          "texture": "#dark"
+        },
+        "north": {
+          "texture": "#dark"
+        },
+        "south": {
+          "texture": "#dark"
+        },
+        "up": {
+          "texture": "#dark"
+        },
+        "west": {
+          "texture": "#dark"
+        }
+      },
+      "from": [
+        5,
+        3,
+        5
+      ],
+      "to": [
+        11,
+        4,
+        11
+      ]
+    }
+  ],
+  "textures": {
+    "dark": "minecraft:block/deepslate",
+    "particle": "minecraft:block/deepslate",
+    "smooth": "minecraft:block/smooth_stone"
+  }
+}

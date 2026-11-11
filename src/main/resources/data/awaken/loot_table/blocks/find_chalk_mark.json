@@ -1,0 +1,20 @@
+{
+  "pools": [
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "name": "awaken:find_chalk_mark",
+          "type": "minecraft:item"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/find_chalk_mark",
+  "type": "minecraft:block"
+}

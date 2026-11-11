@@ -3,6 +3,7 @@ package dev.awaken.village.trouble;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.serialization.Codec;
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
@@ -75,6 +76,10 @@ public final class TroubleContent {
         ENTITIES.register(modBus);
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
+        // the village's bell with the bells, the remedy with the herbs, the keepsake and the token with the keepsakes
+        Tabs.fill(Tabs.Shelf.BELLS, VILLAGE_BELL);
+        Tabs.fill(Tabs.Shelf.HERBS_AND_MEALS, GREY_REMEDY);
+        Tabs.fill(Tabs.Shelf.KEEPSAKES, KEEPSAKE, CARVED_TOKEN_ITEM);
         modBus.addListener((EntityAttributeCreationEvent e) -> e.put(RESCUEE.get(), Rescuee.createAttributes().build()));
     }
 

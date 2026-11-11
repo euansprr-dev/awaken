@@ -2,7 +2,7 @@
 // texture (tools/art/specs/lens_clouds.py: r coverage, g shape, b billows, a wisps) sampled at scales that divide its
 // 30720-block repeat. Needs CloudNoiseSampler and lens_frame.glsl (frame texels 18-19) before it.
 
-const float CLOUD_THICK = 84.0;
+#include <awaken:lens_cloud_cells.glsl>
 
 // smooth 3D value noise (0..1) for the billows: real depth, where flat noise slid with height drew vertical streaks
 float cloudHash(vec3 p) {
@@ -18,12 +18,11 @@ float cloudNoise3(vec3 p) {
                mix(mix(cloudHash(i + vec3(0, 0, 1)), cloudHash(i + vec3(1, 0, 1)), f.x), mix(cloudHash(i + vec3(0, 1, 1)), cloudHash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
 }
 
-// x layer base (0: none), y cover, z/w the camera's x and z plus the wind (modulo 30720)
-vec4 cloudParams() { return F(18); }
 
 // cloud density at a camera-relative point (0..1); detail 0 skips the billows (light and shadow look-ups), 1 one octave
 // of them (Cinematic), 2 two (Ultra)
 float cloudDensity(vec3 rel, vec4 cp, float camY, int detail) {
+    if (cloudBlocks()) return cloudBlock(rel, cp, camY);
     float base = cp.x - 6.0;
     float h = (rel.y + camY - base) / CLOUD_THICK;
     if (h <= 0.0 || h >= 1.0) return 0.0;
@@ -55,9 +54,11 @@ float cloudDensity(vec3 rel, vec4 cp, float camY, int detail) {
 // how much sunlight the clouds let down to a camera-relative point (the light ray through the layer's middle)
 float cloudShadow(vec3 rel, vec3 l, vec4 cp, float camY) {
     if (cp.x <= 0.0 || l.y < 0.03) return 1.0;
-    float t = (cp.x - 6.0 + CLOUD_THICK * 0.35 - (rel.y + camY)) / l.y;
+    float mid = cp.x - cloudUnder() + cloudThick() * (cloudBlocks() ? 0.2 : 0.35);
+    float t = (mid - (rel.y + camY)) / l.y;
     if (t <= 0.0) return 1.0;
     vec3 q = rel + l * t;
-    q.y = cp.x - 6.0 + CLOUD_THICK * 0.35 - camY;
-    return mix(1.0, 0.28, cloudDensity(q, cp, camY, 0));
+    q.y = mid - camY;
+    // (the Air's thinner blocks let more light down, and their shadows are the blocks' own shapes)
+    return mix(1.0, cloudBlocks() ? 0.5 : 0.28, cloudDensity(q, cp, camY, 0));
 }

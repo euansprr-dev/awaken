@@ -78,7 +78,7 @@ public final class ArmsTrack {
         for (ArmsPayloads.NeedRow n : ArmsArmoury.needs(p, t.style(), t.tier())) {
             rows.add(new Checklist.Row(label(n), "", n.have() >= n.need(), Math.min(n.have(), n.need()), n.need(), null));
         }
-        return new Checklist.Task("arms:track", "Making: " + weaponName(t), rows);
+        return Checklist.Task.live("arms:track", "Making: " + weaponName(t), rows); // what's in the pack now: never kept ticked (SPEC §27.14)
     }
 
     private static List<NowHooks.Suggestion> now(ServerPlayer p) {

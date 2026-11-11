@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "name": "Blockout: The Quiet Barrow",
+  "form": "land",
+  "theme": "bell_crypt",
+  "ranks": [],
+  "land": {
+    "program": "awaken:blockout",
+    "water": 62
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/keep_rain"
+    ]
+  },
+  "heart": {
+    "lord": "hive_regent"
+  }
+}

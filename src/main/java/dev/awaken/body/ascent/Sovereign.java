@@ -118,6 +118,11 @@ public final class Sovereign {
         ServerLevel level = p.level();
         for (LivingEntity e : level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(FIELD), x -> x instanceof Enemy && x.isAlive())) {
             if (e.distanceToSqr(p) > FIELD * FIELD) continue;
+            // a boss stands its ground (SPEC §63.2): slowed a little, never routed, or the form would empty the last fight
+            if (dev.awaken.body.BodyConfig.wayUp() && dev.awaken.powers.Combat.isBoss(e)) {
+                e.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 40, 0, false, false, false));
+                continue;
+            }
             e.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 40, 2, false, false, false));
             if (e instanceof net.minecraft.world.entity.Mob m && m.getTarget() == p) m.setTarget(null);
             if (e instanceof PathfinderMob pm) {

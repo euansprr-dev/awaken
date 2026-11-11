@@ -3,8 +3,10 @@
     "subtitle": "subtitles.awaken.wilds.ward_mark",
     "sounds": [
       {
-        "name": "awaken:wilds_ward_mark",
-        "attenuation_distance": 12
+        "name": "minecraft:block.respawn_anchor.charge",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.2
       }
     ]
   },
@@ -12,8 +14,10 @@
     "subtitle": "subtitles.awaken.wilds.ward_crumble",
     "sounds": [
       {
-        "name": "awaken:wilds_ward_crumble",
-        "attenuation_distance": 16
+        "name": "minecraft:block.deepslate_bricks.break",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.8
       }
     ]
   },
@@ -21,8 +25,10 @@
     "subtitle": "subtitles.awaken.wilds.ward_hold",
     "sounds": [
       {
-        "name": "awaken:wilds_ward_hold",
-        "attenuation_distance": 16
+        "name": "minecraft:block.beacon.power_select",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.8
       }
     ]
   }

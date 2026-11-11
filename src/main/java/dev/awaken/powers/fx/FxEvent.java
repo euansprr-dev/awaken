@@ -11,7 +11,7 @@ import org.jspecify.annotations.Nullable;
  * @param caster entity id of the caster, or -1
  * @param target entity id of the target, or -1
  * @param colour ARGB override; 0 = the style's own colours
- * @param flags  low 16 bits: {@link #ULT}, {@link #FOLLOW}, ...; high 16 bits: the caster's {@link CastAnim}
+ * @param flags  low 16 bits: {@link #ULT}, {@link #FOLLOW}, ... (bits 12-15: the cast's way and take, {@link Ways}); high 16 bits: the caster's {@link CastAnim}
  * @param power  the power that sent it ({@code PowerRegistry} index + 1, 0 none): the client draws that power's ladder looks
  *               at the level in the flags (SPEC 36.4)
  */
@@ -71,6 +71,15 @@ public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double
 
     public int variant() {
         return (flags >> VARIANT_SHIFT) & 3;
+    }
+
+    /** How the cast was made (Ways: standing, at a run, in the air), in flag bits 12-13; the take in bits 14-15. */
+    public int way() {
+        return Ways.wayOfFlags(flags);
+    }
+
+    public int take() {
+        return Ways.takeOfFlags(flags);
     }
 
     public static Builder of(FxKind kind, FxStyle style, Vec3 at) {

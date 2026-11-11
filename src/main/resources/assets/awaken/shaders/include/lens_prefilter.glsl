@@ -7,6 +7,11 @@ uniform sampler2D FarTrustSampler; // whether that depth has proven itself (lens
 uniform sampler2D ParamsSampler;
 #ifdef LENS_LIGHT
 uniform sampler2D CloudsSampler;   // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
+uniform sampler2D FrameSampler;    // LensFrame: texel 22 w the Air
+#include <awaken:lens_frame.glsl>
+#include <awaken:lens_air.glsl>
+#include <awaken:lens_cloud_cells.glsl>
+#include <awaken:lens_cloud_walk.glsl>
 #endif
 
 layout(location = 0) in vec2 texCoord;
@@ -31,6 +36,13 @@ void main() {
 #ifdef LENS_LIGHT
     // the clouds are part of the sky that blooms and that the shafts are made of: bright edges glow, cloud cuts the rays
     vec4 cl = texture(CloudsSampler, texCoord);
+    {
+        // the Air's near clouds in front of the others: walked here at this pass's own half size (lens_cloud_walk.glsl)
+        float dz = texture(DepthSampler, texCoord).r;
+        vec3 pw = unproject(frameMat(0), texCoord, sky > 0.5 ? 1.0e-5 : dz, F(16).x > 0.5);
+        vec4 cb = cloudNear(normalize(pw), sky > 0.5 ? 1.0e9 : length(pw));
+        cl = vec4(cb.rgb + cb.a * cl.rgb, cb.a * cl.a);
+    }
     // (the shafts read the open sky's own brightness: bright cloud tops below the camera mustn't streak into rays)
     float openLuma = dot(c, vec3(0.2126, 0.7152, 0.0722));
     if (sky > 0.5) c = c * cl.a + cl.rgb;
@@ -55,9 +67,16 @@ void main() {
     w *= 1.0 + 1.5 * P(20).a * smoothstep(0.6, 0.9, hi) * smoothstep(0.45, 0.8, sat) * cool;
     float luma = dot(c, vec3(0.2126, 0.7152, 0.0722));
 #ifdef LENS_LIGHT
-    // (only partly: soft clouds cutting the rays fully streak the whole sky like rain curtains)
-    sky *= mix(1.0, cl.a, 0.6);
-    luma = openLuma;
+    if ((LensUse.x > 0.5 ? LensF[22] : texelFetch(FrameSampler, ivec2(22, 0), 0)).w > 0.0) {
+        // the Air: its rays are made of the open sky whatever its colour (the light is the sun's own neighbourhood, by
+        // the shafts pass), and its clouds are solid: they cut a ray whole
+        sky *= cl.a;
+        luma = 1.0;
+    } else {
+        // (only partly: soft clouds cutting the rays fully streak the whole sky like rain curtains)
+        sky *= mix(1.0, cl.a, 0.6);
+        luma = openLuma;
+    }
 #endif
     fragColor = vec4(c * w, sky * smoothstep(0.35, 0.95, luma));
 }

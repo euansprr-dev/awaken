@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "awaken:block/olden_pillar"
+    },
+    "axis=z": {
+      "model": "awaken:block/olden_pillar",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "awaken:block/olden_pillar",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

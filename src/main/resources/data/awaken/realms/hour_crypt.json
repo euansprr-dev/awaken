@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "name": "The Hour Crypt",
+  "line": "Every minute the bell tolls, and every door in the crypt comes down until it stops ringing.",
+  "form": "dungeon",
+  "theme": "bell_crypt",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:hour_crypt",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/knell_crypt"
+    ],
+    "lens": "hour_crypt",
+    "air": [
+      "mist",
+      "shaft_dust",
+      "smoke",
+      "dust",
+      "drips",
+      "bats",
+      "rats"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "candle_keepers",
+    "villages": 1
+  },
+  "law": {
+    "kind": "tolls",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 3,
+    "delves": 0,
+    "finds": 16
+  },
+  "heart": {
+    "lord": "bell_warden",
+    "seat": "under_the_bell"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

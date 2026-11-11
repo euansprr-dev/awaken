@@ -30,6 +30,8 @@ public record LifeProfile(String name, float breath, float breathDepth, float bl
     public enum Idle { LOOK, SNIFF, FLICK, SHAKE, STRETCH, YAWN, SCRATCH, PERK, SETTLE, GRAZE }
 
     public static final String PATH = "/assets/awaken/life/creatures.json";
+    /** The gate monsters' entries, in the same shape (tools/art/specs/gate_monsters.py writes it). */
+    public static final String MONSTERS = "/assets/awaken/life/monsters_creatures.json";
     private static final Set<String> FIELDS = Set.of("temperament", "breath", "breathDepth", "blink", "headSpeed", "headDamping", "eyeLead",
             "springHz", "springDamping", "springGain", "bob", "sway", "lean", "fidget", "idles", "arms", "stagger", "mass", "neck");
 
@@ -98,12 +100,21 @@ public record LifeProfile(String name, float breath, float breathDepth, float bl
         for (String v : fauna.values()) if (!t.containsKey(v)) throw new IllegalStateException(PATH + ": no temperament " + v);
         for (String v : tier.values()) if (!t.containsKey(v)) throw new IllegalStateException(PATH + ": no temperament " + v);
         Map<String, JsonObject> creatures = new HashMap<>();
-        for (Map.Entry<String, JsonElement> e : root.getAsJsonObject("creatures").entrySet()) {
-            JsonObject c = e.getValue().getAsJsonObject();
-            String tn = c.has("temperament") ? c.get("temperament").getAsString() : "default";
-            if (!t.containsKey(tn)) throw new IllegalStateException(PATH + ": " + e.getKey() + " names no temperament " + tn);
-            parse(e.getKey(), merge(t.get(tn), c));
-            creatures.put(e.getKey(), c);
+        java.util.List<JsonObject> files = new java.util.ArrayList<>(java.util.List.of(root.getAsJsonObject("creatures")));
+        // the gates' monsters keep theirs in a file of their own, written with their rigs (SPEC §60)
+        try (InputStream in = LifeProfile.class.getResourceAsStream(MONSTERS)) {
+            if (in != null) files.add(JsonParser.parseReader(new InputStreamReader(in, StandardCharsets.UTF_8)).getAsJsonObject().getAsJsonObject("creatures"));
+        } catch (IOException e) {
+            throw new IllegalStateException("can't read " + MONSTERS, e);
+        }
+        for (JsonObject file : files) {
+            for (Map.Entry<String, JsonElement> e : file.entrySet()) {
+                JsonObject c = e.getValue().getAsJsonObject();
+                String tn = c.has("temperament") ? c.get("temperament").getAsString() : "default";
+                if (!t.containsKey(tn)) throw new IllegalStateException(PATH + ": " + e.getKey() + " names no temperament " + tn);
+                parse(e.getKey(), merge(t.get(tn), c));
+                creatures.put(e.getKey(), c);
+            }
         }
         return new Data(Map.copyOf(t), Map.copyOf(fauna), Map.copyOf(tier), Map.copyOf(creatures));
     }

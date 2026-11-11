@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "name": "The Sunken Stacks",
+  "line": "The sea got into this library a long time ago, and the things that drowned in it are still looking after the books.",
+  "form": "dungeon",
+  "theme": "drowned_archive",
+  "ranks": [
+    "D",
+    "C"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:sunken_stacks",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/sunken_stacks"
+    ],
+    "lens": "sunken_stacks",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "paper",
+      "drips",
+      "dust",
+      "pale_fish"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "drowned_archivist",
+    "seat": "under_the_stacks"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

@@ -21,10 +21,6 @@
       "width": 480,
       "height": 300
     },
-    "awaken:lens_eighth": {
-      "width": 240,
-      "height": 150
-    },
     "awaken:lens_wide": {
       "width": 240,
       "height": 150
@@ -43,18 +39,18 @@
       "height": 540,
       "persistent": true
     },
-    "awaken:lens_sunmap": {
-      "width": 512,
-      "height": 512
-    },
     "awaken:lens_clouds": {
-      "width": 560,
-      "height": 315
+      "width": 800,
+      "height": 450
     },
     "awaken:lens_clouds_hist": {
-      "width": 560,
-      "height": 315,
+      "width": 800,
+      "height": 450,
       "persistent": true
+    },
+    "awaken:lens_airsky": {
+      "width": 512,
+      "height": 288
     }
   },
   "passes": [
@@ -108,14 +104,8 @@
     },
     {
       "vertex_shader": "minecraft:core/screenquad",
-      "fragment_shader": "awaken:post/lens_sunmap",
+      "fragment_shader": "awaken:post/lens_airsky",
       "inputs": [
-        {
-          "sampler_name": "Height",
-          "location": "awaken:lens_height",
-          "width": 1024,
-          "height": 1024
-        },
         {
           "sampler_name": "Frame",
           "location": "awaken:lens_frame",
@@ -123,7 +113,7 @@
           "height": 1
         }
       ],
-      "output": "awaken:lens_sunmap",
+      "output": "awaken:lens_airsky",
       "uniforms": {
         "LensBlock": [
           {
@@ -956,7 +946,9 @@
         },
         {
           "sampler_name": "Sunmap",
-          "target": "awaken:lens_sunmap"
+          "location": "awaken:lens_sunmap",
+          "width": 1024,
+          "height": 1024
         },
         {
           "sampler_name": "CloudNoise",
@@ -970,6 +962,19 @@
           "target": "awaken:lens_hist"
         },
         {
+          "sampler_name": "Blocks",
+          "location": "awaken:lens_blocks",
+          "width": 128,
+          "height": 1024
+        },
+        {
+          "sampler_name": "Lit",
+          "location": "awaken:lens_lit",
+          "width": 2048,
+          "height": 1024,
+          "bilinear": true
+        },
+        {
           "sampler_name": "Frame",
           "location": "awaken:lens_frame",
           "width": 48,
@@ -980,6 +985,12 @@
           "location": "awaken:lens_params",
           "width": 16,
           "height": 1
+        },
+        {
+          "sampler_name": "CloudCell",
+          "location": "awaken:lens_cloud_cells",
+          "width": 128,
+          "height": 128
         }
       ],
       "output": "awaken:lens_light",
@@ -1862,6 +1873,12 @@
           "location": "awaken:lens_params",
           "width": 16,
           "height": 1
+        },
+        {
+          "sampler_name": "CloudCell",
+          "location": "awaken:lens_cloud_cells",
+          "width": 128,
+          "height": 128
         }
       ],
       "output": "awaken:lens_clouds",
@@ -2746,6 +2763,18 @@
           "sampler_name": "Clouds",
           "target": "awaken:lens_clouds",
           "bilinear": true
+        },
+        {
+          "sampler_name": "Frame",
+          "location": "awaken:lens_frame",
+          "width": 48,
+          "height": 1
+        },
+        {
+          "sampler_name": "CloudCell",
+          "location": "awaken:lens_cloud_cells",
+          "width": 128,
+          "height": 128
         }
       ],
       "output": "awaken:lens_half",
@@ -3590,23 +3619,11 @@
     },
     {
       "vertex_shader": "minecraft:core/screenquad",
-      "fragment_shader": "awaken:post/lens_down",
+      "fragment_shader": "awaken:post/lens_downblur",
       "inputs": [
         {
           "sampler_name": "In",
           "target": "awaken:lens_quarter",
-          "bilinear": true
-        }
-      ],
-      "output": "awaken:lens_eighth"
-    },
-    {
-      "vertex_shader": "minecraft:core/screenquad",
-      "fragment_shader": "awaken:post/lens_blur",
-      "inputs": [
-        {
-          "sampler_name": "In",
-          "target": "awaken:lens_eighth",
           "bilinear": true
         }
       ],
@@ -4523,6 +4540,17 @@
         {
           "sampler_name": "Clouds",
           "target": "awaken:lens_clouds",
+          "bilinear": true
+        },
+        {
+          "sampler_name": "CloudCell",
+          "location": "awaken:lens_cloud_cells",
+          "width": 128,
+          "height": 128
+        },
+        {
+          "sampler_name": "AirSky",
+          "target": "awaken:lens_airsky",
           "bilinear": true
         }
       ],

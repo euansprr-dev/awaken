@@ -60,6 +60,32 @@ public final class MobDef {
     public final boolean placed;
     /** Keeps to the ground although its model flies (a kit serpent that lies coiled on the floor, SPEC §35.11). */
     public final boolean grounded;
+    /**
+     * A gate monster on a body of its own (SPEC §60): its rig is {@code HeroRig.get(id)}, drawn in place of {@link #model},
+     * which stays as what is drawn if the rig is missing. {@link #moves} says how it gets about when the rig isn't its
+     * model's kind of body (a crawler where a slime hopped).
+     */
+    public final boolean rig;
+    public final Model.@Nullable Move moves;
+    /** Its rules (mobs.entity.GateMonster): ticks it stands open after a move; ticks a missed lunge leaves it stuck. */
+    public final int open, miss;
+    /** A blow stops its wind-up; blows from in front do nothing; it cannot turn while it winds up. */
+    public final boolean stopped, front, planted;
+    /** Ticks its fall lasts (its death clip), at least vanilla's 20. */
+    public final int fall;
+    /** What its shots are, and where they leave its body (blocks up from its feet, and out ahead of it); null: the plain glow. */
+    public final @Nullable ShotLook shot;
+    public final float muzzleUp, muzzleOut;
+    /** Ticks it stands open after its own plain blow (a body that leaves itself open when it swings). */
+    public final int spent;
+    /**
+     * Its plain blow's own rhythm (SPEC §60.8): ticks each blow is told (0: its tier's 8, 9 or 10) and how many blows
+     * it strings together, each told on its own ({@link #blowWeight} keeps what the string does per second the same).
+     */
+    public final int blowTell, blowChain;
+    /** What its blows throw off, and in what colour (SPEC §60.8); null: nothing of its own. */
+    public final @Nullable Matter matter;
+    public final int matterRgb;
 
     /** A boss phase: entered when health falls below {@code below} (phase 0 uses 1.0). */
     public record Phase(float below, String line, List<Ability> abilities, float speedBonus) {}
@@ -107,6 +133,37 @@ public final class MobDef {
         this.talent = b.talent;
         this.placed = b.placed;
         this.grounded = b.grounded;
+        this.rig = b.rig;
+        this.moves = b.moves;
+        this.open = b.open;
+        this.miss = b.miss;
+        this.stopped = b.stopped;
+        this.front = b.front;
+        this.planted = b.planted;
+        this.fall = Math.max(20, b.fall);
+        this.shot = b.shot;
+        this.muzzleUp = b.muzzleUp;
+        this.muzzleOut = b.muzzleOut;
+        this.spent = b.spent;
+        this.blowTell = b.blowTell;
+        this.blowChain = Math.max(1, b.blowChain);
+        this.matter = b.matter;
+        this.matterRgb = b.matterRgb;
+    }
+
+    /** Ticks between two blows of a string: the first one's follow-through, before the next is told. */
+    public static final int STRING_GAP = 5;
+
+    /**
+     * How hard each blow of its own rhythm lands, against the plain swing its tier would throw ({@code tierTell} ticks
+     * told, then 20 of rest): a slow blow lands harder and each blow of a string softer, so that what it does per second
+     * stays what its damage number says. 1 for a monster with no rhythm of its own.
+     */
+    public float blowWeight(int tierTell) {
+        if (blowTell <= 0 && blowChain <= 1) return 1.0F;
+        int tell = blowTell > 0 ? blowTell : tierTell;
+        float string = blowChain * tell + (blowChain - 1) * STRING_GAP + 20;
+        return string / ((tierTell + 20) * blowChain);
     }
 
     public boolean isFauna() {
@@ -138,7 +195,12 @@ public final class MobDef {
     }
 
     public boolean flies() {
-        return model.move == Model.Move.FLY && !grounded;
+        return move() == Model.Move.FLY && !grounded;
+    }
+
+    /** How it gets about: its own way if its rig says so, else its model's. */
+    public Model.Move move() {
+        return moves != null ? moves : model.move;
     }
 
     public String bossId() {
@@ -173,6 +235,12 @@ public final class MobDef {
         BodyMaterial body;
         FaunaTalent talent = FaunaTalent.NONE;
         boolean placed, grounded;
+        boolean rig, stopped, front, planted;
+        Model.Move moves;
+        int open, miss, fall, spent, blowTell, blowChain, matterRgb;
+        Matter matter;
+        ShotLook shot;
+        float muzzleUp, muzzleOut;
 
         B(String id, String name, Theme theme, Tier tier, Model model, String signature) {
             this.id = id;
@@ -214,10 +282,55 @@ public final class MobDef {
         public B placed() { placed = true; return this; }
         /** Walks although its model flies (see {@link MobDef#grounded}). */
         public B grounded() { grounded = true; return this; }
+        /** A gate monster's own body (see {@link MobDef#rig}); {@code size} gives its box. */
+        public B rig() { rig = true; return this; }
+        /** The way its own body gets about, where that isn't its fallback model's way. */
+        public B moves(Model.Move m) { moves = m; return this; }
+        /** It stands open for this many ticks after a move fires. */
+        public B open(int ticks) { open = ticks; return this; }
+        /** A lunge that hits nobody leaves it stuck for this many ticks. */
+        public B miss(int ticks) { miss = ticks; return this; }
+        /** A direct blow while it winds a move up ends the move. */
+        public B stopped() { stopped = true; return this; }
+        /** Blows from in front do nothing unless it stands open. */
+        public B front() { front = true; return this; }
+        /** It cannot turn while it winds up. */
+        public B planted() { planted = true; return this; }
+        /** Its fall lasts this many ticks. */
+        public B fall(int ticks) { fall = ticks; return this; }
 
         /** Abilities for a non-boss (or a boss's opening phase). */
         public B ab(Ability.Builder... abilities) {
             return phase(1.0F, "", 0, abilities);
+        }
+
+        /** Its shots are this (SPEC §60.7), leaving its body {@code up} blocks over its feet and {@code out} ahead of it. */
+        public B shot(ShotLook look, float up, float out) {
+            this.shot = look;
+            this.muzzleUp = up;
+            this.muzzleOut = out;
+            return this;
+        }
+
+        /** Its own plain blow leaves it open for this many ticks. */
+        public B spent(int ticks) {
+            this.spent = ticks;
+            return this;
+        }
+
+        /** Its plain blow is told for {@code tell} ticks (at least 8), and it strings {@code chain} of them together. */
+        public B blow(int tell, int chain) {
+            if (tell < 8 || chain < 1 || chain > 3) throw new IllegalArgumentException(id + ": a blow is told for 8 ticks or more, in strings of 1 to 3");
+            this.blowTell = tell;
+            this.blowChain = chain;
+            return this;
+        }
+
+        /** Its blows throw off bits of this shape and colour. */
+        public B matter(Matter shape, int rgb) {
+            this.matter = shape;
+            this.matterRgb = rgb;
+            return this;
         }
 
         /** A boss phase starting when health drops below {@code below}. */

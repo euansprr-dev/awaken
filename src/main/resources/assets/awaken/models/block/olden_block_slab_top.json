@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "awaken:block/olden_block",
+    "top": "awaken:block/olden_block",
+    "side": "awaken:block/olden_block"
+  }
+}

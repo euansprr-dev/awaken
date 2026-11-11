@@ -42,6 +42,8 @@ public final class AwakenConfig {
     public static final ModConfigSpec.BooleanValue WARDS = B.comment("Precursor wards: blocks placed near Precursor sites crumble after 3 s and come back,",
                     "and a site's own walls can't be broken (SPEC §17)")
             .define("wards", true);
+    public static final ModConfigSpec.BooleanValue FINDS = B.comment("Finds (SPEC 58): the small things to find and do in the overworld, in new chunks. Off: none are placed; ones already standing keep working.")
+            .define("finds", true);
     public static final ModConfigSpec.BooleanValue WILDS = B.comment("The Wilds: how you arrived, the Horizon line, biome discoveries and sky-only rewards (SPEC §17)")
             .define("wilds", true);
     public static final ModConfigSpec.BooleanValue GATE_WORLDS = B.comment("Gate Worlds: new gates' floors become worlds of their theme (SPEC §38).",
@@ -147,6 +149,20 @@ public final class AwakenConfig {
                         "frame in four and its light every other frame, the rest carried forward from the frames before (still and",
                         "slow views look the same; a fast turn settles in a few frames). Off: every pixel every frame.")
                 .define("lensTemporal", true);
+        public static final ModConfigSpec.BooleanValue LENS_AIR = C
+                .comment("The Air (Cinematic and Ultra): Lens's own sky, a far fog of the sky's own colour that takes the land into",
+                        "it, soft clouds in the game's own block shapes (drawn whatever the Clouds video setting says), stronger",
+                        "sunlight against deeper shade, and shadows on the textures' pixel grid. Off: Lens as it was before.")
+                .define("lensAir", true);
+        public static final ModConfigSpec.ConfigValue<String> LENS_GRADE = C
+                .comment("Lens's grade: your choice of colour and atmosphere over every place's own look. \"awaken\" is the look as",
+                        "built; \"vivid\" has an azure sky, bright greens, warm light and a paler haze. The Look page steps through",
+                        "them. A grade is a file, assets/<namespace>/lens_grade/<id>.json, so a resource pack can add its own.")
+                .define("lensGrade", "awaken");
+        public static final ModConfigSpec.BooleanValue LENS_SUN_PASS = C
+                .comment("The Sun Pass (Cinematic and Ultra): shadows from a map of the blocks near you, so a shadow is the block's",
+                        "own shape and the sun comes in under trees, through doorways and under arches. Off: the height-map shadows.")
+                .define("lensSunPass", true);
         public static final ModConfigSpec.BooleanValue LENS_TILES = C
                 .comment("Lens's passes as Apple's (tile-based) GPUs want them: no depth buffers, separate clears or reloads of the frame",
                         "between its passes. The picture is the same; it saves memory traffic. Off: exactly as the game does it.")
@@ -160,6 +176,11 @@ public final class AwakenConfig {
                         "FULL draws to 16 km, NEAR to 4 km, OFF none. Single-player worlds; it steps aside while Distant Horizons",
                         "is installed.")
                 .defineEnum("farSight", FarSight.FULL);
+        public static final ModConfigSpec.BooleanValue TURBO_CHUNK_PACING = C
+                .comment("When chunks leave the view, take them out of the renderer a few a frame and not all in one (a whole row",
+                        "leaving at once, flying, made that frame late). Nothing drawn changes. Needs Sodium; off: Sodium frees them",
+                        "exactly as its own code does.")
+                .define("turboChunkPacing", true);
         public static final ModConfigSpec.BooleanValue FAR_SIGHT_WATER_EDGES = C
                 .comment("While Far Sight draws, leave out the water walls at the edge of the loaded chunks (thin pale lines over the",
                         "far sea after a teleport or in fast flight). Needs Sodium; off: water meshes exactly as Sodium's.")

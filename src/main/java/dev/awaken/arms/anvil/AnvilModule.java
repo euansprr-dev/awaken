@@ -2,14 +2,13 @@ package dev.awaken.arms.anvil;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import dev.awaken.core.AwakenCommands;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -21,7 +20,7 @@ public final class AnvilModule {
     public static void init(IEventBus modBus) {
         AnvilContent.register(modBus);
         modBus.addListener(AnvilModule::registerPayloads);
-        modBus.addListener(AnvilModule::creativeTab);
+        Tabs.fill(Tabs.Shelf.HOME_STATIONS, AnvilContent.ANVIL_ITEM);
         WarAnvil.init();
         NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> {
             WarAnvil.forget(e.getEntity().getUUID());
@@ -52,10 +51,6 @@ public final class AnvilModule {
         r.playToClient(AnvilPayloads.Open.TYPE, AnvilPayloads.Open.STREAM_CODEC);
         r.playToClient(AnvilPayloads.Done.TYPE, AnvilPayloads.Done.STREAM_CODEC);
         r.playToClient(AnvilPayloads.Held.TYPE, AnvilPayloads.Held.STREAM_CODEC);
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey().equals(CoreModule.TAB_KEY)) event.accept(AnvilContent.ANVIL_ITEM.get());
     }
 
     private static void registerCommands() {

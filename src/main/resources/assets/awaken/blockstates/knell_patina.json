@@ -1,0 +1,21 @@
+{
+  "variants": {
+    "": [
+      {
+        "model": "awaken:block/knell_patina"
+      },
+      {
+        "model": "awaken:block/knell_patina",
+        "y": 90
+      },
+      {
+        "model": "awaken:block/knell_patina",
+        "y": 180
+      },
+      {
+        "model": "awaken:block/knell_patina",
+        "y": 270
+      }
+    ]
+  }
+}

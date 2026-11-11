@@ -1,0 +1,56 @@
+# The floor under a low sun (the patchwork check): the same view with each part off in turn, at three sun heights.
+# The Air's look tour (SPEC §22 "Steady Light"): Lens Cinematic with the Air at the moments ImmersiveVFX was shot at
+# (docs/perf/steady60/page/shots), in a copy of Euan's world, with his settings (the game's Clouds setting off: the
+# Air's clouds must draw anyway). Shots only: FOREGROUND= SLOT=light tools/steady60-tour.sh tools/autopilot/steady60-floor.txt floor-1
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud on
+lookswitch cinematic
+wait 400
+cmd time set 11300
+look 90 -6
+wait 200
+shot f1_low
+lens rays off
+wait 80
+shot f1_low_norays
+lens rays setting
+lens sunpass off
+wait 80
+shot f1_low_nosunpass
+lens sunpass setting
+wait 60
+look 90 -28
+wait 60
+shot f1_low_down
+look -90 -20
+wait 60
+shot f1_low_away
+cmd time set 10800
+look 90 -6
+wait 160
+shot f2_lowish
+cmd time set 11600
+wait 160
+shot f3_lower
+cmd time set 600
+look -90 -6
+wait 160
+shot f4_morning_sunward
+look 90 -20
+wait 60
+shot f4_morning_away
+quit

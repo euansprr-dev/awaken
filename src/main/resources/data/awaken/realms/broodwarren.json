@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "name": "The Broodwarren",
+  "line": "A nest dug down under a dead tree. Everything in its walls is asleep, and it's better for you if it stays that way.",
+  "form": "dungeon",
+  "theme": "hive",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:broodwarren",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/brood_warren"
+    ],
+    "lens": "broodwarren",
+    "air": [
+      "mist",
+      "shaft_dust",
+      "dust",
+      "drips",
+      "moths"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "brood",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 5
+  },
+  "heart": {
+    "lord": "hive_regent",
+    "seat": "brood_chamber"
+  },
+  "moods": [
+    "deep_quiet"
+  ]
+}

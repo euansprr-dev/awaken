@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "name": "The Bone Roads",
+  "line": "Roads cut for the dead, under a crypt. They were only ever meant to be walked one way.",
+  "form": "dungeon",
+  "theme": "bell_crypt",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:catacombs",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/catacombs"
+    ],
+    "lens": "catacombs",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "dust",
+      "drips",
+      "bats",
+      "rats",
+      "far_toll"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "bell_warden",
+    "seat": "under_the_roads"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

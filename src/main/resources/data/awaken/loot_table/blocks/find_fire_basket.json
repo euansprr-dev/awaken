@@ -1,0 +1,20 @@
+{
+  "pools": [
+    {
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "name": "awaken:find_fire_basket",
+          "type": "minecraft:item"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "awaken:blocks/find_fire_basket",
+  "type": "minecraft:block"
+}

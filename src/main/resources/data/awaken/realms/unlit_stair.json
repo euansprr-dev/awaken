@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "name": "The Unlit Stair",
+  "line": "People cut this shrine straight down into the dark because they worshipped whatever is at the bottom. None of them came back up.",
+  "form": "dungeon",
+  "theme": "abyssal_shrine",
+  "ranks": [
+    "A",
+    "S"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:unlit_stair",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/unlit_stair"
+    ],
+    "lens": "unlit_stair",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "stars",
+      "dust"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "hollow_herald",
+    "seat": "under_the_roads"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

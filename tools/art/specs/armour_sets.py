@@ -23,6 +23,7 @@ own meshes, and above E its pattern's (a vellum sheet with the helm in ink and a
     assets/awaken/items/<id>.json, assets/awaken/models/item/<id>.json
 Deterministic: nothing is random.
 """
+import json
 import math
 import os
 import sys
@@ -185,7 +186,9 @@ def painter(mats, oy):
         t.flow[:] = np.where((t.emit > 0) & (t.flow == 0), np.clip(t.world_y / FIGURE, 0.02, 1.0), t.flow)
         alb = np.concatenate([colours(t), np.ones((t.k, 1))], axis=1)
         mat = np.stack([t.metal, t.gloss, t.emit, t.flow], axis=1)
-        return (np.clip(alb, 0, 1) * 255).round().astype(np.uint8), (np.clip(mat, 0, 1) * 255).round().astype(np.uint8)
+        alb, mat = (np.clip(alb, 0, 1) * 255).round().astype(np.uint8), (np.clip(mat, 0, 1) * 255).round().astype(np.uint8)
+        FIN.spill(t, alb, mat)  # the Armour Finish: what glows lights the texels beside it
+        return alb, mat
     return paint
 
 
@@ -987,6 +990,10 @@ def gatewrought():
         B(-5, 5, 0, 1, -4, -3, "silver", "collar"),
         VX.rbox((0, -4.5, 4.5), (5, 5, 1), 45, "plinth", "plinth"),
         VX.rbox((0, -4.5, 5.5), (1, 1, 1), 45, "door", "core"),
+        # the gate again on the back (the Armour Finish, stage 3: the back was a blank slab): two pillars and a lintel
+        # round a doorway of gate light, so whoever follows you sees which gate you came out of
+        B(-3, -2, -9, -1, -4, -3, "pillar", "backgate"), B(2, 3, -9, -1, -4, -3, "pillar", "backgate"),
+        B(-3, 3, -1, 0, -4, -3, "pillar", "backgate"), B(-1, 1, -8, -1, -4, -3, "door", "backdoor"),
     ]
     for i in range(5):
         a = math.radians(90 + 72 * i)
@@ -1804,6 +1811,10 @@ def vaultbreaker():
         "steel_lames": AW.Mat("flint", 5, 0.85, 0.85, details=(lames(2, -1),)),
         "steel_rim": AW.Mat("flint", 5, 0.85, 0.85, details=(rims("mirror", 6),)),
         "steel_dark": AW.Mat("flint", 2, 0.8, 0.75, details=(lames(2, -1),)),
+        # the body's own steel, two steps darker than the helm's (the Armour Finish, stage 3: the suit was grey on grey;
+        # now bright rims and diamonds sit on dark vault steel)
+        "steel_body": AW.Mat("flint", 3, 0.85, 0.8, details=(lames(2, -1),)),
+        "vault_door": AW.Mat("flint", 4, 0.85, 0.85, details=(rims("mirror", 6), rivet_grid("pearl", 6, 2))),
         "studs": AW.Mat("flint", 5, 0.85, 0.85, details=(rivet_grid("pearl", 6, 2),)),
         "diamond": AW.Mat("pearl", 5, 0.2, 1.0, emit=0.25, bevel=False),
         "slit": AW.Mat("ice", 5, 0.0, 0.5, emit=0.75, bevel=False),
@@ -1823,17 +1834,19 @@ def vaultbreaker():
 
     # ---- chestplate: a great breastplate studded with diamond, a diamond at its heart; a fauld; the pauldrons
     body = [
-        B(-5, 5, -10, 0, -3, 3, "steel_lames", "cuirass"),
+        B(-5, 5, -10, 0, -3, 3, "steel_body", "cuirass"),
         B(-4, 4, -7, 0, 3, 4, "studs", "breast"),
         B(-2, 2, -5, -1, 4, 5, "steel_rim", "boss"), B(-1, 1, -4, -2, 5, 6, "diamond", "heart"),
         B(-6, 6, -10, -8, -4, 4, "steel_rim", "fauld"),
         B(-5, 5, 0, 2, -4, 4, "steel_rim", "gorget"),
+        # a vault's door on the back: a rimmed, riveted plate, a diamond for its lock
+        B(-3, 3, -7, -1, -4, -3, "vault_door", "vaultdoor"), B(-1, 1, -5, -3, -5, -4, "diamond", "vaultlock"),
     ]
     # the sword arm: a round pauldron stepping in to a knob, tipped outward
     dome = [B(-6, 2, -1, 1, -4, 4, "steel_rim", "pldome"), B(-5, 1, 1, 2, -3, 3, "steel", "pldome"),
             B(-4, 0, 2, 3, -2, 2, "steel", "pldome"), B(-3, -1, 3, 4, -1, 1, "diamond", "plknob")]
     arm = [
-        B(-4, 2, -5, -1, -3, 3, "steel_lames", "rerebrace"),
+        B(-4, 2, -5, -1, -3, 3, "steel_body", "rerebrace"),
         B(-4, 2, -9, -5, -3, 3, "steel", "vambrace"), B(-5, 3, -7, -6, -4, 4, "steel_rim", "cop"),
         B(-4, 2, -11, -9, -3, 3, "leather", "gauntlet"), B(-5, 3, -10, -9, -4, 4, "steel_rim", "cuff"),
     ]
@@ -1848,7 +1861,7 @@ def vaultbreaker():
 
     # ---- leggings: a belt; steel cuisses; knee cops with a diamond stud; a plate tasset front and back
     belt = [B(-5, 5, -13, -10, -3, 3, "steel_rim", "belt"), B(-1, 1, -12, -11, 3, 4, "diamond", "buckle")]
-    right_leg = [B(-3, 2, -6, 0, -3, 3, "steel_lames", "cuisse"), B(-3, 2, -8, -6, 3, 4, "steel_rim", "poleyn"),
+    right_leg = [B(-3, 2, -6, 0, -3, 3, "steel_body", "cuisse"), B(-3, 2, -8, -6, 3, 4, "steel_rim", "poleyn"),
                  B(-1, 0, -7, -6, 4, 5, "diamond", "poleyn_gem")]
     front_cloth = [B(-3, 3, -5, 0, 0, 1, "steel_dark", "tasset", hem=True)]
     back_cloth = [B(-4, 4, -5, 0, -1, 0, "steel_dark", "tasset", hem=True)]
@@ -2081,6 +2094,9 @@ def shardcrown():
         B(-4, 2, -5, -1, -3, 3, "steel_lames", "rerebrace"),
         B(-4, 2, -10, -5, -3, 3, "steel", "vambrace"),
         B(-4, 2, -11, -10, -3, 3, "steel_rim", "gauntlet"),
+        # crystal breaking out of the forearm behind the elbow, as it does from the shoulder and the knee (the Armour
+        # Finish, stage 3: the limbs were plain plate on a set whose whole idea is crystal growing out of it)
+        shard((-4.5, -3.0, -1.0), 1.5, 28, -12, "crystal", "vshard"), shard((-4.5, -4.5, 1.0), 1.0, 20, 14, "crystal_dark", "vshard2", 0.5),
     ]
     cape0 = [B(-5, 5, -6, 0, -1, 0, "cloth", "cape")]
     cape1 = [B(-5, 5, -5, 0, -1, 0, "cloth", "cape", hem=True)]
@@ -3316,6 +3332,11 @@ SETS = {"wildhide": wildhide, "beastbound": beastbound, "gatewrought": gatewroug
         "starfall": starfall, "riftwalker": riftwalker, "nightcourt": nightcourt, "signals_echo": signals_echo}
 SETS = {sid: _awakened(sid, fn) for sid, fn in SETS.items()}
 
+# the Armour Finish (armour_finish.py, SPEC §44.1): one pass over every set; ARMOUR_FINISH=0 leaves them as they were
+import armour_finish as FIN  # noqa: E402
+FIN.A = sys.modules[__name__]
+SETS = {sid: FIN.finished(sid, fn) for sid, fn in SETS.items()}
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Building: every piece's bones into one atlas
@@ -3343,7 +3364,23 @@ def make(design, width=128):
     groups, faces = [], []
     VX.WARNINGS.clear()
     warns = []
-    parts = [(p, b, boxes) for p, bones in design["pieces"].items() for b, boxes in bones.items()]
+    parts = []
+    lives = FIN.live_specs(design)  # (piece, bone) -> its living parts (SPEC §44.10)
+    for p, bones in design["pieces"].items():
+        for b, boxes in bones.items():
+            specs = lives.get((p, b))
+            if not specs:
+                parts.append((p, b, boxes))
+                continue
+            still = list(boxes)
+            for k, spec in enumerate(specs):
+                moving = FIN.split(still, spec)
+                if not moving:
+                    raise ValueError(f"{design['id']}: no part of {p}/{b} is named {spec['parts']}")
+                still = [x for x in still if x not in moving]
+                parts.append((p, f"{b}@live{k}", moving))
+            if still:
+                parts.append((p, b + "@still", still))
     if design.get("rune"):
         parts.append(("rune", "rune", design["rune"]))
     # mastery IV's awakened parts: drawn over the piece's own on the same bone (bone@awake, <piece>_<bone>_awakened.mesh)
@@ -3360,10 +3397,11 @@ def make(design, width=128):
     material = np.zeros((height, width, 4), dtype=np.uint8)
     filled = np.zeros((height, width), dtype=bool)
     acc = {g: ([], [], [], []) for g in groups}
-    for f in faces:
+    painted = [painter(design["mats"], bone_y(f.group[1]))(f) for f in faces]
+    design["marked"] = FIN.maker_marks(faces, painted)  # where a Flawless piece's maker's mark is struck (SPEC §44.11)
+    for f, (a, m) in zip(faces, painted):
         piece, bone = f.group
         oy = bone_y(bone)
-        a, m = painter(design["mats"], oy)(f)
         tx, ty = f.x + f.i - f.i0, f.y + f.j - f.j0
         albedo[ty, tx] = a
         material[ty, tx] = m
@@ -3387,6 +3425,13 @@ def make(design, width=128):
     for g, (P, N, UV, A) in acc.items():
         if P:
             meshes[g] = Built(to_part(np.array(P)), to_part(np.array(N), True), np.array(UV), np.array(A))
+    # a bone with living parts: the whole piece at rest is its still mesh and its living ones together (what every
+    # drawer that knows nothing of living parts goes on drawing)
+    for (piece, bone) in lives:
+        got = [m for (pp, bb), m in meshes.items() if pp == piece and bb.split("@")[0] == bone and ("@still" in bb or "@live" in bb)]
+        if got:
+            meshes[(piece, bone)] = Built(np.concatenate([m.pos for m in got]), np.concatenate([m.nrm for m in got]),
+                                          np.concatenate([m.uv for m in got]), np.concatenate([m.along for m in got]))
     return meshes, albedo, material, warns
 
 
@@ -3400,8 +3445,16 @@ def write(design):
             os.remove(os.path.join(mesh_dir, old))
     accent = AW.hex_rgb(design["accent"])
     for (piece, bone), b in meshes.items():
-        name = "rune" if piece == "rune" else f"{piece}_{bone.replace('@awake', '_awakened')}"
+        name = "rune" if piece == "rune" else f"{piece}_{bone.replace('@awake', '_awakened').replace('@', '_')}"
         MS.write(os.path.join(mesh_dir, name + ".mesh"), b, accent)
+    live = FIN.live_json(design)
+    live_file = os.path.join(mesh_dir, "live.json")
+    if live:
+        with open(live_file, "w") as f:
+            json.dump(live, f, indent=1)
+            f.write("\n")
+    elif os.path.exists(live_file):
+        os.remove(live_file)
     tex_dir = os.path.join(RES, "assets/awaken/textures/entity/armour")
     os.makedirs(tex_dir, exist_ok=True)
     Image.fromarray(np.concatenate([albedo, material], axis=1), "RGBA").save(os.path.join(tex_dir, sid + ".png"))
@@ -3423,8 +3476,11 @@ OWN_ITEMS = {"bellguard": ("E", False), "rootwarden": ("E", False), "amberwing":
 RANK_COLOUR = {"E": "#f4f6fb", "D": "#5fd08f", "C": "#6fb3ff", "B": "#b48cff", "A": "#f2a541", "S": "#ff5a6a"}
 ICON_SKIP = ("cape0", "cape1", "cape2", "back_cloth")  # behind the piece: they would only shrink its icon
 # each piece's turn in its icon (yaw, pitch): a helm and a chest a little from above, the legs level, boots side on
-ICON_VIEW = {"helmet": (-24, 10), "chestplate": (-20, 8), "leggings": (-18, 2), "boots": (-34, 14)}
-ICON_SPREAD = {"leggings": 1.0, "boots": 2.5}  # the legs drawn apart (texels each way), so a pair reads as two
+ICON_VIEW = {"helmet": (-24, 10), "chestplate": (-20, 8), "leggings": (-8, 4), "boots": (-28, 22)}
+# the legs drawn apart (texels each way), so a pair reads as two: boots far enough that the background shows between
+ICON_SPREAD = {"leggings": 0.6, "boots": 3.6}
+ICON_SPLAY = {"leggings": 7.0}                 # the Armour Finish (SPEC §44.11): greaves stand like an A
+ICON_BEHIND = {}                               # a piece whose far leg stands off from the near one (none today)
 ITEM_DIR = os.path.join(RES, "assets/awaken")
 
 
@@ -3432,12 +3488,21 @@ def piece_model(design, piece, meshes):
     """One piece's meshes placed on the figure at rest, in item units (the render's space)."""
     pos, nrm, uv, al = [], [], [], []
     spread = ICON_SPREAD.get(piece, 0.0)
+    splay = ICON_SPLAY.get(piece, 0.0)
     for (p, bone), b in meshes.items():
         if p != piece or bone in ICON_SKIP or "@" in bone:
             continue
         P, N = rest(bone, b.pos, b.nrm)
         if bone.endswith("_leg"):
-            P = P + np.array([spread if bone.startswith("left") else -spread, 0.0, 0.0])
+            left = bone.startswith("left")
+            if splay:  # each leg turned out from the hip, so a pair of greaves stands like an A and reads as legs
+                a = math.radians(splay if left else -splay)
+                R = np.array([[math.cos(a), -math.sin(a), 0], [math.sin(a), math.cos(a), 0], [0, 0, 1]])
+                piv = np.array(PIVOT[bone], dtype=float)
+                P, N = piv + (P - piv) @ R.T, N @ R.T
+            P = P + np.array([spread if left else -spread, 0.0, 0.0])
+            if left and piece in ICON_BEHIND:  # the far boot stands back and a little up: a pair, one behind the other
+                P = P + np.array(ICON_BEHIND[piece], dtype=float)
         pos.append(P)
         nrm.append(N)
         uv.append(b.uv)
@@ -3536,9 +3601,35 @@ def pattern_icon(helm, rank, lord, size=32):
     return out
 
 
-def _item_json(iid):
+# How a piece sits in a hand, on the ground, in a frame and on a shelf when it is drawn as its real mesh (the renderer
+# fits the whole piece, crests and all, to a block; these are a block's own transforms, larger in a frame where it is
+# the whole show and most of a crested helm's block is air)
+HELD_DISPLAY = {
+    "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.4, 0.4, 0.4]},
+    "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1.0, 1.0, 1.0]},
+    "on_shelf": {"rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [0.8, 0.8, 0.8]},
+    "thirdperson_righthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.42, 0.42, 0.42]},
+    # a little higher than a block sits in the hand: the first tour had most of a helm under the screen's edge
+    "firstperson_righthand": {"rotation": [0, 45, 0], "translation": [0, 2, 0], "scale": [0.45, 0.45, 0.45]},
+    "firstperson_lefthand": {"rotation": [0, 225, 0], "translation": [0, 2, 0], "scale": [0.45, 0.45, 0.45]},
+}
+
+
+def _item_json(iid, held=None):
+    """An item's files: its flat icon; with held (set, piece), the icon in the inventory only and the real piece, drawn
+    by awaken:armour_piece (ArmourPieceRenderer), everywhere it is seen in the world (SPEC §44.11)."""
+    flat = {"type": "minecraft:model", "model": "awaken:item/%s" % iid}
+    model = flat
+    if held:
+        model = {"type": "minecraft:select", "property": "minecraft:display_context", "cases": [{"when": ["gui"], "model": flat}],
+                 "fallback": {"type": "minecraft:special", "base": "awaken:item/%s_held" % iid,
+                              "model": {"type": "awaken:armour_piece", "set": held[0], "piece": held[1]}}}
+        with open(os.path.join(ITEM_DIR, "models/item", iid + "_held.json"), "w") as f:
+            json.dump({"parent": "awaken:item/armour_piece_held", "textures": {"particle": "awaken:item/armour/%s" % iid}}, f, indent=2)
+            f.write("\n")
     with open(os.path.join(ITEM_DIR, "items", iid + ".json"), "w") as f:
-        f.write('{\n  "model": {\n    "type": "minecraft:model",\n    "model": "awaken:item/%s"\n  }\n}\n' % iid)
+        json.dump({"model": model}, f, indent=2)
+        f.write("\n")
     with open(os.path.join(ITEM_DIR, "models/item", iid + ".json"), "w") as f:
         f.write('{\n  "parent": "minecraft:item/generated",\n  "textures": {\n    "layer0": "awaken:item/armour/%s"\n  }\n}\n' % iid)
 
@@ -3558,8 +3649,11 @@ def items(design, meshes, albedo, material):
         yaw, pitch = ICON_VIEW[piece]
         Image.fromarray(icon_of(piece_model(design, piece, meshes), tex, yaw=yaw, pitch=pitch), "RGBA").save(
             os.path.join(tex_dir, iid + ".png"))
-        _item_json(iid)
+        _item_json(iid, held=(sid, piece))
         made.append(iid)
+    with open(os.path.join(ITEM_DIR, "models/item", "armour_piece_held.json"), "w") as f:
+        json.dump({"parent": "minecraft:block/block", "display": HELD_DISPLAY}, f, indent=2)
+        f.write("\n")
     if rank != "E":
         helm = icon_of(piece_model(design, "helmet", meshes), tex, size=19, yaw=0, pitch=0, outline=False)
         iid = sid + "_pattern"
@@ -3606,7 +3700,7 @@ def figure(design, skin=True, awake=False):
     tex = np.concatenate([albedo, material], axis=1)
     pos, nrm, uv, al = [], [], [], []
     for (piece, bone), b in meshes.items():
-        if "@" in bone and not awake:
+        if "@" in bone and not (awake and bone.endswith("@awake")):
             continue
         P, N = rest(bone, b.pos, b.nrm)
         pos.append(P)
@@ -3693,7 +3787,7 @@ def _raster_into(img, depth, m, tex, screen, size, **kw):
         nvv = wts @ nv[t:t + 3]
         nvv /= np.maximum(np.linalg.norm(nvv, axis=1, keepdims=True), 1e-9)
         al = wts @ m["along"][t:t + 3]
-        col = MR.shade(alb[keep], mat[keep], nw[keep], nvv[keep], al[keep], accent, **kw)
+        col = (FIN.shade if FIN.ON else MR.shade)(alb[keep], mat[keep], nw[keep], nvv[keep], al[keep], accent, **kw)
         ys_, xs_ = np.nonzero(ok)
         ys_, xs_ = ys_[keep], xs_[keep]
         reg[ys_, xs_] = z[ok][keep]
@@ -3731,17 +3825,19 @@ def check():
     for sid, fn in SETS.items():
         design = fn()
         meshes, albedo, material, warns = make(design)
-        n = sum(len(b.pos) for b in meshes.values())
+        n = sum(len(b.pos) for (_, bn), b in meshes.items() if "@still" not in bn and "@live" not in bn)
         if n > BUDGET:
             bad.append(f"{sid}: {n} corners (at most {BUDGET})")
         bad += [f"{sid}: {w}" for w in warns]
+        bad += [f"{sid}: {w}" for w in FIN.overlaps(design)]
+        bad += [f"{sid}: {w}" for w in FIN.sweep(design)]
         if albedo.shape[0] > 512:
             bad.append(f"{sid}: atlas {albedo.shape[0]} tall")
         for piece, bones in BONES.items():
             for bone in list(design["pieces"].get(piece, {})) + list(design.get("awake", {}).get(piece, {})):
                 if bone not in bones:
                     bad.append(f"{sid}: {piece} on a bone the game doesn't draw it on ({bone})")
-        per = {p: sum(len(b.pos) for (pp, _), b in meshes.items() if pp == p) // 3 for p in BONES}
+        per = {p: sum(len(b.pos) for (pp, bn), b in meshes.items() if pp == p and "@still" not in bn and "@live" not in bn) // 3 for p in BONES}
         print(f"  {sid:14s} {n // 3:5d} triangles {per}  atlas {albedo.shape[1]}x{albedo.shape[0]}")
     return bad
 

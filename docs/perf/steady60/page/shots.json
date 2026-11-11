@@ -1,0 +1,14 @@
+[
+ ["Morning in your clearing, with the storm cell ended and the game's Clouds setting turned on for all three (on your settings Cinematic has had no clouds). Frame rates are uncapped, on the Dell.", [
+   ["p1_morning_vfx.jpg", "ImmersiveVFX", "77 fps"], ["p1_morning_cine.jpg", "Cinematic today", "95 fps"], ["p1_morning_air.jpg", "Proof of concept", "92 fps"]]],
+ ["Dusk, same spot. This is where the sky and the fog do the most.", [
+   ["p2_dusk_vfx.jpg", "ImmersiveVFX", ""], ["p2_dusk_cine.jpg", "Cinematic today", ""], ["p2_dusk_air.jpg", "Proof of concept", ""]]],
+ ["Noon, same spot.", [
+   ["p3_noon_vfx.jpg", "ImmersiveVFX", ""], ["p3_noon_cine.jpg", "Cinematic today", ""], ["p3_noon_air.jpg", "Proof of concept", ""]]],
+ ["The open view, 45 blocks up. This is the view where ImmersiveVFX falls under 60 on the Dell.", [
+   ["p4_open_vfx.jpg", "ImmersiveVFX", "57 fps flying"], ["p4_open_cine.jpg", "Cinematic today", "97 fps flying"], ["p4_open_air.jpg", "Proof of concept", "not timed here"]]],
+ ["Night, the open view.", [
+   ["p5_night_vfx.jpg", "ImmersiveVFX", ""], ["p5_night_air.jpg", "Proof of concept", ""]]],
+ ["Carillon from the Runners' Roost, on the Dell with your settings as they are (so no clouds on Cinematic). The proof wasn't shot here.", [
+   ["city_vfx.jpg", "ImmersiveVFX", "80 fps"], ["city_cine.jpg", "Cinematic today", "116 fps"]]]
+]

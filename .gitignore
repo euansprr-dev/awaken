@@ -42,6 +42,7 @@ repo/
 ### AWAKEN ###
 /run-autopilot/
 /run-preview/
+/run-bench/
 /run-studio/
 .ref/
 /logs/

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "name": "The Sporewells",
+  "line": "Old wells and burrows that one enormous fungus has grown all the way through, and it lights its own way down.",
+  "form": "dungeon",
+  "theme": "fungal_hollow",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:sporewells",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/sporewells"
+    ],
+    "lens": "sporewells",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "spores",
+      "fireflies",
+      "drips",
+      "moths"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "mother_of_spores",
+    "seat": "under_the_wells"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

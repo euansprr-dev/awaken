@@ -226,13 +226,6 @@ public final class HearthContent {
     public static final DeferredHolder<MapCodec<? extends ChunkGenerator>, MapCodec<TrialChunkGenerator>> TRIAL_GENERATOR =
             CHUNK_GENERATORS.register("trials", () -> TrialChunkGenerator.CODEC);
 
-    /** Items shown in the shared creative tab, in order. */
-    static List<DeferredItem<?>> tabItems() {
-        List<DeferredItem<?>> out = new java.util.ArrayList<>(List.of(EMBER_ITEM, HEARTH_ANCHOR_ITEM, MEDITATION_MAT_ITEM, FORGE_ITEM, TROPHY_MOUNT_ITEM));
-        out.addAll(List.of(SPIRE_BOARD_ITEM, MONOLITH_ITEM, START_GATE_ITEM, CHECKPOINT_RING_ITEM, FINISH_GATE_ITEM, TARGET_DUMMY_ITEM));
-        return out;
-    }
-
     static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);

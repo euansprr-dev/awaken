@@ -1,0 +1,121 @@
+# Measurement only (the look-steady-60 plan), third Dell tour: what ImmersiveVFX costs while it sleeps. The same spot
+# and windows as the first tour's Lens section; run once with NOVFX=1 (the jar taken out) and compare with a run that
+# keeps it (asleep).
+#   NOVFX=1 tools/steady60-tour.sh tools/autopilot/steady60-dell-3.txt dell-3-nomod
+#   tools/steady60-tour.sh tools/autopilot/steady60-dell-3.txt dell-3-asleep
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd awaken living calm
+cmd gamemode creative
+screen close
+key dismiss
+screen close
+display DELL fullscreen
+wait 200
+info
+camera first
+hud on
+opt vsync 0
+opt maxFps 260
+pixels gpu on
+lookswitch swift
+# let the join settle: the first tour reached its Lens section four minutes in
+wait 1200
+pixels gpu reset
+perf swift_raw_still 12
+pixels gpu swift_raw_still
+turn 1.5 240
+pixels gpu reset
+perf swift_raw_turn 12
+pixels gpu swift_raw_turn
+lookswitch cinematic
+wait 120
+pixels gpu reset
+perf cine_raw_still 12
+pixels gpu cine_raw_still
+turn 1.5 240
+pixels gpu reset
+perf cine_raw_turn 12
+pixels gpu cine_raw_turn
+# the proof-of-concept look on the same frame: what it costs beside today's Cinematic
+lensdebug 9
+wait 80
+pixels gpu reset
+perf air_raw_still 12
+pixels gpu air_raw_still
+turn 1.5 240
+pixels gpu reset
+perf air_raw_turn 12
+pixels gpu air_raw_turn
+shot u0_air_morning
+lensdebug 0
+lens off
+wait 80
+pixels gpu reset
+perf off_raw_still 12
+pixels gpu off_raw_still
+turn 1.5 240
+pixels gpu reset
+perf off_raw_turn 12
+pixels gpu off_raw_turn
+lookswitch swift
+wait 100
+pixels gpu reset
+perf swift_raw_still_2 12
+pixels gpu swift_raw_still_2
+# ---- with the jar only (without it these lines do nothing): Lens Cinematic's light over the mod's sky, fog and clouds
+lookswitch cinematic
+wait 100
+vfx fogRenderingMode=IMMERSIVE_EXTENDED;atmosphericFog=true;dynamicFog=true;groundMist=true;lowLyingFog=true;weatherMist=true;skyMode=REALISTIC;customSkies=true;cloudRendering=FANCY;cloudFormation=MODERN;shootingStars=true;fireflies=true;specks=true;pollenAndSpores=true;leaves=true;windGusts=true;particleRate=REDUCED
+wait 100
+pixels gpu reset
+perf hybrid_raw_still 12
+pixels gpu hybrid_raw_still
+shot u1_hybrid_morning
+turn 1.5 240
+pixels gpu reset
+perf hybrid_raw_turn 12
+pixels gpu hybrid_raw_turn
+cmd time set 11800
+wait 100
+shot u2_hybrid_dusk
+cmd time set 3000
+wait 60
+# ---- the mod's particles: full, reduced, none (its Bedrock particle runtime was 38% of the render thread's samples)
+lookswitch vfx
+wait 200
+pixels gpu reset
+perf vfx3_full_still 12
+pixels gpu vfx3_full_still
+vfx particleRate=REDUCED
+wait 60
+pixels gpu reset
+perf vfx3_particles_reduced 12
+pixels gpu vfx3_particles_reduced
+vfx particleRate=NONE;fireflies=false;specks=false;windGusts=false;leaves=false;pollenAndSpores=false;shootingStars=false
+wait 60
+pixels gpu reset
+perf vfx3_particles_none 12
+pixels gpu vfx3_particles_none
+vfx particleRate=MAXIMUM;fireflies=true;specks=true;windGusts=true;leaves=true;pollenAndSpores=true;shootingStars=true
+wait 60
+# ---- VFX as he plays it, on a quiet machine (the first tour's as-played windows ran in the join's first minute)
+opt vsync 1
+opt maxFps 60
+wait 60
+pixels gpu reset
+perf vfx3_played_still 15
+pixels gpu vfx3_played_still
+turn 1.5 240
+pixels gpu reset
+perf vfx3_played_turn 12
+pixels gpu vfx3_played_turn
+opt vsync 0
+opt maxFps 260
+pixels config
+quit

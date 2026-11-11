@@ -1,5 +1,6 @@
 package dev.awaken.terrain.fault;
 
+import dev.awaken.core.api.Tabs;
 import dev.awaken.terrain.block.BlockSet;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RotatedPillarBlock;
@@ -20,7 +21,7 @@ import java.util.List;
 public final class FaultBlocks {
     private FaultBlocks() {}
 
-    private static final BlockSet SET = new BlockSet();
+    private static final BlockSet SET = new BlockSet(Tabs.Shelf.LANDS);
 
     public static final DeferredBlock<Block> FAULTSTONE = SET.withItem(SET.blocks.registerSimpleBlock("faultstone",
             p -> p.mapColor(MapColor.TERRACOTTA_PURPLE).instrument(NoteBlockInstrument.BASEDRUM).strength(1.8F, 6.0F)

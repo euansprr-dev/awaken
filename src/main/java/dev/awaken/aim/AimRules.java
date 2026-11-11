@@ -17,6 +17,11 @@ public final class AimRules {
     public static final float STICKY = 8F;
     /** Nearer creatures win a close call: degrees a block of distance is worth. */
     public static final float NEAR_WEIGHT = 0.35F;
+    /**
+     * With nothing marked, the lock key takes any creature you could strike (a sheep, a deer, a villager) within this cone
+     * and the mark's range: tighter than the mark's, so the key still picks the block you point at.
+     */
+    public static final float PRESS_CONE = 12F;
 
     /** A lock lets go beyond this range or after this long unseen (1.5 s). */
     public static final float LOCK_RANGE = 40F;

@@ -26,7 +26,7 @@ public final class MobSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> LISTENER_HEAR = sound("mobs.listener_hear");
 
     /**
-     * The carriers (SPEC §47.2): each sounds from where it is as it comes. Synthesised by tools/art/specs/audio_fights.py;
+     * The carriers (SPEC §47.2): each sounds from where it is as it comes. The game's own recordings (tools/art/specs/audit_rest.py, SPEC §66.7);
      * sounds.json in src/main/merge/mobs_fights. The loops play from mobs.client.CarrierView and the shot renderer.
      */
     public static final DeferredHolder<SoundEvent, SoundEvent> SHOT_RELEASE = sound("mobs.fights.shot_release");
@@ -71,6 +71,28 @@ public final class MobSounds {
     /** A creature's own sound of this kind, or null if it has none (then its borrowed vanilla voice speaks). */
     public static @org.jspecify.annotations.Nullable SoundEvent fauna(String id, String kind) {
         DeferredHolder<SoundEvent, SoundEvent> h = FAUNA.get(id + "." + kind);
+        return h == null || !h.isBound() ? null : h.get();
+    }
+
+    /**
+     * The gate monsters' own voices, {@code monster.<id>.<kind>} (SPEC §60): ambient, hurt and death for every monster
+     * on a body of its own, step for the ones that walk, and its fight's two (§60.8): wind as it gathers a blow, blow as
+     * it lets go. Each points at Minecraft's own recordings by name, re-pitched, in src/main/merge/mobs_monsters
+     * (written by tools/art/specs/gate_monsters.py, which also writes the list of the ones that exist:
+     * {@code mobs.def.GateVoices}).
+     */
+    public static final java.util.List<String> MONSTER_KINDS = java.util.List.of("ambient", "hurt", "death", "step", "wind", "blow");
+    private static final java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> MONSTER = monsterSounds();
+
+    private static java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> monsterSounds() {
+        java.util.Map<String, DeferredHolder<SoundEvent, SoundEvent>> m = new java.util.HashMap<>();
+        for (String key : dev.awaken.mobs.def.GateVoices.KEYS) m.put(key, sound("monster." + key));
+        return java.util.Map.copyOf(m);
+    }
+
+    /** A gate monster's own sound of this kind, or null (then its fallback model's voice speaks). */
+    public static @org.jspecify.annotations.Nullable SoundEvent monster(String id, String kind) {
+        DeferredHolder<SoundEvent, SoundEvent> h = MONSTER.get(id + "." + kind);
         return h == null || !h.isBound() ? null : h.get();
     }
 

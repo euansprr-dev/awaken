@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "name": "The Tallow Runs",
+  "line": "A thousand years of candle wax has run down through the rock under the old works, and things live in the runs it left.",
+  "form": "dungeon",
+  "theme": "hive",
+  "ranks": [
+    "E",
+    "D"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:tallow_runs",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/tallow_runs"
+    ],
+    "lens": "tallow_runs",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "smoke",
+      "embers",
+      "dust",
+      "drips",
+      "moths"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "hive_regent",
+    "seat": "under_the_works"
+  },
+  "moods": [
+    "deep_quiet"
+  ]
+}

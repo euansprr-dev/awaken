@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "name": "The Sleepless Ward",
+  "line": "The corridors of a house you know, the way a bad dream remembers them, and none of the doors go anywhere.",
+  "form": "dungeon",
+  "theme": "nightmare",
+  "ranks": [
+    "C",
+    "B"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:sleepless_ward",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/sleepless_ward"
+    ],
+    "lens": "sleepless_ward",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "dust",
+      "moths",
+      "procession"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "the_sleeper",
+    "seat": "the_last_room"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

@@ -22,6 +22,10 @@ public final class BodyConfig {
     public static final ModConfigSpec.BooleanValue ASCENT = B
             .comment("The Ascent: ropes, wings and flight (the tiers players earn). Off: none of them start, saves keep the tiers.")
             .define("ascent", true);
+    public static final ModConfigSpec.BooleanValue WAY_UP = B
+            .comment("The Way Up (SPEC 63): a rank fight opens a rung of the Ascent, a place gives it, and each unlock is taught where it is given.",
+                    "Off: every rung is earned exactly as before (the rope from the Ringer's chain, the form after an ending).")
+            .define("wayUp", true);
     public static final ModConfigSpec SPEC = B.build();
 
     static void register() {
@@ -39,6 +43,19 @@ public final class BodyConfig {
         if (kitOverride != null) return kitOverride;
         try {
             return !SPEC.isLoaded() || RUNNERS_KIT.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Test stand-in: GameTests flip The Way Up and put it back in try/finally (null: read the config). */
+    public static Boolean wayOverride;
+
+    /** The Way Up's rules (SPEC §63), with the Ascent itself on. */
+    public static boolean wayUp() {
+        if (wayOverride != null) return wayOverride && ascent();
+        try {
+            return ascent() && (!SPEC.isLoaded() || WAY_UP.get());
         } catch (RuntimeException e) {
             return true;
         }

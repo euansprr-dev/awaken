@@ -1,0 +1,156 @@
+# The rope in a real forest as it plays today (the movement plan's audit, docs/movement/PLAN.md): sprint, jump, hold
+# the rope, in third person then first. Shots only; the log's [ascent] trace says what each rope did.
+# Look tour: tools/tour-ci.sh tools/autopilot/movement-wood.txt 1500
+# ci knobs: LENS=cinematic
+world movement_wood survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 960 600
+gui 0
+hud off
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd awaken ascent grant none
+cmd awaken ascent grant tether
+cmd awaken terrain visit minecraft:forest
+waitpassage
+wait 200
+screen close
+info
+camera back
+wait 10
+shotnow w_tp_00
+cmd awaken ascent pilot hold forward,sprint 500
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_tp_01
+wait 12
+shotnow w_tp_02
+wait 14
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_tp_03
+wait 12
+shotnow w_tp_04
+wait 14
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_tp_05
+wait 12
+shotnow w_tp_06
+wait 14
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_tp_07
+wait 12
+shotnow w_tp_08
+wait 14
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_tp_09
+wait 12
+shotnow w_tp_10
+wait 14
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_tp_11
+wait 12
+shotnow w_tp_12
+wait 14
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_tp_13
+wait 12
+shotnow w_tp_14
+wait 14
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_tp_15
+wait 12
+shotnow w_tp_16
+wait 14
+cmd awaken ascent pilot stop
+wait 30
+camera first
+hud on
+wait 10
+shotnow w_fp_00
+cmd awaken ascent pilot hold forward,sprint 300
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_fp_01
+wait 12
+shotnow w_fp_02
+wait 14
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_fp_03
+wait 12
+shotnow w_fp_04
+wait 14
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_fp_05
+wait 12
+shotnow w_fp_06
+wait 14
+wait 8
+cmd awaken ascent pilot hold jump 2
+wait 5
+cmd awaken ascent pilot hold tether 34
+wait 10
+shotnow w_fp_07
+wait 12
+shotnow w_fp_08
+wait 14
+cmd awaken ascent pilot stop
+info
+quit

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "name": "The Silvered Halls",
+  "line": "These are the back halls of a palace where every wall used to be a mirror, and some of them still are.",
+  "form": "dungeon",
+  "theme": "mirror_palace",
+  "ranks": [
+    "C",
+    "B"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:silvered_halls",
+    "water": 0
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/silvered_halls"
+    ],
+    "lens": "silvered_halls",
+    "air": [
+      "shaft_dust",
+      "dust",
+      "stars"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "mirror_knight",
+    "seat": "under_the_roads"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}
