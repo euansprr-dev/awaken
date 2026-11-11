@@ -88,7 +88,8 @@ public final class RealmLive {
         double over = plan.land().edge(lx, lz);
         if (over > 0) {
             // the valley's edge: no wall, just a wind that keeps turning you back, stronger the further you push
-            double dx = -lx + 190, dz = -lz, l = Math.max(1, Math.hypot(dx, dz)), f = Math.min(1.6, 0.35 + over / 60);
+            // back toward the land's middle (Amber Reach's valley lies east of its own, where this was first written for)
+            double dx = -lx + (plan.land() instanceof dev.awaken.gates.realms.land.AmberReach ? 190 : 0), dz = -lz, l = Math.max(1, Math.hypot(dx, dz)), f = Math.min(1.6, 0.35 + over / 60);
             p.push(dx / l * f, 0.08, dz / l * f);
             p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(p)); // a player moves on their own side
             if (t % 600 < 10) Signal.toast(p, Component.literal("The wind won't let you go any further this way."));

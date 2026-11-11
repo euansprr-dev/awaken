@@ -1,0 +1,47 @@
+# Who lives in an open land (SPEC 50.9 "Who lives there"), seen on the Quiet Barrow's moor: its herd of stags on their
+# ground, and a pack on the prowl from above, twice, forty seconds apart, so its walk shows. This land's seed has no perch
+# and nowhere far enough from its run for a lair. Difficulty is normal so the pack comes; the camera is creative, so nothing
+# notices it. Each haunt is first looked at from 70 blocks, which is where it fills. What filled is in the log: "[country]".
+# ci knobs: RD=16
+world autopilot_realm_quiet_barrow_country creative 20261121
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 18000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+cmd awaken gate realm_enter E awaken:quiet_barrow
+need realm
+hud off
+wait 300
+
+cmd awaken gate realm_haunt HERD 0 70 14
+wait 100
+cmd awaken gate realm_haunt HERD 0 14 4
+wait 80
+shot country_stags
+cmd awaken gate realm_haunt HERD 0 30 2
+wait 60
+shot country_stags_on_the_skyline
+
+cmd awaken gate realm_haunt PROWL 0 70 14
+wait 100
+cmd awaken gate realm_haunt PROWL 0 22 18
+wait 60
+shot country_prowl_1
+cmd awaken gate realm_haunt PROWL 0 60 30
+wait 700
+cmd awaken gate realm_haunt PROWL 0 22 18
+wait 60
+shot country_prowl_2
+cmd awaken gate realm_haunt PROWL 0 9 3
+wait 60
+shot country_prowl_close
+quit

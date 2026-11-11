@@ -75,6 +75,7 @@ public final class RealmTests {
             h.succeed();
         });
         dev.awaken.gates.realms.bench.BenchTests.register(); // realm_bench (tools/bench/bench.sh) and the straight-in walk's command
+        dev.awaken.gates.realms.kit.land.LandTests.register(); // the rolled lands (SPEC 50.9): each walks to everything and floats nothing
         AwakenTests.register("realm_blueprints_parse", 40, h -> {
             String why = AMBER.problem();
             if (!why.isEmpty()) h.fail("Amber's blueprint: " + why);
@@ -87,6 +88,38 @@ public final class RealmTests {
                 if (dev.awaken.gates.world.Cells.cellAt(x, z) >= 0) h.fail("a Realm reads as a floor cell");
             }
             if (RealmCells.cellAt(RealmCells.centerX(0) + RealmCells.HALF + 8, RealmCells.centerZ(0)) != -1) h.fail("the gap between cells belongs to one");
+            h.succeed();
+        });
+        // Who lives there (SPEC 50.9): a cell's haunt comes from the seed and the ground alone, keeps off the run's own places, and leaves quiet stretches
+        AwakenTests.register("realm_country_haunts", 200, h -> {
+            Land land = amber(1);
+            if (!RealmCountry.has(land)) h.fail("Amber Reach has no country");
+            int half = land.halfSize() / RealmCountry.CELL + 1, cells = 0, quiet = 0, herds = 0, packs = 0;
+            StringBuilder list = new StringBuilder();
+            for (int cz = -half; cz <= half; cz++) {
+                for (int cx = -half; cx <= half; cx++) {
+                    RealmCountry.Haunt a = RealmCountry.find(land, 1, cx, cz);
+                    if (!a.equals(RealmCountry.find(land, 1, cx, cz))) h.fail("cell " + cx + "," + cz + " gave two answers");
+                    if (land.edge(cx * RealmCountry.CELL + RealmCountry.CELL / 2, cz * RealmCountry.CELL + RealmCountry.CELL / 2) > -20) {
+                        if (a.kind() != RealmCountry.Kind.NONE) h.fail("a haunt past the land's edge at cell " + cx + "," + cz);
+                        continue;
+                    }
+                    cells++;
+                    switch (a.kind()) {
+                        case NONE -> quiet++;
+                        case HERD, SMALL -> herds++;
+                        default -> packs++;
+                    }
+                    if (a.kind() == RealmCountry.Kind.NONE) continue;
+                    if (!RealmCountry.free(land, a.x(), a.z(), 24)) h.fail("a " + a.kind() + " at " + a.x() + "," + a.z() + " stands on one of the run's own places");
+                    if (Math.abs(a.y() - 1 - land.ground(a.x(), a.z())) != 0) h.fail("a haunt that isn't on the ground at " + a.x() + "," + a.z());
+                    list.append(' ').append(a.kind()).append('@').append(a.x()).append(',').append(a.y()).append(',').append(a.z());
+                }
+            }
+            dev.awaken.Awaken.LOG.info("[country] amber seed 1: {} cells, {} quiet, {} herds, {} packs:{}", cells, quiet, herds, packs, list);
+            if (herds == 0 || packs == 0) h.fail("Amber Reach's country is empty: " + herds + " herds and " + packs + " packs in " + cells + " cells");
+            if (quiet * 3 < cells) h.fail("no quiet stretches: only " + quiet + " of " + cells + " cells hold nothing");
+            if (!RealmCountry.find(land, 2, 1, 1).equals(RealmCountry.find(land, 2, 1, 1))) h.fail("another seed gave two answers");
             h.succeed();
         });
         AwakenTests.register("realm_truelight_matches_the_shader", 20, h -> { String why = dev.awaken.gates.realms.preview.TrueLight.problem(); if (!why.isEmpty()) h.fail(why); h.succeed(); });

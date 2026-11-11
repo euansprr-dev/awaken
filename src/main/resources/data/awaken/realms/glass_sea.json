@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "name": "The Glass Sea",
+  "line": "The sand melted here once, a long time ago, and set flat. One road still crosses it, to the tower that did the melting.",
+  "form": "land",
+  "theme": "glass_desert",
+  "ranks": [
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
+  ],
+  "land": {
+    "program": "awaken:glass_country",
+    "water": 62,
+    "params": {
+      "landform": 3
+    }
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/glass_sea"
+    ],
+    "lens": "glass_sea",
+    "air": [
+      "sand",
+      "dust",
+      "wind"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 6
+  },
+  "heart": {
+    "lord": "glass_serpent",
+    "seat": "under_the_burning_glass"
+  },
+  "moods": [
+    "white_noon"
+  ],
+  "ready": true
+}

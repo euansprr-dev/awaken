@@ -950,15 +950,16 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             if (!p.open(x, y, z) || inDoor(x, y, z)) continue;
             double off = room != null ? room.offWay(x, z) : way.offWay(x, z), wild = Math.max(0, Math.min(1, (off - (room != null ? 2.5 : 1.2)) / 4));
             double own = dev.awaken.gates.realms.kit.N.rnd(x, z, 2001), clump = dev.awaken.gates.realms.kit.N.rnd(Math.floorDiv(x, 3), Math.floorDiv(z, 3), 2002);
-            // the floor
-            if (v.get(x, y, z) == null && stone(v, x, y - 1, z) && wild > 0) {
+            // the floor: only where it is a whole block. Over a slab laid low the cell above starts half a block up, and
+            // anything set there (a crystal, a drift, a stair) hung in the air (Euan, 11 Nov: "some floating things")
+            if ((f & 1) == 0 && v.get(x, y, z) == null && stone(v, x, y - 1, z) && wild > 0) {
                 int side = -1, walls = 0;
                 for (int i = 0; i < 4; i++) if (stone(v, x + SIDES[i][0], y, z + SIDES[i][1]) && stone(v, x + SIDES[i][0], y + 1, z + SIDES[i][1])) {
                     side = i;
                     walls++;
                 }
                 boolean clear = v.get(x, y + 1, z) == null && p.open(x, y + 1, z);
-                if (walls == 1 && clear && (f & 1) == 0 && t.footStairs() != null && t.footStairs().hasProperty(net.minecraft.world.level.block.StairBlock.FACING) && clump < 0.55 && own < 0.8) {
+                if (walls == 1 && clear && t.footStairs() != null && t.footStairs().hasProperty(net.minecraft.world.level.block.StairBlock.FACING) && clump < 0.55 && own < 0.8) {
                     v.set(x, y, z, t.footStairs().setValue(net.minecraft.world.level.block.StairBlock.FACING, FACES[side]));
                 } else if (walls > 0 && t.drift() != null && own < 0.45) v.set(x, y, z, t.drift());
                 else if (den && !t.plants().isEmpty() && clump < t.growth() * (0.12 + 0.3 * wild) && own < 0.62) v.set(x, y, z, t.plants().get((int) (dev.awaken.gates.realms.kit.N.rnd(x, z, 2003) * t.plants().size())));

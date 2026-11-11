@@ -258,6 +258,7 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         for (int x = v.x0 - 1; x <= v.x0 + 16; x++) for (int z = v.z0 - 1; z <= v.z0 + 16; z++) column(v, m, x, z);
         drawPieces(v, m);
         settle(v, m);
+        dev.awaken.gates.realms.kit.Settle.overSlabs(v); // nothing small half a block over a low slab (SPEC 50.6)
         // the game draws the dark that the preview doesn't: a room this deep needs its air lit as well as its fires
         for (int x = v.x0; x < v.x0 + 16; x++) for (int z = v.z0; z < v.z0 + 16; z++) if (Math.floorMod(x, 9) == 0 && Math.floorMod(z, 9) == 0) for (Room r : rooms) if (r.has(x, z)) {
             int y = r.floor(x, z) + 5;

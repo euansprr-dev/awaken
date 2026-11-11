@@ -133,7 +133,7 @@ final class RealmRun {
         }
         if (plays) course(level, p, g, land, ref, lx, ly, lz);
         if (!land.traps().isEmpty()) RealmTraps.tick(level, g, land, ref, p, lx, ly, lz);
-        if (plays && !(land instanceof dev.awaken.gates.realms.kit.crawl.CrawlLand) && level.getDifficulty() != Difficulty.PEACEFUL) wander(level, p, g, land, lx, lz);
+        RealmCountry.tick(level, p, g, plan, ref, st, data, lx, lz);
     }
 
     /** How many waves a leg's fight comes in: a stand's ambush says "waves:8"; anything else is one. */
@@ -147,30 +147,9 @@ final class RealmRun {
         }
     }
 
-    /** Wandering packs sent per gate so far. Not saved: after a restart a land may get a few more. */
-    private static final Map<Integer, Integer> WANDERED = new HashMap<>();
-
-    /** A server is starting: gate ids begin again in another world, so the last world's counts must not be read as this one's. */
+    /** A server is starting: gate ids begin again in another world, so nothing kept by gate id may be read as this one's. */
     static void reset() {
-        WANDERED.clear();
-    }
-
-    /**
-     * The right amount (SPEC §50.9): an open land is never empty between its dens. About every twenty seconds, for a player
-     * who is out in the land with nothing of the gate's near them, away from the way in and from every fight the land has
-     * placed, one more pack stands waiting somewhere ahead. A land gets four of these and one more for every rank.
-     */
-    private static void wander(ServerLevel level, ServerPlayer p, GateRecord g, Land land, int lx, int lz) {
-        if ((p.tickCount + p.getId() * 37) % 400 >= 10) return;
-        int sent = WANDERED.getOrDefault(g.id, 0);
-        if (sent >= 4 + g.plan.rank().ordinal()) return;
-        Land.Site mouth = land.mouth();
-        if (mouth != null && Math.hypot(lx - mouth.x(), lz - mouth.z()) < 48) return;
-        for (Land.Leg leg : land.route()) {
-            if (leg.kind() != Land.LegKind.ARRIVE && Math.hypot(leg.x() - lx, leg.z() - lz) < leg.radius() + 30) return;
-        }
-        if (RealmPacks.near(level, p.blockPosition(), 44) > 2) return;
-        if (RealmPacks.wander(level, g, GateLayout.of(g.plan).floor(0, 1), p, sent) > 0) WANDERED.put(g.id, sent + 1);
+        RealmCountry.reset();
     }
 
     /** A den's fight: once its pack is gone it counts as cleared (a way may open on that), and while it's on its doors are shut. */
@@ -187,11 +166,16 @@ final class RealmRun {
     }
 
     /** A herd put down leaves something: a cache where it stood, as a room's does in the old gates. */
-    private static void spoils(ServerLevel level, BlockPos center) {
+    static void spoils(ServerLevel level, BlockPos center) {
         for (int dy : new int[]{0, 1, -1, 2, -2, 3, -3}) {
             BlockPos at = center.above(dy);
             var here = level.getBlockState(at);
-            if (!here.isAir() && !here.is(net.minecraft.world.level.block.Blocks.WATER) || level.getBlockState(at.below()).getCollisionShape(level, at.below()).isEmpty()) continue;
+            var under = level.getBlockState(at.below());
+            if (!here.isAir() && !here.is(net.minecraft.world.level.block.Blocks.WATER) || under.getCollisionShape(level, at.below()).isEmpty()) continue;
+            // a floor that steps in half blocks: the slab under a cache is made whole, or the cache stands half a block up
+            if (under.getBlock() instanceof net.minecraft.world.level.block.SlabBlock && under.getValue(net.minecraft.world.level.block.SlabBlock.TYPE) == net.minecraft.world.level.block.state.properties.SlabType.BOTTOM) {
+                level.setBlock(at.below(), under.setValue(net.minecraft.world.level.block.SlabBlock.TYPE, net.minecraft.world.level.block.state.properties.SlabType.DOUBLE), Block.UPDATE_CLIENTS);
+            }
             level.setBlock(at, GatesRegistry.CACHE.get().defaultBlockState(), Block.UPDATE_CLIENTS);
             level.playSound(null, at, GatesRegistry.SND_CACHE.get(), SoundSource.BLOCKS, 1F, 1F);
             level.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, at.getX() + 0.5, at.getY() + 0.8, at.getZ() + 0.5, 24, 0.4, 0.5, 0.4, 0.03);
