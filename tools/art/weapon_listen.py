@@ -1,7 +1,8 @@
 """The weapon sounds' listening page (SPEC §25 "Weight in the Hand", stage 0; Euan 2026-11-09: "built sounds read fake",
 start from Minecraft's own recordings named in sounds.json, audition locally in context).
 
-Each of the fourteen weapon sounds that failed the audit, and the five new draws, in a scene at the game's own timing:
+Each of the fourteen weapon sounds that failed the audit, the five new draws and the clash (a light blow turned aside, a
+heavy one, the one that breaks a stance, and on a bell), in a scene at the game's own timing:
 today's sound beside three picks, every pick a recipe of recordings named the way sounds.json and the code would name them.
 Euan marks one for each row; the marks land in run-autopilot/weapon-listen/picks.json.
 
@@ -36,6 +37,11 @@ def a(event, vol=1.0, pitch=1.0, at=0):
     return {"e": "awaken:arms." + event, "vol": vol, "pitch": pitch, "at": at}
 
 
+def o(event, vol=1.0, pitch=1.0, at=0):
+    """One of our events that names Minecraft's recordings at its own level and pitch (guard.struck, fight.bell...)."""
+    return {"e": "awaken:" + event, "vol": vol, "pitch": pitch, "at": at}
+
+
 STRONG, CRIT, KNOCK, SWEEP = "entity.player.attack.strong", "entity.player.attack.crit", "entity.player.attack.knockback", "entity.player.attack.sweep"
 ZOMBIE = v("entity.zombie.hurt", 0.6)
 
@@ -56,6 +62,10 @@ SCENES = {
     "execution": [(0, a("swish_heavy")), (100, "X")],
     "dodge": [(0, a("tell_heavy")), (450, a("dodge")), (500, "X")],
     "draw": [(0, "X"), (500, a("swish_light")), (600, a("hit_flesh"))],
+    # the clash (SPEC §25 "The clash"): the boss's own whoosh (a heavy swish, lowered: a bigger arm) at the fight's rhythm
+    "clash_light": [(0, a("tell_light")), (330, a("swish_heavy", 0.8, 0.75)), (400, "X"), (900, a("swish_heavy", 0.8, 0.8)), (970, "X")],
+    "clash_heavy": [(0, a("tell_heavy")), (520, a("swish_heavy", 1.0, 0.65)), (620, "X")],
+    "clash_break": [(0, a("tell_heavy")), (520, a("swish_heavy", 1.0, 0.65)), (620, "X"), (700, v("entity.ravager.stunned", 0.9))],
 }
 SCENE_SAYS = {
     "chain": "three strikes of a chain, each swish then the hit with a zombie's own grunt under it",
@@ -71,6 +81,9 @@ SCENE_SAYS = {
     "execution": "a heavy swish, then the Execution",
     "dodge": "a heavy tell, your dodge, then the perfect dodge's own sound",
     "draw": "the draw, then a first strike",
+    "clash_light": "a boss's tell, then two of its blows turned aside on the beat, each its whoosh then the clash",
+    "clash_heavy": "a boss's heavy tell, its whoosh, the clash",
+    "clash_break": "a heavy tell, its whoosh, the clash that breaks its stance, then its voice (in the game, the body's own)",
 }
 
 ROWS = [
@@ -102,6 +115,40 @@ ROWS = [
         ("An anvil landing, quiet and raised, over a shield block", [v("block.anvil.land", 0.45, 1.6), v("item.shield.block", 1.0, 1.1)]),
         ("A zombie on an iron door, raised, over a shield block", [v("entity.zombie.attack_iron_door", 0.9, 1.4), v("item.shield.block", 0.8, 1.2)]),
         ("A chain breaking, over an iron golem struck and raised", [v("block.chain.break", 1.0, 0.9), v("entity.iron_golem.hurt", 0.7, 1.5)])]),
+    # the clash (SPEC §25 "The clash"; Euan 2026-11-11 of the parry above: "a very small ding, and the screen barely moves"):
+    # each pick is our steel by the blow's size over what it met (a sword here, a bell on the last row); no layer above 1.2
+    dict(id="clash_light", name="The clash: a light blow turned aside", scene="clash_light", why="today's parry is an anvil at 1.6 over a shield: a small ding",
+         today=[v("block.anvil.land", 0.45, 1.6), o("guard.struck", 1.0, 1.1)], picks=[
+        ("A trident striking the ground and an anvil landing, over the shield and an iron golem struck (in the game now)",
+         [v("item.trident.hit_ground", 1.0, 1.0), v("block.anvil.land", 0.8, 1.15), o("guard.struck", 0.8, 1.0), o("guard.steel", 1.0, 1.0)]),
+        ("The mace through the air, an iron golem cracking, over the shield",
+         [v("item.mace.smash_air", 0.8, 1.0), v("entity.iron_golem.damage", 0.8, 1.1), o("guard.struck", 0.8, 1.0)]),
+        ("A chain and copper struck, an anvil landing, over the shield",
+         [v("block.chain.hit", 1.0, 1.0), v("block.copper.hit", 0.9, 1.1), v("block.anvil.land", 0.7, 1.2), o("guard.struck", 0.7, 1.0)])]),
+    dict(id="clash_heavy", name="The clash: a heavy blow turned aside", scene="clash_heavy", why="new: today a heavy's parry sounds like a light's",
+         today=[v("block.anvil.land", 0.45, 1.6), o("guard.struck", 1.0, 1.1)], picks=[
+        ("An anvil landing low and the mace on the ground, over the shield and an iron golem struck (in the game now)",
+         [v("block.anvil.land", 1.0, 0.9), v("item.mace.smash_ground", 0.8, 1.0), o("guard.struck", 0.9, 0.95), o("guard.steel", 1.0, 0.9)]),
+        ("A heavy core struck, an iron golem cracking and a trident in the ground, all lowered",
+         [v("block.heavy_core.hit", 1.0, 0.9), v("entity.iron_golem.damage", 0.9, 0.9), v("item.trident.hit_ground", 0.9, 0.9), o("guard.struck", 0.9, 0.9)]),
+        ("Netherite struck, the mace through the air and a chain breaking, lowered",
+         [v("block.netherite_block.hit", 1.0, 0.8), v("item.mace.smash_air", 0.9, 0.85), v("block.chain.break", 0.8, 0.9), o("guard.struck", 0.9, 0.9)])]),
+    dict(id="clash_break", name="The clash that breaks its stance", scene="clash_break", why="new: the biggest parry, with the body's own voice after it",
+         today=[v("block.anvil.land", 0.45, 1.6), o("guard.struck", 1.0, 1.1)], picks=[
+        ("An anvil landing lower and the mace's heaviest ground blow, over the shield and an iron golem struck (in the game now)",
+         [v("block.anvil.land", 1.0, 0.8), v("item.mace.smash_ground_heavy", 0.9, 1.0), o("guard.struck", 0.9, 0.85), o("guard.steel", 1.0, 0.85)]),
+        ("The mace's heaviest blow, an iron golem cracking and a heavy core struck, all low",
+         [v("item.mace.smash_ground_heavy", 0.9, 0.9), v("entity.iron_golem.damage", 1.0, 0.8), v("block.heavy_core.hit", 1.0, 0.8), o("guard.struck", 0.9, 0.85)]),
+        ("An anvil landing lowest, a chain breaking and a vault struck",
+         [v("block.anvil.land", 1.0, 0.75), v("block.chain.break", 1.0, 0.8), v("block.vault.hit", 0.9, 0.8), o("guard.struck", 0.9, 0.8)])]),
+    dict(id="clash_bell", name="The clash on a bell (the Ringer, the Bell Warden, the Toller)", scene="clash_light", why="new: what met the blade was a bell",
+         today=[v("block.anvil.land", 0.45, 1.6), o("guard.struck", 1.0, 1.1)], picks=[
+        ("The light clash with a bell struck over it (in the game now)",
+         [v("item.trident.hit_ground", 1.0, 1.0), v("block.anvil.land", 0.8, 1.15), o("guard.struck", 0.8, 1.0), o("fight.bell", 1.0, 1.0)]),
+        ("A trident in the ground and the shield, with the bell lower",
+         [v("item.trident.hit_ground", 1.0, 1.0), o("guard.struck", 0.8, 1.0), o("fight.bell", 1.0, 0.85)]),
+        ("An anvil landing and a chain, with the bell quieter and a little higher",
+         [v("block.anvil.land", 0.9, 1.0), v("block.chain.hit", 0.9, 1.0), o("guard.struck", 0.8, 1.0), o("fight.bell", 0.7, 1.1)])]),
     dict(id="glance", name="A shot glancing off the guard", scene="glance", why="all four files carry the thin tone", today=[a("glance")], picks=[
         ("A breeze turning a shot away", [v("entity.breeze.deflect", 0.9)]),
         ("A shield block, raised, with an arrow striking", [v("item.shield.block", 0.8, 1.6), v("entity.arrow.hit", 0.6, 1.2)]),
@@ -188,7 +235,7 @@ def manifest():
             if s.get("type") == "event":
                 continue
             n = s["name"]
-            if ns == "minecraft":
+            if ns == "minecraft" or n.startswith("minecraft:"):  # ours may name Minecraft's recordings directly (guard.struck)
                 n = n.split(":", 1)[-1]
                 o = objects.get(f"minecraft/sounds/{n}.ogg")
                 if o is None:
@@ -237,7 +284,7 @@ input[type=text], textarea { font: inherit; font-size: 0.9rem; width: 100%; box-
 label { font-size: 0.9rem }
 </style></head><body><main>
 <h1>Weapon sounds, by ear</h1>
-<p>Nineteen sounds. For each one: today's, and three picks made from Minecraft's own recordings. <strong>In a fight</strong> plays the sound where the game plays it, with the sounds round it. <strong>Alone</strong> plays just the sound. Press <strong>Use this</strong> on the one you'd keep, or <strong>None of these</strong>, and add a word if something is close but off. Your marks save as you go.</p>
+<p>Twenty-three sounds. For each one: today's, and three picks made from Minecraft's own recordings. <strong>In a fight</strong> plays the sound where the game plays it, with the sounds round it. <strong>Alone</strong> plays just the sound. Press <strong>Use this</strong> on the one you'd keep, or <strong>None of these</strong>, and add a word if something is close but off. Your marks save as you go.</p>
 <p class="muted small">Every pick is a guess until you have heard it. The levels are first values. This page plays the recordings from this Mac's own copy of the game; it is not hosted anywhere.</p>
 <div class="bar"><label>Volume <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8"></label><button id="stop">Stop</button><span id="state"></span><span class="muted small" id="count"></span></div>
 <div id="rows"></div>

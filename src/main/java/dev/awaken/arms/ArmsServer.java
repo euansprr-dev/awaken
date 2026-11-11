@@ -987,8 +987,11 @@ final class ArmsServer {
                 // mastery III: a charged deflect; an untold blow's wider window pays a little less
                 float charged = ArmsMastery.deflect(ArmsMastery.step(p, style)) * (untold ? ArmsRules.UNTOLD_REWARD : 1F);
                 resonance(p, s, ArmsRules.RESONANCE_DEFLECT * charged);
+                boolean broke = false;
                 if (by instanceof LivingEntity attacker && src.getDirectEntity() == by) {
+                    long stood = attacker instanceof Player ? 0 : posture(attacker).brokenUntil;
                     addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);
+                    broke = !(attacker instanceof Player) && posture(attacker).brokenUntil != stood; // this deflect broke its stance
                     // a flier's dive turned aside brings it down (SPEC §40): the opening a fight in the air needs
                     Strikes.ground(attacker, Aim.GROUNDED_TICKS);
                     // its limb recoils, and a phrase's last blow turned aside staggers it (SPEC §47.3)
@@ -1001,8 +1004,7 @@ final class ArmsServer {
                     boolean back = src.getDirectEntity() != null && Strikes.returnShot(src.getDirectEntity(), p);
                     stop(p, s, src, from, true, 0F, by, back);
                 } else {
-                    soundForOthers(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
-                    answer(p, s, ArmsPayloads.DEFLECT, by);
+                    clash(p, s, by, ArmsRules.clashSize(kind, broke));
                 }
             }
             case BLOCK -> {
@@ -1126,9 +1128,24 @@ final class ArmsServer {
     }
 
     private static void answer(ServerPlayer p, ArmsState s, int what, @Nullable Entity by) {
+        answer(p, s, what, by, 0);
+    }
+
+    private static void answer(ServerPlayer p, ArmsState s, int what, @Nullable Entity by, int aux) {
         int id = by == null ? -1 : by.getId();
-        AwakenNet.send(p, new ArmsPayloads.Result(s.seq, what, id, 0, 0));
-        seen(p, new ArmsPayloads.Seen(p.getId(), what, id, 0, 0));
+        AwakenNet.send(p, new ArmsPayloads.Result(s.seq, what, id, aux, 0));
+        seen(p, new ArmsPayloads.Seen(p.getId(), what, id, aux, 0));
+    }
+
+    /**
+     * A blade's deflect answered as a clash of its size (SPEC §25 "The clash"): those near hear its metal by what met the
+     * blade, a stance it broke draws the body's own voice, and the fighter's hands play the rest on the answer (its aux).
+     */
+    static void clash(ServerPlayer p, ArmsState s, @Nullable Entity by, int size) {
+        s.lastClash = size;
+        ArmsSounds.playClash(p.level(), p, p.getX(), p.getY(), p.getZ(), size, ArmsSounds.edge(by));
+        if (size == ArmsRules.CLASH_BREAK && by instanceof net.minecraft.world.entity.Mob m) m.playAmbientSound();
+        answer(p, s, ArmsPayloads.DEFLECT, by, size);
     }
 
     /** Gives the blow just held for this player what it does after it lands; false if none was held this tick. */

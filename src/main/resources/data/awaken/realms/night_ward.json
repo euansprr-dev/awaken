@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "name": "The Night Ward",
+  "line": "One long ward and the lamps still lit. They come in when the last ones stop moving.",
+  "form": "dungeon",
+  "theme": "nightmare",
+  "ranks": [
+    "C",
+    "B",
+    "A",
+    "S"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:sleepless_ward",
+    "water": 0,
+    "params": {
+      "stand": 1.0
+    }
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/sleepless_ward"
+    ],
+    "lens": "sleepless_ward",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "dust",
+      "moths",
+      "procession"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "the_sleeper",
+    "seat": "the_last_room"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

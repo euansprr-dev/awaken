@@ -7985,6 +7985,47 @@ writes each decision here. Module `arms` (`dev.awaken.arms`), docs/modules/arms.
     top right to the bottom left), and the server confirmed both hits (`hit heavy rel 1`). The Greatblade's two hands sit
     where the Maul's do, the off hand's edge just under and right of the crosshair, the crosshair and the target's head
     clear.
+  - *The clash* (Euan 2026-11-11, after the Ringer: "Sometimes I parry perfectly and it's a very small ding, and the
+    screen barely moves"; the boss plan's part three, approved with the rest, "Go with all", 11 Nov, built here from its
+    numbers, `docs/boss-experience/PLAN.md` 4.3 on `claude/boss-experience-plan-3bdfa8`). A deflect is answered by the
+    size of the blow it turned aside, sent in the answer's aux (`ArmsRules.clashSize`, `ArmsServer.clash`): 0 a light
+    blow, 1 a heavy one, 2 the deflect that broke its stance (the posture's broken-until moved by this deflect's own
+    share). The boss plan adds "it reels" (`Strikes.reeling`, mobs side) to size 2; until it is in build, size 2 is the
+    break alone. Today's deflect stays as `ArmsRules.TODAY` for the switch.
+    | | Today | Light | Heavy | Breaks its stance |
+    |---|---|---|---|---|
+    | Freeze (hands and the body) | 100 ms | 110 | 160 | 200 |
+    | View kick, up / roll (degrees), settling over | 1.8 / 1.2, 7 ticks | 2.6 / 1.6, 7 | 4.0 / 2.4, 8 | 4.5 / 2.8, 9 |
+    | View shake (degrees, ticks) | none | 0.35, 4 | 0.55, 6 | 0.75, 8 |
+    | Field of view | -3.5%, 9 ticks | -4.5%, 9 | -6%, 11 | -8%, 14 |
+    | White-gold light (`FxClient.guardSpark` size) | none | 1.9 | 2.4 | 2.4, and the frame's edges flash |
+    The settle grows with the kick so a bigger kick never moves faster; the shake is two sines (23 and 31 Hz, the yaw at
+    0.7 of the pitch) on the feel's clock, eased out by the square of what is left, so a slowed film shakes as many ticks
+    as play (both the plan left open). Light: the deflect's spark in the weapon's own light stays, and over it a white-gold
+    (0xFFE3A0) spark of the size above: its flash where the weapons met and 21 more sparks at size 1.9 (2.5 times
+    today's 14), 25 thrown faster (wider) at 2.4; they go the way the turned blow went: on past the guard and across it,
+    away from the side it came from (met head-on, out past the sword hand), a little up. The break flashes the frame's
+    edges white-gold (the low-health falloff, at most 0.55, gone in 6 ticks). Those near see the light by its size.
+    Sound, first picks: our steel by size, lower and longer as it grows (light: a trident striking the ground, an anvil
+    landing at 1.15, the shield's knock; heavy: the anvil at 0.9, the mace on the ground, the shield at 0.95; the break:
+    the anvil at 0.8, the mace's heaviest ground blow, the shield at 0.85), and over it what met the blade, lower by size
+    (1, 0.9, 0.85), by `ArmsSounds.edge`: a bell-armed body (`#awaken:clash_bell`: the Ringer, the Bell Warden, the
+    Toller) a bell (its recordings at 0.55, not the block's carry of 12); a held weapon by its make (`wooden_` wood,
+    `stone_` stone, else steel); else the body (plate an iron golem struck, stone a heavy core with stone, bone a bone
+    block, wood wood, a spirit a breeze turning a shot, flesh and slime the knockback hit). No layer above 1.2
+    (`guard.steel`'s recordings already play at 1.2, so its voice stays at 1 or under). The break also draws the body's
+    own voice (`Mob.playAmbientSound` from the server). Those near hear the same mix from the server. Listening page rows
+    `clash_light`, `clash_heavy`, `clash_break`, `clash_bell` (`tools/art/weapon_listen.py`, each after the boss's own
+    whoosh at the fight's rhythm; pick 1 is in the game, his marks replace it). A block is unchanged: its thud, no
+    flash. Switch: `clashSizes` (comfort, on; off: every deflect is today's, its sound included); each layer also obeys
+    the freeze, view kick and camera shake, moments and recorded sounds switches. Dev: `/awaken arms clash
+    light|heavy|break` answers one from the nearest creature, the guard's rules aside. Test `arms_clash` (sizes from
+    three real deflects, each size bigger than the last, today kept, what met the blade, no layer over 1.2). Film
+    `tools/autopilot/arms-clash.txt`: on CI (run 42984078674, 2 ticks a second) all three sizes reached the hands
+    (`clash 0`, `1`, `2`); the light kicks and throws thin white-gold sparks up and across from the guard, the heavy
+    kicks harder and throws them twice as far, the break leans in furthest and flashes the edges; from behind, the
+    sparks show before the body. The edge flash was filmed at 0.85 and washed half the frame cream, so it is 0.55 over
+    6 ticks (not filmed again).
   - *The hit on the blade* (decisions 2 and 6, on fights' stage 0, §47.1 "Hits land now", Fights renumbered from §46 on
     boss-fights): each keyed blow's pose sits on the tick the server counts its hit, so the impact stage 0 plays the
     frame its sweep reaches the body meets the blade there and the freeze holds the contact pose. A heavy's windup is 0 (the
@@ -22479,6 +22520,25 @@ step of one; what was built (`wild()` under a half) stands square to the compass
 grows is cleared from over every stand; every stand has a light over it. A tour can't name a place in a rolled run, so it
 names a leg: `/awaken gate realm_leg <kind> <n> <dx> <dy> <dz>` stands at the n-th leg of a kind, turned toward where it
 leads. The wide sweep (eight seeds a kind) fails unless every room form, every Lord's plan and every crossing turned up.
+
+**A stand** (Euan, 11 Nov: "maybe some gates that are like almost kind of like a wave system... survive 10 waves"). A blueprint whose
+`land.params` has `"stand": 1` is cut by a rolled kind's skin but is no run: the way in, one great room (an ambush leg eighteen or
+so across, nine high, its `when` reading `waves:N`), its Warden, the Lord. N is six at E rank and one more for every rank above. A
+wave comes when the last is down and someone still holds the room (`RealmRun`, markers `wave<site>_<k>` in the saved `woken` set);
+every other wave is the theme's own roll in place of the kind's herd, so no two waves are the same company; the room's doors stay
+shut until the last wave falls. A stand pays what any gate of its rank pays: its waves count as shares (`RealmLive.units`). Eight
+on 11 Nov: The Ossuary Floor, The Slag Pit, The Spore Ring, The Drowned Hall, The Glass Bowl, The Chapter House, The Night Ward,
+The Black Landing.
+
+**The right amount** (the same day: "the big worlds we've built so far... look pretty good, like with the right amount of mobs in
+them"). An open land (anything that is not a crawl) is never empty between its dens: about every twenty seconds, for a player out
+in the land with fewer than three of the gate's monsters within forty-four blocks, more than forty-eight from the way in and clear
+of every fight the land has placed, one more pack of the theme's own stands waiting thirty to forty-four blocks off
+(`RealmPacks.wander`). A land gets four such packs and one more for every rank. They pay as any kill does, on top of the gate's
+own shares: whether that stays is Euan's call.
+
+**Every rank.** Each finished blueprint lists every rank from the one its theme opens at up to S, not the two it first had. Packs
+already grow with rank (`RealmPacks.roll`, `den`, `warden`). A run's shape does not change with rank yet.
 
 **Depth.** Euan, 10 Nov, on the pictures of the new shapes: "the rooms and the setups and stuff is decent now, but the
 atmosphere itself is completely missing... a completely flat floor, completely flat walls... it's still all one block

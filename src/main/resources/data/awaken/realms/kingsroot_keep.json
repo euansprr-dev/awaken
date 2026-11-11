@@ -6,8 +6,13 @@
   "theme": "overgrown_temple",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:kingsroot_keep",
     "water": 62
