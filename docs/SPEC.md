@@ -9618,6 +9618,43 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   outside doesn't), `progression_truths_by_themselves`, `progression_first_job`, `trail_steps_on_tasks`, and the kin
   sweep (`kin_done_never_shows`) checks a met kind is named and a read want is the step.
 
+### 27.14 A done step stays done (Euan's play, 2026-11-11)
+"I already had that thing completed of building like a somewhere with walls and etc. Near my fire ... and I'm literally
+in the room right now as well. But after the gate, for some reason, that is not completed anymore. So tasks are never
+removed, and a task can never not be completed if it actually is completed." (His screen: inside his timber room, bed
+beside him, "YOUR HOME 1/3" with "Build a room near your fire: walls, a roof and a door" unticked and its compass on the
+fire 7 m away, on the card and in the Tab glance.) The cause was a scan of his home run while half its land was
+unloaded (§28.2, "Read whole"); the rule holds whatever the cause:
+- **A step once done stays done**, whatever a later check finds. What is there now can still say what's next and why a
+  room isn't counted ("Your Bedroom isn't a room yet: ..."), but it never unticks a step or brings a done one back.
+- **A step on the list stays until it is done**, or the story moves past it (the Anchor replacing the fire's first
+  steps); never because a live read flickered.
+- **The task card and the Tab glance** (`progression.Checklist.now`, which both draw from): every row sent ticked is
+  remembered under its task's id (`progression.Ticked`, player attachment `awaken:ticked`, saved with `schema` 1, kept
+  through death, never synced, at most 1024 rows, the oldest first). A row remembered and now unticked goes out ticked,
+  its count full and its place dropped, so nothing points at a done step. A card made with `Checklist.Task.live` is left
+  as it is: its rows are what holds now, not steps done (the weapon you're making: what's in the pack, `arms:track`; a
+  pinned step's needs, `tasks:<key>`).
+- **The Tasks page** (`core.api.Goals`): what a step says is done is the source's call, and a source decides it from
+  what it remembers (a counter, a saved set, what a home has had), never from a live read that can come and go (land half
+  unloaded, an entity out of range). Live reads belong in a step's needs, which tick and untick as they hold. Every
+  source was read against it: the Hearth's were the ones that read the last scan.
+- **The Hearth remembers what it has had** (`HearthRecord.hadRoom()`, `had(RoomType)`; saved in the record's `home` as
+  `ever_room` and `ever_kinds`, Home schema 4; a schema 3 save fills them from the rooms it saved, so an old world keeps
+  what it had). Every step a room finishes reads it, never the last scan: "Build a room near your fire" (`HearthTask`; its
+  card id is now `hearth:first@<the home's place>`, so the card's memory is that home's and a new fire starts afresh), the
+  Now line's `hearth:shelter`, the Armoury, the Forge, the Forge's tiers, the Bedroom's Sanctuary and "Add to your home"
+  (`HearthGoals`), and the next room on the card and the Now line (`HearthNow.nextRoom`: a kind the home has had is never
+  suggested again; if it isn't a room now, the why-line says why). The toasts for a room kind ("First shelter", "Kitchen
+  recognised") come only the first time a home has that kind. What rooms do (rest, the Study's depth, the Armoury's
+  gift, the Hearth page's list) still reads what stands now.
+- **The fire never lifts once a room was read**: an empty hand on your fire lifts the coal only while the home has never
+  had a room (`Embers`), since after it the card says to right-click the fire for the guide. Breaking it still returns
+  the coal.
+- Test `tasks_done_stays_done` (a row ticked once stays ticked on the card when its source unticks it, a live card's row
+  doesn't; a home that lost its rooms to a scan keeps its first room's step and its Armoury done, and a partial scan
+  keeps a room it couldn't see), for the final suite.
+
 ## 28. Between the Gates (home, people, below; plan docs/world-depth/PLAN.md, page https://claude.ai/artifact/ATZfZSczLg95kNSgnLF42M; Euan approved all of it 2026-10-26)
 
 Euan, 2026-10-26: "Go ahead with all recommendations." PLAN.md is the long form and its audits (`docs/world-depth/
@@ -9733,7 +9770,7 @@ checklist titled "Your home", not Now lines (which leave the HUD, §27.11):
 - No home: what you carry says how to make one, one row: "Place your Ember on the ground where you want your home", else
   "Place your Hearth Anchor on the ground where you want your home", else (a Lord's Heart) "Craft a Hearth Anchor: the
   Lord's Heart, 4 stone bricks and 4 copper ingots".
-- A fire: "Build a room near your fire: walls, a roof and a door" (done: any room read), then "Right-click your campfire
+- A fire: "Build a room near your fire: walls, a roof and a door" (done: any room read, ever, §27.14), then "Right-click your campfire
   to see what your home needs" (done: the guide opened, `guide_seen`; it waits for the room because an empty hand on a
   roomless fire lifts the coal), then, holding a Lord's Heart, "Hold the Lord's Heart and right-click your campfire to
   make it an Anchor". An Anchor: "Right-click your Anchor to see what your home needs".
@@ -9749,6 +9786,24 @@ checklist titled "Your home", not Now lines (which leave the HUD, §27.11):
   heal your Fracture".
 - Test `hearth_task_steps` (no home and nothing carried: no card; the Ember's row; a fire at home: room then guide, a
   hint; from afar: home on the Now line; an Anchor's guide; then the next room at home only).
+
+**Read whole** (Euan 2026-11-11, back from a gate: his room near the fire no longer counted while he stood in it). His
+room stands in the chunk west of his fire's (fire at -1534, room -1541 to -1537, the chunk line at -1536). The rescan
+came due while he was in the gate (every 5 minutes) and waited only for the fire's own chunk; coming home from the gate's
+mouth about 340 blocks east, that chunk came into range first, and the scan ran with the room's chunk still unloaded. The
+sweep skips an unloaded chunk without a word, so no room was read, and "Build a room near your fire" unticked; a later
+rescan found it again. Now:
+- A due scan waits for its home's whole land (`HearthService.landReady`): every chunk the sweep covers loaded whole
+  (`getChunkNow`). A home whose fire is loaded but not the rest waits 30 checks (15 s, `LAND_WAIT`), then is read anyway
+  (a tiny view distance may never load it all).
+- The scanner says when it met unloaded land (`Scan.whole`: a chunk of the radius it couldn't sweep, a fill or a solid
+  seed's side that ran into one). A partial scan adds what it read and keeps every room it knew that nothing it read
+  stands over, keeps the misses, land and Style it had, takes the most of each piece of furniture, and tries a whole
+  scan again in a minute (`onRoomsScanned`, `keepUnseen`). Only a whole scan forgets a room. `scanNow` (the command, the
+  tests) takes what it reads as whole.
+- And the steps a room finished stay done whatever any scan reads (§27.14). His world needs nothing: its saved record
+  holds the room again (a later rescan found it), and on loading it the Hearth remembers it has had a Shelter, a Bedroom
+  and an Armoury.
 
 **Setting it down** (use on the top of a block). Refused, each with its reason: soft ground or no room, the city reserve
 (`CityBasin.reserved`), a Precursor ward (`WardHooks.at`), any gate that stands within 64 (`GateHooks.near`; one still
@@ -9769,7 +9824,7 @@ later the **YOUR GROUND** card (`client/NameScreen`, low on the screen, no dimmi
 holm, wick, cote, ley, by, worth, combe, field, hearth, burn, or apart: Rest, Hollow, End, Green, Hearth; deterministic per
 place and owner); the name is cleaned (letters, digits, spaces, ' and -, 24 at most). Walking onto your land: a place
 caption, the name spaced over "your hearth" (IMPORTANT, topic `hearth_place`, filed after 200 ticks). Fireflies over your
-land at night (one every 8 ticks round you). **Lifting**: empty hand on your fire while no room is read → the record ends
+land at night (one every 8 ticks round you). **Lifting**: empty hand on your fire while the home has never had a room (§27.14) → the record ends
 (its household kept), the coal comes back, `hearth.lift`. Breaking it (owner) or losing it any other way returns the coal
 (to an owner within 16, else dropped there). **Tier I**: a Lord's Heart or the Anchor used on your fire, or the guide's
 button with a Heart in your pack, sets the Anchor block in place, tier 1, and runs what an Anchor placed runs

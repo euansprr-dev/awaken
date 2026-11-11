@@ -487,6 +487,69 @@ final class HomeTests {
                 clear(level, base, 9, 6, 9);
             }
         });
+        // SPEC §27.14 (Euan 2026-11-11, back from a gate in his own room): a done step stays done
+        AwakenTests.registerIsolated("tasks_done_stays_done", 40, h -> {
+            ServerLevel level = h.getLevel();
+            ServerPlayer sp = h.makeMockServerPlayerInLevel();
+            Progression.awaken(sp);
+            HearthData data = HearthData.get(level.getServer());
+            BlockPos origin = h.absolutePos(BlockPos.ZERO);
+            BlockPos at = new BlockPos((origin.getX() & ~15) + 8, origin.getY() + 101, (origin.getZ() & ~15) + 8);
+            var tips = HearthService.player(sp).tips;
+            try {
+                // the card: a row ticked once stays ticked when its source unticks it, with nothing pointing at it
+                dev.awaken.progression.Checklist.remembered(sp, new dev.awaken.progression.Checklist.Task("test:done", "Test",
+                        List.of(dev.awaken.progression.Checklist.Row.of("Do the thing", true))));
+                var back = dev.awaken.progression.Checklist.remembered(sp, new dev.awaken.progression.Checklist.Task("test:done", "Test",
+                        List.of(new dev.awaken.progression.Checklist.Row("Do the thing", "", false, 0, 0, at))));
+                h.assertTrue(back != null && back.rows().getFirst().done() && back.rows().getFirst().at() == null, "a ticked row stays ticked: " + back);
+                // a live card's rows are what holds now (what you carry for a weapon): they untick
+                dev.awaken.progression.Checklist.remembered(sp, dev.awaken.progression.Checklist.Task.live("test:live", "Test",
+                        List.of(dev.awaken.progression.Checklist.Row.of("Iron ingots", true))));
+                var live = dev.awaken.progression.Checklist.remembered(sp, dev.awaken.progression.Checklist.Task.live("test:live", "Test",
+                        List.of(dev.awaken.progression.Checklist.Row.of("Iron ingots", false))));
+                h.assertTrue(live != null && !live.rows().getFirst().done(), "a live card's row is what holds now: " + live);
+                // the Hearth: a home whose scan read no room keeps what it has had
+                java.util.EnumSet<RoomType> kinds = java.util.EnumSet.of(RoomType.SHELTER, RoomType.BEDROOM, RoomType.FITTING);
+                Room room = new Room(kinds, at.offset(-7, 0, 4), at.offset(-3, 3, 8), new it.unimi.dsi.fastutil.longs.LongOpenHashSet(),
+                        new int[dev.awaken.hearth.room.Furniture.COUNT], new int[dev.awaken.hearth.room.Tally.F_COUNT], java.util.Set.of(),
+                        Reading.of(new dev.awaken.hearth.room.Tally(), kinds));
+                HearthRecord rec = new HearthRecord(sp.getUUID(), "test", at, HearthService.OVERWORLD);
+                rec.tier = 0;
+                rec.rooms = List.of(room);
+                rec.remember(rec.rooms);
+                rec.rooms = List.of(); // a scan that read nothing
+                h.assertTrue(rec.hadRoom() && rec.had(RoomType.FITTING) && !rec.had(RoomType.KITCHEN), "what the home had stays had");
+                var json = HearthRecord.CODEC.encodeStart(JsonOps.INSTANCE, rec).getOrThrow();
+                HearthRecord loaded = HearthRecord.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow();
+                h.assertTrue(loaded.hadRoom() && loaded.had(RoomType.BEDROOM) && loaded.rooms.isEmpty(), "saved and loaded, it still had them");
+                // its card: the room's step ticked though no room is read, the compass on to the guide
+                data.remove(sp.getUUID());
+                clearEmbers(sp);
+                data.put(rec);
+                tips.remove(dev.awaken.hearth.guide.Guide.TIP_SEEN);
+                sp.setPos(at.getX() + 3.5, at.getY(), at.getZ() + 0.5);
+                var t = HearthTask.here(sp);
+                h.assertTrue(t != null && t.rows().get(0).text().equals(HearthTask.SHELTER) && t.rows().get(0).done() && t.rows().get(0).at() == null
+                        && at.equals(t.rows().get(1).at()), "the room's step stays done, the guide is next: " + t);
+                RoomType next = HearthNow.nextRoom(sp, rec);
+                h.assertTrue((next == null || !kinds.contains(next)) && HearthGoals.steps(sp).stream().noneMatch(s -> s.key().equals("hearth/armoury")),
+                        "a kind it had is never asked for again");
+                // a partial scan keeps the room it couldn't see; a room read over it stands for it
+                Room far = new Room(java.util.EnumSet.of(RoomType.SHELTER), at.offset(12, 0, 12), at.offset(15, 3, 15),
+                        new it.unimi.dsi.fastutil.longs.LongOpenHashSet(), new int[dev.awaken.hearth.room.Furniture.COUNT],
+                        new int[dev.awaken.hearth.room.Tally.F_COUNT], java.util.Set.of(), Reading.of(new dev.awaken.hearth.room.Tally(), java.util.EnumSet.of(RoomType.SHELTER)));
+                Room over = new Room(java.util.EnumSet.of(RoomType.SHELTER), at.offset(-6, 0, 5), at.offset(-4, 2, 7),
+                        new it.unimi.dsi.fastutil.longs.LongOpenHashSet(), new int[dev.awaken.hearth.room.Furniture.COUNT],
+                        new int[dev.awaken.hearth.room.Tally.F_COUNT], java.util.Set.of(), Reading.of(new dev.awaken.hearth.room.Tally(), java.util.EnumSet.of(RoomType.SHELTER)));
+                h.assertTrue(HearthService.keepUnseen(List.of(room), List.of(far)).size() == 2, "a partial scan keeps the room it couldn't see");
+                h.assertTrue(HearthService.keepUnseen(List.of(room), List.of(over)).equals(List.of(over)), "a room read over the old one stands for it");
+                h.succeed();
+            } finally {
+                tips.remove(dev.awaken.hearth.guide.Guide.TIP_SEEN);
+                data.remove(sp.getUUID());
+            }
+        });
     }
 
     /**
