@@ -21915,6 +21915,17 @@ correct and the names are actually correct").
   the kit draws a picture of its own. What stands in for something not found is a dark diamond that gives nothing away.
 - **What can be clicked** (`Hot`): each part that draws something clickable adds its rectangle and what a click does, in the same
   pass, so drawing and clicking can't disagree.
+- **Bodies in screens** (`Figure`, 11 Nov 2026): every figure an AWAKEN screen draws (you on Status, in the bag, in the Hall's
+  looks, at the Forge, the Tasks picks and the set preview; a creature on a card through `Kit.creature`) goes through
+  `Figure.followsMouse` / `followsAngle`, vanilla's inventory figure turned the same way, never `InventoryScreen`'s own. Two rules:
+  - **As deep as it is big.** Vanilla draws a figure into a picture with 1000 pixels of depth in front of the body and 1000 behind;
+    at Status's size (about 600 pixels a block on a 4K screen) that cut through anything held out past 1.6 blocks, and a maul or a
+    spear (59 of the 81 hand-held weapon meshes reach further; spears 2.4 blocks) came apart round the body, its head's front sliced
+    off (Euan, 11 Nov: "The weapon in the K menu is glitched out"). The figure's picture keeps 4 blocks each way (a creature bigger
+    than a player twice its longest side); one small enough to fit vanilla's depth is drawn exactly as vanilla draws it.
+  - **Seen from in front.** While a figure is read or drawn, `Figure.drawing()` is true: a weapon takes it as seen from outside
+    whatever the camera (no first-person part: a gauntlet's sleeve stayed on the figure, two blocks up out of its arm, when the
+    menu was opened in first person) and a gem's glow faces the picture, not the world's camera.
 
 ### 57.2 The band's stage (`holo.client.BandStage`, geometry `holo.ui.StageLayout`)
 - K opens the stage: the band's glass as one plate (152,40 to 1680,884) with you (level, rank, XP) and the six places down the wrist
@@ -21958,9 +21969,9 @@ correct and the names are actually correct").
   second each). Materials get none.
 
 ### 57.4 Status on the stage (`progression.client.StatusPlace`)
-- **You.** The real player stands at the left on the band's lit floor, drawn as the bag draws you
-  (`InventoryScreen.extractEntityInInventoryFollowsMouse`): your body is under your armour, and you turn to the pointer as in
-  vanilla's inventory (Euan, 10 Nov). Your name and title under it.
+- **You.** The real player stands at the left on the band's lit floor, drawn as the bag draws you (`Figure.followsMouse`, §57.1):
+  your body is under your armour, what you hold is whole in your hand, and you turn to the pointer as in vanilla's inventory
+  (Euan, 10 Nov). Your name and title under it.
 - **Level and rank as numbers**, when the next rank comes (the rank's tip says what it opens for you), your path; XP as 32 segments.
 - **What comes next:** the level road's next three stops as tiles (level, name; the long line is the tip).
 - **Stats:** the six as columns. A click (or arrows and Space) places a point; nothing is sent until **Hold to confirm** (Enter held
