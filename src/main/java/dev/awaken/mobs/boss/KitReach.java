@@ -7,7 +7,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 /**
- * Where a kit move's blow is, as both sides work it out (SPEC §67.2): the server strikes with a move's capsules
+ * Where a kit move's blow is, as both sides work it out (SPEC §68.2): the server strikes with a move's capsules
  * ({@code FightRunner.strike}), and a client asks the same rule which tick of the blow will reach where it stands, so
  * the ring it draws closes on the tick the blow lands (`mobs.client.TellClock`). Pure maths, no state.
  */

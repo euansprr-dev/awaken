@@ -587,7 +587,7 @@ public final class AbilityRunner {
     static final double CHARGE_BRAKE = 0.2;
 
     private double chargeSpeed() {
-        return dev.awaken.mobs.boss.KitReach.chargeSpeed(mob.def().flies()); // one rule with the ring a client draws (SPEC §67.2)
+        return dev.awaken.mobs.boss.KitReach.chargeSpeed(mob.def().flies()); // one rule with the ring a client draws (SPEC §68.2)
     }
 
     /** How far past where it is a charge sends the body this tick, or null (SPEC §48.8). Its last tick is only {@link #CHARGE_BRAKE} of a stride. */

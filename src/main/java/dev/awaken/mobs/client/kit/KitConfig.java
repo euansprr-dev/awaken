@@ -16,7 +16,7 @@ public final class KitConfig {
     public static final ModConfigSpec.BooleanValue HIT_FEEL = B
             .comment("A boss's heavy blows shake your view when they land near you (only if camera shake is on too), and a boss pauses for a split second when a blow lands, its on you or yours on it (SPEC 35.10). Off: no shake and no pause from bosses.")
             .define("hitFeel", true);
-    /** How a boss's finishing blow is shown to the one who strikes it (SPEC §67.4). */
+    /** How a boss's finishing blow is shown to the one who strikes it (SPEC §68.4). */
     public enum FinishView {
         /** The view leaves your eyes for the blow and the boss's ending, then comes back. */
         CINEMATIC,

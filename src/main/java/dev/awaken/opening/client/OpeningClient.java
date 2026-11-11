@@ -74,7 +74,7 @@ public final class OpeningClient {
 
     public static void init(IEventBus modBus) {
         OpeningConfig.register();
-        // the opening's camera, lent to any module with a shot of its own (core.api.Shots: SPEC §16.4, §67.4)
+        // the opening's camera, lent to any module with a shot of its own (core.api.Shots: SPEC §16.4, §68.4)
         dev.awaken.core.api.Shots.install(new dev.awaken.core.api.Shots.Director() {
             @Override public boolean take(dev.awaken.core.api.Shots.Shot shot) {
                 OpeningCamera.take(new OpeningCamera.Shot() {

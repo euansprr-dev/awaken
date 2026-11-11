@@ -110,7 +110,7 @@ final class ArmsBlackBox {
             dir.mkdirs();
             Files.writeString(new File(dir, "arms-blackbox.tsv").toPath(), out, StandardCharsets.UTF_8);
             // and under its own time, the last KEPT of them: the plain file is overwritten by the next world left, which
-            // lost a boss fight's record six minutes after it (SPEC §67.5)
+            // lost a boss fight's record six minutes after it (SPEC §68.5)
             String stamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
             Files.writeString(new File(dir, "arms-blackbox-" + stamp + ".tsv").toPath(), out, StandardCharsets.UTF_8);
             File[] kept = dir.listFiles((d, name) -> name.startsWith("arms-blackbox-") && name.endsWith(".tsv"));

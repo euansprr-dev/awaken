@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/** The Whole Boss Fight's GameTests on the mobs' side (SPEC §67.2, §67.4): the last stand, and the tick a blow lands. */
+/** The Whole Boss Fight's GameTests on the mobs' side (SPEC §68.2, §68.4): the last stand, and the tick a blow lands. */
 public final class FinishTests {
     private FinishTests() {}
 
@@ -33,7 +33,7 @@ public final class FinishTests {
     }
 
     /**
-     * A boss with an ending doesn't fall to a player's killing blow (SPEC §67.4): it is held at its last point, beaten,
+     * A boss with an ending doesn't fall to a player's killing blow (SPEC §68.4): it is held at its last point, beaten,
      * and an ordinary blow after that does nothing. A boss without one dies as it always did, and what nothing withstands
      * still kills a beaten one.
      */
@@ -76,7 +76,7 @@ public final class FinishTests {
     }
 
     /**
-     * The ring a client draws closes on the tick the blow lands (SPEC §67.2): for the Ringer's Swing at a still player in
+     * The ring a client draws closes on the tick the blow lands (SPEC §68.2): for the Ringer's Swing at a still player in
      * its reach, the rule the client asks ({@link KitReach#firstTouch}) of the pose the blow commits to at its lock (the
      * synced aim) names the active tick the server then strikes on. Counted as a client counts, from the move's own synced
      * start; the test begins the move between two of the boss's ticks, so the strike may come a tick sooner than in play,

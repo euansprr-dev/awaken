@@ -60,7 +60,7 @@ public final class ArmsItems {
         TagKey<Item> repair = TagKey.create(Registries.ITEM, Awaken.id(w.repair()));
         int former = formerUses(w.tier());
         return switch (w.style()) {
-            // vanilla's axe costs two uses a blow; ours costs one, as every weapon does (SPEC §67.1). Its five seconds off a shield stay
+            // vanilla's axe costs two uses a blow; ours costs one, as every weapon does (SPEC §68.1). Its five seconds off a shield stay
             case Arms.AXE -> ITEMS.registerItem(w.id(), p -> new ArmsWeaponItem(p, former), p -> p.rarity(w.rarity())
                     .axe(new ToolMaterial(incorrectFor(w.tier()), w.durability(), mining(w.tier()), 0.0F, w.enchantability(), repair), w.damage(), w.speed())
                     .component(DataComponents.WEAPON, new Weapon(1, AXE_DISABLES_SHIELD)));
@@ -86,7 +86,7 @@ public final class ArmsItems {
     private static final float AXE_DISABLES_SHIELD = 5.0F;
 
     /**
-     * The uses an E or a D weapon had until 2026-11-11 (SPEC §67.1: 220 and 500, now 900 and 1,300), so a weapon made in an
+     * The uses an E or a D weapon had until 2026-11-11 (SPEC §68.1: 220 and 500, now 900 and 1,300), so a weapon made in an
      * Armoury under those keeps its quarter over today's ({@link dev.awaken.core.api.Lasting#formerUses}). 0: never changed.
      */
     static int formerUses(String tier) {

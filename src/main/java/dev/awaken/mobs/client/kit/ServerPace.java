@@ -39,7 +39,7 @@ public final class ServerPace {
     /**
      * Ticks on the server's clock since game tick {@code from}, with the frame's fraction, as a double: a difference
      * taken before anything is rounded, so it stays smooth however old the world is ({@link #now} is a float of the game
-     * time itself, good to a hundredth of a tick only in a young world). For what must glide (SPEC §67.2, the ring).
+     * time itself, good to a hundredth of a tick only in a young world). For what must glide (SPEC §68.2, the ring).
      */
     public static double since(Level l, long from, float partialTicks) {
         long ago = System.nanoTime() - at;

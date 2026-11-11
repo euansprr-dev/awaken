@@ -1,4 +1,4 @@
-# The ring's look (SPEC §67.2), in a real fight with the Ringer on the duel stage, slowed to 5 ticks a second, a picture
+# The ring's look (SPEC §68.2), in a real fight with the Ringer on the duel stage, slowed to 5 ticks a second, a picture
 # a half tick, the whole ring in frame (you stand three blocks in front of it, looking at its middle):
 #   clips/ring_look_struck   the guard never raised: the band, the ring white inside it, closed as the blow lands
 #   clips/ring_look_parried  the guard raised in the middle of the band (arms parry 2.5): the burst

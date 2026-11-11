@@ -49,7 +49,7 @@ public final class ArmsModule {
             @Override public void hold(net.minecraft.world.entity.LivingEntity target, boolean fighting) {
                 ArmsServer.hold(target, fighting);
             }
-            // a body at its last point is held open for the blow that ends it, and that blow is an Execution's (SPEC §67.4)
+            // a body at its last point is held open for the blow that ends it, and that blow is an Execution's (SPEC §68.4)
             @Override public void beaten(net.minecraft.world.entity.LivingEntity target, int ticks, net.minecraft.world.entity.player.Player by) {
                 if (by instanceof ServerPlayer sp) ArmsServer.beaten(target, ticks, sp);
             }

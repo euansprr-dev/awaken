@@ -354,7 +354,7 @@ public final class BossPlate {
             float pulse = 0.75F + 0.25F * Mth.sin(now / 90F);
             c.fill(x0 - 1, y0 - 2, x1 + 1, y1 + 2, Glass.a(BROKEN, 0.25F * pulse * alpha));
             c.gradient(x0, y0, x1, y1, Glass.a(0xFFF4C8, pulse * alpha), Glass.a(BROKEN, pulse * alpha));
-            // at its last point the words change: this blow ends it (SPEC §67.4)
+            // at its last point the words change: this blow ends it (SPEC §68.4)
             String words = dev.awaken.core.api.Strikes.atLastStand(e) ? "awaken.plate.beaten" : "awaken.plate.stance.broken";
             caption(g, c, font, dev.awaken.signal.client.KeyText.resolve(Component.translatable(words).getString()),
                     mid, capY, BROKEN, pulse * alpha, true);

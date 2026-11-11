@@ -27,7 +27,7 @@ public final class GearClient {
             {6, 13, 0}, {6, 14, 0}, {10, 2, 1}, {9, 4, 1}, {11, 6, 1}, {9, 8, 1}, {8, 10, 1}, {8, 12, 1}};
 
     /**
-     * A worn-out piece of ours shows it on its icon (SPEC §67.1): a crack down it, wherever the icon is drawn (the hotbar,
+     * A worn-out piece of ours shows it on its icon (SPEC §68.1): a crack down it, wherever the icon is drawn (the hotbar,
      * the bag, a chest), on every item that is never destroyed ({@link dev.awaken.core.api.Lasting}), whichever module made it.
      */
     private static void decorations(net.neoforged.neoforge.client.event.RegisterItemDecorationsEvent e) {

@@ -78,7 +78,7 @@ STYLES = {
 # The Hunter tiers: (tier, set, name, the Longsword's damage over the player's 1, uses, vanilla rarity, enchantability,
 # repair tag); every style of a tier keeps its uses, rarity, enchantability and repair. Decision 14 (SPEC §46.5): every
 # forged weapon a point over vanilla's same metal, the eight slower or longer styles two (their offsets above carry the
-# second), C and B outlasting diamond and netherite. E and D hold what their rank's fights take (SPEC §67.1: a boss is
+# second), C and B outlasting diamond and netherite. E and D hold what their rank's fights take (SPEC §68.1: a boss is
 # 90 to 300 landed blows and a whole E gate about 500; they were 220 and 500, and a fresh E blade broke mid-Proving).
 TIERS = [
     ("E", "wildhide", "Wildhide", 5.5, 900, "COMMON", 15, "hunter_core_e"),

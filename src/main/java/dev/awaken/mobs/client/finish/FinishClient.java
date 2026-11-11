@@ -29,7 +29,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A boss's finishing blow as the client shows it (SPEC §67.4). The server decides everything and says it once
+ * A boss's finishing blow as the client shows it (SPEC §68.4). The server decides everything and says it once
  * ({@code mobs_finish}, sent as the blow lands and the body dies): who fell, who struck, how long its ending plays.
  * From that one word this plays a fixed sequence, and nothing the server says later can change it:
  * <ul>

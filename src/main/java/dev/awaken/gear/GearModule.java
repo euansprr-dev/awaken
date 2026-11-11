@@ -25,7 +25,7 @@ public final class GearModule {
         bus.addListener(EventPriority.LOW, GearCombat::onIncomingDamage);
         bus.addListener(EventPriority.HIGHEST, GearCombat::beforeDeath);
         bus.addListener(EventPriority.LOWEST, GearCombat::afterDeath);
-        // how our gear wears (SPEC §67.1): armour by how hard it is hit, and a worn-out piece at half its worth
+        // how our gear wears (SPEC §68.1): armour by how hard it is hit, and a worn-out piece at half its worth
         bus.addListener(EventPriority.LOWEST, GearWear::onIncomingDamage);
         bus.addListener(EventPriority.LOWEST, GearWear::onShieldBlock);
         bus.addListener(GearWear::onArmourHurt);

@@ -9,7 +9,7 @@ import net.minecraft.world.item.component.TooltipDisplay;
 
 import java.util.function.Consumer;
 
-/** An Arms weapon: vanilla's item of its kind, never destroyed by wear ({@link Lasting}, SPEC §67.1). */
+/** An Arms weapon: vanilla's item of its kind, never destroyed by wear ({@link Lasting}, SPEC §68.1). */
 public class ArmsWeaponItem extends Item implements Lasting {
     private final int formerUses;
 

@@ -19,7 +19,7 @@ import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
 import java.util.List;
 
 /**
- * How our gear wears (SPEC §67.1). Armour of ours wears by how hard it is hit: vanilla takes a quarter of a blow from
+ * How our gear wears (SPEC §68.1). Armour of ours wears by how hard it is hit: vanilla takes a quarter of a blow from
  * each piece and never less than a point, so a scratch costs what a crushing blow does, and a duel's many light blows
  * (6 to 10% of your health each) took a point a piece every time. Ours takes the quarter with no floor, the part of a
  * point settled by chance, so a fight's wear follows the damage taken and not the number of blows. A worn-out piece or

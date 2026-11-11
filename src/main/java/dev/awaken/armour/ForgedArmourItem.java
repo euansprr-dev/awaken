@@ -22,7 +22,7 @@ public class ForgedArmourItem extends Item implements dev.awaken.core.api.Lastin
 
     static final int GREY = 0x8A93A6, LIGHT = 0xC9D2E3;
 
-    /** What this piece held before SPEC §67.1 raised E and D armour (the Armoury's quarter keeps its share). */
+    /** What this piece held before SPEC §68.1 raised E and D armour (the Armoury's quarter keeps its share). */
     @Override
     public int formerUses() {
         return set.tier().formerUses(piece);

@@ -29,7 +29,7 @@ import org.joml.Vector4f;
  * overshoot when it takes, slides to the next creature on a switch, kicks and flashes on every blow that lands, and
  * splinters when the creature falls. A creature's blow closes in on the ring as a second ring in its class's colour (white,
  * amber, red, violet), on the body's own clock and at one speed for every blow, meeting the ring on the tick the blow
- * lands; the ground it crosses while a guard raised now turns the blow aside is a band that burns white (SPEC §67.2). A
+ * lands; the ground it crosses while a guard raised now turns the blow aside is a band that burns white (SPEC §68.2). A
  * wind-up out of view shows as an arc at that edge. The dot in the middle shows only when there is something to mine,
  * place or use.
  */
@@ -47,7 +47,7 @@ final class Reticle {
     /** The parry band for a window of 3, 4 or 5 ticks (the art's own widths: tools/art/specs/aim_reticle.py). */
     private static final Identifier[] BAND = {tex("band3"), tex("band4"), tex("band5")}, BAND_G = {tex("band3_glow"), tex("band4_glow"), tex("band5_glow")};
 
-    // ---- the closing ring's timing (SPEC §67.2; the band's art is drawn to the same numbers) ----------------------------
+    // ---- the closing ring's timing (SPEC §68.2; the band's art is drawn to the same numbers) ----------------------------
     /** Every ring appears this many ticks before its blow, this many lock rings out, and closes in a straight line of time. */
     static final float APPROACH = 12F, SPREAD = 1.15F;
     /**
@@ -131,7 +131,7 @@ final class Reticle {
         int id = Lock.locked >= 0 ? Lock.locked : markShown(p) ? Lock.marked : -1;
         boolean drew = false;
         if (id >= 0 && mc.level.getEntity(id) instanceof LivingEntity le && le.isAlive()) drew = target(g, p, le, Lock.locked >= 0, false, pt, now, frame, w, h, reduced);
-        // a boss that fights you shows its blows' ring with no lock and no mark on it (SPEC §67.2)
+        // a boss that fights you shows its blows' ring with no lock and no mark on it (SPEC §68.2)
         if (!drew && bossRing >= 0 && bossRing != id && AimConfig.bossRing() && mc.level.getEntity(bossRing) instanceof LivingEntity boss && boss.isAlive()) {
             drew = target(g, p, boss, false, true, pt, now, frame, w, h, reduced);
         }
@@ -176,7 +176,7 @@ final class Reticle {
         lastX = sx;
         lastY = sy;
 
-        // the blow coming from this creature, on the body's own clock (Strikes.Coming: never the tell's count, SPEC §67.2)
+        // the blow coming from this creature, on the body's own clock (Strikes.Coming: never the tell's count, SPEC §68.2)
         double left = Strikes.left(le, pt);
         Strikes.Kind kind = Double.isNaN(left) ? Strikes.Kind.NONE : Strikes.comingKind(le);
         boolean coming = kind != Strikes.Kind.NONE && left <= APPROACH && left > -LINGER;
@@ -221,7 +221,7 @@ final class Reticle {
 
     /**
      * Whether this body's coming blow is yours to answer. Its tell says whom it is aimed at only while the wind-up lasts;
-     * the ring runs on to the landing (SPEC §67.2), so what the tell last said is kept until the blow is over.
+     * the ring runs on to the landing (SPEC §68.2), so what the tell last said is kept until the blow is over.
      */
     private static boolean mine(LocalPlayer p, Entity e, boolean coming) {
         int id = e.getId(), at = -1, free = -1;
@@ -287,7 +287,7 @@ final class Reticle {
     private static int struckBy = -1, struckTicks, pressOf = -1, pressAge;
     private static double pressLeft;
     private static boolean pressHot;
-    // a development run's count of what the ring promised against what the guard got (SPEC §67.2, the plan's stage 0)
+    // a development run's count of what the ring promised against what the guard got (SPEC §68.2, the plan's stage 0)
     private static final boolean DEV = !net.neoforged.fml.loading.FMLEnvironment.isProduction();
     private static int presses, pressesHot, hotDeflected, answers;
     private static double offSum, offMax;
@@ -489,7 +489,7 @@ final class Reticle {
             if (shown >= 4) break;
             if (!(e instanceof LivingEntity le) || le == p || !le.isAlive()) continue;
             if (le.distanceToSqr(p) > AimRules.THREAT_RANGE * AimRules.THREAT_RANGE) continue;
-            // on the blow's own clock, as the ring is (SPEC §67.2): the arc brightens evenly and lasts until the blow lands
+            // on the blow's own clock, as the ring is (SPEC §68.2): the arc brightens evenly and lasts until the blow lands
             double left = Strikes.left(le, pt);
             Strikes.Kind kind = Double.isNaN(left) ? Strikes.Kind.NONE : Strikes.comingKind(le);
             if (kind == Strikes.Kind.NONE || left <= 0 || !mine(p, le, true)) continue; // someone else's blow is no threat to you (SPEC §70.3)

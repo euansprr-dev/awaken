@@ -656,7 +656,7 @@ FIGHT = {
     "schemaVersion": 2,
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside hand throws it back
     "duel": True,
-    "finish": True,  # dies only to a finishing blow: one of the three pilots (SPEC §67.4)
+    "finish": True,  # dies only to a finishing blow: one of the three pilots (SPEC §68.4)
     # it watches you and answers (SPEC §48): a drink brings the Stride, a guard kept up the Slam
     "mind": {
         "cooldowns": {"strikes": 240, "overload": 200, "slam": 50},

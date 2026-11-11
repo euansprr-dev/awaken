@@ -998,16 +998,16 @@ of `AwakenConfig.Client`.
   `RECOVERY`, `DODGE`, `CAST`; `installArms`/`installPowers` (each module's own part); `stage(entity, facts)` for tests.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
-- `dev.awaken.core.api.Strikes` additions (§67): `Coming` / `installComing` with `left(entity, partialTick)` (ticks until its
+- `dev.awaken.core.api.Strikes` additions (§68): `Coming` / `installComing` with `left(entity, partialTick)` (ticks until its
   told blow reaches you, a double on one clock, NaN when none), `reaches(entity)`, `comingKind(entity)`, `lands(entity)`
   (client; the mobs module's `TellClock`); `Answer {DEFLECT, BLOCK, GUARD_BREAK, STRUCK}`, `installAnswers`, `answered`
   (client: how the local guard answered, told to the ring); `Duel.reeling`, `Duel.atLastStand` (`reeling(entity)`,
   `atLastStand(entity)`); `Postures.beaten(target, ticks, by)` and `Postures.executing(source)` (`beaten`, `executing`: a
   body held broken for its last stand, and whether a blow now landing is an Execution's).
-- `dev.awaken.core.api.Lasting` (§67.1) — an interface an item class of ours names to be never destroyed by wear:
+- `dev.awaken.core.api.Lasting` (§68.1) — an interface an item class of ours names to be never destroyed by wear:
   `setDamage` stops a use short of breaking, `getMaxDamage` carries a stack's own count over a change of numbers
   (`formerUses()`), `wornOut(stack)`, `nearlyWornOut(stack)`, `tooltip`, `tell`; `WORN_OUT_SHARE` 0.5.
-- `dev.awaken.core.api.Shots` (client, §67.4) — the game's one cinematic camera for any module: `Shot` (`pose(t, out)`,
+- `dev.awaken.core.api.Shots` (client, §68.4) — the game's one cinematic camera for any module: `Shot` (`pose(t, out)`,
   `length()`, `tick`, `finished`), `take(shot)`, `finish(reason)`, `active()`; the opening installs its `OpeningCamera`.
 - `dev.awaken.delve.api.CaveGround` (§34.1, §21.11) — `cuts(ServerLevel, x0, z0, x1, z1, y0, y1)`: whether a cave place open to
   the sky (mouth, sinkhole, mine) has its box over the box; from the seed (each candidate start's own site search), any thread.
@@ -24628,7 +24628,7 @@ bell): his pick decides the whole family.
 - Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
   first values. The listening page is the check, and his marks choose (`apply`, then `build`).
 
-## 67. The Whole Boss Fight (plan docs/boss-experience/PLAN.md, page https://claude.ai/artifact/VDXqPTJJxktRgDLiJJRdH7; Euan approved all fourteen decisions 2026-11-11: "Go with all")
+## 68. The Whole Boss Fight (plan docs/boss-experience/PLAN.md, page https://claude.ai/artifact/VDXqPTJJxktRgDLiJJRdH7; Euan approved all fourteen decisions 2026-11-11: "Go with all")
 
 Euan fought the Ringer on build 69fee63de with a longsword (11 Nov 2026): the E sword broke mid-fight, the closing ring was
 "jittery" and "you're not exactly sure when the ring is going to close", a perfect parry was "a very small ding, and the
@@ -24642,7 +24642,7 @@ the Hive Regent, the Gearwright; Longsword, Maul, Twin Blades, Daggers); 12 the 
 counter-hits not now; 14 the Journal picture later. **No window, health, damage, stance or mind number changes**: the
 simulator's table (`tools/sim/combat_sim.py`) reads none of what this section touches.
 
-**67.1 Gear that lasts (decisions 1 to 3).** Modules `arms`, `gear`, `armour`; the shared rule is `core.api.Lasting` (§12).
+**68.1 Gear that lasts (decisions 1 to 3).** Modules `arms`, `gear`, `armour`; the shared rule is `core.api.Lasting` (§12).
 - **Why.** A boss is 90 to 300 landed blows (`docs/boss-experience/harness/durability.py`: E Lords 44 to 81% of a fresh E
   weapon at 220 uses, the Ringer 107%; his own fight 300) and a whole E gate about 500; D at 500 uses lost 20 to 47% a boss.
   C and up lost 4 to 15% and are unchanged.
@@ -24676,7 +24676,7 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
   weapon's attack damage is halved and mending restores it; an axe costs one use a blow; an old Armoury count keeps its
   quarter), `gear_armour_wear` (twenty light blows cost a piece about a quarter of their damage, not twenty).
 
-**67.2 A ring you can read (decisions 4 to 6).** Modules `aim` (the ring), `mobs` (the clock), `arms` (the glint, the answer).
+**68.2 A ring you can read (decisions 4 to 6).** Modules `aim` (the ring), `mobs` (the clock), `arms` (the glint, the answer).
 - **Why.** The ring read a tell's count, which the server re-sends only on every fourth tick of a wind-up
   (`FightRunner.step`, `AbilityRunner.windup`: `(t & 3) == 0`; plain melee every second) and clears on the wind-up's last
   tick, a tick or more before the blow lands; `Reticle` drew `(count - partialTick) / total`. So it moved in four jumps with
@@ -24746,16 +24746,18 @@ simulator's table (`tools/sim/combat_sim.py`) reads none of what this section to
 - Not built: the hands' word for a parry (the plan's ambitious option); a white-gold shot's ring to its arrival.
 - Tests: `fights_ring_lands` (the rule's tick is the tick the Ringer's Swing lands on a still body).
 
-**67.3 A parry that feels great (decision 7): built by the weapon-feel session in `arms`, recorded in §25.** The contract:
+**68.3 A parry that feels great (decision 7): built by the weapon-feel session in `arms`, recorded in §25.** The contract:
 three sizes of clash by what was turned aside (a LIGHT blow / a HEAVY blow / the blow that makes it reel or breaks its
 stance): freeze 110 / 160 / 200 ms (was 100), view kick 2.6 / 4.0 / 4.5 degrees of pitch with 1.6 / 2.4 / 2.8 of roll (was
 1.8 and 1.2), a shake of 4 / 6 / 8 ticks, the field of view in 4.5% / 6% / 8% (was 3.5%), sparks x2.5 and a white-gold
 flash at the meeting, wider by size, the frame's edges for the third; sounds from Minecraft's own recordings by the boss
 weapon's material with no layer pitched above 1.2 (was an anvil at 0.45 volume pitched 1.6 over a shield block), three
 candidates a size on the local listening page; a block keeps its thud and gets no flash. The size rides in the DEFLECT
-reply's `aux` (0, 1, 2); `Strikes.reeling` gives the mobs' side of the third. The ring's own burst is §67.2's.
+reply's `aux` (0, 1, 2); `Strikes.reeling` gives the mobs' side of the third: `ArmsServer` sizes the clash
+`ArmsRules.clashSize(kind, broke || Strikes.reeling(attacker))`, so a blow whose deflect leaves the body reeling (its
+phrase's last) gets the biggest clash as a broken stance does. The ring's own burst is §68.2's.
 
-**67.4 A final blow worth remembering (decisions 8 to 11).** Modules `mobs` (the last stand, the shot), `arms` (the
+**68.4 A final blow worth remembering (decisions 8 to 11).** Modules `mobs` (the last stand, the shot), `arms` (the
 Execution), `opening` (the camera), `living` (the plate's words).
 - **The last stand** (`AwakenBoss.lastStand`, from `die`). A boss whose fight script says `"finish": true` (the three
   pilots: `proving_ringer`, `hive_regent`, `gearwright_colossus`; `FightScripts.Fight.finish`, default false) doesn't fall
@@ -24799,7 +24801,7 @@ Execution), `opening` (the camera), `living` (the plate's words).
 - Tests: `fights_last_stand` (beaten at one health; an ordinary blow does nothing; a boss without an ending dies as
   before; what nothing withstands kills), `fights_last_stand_ends` (it waits, harms nobody, and dies after 400 ticks).
 
-**67.5 Found in passing (decision 12, and what waits).**
+**68.5 Found in passing (decision 12, and what waits).**
 - **The autosave waits while a boss fights** (`mobs.entity.FightSaves`): while a boss with a fight has a player for its
   target (or waits beaten), each level's chunks are kept from the autosave (`ServerLevel.noSave`, only where it was on);
   15 s after the last such tick (`AFTER` 300) they are let go and saved once. A fight over ten minutes lets a save through
@@ -25000,7 +25002,7 @@ on purpose isn't put back. With the switch `party` off the rule is the old one (
   on standable ground within five blocks of it), and going back in takes you to the entrance of the floor your party
   has reached, once they are clear of a fight (`Runs.rejoinFloor`; realms and the story's gates start at their start).
   The Satchel and the Fracture are the price as before.
-- The finishing blow (§67 of the boss plan, when built): either may take it; everyone in the fight sees the film.
+- The finishing blow (§68): either may take it; everyone in the fight sees the film.
 
 **70.4 My fights: Full or Gentle** (replaces §55's bond, 40% hits, half XP, no rank and the fold).
 One setting per player (attachment `awaken:fights`, schema 1, kept through death and logout; default Full). Changed on

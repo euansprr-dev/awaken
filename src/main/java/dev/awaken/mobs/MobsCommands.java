@@ -74,11 +74,11 @@ final class MobsCommands {
                                 if (why != null) c.getSource().sendFailure(Component.literal(why));
                                 return why == null ? 1 : 0;
                             })))
-                    // the finishing blow's switch (SPEC §67.4): off, every boss dies as it did before
+                    // the finishing blow's switch (SPEC §68.4): off, every boss dies as it did before
                     .then(Commands.literal("finishing")
                             .then(Commands.literal("on").executes(c -> finishing(c, true)))
                             .then(Commands.literal("off").executes(c -> finishing(c, false))))
-                    // the autosave held while a boss fights (SPEC §67.5): free, it saves as vanilla does
+                    // the autosave held while a boss fights (SPEC §68.5): free, it saves as vanilla does
                     .then(Commands.literal("saves")
                             .then(Commands.literal("hold").executes(c -> saves(c, true)))
                             .then(Commands.literal("free").executes(c -> saves(c, false))))
