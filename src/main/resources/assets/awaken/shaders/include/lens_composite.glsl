@@ -304,7 +304,8 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     float crisp = air > 0.0 ? 1.0 - smoothstep(10.0, 18.0, dist) : 0.0;
     if (crisp > 0.0) {
         vec3 an = abs(n);
-        if (max(an.x, max(an.y, an.z)) > 0.99) {
+        // (a block's face only, as the light pass has it: a creature keeps the smooth read)
+        if (max(an.x, max(an.y, an.z)) > 0.99 && (F(15).x < 1.0 || blockFace(p + f12.xyz, n))) {
             vec3 w = p + f12.xyz;
             vec3 q = project(frameMat(4), mix((floor(w * 16.0) + 0.5) / 16.0, w, step(0.99, an)) - f12.xyz, z01);
             if (q.x > 0.0 && q.y > 0.0 && q.x < 1.0 && q.y < 1.0) {

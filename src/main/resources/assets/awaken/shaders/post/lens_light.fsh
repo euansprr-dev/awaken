@@ -449,7 +449,11 @@ void main() {
                 vec3 an = abs(n);
                 // a low sun's shadows are long and their edges wide: the disc grows as it sinks
                 rad *= 0.2 + 2.8 * (1.0 - smoothstep(0.08, 0.42, f14.y)) * (1.0 - F(16).y);
-                if (max(an.x, max(an.y, an.z)) > 0.99) {
+                // (a block's face only. The texels are the world's, a sixteenth of a block on its own grid: a creature's
+                // side is square to the world now and then, and its shade was then cut along a grid that is not its
+                // skin's and does not move with it, stair-steps that crawled as it walked. Euan, playing, 11 Nov:
+                // "actual artifacts in the shadows, where the shadows have jagged edges or like zigzags")
+                if (max(an.x, max(an.y, an.z)) > 0.99 && (F(15).x < 1.0 || blockFace(p + vec3(f12.x, f12.y, f12.z), n))) {
                     vec3 w = p + vec3(f12.x, f12.y, f12.z), tex = floor(w * 16.0);
                     ps = mix((tex + 0.5) / 16.0, w, step(0.99, an)) - vec3(f12.x, f12.y, f12.z);
                     // close to the eye a texel is many screen pixels, and its light must hold still from frame to

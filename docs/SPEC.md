@@ -6635,6 +6635,20 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     a scan at chunk load): not built.
   - Tour: `tools/autopilot/steady60-treeshadow-ci.txt` (a built jungle giant and a stone table from 16, 42 and 78
     blocks, and from the ground).
+- **Shade on creatures** (Euan, playing, 2026-11-11, with a cow at arm's length: "the shadows on animals are a bit
+  broken ... you can see really weird frames or really weird pixels ... actual artifacts in the shadows, where the
+  shadows have jagged edges or like zigzags"). Close to the eye the Air's shadows are cut in the texture's own
+  pixels: a point on a face square to the world asks for its light from the centre of its sixteenth-of-a-block
+  texel, in the light pass and again where the composite reads the light (SPEC §22 "Sunlight"). Those texels are the
+  world's, on the world's grid. A creature's side is square to the world whenever it happens to face that way, and
+  its shade was then cut along a grid that is not its skin's and does not move with it: stair-steps a texel wide
+  that crawled as it walked or breathed. Now only a block's own face is cut that way (`blockFace` in
+  lens_height.glsl: the point just behind the surface lies in its column's solid, by the heightfield); a creature,
+  a dropped item or anything else with open air behind its surface keeps the smooth shadow, the sun's small disc
+  smoothed over frames. Known gaps: under a solid roof everything reads as a block (the heightfield has one top a
+  column), so a creature indoors is cut as before; and a leaf block's face is no longer cut (the solid top is
+  without leaves), which on a leaf texture does not show. Tour:
+  `tools/autopilot/steady60-creature-shade-ci.txt`.
 - **The Air in other worlds** (Euan 2026-11-11, in the first rolled gate world, Cinder Crown: "Each should have its
   own sky and atmosphere ... the cinder crown, it should have kind of a more reddish sky, I think, and a reddish
   atmosphere"). The Air drew one sky everywhere its sun shines (`sunHere`: any world with an overworld skybox, the
