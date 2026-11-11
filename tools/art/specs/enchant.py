@@ -13,7 +13,9 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
+sys.path.insert(0, HERE)
 from pixelart import Canvas, hex_rgba, ramp, rng_for  # noqa: E402
+import _enchant_glyphs as GL  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "../../.."))
 RES = os.path.join(ROOT, "src/main/resources")
@@ -351,7 +353,68 @@ def word_script():
     return c
 
 
+def page_icon(g):
+    """One inscription's page (SPEC §45.15): a parchment leaf with a band in its family's colour and its own sign in dark
+    ink (the glyph without its family's frame, which the band stands for at sixteen pixels)."""
+    c = Canvas()
+    edge, paper, shade = hex_rgba("#70583a"), PAPER[4], PAPER[2]
+    for y in range(1, 15):
+        for x in range(2, 14):
+            c.set(x, y, paper)
+    for x in range(2, 14):
+        c.set(x, 0, edge)
+        c.set(x, 15, edge)
+        c.set(x, 14, shade)
+    for y in range(1, 15):
+        c.set(1, y, edge)
+        c.set(14, y, edge)
+        c.set(13, y, shade)
+    r, gr, b = GL.rgb(g["colour"])
+    for x in range(2, 14):
+        c.set(x, 1, (r, gr, b, 255))
+        c.set(x, 2, (int(r * 0.72), int(gr * 0.72), int(b * 0.72), 255))
+    strokes = GL.sign(g)
+    xs = [x for st in strokes for x, _ in st]
+    ys = [y for st in strokes for _, y in st]
+    w, h = max(xs) - min(xs), max(ys) - min(ys)
+    k = min(8 / max(w, 0.01), 8 / max(h, 0.01), 3.0)
+    ox, oy = 7.5 - (min(xs) + w / 2) * k, 8.5 - (min(ys) + h / 2) * k
+    ink = hex_rgba("#3a2a1c")
+    for st in strokes:
+        pts = [(round(ox + x * k), round(oy + y * k)) for x, y in st]
+        for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+            n = max(abs(x1 - x0), abs(y1 - y0), 1)
+            for i in range(n + 1):
+                c.set(round(x0 + (x1 - x0) * i / n), round(y0 + (y1 - y0) * i / n), ink)
+    return c
+
+
+def inkwell():
+    """The desk's inkwell: dark stone, a pool of lapis in its top. Top at (0..4, 0..4), a side at (4..8, 0..3), the lit
+    pool alone at (8..10, 0..2)."""
+    sl = ramp("slate")
+    c = Canvas()
+    rng = rng_for("inscribing_inkwell")
+    for y in range(16):
+        for x in range(16):
+            c.set(x, y, sl[1 + (1 if rng.random() < 0.35 else 0)])
+    for y in range(4):
+        for x in range(4):
+            rim = x in (0, 3) or y in (0, 3)
+            c.set(x, y, sl[3] if rim else LAPIS[3 + (1 if (x + y) % 2 == 0 else 0)])
+    for x in range(4, 8):
+        c.set(x, 0, sl[3])
+        c.set(x, 2, sl[0])
+    for y in range(2):
+        for x in range(8, 10):
+            c.set(x, y, LAPIS[4 if (x + y) % 2 == 0 else 5])
+    return c
+
+
 def build(out):
+    out.block("inscribing_inkwell", inkwell())
+    for g in GL.GLYPHS:
+        out.item("enchantment_page_" + GL.path(g), page_icon(g))
     out.block("inscribing_table_top", top())
     out.block("inscribing_table_side", panel())
     out.block("inscribing_table_front", panel(front=True))
@@ -391,37 +454,66 @@ def box(lo, hi, faces):
 
 
 def table_model():
-    """North-facing: the writer stands on the north side (z 0), the brass bracket is at the back (south)."""
-    t = lambda tex, uv, cull=None: ({"texture": tex, "uv": uv} | ({"cullface": cull} if cull else {}))  # noqa: E731
+    """The scribe's desk (SPEC §45.15), north-facing: the writer stands on the north side (z 0). Two trestle ends and a
+    stretcher, an apron with a brass pull, the slate with its lapis channel, a rail along the back, a brass rest for the
+    book at the writer's left (the renderer lays the book on it) and an inkwell of lapis at their right (the renderer
+    stands the burin in it while nobody writes). Faces without a uv take the model's own."""
+    f = lambda tex, **kw: {"texture": tex} | kw  # noqa: E731
+
+    def span(a0, a1):
+        """A run of the model's own coordinates as texels inside 0..16 (a part above the block's top slides down into it)."""
+        if a1 > 16:
+            a0, a1 = a0 - (a1 - 16), 16
+        if a0 < 0:
+            a0, a1 = 0, a1 - a0
+        return max(0, a0), min(16, a1)
+
+    def uv(lo, hi, d):
+        (x0, y0, z0), (x1, y1, z1) = lo, hi
+        if d in ("up", "down"):
+            u, v = span(x0, x1), span(z0, z1)
+            return [u[0], v[0], u[1], v[1]]
+        u, v = span(*((x0, x1) if d in ("north", "south") else (z0, z1))), span(y0, y1)
+        return [u[0], 16 - v[1], u[1], 16 - v[0]]
+
+    def solid(lo, hi, tex, **over):
+        faces = {d: f(tex, uv=uv(lo, hi, d)) for d in ("north", "south", "west", "east", "up", "down")}
+        for d, face in over.items():
+            faces[d] = face if "uv" in face else face | {"uv": uv(lo, hi, d)}
+        return box(lo, hi, faces)
+
     els = [
-        # the plinth
-        box([1, 0, 1], [15, 2, 15], {
-            "down": t("#trim", [1, 1, 15, 15], "down"), "up": t("#trim", [1, 1, 15, 15]),
-            "north": t("#trim", [1, 9, 15, 11]), "south": t("#trim", [1, 9, 15, 11]),
-            "west": t("#trim", [1, 9, 15, 11]), "east": t("#trim", [1, 9, 15, 11])}),
-        # the body: framed panels, the front carrying the mark
-        box([2, 2, 2], [14, 11, 14], {
-            "north": t("#front", [2, 5, 14, 14]), "south": t("#side", [2, 5, 14, 14]),
-            "west": t("#side", [2, 5, 14, 14]), "east": t("#side", [2, 5, 14, 14])}),
-        # the top board with its brass line, and the slate let into it
-        box([0, 11, 0], [16, 13, 16], {
-            "down": t("#trim", [0, 0, 16, 16]), "up": t("#top", [0, 0, 16, 16]),
-            "north": t("#trim", [0, 6, 16, 8], "north"), "south": t("#trim", [0, 6, 16, 8], "south"),
-            "west": t("#trim", [0, 6, 16, 8], "west"), "east": t("#trim", [0, 6, 16, 8], "east")}),
-        # the brass bracket at the back for the book
-        box([6, 13, 12], [10, 13.5, 15], {
-            "up": t("#brass", [6, 12, 10, 15]), "north": t("#brass", [6, 0, 10, 1]), "south": t("#brass", [6, 0, 10, 1]),
-            "west": t("#brass", [12, 0, 15, 1]), "east": t("#brass", [12, 0, 15, 1])}),
-        box([7.5, 13.5, 13], [8.5, 14.5, 14], {
-            "up": t("#brass", [7, 7, 8, 8]), "north": t("#brass", [7, 1, 8, 2]), "south": t("#brass", [7, 1, 8, 2]),
-            "west": t("#brass", [7, 1, 8, 2]), "east": t("#brass", [7, 1, 8, 2])}),
+        # the trestle ends, their feet and the stretcher between them
+        solid([1, 0, 2], [3, 10, 14], "#side"), solid([13, 0, 2], [15, 10, 14], "#side"),
+        solid([0.5, 0, 1.5], [3.5, 1.5, 14.5], "#trim", down=f("#trim", cullface="down")),
+        solid([12.5, 0, 1.5], [15.5, 1.5, 14.5], "#trim", down=f("#trim", cullface="down")),
+        solid([3, 4, 7], [13, 6, 9], "#trim"),
+        # the apron toward the writer, with its drawer's brass pull
+        solid([3, 7.5, 1.5], [13, 10, 3], "#side"), solid([7.2, 8.2, 1], [8.8, 9.2, 1.5], "#brass"),
+        # the slate let into the top board, its lapis channel one pixel in from the edge
+        box([0, 10, 0], [16, 12, 16], {
+            "down": f("#trim", uv=[0, 0, 16, 16]), "up": f("#top", uv=[0, 0, 16, 16]),
+            "north": f("#trim", uv=[0, 6, 16, 8], cullface="north"), "south": f("#trim", uv=[0, 6, 16, 8], cullface="south"),
+            "west": f("#trim", uv=[0, 6, 16, 8], cullface="west"), "east": f("#trim", uv=[0, 6, 16, 8], cullface="east")}),
+        # the rail along the back under a brass cap, and a cheek at each side
+        solid([0, 12, 14], [16, 14.5, 16], "#side"), solid([0, 14.5, 14], [16, 15, 16], "#brass"),
+        solid([0, 12, 9], [1, 13.5, 14], "#side"), solid([15, 12, 9], [16, 13.5, 14], "#side"),
+        # the book's rest: a brass post off the rail and a plate, on the writer's left (east when you face south)
+        solid([11.6, 15, 14.4], [12.4, 17, 15.2], "#brass"), solid([6.8, 17, 11.2], [14.8, 17.4, 16], "#brass"),
+        # the inkwell on the writer's right, and its pool of lapis, lit
+        box([1.4, 12, 10.8], [4.8, 14.2, 14], {
+            "up": f("#inkwell", uv=[0, 0, 4, 4]), "north": f("#inkwell", uv=[4, 0, 8, 3]), "south": f("#inkwell", uv=[4, 0, 8, 3]),
+            "west": f("#inkwell", uv=[4, 0, 8, 3]), "east": f("#inkwell", uv=[4, 0, 8, 3])}),
+        {"from": [2.2, 14.2, 11.6], "to": [4, 14.25, 13.2], "shade": False, "light_emission": 12,
+         "faces": {"up": f("#inkwell", uv=[8, 0, 10, 2])}},
     ]
     b = "awaken:block/inscribing_table_"
     return {"parent": "minecraft:block/block",
-            "textures": {"particle": b + "side", "top": b + "top", "side": b + "side", "front": b + "front", "trim": b + "trim", "brass": b + "brass"},
+            "textures": {"particle": b + "side", "top": b + "top", "side": b + "side", "trim": b + "trim", "brass": b + "brass",
+                         "inkwell": "awaken:block/inscribing_inkwell"},
             "elements": els,
             "display": {
-                "gui": {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.625, 0.625, 0.625]},
+                "gui": {"rotation": [30, 225, 0], "translation": [0, -0.5, 0], "scale": [0.6, 0.6, 0.6]},
                 "ground": {"rotation": [0, 0, 0], "translation": [0, 3, 0], "scale": [0.25, 0.25, 0.25]},
                 "fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.5, 0.5, 0.5]},
                 "thirdperson_righthand": {"rotation": [75, 45, 0], "translation": [0, 2.5, 0], "scale": [0.375, 0.375, 0.375]},
@@ -467,6 +559,16 @@ def content():
     for name, parent in (("enchantment_page", "minecraft:item/generated"), ("burin", "minecraft:item/handheld")):
         _write(os.path.join(ASSETS, f"models/item/{name}.json"), {"parent": parent, "textures": {"layer0": f"awaken:item/{name}"}})
         _write(os.path.join(ASSETS, f"items/{name}.json"), {"model": {"type": "minecraft:model", "model": f"awaken:item/{name}"}})
+    # every inscription's page has its own leaf (enchant.client.PageSelect names it by the enchantment's id path); a page
+    # of anything else keeps the plain leaf
+    cases = []
+    for g in GL.GLYPHS:
+        name = "enchantment_page_" + GL.path(g)
+        _write(os.path.join(ASSETS, f"models/item/{name}.json"), {"parent": "minecraft:item/generated", "textures": {"layer0": f"awaken:item/{name}"}})
+        cases.append({"when": GL.path(g), "model": {"type": "minecraft:model", "model": f"awaken:item/{name}"}})
+    _write(os.path.join(ASSETS, "items/enchantment_page.json"), {"model": {
+        "type": "minecraft:select", "property": "awaken:page", "cases": cases,
+        "fallback": {"type": "minecraft:model", "model": "awaken:item/enchantment_page"}}})
     _merge(os.path.join(MERGE, "assets/awaken/lang/en_us.json"), {"item.awaken.burin": "Burin", "block.awaken.word_stone": "Word Stone"})
     _write(os.path.join(ASSETS, "models/block/word_stone.json"), word_stone_model())
     stone = {}

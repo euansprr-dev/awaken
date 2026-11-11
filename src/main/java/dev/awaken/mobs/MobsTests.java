@@ -55,6 +55,7 @@ final class MobsTests {
         dev.awaken.mobs.entity.BrambleTests.register(); // berry bushes neither prick nor hold our wild things (SPEC §47.13)
         dev.awaken.mobs.entity.DuelTests.register(); // the duel: openings, recoils, reels, shots sent back (SPEC §47.3)
         dev.awaken.mobs.entity.FightReachTests.register(); // a blow aimed at you lands
+        dev.awaken.mobs.entity.FinishTests.register(); // the last stand, and the tick the ring closes on (SPEC §68)
         dev.awaken.mobs.entity.FightRecorder.register(); // what each fight did, against six kinds of player (SPEC §48.7)
         dev.awaken.mobs.entity.FightMindTests.register(); // it reads what you've started and answers it
         dev.awaken.mobs.entity.FairTests.register(); // fair damage: nothing that belongs takes most of you at once (SPEC §47.14)

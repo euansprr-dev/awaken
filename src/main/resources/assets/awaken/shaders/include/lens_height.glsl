@@ -6,3 +6,12 @@
 vec2 heightAt(ivec2 c, int lvl) {
     return texelFetch(HeightSampler, (c & 1023) >> lvl, lvl).rg;
 }
+
+// Whether a surface is a block's own face: the point just behind it lies in its column's solid. A creature's flank, a
+// dropped item, anything that is not a block has open air behind it there. (Leaves are not counted: the solid top is
+// without them. Under a solid roof everything reads as a block, a creature too: the heightfield has one top a column.)
+// w: the point in the world, n: its normal.
+bool blockFace(vec3 w, vec3 n) {
+    vec3 q = w - n * 0.06;
+    return q.y < heightAt(ivec2(floor(q.xz)), 0).g;
+}

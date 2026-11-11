@@ -49,6 +49,13 @@ public final class ArmsModule {
             @Override public void hold(net.minecraft.world.entity.LivingEntity target, boolean fighting) {
                 ArmsServer.hold(target, fighting);
             }
+            // a body at its last point is held open for the blow that ends it, and that blow is an Execution's (SPEC §68.4)
+            @Override public void beaten(net.minecraft.world.entity.LivingEntity target, int ticks, net.minecraft.world.entity.player.Player by) {
+                if (by instanceof ServerPlayer sp) ArmsServer.beaten(target, ticks, sp);
+            }
+            @Override public boolean executing(net.minecraft.world.damagesource.DamageSource source) {
+                return ArmsServer.executing(source);
+            }
         });
         // a weapon's tier as its rank, for enchanting's depth (SPEC §45.5); its forged quality comes with the War Anvil
         dev.awaken.core.api.ForgeHooks.reader(new dev.awaken.core.api.ForgeHooks.Reader() {

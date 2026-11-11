@@ -31,6 +31,8 @@ final class ArmsBlackBox {
         return ON;
     }
     private static final int FRAMES = 1 << 14, EVENTS = 1 << 12;
+    /** How many black boxes are kept under their own time. */
+    private static final int KEPT = 5;
     /** A frame's numbers: the camera's lean, the clip's main hand, then each hand as shown. */
     private static final int COLS = 3 + 7 * 3;
     private static final long[] FRAME_AT = new long[ON ? FRAMES : 0], EVENT_AT = new long[ON ? EVENTS : 0];
@@ -107,7 +109,16 @@ final class ArmsBlackBox {
             File dir = new File(Minecraft.getInstance().gameDirectory, "logs");
             dir.mkdirs();
             Files.writeString(new File(dir, "arms-blackbox.tsv").toPath(), out, StandardCharsets.UTF_8);
-            Awaken.LOG.info("[arms] black box: the last {} frames written", count);
+            // and under its own time, the last KEPT of them: the plain file is overwritten by the next world left, which
+            // lost a boss fight's record six minutes after it (SPEC §68.5)
+            String stamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+            Files.writeString(new File(dir, "arms-blackbox-" + stamp + ".tsv").toPath(), out, StandardCharsets.UTF_8);
+            File[] kept = dir.listFiles((d, name) -> name.startsWith("arms-blackbox-") && name.endsWith(".tsv"));
+            if (kept != null && kept.length > KEPT) {
+                java.util.Arrays.sort(kept, java.util.Comparator.comparing(File::getName));
+                for (int i = 0; i < kept.length - KEPT; i++) Files.deleteIfExists(kept[i].toPath());
+            }
+            Awaken.LOG.info("[arms] black box: the last {} frames written (also as arms-blackbox-{}.tsv)", count, stamp);
         } catch (IOException ex) {
             Awaken.LOG.warn("[arms] black box not saved: {}", ex.toString());
         }

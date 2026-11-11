@@ -41,6 +41,10 @@ public final class AimClient {
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Pre.class, e -> key());
         bus.addListener(ClientTickEvent.Post.class, e -> Lock.tick(Minecraft.getInstance()));
+        // the ring's own moments (SPEC §68.2): the boss whose ring shows without a lock, the guard going up, how it answered
+        bus.addListener(ClientTickEvent.Post.class, e -> Reticle.tick(Minecraft.getInstance()));
+        dev.awaken.core.api.Strikes.installAnswers(Reticle::onAnswer);
+        bus.addListener(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut.class, e -> Reticle.reset());
         bus.addListener(RenderFrameEvent.Pre.class, e -> Lock.frame(Minecraft.getInstance(), e.getPartialTick().getGameTimeDeltaPartialTick(false)));
         bus.addListener(CalculatePlayerTurnEvent.class, Lock::turn);
         bus.addListener(ExtractLevelRenderStateEvent.class, Reticle::extract);

@@ -1,0 +1,263 @@
+# Enchanting, the polish pass (SPEC §45.15-45.18, docs/enchanting/POLISH.md): the pilot as built. The first touch (a page
+# flying to you, its own leaf in the hand, reading it, the card that says how it gets onto a piece), the scribe's desk
+# in a room, a weapon on the slate as the thing it is with your pages hanging over the near edge, a page pointed at (its
+# glyph on the piece, the one label), the choice, the trace cut by cut, the wake with its name in blackletter, the
+# sockets behind the piece, a breastplate on the slate, a bane's brand and a ward's plate in a fight, the shine on the
+# sword in the hand, and Lantern in a dark tunnel.
+# Run on GitHub: tools/tour-ci.sh tools/autopilot/enchant-polish.txt 1500
+world autopilot_enchant_polish creative 20261111
+waitworld
+camera first
+cmd gamerule send_command_feedback false
+cmd weather clear 100000
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+wait 40
+cmd awaken opening skip
+wait 160
+screen close
+cmd awaken admin awaken
+wait 200
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+wait 40
+key dismiss
+wait 10
+screen close
+cmd gamerule advance_time false
+cmd time set 12600
+cmd gamemode creative
+cmd tp @s 0.5 201 0.5 0 20
+cmd forceload add -16 -16 16 16
+wait 300
+# ---- a small study high over spawn, and a dark tunnel off its west wall for the Lantern ----
+cmd fill -6 200 -4 6 200 8 minecraft:polished_deepslate
+cmd fill -6 201 8 6 204 8 minecraft:bookshelf
+cmd fill -6 201 -4 -6 204 8 minecraft:spruce_planks
+cmd fill 6 201 -4 6 204 8 minecraft:spruce_planks
+cmd fill -6 205 -4 6 205 8 minecraft:dark_oak_planks
+cmd fill -6 201 -4 6 204 -4 minecraft:spruce_planks
+cmd fill -30 200 12 -8 205 16 minecraft:deepslate_bricks
+cmd fill -29 201 13 -8 203 15 minecraft:air
+cmd setblock -2 201 5 minecraft:lantern
+cmd setblock 2 201 5 minecraft:lantern
+cmd setblock 0 201 4 awaken:inscribing_table[facing=north]
+wait 100
+# again: on a slow runner the first pass ran before every chunk was in, and two walls and the roof were left out
+cmd fill -6 200 -4 6 200 8 minecraft:polished_deepslate
+cmd fill -6 201 8 6 204 8 minecraft:bookshelf
+cmd fill -6 201 -4 -6 204 8 minecraft:spruce_planks
+cmd fill 6 201 -4 6 204 8 minecraft:spruce_planks
+cmd fill -6 205 -4 6 205 8 minecraft:dark_oak_planks
+cmd fill -6 201 -4 6 204 -4 minecraft:spruce_planks
+cmd fill -30 200 12 -8 205 16 minecraft:deepslate_bricks
+cmd fill -29 201 13 -8 203 15 minecraft:air
+cmd setblock -2 201 5 minecraft:lantern
+cmd setblock 2 201 5 minecraft:lantern
+cmd setblock 0 201 4 awaken:inscribing_table[facing=north]
+wait 40
+cmd gamemode survival
+cmd xp add @s 40 levels
+cmd give @s minecraft:lapis_lazuli 32
+cmd tp @s 0.5 201 0.5 0 10
+wait 40
+# ---- the first touch: a page flies to you from where a Lord fell, then lies in the hand as its own leaf ----
+cmd awaken admin enchant page bane_of_crawlers
+wait 4
+shotnow polish_00_a_page_flying_a
+wait 5
+shotnow polish_00_a_page_flying_b
+wait 30
+shotnow polish_00_c_the_card_it_comes_with
+cmd item replace entity @s weapon.mainhand with awaken:enchantment_page[stored_enchantments={"awaken:bane_of_crawlers":1},custom_data={awaken_where:"From the Hive Regent, the Lord of the Hive"}]
+wait 30
+shotnow polish_01_a_page_in_the_hand
+use
+wait 6
+shotnow polish_02_reading_a
+wait 8
+shotnow polish_03_reading_b
+wait 10
+shotnow polish_04_reading_c
+wait 30
+shotnow polish_05_the_card_after
+wait 150
+shotnow polish_05_b_the_card_for_reading
+wait 200
+key dismiss
+screen close
+# ---- the desk in the room ----
+cmd awaken admin enchant learn all
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword
+cmd tp @s 1.9 201 2.2 28 30
+wait 60
+shot polish_06_the_desk_in_the_room
+cmd tp @s -1.6 201 2.4 -32 28
+wait 40
+shot polish_07_the_desk_other_side
+# ---- step up and use it: the piece goes down, the pages rise out of the book ----
+cmd tp @s 0.5 201 2.6 0 34
+wait 30
+use
+wait 10
+shotnow polish_08_laying_the_piece
+wait 8
+shotnow polish_09_pages_rising
+wait 30
+shot polish_10_the_desk_to_choose
+cmd awaken enchant pilot hover 10
+wait 20
+shot polish_11_pointing_at_a_page
+cmd awaken enchant pilot hover 14
+wait 20
+shot polish_12_pointing_at_another
+cmd awaken enchant pilot choose 10
+wait 4
+shotnow polish_13_the_page_comes_down
+wait 14
+shotnow polish_14_the_glyph_on_the_piece
+cmd awaken enchant pilot trace
+wait 10
+shotnow polish_15_w01
+wait 8
+shotnow polish_15_w02
+wait 8
+shotnow polish_15_w03
+wait 8
+shotnow polish_15_w04
+wait 8
+shotnow polish_15_w05
+wait 8
+shotnow polish_15_w06
+wait 8
+shotnow polish_15_w07
+wait 8
+shotnow polish_15_w08
+wait 8
+shotnow polish_15_w09
+wait 8
+shotnow polish_15_w10
+wait 8
+shotnow polish_15_w11
+wait 8
+shotnow polish_15_w12
+wait 30
+shot polish_16_after_the_wake
+cmd awaken enchant pilot again
+wait 40
+shot polish_17_its_socket_filled
+cmd awaken enchant pilot socket 0
+wait 20
+shot polish_17_b_the_socket_pointed_at
+cmd awaken enchant pilot hover 14
+wait 20
+shot polish_17_c_what_cant_go_on
+cmd awaken enchant pilot close
+wait 30
+# ---- a breastplate on the slate ----
+cmd item replace entity @s weapon.mainhand with awaken:dreamsteel_chestplate
+wait 10
+use
+wait 60
+shot polish_18_a_breastplate_on_the_slate
+cmd awaken enchant pilot hover 1
+wait 20
+shot polish_19_a_ward_pointed_at
+cmd awaken enchant pilot choose 1
+wait 20
+shotnow polish_20_a_the_mark_on_armour
+cmd awaken enchant pilot trace
+wait 30
+shotnow polish_20_tracing_on_armour
+wait 24
+shotnow polish_20_c_armour_waking
+wait 76
+shot polish_21_armour_woken
+cmd awaken enchant pilot close
+wait 30
+# ---- a helm on the slate ----
+cmd item replace entity @s weapon.mainhand with awaken:dreamsteel_helmet
+wait 10
+use
+wait 60
+shot polish_22_a_helm_on_the_slate
+cmd awaken enchant pilot hover 31
+wait 20
+shot polish_22_b_lantern_pointed_at
+cmd awaken enchant pilot choose 31
+wait 20
+shotnow polish_22_c_the_mark_on_a_helm
+cmd awaken enchant pilot trace
+wait 30
+shotnow polish_22_d_tracing_on_a_helm
+wait 100
+shot polish_22_e_helm_woken
+cmd awaken enchant pilot close
+wait 30
+# ---- the shine on the sword in the hand ----
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_longsword[enchantments={"awaken:bane_of_the_dead":2}]
+cmd tp @s 0.5 201 1.0 180 8
+wait 40
+shotnow polish_23_shine_a
+wait 14
+shotnow polish_23_shine_b
+wait 14
+shotnow polish_23_shine_c
+wait 14
+shotnow polish_23_shine_d
+wait 14
+shotnow polish_23_shine_e
+wait 14
+shotnow polish_23_shine_f
+wait 14
+shotnow polish_23_shine_g
+wait 14
+shotnow polish_23_shine_h
+# ---- at work: a bane's brand on one of the dead ----
+cmd summon minecraft:zombie 0.5 201 -1.6 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Health:40f}
+cmd tp @s 0.5 201 0.5 180 6
+wait 30
+cmd damage @e[type=minecraft:zombie,limit=1,sort=nearest] 4 minecraft:player_attack by @s
+wait 2
+shotnow polish_24_a_bane_a
+wait 6
+shotnow polish_25_a_bane_b
+wait 20
+shotnow polish_26_a_bane_c
+cmd kill @e[type=minecraft:zombie]
+wait 20
+# ---- at work: a ward's plate (seen from the front) ----
+cmd item replace entity @s armor.chest with awaken:dreamsteel_chestplate[enchantments={"awaken:heat_ward":3}]
+cmd item replace entity @s armor.legs with awaken:dreamsteel_leggings[enchantments={"awaken:heat_ward":3}]
+cmd effect give @s minecraft:night_vision 600 0 true
+cmd tp @s 0.5 201 0.5 180 0
+camera front
+wait 30
+cmd damage @s 3 awaken:heat at 0.5 202 -3.5
+wait 2
+shotnow polish_27_a_ward_a
+wait 6
+shotnow polish_28_a_ward_b
+wait 8
+shotnow polish_29_a_ward_c
+camera first
+cmd effect clear @s minecraft:night_vision
+wait 20
+# ---- Lantern in a dark tunnel: without it, then with it ----
+cmd tp @s -10.5 201 14.5 90 0
+wait 60
+shot polish_30_the_tunnel_dark
+cmd item replace entity @s armor.head with awaken:dreamsteel_helmet[enchantments={"awaken:lantern":3}]
+wait 40
+shot polish_31_lantern_lit
+walk 40
+wait 60
+shot polish_32_lantern_walked
+camera back
+wait 20
+shot polish_33_lantern_from_behind
+camera first
+quit

@@ -60,6 +60,7 @@ public final class InscribeScene {
 
     // the session
     static @Nullable BlockPos pos;
+    private static @Nullable Direction facing;
     static int session, slot;
     static boolean study, live;
     static int phase = NONE;
@@ -99,6 +100,16 @@ public final class InscribeScene {
     static double fx, fz = 1, rx = 1, rz;
     static Vec3 centre = Vec3.ZERO;
     static double slateY;
+    /**
+     * How far above the slate the mark lies: on the top of the piece, whatever its build (a blade a few hundredths, a
+     * breastplate a quarter of a block). The table's renderer measures the piece it draws and says ({@link #pieceTop}).
+     */
+    static double lift = 0.036;
+
+    /** The writer's own piece, as the table drew it this frame: its top above the slate. */
+    static void pieceTop(double top) {
+        lift = Math.max(0.03, top + 0.006);
+    }
 
     // the view: last tick's and this tick's yaw, pitch and field of view, eased toward the phase's frame
     private static final float[] VIEW = new float[3], VIEW_O = new float[3];
@@ -119,6 +130,7 @@ public final class InscribeScene {
         slot = o.slot();
         study = o.study();
         live = true;
+        facing = Direction.from2DDataValue(o.facing());
         place();
         phase(BOOK);
         no = level = 0;
@@ -162,11 +174,17 @@ public final class InscribeScene {
         }
     }
 
+    /** When the scene opened (the pages rise out of the book from then). */
+    static int openedAt() {
+        return openedAt;
+    }
+
     static void done(EnchantPayloads.Done d) {
         if (!live || d.session() != session) return;
         done = d;
         no = d.no();
         phase(WAKE);
+        Desk.picked = -1;
         // the piece's chord is the server's sound at the table; the client adds nothing over it
     }
 
@@ -184,6 +202,7 @@ public final class InscribeScene {
         closedAt = ticks;
         phase = NONE;
         drawing = false;
+        Desk.reset();
         Minecraft mc = Minecraft.getInstance();
         if (before != null) {
             mc.options.setCameraType(before);
@@ -283,7 +302,7 @@ public final class InscribeScene {
         double dx = fw.x() - left.x() * nx * tan * aspect + up.x() * ny * tan;
         double dy = fw.y() - left.y() * nx * tan * aspect + up.y() * ny * tan;
         double dz = fw.z() - left.z() * nx * tan * aspect + up.z() * ny * tan;
-        double planeY = slateY + 0.035;
+        double planeY = slateY + lift;
         if (dy > -1e-4) return;
         double t = (planeY - o.y) / dy;
         if (t <= 0 || t > 8) return;
@@ -417,9 +436,11 @@ public final class InscribeScene {
             sparkRun = 0;
             spark(u, v, 0.02F + 0.025F * (float) Math.random(), 0.006F + 0.008F * (float) Math.random());
         }
-        if (tickRun >= 0.3F) {
+        // the cut under the hand: a grain of the burin every eighth of the mark's width drawn, so it runs with the hand and
+        // stops with it (it was a one-shot played as a loop, with a seam every time round: SPEC §45.18)
+        if (tickRun >= 0.12F) {
             tickRun = 0;
-            play(burinSound(), 0.08F, 1.05F + 0.45F * progress / (float) Math.max(1, n - 1));
+            play(burinSound(), 0.2F, 1.0F + 0.25F * progress / (float) Math.max(1, n - 1) + 0.08F * (float) Math.random());
         }
     }
 
@@ -455,7 +476,8 @@ public final class InscribeScene {
         // each stroke rings its family's note, a step higher each time; one that wandered scratches dully
         Inscriptions.Entry e = entry();
         if (e != null) {
-            if (share >= 0.6F) play(EnchantContent.note(e.family()), 0.55F, 0.84F + 0.12F * stroke);
+            // a sealed stroke: one recording, a step higher each time (it rang its family's chime)
+            if (share >= 0.6F) play(EnchantContent.SEAL.get(), 0.8F, (float) Math.pow(1.0594631, 2 * stroke));
             else play(EnchantContent.SCRATCH.get(), 0.45F, 0.7F);
         }
         if (share >= 0.6F) {
@@ -541,6 +563,8 @@ public final class InscribeScene {
         // once the piece is down the off hand has nothing to do, and over the slate it would hide the piece or its mark
         boolean writing = live && ticks - openedAt >= LAY_TICKS;
         drawBack += ((writing ? 1F : 0F) - drawBack) * 0.3F;
+        burinInO = burinIn;
+        burinIn += ((burinOut() ? 1F : 0F) - burinIn) * 0.3F;
         VIEW_O[0] = VIEW[0];
         VIEW_O[1] = VIEW[1];
         VIEW_O[2] = VIEW[2];
@@ -551,13 +575,15 @@ public final class InscribeScene {
     private static void place() {
         Minecraft mc = Minecraft.getInstance();
         if (pos == null || mc.level == null) return;
+        // the server's word for the facing first: a vanilla table that has just turned may still be the old block here
+        // (it framed the scene from the table's side, SPEC 45.15)
         var st = mc.level.getBlockState(pos);
-        Direction d = st.hasProperty(InscribingTableBlock.FACING) ? st.getValue(InscribingTableBlock.FACING) : Direction.NORTH;
+        Direction d = facing != null ? facing : st.hasProperty(InscribingTableBlock.FACING) ? st.getValue(InscribingTableBlock.FACING) : Direction.NORTH;
         fx = d.getStepX();
         fz = d.getStepZ();
         rx = fz;
         rz = -fx;
-        slateY = pos.getY() + 13 / 16.0;
+        slateY = pos.getY() + InscribingTableRenderer.SLATE;
         centre = new Vec3(pos.getX() + 0.5 + fx * 0.08, slateY, pos.getZ() + 0.5 + fz * 0.08);
     }
 
@@ -589,7 +615,7 @@ public final class InscribeScene {
         Minecraft mc = Minecraft.getInstance();
         double base = mc.options.fov().get();
         int guiH = Math.max(1, mc.getWindow().getGuiScaledHeight());
-        double tx = centre.x, ty = slateY + 0.03, tz = centre.z, size, frac, clear;
+        double tx = centre.x, ty = slateY + lift, tz = centre.z, size, frac, clear;
         switch (phase) {
             case TRACE, MEMORY -> {
                 // leaning in to write: the mark fills most of the view
@@ -598,19 +624,29 @@ public final class InscribeScene {
                 clear = 1 - 44.0 / guiH;
             }
             case WAKE -> {
-                // the turn (6-40 ticks) held close, the piece still filling the view; only then back a little for the card
-                boolean card = ticks - phaseAt >= InscribeScreen.CARD_AT - 6;
+                // the turn (6-40 ticks) held close, the piece still filling the view; only then back a little
+                boolean card = ticks - phaseAt >= InscribeScreen.CARD_AT - 6, classic = EnchantClientConfig.classic();
                 ty += card ? 0.06 : 0.03;
                 size = card ? 0.62 : 0.56;
                 frac = card ? 0.8 : 0.78;
-                clear = card ? InscribeScreen.cardTop(guiH) : 1 - 44.0 / guiH;
+                clear = card && classic ? InscribeScreen.cardTop(guiH) : 1 - 44.0 / guiH;
             }
             default -> {
-                // the piece on the slate (its mark faint as you rest on a row) with the floating book behind, over the pages
-                ty = slateY + 0.05;
-                size = 0.62;
-                frac = 0.9;
-                clear = InscribeScreen.pagesTop(guiH) - 0.02;
+                if (EnchantClientConfig.classic()) {
+                    // the piece on the slate (its mark faint as you rest on a row) with the book behind, over the pages
+                    ty = slateY + lift + 0.02;
+                    size = 0.62;
+                    frac = 0.9;
+                    clear = InscribeScreen.pagesTop(guiH) - 0.02;
+                } else {
+                    // the whole desk: the piece across the slate, your pages hanging over its near edge, nothing over them
+                    tx = pos.getX() + 0.5 + fx * 0.14;
+                    tz = pos.getZ() + 0.5 + fz * 0.14;
+                    ty = slateY + 0.1;
+                    size = 1.12;
+                    frac = 0.92;
+                    clear = 1 - 22.0 / guiH;
+                }
             }
         }
         clear = Mth.clamp(clear, 0.3, 1.0);
@@ -685,6 +721,17 @@ public final class InscribeScene {
     private static ItemStack burin = ItemStack.EMPTY;
     /** How far the off hand has drawn back (0..1), this tick and last. */
     private static float drawBack, drawBackO;
+    /**
+     * How far the main hand has come in with the burin (0..1), this tick and last. While you choose on the desk it stays
+     * out and the burin stands in its inkwell: the first frames had the fist over the right-hand pages, and over a
+     * helm it filled a third of the view. It takes the burin up as the chosen page comes down.
+     */
+    private static float burinIn, burinInO;
+
+    /** Whether the writer's burin is in their hand (the table then leaves the inkwell empty). */
+    static boolean burinOut() {
+        return live && (EnchantClientConfig.classic() || phase != BOOK);
+    }
 
     /**
      * Where the burin's point sits from the fist that holds it, on screen (half screen heights, right and up): it's drawn
@@ -750,6 +797,15 @@ public final class InscribeScene {
                 x = tip[0] + (left.x() * BURIN_RIGHT - up.x() * BURIN_UP) * k;
                 y = tip[1] + (left.y() * BURIN_RIGHT - up.y() * BURIN_UP) * k;
                 z = tip[2] + (left.z() * BURIN_RIGHT - up.z() * BURIN_UP) * k;
+                // out of the view while you choose, low by your side and behind what the eye takes in; up with the
+                // burin once you have. The rig keeps the arm all the while: at no weight the game's own hand came
+                // back into the corner, still holding the piece that lies on the slate
+                float in = ease(Mth.lerp(pt, burinInO, burinIn));
+                if (in < 1F) {
+                    x = Mth.lerp(in, eye.x + bx * side * 0.5 - inX * 0.3, x);
+                    y = Mth.lerp(in, eye.y - 0.85, y);
+                    z = Mth.lerp(in, eye.z + bz * side * 0.5 - inZ * 0.3, z);
+                }
             }
             y += wake * 0.08;
             x -= inX * wake * 0.08;
@@ -789,7 +845,7 @@ public final class InscribeScene {
             lift = 0;
         }
         TIP[0] = wx(u, v);
-        TIP[1] = slateY + 0.035 + lift;
+        TIP[1] = slateY + InscribeScene.lift + lift;
         TIP[2] = wz(u, v);
         return TIP;
     }
@@ -835,16 +891,19 @@ public final class InscribeScene {
             // the mark scored into the piece, dark either side of each line, before any of it is cut
             float scored = 0.6F * Mth.clamp((t - phaseAt) / 15F, 0F, 1F);
             e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RenderTypes.debugQuads(), (pose, vc) -> {
-                for (float[] s : m) groove(pose, vc, s, slateY + 0.0355, 0.007, 0.012, argb(0x0B0706, scored));
+                for (float[] s : m) groove(pose, vc, s, slateY + lift - 0.0005, 0.007, 0.012, argb(0x0B0706, scored));
             });
         }
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RenderTypes.lightning(), (pose, vc) -> {
-            double y = slateY + 0.036;
+            double y = slateY + lift;
             switch (ph) {
                 case BOOK -> {
-                    // the book open at it: its mark, barely there, where it would go
-                    float a = 0.12F + 0.05F * Mth.sin(t * 0.15F);
-                    for (float[] s : m) ribbon(pose, vc, s, 0, s.length / 2, y, 0.016, argb(colour, a));
+                    // the page pointed at: its mark where it would go. In the book's day it was barely there under a
+                    // page of text; from the whole desk's distance it has to carry on its own
+                    boolean classic = EnchantClientConfig.classic();
+                    float a = (classic ? 0.12F : 0.5F) + 0.05F * Mth.sin(t * 0.15F);
+                    if (!classic) for (float[] s : m) ribbon(pose, vc, s, 0, s.length / 2, y, 0.055, argb(colour, 0.16F));
+                    for (float[] s : m) ribbon(pose, vc, s, 0, s.length / 2, y + 0.0005, classic ? 0.016 : 0.02, argb(classic ? colour : hot(colour, 0.3F), a));
                 }
                 case TRACE -> {
                     float burn = Mth.clamp((t - phaseAt) / 15F, 0F, 1F);
@@ -971,7 +1030,7 @@ public final class InscribeScene {
         float[][] m = Marks.of(scrapedNo);
         float crumble = Mth.clamp((a - 3F) / 12F, 0F, 1F);
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), RenderTypes.lightning(), (pose, vc) -> {
-            double y = slateY + 0.036;
+            double y = slateY + lift;
             for (float[] s : m) {
                 int n = s.length / 2, from = Math.round(crumble * (n - 1));
                 if (from >= n - 1) continue;

@@ -998,6 +998,17 @@ of `AwakenConfig.Client`.
   `RECOVERY`, `DODGE`, `CAST`; `installArms`/`installPowers` (each module's own part); `stage(entity, facts)` for tests.
 - `dev.awaken.core.api.Strikes` additions (§40): `ground(entity, ticks)` / `installGrounder` (a flier brought down; the
   mobs module grounds normal and elite fliers, never a kit flier).
+- `dev.awaken.core.api.Strikes` additions (§68): `Coming` / `installComing` with `left(entity, partialTick)` (ticks until its
+  told blow reaches you, a double on one clock, NaN when none), `reaches(entity)`, `comingKind(entity)`, `lands(entity)`
+  (client; the mobs module's `TellClock`); `Answer {DEFLECT, BLOCK, GUARD_BREAK, STRUCK}`, `installAnswers`, `answered`
+  (client: how the local guard answered, told to the ring); `Duel.reeling`, `Duel.atLastStand` (`reeling(entity)`,
+  `atLastStand(entity)`); `Postures.beaten(target, ticks, by)` and `Postures.executing(source)` (`beaten`, `executing`: a
+  body held broken for its last stand, and whether a blow now landing is an Execution's).
+- `dev.awaken.core.api.Lasting` (§68.1) — an interface an item class of ours names to be never destroyed by wear:
+  `setDamage` stops a use short of breaking, `getMaxDamage` carries a stack's own count over a change of numbers
+  (`formerUses()`), `wornOut(stack)`, `nearlyWornOut(stack)`, `tooltip`, `tell`; `WORN_OUT_SHARE` 0.5.
+- `dev.awaken.core.api.Shots` (client, §68.4) — the game's one cinematic camera for any module: `Shot` (`pose(t, out)`,
+  `length()`, `tick`, `finished`), `take(shot)`, `finish(reason)`, `active()`; the opening installs its `OpeningCamera`.
 - `dev.awaken.delve.api.CaveGround` (§34.1, §21.11) — `cuts(ServerLevel, x0, z0, x1, z1, y0, y1)`: whether a cave place open to
   the sky (mouth, sinkhole, mine) has its box over the box; from the seed (each candidate start's own site search), any thread.
 - `dev.awaken.core.api.GroundPiece` (§28.9, §21.11) — `usesGround(WorldGenLevel, ChunkGenerator, x, z, r)`: a structure piece whose
@@ -6525,6 +6536,27 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     in a texture (Java) and is not built.
   - Checked on CI with `tools/autopilot/steady60-cover-ci.txt` (a stone room with a seven-block roof in its own
     morning shadow; views at 70, 100 and 110 degrees), before and after.
+  - **The hand** (Euan, playing, the same day, after the fix above: "When I get close to a door that's full of shade
+    ... it creates this spotlight effect in my view. And then if I move forward, the spotlight effect moves with me";
+    "Same thing when I get close to a wall ... the same issue as earlier, but for walls and for ceilings"). Three
+    rules took "within 1.25 blocks of the eye" to mean "the hand": the light pass shadowed nothing nearer, the
+    composite's light eased in from there to 1.45, and inside that reach nothing was darker than the game. A wall, a
+    door or a ceiling at arm's length is inside it too, so it stood in the game's raw light, a disc on the shaded
+    surface that moved with the camera. The hand cannot be told from a wall by the frame's depth (the game copies the
+    hand's depth over the world's, and both are a block away). But the game draws the hand and what it holds into a
+    depth of their own first (`GameRenderer.hud3DTarget`, "hud_3d_depth", cleared to 0, whenever a post effect
+    runs), and that texture still holds them when Lens's chain runs. Lens now reads it: `LensHand`
+    (`awaken:lens_hand_depth`, a view of the game's texture, never owned), pointed each frame after the world is
+    drawn at the target Pixels' own hook already receives (`PixelsHooks.handTarget()`: the shadowed field of the
+    Pixels mixin, no new mixin and no access transformer; while Pixels scales the world it is Pixels' lent texture,
+    the one the hand is really drawn into). Parameter texel 26 r says Lens has it. Then a pixel is the hand where
+    that depth is not 0, and only there: the light pass shadows every other pixel, the composite lights the world
+    right up to the eye, and "never darker than the game" holds for the hand alone. Without the hook (Pixels' mixin
+    off or failed) the three rules go by reach as before. Left by reach on purpose: the light pass's contact shadows
+    and ambient occlusion still ignore occluders nearer than 1.25 blocks, so the hand casts none on the world (a
+    wall that near casts none either, which nobody will miss). Inputs: `Hand` on the light pass and the lit
+    composite of every chain (`tools/lens/probes.py` regenerated the measuring chains). Tour:
+    `tools/autopilot/steady60-hand-ci.txt`.
 - **Grades** (Euan 2026-11-10, with three pictures of a vibrant look: "what would it take to add this as an option in
   the Lens setting for the color grading ... defo want to be able to switch back and forth, and that way we also get
   to add more options in the future"; "this is for colors and atmosphere, not shaders or clouds"). A grade is the
@@ -6592,6 +6624,126 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     `docs/perf/steady60/play-2026-11-11/steppe-fog-before-after.jpg`. In Euan's own shot the sand shapes were
     stronger than any the runner drew; his chunk fade is off, so it was most likely the edge hold's mist as new land
     was being made, which is a reading and not a measurement.
+- **Shadows beyond the block map** (Euan, playing, 2026-11-11, in a jungle: "There's an issue here with the tree's
+  shadow ... it moves as I move, so the shadow isn't consistent ... it's very cut off, and then if I move, the shadow
+  moves along with my view ... if I move completely to the left of the tree, then the entire shadow of the tree
+  basically disappears. We need to double check this is fixed across the board for not just trees"). The Sun Pass
+  has two answers for "does the sun reach this point": the block map, exact, within 46 blocks of the camera, and the
+  heightfield beyond it and for the rest of a ray that leaves the map. The heightfield knows a column's top with its
+  leaves and without, not where a crown ends below, and it took the whole column under the leaves' top for leaves: a
+  curtain to the ground. So a ray that passed under a crown was shaded wherever the heightfield had the say, and lit
+  where the map did, and the line between the two, a straight edge on the ground at the map's reach toward the sun,
+  moved with the camera. Under tall trees (a jungle) that was a slab of shade that came and went.
+  - **The rule**: beyond the block map a crown shades a ray only in the top seven blocks of its column
+    (`CANOPY` in lens_light.fsh, `heightRay`), so a tree far off casts its crown's shadow and light passes under
+    it, as the map finds for the same tree near by. Inside the map nothing is lost: a point is called lit without
+    a walk only when nothing at all stands over its ray, leaves at any height included (`leafy`), so the walk still
+    has its say wherever the old curtain did, at the same cost.
+  - **What still differs with distance**: leaves lower than a crown's top seven (a spruce's skirt, a bush under a
+    giant) shade only inside the map; and a solid thing with open air under it (a bridge, an arch, a table) is a
+    solid pillar to the heightfield, so beyond 46 blocks its shadow is the pillar's and nearer it is the thing's
+    own. Telling those apart needs the underside of each column's top run in the heightfield (a third channel and
+    a scan at chunk load): not built.
+  - Tour: `tools/autopilot/steady60-treeshadow-ci.txt` (a built jungle giant and a stone table from 16, 42 and 78
+    blocks, and from the ground).
+- **Shade on creatures** (Euan, playing, 2026-11-11, with a cow at arm's length: "the shadows on animals are a bit
+  broken ... you can see really weird frames or really weird pixels ... actual artifacts in the shadows, where the
+  shadows have jagged edges or like zigzags"). Close to the eye the Air's shadows are cut in the texture's own
+  pixels: a point on a face square to the world asks for its light from the centre of its sixteenth-of-a-block
+  texel, in the light pass and again where the composite reads the light (SPEC §22 "Sunlight"). Those texels are the
+  world's, on the world's grid. A creature's side is square to the world whenever it happens to face that way, and
+  its shade was then cut along a grid that is not its skin's and does not move with it: stair-steps a texel wide
+  that crawled as it walked or breathed. Now only a block's own face is cut that way (`blockFace` in
+  lens_height.glsl: the point just behind the surface lies in its column's solid, by the heightfield); a creature,
+  a dropped item or anything else with open air behind its surface keeps the smooth shadow, the sun's small disc
+  smoothed over frames. Known gaps: under a solid roof everything reads as a block (the heightfield has one top a
+  column), so a creature indoors is cut as before; and a leaf block's face is no longer cut (the solid top is
+  without leaves), which on a leaf texture does not show. Tour:
+  `tools/autopilot/steady60-creature-shade-ci.txt`.
+- **Near lights against the sky** (Euan, playing by night, 2026-11-11: "the Firefly lights goes behind clouds. Which
+  shouldn't be the case"). A particle writes no depth, so where a firefly's glow shows against the sky its pixel is
+  sky to the composite, and the wisps and the clouds were laid over it as they are over the stars. What the frame
+  holds over the game's own sky is the sun, the moon, the stars and any light that is near; a near light is told
+  from the rest by where it is and by its colour: not within the sun's disc (some 12 degrees) or the moon's (some
+  8), and not white as the stars are (its strongest channel leads its weakest by a quarter and more). That light is
+  put back over whatever of the sky covered it (`nearGlow`, `skyCover` in lens_composite.glsl). Not while the
+  game's own sunrise glow is up, which is coloured sky: at dusk a firefly still goes behind a cloud. Not solved by
+  it: a white or grey particle (snow, smoke) against a cloud, and a near light in front of far land, which takes
+  the land's fog. No tour: fireflies come by chance at night; to be seen in play.
+- **The Air in other worlds** (Euan 2026-11-11, in the first rolled gate world, Cinder Crown: "Each should have its
+  own sky and atmosphere ... the cinder crown, it should have kind of a more reddish sky, I think, and a reddish
+  atmosphere"). The Air drew one sky everywhere its sun shines (`sunHere`: any world with an overworld skybox, the
+  Realms among them): its own blue model, and since "The game's fog under the Air" its horizon colour as the game's
+  fog too, so a Realm biome's `sky_color` and `fog_color` never showed on Lite, Cinematic or Ultra, and with the
+  Air on the look's haze tint did nothing.
+  - **The rule**: in every world but the overworld the sky is the land's own. The Air keeps its shape (a deeper
+    zenith, the horizon rising a little way, the sun's glow, the night's stars and galaxy, wisps, block clouds lit
+    by that sky, the far fog that takes the land into the horizon) and takes its colours from the land: overhead
+    the game's sky colour as it is this frame (the biome's `sky_color` with the land's hour and weather), at the
+    horizon the game's fog colour (`fog_color`) with the look's `hazeTint` laid over it by `hazeTintMix`. The far
+    fog is the same horizon colour, so the land still fades into exactly the sky behind it, and far land greys by
+    the look's `hazeDesaturate`. There the game's fog keeps the land's colour (the overworld's rule is not applied).
+  - **For a land's maker**: set the biome's `minecraft:visual/sky_color` and `fog_color` (the zenith and the
+    horizon), and in the land's look `hazeTint` with `hazeTintMix` (to draw the horizon and the far fog toward a
+    colour) and `hazeDesaturate`. Nothing else: no key says "own sky", it is every world but the overworld.
+  - `lens_air.glsl` (`airLand`, the end of `airSky`), frame texels 24, 25, 26 w (the land's horizon) and 27 w (its
+    share; the Holo plates' spare components), `LensFrame.land`, `LensClient.ownSky`. The overworld is untouched.
+  - **How much fog** stays the Air's own, by the render distance: a land's look gives the fog its tint, not its
+    amount (`haze` and `hazeStart` do not act under the Air). On Amber Reach that is hazier than the land's first
+    pictures, the far cliffs fading more. Shown the two side by side and asked whether a gate world's fog should
+    follow its look's haze strength, Euan said: "Leave it" (2026-11-11).
+  - Tour: `tools/autopilot/steady60-realm-sky-ci.txt` (Amber Reach: the Air off, on, and Lite). Before, run
+    42996721809; after, 42996759340: the sky, the far fog and the clouds are the land's amber. Sheet:
+    `docs/perf/steady60/play-2026-11-11/gate-sky-before-after.jpg`.
+- **Glasswater: the Air's water** (Euan 2026-11-11: "Right now the water is still vanilla basically ... keep it MC
+  like ... I don't want like insane physics ... pretty simple water that doesn't take a lot of performance away, but
+  that's much more cinematic and less flat"; told that Cinematic's water mirrored the game's old sky: "that makes no
+  sense ... That would be inconsistent"; then: "surprise me along the lines of what we've been building ... the
+  fantasy style ... I don't want the usual blue, like, flat blue style ... still feels like MC, but doesn't look at
+  all like what it was before"). Under the Air, still water is drawn again by the composite, on Lite as on Cinematic
+  and Ultra (`lens_water.glsl`: `waterHere`, `airWater`). Nothing moves the surface, bends what is under it or is
+  simulated, and all of it is smooth. (The first build drew it on the block's sixteenth grid: a mirror leaning a
+  texel at a time, glints a texel square, a stepped waterline. Shown it, he said: "I'm really not a fan of the
+  pixelized reflections, though. It looks more glitchy than anything else." A stepped mirror is what a broken
+  upscale looks like. What keeps the water this game's is what it mirrors, block clouds and block shores, and the
+  place's own water colour: never a pixel grid laid over a reflection.)
+  - **What is water**: a level surface at the height a still fluid stands in its block (0.8889), seen from above,
+    by the pixel's own world height (within 0.004), with the composite's normal up (or none, on an edge); lava, which
+    stands at the same height, is told by the game's colour. So it needs no heightfield (Lite has none) and holds
+    at any distance. Flowing water and falls are not level and stay the game's. Under cover (parameter texel 21 r,
+    and on Cinematic the pixel's own cover) it stays the game's too: a cave's lake has no sky to hold. It gives way
+    with the game's own fog, and by the look's `water` (0.6 is whole).
+  - **The body**: jewel tones from the place's own water colour (the hue of the game's pixel: a marsh stays dark, a
+    steppe pale), drawn toward aqua where you look down into it and toward indigo where it runs deep and far, lit
+    by the hour and by Lens's own shade (the lit and the raw pixel differ by nothing else). Near you the game's
+    picture of the bed shows through it; far out the body is all there is. Long wind lanes (about nine blocks by
+    three) drift across it, a crest a little lighter.
+  - **The mirror**: the Air's sky the way the reflected ray looks; its block clouds (Cinematic and Ultra: walked
+    from the camera's image under the surface, `cloudNearFrom`, block for block the sky's, to 1,240 blocks; Lite:
+    a cloud's own footprint, one read where the mirrored ray meets the layer's underside); and the land over the
+    far shore, read from the frame where the mirrored ray looks, into the Air's fog by its distance (true for
+    anything far off; nearer than some twenty blocks it is left to the sky). The mirror ripples gently: three slow
+    swells and a little chop lean it, more on a lane's crest. Its share is wider than glass's (0.05 straight down to 0.86 toward the horizon), so a
+    lake across the way is already sky and still keeps some of its own colour.
+  - **Lace**: thin soft lines of light on the lanes' crests, long along the lanes and broken into dashes, gone
+    before they are finer than a screen pixel.
+  - **The road of the sun, and the moon's**: the light's own long reflection on the ripples, a wide soft glow
+    under it and a fine sparkle that comes and goes along it, laid over the water in the hour's own light (gold
+    toward dusk). By night the water holds a scatter of small soft stars. None in the water's own shade
+    (Cinematic's sun term).
+  - **The waterline** (with the heightfield: Cinematic and Ultra): a pale line where water meets what stands over
+    it, soft-edged, breathing in and out along the shore, a faint ring off it now and then, and aqua shallows within
+    a block of the shore. For it the heightfield marks water under leaves too (it marked open water only, and every column
+    under a tree's crown read as a bank). A bridge overhead reads as a bank as well: the water under its edge
+    ripples.
+  - **Cost**: only water pixels pay. Lite: arithmetic (some forty hashes and three cosines), the sky model twice,
+    and three reads.
+    Cinematic: the mirrored cloud walk and four heights more. Not measured: frame times need the Mac.
+  - **Not done**: flowing water and falls, cave lakes, rain rings, a storm cell and the sun's and moon's discs in the
+    mirror, the bed's real depth (the shallows are by the shore, not by how deep it is). Without the Air (`lensAir`
+    off) L3's water is as it was.
+  - Tour: `tools/autopilot/steady60-water-ci.txt` (a pool with a deep middle, a sand corner, lily pads, a pillar and
+    an island: across, down at the bank, along the shore, from above, golden hour, dusk, night; Vivid; Lite).
 - **Lite** (Euan 2026-11-11: "a new version between Swift and Cinematic ... it has all the best stuff, like the
   atmosphere and everything, but it's really optimized for performance ... if my girlfriend was playing on her ... M1
   MacBook with 16 gigs of RAM ... let's keep Swift as it is now ... if you want to turn everything off, you just use
@@ -19459,7 +19611,7 @@ Lunge, Frost Walker, Soul Speed, Sweeping Edge, Channeling) stays only where it 
   piece allows.", "This piece takes it to N at most.", "You need 6 levels and 2 lapis.". Test `enchant_room_depth`.
 
 ### 45.5 The Inscribing Table (`InscribingTableBlock`, `Inscribe`)
-- **`awaken:inscribing_table`**: lapis, book, lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
+- **`awaken:inscribing_table`**: lapis, stick (a book until §45.15), lapis / planks, essence shard, planks / stone, lapis, stone (`#planks`,
   `#stone_crafting_materials`); axe-mineable; drops itself. (The plan's "unlocks when you first hold a page" is not
   built: the recipe is always known.)
 - **Use it holding a piece** to lay it on the slate and open the book. The server opens a session (table, hand slot, a
@@ -19515,6 +19667,8 @@ A piece's tab is Armour for armour, Weapons for anything else; an enchantment's 
   `village.Trade`.
 
 ### 45.10 The writing scene, the table drawn, the Journal (`enchant.client`)
+(Since §45.15 the book's two pages and the result card are the `classicTable` setting only, the table is a desk with the
+book on a rest, and the piece on the slate is the thing itself. The view, the hands, the trace and its numbers stand.)
 - **You step to the desk and the view leans in** (a change from the plan's "cinematic by default"): as the scene opens
   you take a short walk (a few moves over 12 ticks, collisions and all) to the spot 0.36 out from the table's front,
   where both hands reach the slate, if you're within three blocks of it, on its floor (within 0.6) and there's room
@@ -19696,6 +19850,125 @@ angle on the ground the blow came from (`dir`, NaN when there's no telling). The
 - **The Inscribing Table's book on a narrow page** (Euan's MacBook, GUI 4): each row's line drops detail until it fits,
   so the price always shows: "Up to II here (III in your Study) · 6 levels and 2 lapis", then without the Study, then
   without "here", then the price alone; the foot's hint wraps.
+
+### 45.15 The polish pass: the door, the desk, one script (plan docs/enchanting/POLISH.md, page https://claude.ai/artifact/GGUiB3qof3qZMVuxQoMAsb; Euan approved the full plan 2026-11-11: "go ahead with the full plan", with three changes)
+His changes, which override the page where they differ: **no menu** ("let's not make it a menu for enchanting. It should
+stay 3D inside of the actual world, like similar to how it is now, maybe just better, like more cinematic"); an
+inscription's look **must not distract from the armour set** but should give "a nice shine" or a small aura (§45.17);
+and **a page must say how it is used** ("I thought the pages were like being automatically applied... say: you enchant
+this onto a weapon by doing XYZ"). What the audit found is in POLISH.md §2: across two worlds he was given six pages, read
+four, and never built the table. Built first as a pilot (the door, the desk, his three banes and Lantern); the other five
+new words of the plan wait for his play.
+
+- **A page says how it is used.** Its own lines end "Use this page to learn it. That puts it on nothing yet." and
+  `Entry.howTo()`: "To put it on a weapon, hold the piece and use an Inscribing Table." (the noun by what it fits:
+  `Entry.piece()`). The line when one is given: "The Hive Regent carried a page of Bane of Crawlers. Use the page to learn
+  it, then write it onto a weapon at an Inscribing Table." (`Pages.then`). Reading one, chat says "You learned Bane of
+  Crawlers. It isn't on anything yet." while the card below is sure to show (five lines of chat lay over it at his
+  size), and once the card is paced, all of it: "... To put it on a weapon, hold the piece and use an Inscribing Table.
+  It fits your Beastbound Maul. You can make a table: it's on your Tasks page." (the last two only where they hold).
+  The first time ever the System's line about gates follows as a paced toast short enough to show whole: "Each kind of
+  gate keeps its own enchantment." (it was a longer toast, cut after "and its L").
+  **Two System panels** say the same in the room a panel has, which is a title and three lines of 188 pixels at the size
+  he plays at (the first cut had a body and rows: the body was cut with "..." and the how-to folded behind "Press K to
+  see 2 more"). Each line is a row with no value, which a panel draws at full width. Given (`Pages.givenCard`, 7 s):
+  "Page of Bane of Crawlers" / "It isn't on your gear yet." / "Use the page to learn it. Then" / "write it on at an
+  Inscribing Table." Read (`Pages.learnedCard`, 12 s): "Learned: Bane of Crawlers" / "It isn't on anything yet." / "To
+  write it on, hold the piece" / "and use an Inscribing Table." Until you have written your first enchantment both
+  panels are CRITICAL, so the System's pacing never holds them (`Pages.doorTier`: paced, the first filmed run showed
+  neither, a new world being quiet for its first five minutes); after that they are paced like any notice. A page held
+  to the table is read there.
+- **A bane's line leads with what it does** ("Your hits land 8% harder for each level on spiders, bees and the creatures
+  of a Hive."); what it won't touch is the Journal entry's small print.
+- **The recipe** takes a stick where it took a book: lapis, stick, lapis / planks, essence shard, planks / stone, lapis,
+  stone. Tasks' `enchant/table` asks for the stick.
+- **A converted vanilla table** opens facing as the server says (`Open.facing`): the scene framed itself before the new
+  block reached the client and fell back to north.
+- **The door's log**: `[enchant] door: page given|read|table set|opened|written[ clean| from memory] <id> t=<game time>`.
+- **One script** (`Marks`, written by `tools/art/specs/_enchant_glyphs.py java`): 36 designed glyphs in place of five
+  generated templates. A glyph is its family's frame (wards a shield, banes a spear, spoils a cup, carrying a gable,
+  keeping a knot) and the enchantment's own sign, straight cuts between points of a 7 by 7 grid, 2 to 5 strokes, sampled
+  about every 0.11 of the mark with every corner a sample. `Marks.frame(no)` counts the frame's strokes; `Marks.grid(no)`
+  gives the corners. Numbers 32 to 36 are drawn for the words not built yet. A Word Stone's `word` runs 1 to 36.
+- **Every page has its own leaf**: 36 item textures (`enchantment_page_<path>`: the sign in dark ink on a parchment with a
+  band in the family's colour) chosen by the item model select `awaken:page` (`PageSelect`: the enchantment's id path).
+- **The scribe's desk** (the block's model, `tools/art/specs/enchant.py`): two trestle ends and a stretcher, an apron with
+  a brass pull, the slate (its top at 12 of 16) with the lapis channel, a rail along the back, a brass rest at the
+  writer's left where the book lies (shut when nobody is near, opening as they come), and an inkwell of lapis at their
+  right with the burin standing in it while nobody writes and while its writer still chooses: the hand takes it up as
+  the chosen page comes down (`InscribeScene.burinOut`; held through the choosing, the fist lay over the right-hand
+  pages). While you choose the arm rig still holds that arm, low by your side and out of the view: left to the game, its
+  own hand came back into the corner still holding the piece. The floating book is gone. Shape and outline follow.
+- **The piece is the thing itself** (`InscribingTableRenderer.lay`): drawn with `ItemDisplayContext.NONE`, where our
+  weapons and armour are their own meshes, and laid by the bounds of what is drawn: a flat icon or a weapon on its side
+  across the slate (0.8 of a block along its diagonal), a breastplate or leggings on their back (half a block across), a
+  helm or boots standing (0.42 across and never taller than 0.32). A sculpted armour piece's item says only that it
+  fills a block, so its real width, height and depth are measured from its meshes as the armour's item renderer fits it
+  (`InscribingTableRenderer.shape`; taken as the block, a breastplate floated a third of a block over the slate and the
+  view to its mark went flat). The glyph rides on the piece's top (`InscribeScene.lift`).
+- **Choosing in the world, no menu** (`Desk`; the screen only frees the pointer). The pages of what you know that fits
+  rise out of the book over 10 ticks and hang in a row over the desk's near edge, each the real page, leaning back toward
+  your eyes, at most sixteen. Pointing at one (its place on screen from the camera) lifts it, shows its glyph on the
+  piece, and shows one label over the row on the page's own side of the piece, so it covers neither the row nor the
+  piece: its name and level, its line, "Up to II here, III in your Study", the price as the
+  things themselves (red when you can't pay) and "Click to write it." (the wheel changes the level; a page in memory:
+  "Click: from memory. Shift and click: trace it."). A click takes the page down onto the piece over 8 ticks while the rest
+  sink, and the trace begins. What can't go on lies flat on the slate, dim, and its label says why. What is written
+  shows as glyphs in sockets let into the slate down its left side (behind the piece, a longsword's point lay over the
+  one it had), a framed glyph for each thing written and an empty frame for each it still has room for; a press held
+  on one for 16 ticks closes a ring round it and scrapes it off, its label to its left. A line of key caps at the foot
+  says the rest.
+  The view frames the whole desk while you choose. The room steps back (a soft dark frame at the screen's edges).
+- **The wake** shows the enchantment's name in the Hall's blackletter over a soft light, how it came out ("A clean hand",
+  "Written", "From memory") and, at the foot, the levels that came back and "Its mark is in your memory now." with Space
+  to write another and Esc to step away. No card. It is drawn here, not through `HallMoment`, whose anvil doesn't belong
+  at a desk.
+- **`classicTable`** (`config/awaken-enchant-client.toml`, off): the old book of two pages and the result card, kept for
+  one build.
+- Dev: `/awaken admin enchant page <id>` gives a page as a door does. Tour `tools/autopilot/enchant-polish.txt`. Tests
+  `enchant_glyphs`, `enchant_door`.
+
+### 45.16 Lantern, the first new word (`Lantern`, `LanternGlowBlock`)
+- **`awaken:lantern`** (helmets, I-III, carrying): your helmet lights the dark around you. The Lantern Night Market's
+  Lord carries its page; Looting, which he carried, is sold at the market and found in old books. The Journal counts
+  thirty-one.
+- Where the wearer's head is darker than the word's own light (8, 10, 12), one `awaken:lantern_glow` stands there: a block
+  with nothing to see, touch or hold that only gives light, so friends see by it too. It follows when the wearer has gone
+  two blocks, sits in water as water, and goes out in daylight, by a brighter fire, when the helmet comes off, at death,
+  on leaving, or when left four blocks behind. What the old glow still lends a place doesn't count as light of the
+  world's own (`Lantern.dark`). A glow nobody wears clears itself on its own tick (a crash, a chunk that slept).
+  Asked every fourth tick a wearer.
+- One soft sound as it catches (`block.lantern.place`). **Its frame time on the Mac is not measured yet**: each move
+  rebuilds a chunk section. Test `enchant_lantern`.
+
+### 45.17 Seen at work, and on the piece
+- **On our weapons and armour** (both shaders' enchantment block; `tools/art/mesh_render.py` in step): what glows of
+  itself keeps its own colour (it took the enchantment's, which made the piece read as a different one). An inscribed
+  piece shows a shine, a clean band of light crossing it on its metal in about a second every five, with its script
+  showing for a moment in the band's wake and a few pixels catching it, and a small aura, the enchantment's colour held
+  faintly (a tenth) on the faces turned furthest from you, breathing. Between crossings the piece is itself. Nothing
+  here may be bright for long: in the hand nearly every face of a blade is turned away, and the first cut, with the
+  letters and the aura always on, striped the whole blade in the enchantment's colour.
+- **A ward's plate**: its glyph stands between you and the blow, 0.8 of a block across, a soft halo, a body in the
+  Force's colour and a white-hot core, held bright for half of 24 ticks.
+- **A bane's brand**: its glyph on the creature where the blow landed, white-hot for 8 ticks, then glowing on it as it
+  moves for two seconds.
+- **A page given** flies from where it was (a fallen Lord, a lode's heart) to the one it goes to over 16 ticks, its sign
+  showing, with a page's turn and a soft pickup.
+- **Reading** (a page, an old book, a Word Stone): the glyph lifts in front of the reader, cut by cut in the order it
+  will be traced, holds, then runs down into their hand; the column of light is softer.
+- An extra drop's glint is larger.
+
+### 45.18 Sound (first picks; Euan's ear decides on `tools/art/enchant_listen.py`)
+Every beat is Minecraft's own recordings by name. A stroke seals with one recording (`enchant.seal`, an eye set into an
+End portal frame) two semitones higher each stroke, not a family's chime. The wake is `block.respawn_anchor.set_spawn`
+over a bell's resonance low (`enchant.wake_under`); the piece's chord of §45.14 (each other enchantment's note a third, a
+fifth and an octave up) is gone, since a stack of pitched chimes at the peak is the high tone he asked to be rid of.
+Reading is a page's turn and a respawn anchor's charge. The cut under the hand is grains of the burin by distance drawn
+(every 0.12 of the mark), not a one-shot played as a loop. A ward is a shield's block, a bane a trident going in, an
+extra drop gold armour put on, carrying a bucket filling. None of it has been heard in the game. The listening page
+(`python3 tools/art/enchant_listen.py serve`, http://127.0.0.1:8767) plays ten beats in their moments, today's beside
+three picks each; his marks land in `run-autopilot/enchant-listen/picks.json`.
 
 ## 46. The War Anvil (weapon forging; plan docs/weapon-forge/PLAN.md, page https://claude.ai/artifact/UzcPa1mNX9gL1dsAuTiAJZ; Euan approved all of it 2026-11-02: "go ahead with the weapon forge plan")
 
@@ -24528,6 +24801,313 @@ bell): his pick decides the whole family.
 - Nothing here has been heard by a person. Every pick is a first guess from what each recording is; the levels are
   first values. The listening page is the check, and his marks choose (`apply`, then `build`).
 
+## 68. The Whole Boss Fight (plan docs/boss-experience/PLAN.md, page https://claude.ai/artifact/VDXqPTJJxktRgDLiJJRdH7; Euan approved all fourteen decisions 2026-11-11: "Go with all")
+
+Euan fought the Ringer on build 69fee63de with a longsword (11 Nov 2026): the E sword broke mid-fight, the closing ring was
+"jittery" and "you're not exactly sure when the ring is going to close", a perfect parry was "a very small ding, and the
+screen barely moves", and the final blow was "too boring" ("a cinematic blow ... similar to Mortal Kombat"). "Still
+challenging, obviously." For every boss. What his log, save and statistics and the code showed is in the plan (§2).
+Decisions: 1 E and D uses; 2 nothing forged is destroyed; 3 armour wears by how hard it is hit; 4 the ring on the body's
+clock at one speed, closing when the blow reaches you; 5 the parry band and "Too early" / "Too late"; 6 the ring on a boss
+without a lock; 7 the clash in three sizes, built by the weapon-feel session (SPEC §25); 8 a boss dies only to a finishing
+blow; 9 filmed from outside the body by default; 10 skipped with Sneak from the second time; 11 pilots first (the Ringer,
+the Hive Regent, the Gearwright; Longsword, Maul, Twin Blades, Daggers); 12 the autosave held while a boss fights; 13
+counter-hits not now; 14 the Journal picture later. **No window, health, damage, stance or mind number changes**: the
+simulator's table (`tools/sim/combat_sim.py`) reads none of what this section touches.
+
+**68.1 Gear that lasts (decisions 1 to 3).** Modules `arms`, `gear`, `armour`; the shared rule is `core.api.Lasting` (§12).
+- **Why.** A boss is 90 to 300 landed blows (`docs/boss-experience/harness/durability.py`: E Lords 44 to 81% of a fresh E
+  weapon at 220 uses, the Ringer 107%; his own fight 300) and a whole E gate about 500; D at 500 uses lost 20 to 47% a boss.
+  C and up lost 4 to 15% and are unchanged.
+- **Uses.** Forged weapons (`tools/art/specs/arms_weapons.py` `TIERS`, generated into `ArmsData`) and Hunter blades
+  (`HunterTier.Blade`): E 220 → **900**, D 500 → **1,300**. Armour's durability multiplier (`HunterTier.Armour`, worn by the
+  Hunter sets and every forged set of the tier): E 13 → **24**, D 18 → **28** (a Wildhide helmet 143 → 264; C stays
+  diamond's 33).
+- **One use a blow.** Axe-style weapons were built on vanilla's axe preset, whose `Weapon` component costs two uses a
+  blow; `ArmsItems` sets `Weapon(1, 5 s)` on them (the five seconds a struck shield stays down are kept).
+- **Never destroyed** (`core.api.Lasting`, an interface over NeoForge's `IItemExtension`; `ArmsWeaponItem`, `ArmsMaulItem`,
+  `HunterGearItem`, `ForgedArmourItem` implement it). `setDamage` stops one use short of breaking, so the stack is never
+  broken and nothing removes it. With no use left it is **worn out** (`Lasting.wornOut`, read off the stack's own damage:
+  nothing new is saved, and mending it by any means ends it): its attack damage, armour and toughness are halved
+  (`GearWear.onAttributes`, `ItemAttributeModifierEvent`; `WORN_OUT_SHARE` 0.5), an Arms blow with it fills a stance half as
+  fast (`ArmsServer.onIncomingDamage`), and it still parries. Its icon carries a crack (`GearClient.decorations`, an item
+  decorator on every `Lasting` item), its tooltip reads "Worn out. It hits half as hard until you mend it at an anvil." (or
+  "It protects half as well ..."), and the blow that wears it out says so once over the hotbar with the sound of it giving
+  (`Lasting.tell`). Forged picks keep their own rule (§49).
+- **Old stacks.** A stack that carries its own count of uses (the Armoury's quarter, §27.13) under the old numbers keeps
+  the same share over today's: `Lasting.getMaxDamage` reads a count under the kind's as a share over `formerUses()` (E 220
+  or 143 to 208, D 500 or 198 to 288). Nothing is rewritten.
+- **Armour wears by how hard it is hit** (`gear.GearWear`, `ArmorHurtEvent`; ours only, vanilla armour keeps vanilla's
+  rule). Vanilla takes `max(1, damage / 4)` from every piece, so a duel's many light blows cost a point a piece each; ours
+  takes `damage / 4` with no floor, the part of a point settled by chance. The blow is kept from
+  `LivingIncomingDamageEvent` and `LivingShieldBlockEvent` (both at LOWEST, the same tick and body), since the armour's
+  event carries only the floored wear.
+- **Said at home.** `GearNow`: "Your %s is nearly worn out. Mend it at an anvil." under 15% of its uses (`Lasting.NEARLY`),
+  "... is worn out ..." at none, priority 60.
+- Kept: mending at an anvil with the tier's repair tag, the War Anvil, the Armoury's quarter, enchantments.
+- Tests: `gear_lasts` (a weapon and a piece of armour of ours at their last use stay and are worn out; the worn-out
+  weapon's attack damage is halved and mending restores it; an axe costs one use a blow; an old Armoury count keeps its
+  quarter), `gear_armour_wear` (twenty light blows cost a piece about a quarter of their damage, not twenty).
+
+**68.2 A ring you can read (decisions 4 to 6).** Modules `aim` (the ring), `mobs` (the clock), `arms` (the glint, the answer).
+- **Why.** The ring read a tell's count, which the server re-sends only on every fourth tick of a wind-up
+  (`FightRunner.step`, `AbilityRunner.windup`: `(t & 3) == 0`; plain melee every second) and clears on the wind-up's last
+  tick, a tick or more before the blow lands; `Reticle` drew `(count - partialTick) / total`. So it moved in four jumps with
+  a tremble and vanished a quarter open (CI run 42977120489, the Ringer's Swing: four sizes only, 377, 317, 266 and 223
+  px, still open as the bell came across). The LIGHT glint waited for a count of exactly 5, which a count stepping 16,
+  12, 8, 4 never shows.
+- **One clock** (`mobs.client.TellClock`, installed as `Strikes.Coming`). A blow's time is fixed once and counted on one
+  clock; a later count is never read for time. A kit body's move: from its synced start (`kitStart`), its move table and
+  `ServerPace.since` (a double difference; `ServerPace.now` is a float of game time and too coarse in an old world) to
+  `windup + hold + 1 + k`, `k` the first active tick whose capsules reach where you stand by the server's own rule
+  (`mobs.boss.KitReach.firstTouch`, which `FightRunner.world` and `touches` now call too), asked of the pose the blow
+  has committed to and not of where the body is now: as a move locks the server syncs its aim (`AwakenBoss.DATA_KIT_AIM`,
+  `syncKitAim`: the facing it turns to, the step it takes, its run through the blow and its dip, beside the lean already
+  synced; a blow whose ability does the aiming is committed where it stands), and the client adds the step to where the
+  body stands at that moment. Until the aim is known the blow is taken to land on its first tick. `k` is set as the
+  blow commits (eased over that tick), then follows you at most a tick a tick while you move about a sweep, and is fixed
+  for the last 4 ticks; when the committed blow reaches no tick the ring is drawn at 35% (`Strikes.reaches`). A move that strikes with no capsule (a shot's or a wave's
+  release) counts to its release and has no band (`Strikes.lands`). **What strikes for a move with an ability** (the
+  client reads the body's abilities from the shared bestiary, `AwakenBoss.abilityNamed`; the numbers are one set for
+  both sides, `KitReach.SLAM_CORE`, `CHARGE_TICKS`, `CHARGE_PAST`, `CHARGE_GRAZE`, `chargeSpeed`): a **slam**'s core
+  (1.5 blocks round the point the move names, `Abilities.area`) lands on the first active tick on whoever stands in
+  it, before the body's own capsules come down, so that is the tick the ring closes on there; its wave beyond is not
+  the ring's (it draws itself on the ground, and a hit by it is logged as a blow the ring said passes by). A
+  **charge** is walked ahead as the server carries it (straight at you and 1.5 past, a flier down to your feet, a
+  stride a tick from two ticks after it sets off, its body's touch within 0.6 asked before each stride and its capsules
+  where it stands): the ring closes on that tick but shows **no band**, because the tick is an estimate (a wall, the
+  ground under a flier, who else stands in the way; filmed, four of the Regent's dives landed 0 to 3.3 ticks after the
+  ring closed, 1.7 on average, before the estimate was moved a tick later). A **leap** or a **step** closes its ring as it sets off, as the
+  tell always did, with no band. Any other body: from the count it first showed, on the
+  client's game clock; a tell gone with more than 1.5 ticks left was called off, a count 2.5 over what is left is a new blow.
+- **One speed** (`aim.client.Reticle`): every ring appears `APPROACH` 12 ticks before its blow at 1 + `SPREAD` 1.15 lock
+  rings and closes in a straight line of time, steady in brightness, onto the lock ring as the blow lands; it lingers
+  0.6 ticks closed. A held blow's ring simply comes later.
+- **The band** (art `band3/4/5` from `tools/art/specs/aim_reticle.py`, drawn 3.2 lock rings wide): the ground the ring
+  crosses while a guard raised now turns the blow aside, for the held weapon's window (its guard's `deflect` ticks for a
+  LIGHT or HEAVY blow, its dodge's `evade` ticks for a red or violet one; no band with no style in hand). It is lit, ring
+  and band white, from `window - BAND_EARLY` 0.5 ticks down to `BAND_LATE` 0.75 ticks before the blow: the margins a
+  press needs to reach the server, which sees the guard a tick after the press and counts whole ticks.
+- **After** (`Strikes.answered`, from the server's own DEFLECT / BLOCK / GUARD_BREAK / HURT replies through
+  `arms.client.ArmsAnswers`, one line at the top of `ArmsPredict.onResult`): a deflect bursts the ring outward (300 ms); a
+  block or a broken guard says "Too early" under it, and a guard raised within 5 ticks after being struck says "Too late"
+  (650 ms; `timing_words` in `awaken-aim-client.toml`).
+- **On a boss without a lock:** the duel body nearest its blow within 32 blocks shows its ring with no brackets
+  (`boss_ring`). The out-of-view arcs brighten on the same clock.
+- **The glint** (`ArmsTells`): fires once as the ring enters the band, on the same clock; a body with no clock keeps the
+  count's cue.
+- **Development count** (stage 0; development runs only): each answered blow logs `[fights] ring: DEFLECT with the ring at
+  +0.31 ticks; guard raised at 2.40 ticks (in the band)`, and leaving the world logs the totals (blows answered, the
+  ring's average and worst offset, guards raised in the band and how many of those deflected); only a blow the ring
+  said reaches you counts toward the offset. Each kit blow also logs as it commits (`[fights] clock: proving_ringer
+  swing_a commits: it reaches you (active tick 2, tick 19 of the move)`). The black box is also kept under its own
+  time, the last five (`logs/arms-blackbox-<time>.tsv`). A tour raises the guard on the ring's own clock with `arms
+  parry <ticks>` (`ArmsAutopilot`: at the first tick a deflectable blow that reaches you is that near, held 8 ticks),
+  which is how the band is measured against the server (`tools/autopilot/boss-experience.txt`).
+- **Measured** (CI run 42994866259, `tools/autopilot/boss-experience.txt`: the three pilots fighting a player put back
+  in front of them every three seconds, their own choice of blows and aim; 68 blows the ring said reach, answered). **The band:** 12 guards
+  went up while the ring showed white (from 0.80 to 3.15 ticks before the blow) and all 12 were deflected. Outside it,
+  5 went up 3.55 to 4.00 ticks before (4 deflected, one at 4.00 blocked: "Too early") and 4 went up 0.17 to 0.69
+  before (3 deflected, one at 0.59 struck): the margins hold, and are not generous. **The clock:** of those 68 blows,
+  60 landed with the ring between 0 and 1 tick from closed (the server's word reaches the client inside the
+  tick the ring closes in; the body's animation runs on the same clock), the Colossus's 7 of 7 and the Ringer's Swings
+  among them (49 of its 54). The 8 others: 3 of the Regent's 4 dives (the charge's estimate, above) and 5 of the Ringer's 54,
+  4 of them Clangs, 2 to 6 ticks after the ring closed. Those are not explained: the likeliest is the Clang's wave
+  reaching a player its core and bells missed, in a film that moves the player by command in the middle of wind-ups;
+  a played fight's log (`[fights] clock:` and `[fights] ring:`) is the check. A blow played by command (`duel play`)
+  is no measure: it begins between two of the boss's ticks, so it lands a tick sooner than a move the boss begins.
+- Not built: the hands' word for a parry (the plan's ambitious option); a white-gold shot's ring to its arrival.
+- Tests: `fights_ring_lands` (the rule's tick is the tick the Ringer's Swing lands on a still body).
+
+**68.3 A parry that feels great (decision 7): built by the weapon-feel session in `arms`, recorded in §25.** The contract:
+three sizes of clash by what was turned aside (a LIGHT blow / a HEAVY blow / the blow that makes it reel or breaks its
+stance): freeze 110 / 160 / 200 ms (was 100), view kick 2.6 / 4.0 / 4.5 degrees of pitch with 1.6 / 2.4 / 2.8 of roll (was
+1.8 and 1.2), a shake of 4 / 6 / 8 ticks, the field of view in 4.5% / 6% / 8% (was 3.5%), sparks x2.5 and a white-gold
+flash at the meeting, wider by size, the frame's edges for the third; sounds from Minecraft's own recordings by the boss
+weapon's material with no layer pitched above 1.2 (was an anvil at 0.45 volume pitched 1.6 over a shield block), three
+candidates a size on the local listening page; a block keeps its thud and gets no flash. The size rides in the DEFLECT
+reply's `aux` (0, 1, 2); `Strikes.reeling` gives the mobs' side of the third: `ArmsServer` sizes the clash
+`ArmsRules.clashSize(kind, broke || Strikes.reeling(attacker))`, so a blow whose deflect leaves the body reeling (its
+phrase's last) gets the biggest clash as a broken stance does. The ring's own burst is §68.2's.
+
+**68.4 A final blow worth remembering (decisions 8 to 11).** Modules `mobs` (the last stand, the shot), `arms` (the
+Execution), `opening` (the camera), `living` (the plate's words).
+- **The last stand** (`AwakenBoss.lastStand`, from `die`). A boss whose fight script says `"finish": true` (the three
+  pilots: `proving_ringer`, `hive_regent`, `gearwright_colossus`; `FightScripts.Fight.finish`, default false) doesn't fall
+  to a player's killing blow: it is held at one health, **beaten** (`F_BEATEN`, synced, never saved), every move and phase
+  stopped (`FightRunner.tick` only holds its kneel), a flier brought down (`AwakenMob.bringDown`, kit fliers too), its helpers killed, its stance held broken for
+  `BEATEN_TICKS` 400 (`Strikes.beaten`, Arms' `ArmsServer.beaten`), its bar empty, a low toll. Beaten, nothing hurts it but
+  the finishing blow, and it harms nobody: whatever of its is still in the air lands on no one (`mobs.entity.Finishers`,
+  first of the damage listeners). The plate reads "It's beaten. Hold {attack} to finish it" (`awaken.plate.beaten`). Left
+  alone for 20 s it dies its plain death, credited to whoever beat it. What isn't a player's (a fall, the void, a
+  command) kills it plainly at any time. `/awaken bosses finishing on|off` is the rule's switch.
+- **The finishing blow** is the weapon's own Execution: a heavy held and let go on the beaten body, as on any broken
+  stance (`Strikes.executing`: Arms says whether the blow now landing is one; the weapon's Art counts too, since a full
+  meter makes the Art of the same held heavy), or an Execution or Art that takes a boss's last health without the wait. That blow is the kill: the body dies as it always did, and the server says so once
+  (`mobs_finish`: the body, the striker, the ticks its ending plays) to everyone within 64 blocks. The striker can't be
+  hurt until the ending is over (`Finishers.safe`).
+- **As it is shown** (`mobs.client.finish.FinishClient`; one fixed sequence from that one word). For everyone: the blow's
+  light (a white-gold and a body-coloured flare, sparks the way the blow went, Minecraft's heaviest impact by name,
+  `mobs.finish.blow`), then the body's own ending: its `death` clip with its light leaving it, no vanilla red flash
+  (`KitRenderer`) and no white puff (`AwakenBoss.makePoofParticles`: a last flare and its light let go). For the
+  striker: both bodies held 280 ms, one white frame, the frame's bars (11.5% each; they begin to close while the
+  attack key is held on a beaten body in reach and stay closed 16 ticks after it is let go, so the blow lands inside
+  them), and in the cinematic view the camera out of their eyes (`core.api.Shots`, the opening's `OpeningCamera`): a
+  low shot to one side of the two bodies and a little to the striker's end of the line between them, looking at the
+  body a little under its middle through a drawn-in lens (74% of the player's own field of view, easing to 72%), as far off as fits the
+  two of them across and stands the body's box 62% of the frame high (3.2 to 14 blocks; the second film had it half as large as meant), pushing in an eighth of the way for 6
+  ticks and the ending (26 to 66). **The way back is a cut, never a flight** (the first film flew the camera through the
+  striker's own head): over the shot's last 5 ticks the bars meet, the view is given back under them, and they open on
+  the striker's own eyes. The frame (bars, white frame, skip line) is drawn after every HUD layer
+  (`RenderGuiEvent.Post`), not as a layer: the opening's camera cancels the layers while a shot runs, and the first film
+  had no bars in the shot because of it. Three framings are tried (its left, its right, high behind), each with both
+  ends of the push in open air and in sight of both bodies; none clear, or `OWN_EYES`, or reduced motion: the same beats
+  with no camera move. `finishingBlows` in `awaken-mobs-client.toml`: `CINEMATIC` (default), `OWN_EYES`, `OFF`.
+- **Skipping:** an ending watched once (`endingsSeen`, kept in the client's settings) is skipped by holding Sneak for
+  half a second; the hint shows in the lower bar, and a skip leaves by the same cut (the bars meet first).
+- **Where this differs from the approved page** (the page's storyboard assumed a new move filmed from its start): the cut
+  comes as the blow lands, since the blow is the player's own Execution through their own hands and the server's word
+  for the kill is the only trigger (one side decides; nothing is predicted). So the finishing move is each style's own
+  charged heavy and Execution, with no second beat and no slowed swing; the endings are each body's own death clip in
+  its own light, with no family's "last word" authored yet; the sequence runs about 2 to 4 s from the blow. The
+  sixteen styles' finishing moves and the authored endings are the roll-out's work, after the pilots are played.
+- Tests: `fights_last_stand` (beaten at one health; an ordinary blow does nothing; a boss without an ending dies as
+  before; what nothing withstands kills), `fights_last_stand_ends` (it waits, harms nobody, and dies after 400 ticks).
+
+**68.5 Found in passing (decision 12, and what waits).**
+- **The autosave waits while a boss fights** (`mobs.entity.FightSaves`): while a boss with a fight has a player for its
+  target (or waits beaten), each level's chunks are kept from the autosave (`ServerLevel.noSave`, only where it was on);
+  15 s after the last such tick (`AFTER` 300) they are let go and saved once. A fight over ten minutes lets a save through
+  (`MAX_HOLD`), the server stopping lets go first, and `/awaken bosses saves hold|free` is the switch. A crash in the
+  middle of a boss fight loses that fight's minutes of the world.
+- Counter-hits (decision 13) are not built. The Journal picture of a finishing blow (decision 14) is later.
+- Known and not changed here: `ServerPace.now` is a float of game time, so in a world past about a hundred hours a kit
+  body's own animation clock steps by a tick or more; the ring uses `ServerPace.since`.
+
+## 69. The Hearth's family: Aya and Dubu (plan docs/family/PLAN.md, page https://claude.ai/artifact/PFB5JdXQaZDCV8MLrmvdYN; Euan approved all of it 2026-11-11: "Go ahead with the full plan")
+
+Euan's own cat and dog, drawn from his photos (which are private and never in the repo). His words: "when you place your
+hearth for the first time, they should wander up to the house and be one of the kins, but they don't really do
+anything... if they can come like join you on adventures too and follow you around in a very like natural and awesome
+way... And you can also just make them stay... And also make them immortal." Her name is Aya, spelled A-Y-A.
+Code: `dev.awaken.kin.Family*`, client `kin.client.FamilyRenderer`, art `tools/art/specs/hearth_family.py`.
+
+**69.1 The rule.** Nothing fights for you (§43.4) holds for them without exception: neither ever attacks, blocks,
+distracts or warns. Nothing can hurt one, nothing can take one as its target, and neither can be lost.
+
+**69.2 Family, not kin.** They are their own type beside the kin (`FamilyPet`, entity types `awaken:family_aya` "Cat" and
+`awaken:family_dubu` "Dog"; their names are custom names, Aya and Dubu), not `KinKind`s. They take no nook, have no job,
+want, rumour or Kinship, and do not count for `beasts:N`, the Nook bell or any beast step. The Hundred Peal, the Kinsong,
+the Gnawed and a raid's thefts never touch them. One Aya and one Dubu per Hearth, by its owner, shared by its household;
+a sister home gets no second pair.
+
+**69.3 At home.** Each has a day of small things (`FamilyBrain.day`, a choice every few hundred ticks, by weight):
+- Aya by day: the loaf on a raised spot in good light she can step up to (never a chest's lid; a barrel is fine) 30%,
+  belly up under open sky on a clear day 12%, a stroll 26%, sitting 16%, a nap 16% (on the household's bed if one of
+  them has slept in it, else by the fire); a long stretch after any sleep. By night she sleeps 68%.
+- Dubu by day: shadowing whoever is in (a few steps off, sitting, then chin on his paws) 36% when someone is, a stroll
+  30% (his giraffe in his mouth two times in five), chin on his paws near you or the fire 16%, a nap in the sun 10%,
+  sitting 8%. By night he sleeps by the fire 78%, his giraffe under his chin.
+- With you: at a bench or any open screen within 12 blocks she sits and watches and he lies at your feet; when you sleep
+  she is at the foot of your bed and he beside it.
+- Coming home after more than two minutes and 64 blocks away: Dubu runs to meet you with his giraffe and says hello; Aya
+  follows five to eleven seconds later at a walk.
+- Leaving: until you have once asked one along, Dubu walks you to the yard's edge (within 3 of the radius, having been
+  8 inside it in the last 15 s) and sits, and the System says once: "[Dubu wants to come. Crouch and call him and he will.]"
+- The tower's song (§43.7): he sits and howls along, she sits through it with her ears back. A raid warned or on, or a
+  foe within 10 blocks: both in by the fire, low.
+- Sitting is one of three things each time: plainly (half the time), or she grooms a paw or gazes at something only she
+  can see, and he scratches behind an ear or sniffs along the ground.
+- The two of them: by day Dubu sometimes (4 in 100 of his choices, with her awake within 24 blocks) trots over and
+  play-bows at her; half the time she swats the air at him twice, ears back, never touching him, and half the time she
+  looks the other way. In the evening (clock 11,000 to 13,000) both rest by the same fire.
+- Never in the way of your hands: one that stands on, in or against the block you are aiming at within 4.5 blocks steps
+  two blocks aside.
+- A use pets one (a hello and its sound; not while it sleeps). A hello or a stretch is played through where it stands
+  (40 and 52 ticks; her swat 28) before its day goes on. No food, breeding, leash or hearts. They push nothing
+  and cannot be pushed.
+
+**69.4 Arrival.** Half a minute (600 ticks) after the family's clock first sees a household's Hearth (a Hearthfire or an
+Anchor; an old world's Hearth is first seen when its owner next plays), with one of the household in at it and no raid
+warned or on: Dubu is made 24 to 36 blocks off where a hill or wall hides him (else 12 to 20), runs in with his giraffe
+and says hello; at 14 blocks the System says "[That's Dubu. He must have followed you the whole way.]". Aya follows 220
+to 300 ticks later at a walk, sits six blocks off for 70 ticks to look, then comes to your shin: "[And Aya, taking her
+time. They live here now.]". Once per Hearth (`FamilyWorld.Home.stage`). `/awaken admin family arrive` sends them now.
+
+**69.5 Out with you.** Sneak and use on one asks it along (state WITH, its person recorded); again tells it to stay: at
+home that is home, away from home it waits where it is (WAITING). Only the household may ask, and it answers to one
+person at a time.
+- Manner: Dubu keeps 3.2 blocks ahead and to one side, at your side when you sneak; Aya 2.2 behind and to the other
+  side. When you have stood still 3 s (4 for her) each comes over and sits, and after 16 s (21) rests. Asleep by your bed
+  when you sleep away. Speeds: movement 0.3; walk factor 1.0, 1.25 past 5 blocks, 1.45 when you sprint, 1.55 past 10.
+- Catching up: more than 28 blocks behind, or stuck 4 s more than 10 blocks off, it is put on ground 12 to 20 blocks
+  off behind you (out of your view, or hidden by terrain; else 5 to 11) and runs in. A body that falls out of the loaded
+  world is made again the same way. Never beside you.
+- A boat you are in with a free seat within 4.5 blocks: it hops in. Aya will not path through water; Dubu swims.
+- A fight (something within 16 blocks hunting you, or that hurt you, or a foe you struck, in the last 5 s): each runs
+  straight away from it (measured from the fight, not from you: a foe circles you) until it is 11 (Dubu) or 13 (Aya)
+  blocks off, then turns and watches in its wary pose; 3 s after it ends it comes back and says hello.
+- Thresholds: they exist only in the overworld. When their person leaves it, one that is with them waits where it is
+  (DOOR) and rejoins them if they come back within 64 blocks of that spot; after five minutes, or if they come back
+  somewhere else or log off, it goes home. One told to wait goes home when its person is more than 64 blocks off or
+  gone five minutes. Going home from the wild: it walks off homeward for six seconds, its body leaves, and it is at
+  home when the home is next loaded.
+
+**69.6 The record comes first** (`FamilyWorld`, saved data `family`, schema 1, by the Hearth's owner): for each of the
+two its body's id, name, state (HOME, WITH, WAITING, DOOR), person, waiting spot and deadline, and whether it has
+arrived; the Hearth's arrival stage and the household's bed; and the players who have asked one along or had Dubu's hint.
+A body carries only its owner. Every fifth tick a body checks the record names it, else it removes itself; every second
+(`FamilyService.keep`) a record with no loaded body gets one made: at home once the Anchor stands on entity-ticking ground and the body
+has been gone 200 ticks (at once if it was sent home), behind its person when it is out with them, at its spot when it
+waits. So neither can be lost and neither can be two.
+
+**69.7 Immortal.** `FamilyPet.hurtServer` refuses everything but what bypasses invulnerability; falling out of the world
+puts it back (behind its person, else by the fire); `/kill` takes the body and the record makes it again. Fire immune,
+knockback resistance 1, no pushing either way, never leashed, never despawned. `LivingChangeTargetEvent` onto one is
+cancelled. They implement `OwnableEntity` (the Hearth's owner), so powers and sweeps already count them as yours
+(`Combat.isAlly`, `ArmsServer.foe`), and lock-on takes only hostiles.
+
+**69.8 Words.** The kin plate (§43.17): "yours" (or "Ana's"), then what it is doing ("Coming with you.", "Loafing in the
+light.", "Lying with his chin on his paws."), with "Crouch and use to ask her along." until you have asked one along
+once. The Hearth page: their two cards first under Your beasts ("Aya · Cat"), the Hearth's owner may rename them with the
+naming card (an empty name gives its own back). Tasks, Hearth tab: one optional row until first done, "Take Aya or Dubu
+out with you" (`family/ask`). Counter `awaken:family_asked_along`.
+
+**69.9 Their look and motion.** Bodies of their own on the hero rigs with the life layer, not the game's cat and wolf
+(a 5 by 4 pixel face cannot be hers; a wolf is not his shape). `family_aya`: 13 bones, drawn at 0.45, 0.39 blocks at
+the back, 0.68 long. `family_dubu`: 15 bones (one is his giraffe, in his mouth when he carries it and under his chin
+asleep), drawn at 0.5, 0.38 at the back, 0.9 long. Their coats are painted in body space (`coat(x, y, z)`), so a patch
+runs unbroken from box to box; no band is under two pixels; the chest laps a pixel into the rump a hair smaller, and the
+thighs sit inside the flank, so nothing shares a plane and no crack opens when the back bends. Poses (the synced
+`act`): idle, sit, rest (her loaf, his chin on his paws), sleep, roll, nudge (hello), stretch, hide (wary), carry, song,
+swat, groom, gaze (hers), sniff, scratch (his).
+The renderer plays a walk or run by the ground covered, one stride a cycle (Aya 0.24 and 0.8 blocks, Dubu 0.31 and
+0.85), capped at 3.5 and 3.8 cycles a second. Getting down and getting up are acted, not blended: between standing and a
+held pose the renderer plays a clip made for it once (`to_sit`, `to_rest`, `to_sleep`, her `to_roll`, and `from_` each;
+0.45 to 0.9 seconds), which starts on the standing pose and ends on the held pose's first frame. In them the parts go in
+an order (legs and rump, then the head, the tail last; his front feet slide out before his chest goes down; she goes
+down before she rolls over), each runs a little past its place and settles, and getting up runs the order backwards. A
+change of mind half way picks the other clip up at the matching moment. The server waits for it: asked to walk while
+down, one stands for half a second first (`FamilyPet.upAt`). One-shots (hello, stretch, swat) and changes between two
+held poses blend over 10 ticks, other changes over 5. Standing about is one of three clips (`idle` twice as likely as
+`idle_b`, her look over her shoulder and his shake, and `idle_c`, a paw held up), picked again each time one ends. A
+turn on the spot faster than four degrees a tick plays the walk, a full circle three strides.
+
+**69.10 Sounds, switch, commands, tests.** Sounds are the game's own recordings by name, pitched (rule 1 of §66):
+`family.aya.purr|trill|meow` from `entity.cat.purr|purreow|ambient`, `family.dubu.bark|pant|whine|howl` from
+`entity.wolf_cute.ambient|pant|whine` (the howl is the whine at 0.75). Game rule `awaken:hearth_family` (on): off, their
+bodies leave and nothing runs; the record is kept. `/awaken admin family arrive | use aya|dubu [sneak] | state`, and for a
+body to look at that belongs to nobody `place|pose|walk|clear`. Tour `tools/autopilot/family.txt`. Tests (CI):
+`family_never_lost`, `family_ask_and_stay`. Budget: two entities a Hearth, decisions every fifth tick, a spot search of
+at most fourteen tries when one chooses what to do next.
+
+Their sounds can be heard from the game's own files with `/Volumes/MEDIA/pets-ref/aya-dubu-sounds.html` (a local page
+outside the repo; nothing of the game's is copied).
+
+Not built (each its own decision later): fetch with Dubu, Aya on your shoulder at speed. Not built from the plan:
+coming from the skiff's mooring (the Far Landing is not merged), and the head leading a turn. Not checked by a person:
+nothing here has been played, and no sound has been heard in place.
+
 ---------------------------------------------------------------------------------------------------------------------
 
 ## 70. Together, All the Way (co-op from the first bell to the last; plan docs/coop/PLAN.md, page https://claude.ai/artifact/EDCD8YwLJb9mbAQLLNhULS; Euan approved all twenty-one decisions 2026-11-11: "Go ahead with the full plan")
@@ -24595,7 +25175,7 @@ on purpose isn't put back. With the switch `party` off the rule is the old one (
   on standable ground within five blocks of it), and going back in takes you to the entrance of the floor your party
   has reached, once they are clear of a fight (`Runs.rejoinFloor`; realms and the story's gates start at their start).
   The Satchel and the Fracture are the price as before.
-- The finishing blow (§67 of the boss plan, when built): either may take it; everyone in the fight sees the film.
+- The finishing blow (§68): either may take it; everyone in the fight sees the film.
 
 **70.4 My fights: Full or Gentle** (replaces §55's bond, 40% hits, half XP, no rank and the fold).
 One setting per player (attachment `awaken:fights`, schema 1, kept through death and logout; default Full). Changed on
