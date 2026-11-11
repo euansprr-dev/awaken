@@ -187,6 +187,7 @@
     ]
   },
   "enchant.wake_under": {
+    "subtitle": "subtitles.awaken.enchant.wake_under",
     "sounds": [
       {
         "name": "minecraft:block.bell.resonate",
