@@ -22341,7 +22341,11 @@ have a ready Realm is that Realm (`Blueprints.open` and `pick`: one its finder h
 floors as before. A blueprint that does not say it is ready is never rolled, only entered by command, so a land still being
 built cannot turn up in play. Ready on 11 Nov: Amber Reach, The Hour Crypt, The Broodwarren and the seventeen rolled kinds
 (§50.9). Not yet: Kingsroot Keep, The Vine Seat, The Quiet Barrow, Saltcomb Flats, The Wax Galleries (their owners set the
-line when they are done) and the blockouts. The switch's default stays off in code until a full suite has run with it on
+line when they are done) and the blockouts. (Later the same day those five were marked ready at Euan's word, and after
+them the five rolled lands of §50.9 "Rolled lands": the Cinder Crown, Fallwater Vale and the High Caps from E, the Glass Sea
+from D, the Hush Tarn from C. Each had walked clean in the real game, their tests were green under the stricter float rule,
+and the Cinder Crown had been seen under its own red sky, run 43013074163. He had seen the first of them and said "this
+looks really good. Let's keep going in this direction", then "Yes, merge them".) The switch's default stays off in code until a full suite has run with it on
 (the old gates' tests make gates and expect floors); a world turns it on in `config/awaken-synced.toml`. Gates already
 standing keep what they are.
 

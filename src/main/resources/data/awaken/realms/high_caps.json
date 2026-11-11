@@ -54,5 +54,6 @@
   },
   "moods": [
     "cyan_moon"
-  ]
+  ],
+  "ready": true
 }

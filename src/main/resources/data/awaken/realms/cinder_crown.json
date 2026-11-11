@@ -55,5 +55,6 @@
   },
   "moods": [
     "last_light"
-  ]
+  ],
+  "ready": true
 }

@@ -51,5 +51,6 @@
   },
   "moods": [
     "clear_and_cold"
-  ]
+  ],
+  "ready": true
 }
