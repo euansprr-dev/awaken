@@ -172,17 +172,7 @@ final class AscentSwingTests {
                 }
             }
             SwingBench.heldRule = SwingBench.LIT;
-            // how far a sling's aim leans toward the heading (logged, never judged): 0 is over the top it bit, 99 on the
-            // heading's line
-            for (double lean : new double[] {0, 1.5, 2.5, 4}) {
-                AscentSwing.T = new AscentSwing.Tune(java.util.Map.of("slingLean", lean));
-                rows.append(String.format(java.util.Locale.ROOT, "\nlean %.1f: one tree %d/%d/%d", lean, singleTrees(0.36), singleTrees(0.6), singleTrees(1.0)));
-                for (String place : new String[] {"forest", "oak", "spruce", "roofs"}) rows.append("\n  held ").append(SwingBench.bench(place, true, true));
-                for (String place : new String[] {"oak", "spruce", "lane"}) rows.append("\n  key  ").append(SwingBench.benchKey(place));
-                AscentSwing.hold = false;
-                rows.append("\n  self ").append(SwingBench.bench("lane", true, true));
-                AscentSwing.hold = true;
-            }
+            // how far a sling's aim leans toward the heading was swept on 11 Nov (SPEC §62, "One key, one read"): 1.5
             AscentSwing.T = AscentSwing.Tune.JAR;
             int free = 0;
             for (String place : SwingBench.PLACES) {
@@ -432,8 +422,8 @@ final class AscentSwingTests {
         StringBuilder rows = new StringBuilder();
         try {
             // radius, rise, run, the top stone's distance from the deck's middle and depth under it
-            double[][] shapes = {{30, 13, 18, 26, 9}, {30, 11, 18, 26, 9}, {30, 15, 18, 26, 9}, {30, 13, 15, 26, 9}, {30, 13, 21, 26, 9},
-                    {30, 11, 15, 26, 9}, {30, 15, 21, 26, 9}, {26, 13, 18, 26, 9}, {34, 13, 18, 26, 9}, {30, 13, 18, 29, 8}, {30, 13, 18, 23, 10}};
+            double[][] shapes = {{30, 11, 18, 29, 8}, {30, 12, 18, 29, 8}, {30, 13, 18, 29, 8}, {30, 12, 20, 29, 8}, {30, 11, 20, 29, 8},
+                    {32, 12, 18, 29, 8}, {30, 13, 21, 29, 8}, {28, 12, 18, 29, 8}, {30, 11, 18, 26, 9}, {30, 12, 18, 31, 7}};
             for (double[] sh : shapes) {
                 StairStats st = stairRuns(new dev.awaken.above.ruin.SkyRig.Stair(sh[0], sh[1], sh[2], 3.6, (int) sh[4], sh[3], 6));
                 rows.append("\nsweep ").append(st);
@@ -506,10 +496,10 @@ final class AscentSwingTests {
             boolean key = i >= 12;
             double back = 2 + r.next() * 8, side = (r.next() - 0.5) * 6, speed = 0.7 + r.next() * 0.3;
             double sx = next.x() + 0.5 - dx * back - dz * side, sz = next.z() + 0.5 - dz * back + dx * side;
-            boolean traced = trace != null && (i < 3 || i == 12 || i == 13);
-            SwingBench.climbTrace = traced ? new StringBuilder() : null;
+            SwingBench.climbTrace = trace != null ? new StringBuilder() : null;
             SwingBench.Climb c = SwingBench.climb(tops, pieces, always, sx, sz, speed, key, 3600);
-            if (traced) trace.append("\n  ").append(key ? "key " : "hop ").append(i).append(':').append(SwingBench.climbTrace);
+            // traced: the climbs that fell, stuck or hit something hard
+            if (trace != null && (!c.up() || c.hard() > 0)) trace.append("\n  ").append(key ? "key " : "hop ").append(i).append(':').append(SwingBench.climbTrace);
             SwingBench.climbTrace = null;
             hard += c.hard();
             if (!key) {

@@ -310,6 +310,10 @@ public final class SwingBench {
             if (lost >= HARD) {
                 if (onRope) run.hardOnRope++;
                 else run.hardFree++;
+                if (climbTrace != null && climbTrace.length() < 1500) {
+                    climbTrace.append(String.format(java.util.Locale.ROOT, " HARD %.2f %s%s at %.0f %.0f %.0f", lost, onRope ? "on the " : "free",
+                            onRope ? sling ? "sling" : zip ? "zip" : "swing" : "", b.x, b.y, b.z));
+                }
             }
         }
 

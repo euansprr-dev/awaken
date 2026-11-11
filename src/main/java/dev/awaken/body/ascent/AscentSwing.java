@@ -90,7 +90,8 @@ public final class AscentSwing {
         public final double wallZip;
         /**
          * How far (blocks) a sling's aim leans from the top it bit toward your heading's line: the pull goes where you
-         * look, as a swing does, without leaving the rope's own top far to the side.
+         * look, as a swing does, without leaving the rope's own top far to the side. With the held rope only (off, the
+         * rope is 10 Nov's exactly).
          */
         public final double slingLean;
         /**
@@ -150,7 +151,7 @@ public final class AscentSwing {
             slingReach = v(o, "slingReach", 30);
             slingTicks = (int) v(o, "slingTicks", 34);
             wallZip = v(o, "wallZip", 44);
-            slingLean = v(o, "slingLean", 2.5);
+            slingLean = v(o, "slingLean", 1.5);
             holdPump = v(o, "holdPump", 0.008);
             holdTop = v(o, "holdTop", 80);
             holdCap = v(o, "holdCap", 88);
@@ -469,7 +470,7 @@ public final class AscentSwing {
                 // distance, by at most slingLean, where that way is clear
                 if (sc <= best) continue;
                 double lx = hand.x + fx * ahead - hx, lz = hand.z + fz * ahead - hz, ld = Math.sqrt(lx * lx + lz * lz);
-                double lean = ld > t.slingLean ? t.slingLean / ld : 1, px = hx + lx * lean, pz = hz + lz * lean;
+                double lean = !hold ? 0 : ld > t.slingLean ? t.slingLean / ld : 1, px = hx + lx * lean, pz = hz + lz * lean;
                 if (!slingClear(s, hand, px, top + t.slingOver, pz, w)) {
                     // that way blocked: straight over the top
                     if (lean * ld < 0.05 || !slingClear(s, hand, hx, top + t.slingOver, hz, w)) continue;
