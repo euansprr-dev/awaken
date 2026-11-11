@@ -1,0 +1,72 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.7,
+  "downfall": 0.6,
+  "effects": {
+    "water_color": "#1f6a78",
+    "grass_color": "#3aa89a",
+    "foliage_color": "#2f9488"
+  },
+  "attributes": {
+    "minecraft:visual/fog_color": "#3a8a90",
+    "minecraft:visual/sky_color": "#2c5a78",
+    "minecraft:visual/fog_start_distance": 64.0,
+    "minecraft:visual/fog_end_distance": 760.0,
+    "minecraft:visual/water_fog_color": "#0a2a34",
+    "minecraft:gameplay/natural_mob_spawns": {
+      "modifier": "overlay",
+      "argument": {
+        "spawn_costs": {},
+        "spawns_by_category": {
+          "ambient": [],
+          "axolotls": [],
+          "creature": [],
+          "misc": [],
+          "monster": [],
+          "underground_water_creature": [],
+          "water_ambient": [],
+          "water_creature": []
+        }
+      }
+    },
+    "minecraft:visual/ambient_particles": {
+      "modifier": "append",
+      "argument": [
+        {
+          "particle": {
+            "type": "minecraft:warped_spore"
+          },
+          "probability": 0.02
+        }
+      ]
+    },
+    "minecraft:visual/sun_angle": 272.0,
+    "minecraft:visual/sky_light_color": "#9ae8f4",
+    "minecraft:visual/sunrise_sunset_color": "#6070a0ff",
+    "minecraft:visual/sky_light_factor": 0.3,
+    "minecraft:audio/ambient_sounds": {
+      "loop": "minecraft:ambient.warped_forest.loop",
+      "mood": {
+        "sound": "minecraft:ambient.warped_forest.mood",
+        "tick_delay": 6000,
+        "block_search_extent": 8,
+        "offset": 2.0
+      },
+      "additions": {
+        "sound": "minecraft:ambient.warped_forest.additions",
+        "tick_chance": 0.006
+      }
+    },
+    "minecraft:audio/background_music": {
+      "default": {
+        "sound": "awaken:music.gate.fungal_hollow",
+        "min_delay": 3600,
+        "max_delay": 12000
+      }
+    },
+    "minecraft:visual/ambient_light_color": "#1c3038",
+    "minecraft:visual/block_light_tint": "#9af4ff"
+  },
+  "carvers": [],
+  "features": []
+}

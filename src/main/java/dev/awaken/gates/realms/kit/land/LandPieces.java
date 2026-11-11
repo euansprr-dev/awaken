@@ -254,43 +254,61 @@ public final class LandPieces {
     public static final class Bridge extends Piece<Kit> {
         final int x0, feet, z;
         final boolean[] cells;
+        final boolean alongZ;
         final GeneratedLand land;
 
+        /** A bridge whose deck runs along x from {@code x0}, at {@code z}. */
         Bridge(int x0, int feet, int z, boolean[] cells, GeneratedLand land) {
+            this(x0, feet, z, cells, false, land);
+        }
+
+        /** A bridge along x from {@code x0} at {@code z}; or, {@code alongZ}, along z from {@code z} at {@code x0}. */
+        Bridge(int x0, int feet, int z, boolean[] cells, boolean alongZ, GeneratedLand land) {
             this.x0 = x0;
             this.feet = feet;
             this.z = z;
             this.cells = cells;
+            this.alongZ = alongZ;
             this.land = land;
-            box(x0 + cells.length / 2, z, cells.length / 2 + 2, 3);
+            if (alongZ) box(x0, z + cells.length / 2, 3, cells.length / 2 + 2);
+            else box(x0 + cells.length / 2, z, cells.length / 2 + 2, 3);
             mayOverlap = true;
             startsWay = true;
             label = "a broken bridge";
         }
 
+        /** The column {@code i} cells along the deck and {@code c} across it. */
+        private int px(int i, int c) {
+            return alongZ ? x0 + c : x0 + i;
+        }
+
+        private int pz(int i, int c) {
+            return alongZ ? z + i : z + c;
+        }
+
         @Override
         public void draw(V v, Kit m) {
             Dress d = land.dress();
-            BlockState beam = along(d.post(), Direction.Axis.X);
+            BlockState beam = along(d.post(), alongZ ? Direction.Axis.Z : Direction.Axis.X), tie = along(d.post(), alongZ ? Direction.Axis.X : Direction.Axis.Z);
             for (int i = 0; i < cells.length; i++) {
                 if (!cells[i]) continue;
-                int x = x0 + i;
-                for (int c = -1; c <= 1; c++) v.set(x, feet - 1, z + c, d.planks());
+                for (int c = -1; c <= 1; c++) v.set(px(i, c), feet - 1, pz(i, c), d.planks());
                 boolean free = true, first = i == 0 || !cells[i - 1], end = i == cells.length - 1 || !cells[i + 1];
                 for (int k = i; k >= 0 && cells[k]; k--) if (k == 0) free = false;
                 for (int k = i; k < cells.length && cells[k]; k++) if (k == cells.length - 1) free = false;
-                if (!free) v.set(x, feet - 2, z, beam);
+                if (!free) v.set(px(i, 0), feet - 2, pz(i, 0), beam);
                 else if (first || end) {
                     // a trestle: two posts down to the ground, however far that is, tied under the deck
-                    for (int c = -1; c <= 1; c += 2) v.foot(x, feet - 2, z + c, d.post());
-                    v.set(x, feet - 2, z, along(d.post(), Direction.Axis.Z));
-                } else v.set(x, feet - 2, z, beam);
+                    for (int c = -1; c <= 1; c += 2) v.foot(px(i, c), feet - 2, pz(i, c), d.post());
+                    v.set(px(i, 0), feet - 2, pz(i, 0), tie);
+                } else v.set(px(i, 0), feet - 2, pz(i, 0), beam);
             }
             // what fell lies under the gaps
             for (int i = 1; i < cells.length - 1; i++) {
-                if (cells[i] || N.rnd(x0 + i, z, 311) > 0.6) continue;
-                int x = x0 + i, c = (int) (N.rnd(x0 + i, z, 312) * 3) - 1, gy = v.groundBelow(x, feet - 3, z + c);
-                if (gy > 0 && v.get(x, gy + 1, z + c) == null) v.set(x, gy + 1, z + c, d.planks());
+                int along = (alongZ ? z : x0) + i, fixed = alongZ ? x0 : z;
+                if (cells[i] || N.rnd(along, fixed, 311) > 0.6) continue;
+                int c = (int) (N.rnd(along, fixed, 312) * 3) - 1, x = px(i, c), zz = pz(i, c), gy = v.groundBelow(x, feet - 3, zz);
+                if (gy > 0 && v.get(x, gy + 1, zz) == null) v.set(x, gy + 1, zz, d.planks());
             }
         }
     }

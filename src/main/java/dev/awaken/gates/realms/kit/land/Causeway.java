@@ -133,7 +133,7 @@ final class Causeway extends Landform {
     // ---- the way ----------------------------------------------------------------------------------------------------------------
 
     /** Lays a way through points with its corners rounded, a point every block, every one wanting the same height. */
-    private static void through(Trail t, double want, double[]... pts) {
+    static void through(Trail t, double want, double[]... pts) {
         List<double[]> q = new ArrayList<>(List.of(pts));
         for (int pass = 0; pass < 3; pass++) {
             List<double[]> n = new ArrayList<>();
@@ -155,13 +155,13 @@ final class Causeway extends Landform {
         }
     }
 
-    private static int nearest(Trail t, double u, double v, int from, int to) {
+    static int nearest(Trail t, double u, double v, int from, int to) {
         int best = from;
         for (int i = from; i <= to; i++) if (Math.hypot(t.x(i) - u, t.z(i) - v) < Math.hypot(t.x(best) - u, t.z(best) - v)) best = i;
         return best;
     }
 
-    private static double[] p(double u, double v) {
+    static double[] p(double u, double v) {
         return new double[]{u, v};
     }
 

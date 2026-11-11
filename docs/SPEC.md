@@ -21974,8 +21974,9 @@ skin is) says what it is made of. Built so far, none yet `ready`: The Ascent in 
 Crown, `awaken:cinder_crown`, program `awaken:ember_country`, every rank from E), The Valley in the Overgrown Temple's
 (Fallwater Vale, `awaken:fallwater_vale`, `awaken:temple_country`, from E), The Basin in the Frost Monastery's (The Hush
 Tarn, `awaken:hush_tarn`, `awaken:frost_country`, from C), The Causeway in the Glass Desert's (The Glass Sea,
-`awaken:glass_sea`, `awaken:glass_country`, from D). `land.params.landform` names the landform by its place in
-`Landform.Kind` (0 Ascent, 1 Valley, 2 Basin, 3 Causeway, 4 Isles); the last is not built and fails loudly.
+`awaken:glass_sea`, `awaken:glass_country`, from D), The Isles in the Fungal Hollow's (The High Caps,
+`awaken:high_caps`, `awaken:fungal_country`, from E). `land.params.landform` names the landform by its place in
+`Landform.Kind` (0 Ascent, 1 Valley, 2 Basin, 3 Causeway, 4 Isles).
 
 - **Each land has its own sky and atmosphere** (Euan, 11 Nov: "Each should have its own sky and atmosphere. That
   matches."). No two lands share an hour, a light colour, a grade or an air. A land's biome chooses the hour
@@ -22158,9 +22159,40 @@ the floor, a shaft of its light coming down on the floor. The Glass Sea's hour i
 white-gold light (#fff6e0), `sky_color` #9ad2ff, `fog_color` #fff0cc, a hot grade (warmth 0.22, short brown shadows,
 strong bloom, heat shimmer 0.7), sand, dust and wind in the air. Lord: the Glass Serpent.
 
+**The Isles** (`kit/land/Isles`). Tables standing out of a sea, each on a stalk about a third as wide as itself, each
+higher than the one before (eight or nine blocks), spans from one to the next, and the last and highest (twelve more,
+104 across) the country's great thing. They stand round an arc that bulges to one side, a wider turn the more of them
+there are, so from the way in on the first you look straight across open water at the last, with the others stepping
+up beside the view, and the last is never more than 320 to 390 blocks from the first. Three tables stand between the
+first and the last at E and D, four at C and B, five at A and S, a den on each. The way crosses each table by its
+middle and the span after it; the middle table is split from edge to edge and crossed on what is left of a bridge (the
+kit's bridge runs either way now), an ambush on its near half and its den on the far one; a small table hangs off the
+way between the one before it and its near half (the way round); on the last table an ambush where the last span
+comes in, a court where the Warden stands, the Lord's floor (radius 23.5) in its middle, and a span down from its far
+side to a small table kept back. 12 legs at E. Tables and spans are ground like any other, laid as heights, so their
+tops are where `ground` says; one piece (`Isles.Under`) then takes away everything under them but the stalks and puts
+the sea back: a column keeps its top three blocks (a table thickens to seven at its stalk), unless a neighbour stands
+so far over it that the two would not touch, when it goes altogether (the one-block skirt a way's edge leaves beside
+a span: there `ground` still answers the skirt's height). A way over the sea is laid with a blend of 0.6, so a span
+stands sheer. The skin says what a stalk's side, a table's underside and a span's underside are made of (`stalk`).
+
+**The Fungal Hollow's country** (`land/FungalCountry`). No new blocks. Everything that stands is a glowcap: a table is
+a cap, purple flesh with glowing moss over most of it in layers, bare flesh at its shoulder and in patches, loam
+wherever anything walks; its stalk a pale stem; its whole underside gills, which light the sea beneath; a span is a
+strand of the same stem; where a cap is torn the flesh glows. Glowcaps the size of trees stand on the caps in stands
+with clearings between (`Glowcap`, 4 to 16 tall), lamps of the same stuff along the way, sprouts in clumps on the
+moss and threads over the bare flesh, and threads of light fall off the rims into the sea (`Glowfall`, each standing
+on a stone at the water: seventy of them). Its great thing is what stands on the last cap (`Grove`): the Lord's floor
+of moss and loam with a veined stone at its heart, inside a fence of stems capped with flesh, eleven glowcaps standing
+in the fence with their gills over the floor and two taller ones at the gate; and behind it, out of the cap's back,
+one glowcap far taller than the rest, its cap 44 across and its top 54 over the floor, gills under all of it. The
+High Caps' hour is the hour before the sun: the sun at 272, sky light at three tenths and cyan (#9ae8f4), `sky_color`
+#2c5a78, `fog_color` #3a8a90, block light cyan, a teal grade with strong bloom, mist on the sea lit from under the
+caps, spores and stars in the air, the warped forest's sounds. Lord: the Mother of Spores.
+
 Tests, for each land at the lowest rank it opens at (`kit/land/LandTests`): `realm_<land>_walks_to_everything` (seeds 1
 and 2: the walk, the route check, the door) and `realm_<land>_nothing_floats`, for `cinder_crown`, `fallwater_vale`,
-`hush_tarn` and `glass_sea`. Tours `tools/autopilot/realm-<land>.txt`, each ending with the first look again with the Air off.
+`hush_tarn`, `glass_sea` and `high_caps`. Tours `tools/autopilot/realm-<land>.txt`, each ending with the first look again with the Air off.
 
 ## 57. One Stage (the band, the bag, the Tab glance and the workshops as one system; plan docs/ui-unify/PLAN.md, page https://claude.ai/artifact/JKaBMt53QurNkprr7Ub5xs; Euan approved all seven recommendations 2026-11-10)
 

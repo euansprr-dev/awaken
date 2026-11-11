@@ -38,6 +38,8 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
     public static final int WATER = 62;
     /** What a station is: a worn path, a level place, a tread of a stair, a narrow track, a floor a piece lays itself. */
     public static final byte TRAIL = 1, PAD = 2, STAIR = 3, SPUR = 4, FLOOR = 5;
+    /** The parts of what stands under a table of the Isles ({@link #stalk}): a stalk's side, a table's underside, a span's underside. */
+    public static final int STALK = 0, CAP_UNDER = 1, SPAN_UNDER = 2;
     /** How far from a way the land beside it is kept gentle, so the way can be seen from and the cut beside it is small. */
     static final double CALM = 24;
     private static final int G = 20;
@@ -170,6 +172,11 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
      */
     protected Piece<? super Kit> hall(int cx, int cz, int feet, double radius, long salt) {
         return new LandPieces.Hall(cx, cz, feet, radius, salt, this);
+    }
+
+    /** What a table's stalk, its underside or a span's underside is made of (the Isles), by part: the plain answer is the land's rock, dark underneath. */
+    protected BlockState stalk(int part, int x, int y, int z) {
+        return part == STALK ? dress.rock() : dress.dark();
     }
 
     /** One cell of the Lord's door while it is shut: a body, whatever this country closes a way with. */

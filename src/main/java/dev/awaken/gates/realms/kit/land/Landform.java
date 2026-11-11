@@ -42,7 +42,7 @@ public abstract class Landform {
         if (kind == Kind.VALLEY) return new Valley(land);
         if (kind == Kind.BASIN) return new Basin(land);
         if (kind == Kind.CAUSEWAY) return new Causeway(land);
-        throw new IllegalArgumentException("the " + kind + " landform is not built yet");
+        return new Isles(land);
     }
 
     /** The landform a blueprint asks for, or the one its seed rolls from those that are built. */

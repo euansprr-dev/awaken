@@ -2036,6 +2036,48 @@
       "skyGlow": 0.0,
       "heat": 0.7,
       "glow": 0.9
+    },
+    "biome:awaken:realm/high_caps": {
+      "_name": "The High Caps: the hour before the sun, still night under the caps. A thin band of light on the sea's edge and no more; everything else is lit from below, teal off the gills and the moss, the shadows a deep blue-green, mist on the water glowing where a cap stands over it",
+      "exposure": 1.1,
+      "contrast": 1.1,
+      "saturation": 1.25,
+      "warmth": -0.15,
+      "shadowTint": [
+        0.16,
+        0.4,
+        0.55
+      ],
+      "highlightTint": [
+        0.72,
+        1.0,
+        0.94
+      ],
+      "splitTone": 0.6,
+      "vignette": 0.3,
+      "bloom": 1.2,
+      "bloomThreshold": 0.55,
+      "skyBloom": 0.1,
+      "shafts": 0.4,
+      "haze": 0.3,
+      "hazeStart": 0.25,
+      "hazeTint": [
+        0.3,
+        0.75,
+        0.8
+      ],
+      "hazeTintMix": 0.6,
+      "hazeDesaturate": 0.0,
+      "sunsetWarmth": 0.0,
+      "sunGlow": 0.3,
+      "light": 0.0,
+      "ao": 0.9,
+      "filmic": 1.0,
+      "mist": 0.4,
+      "mistHeight": 64.0,
+      "fogGlow": 0.9,
+      "skyGlow": 0.0,
+      "glow": 1.0
     }
   }
 }

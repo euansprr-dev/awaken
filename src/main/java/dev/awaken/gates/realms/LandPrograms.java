@@ -39,7 +39,8 @@ public final class LandPrograms {
             Map.entry("awaken:ember_country", dev.awaken.gates.realms.land.EmberCountry::new),
             Map.entry("awaken:temple_country", dev.awaken.gates.realms.land.TempleCountry::new),
             Map.entry("awaken:frost_country", dev.awaken.gates.realms.land.FrostCountry::new),
-            Map.entry("awaken:glass_country", dev.awaken.gates.realms.land.GlassCountry::new));
+            Map.entry("awaken:glass_country", dev.awaken.gates.realms.land.GlassCountry::new),
+            Map.entry("awaken:fungal_country", dev.awaken.gates.realms.land.FungalCountry::new));
 
     public static boolean has(String id) {
         return PROGRAMS.containsKey(id);
