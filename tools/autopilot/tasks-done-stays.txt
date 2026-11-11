@@ -60,29 +60,41 @@ wait 20
 cmd awaken admin hearth scan
 wait 160
 screen close
-shot done_00_room_by_the_fire_ticked
+# the card leaves the screen 8 s after it last changed (SPEC §40.6), and comes back when it changes or Tab is held:
+# each card shot follows a change, the Lord's Heart taken out of the pack or put back (its row comes and goes)
+shot done_00_room_by_the_fire
+cmd clear @s awaken:lord_heart
+wait 20
+shotnow done_01_card_room_ticked
 cmd tp @s 1531.5 200 9.5 160 10
 wait 40
-shot done_01_inside_ticked
+cmd give @s awaken:lord_heart 1
+wait 20
+shotnow done_02_inside_card_with_the_heart
 # ---- away east 600 blocks: the home's land unloads while five minutes pass, so its rescan comes due ----
 cmd spreadplayers 2140 8 0 4 false @s
 wait 300
-shot done_02_far_away
+shot done_03_far_away
 cmd tick sprint 6400
 wait 200
 # ---- back from the east: the fire's chunk comes in first ----
 cmd tp @s 1545.5 200 8.5 90 15
 wait 40
-shotnow done_03_coming_home
+shotnow done_04_coming_home
 wait 400
-shot done_04_home_ticked
+shot done_05_home
+cmd clear @s awaken:lord_heart
+wait 20
+shotnow done_06_card_after_trip_ticked
 cmd tp @s 1531.5 200 9.5 160 10
 wait 60
-shot done_05_inside_after_trip_ticked
+cmd give @s awaken:lord_heart 1
+wait 20
+shotnow done_07_inside_after_trip_card_with_the_heart
 screen holo tasks
 tasks now
 wait 60
-shot done_06_tasks_page_after_trip
+shot done_08_tasks_page_after_trip
 screen close
 wait 10
 # ---- the doorway knocked out: no room stands now; the step a room finished stays done ----
@@ -94,12 +106,14 @@ wait 20
 cmd awaken admin hearth scan
 wait 160
 screen close
-shot done_07_no_room_now_still_ticked
-# the guide, then the card says why the room isn't one, the step still done
+cmd clear @s awaken:lord_heart
+wait 20
+shotnow done_09_no_room_now_card_still_ticked
+# the guide (its step ticks: the card changes), then the card says what's next, the room's step still done
 cmd awaken hearth guide
 wait 40
-shot done_08_guide_says_why
+shot done_10_guide
 screen close
-wait 40
-shot done_09_card_after_guide
+wait 20
+shotnow done_11_card_after_guide
 quit
