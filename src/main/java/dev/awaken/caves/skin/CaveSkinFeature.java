@@ -220,22 +220,25 @@ public final class CaveSkinFeature implements Feature {
                             }
                         } else if (here.is(Blocks.WATER) && rock(below[i]) != null) {
                             if (regions.at(x, y, z) == CaveRegion.DROWNED_GALLERIES) placed += weed(c, seed, x, y, z, here);
-                        } else if (below[i].isAir()) {
-                            SkinRock rockHere = rock(here);
-                            if ((rockHere != null || crumb(here)) && ((i & 15) == 0 || open(w)) && lone(c, x, y, z)) {
-                                // a crumb two cuts left, air all round it: it goes, and nothing is laid on it or hung from it
+                        } else if (!below[i].canOcclude()) {
+                            // open under (air or a liquid; the bulk of the rock, rock under rock, stops at this one read)
+                            if (below[i].isAir()) {
+                                SkinRock rockHere = rock(here);
+                                if ((rockHere != null || crumb(here)) && ((i & 15) == 0 || open(w)) && lone(c, x, y, z)) {
+                                    // a crumb two cuts left, air all round it: it goes, and nothing is laid on it or hung from it
+                                    c.set(x, y, z, below[i]);
+                                    here = below[i];
+                                    west = here;
+                                } else if (rockHere != null) {
+                                    placed += ceiling(c, seed, x, y - 1, z, here, regions.at(x, y - 1, z), wet[i], crystal, sites);
+                                }
+                            } else if (below[i].liquid() && !here.liquid() && ((i & 15) == 0 || w == below[i]) && below[i].getFluidState().isSource()
+                                    && (rock(here) != null || crumb(here)) && drowned(c, x, y, z, below[i])) {
+                                // a crumb wholly in a flooded cave's water or lava: it goes to the same, so no rock hangs in the flood
                                 c.set(x, y, z, below[i]);
                                 here = below[i];
                                 west = here;
-                            } else if (rockHere != null) {
-                                placed += ceiling(c, seed, x, y - 1, z, here, regions.at(x, y - 1, z), wet[i], crystal, sites);
                             }
-                        } else if (below[i].liquid() && !here.liquid() && ((i & 15) == 0 || w == below[i]) && below[i].getFluidState().isSource()
-                                && (rock(here) != null || crumb(here)) && drowned(c, x, y, z, below[i])) {
-                            // a crumb wholly in a flooded cave's water or lava: it goes to the same, so no rock hangs in the flood
-                            c.set(x, y, z, below[i]);
-                            here = below[i];
-                            west = here;
                         }
                     }
                     below[i] = here;
