@@ -63,8 +63,9 @@ wait 160
 # the homecoming: back out to the landing, then the skiff comes for you where you stand
 cmd awaken frontier goto landing
 wait 100
-cmd tp @s ~12 ~ ~12
-wait 40
+# off the mooring and onto open ground: dropped from above, so the walk never ends inside a hillside
+cmd tp @s ~24 ~40 ~24
+wait 140
 cmd awaken frontier homecoming
 wait 8
 shotnow fh_07a_skiff_came_for_you
