@@ -6,8 +6,13 @@
   "theme": "bell_crypt",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:hour_crypt",
     "water": 0

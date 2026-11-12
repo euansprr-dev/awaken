@@ -6,25 +6,27 @@
   "theme": "clockwork_foundry",
   "ranks": [
     "D",
-    "C"
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:stopped_works",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:gate_clockwork_foundry"
+      "awaken:realm/stopped_works"
     ],
     "lens": "stopped_works",
     "air": [
-      "mist",
       "shaft_dust",
       "smoke",
-      "dust",
-      "drips",
-      "bats",
-      "rats"
+      "steam",
+      "embers",
+      "dust"
     ]
   },
   "life": {

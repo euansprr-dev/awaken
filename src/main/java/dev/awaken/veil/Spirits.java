@@ -101,7 +101,7 @@ public final class Spirits {
                 int cx = ccx + dx, cz = ccz + dz;
                 if (!SpiritPlacer.haunted(seed, cx, cz)) continue;
                 int[] xz = SpiritPlacer.spot(seed, cx, cz);
-                if (!level.hasChunk(xz[0] >> 4, xz[1] >> 4)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, xz[0] >> 4, xz[1] >> 4)) continue;
                 int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, xz[0], xz[1]);
                 // surface first: one spirit per cell
                 boolean placed = false;

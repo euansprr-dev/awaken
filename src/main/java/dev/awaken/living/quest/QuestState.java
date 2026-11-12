@@ -75,4 +75,14 @@ public final class QuestState {
     public boolean has(String chain) {
         return active.stream().anyMatch(a -> a.chain.equals(chain));
     }
+
+    /** Holds this chain, under either form of its id (QuestBook.same). */
+    public boolean holds(String chain) {
+        return active.stream().anyMatch(a -> QuestBook.same(a.chain, chain));
+    }
+
+    /** Has finished this chain, under either form of its id (QuestBook.same). */
+    public boolean finished(String chain) {
+        return done.stream().anyMatch(c -> QuestBook.same(c, chain));
+    }
 }

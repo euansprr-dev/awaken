@@ -15,15 +15,63 @@ import java.util.Locale;
  * server thread does what it does in play each tick (a pass ahead of a player flying 40 blocks a second over new land,
  * the distance to a road a creature's level asks), and none of it waits for planning (no future joined, no lock a
  * planner holds), no call of it does over 5 ms of work (its own CPU time: its wall time also counts the moments the OS
- * gave its core to another thread, which the planner cap governs) and no tick takes over 250 ms (a collection or the
- * runner's shared cores, never a stall: Euan's was 42 s), the planners busy all along and two cores left for the game.
- * {@code village_far_chunk_named}: a
+ * gave its core to another thread, which the planner cap governs) and no tick takes over 250 ms less the garbage
+ * collections inside it (the runner's shared cores, never a stall: Euan's was 42 s; a collection pauses every thread and
+ * is no wait for the roads, so it is counted out and named in the line), the planners busy all along and two cores left
+ * for the game. {@code village_far_chunk_named}: a
  * chunk the server thread had to wait for far from every player is logged with who asked.
  */
 final class RoadTickTests {
     private RoadTickTests() {}
 
     static final long WINDOW_NS = 15_000_000_000L, CALL_NS = 5_000_000L, TICK_NS = 250_000_000L;
+
+    /**
+     * The time every thread stood still for garbage collection so far, in ns. G1's beans (young, old, and since JDK 20
+     * "G1 Concurrent GC" for the Remark and Cleanup pauses) all count pauses; ZGC's and Shenandoah's "Cycles" beans
+     * count work done alongside the game, which stops no tick, so they are left out.
+     */
+    static long gcPauseNanos() {
+        long ms = 0;
+        for (var b : java.lang.management.ManagementFactory.getGarbageCollectorMXBeans())
+            if (!b.getName().contains("Cycles")) ms += Math.max(0, b.getCollectionTime());
+        return ms * 1_000_000L;
+    }
+
+    /**
+     * The gaps between the server's ticks: the longest, the collections inside it, and the longest less its collections,
+     * which is what the 250 ms limit holds (a collection is no wait for the roads). The first ticks hold the setup.
+     */
+    static final class Gaps {
+        long last = System.nanoTime(), gcLast = gcPauseNanos(), worst, worstGc, worstNet;
+        int seen;
+
+        /** A tick begins at {@code now}: the gap since the last ended. */
+        void begin(long now) {
+            long gc = gcPauseNanos();
+            if (seen++ > 2) {
+                long gap = now - last, inGap = Math.min(gap, gc - gcLast);
+                if (gap > worst) {
+                    worst = gap;
+                    worstGc = inGap;
+                }
+                worstNet = Math.max(worstNet, gap - inGap);
+            }
+            last = now;
+            gcLast = gc;
+        }
+
+        /** The test's own work this tick is done: the next gap starts here. */
+        void end() {
+            last = System.nanoTime();
+            gcLast = gcPauseNanos();
+        }
+
+        String line() {
+            return String.format(Locale.ROOT, "the longest %.1f ms (%.1f ms of it garbage collection), the longest less its collections %.1f ms",
+                    worst / 1e6, worstGc / 1e6, worstNet / 1e6);
+        }
+    }
 
     static void register() {
         AwakenTests.registerIsolated("village_tick_holds", 60000, RoadTickTests::tickHolds);
@@ -86,13 +134,15 @@ final class RoadTickTests {
         var cpu = java.lang.management.ManagementFactory.getThreadMXBean();
         boolean cpuTimed = cpu.isCurrentThreadCpuTimeSupported();
         long waits0 = RoadTimer.serverWaits(), t0 = System.nanoTime();
-        long[] last = {t0}, worstTick = {0}, worstCall = {0}, worstWall = {0}, ticks = {0}, busy = {0};
+        long[] worstCall = {0}, worstWall = {0}, ticks = {0}, busy = {0};
+        Gaps gaps = new Gaps();
         String[] worstWhat = {""};
         boolean[] done = {false};
         h.onEachTick(() -> {
             if (done[0]) return;
             long now = System.nanoTime();
-            if (ticks[0]++ > 2) worstTick[0] = Math.max(worstTick[0], now - last[0]); // (the first ticks hold the setup above)
+            gaps.begin(now);
+            ticks[0]++;
             if (RoadPlanners.queued() > 0) busy[0]++;
             // a player flying east over new land at 40 blocks a second: the pass ahead of it, and a creature's road distance
             int px = w.cx - 1200 + (int) ((now - t0) / 25_000_000L), pz = w.cz + 600;
@@ -111,15 +161,15 @@ final class RoadTickTests {
                 worstCall[0] = c2 - c1;
                 worstWhat[0] = "the road distance at " + px + "," + pz;
             }
-            last[0] = System.nanoTime();
+            gaps.end();
             if (now - t0 < WINDOW_NS) return;
             done[0] = true;
             int queued = RoadPlanners.queued();
             long waits = RoadTimer.serverWaits() - waits0;
-            String line = String.format(Locale.ROOT, "%d ticks in %.1f s, the longest %.1f ms; the most work in a road call %.2f ms%s (%s), "
+            String line = String.format(Locale.ROOT, "%d ticks in %.1f s, %s; the most work in a road call %.2f ms%s (%s), "
                             + "the longest tick's road calls by the clock %.2f ms; %d server-thread waits; the planners (%d) had work in %d ticks, "
                             + "%d jobs queued at the end",
-                    ticks[0], (now - t0) / 1e9, worstTick[0] / 1e6, worstCall[0] / 1e6, cpuTimed ? " of CPU" : " by the clock", worstWhat[0],
+                    ticks[0], (now - t0) / 1e9, gaps.line(), worstCall[0] / 1e6, cpuTimed ? " of CPU" : " by the clock", worstWhat[0],
                     worstWall[0] / 1e6, waits, RoadPlanners.threads(), busy[0], queued);
             Awaken.LOG.info("[road] tick holds: {}", line);
             try {
@@ -127,7 +177,7 @@ final class RoadTickTests {
                 h.assertTrue(queued > 0 && busy[0] * 10 >= ticks[0] * 9, "the wave kept the planners busy throughout: " + line);
                 h.assertTrue(waits == 0, "the server thread never waited for planning: " + line);
                 h.assertTrue(worstCall[0] < CALL_NS, "no road call on the server thread does over 5 ms of work: " + line);
-                h.assertTrue(worstTick[0] < TICK_NS, "no tick over 250 ms while the wave runs: " + line);
+                h.assertTrue(gaps.worstNet < TICK_NS, "no tick over 250 ms, less its garbage collections, while the wave runs: " + line);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } finally {
@@ -140,7 +190,7 @@ final class RoadTickTests {
     /**
      * Road starts (Turbo, {@code RoadStarts}): a cold lattice chunk's structure starts, handed off on a stand-in for the
      * level's worldgen executor, come back at once (under 50 ms) as a future; the executor runs other work meanwhile and the server ticks
-     * on (no tick over 250 ms); once a planner has made the legs, the step runs on that executor, the legs known (under
+     * on (no tick over 250 ms less its garbage collections); once a planner has made the legs, the step runs on that executor, the legs known (under
      * 5 ms), and the chunk is never set aside again.
      */
     private static void startsWait(GameTestHelper h) {
@@ -152,7 +202,8 @@ final class RoadTickTests {
             t.setDaemon(true);
             return t;
         });
-        long[] stepNs = {-1}, handNs = {-1}, probeNs = {-1}, worstTick = {0}, ticks = {0}, last = {System.nanoTime()}, aside0 = {0};
+        long[] stepNs = {-1}, handNs = {-1}, probeNs = {-1}, ticks = {0}, aside0 = {0};
+        Gaps gaps = new Gaps();
         String[] stepOn = {""}, outWaiting = {""};
         boolean[] probeWaiting = {false}, done = {false};
         java.util.concurrent.atomic.AtomicReference<java.util.concurrent.CompletableFuture<java.util.List<Road.Leg>>> later = new java.util.concurrent.atomic.AtomicReference<>();
@@ -181,23 +232,23 @@ final class RoadTickTests {
         h.onEachTick(() -> {
             if (done[0]) return;
             long now = System.nanoTime();
-            if (ticks[0]++ > 2) worstTick[0] = Math.max(worstTick[0], now - last[0]);
-            last[0] = now;
+            gaps.begin(now);
+            ticks[0]++;
             var f = later.get();
             boolean timedOut = now - t0 > 240_000_000_000L;
             if (!timedOut && (f == null ? handNs[0] < 0 : !f.isDone() || stepNs[0] < 0)) return;
             done[0] = true;
             try {
                 String line = String.format(Locale.ROOT, "handed off in %.2f ms, the next task ran %.1f ms later%s; %d ticks while the roads were planned "
-                                + "(%.1f s), the longest %.1f ms; the step ran on %s in %.2f ms", handNs[0] / 1e6, probeNs[0] / 1e6,
-                        probeWaiting[0] ? " (still waiting)" : "", ticks[0], (now - t0) / 1e9, worstTick[0] / 1e6, stepOn[0], stepNs[0] / 1e6);
+                                + "(%.1f s), %s; the step ran on %s in %.2f ms", handNs[0] / 1e6, probeNs[0] / 1e6,
+                        probeWaiting[0] ? " (still waiting)" : "", ticks[0], (now - t0) / 1e9, gaps.line(), stepOn[0], stepNs[0] / 1e6);
                 Awaken.LOG.info("[road] road starts: {}; {}", line, dev.awaken.turbo.roadstarts.RoadStarts.status());
                 h.assertTrue(!timedOut, "the legs were made within 240 s: " + line);
                 h.assertTrue(f != null, "the cold lattice chunk was set aside");
                 // at once (the first hand-off on a server also loads its classes), where waiting would take the seconds planning does
                 h.assertTrue(handNs[0] < 50_000_000L, "the hand-off returned at once: " + line);
                 h.assertTrue(probeWaiting[0] && probeNs[0] >= 0 && probeNs[0] < 100_000_000L, "world generation ran on while the chunk waited: " + line);
-                h.assertTrue(ticks[0] > 20 && worstTick[0] < TICK_NS, "the server ticked on, no tick over 250 ms: " + line);
+                h.assertTrue(ticks[0] > 20 && gaps.worstNet < TICK_NS, "the server ticked on, no tick over 250 ms less its garbage collections: " + line);
                 h.assertTrue("Awaken test worldgen".equals(stepOn[0]) && stepNs[0] < CALL_NS, "the step ran on world generation's executor, the legs known: " + line);
                 h.assertTrue(f.join().equals(RoadNet.startsIn(cx, cz)), "the step's legs are the chunk's legs");
                 h.assertTrue(dev.awaken.turbo.roadstarts.RoadStarts.later(cx, cz, worldgen, () -> null) == null, "a chunk whose legs are known isn't set aside");

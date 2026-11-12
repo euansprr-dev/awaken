@@ -43,7 +43,7 @@ public final class Spotting {
     public static boolean clearLine(ServerLevel level, Vec3 from, Vec3 to) {
         int[] leaves = {0};
         return BlockGetter.traverseBlocks(from, to, level, (l, pos) -> {
-            if (!l.hasChunkAt(pos)) return Boolean.FALSE;
+            if (!dev.awaken.core.api.Ready.at(l, pos)) return Boolean.FALSE;
             BlockState state = l.getBlockState(pos);
             if (state.isAir()) return null;
             VoxelShape shape = state.getVisualShape(l, pos, CollisionContext.empty());

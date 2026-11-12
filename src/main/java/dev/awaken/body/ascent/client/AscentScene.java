@@ -35,11 +35,17 @@ final class AscentScene {
 
     /** The short moments that play at once (a trial's edge), not waiting for a free moment on the ground. */
     private static boolean edge(int m) {
-        return m == AscentPayloads.LEAP_EDGE || m == AscentPayloads.SKY_EDGE;
+        return m == AscentPayloads.LEAP_EDGE || m == AscentPayloads.SKY_EDGE || m == AscentPayloads.WINGS_EDGE;
     }
 
     static boolean running() {
         return age >= 0;
+    }
+
+    /** The wings' gift, for the case at a sky core: -2 none, -1 given and waiting to begin, else the scene's age. */
+    static int wingsGift() {
+        if (pending != 0 && age < 0 && mode == AscentPayloads.GIFT_WINGS) return -1;
+        return age >= 0 && playingMode == AscentPayloads.GIFT_WINGS ? age : -2;
     }
 
     static void tick(LocalPlayer p) {
@@ -60,6 +66,7 @@ final class AscentScene {
                 AscentSounds.local(p, AscentContent.REMEMBER.get(), edge ? 0.7F : 1F, edge ? 1.26F : 1F);
                 AscentSounds.duck(edge ? EDGE_LENGTH : LENGTH);
                 ClientPacketDistributor.sendToServer(new AscentPayloads.Event(AscentPayloads.EV_REMEMBER, 0));
+                WayClient.sceneBegan(playingMode);
             }
         }
         if (age < 0) return;
@@ -74,7 +81,10 @@ final class AscentScene {
                 WingLayer.flourish(p.getId(), 46);
             }
         }
-        if (age > (edge ? EDGE_LENGTH : LENGTH)) age = -1;
+        if (age > (edge ? EDGE_LENGTH : LENGTH)) {
+            age = -1;
+            WayClient.sceneEnded(playingMode);
+        }
     }
 
     /** Light rising around a body: thick at first, thinning as the swell settles (others' scenes call it too). */
@@ -102,10 +112,17 @@ final class AscentScene {
         Minecraft mc = Minecraft.getInstance();
         if (age < 0 || mc.player == null || mc.gui.hud.isHidden()) return;
         float t = age + dt.getGameTimeDeltaPartialTick(false);
-        int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * 0.30F);
+        int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * (dev.awaken.core.api.Notices.client().showing() ? 0.60F : 0.30F));
         boolean edge = edge(playingMode);
+        // The Way Up (SPEC §63.3): in a fight there is no scene, only the Lesson's strip of keys; and no gift carries a
+        // line of clipped words any more (its Lesson or its card of keys says how)
+        boolean way = dev.awaken.body.BodyConfig.wayUp();
+        // and since SPEC §71.2 a gift's words are the Unlock title's (WayClient.sceneBegan): the scene keeps its light and
+        // its swell, and draws no line of its own. Only an old world's first load ("Your body remembers") still does.
+        if (way && playingMode != AscentPayloads.REMEMBER) return;
         float a1 = edge ? env(t, 2, 10, 46, 62) : env(t, 8, 22, 100, 122), a2 = edge ? env(t, 12, 20, 50, 64)
                 : env(t, WINGS_AT + 6, WINGS_AT + 20, 104, 126);
+        if (way && playingMode != AscentPayloads.REMEMBER) a2 = 0;
         if (a1 > 0.01F) {
             Component title = Component.translatable(switch (playingMode) {
                 case AscentPayloads.GIFT_WINGS -> "awaken.ascent.gift.wings";
@@ -114,6 +131,7 @@ final class AscentScene {
                 case AscentPayloads.GIFT_SKY -> "awaken.ascent.gift.sky";
                 case AscentPayloads.SKY_EDGE -> "awaken.ascent.edge.sky";
                 case AscentPayloads.GIFT_SOVEREIGN -> "awaken.ascent.gift.sovereign";
+                case AscentPayloads.WINGS_EDGE -> "awaken.ascent.gift.wings";
                 default -> "awaken.ascent.remember.title";
             });
             HudLook.glow(g, cx - mc.font.width(title) - 8, y - 6, mc.font.width(title) * 2 + 16, 22, Glass.EDGE, 0.5F * a1);

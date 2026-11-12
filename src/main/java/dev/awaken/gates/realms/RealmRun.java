@@ -60,15 +60,37 @@ final class RealmRun {
             boolean inside = dx * dx + dz * dz <= leg.radius() * leg.radius() && Math.abs(leg.y() - ly) <= 10;
             switch (leg.kind()) {
                 case AMBUSH -> {
+                    BlockPos at = Realms.world(ref.cell(), leg.x(), leg.y(), leg.z());
                     if (plays && inside && level.getDifficulty() != Difficulty.PEACEFUL && st.woken.add("den" + leg.site())) {
-                        BlockPos at = Realms.world(ref.cell(), leg.x(), leg.y(), leg.z());
                         apply(level, ref, land, "ambush_" + leg.id());
                         FloorLayout f = GateLayout.of(g.plan).floor(0, 1);
                         RealmPacks.den(level, g, f, at, leg.site(), leg.pack(), p);
                         level.playSound(null, at, SoundEvents.TURTLE_EGG_CRACK, SoundSource.HOSTILE, 1.6F, 0.6F);
                         data.setDirty();
                     }
-                    if (near) fight(level, g, land, ref, st, data, leg, "d" + leg.site(), st.woken.contains("den" + leg.site()), close);
+                    boolean woken = st.woken.contains("den" + leg.site());
+                    int waves = waves(leg);
+                    if (near && waves > 1 && woken && !st.densCleared.contains(leg.site())) {
+                        // a stand (SPEC §50.9): the next wave comes when the last is down and someone still holds the room
+                        int sent = 1;
+                        while (sent < waves && st.woken.contains("wave" + leg.site() + "_" + (sent + 1))) sent++;
+                        if (sent < waves) {
+                            if (close && plays && inside && level.getDifficulty() != Difficulty.PEACEFUL && !RealmPacks.alive(level, at, "d" + leg.site())) {
+                                st.woken.add("wave" + leg.site() + "_" + (sent + 1));
+                                FloorLayout f = GateLayout.of(g.plan).floor(0, 1);
+                                // every other wave is the theme's own roll, so no two waves are the same company
+                                RealmPacks.den(level, g, f, at, leg.site(), sent % 2 == 1 ? List.of() : leg.pack(), p);
+                                level.playSound(null, at, SoundEvents.TURTLE_EGG_CRACK, SoundSource.HOSTILE, 1.6F, 0.6F);
+                                for (ServerPlayer q : level.players()) {
+                                    if (Runs.run(q).gateId == g.id) Signal.toast(q, Component.literal("More are coming. Wave " + (sent + 1) + " of " + waves + "."));
+                                }
+                                data.setDirty();
+                            }
+                            if (land.seals(leg.id())) doors(level, g, land, ref, st, data, leg, "d" + leg.site(), true);
+                            continue;
+                        }
+                    }
+                    if (near) fight(level, g, land, ref, st, data, leg, "d" + leg.site(), woken, close);
                 }
                 case FIGHT -> {
                     if (near) fight(level, g, land, ref, st, data, leg, "d" + leg.site(), st.woken.contains("den" + leg.site()), close);
@@ -79,7 +101,7 @@ final class RealmRun {
                 case SHORTCUT -> {
                     if (!st.woken.contains("open_" + leg.id()) && met(st, leg.when())) {
                         List<Land.Edit> edits = land.change("shortcut_" + leg.id());
-                        if (!edits.isEmpty() && !level.isLoaded(Realms.world(ref.cell(), edits.getFirst().x(), edits.getFirst().y(), edits.getFirst().z()))) continue;
+                        if (!edits.isEmpty() && !dev.awaken.core.api.Ready.loaded(level, Realms.world(ref.cell(), edits.getFirst().x(), edits.getFirst().y(), edits.getFirst().z()))) continue;
                         for (Land.Edit e : edits) level.setBlock(Realms.world(ref.cell(), e.x(), e.y(), e.z()), e.state(), Block.UPDATE_CLIENTS);
                         st.woken.add("open_" + leg.id());
                         data.setDirty();
@@ -110,7 +132,26 @@ final class RealmRun {
             }
         }
         if (plays) course(level, p, g, land, ref, lx, ly, lz);
+        RealmTrial.tick(level, p, g, land, ref, st, data, lx, ly, lz);
         if (!land.traps().isEmpty()) RealmTraps.tick(level, g, land, ref, p, lx, ly, lz);
+        RealmCountry.tick(level, p, g, plan, ref, st, data, lx, lz);
+    }
+
+    /** How many waves a leg's fight comes in: a stand's ambush says "waves:8"; anything else is one. */
+    static int waves(Land.Leg leg) {
+        String w = leg.when();
+        if (w == null || !w.startsWith("waves:")) return 1;
+        try {
+            return Math.max(1, Integer.parseInt(w.substring(6)));
+        } catch (NumberFormatException e) {
+            return 1;
+        }
+    }
+
+    /** A server is starting: gate ids begin again in another world, so nothing kept by gate id may be read as this one's. */
+    static void reset() {
+        RealmCountry.reset();
+        RealmTrial.reset();
     }
 
     /** A den's fight: once its pack is gone it counts as cleared (a way may open on that), and while it's on its doors are shut. */
@@ -127,11 +168,16 @@ final class RealmRun {
     }
 
     /** A herd put down leaves something: a cache where it stood, as a room's does in the old gates. */
-    private static void spoils(ServerLevel level, BlockPos center) {
+    static void spoils(ServerLevel level, BlockPos center) {
         for (int dy : new int[]{0, 1, -1, 2, -2, 3, -3}) {
             BlockPos at = center.above(dy);
             var here = level.getBlockState(at);
-            if (!here.isAir() && !here.is(net.minecraft.world.level.block.Blocks.WATER) || level.getBlockState(at.below()).getCollisionShape(level, at.below()).isEmpty()) continue;
+            var under = level.getBlockState(at.below());
+            if (!here.isAir() && !here.is(net.minecraft.world.level.block.Blocks.WATER) || under.getCollisionShape(level, at.below()).isEmpty()) continue;
+            // a floor that steps in half blocks: the slab under a cache is made whole, or the cache stands half a block up
+            if (under.getBlock() instanceof net.minecraft.world.level.block.SlabBlock && under.getValue(net.minecraft.world.level.block.SlabBlock.TYPE) == net.minecraft.world.level.block.state.properties.SlabType.BOTTOM) {
+                level.setBlock(at.below(), under.setValue(net.minecraft.world.level.block.SlabBlock.TYPE, net.minecraft.world.level.block.state.properties.SlabType.DOUBLE), Block.UPDATE_CLIENTS);
+            }
             level.setBlock(at, GatesRegistry.CACHE.get().defaultBlockState(), Block.UPDATE_CLIENTS);
             level.playSound(null, at, GatesRegistry.SND_CACHE.get(), SoundSource.BLOCKS, 1F, 1F);
             level.sendParticles(net.minecraft.core.particles.ParticleTypes.END_ROD, at.getX() + 0.5, at.getY() + 0.8, at.getZ() + 0.5, 24, 0.4, 0.5, 0.4, 0.03);
@@ -190,7 +236,7 @@ final class RealmRun {
     private static void place(ServerLevel level, RealmRef ref, List<Land.Edit> edits) {
         for (Land.Edit e : edits) {
             BlockPos at = Realms.world(ref.cell(), e.x(), e.y(), e.z());
-            if (!level.isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
             if (!e.state().isAir() && !level.getEntitiesOfClass(LivingEntity.class, new AABB(at)).isEmpty()) continue;
             level.setBlock(at, e.state(), Block.UPDATE_CLIENTS);
         }
@@ -216,8 +262,13 @@ final class RealmRun {
                 p.resetFallDistance();
                 p.setDeltaMovement(Vec3.ZERO);
                 p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(p)); // a player moves on their own side
-                p.hurtServer(level, level.damageSources().generic(), FALL_DAMAGE + p.getMaxHealth() * FALL_SHARE);
                 level.playSound(null, at, GatesRegistry.SND_RIG_PIT.get(), SoundSource.PLAYERS, 0.8F, 1F);
+                // a hall that teaches a move takes nothing for a fall and says nothing about it
+                if (c.free()) {
+                    RealmTrial.fell(p, g, land, ref, l);
+                    return;
+                }
+                p.hurtServer(level, level.damageSources().generic(), FALL_DAMAGE + p.getMaxHealth() * FALL_SHARE);
                 Signal.toast(p, Component.literal("You fell. You're back on the last ledge you stood on."));
             }
             return;

@@ -109,11 +109,32 @@ public final class Carcass {
                 return;
             }
             made.snapTo(dead.getX(), dead.getY(), dead.getZ(), dead.getYRot(), 0);
+            // a fall that ended in the air (from a height, or a flier killed on the wing): it lies on the ground below
+            if (!dead.onGround() && !dead.isInWater()) made.setPos(made.getX(), restY(level, made), made.getZ());
             made.setYBodyRot(dead.yBodyRot);
             made.setYHeadRot(dead.yBodyRot);
             made.setData(LivingContent.CARCASS, level.getGameTime() + LIES);
             if (level.addFreshEntity(made)) BODIES.put(made.getUUID(), b);
         });
+    }
+
+    /**
+     * Where a body laid in the air comes to rest: on the ground under it (a carcass has no mind, so nothing would bring it
+     * down), or on water it would fall into; left where it is with nothing in 64 blocks.
+     */
+    static double restY(ServerLevel level, Mob made) {
+        double y = made.getY();
+        net.minecraft.world.phys.Vec3 fall = Entity.collideBoundingBox(made, new net.minecraft.world.phys.Vec3(0, -64, 0),
+                made.getBoundingBox(), level, java.util.List.of());
+        if (fall.y <= -64 + 1.0E-6) return y;
+        double to = y + fall.y;
+        net.minecraft.core.BlockPos.MutableBlockPos p = new net.minecraft.core.BlockPos.MutableBlockPos(made.getBlockX(), 0, made.getBlockZ());
+        for (int by = net.minecraft.util.Mth.floor(y); by >= net.minecraft.util.Mth.floor(to); by--) {
+            p.setY(by);
+            var water = level.getFluidState(p);
+            if (!water.isEmpty()) return Math.max(to, Math.min(y, by + water.getHeight(level, p)));
+        }
+        return to;
     }
 
     /** A still copy of the dead: the same kind, size, age and colour; no mind, no voice, nothing can hurt it. */

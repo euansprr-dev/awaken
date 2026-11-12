@@ -6,8 +6,13 @@
   "theme": "hive",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:brood_burrow",
     "water": 0
@@ -18,8 +23,9 @@
     ],
     "lens": "brood_burrow",
     "air": [
-      "mist",
       "shaft_dust",
+      "mist",
+      "spores",
       "dust",
       "drips",
       "moths"

@@ -70,7 +70,7 @@ final class EnchantFx {
         return 0;
     }
 
-    private static boolean has(ItemStack s, ResourceKey<Enchantment> key) {
+    static boolean has(ItemStack s, ResourceKey<Enchantment> key) {
         if (s.isEmpty()) return false;
         for (Holder<Enchantment> h : s.getEnchantments().keySet()) if (h.is(key)) return true;
         return false;
@@ -84,19 +84,19 @@ final class EnchantFx {
     /** A ward took {@code share} (0-0.3) off a blow of this Force that came from {@code from} (null: from nowhere in particular). */
     static void warded(ServerPlayer p, Forces.Force force, float share, @Nullable Vec3 from) {
         send(p, EnchantPayloads.FX_WARD, colour(force), share, wardNo(force), toward(p.position(), from));
-        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), EnchantContent.NOTE_WARD.get(), SoundSource.PLAYERS, 0.35F + share, 1.15F);
+        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), EnchantContent.NOTE_WARD.get(), SoundSource.PLAYERS, 0.55F + share, 1F);
     }
 
     /** A bane (numbered {@code no}) bit this creature: its mark burns on the side the blow came from. */
     static void baned(ServerPlayer p, LivingEntity target, int no) {
         send(target, EnchantPayloads.FX_BANE, Family.BANE.colour, 1F, no, toward(target.position(), p.position()));
-        p.level().playSound(null, target.getX(), target.getY(), target.getZ(), EnchantContent.NOTE_BANE.get(), SoundSource.PLAYERS, 0.45F, 1.3F);
+        p.level().playSound(null, target.getX(), target.getY(), target.getZ(), EnchantContent.NOTE_BANE.get(), SoundSource.PLAYERS, 0.8F, 1F);
     }
 
     /** Harvest's extra drop. */
     static void spoils(ServerLevel level, Entity drop) {
         send(drop, EnchantPayloads.FX_SPOILS, Family.SPOILS.colour, 1F);
-        level.playSound(null, drop.getX(), drop.getY(), drop.getZ(), EnchantContent.NOTE_SPOILS.get(), SoundSource.PLAYERS, 0.5F, 1.4F);
+        level.playSound(null, drop.getX(), drop.getY(), drop.getZ(), EnchantContent.NOTE_SPOILS.get(), SoundSource.PLAYERS, 0.8F, 1F);
     }
 
     /** Looting's and Fortune's extra: the first one or two drops a stack richer than one glint as they fall. */
@@ -105,7 +105,7 @@ final class EnchantFx {
         for (ItemEntity d : drops) {
             if (d.getItem().getCount() < 2) continue;
             send(d, EnchantPayloads.FX_SPOILS, Family.SPOILS.colour, 0.8F);
-            if (n++ == 0) level.playSound(null, d.getX(), d.getY(), d.getZ(), EnchantContent.NOTE_SPOILS.get(), SoundSource.PLAYERS, 0.3F, 1.5F);
+            if (n++ == 0) level.playSound(null, d.getX(), d.getY(), d.getZ(), EnchantContent.NOTE_SPOILS.get(), SoundSource.PLAYERS, 0.6F, 1.05F);
             if (n == 2) return;
         }
     }
@@ -134,6 +134,12 @@ final class EnchantFx {
     /** An orb about to be taken: if it will mend something, a thread runs from it into the piece. */
     static void onPickupXp(PlayerXpEvent.PickupXp e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
+        // Insight in the hand: the experience comes in with a gold edge (one glint in eight ticks, however many orbs)
+        if ((p.tickCount & 7) == 0 && has(p.getMainHandItem(), INSIGHT)) {
+            var in = e.getOrb();
+            near((ServerLevel) p.level(), p.getX(), p.getY(), p.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_SPOILS, in.getId(),
+                    in.getX(), in.getY() + 0.15, in.getZ(), Family.SPOILS.colour, 0.6F, 0, Float.NaN));
+        }
         var mended = EnchantmentHelper.getRandomItemWith(EnchantmentEffectComponents.REPAIR_WITH_XP, p, ItemStack::isDamaged);
         if (mended.isEmpty()) return;
         EquipmentSlot slot = mended.get().inSlot();
@@ -142,6 +148,39 @@ final class EnchantFx {
                 orb.getX(), orb.getY() + 0.15, orb.getZ(), Family.KEEPING.colour, 1F, slot == null ? 0 : slot.ordinal(), Float.NaN));
     }
 
+    /** A creature a bane killed goes out in the bane's red: a ring of it over the ground where it fell, motes lifting off. */
+    static void banedOut(ServerPlayer p, LivingEntity dead, int no) {
+        near((ServerLevel) p.level(), dead.getX(), dead.getY(), dead.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_PUFF, dead.getId(),
+                dead.getX(), dead.getY(), dead.getZ(), Family.BANE.colour, 0.9F, no, Float.NaN));
+    }
+
+    /** Gather: a gold thread from where a thing fell into the hand that took it. */
+    static void gathered(ServerPlayer p, double x, double y, double z) {
+        near((ServerLevel) p.level(), p.getX(), p.getY(), p.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_MEND, p.getId(),
+                x, y, z, Family.SPOILS.colour, 1F, EquipmentSlot.MAINHAND.ordinal(), Float.NaN));
+    }
+
+    /** Regrowth: a green thread out of the open sky into the piece it mends. */
+    static void regrew(ServerPlayer p, EquipmentSlot slot) {
+        near((ServerLevel) p.level(), p.getX(), p.getY(), p.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_MEND, p.getId(),
+                p.getX(), p.getEyeY() + 1.5, p.getZ(), Words.REGROWTH_COLOUR, 0.8F, slot.ordinal(), Float.NaN));
+    }
+
+    /** Remembrance: its glyph lifts where you stand as a name is kept. */
+    static void remembered(ServerPlayer p) {
+        near((ServerLevel) p.level(), p.getX(), p.getY(), p.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_PUFF, p.getId(),
+                p.getX(), p.getY(), p.getZ(), Family.KEEPING.colour, 0.6F, 35, Float.NaN));
+        p.level().playSound(null, p.getX(), p.getY(), p.getZ(), EnchantContent.NOTE_KEEP.get(), SoundSource.PLAYERS, 0.6F, 0.9F);
+    }
+
+    /** Clear Blood burning poison off: a green pulse where you stand, once a second while it works. */
+    static void cleared(ServerPlayer p) {
+        near((ServerLevel) p.level(), p.getX(), p.getY(), p.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_PUFF, p.getId(),
+                p.getX(), p.getY(), p.getZ(), 0x9FE07A, 0.35F, 9, Float.NaN));
+    }
+
+    private static final ResourceKey<Enchantment> INSIGHT = ResourceKey.create(net.minecraft.core.registries.Registries.ENCHANTMENT, dev.awaken.Awaken.id("insight"));
+
     /** A fall of four blocks or more on Feather Falling boots: a puff of light where you land. */
     static void onFall(LivingFallEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p) || e.getDistance() < 4 || !has(p.getItemBySlot(EquipmentSlot.FEET), Enchantments.FEATHER_FALLING)) return;
@@ -149,9 +188,17 @@ final class EnchantFx {
                 p.getX(), p.getY(), p.getZ(), Family.WARD.colour, (float) Math.min(1, e.getDistance() / 12), 8, Float.NaN));
     }
 
-    /** A page learned. */
+    /** A page learned: its glyph lifts in front of the reader, cut by cut, and runs into them. */
     static void learned(ServerPlayer p, Inscriptions.Entry e) {
-        send(p, EnchantPayloads.FX_LEARN, e.colour(), 1F);
+        send(p, EnchantPayloads.FX_LEARN, e.colour(), 1F, e.no(), Float.NaN);
+    }
+
+    /** A page given: it flies from where it was (a fallen Lord, a lode's heart) to the one it goes to, its sign showing. */
+    static void page(ServerPlayer p, Inscriptions.Entry e, @Nullable Vec3 from) {
+        if (from == null || !(p.level() instanceof ServerLevel level)) return;
+        near(level, p.getX(), p.getY(), p.getZ(), new EnchantPayloads.Fx(EnchantPayloads.FX_PAGE, p.getId(), from.x, from.y, from.z, e.colour(), 1F, e.no(), Float.NaN));
+        level.playSound(null, p.getX(), p.getY(), p.getZ(), EnchantContent.PAGE_TURN.get(), SoundSource.PLAYERS, 0.9F, 1F);
+        level.playSound(null, p.getX(), p.getY(), p.getZ(), net.minecraft.sounds.SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.3F, 0.8F);
     }
 
     /** An old enchanting table turned into an Inscribing Table. */

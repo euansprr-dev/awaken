@@ -46,12 +46,10 @@ cmd gamemode spectator
 cmd time set 6000
 wait 20
 # hive_guard (The Door)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.6 199.93 2.6 -90 4
 look -90 4
 wait 6
@@ -73,13 +71,11 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec hive_guard_death 50 2
 wait 54
 # the_swarm_mind (The Swarm Mind)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
-cmd tp @s -7.8 201.58 2.6 -90 -6
+cmd tp @s -12.6 201.58 2.6 -90 -6
 look -90 -6
 wait 6
 cmd summon minecraft:husk 0.5 201 4.8 {NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}
@@ -103,12 +99,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_swarm_mind_death 50 2
 wait 54
 # sporeling (The Sporeling)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.3 199.71 2.6 -90 4
 look -90 4
 wait 6
@@ -127,12 +121,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec sporeling_death 50 2
 wait 54
 # mycelid (The Shelf)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.1 200.48 2.6 -90 4
 look -90 4
 wait 6
@@ -151,12 +143,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec mycelid_death 50 2
 wait 54
 # capweaver (The Capweaver)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -3.9 199.68 2.6 -90 4
 look -90 4
 wait 6
@@ -175,12 +165,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec capweaver_death 50 2
 wait 54
 # puffcap (The Puffcap)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -4.3 200.20 2.6 -90 4
 look -90 4
 wait 6
@@ -196,12 +184,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec puffcap_death 50 2
 wait 54
 # hollow_tender (The Tender)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -8.7 200.70 4.5 -90 4
 look -90 4
 wait 6
@@ -226,12 +212,10 @@ cmd kill @e[tag=p]
 cmd awaken ascent pilot rec hollow_tender_death 50 2
 wait 54
 # the_rot (The Rot)
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
+wait 44
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 4
-cmd kill @e[type=item]
-cmd kill @e[type=awaken:gel_sample]
-cmd kill @e[type=minecraft:experience_orb]
 cmd tp @s -5.2 200.20 2.6 -90 4
 look -90 4
 wait 6
@@ -255,8 +239,7 @@ wait 80
 cmd kill @e[tag=p]
 cmd awaken ascent pilot rec the_rot_death 50 2
 wait 54
-cmd kill @e[tag=p]
-cmd kill @e[tag=d]
+cmd kill @e[type=!minecraft:player,distance=..160]
 wait 10
 cmd gamemode creative
 info

@@ -137,7 +137,7 @@ final class BellGoals {
 
     /** Free hooks on the home's Bell Frame (0 if it isn't loaded or set). */
     static int freeFrameHooks(ServerPlayer p, BellWorld.@org.jspecify.annotations.Nullable Home home) {
-        if (home == null || home.frame == null || !p.level().isLoaded(home.frame)) return home != null && home.frame != null ? 1 : 0;
+        if (home == null || home.frame == null || !dev.awaken.core.api.Ready.loaded(p.level(), home.frame)) return home != null && home.frame != null ? 1 : 0;
         if (!(p.level().getBlockEntity(home.frame) instanceof HooksEntity be)) return 0;
         int n = 0;
         for (int i = 0; i < be.hooks(); i++) if (be.bell(i) < 0) n++;

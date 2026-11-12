@@ -78,6 +78,7 @@ public final class ArmourForge {
         boolean metal = be != null && anvil(level, be.getBlockPos()) != null && forge(level, be.getBlockPos()) != null;
         boolean hand = be != null && table(level, be.getBlockPos()) != null;
         List<ArmourPayloads.Offer> out = new ArrayList<>();
+        ArmourSet held = be == null ? null : be.held();
         for (ArmourSet set : ArmourSet.values()) {
             boolean above = set.rank.ordinal() > rank.ordinal();
             if (above && !every || !set.made()) continue;
@@ -94,7 +95,10 @@ public final class ArmourForge {
                 }
                 boolean placed = ForgeSong.byHand(set) ? hand : metal;
                 ItemStack made = make(set, piece); // worn or carried: the row says so, not "Needs more" (Euan 2026-11-03)
-                int flags = (afford && placed && known && !above ? ArmourPayloads.CAN : 0) | (mem.fromMemory(set, piece) ? ArmourPayloads.FROM_MEMORY : 0)
+                boolean other = held != null && held != set;
+                boolean stands = held == set && !be.suit(ForgeSong.slot(piece)).isEmpty();
+                int flags = (afford && placed && known && !above && !other ? ArmourPayloads.CAN : 0) | (mem.fromMemory(set, piece) ? ArmourPayloads.FROM_MEMORY : 0)
+                        | (other ? ArmourPayloads.HELD_OTHER : 0) | (stands ? ArmourPayloads.ON_STAND : 0)
                         | (above ? ArmourPayloads.ABOVE : 0) | (afford ? ArmourPayloads.AFFORD : 0)
                         | (mem.forgedWhole(set) ? ArmourPayloads.KNOWN_WHOLE : 0) | (known ? 0 : ArmourPayloads.NO_PATTERN)
                         | (!made.isEmpty() && ArmourGoals.owns(p, made.getItem()) ? ArmourPayloads.OWNED : 0);
@@ -217,7 +221,7 @@ public final class ArmourForge {
     // ---- acts ----------------------------------------------------------------------------------------------------------
 
     public static void onAct(ServerPlayer p, ArmourPayloads.Act a) {
-        if (!(p.level() instanceof ServerLevel level) || !level.isLoaded(a.pos())) return;
+        if (!(p.level() instanceof ServerLevel level) || !dev.awaken.core.api.Ready.loaded(level, a.pos())) return;
         if (!(level.getBlockEntity(a.pos()) instanceof FittingStandBlockEntity be)) return;
         if (p.distanceToSqr(Vec3.atCenterOf(a.pos())) > 10 * 10) return;
         ForgeWork w = be.work();
@@ -225,7 +229,12 @@ public final class ArmourForge {
         switch (a.act()) {
             // a start's aim names the catalyst to inlay (its Force + 1; 0 none)
             case ArmourPayloads.START, ArmourPayloads.MEMORY -> start(p, level, be, a.a(), a.act() == ArmourPayloads.MEMORY, Math.round(a.aim()));
-            case ArmourPayloads.TAKE -> takeSuit(p, be);
+            case ArmourPayloads.TAKE -> {
+                if (a.a() >= 1 && a.a() <= 4) takePiece(p, be, a.a() - 1);
+                else takeSuit(p, be);
+                // the Hall is open on this stand: what can be made here changed with what stands on it
+                AwakenNet.send(p, new dev.awaken.hall.HallNet.Suits(hall(p, be)));
+            }
             // Looks and accents, on what you wear (SPEC §44.8): a is the slot, aim the set's ordinal + 1 (0 its own look)
             case ArmourPayloads.LOOK -> look(p, a.a(), Math.round(a.aim()));
             // aim: the dye's id + 1 (0 each piece's own glow back)
@@ -310,6 +319,12 @@ public final class ArmourForge {
         List<ForgeSong.Need> cost = ForgeSong.cost(set, piece);
         if (cost == null || set.rank.ordinal() > Progression.rank(p).ordinal() || !known(mem, set)) return;
         if (memory && !mem.fromMemory(set, piece)) return;
+        // a stand builds one set at a time (SPEC §44.14): while pieces of one stand on it, nothing of another is started
+        ArmourSet held = be.held();
+        if (held != null && held != set) {
+            open(p, be);
+            return;
+        }
         BlockPos stand = be.getBlockPos();
         BlockPos work = ForgeSong.byHand(set) ? table(level, stand) : anvil(level, stand);
         BlockPos fire = ForgeSong.byHand(set) ? null : forge(level, stand);
@@ -582,6 +597,33 @@ public final class ArmourForge {
     private static Forged story(ItemStack stack, ArmourSet set) {
         Forged story = stack.get(ArmourContent.FORGED.get());
         return story != null ? story : new Forged(Forged.SCHEMA, set.id, 0, 0, false, false, "");
+    }
+
+    /**
+     * Dev (tours have no way to play the Forge Song): stands a plain piece of {@code set} on the Fitting Stand nearest the
+     * player, within 8 blocks, as a finished forge would. Refused, like a forge, when the stand holds another set.
+     */
+    public static boolean fitForTour(ServerPlayer p, ArmourSet set, int slot) {
+        BlockPos at = p.blockPosition();
+        for (BlockPos pos : BlockPos.betweenClosed(at.offset(-8, -4, -8), at.offset(8, 4, 8))) {
+            if (!(p.level().getBlockEntity(pos) instanceof FittingStandBlockEntity be)) continue;
+            ArmourSet held = be.held();
+            if (held != null && held != set || slot < 0 || slot > 3) return false;
+            ItemStack piece = make(set, ForgeSong.PIECES[slot]);
+            if (piece.isEmpty()) return false;
+            be.setSuit(slot, piece);
+            return true;
+        }
+        return false;
+    }
+
+    /** One piece off the stand into your pack. The stand is free for another set once the last one is off. */
+    static void takePiece(ServerPlayer p, FittingStandBlockEntity be, int slot) {
+        ItemStack s = be.suit(slot);
+        if (s.isEmpty()) return;
+        be.setSuit(slot, ItemStack.EMPTY);
+        give(p, be, s);
+        be.getLevel().playSound(null, be.getBlockPos(), ArmourContent.FIT.get(), SoundSource.BLOCKS, 0.8F, 1.2F);
     }
 
     static void takeSuit(ServerPlayer p, FittingStandBlockEntity be) {

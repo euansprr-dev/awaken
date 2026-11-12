@@ -261,7 +261,7 @@ public final class Overworld {
                 double d = Math.sqrt(a * a + b * b);
                 if (d > ring + 0.5) continue;
                 BlockPos col = at(pos, axis, a, 0, b);
-                if (!level.hasChunkAt(col)) continue;
+                if (!dev.awaken.core.api.Ready.at(level, col)) continue;
                 double crack = fissure(seed, a, b, d, rays, pad, ring);
                 boolean fissure = !Double.isNaN(crack);
                 if (d <= pad + 0.4) {
@@ -328,8 +328,8 @@ public final class Overworld {
     /** Whether all that {@link #fellCut} reads is loaded. */
     static boolean treesLoaded(ServerLevel level, GateRecord g) {
         int r = cutReach(g.plan.rank().ordinal()) + TREE_READ;
-        return level.hasChunkAt(g.pos.offset(r, 0, r)) && level.hasChunkAt(g.pos.offset(-r, 0, r))
-                && level.hasChunkAt(g.pos.offset(r, 0, -r)) && level.hasChunkAt(g.pos.offset(-r, 0, -r));
+        return dev.awaken.core.api.Ready.at(level, g.pos.offset(r, 0, r)) && dev.awaken.core.api.Ready.at(level, g.pos.offset(-r, 0, r))
+                && dev.awaken.core.api.Ready.at(level, g.pos.offset(r, 0, -r)) && dev.awaken.core.api.Ready.at(level, g.pos.offset(-r, 0, -r));
     }
 
     /**
@@ -351,10 +351,10 @@ public final class Overworld {
         for (int a = -reach; a <= reach; a++) {
             for (int b = -reach; b <= reach; b++) {
                 int x = pos.getX() + a, z = pos.getZ() + b;
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) continue;
                 // a tree may well go on past what's read: whatever reaches the edge counts as held
-                boolean edge = Math.abs(a) == reach || Math.abs(b) == reach || !level.hasChunk((x + 1) >> 4, z >> 4)
-                        || !level.hasChunk((x - 1) >> 4, z >> 4) || !level.hasChunk(x >> 4, (z + 1) >> 4) || !level.hasChunk(x >> 4, (z - 1) >> 4);
+                boolean edge = Math.abs(a) == reach || Math.abs(b) == reach || !dev.awaken.core.api.Ready.chunkReady(level, (x + 1) >> 4, z >> 4)
+                        || !dev.awaken.core.api.Ready.chunkReady(level, (x - 1) >> 4, z >> 4) || !dev.awaken.core.api.Ready.chunkReady(level, x >> 4, (z + 1) >> 4) || !dev.awaken.core.api.Ready.chunkReady(level, x >> 4, (z - 1) >> 4);
                 int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
                 for (int y = floor; y < top; y++) {
                     BlockState s = level.getBlockState(m.set(x, y, z));
@@ -428,7 +428,7 @@ public final class Overworld {
         for (int a = -near; a <= near; a++) {
             for (int b = -near; b <= near; b++) {
                 int x = pos.getX() + a, z = pos.getZ() + b;
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) continue;
                 int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
                 for (int y = pos.getY() + 1; y < top; y++) {
                     BlockState s = level.getBlockState(m.set(x, y, z));
@@ -442,7 +442,7 @@ public final class Overworld {
             BlockPos p = gone.poll();
             for (Direction side : Direction.values()) {
                 BlockPos q = p.relative(side);
-                if (!level.hasChunkAt(q)) continue;
+                if (!dev.awaken.core.api.Ready.at(level, q)) continue;
                 BlockState s = level.getBlockState(q);
                 if (s.isAir() || ours(s)) continue;
                 BlockState now = !s.canSurvive(level, q) ? Blocks.AIR.defaultBlockState() : s.is(Blocks.VINE) ? Block.updateFromNeighbourShapes(s, level, q) : s;
@@ -583,7 +583,7 @@ public final class Overworld {
         int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
         int rank = g.plan.rank().ordinal();
         for (Placed p : blocks(g.pos, g.axis, rank, false)) {
-            if (!level.hasChunkAt(p.pos())) continue;
+            if (!dev.awaken.core.api.Ready.at(level, p.pos())) continue;
             BlockState here = level.getBlockState(p.pos());
             boolean core = p.state().is(GatesRegistry.CORE.get());
             if (core ? here.is(GatesRegistry.CORE.get()) : spurBlock(here)) level.setBlock(p.pos(), Blocks.AIR.defaultBlockState(), flags);
@@ -598,7 +598,7 @@ public final class Overworld {
         for (int a = -R; a <= R; a++) {
             for (int b = -R; b <= R; b++) {
                 BlockPos col = at(pos, axis, a, 0, b);
-                if (!level.hasChunkAt(col)) continue;
+                if (!dev.awaken.core.api.Ready.at(level, col)) continue;
                 for (int y = -6; y <= 6; y++) {
                     m.set(col.getX(), col.getY() + y, col.getZ());
                     if (level.getBlockState(m).is(GatesRegistry.FISSURE.get())) level.setBlock(m, Blocks.COARSE_DIRT.defaultBlockState(), flags);
@@ -669,7 +669,7 @@ public final class Overworld {
                 boolean tall = Math.abs(a) <= half && Math.abs(b) <= 3;
                 int y1 = tall ? top : 6;
                 BlockPos col = at(pos, axis, a, 0, b);
-                if (!level.hasChunkAt(col)) continue;
+                if (!dev.awaken.core.api.Ready.at(level, col)) continue;
                 for (int y = -3; y <= y1; y++) {
                     m.set(col.getX(), col.getY() + y, col.getZ());
                     if (built(level, m)) return false;
@@ -699,7 +699,7 @@ public final class Overworld {
             for (int i = 0; i < (r == 0 ? 1 : 8); i++) {
                 double ang = Math.PI / 4 * i;
                 int x = center.getX() + (int) Math.round(Math.cos(ang) * r), z = center.getZ() + (int) Math.round(Math.sin(ang) * r);
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) continue;
                 BlockPos ground = new BlockPos(x, groundY(level, x, z), z);
                 if (goodGround(level, ground) && untouched(level, ground, axis)) return Optional.of(ground);
             }

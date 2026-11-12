@@ -3,6 +3,7 @@ package dev.awaken.delve;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -34,7 +35,7 @@ import java.util.Map;
 /**
  * The deep's registrations (SPEC §28.3): Deepglass and its shard, the lode hearts, starmetal, bell bronze, the Tuning
  * Fork, pitons and Runner's rope, the miner's lamp, the lode feature, and the strike's particles and sounds. Textures,
- * models, recipes, loot and tags come from tools/art/specs/delve.py; sounds from tools/art/specs/audio_delve.py.
+ * models, recipes, loot and tags come from tools/art/specs/delve.py; sounds are the game's own recordings (tools/art/specs/audit_mining.py, SPEC §66.4).
  */
 public final class DelveContent {
     private DelveContent() {}
@@ -162,7 +163,7 @@ public final class DelveContent {
     /** Dust in the air your light reaches (SPEC §34.5): the mote's sprite, lit by the world, so it shows only in light. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> LIGHT_MOTE = PARTICLES.register("delve_light_mote", () -> new SimpleParticleType(false));
 
-    // ---- sounds (tools/art/specs/audio_delve.py) ------------------------------------------------------------------------
+    // ---- sounds (the game's own: specs/audit_mining.py) ------------------------------------------------------------------------
 
     public static final Map<Ore, DeferredHolder<SoundEvent, SoundEvent>> STRIKE = new EnumMap<>(Ore.class);
 
@@ -199,6 +200,18 @@ public final class DelveContent {
     static void register(IEventBus modBus) {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
+        // deepglass and the lode hearts with the caves; the deep's metals; the Waking Pick first among the picks; the
+        // rope's pitons and runner rope with the climbing gear; the fork and the lamps with the gear
+        Tabs.fill(Tabs.Shelf.CAVES, (p, out) -> {
+            out.accept(DEEPGLASS_ITEM.get());
+            out.accept(DEEPGLASS_SHARD.get());
+            for (Ore o : Ore.values()) if (HEART_ITEMS.containsKey(o)) out.accept(HEART_ITEMS.get(o).get());
+        });
+        Tabs.fill(Tabs.Shelf.METALS, RAW_STARMETAL, STARMETAL_INGOT, BELL_BRONZE_INGOT);
+        Tabs.fill(Tabs.Shelf.PICKS, WAKING_PICK);
+        Tabs.icon(Tabs.Tab.TOOLS, () -> WAKING_PICK.get().getDefaultInstance());
+        Tabs.fill(Tabs.Shelf.CLIMBING, PITON_ITEM, RUNNER_ROPE);
+        Tabs.fill(Tabs.Shelf.GEAR, TUNING_FORK, MINERS_LAMP, DELVER_LAMP_ITEM);
         COMPONENTS.register(modBus);
         FEATURES.register(modBus);
         PARTICLES.register(modBus);

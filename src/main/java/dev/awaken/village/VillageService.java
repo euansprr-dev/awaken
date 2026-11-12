@@ -129,6 +129,8 @@ public final class VillageService {
         var src = level.getChunkSource();
         planner.submit(() -> {
             try {
+                // land comes first (SPEC §12): the plan waits while new land comes in round a player
+                dev.awaken.core.api.LandFirst.hold(dev.awaken.core.api.LandFirst.MOST_NS);
                 Plans.of(a, GenTerrain.of(src.getGenerator(), level, src.randomState()));
             } catch (RuntimeException e) {
                 Awaken.LOG.error("[village] planning {} failed", a.key(), e);
@@ -149,7 +151,7 @@ public final class VillageService {
             return null;
         }
         BlockPos well = plan.ground(plan.well[0], plan.well[1]);
-        if (!level.isLoaded(well)) return null;
+        if (!dev.awaken.core.api.Ready.loaded(level, well)) return null;
         if (!level.getBlockState(well).is(Blocks.WATER)) {
             // a world made before the settlement could generate here (or a plan changed under it): no people
             ABSENT.add(plan.key);

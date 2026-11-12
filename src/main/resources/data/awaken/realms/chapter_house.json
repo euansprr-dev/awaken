@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "name": "The Chapter House",
+  "line": "The monks met here. What is left of them comes back in, a few at a time, then more.",
+  "form": "dungeon",
+  "theme": "frost_monastery",
+  "ranks": [
+    "C",
+    "B",
+    "A",
+    "S"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:frozen_cells",
+    "water": 0,
+    "params": {
+      "stand": 1.0
+    }
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/frozen_cells"
+    ],
+    "lens": "frozen_cells",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "snow",
+      "wind",
+      "dust"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "abbot_of_frost",
+    "seat": "under_the_ice"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

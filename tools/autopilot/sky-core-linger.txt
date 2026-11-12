@@ -1,0 +1,106 @@
+# The core after a look round (SPEC §17.9, 11 Nov 2026): C-rank with only the rope, under a sky platform's lowest ring;
+# the pilot climbs the rings, the perch and the pier, then stands looking round the deck for 25 s before walking in to
+# the core, which must still give the wings (the old 20 s stopwatch refused this with the rope's words). The server log
+# says why the core stays dark ("[ascent] the sky core at ... stays dark for ...: rank|built|line") or "gives ... the
+# wings"; the pilot logs "up on the deck after N s" and "the core gave wings".
+# Run on CI: tools/tour-ci.sh tools/autopilot/sky-core-linger.txt 1800
+world sky_core_linger survival 4246
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd time set 5500
+cmd awaken admin levels 25
+wait 40
+key dismiss
+wait 10
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd awaken admin rankup
+wait 60
+key dismiss
+screen close
+cmd tick sprint 6200
+# the sprint must be over before anything is timed: a Proving's outro is counted in server ticks
+wait 2400
+cmd tick sprint stop
+wait 40
+cmd time set 5500
+cmd awaken ascent grant tether
+cmd awaken ascent sky goto
+wait 80
+camera back
+hud on
+shot core_00_under
+cmd awaken ascent pilot run climb 25
+wait 100
+shotnow core_01
+wait 100
+shotnow core_02
+wait 100
+shotnow core_03
+wait 100
+shotnow core_04
+wait 100
+shotnow core_05
+wait 100
+shotnow core_06
+wait 100
+shotnow core_07
+wait 100
+shotnow core_08
+wait 100
+shotnow core_09
+wait 100
+shotnow core_10
+wait 100
+shotnow core_11
+wait 100
+shotnow core_12
+wait 100
+shotnow core_13
+wait 100
+shotnow core_14
+wait 100
+shotnow core_15
+wait 100
+shotnow core_16
+wait 100
+shotnow core_17
+wait 100
+shotnow core_18
+wait 100
+shotnow core_19
+wait 100
+shotnow core_20
+wait 100
+shotnow core_21
+wait 100
+shotnow core_22
+wait 100
+shotnow core_23
+wait 100
+shotnow core_24
+cmd awaken ascent pilot stop
+key dismiss
+wait 10
+screen close
+info
+quit

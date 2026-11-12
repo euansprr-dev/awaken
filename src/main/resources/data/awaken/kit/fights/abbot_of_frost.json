@@ -3,7 +3,7 @@
  "id": "abbot_of_frost",
  "moves": "abbot_of_frost",
  "duel": true,
- "stance": 300,
+ "stance": 160,
  "intro": {
   "pose": "idle",
   "move": "wake"

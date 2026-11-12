@@ -194,13 +194,13 @@ public final class Camps extends SavedData {
     static @Nullable BlockPos site(ServerLevel level, BlockPos around, RandomSource r) {
         for (int i = 0; i < 24; i++) {
             int x = around.getX() + r.nextInt(97) - 48, z = around.getZ() + r.nextInt(97) - 48;
-            if (!level.hasChunkAt(new BlockPos(x, 0, z)) || CityBasin.reserved(x, z)) continue;
+            if (!dev.awaken.core.api.Ready.at(level, new BlockPos(x, 0, z)) || CityBasin.reserved(x, z)) continue;
             BlockPos at = CampPainter.surface(level, x, z);
             if (!level.getFluidState(at).isEmpty() || !level.getFluidState(at.below()).isEmpty() || !level.getBlockState(at.below()).isSolid()) continue;
             if (HearthHooks.nearest(level, at, 120).isPresent() || !GateHooks.near(level, at, 48).isEmpty()) continue;
             int rough = 0;
             for (int[] d : new int[][]{{5, 0}, {-5, 0}, {0, 5}, {0, -5}}) {
-                if (level.hasChunkAt(at.offset(d[0], 0, d[1]))) rough = Math.max(rough, Math.abs(CampPainter.surface(level, x + d[0], z + d[1]).getY() - at.getY()));
+                if (dev.awaken.core.api.Ready.at(level, at.offset(d[0], 0, d[1]))) rough = Math.max(rough, Math.abs(CampPainter.surface(level, x + d[0], z + d[1]).getY() - at.getY()));
             }
             if (rough <= 2) return at;
         }
@@ -223,7 +223,7 @@ public final class Camps extends SavedData {
             ServerPlayer near = nearest(level, c.pos);
             double d = near == null ? Double.MAX_VALUE : Math.sqrt(near.distanceToSqr(c.pos.getX() + 0.5, near.getY(), c.pos.getZ() + 0.5));
             if (!c.resolved) {
-                if (d > 160 || !level.hasChunkAt(c.pos)) continue;
+                if (d > 160 || !dev.awaken.core.api.Ready.at(level, c.pos)) continue;
                 BlockPos at = site(level, c.pos, RandomSource.create(c.seed));
                 if (at == null) {
                     camps.remove(i--); // no ground for it here: it never was
@@ -241,7 +241,7 @@ public final class Camps extends SavedData {
                 c.built = 0;
                 setDirty();
             }
-            if (d <= BUILD && c.built < c.tier && level.hasChunkAt(c.pos)) build(level, c);
+            if (d <= BUILD && c.built < c.tier && dev.awaken.core.api.Ready.at(level, c.pos)) build(level, c);
             List<UUID> b = bodies.get(c.id);
             if (b == null && d <= WAKE && c.built > 0) wake(level, c);
             else if (b != null && d > SLEEP) sleep(level, c);
@@ -327,7 +327,7 @@ public final class Camps extends SavedData {
         if (def == null) return null;
         int lv = Regions.creatureLevel(level, c.pos, Regions.Role.CAMP) + (c.tier - 1) * 2 + (heart ? 2 : 0);
         int x = c.pos.getX() + r.nextInt(9) - 4, z = c.pos.getZ() + r.nextInt(9) - 4;
-        BlockPos at = level.hasChunkAt(new BlockPos(x, 0, z)) ? CampPainter.surface(level, x, z) : c.pos;
+        BlockPos at = dev.awaken.core.api.Ready.at(level, new BlockPos(x, 0, z)) ? CampPainter.surface(level, x, z) : c.pos;
         var role = new MobRole(heart ? MobRole.Role.ELITE : MobRole.Role.NORMAL, lv, def.theme.id, Optional.empty(), "");
         Entity e = Mobs.spawn(level, def, Vec3.atBottomCenterOf(at), lv, role, Set.of());
         if (e == null) return null;
@@ -453,7 +453,7 @@ public final class Camps extends SavedData {
         if (target == null) return;
         Vec3 dir = Vec3.atCenterOf(c.pos).subtract(Vec3.atCenterOf(target)).multiply(1, 0, 1).normalize().scale(24);
         BlockPos at = BlockPos.containing(Vec3.atCenterOf(target).add(dir));
-        if (!level.hasChunkAt(at)) return;
+        if (!dev.awaken.core.api.Ready.at(level, at)) return;
         BlockPos saved = c.pos;
         c.pos = CampPainter.surface(level, at.getX(), at.getZ());
         for (int i = 0; i < 4 + c.tier; i++) {
@@ -508,7 +508,7 @@ public final class Camps extends SavedData {
         Camps cs = get(level.getServer());
         Camp c = cs.byId(id);
         List<Entity> out = new ArrayList<>();
-        if (c == null || !level.hasChunkAt(from)) return out;
+        if (c == null || !dev.awaken.core.api.Ready.at(level, from)) return out;
         BlockPos saved = c.pos;
         c.pos = CampPainter.surface(level, from.getX(), from.getZ());
         for (int i = 0; i < count; i++) {

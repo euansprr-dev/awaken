@@ -268,7 +268,7 @@ public final class TroubleDirector {
 
     /** Puts one of a trouble's marks in the world (only into air or replaceable plants) and remembers it. */
     static boolean lay(ServerLevel level, Trouble t, BlockPos pos, BlockState s) {
-        if (!level.isLoaded(pos)) return false;
+        if (!dev.awaken.core.api.Ready.loaded(level, pos)) return false;
         BlockState was = level.getBlockState(pos);
         if (!was.isAir() && !was.canBeReplaced()) return false;
         level.setBlock(pos, s, Block.UPDATE_CLIENTS);
@@ -279,7 +279,7 @@ public final class TroubleDirector {
     /** Takes a mark away if it's still ours (anything a player put there since stays). */
     static boolean unlay(ServerLevel level, long p) {
         BlockPos pos = BlockPos.of(p);
-        if (!level.isLoaded(pos)) return false;
+        if (!dev.awaken.core.api.Ready.loaded(level, pos)) return false;
         BlockState s = level.getBlockState(pos);
         if (ours(s)) level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
         return true;

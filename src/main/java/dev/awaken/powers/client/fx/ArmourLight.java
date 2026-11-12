@@ -29,7 +29,7 @@ import java.util.Map;
  * drawn cell by cell on the faces themselves, a hair off them: the type's colour runs down the set's own lines, fills its
  * stones, and lays the type's motif over cloth and plate, one face at a time, as a tint that follows their own painting
  * (never a coat of paint over it). So every set wears each type its own way
- * with no art of its own, and a set's record ({@link #SETS}) says how its materials take it: how far the lines run ahead
+ * with no art of its own, and a set's record ({@link #SETS}, one for each of the 29) says how its materials take it: how far the lines run ahead
  * of the rest (metal), how much the cloth holds a glow (hide and cloth), how what glows shimmers (crystal).
  * <p>
  * {@code tools/art/arm_light_preview.py} draws the same thing off line; {@link #light} and its {@code light} are kept
@@ -47,11 +47,17 @@ final class ArmourLight {
     private static final float LIFT = 0.003f, GLOW_LIFT = 0.007f;
 
     /**
-     * A set's own way with the light: how much its cloth, plate, lines and glowing parts each take; how many rows its
-     * lines run ahead of the rest; how much its cloth holds a glow where the light has been; how much what glows of itself
-     * shimmers.
+     * A set's own way with the light. {@code soft, plate, trim, emit}: how much its cloth, plate, lines and glowing parts each
+     * take. {@code lead}: how many rows its lines run ahead of the rest (metal conducts). {@code soak}: how much its cloth
+     * holds a glow where the light has been (hide and cloth). {@code shimmer}: how much what glows of itself flickers
+     * (crystal, a signal). {@code grain}: +1 its bright texels take more light, -1 its dark ones do (the light sits in
+     * bark's cracks, bone's hollows). {@code tips}: how much the parts that stand off the arm (fins, feathers, spurs) light
+     * late and bright. {@code ripple}: how much a wave of shade runs down its plate and cloth (rows of scales, of feathers).
+     * {@code glitter}: how often an unlit texel where the light has been catches it for a moment (mail's links, rivets,
+     * star metal).
      */
-    record SetStyle(float soft, float plate, float trim, float emit, float lead, float soak, float shimmer) {
+    record SetStyle(float soft, float plate, float trim, float emit, float lead, float soak, float shimmer, float grain, float tips, float ripple,
+                    float glitter) {
         float gain(int role) {
             return switch (role) {
                 case SOFT -> soft;
@@ -60,22 +66,85 @@ final class ArmourLight {
                 default -> emit;
             };
         }
+
+        /** The four gains and the lead; the rest as most sets have them, changed with the withers below. */
+        static SetStyle of(double soft, double plate, double trim, double emit, double lead) {
+            return new SetStyle((float) soft, (float) plate, (float) trim, (float) emit, (float) lead, 0f, 0f, 1f, 0.5f, 0f, 0f);
+        }
+
+        SetStyle soak(double v) {
+            return new SetStyle(soft, plate, trim, emit, lead, (float) v, shimmer, grain, tips, ripple, glitter);
+        }
+
+        SetStyle shimmer(double v) {
+            return new SetStyle(soft, plate, trim, emit, lead, soak, (float) v, grain, tips, ripple, glitter);
+        }
+
+        SetStyle grain(double v) {
+            return new SetStyle(soft, plate, trim, emit, lead, soak, shimmer, (float) v, tips, ripple, glitter);
+        }
+
+        SetStyle tips(double v) {
+            return new SetStyle(soft, plate, trim, emit, lead, soak, shimmer, grain, (float) v, ripple, glitter);
+        }
+
+        SetStyle ripple(double v) {
+            return new SetStyle(soft, plate, trim, emit, lead, soak, shimmer, grain, tips, (float) v, glitter);
+        }
+
+        SetStyle glitter(double v) {
+            return new SetStyle(soft, plate, trim, emit, lead, soak, shimmer, grain, tips, ripple, (float) v);
+        }
     }
 
-    private static final SetStyle DEFAULT = new SetStyle(0.8f, 0.85f, 1.0f, 1.15f, 1.0f, 0.0f, 0.0f);
-    /** The sets whose arms are finished (the armour's C rank, 10 Nov 2026); the rest take {@link #DEFAULT} until theirs are. */
-    private static final Map<String, SetStyle> SETS = Map.of(
-            "gatewrought", new SetStyle(0.85f, 0.9f, 1.0f, 1.15f, 1.5f, 0.12f, 0.0f),  // a leather sleeve under a plated glove
-            "vaultbreaker", new SetStyle(0.7f, 0.85f, 1.05f, 1.2f, 2.5f, 0.0f, 0.0f),  // steel: the cuff rings run well ahead
-            "frostwalker", new SetStyle(0.9f, 0.85f, 1.0f, 1.2f, 0.5f, 0.2f, 0.0f),    // hide: it soaks the light up
-            "sunward", new SetStyle(0.85f, 0.9f, 1.1f, 1.2f, 1.5f, 0.14f, 0.5f),       // cloth under gold bands and a stone
-            "shardcrown", new SetStyle(0.7f, 0.8f, 1.0f, 1.3f, 1.0f, 0.0f, 1.0f));     // crystal fills and shimmers
+    private static final SetStyle DEFAULT = SetStyle.of(0.8, 0.85, 1.0, 1.15, 1.0);
+    /**
+     * All 29 sets, each from how its own arm is made (every arm was finished on 11 Nov 2026, the Armour Finish). The same
+     * table, row for row, as {@code SETS} in tools/art/arm_light_preview.py. A set not here takes {@link #DEFAULT}.
+     */
+    private static final Map<String, SetStyle> SETS = Map.ofEntries(
+            // E
+            Map.entry("wildhide", SetStyle.of(0.9, 0.85, 1.0, 1.15, 0.5).soak(0.22).tips(0)),                 // fur and hide: it soaks; the lacing leads a little
+            Map.entry("bellguard", SetStyle.of(0.8, 0.9, 0.9, 1.15, 2.0).soak(0.08)),                         // bell bronze, rim after rim: they carry it far
+            Map.entry("rootwarden", SetStyle.of(0.9, 0.85, 1.0, 1.3, 0.5).soak(0.1).grain(-1).tips(0)),       // bark: the light sits in its cracks, the resin fills
+            Map.entry("amberwing", SetStyle.of(0.9, 0.85, 1.0, 1.15, 1.0).soak(0.14).tips(0.3)),              // a jerkin: it soaks, the amber cuff leads
+            // D
+            Map.entry("beastbound", SetStyle.of(0.85, 0.85, 1.0, 1.2, 1.0).soak(0.06).grain(-1).tips(0.7)),   // bone plates: the light in their hollows
+            Map.entry("cleftrunner", SetStyle.of(0.85, 0.85, 1.0, 1.15, 1.5).soak(0.16).tips(0.3)),           // cloth under lamellar strips
+            Map.entry("lanternlight", SetStyle.of(0.85, 0.9, 1.0, 1.3, 1.5).soak(0.08).glitter(0.6)),         // a robe over mail: the links glitter, the lantern glass fills
+            Map.entry("bladeward", SetStyle.of(0.8, 0.9, 1.0, 1.15, 2.0).soak(0.08).glitter(0.35)),           // a brigandine: its rivets catch the light
+            Map.entry("hornlord", SetStyle.of(0.7, 0.85, 1.05, 1.2, 2.0).grain(-0.6)),                        // horn and plate: the light in the horn's grooves
+            // C
+            Map.entry("gatewrought", SetStyle.of(0.85, 0.9, 1.0, 1.15, 1.5).soak(0.12)),                      // a leather sleeve under a plated glove
+            Map.entry("vaultbreaker", SetStyle.of(0.7, 0.85, 1.05, 1.2, 2.5)),                                // steel: the cuff rings run well ahead
+            Map.entry("frostwalker", SetStyle.of(0.9, 0.85, 1.0, 1.2, 0.5).soak(0.2).shimmer(0.6).tips(0)),   // hide: it soaks the light up; its stone flickers
+            Map.entry("sunward", SetStyle.of(0.85, 0.9, 1.1, 1.2, 1.5).soak(0.14).shimmer(0.5)),              // cloth under gold bands and a stone
+            Map.entry("shardcrown", SetStyle.of(0.7, 0.8, 1.0, 1.3, 1.0).shimmer(1).tips(0.6)),               // crystal fills and shimmers
+            // B
+            Map.entry("veilwoven", SetStyle.of(0.85, 0.85, 0.65, 1.15, 2.0).soak(0.12).tips(0.3)),             // a veil of threads: they carry it, and are kept from flooding
+            Map.entry("deepcarapace", SetStyle.of(0.85, 0.85, 1.0, 1.25, 1.0).grain(-1).tips(0.8)),           // shell: the light between its plates, out along the spurs
+            Map.entry("cloudrunner", SetStyle.of(0.9, 0.85, 0.9, 1.15, 1.0).soak(0.1).tips(1).ripple(0.6)),   // feathers: a wave down the rows, out to the tips
+            Map.entry("tidebreaker", SetStyle.of(0.85, 0.9, 1.0, 1.2, 1.5).soak(0.06).tips(0.8).ripple(0.4).glitter(0.5)), // wet mail and fins
+            Map.entry("hollowheart", SetStyle.of(0.85, 0.85, 1.0, 1.25, 1.0).soak(0.08).grain(-1).tips(0.7)), // bone: the light in the hollows, the heart-stone fills
+            // A
+            Map.entry("lordscale", SetStyle.of(0.7, 0.85, 1.05, 1.3, 2.0).ripple(0.6)),                       // scales: a wave down their rows, the ember seams fill
+            Map.entry("leviathan", SetStyle.of(0.8, 0.85, 1.05, 1.25, 1.5).soak(0.06).tips(0.9).ripple(0.4)), // deep plate and fins: out along the fins
+            Map.entry("galewing", SetStyle.of(0.9, 0.85, 1.0, 1.15, 1.0).soak(0.1).tips(1).ripple(0.6)),      // feathers, as Cloudrunner's, over plate
+            Map.entry("halo_choir", SetStyle.of(0.8, 0.85, 0.95, 1.3, 2.0).soak(0.08).shimmer(0.5).glitter(0.3)), // ivory and gold: the gold carries it, the stone flickers
+            Map.entry("dreamsteel", SetStyle.of(0.8, 0.85, 1.0, 1.3, 1.5).shimmer(0.8).tips(0.6)),            // dream steel: plates off the sleeve, stones that flicker
+            // S
+            Map.entry("sovereign", SetStyle.of(0.7, 0.85, 0.85, 1.25, 2.5).ripple(0.3)),                       // the Weave: its threads carry the light well ahead
+            Map.entry("starfall", SetStyle.of(0.7, 0.85, 1.05, 1.2, 2.0).glitter(0.8)),                       // star metal: specks of it catch the light
+            Map.entry("riftwalker", SetStyle.of(0.85, 0.9, 0.85, 1.2, 1.5).tips(0.8).glitter(0.4)),            // plates that float off the sleeve
+            Map.entry("nightcourt", SetStyle.of(0.9, 0.85, 0.9, 1.15, 1.0).soak(0.18).tips(0)),               // court leather and a half-cloak that hangs: it soaks, nothing flares
+            Map.entry("signals_echo", SetStyle.of(0.85, 0.85, 1.0, 1.0, 1.0).soak(0.12).shimmer(0.7).tips(0.3))); // the Signal runs through it already: its light flickers, never doubles
 
     /** One arm piece, cut up. Cells of a face lie together: {@code faceStart[f]} to {@code faceStart[f + 1]}. */
     static final class Cells {
         int n, faces;
         float[] pos;        // twelve a cell: its four corners
         float[] v;          // how far down the arm, in texels from the shoulder end
+        float[] off;        // how far it stands off the sleeve, in texels (0 on the arm itself; a fin, a feather, a spur more)
         short[] face;       // which flat face
         byte[] ul, cols, role, side;
         byte[] lum;         // how bright its own painting is there, 0 to 255
@@ -125,6 +194,10 @@ final class ArmourLight {
         float[] p = surface.positions(), uv = surface.texels();
         byte[] nr = surface.normals();
         int faces = p.length / 18, accent = surface.accent();
+        // the arm's own middle: a left arm's bone has the arm a texel to its right, a right arm's a texel to its left
+        double sum = 0;
+        for (int k = 0; k < p.length; k += 3) sum += p[k];
+        float axis = sum > 0 ? 1f : -1f;
         Cells out = new Cells();
         out.style = SETS.getOrDefault(surface.style(), DEFAULT);
         var resource = Minecraft.getInstance().getResourceManager().getResource(surface.texture());
@@ -157,6 +230,7 @@ final class ArmourLight {
             }
             out.pos = new float[most * 12];
             out.v = new float[most];
+            out.off = new float[most];
             out.face = new short[most];
             out.ul = new byte[most];
             out.cols = new byte[most];
@@ -211,6 +285,9 @@ final class ArmourLight {
                         corner(out.pos, at + 6, ax, ay, az, e1x, e1y, e1z, e2x, e2y, e2z, s1, t1);
                         corner(out.pos, at + 9, ax, ay, az, e1x, e1y, e1z, e2x, e2y, e2z, s0, t1);
                         out.v[n] = (ay + e1y * sm + e2y * tm) * 16f + 2f;
+                        // how far it stands off the sleeve (the arm is two texels each way from its middle, a sleeve and its cuff two more)
+                        float cx = (ax + e1x * sm + e2x * tm) * 16f, cz = (az + e1z * sm + e2z * tm) * 16f;
+                        out.off[n] = Math.min(4f, Math.max(0f, Math.max(Math.abs(cx - axis), Math.abs(cz)) - 4f));
                         out.face[n] = (short) f;
                         out.ul[n] = (byte) Math.min(127, firstAlong ? j : i);
                         out.cols[n] = (byte) Math.min(127, firstAlong ? w2 : w1);
@@ -276,8 +353,12 @@ final class ArmourLight {
      */
     static float light(FxStyle style, Cells c, int k, float t, int seed, float charge, boolean awake) {
         SetStyle set = c.style;
-        float v = c.v[k];
+        float v = c.v[k], off = c.off[k];
         int q = c.face[k], ul = c.ul[k], cols = Math.max(1, c.cols[k]), role = c.role[k], f = c.side[k];
+        // what stands off the arm lights late: the light has to run out along it (to the fist it arrives later; from the
+        // hand it grows later)
+        float out = off * 0.8f * set.tips;
+        if (out > 0f) v = fromHand(style) ? v - out : v + out;
         int vi = Mth.floor(v);
         float reach = charge * ROWS;
         boolean line = role >= TRIM; // the set's own lines: its trims and what glows of itself
@@ -426,11 +507,29 @@ final class ArmourLight {
                 if (here && (line || Math.floorMod(ul + vi, 3) == 0)) i = 0.6f;
             }
         }
-        if (i == 0f && role == SOFT && set.soak > 0f && region) return set.soak * (0.8f + 0.2f * Mth.sin(t * 0.3f + q));
+        if (i == 0f && !line && region) {
+            // nothing of the motif here: a texel may still catch the light for a moment (mail, rivets), or cloth hold a glow
+            if (set.glitter > 0f && hash(seed, q * 13 + ul, vi * 7 + (int) (t * 0.5f)) > 1f - 0.07f * set.glitter) return 0.95f * set.gain(role);
+            if (role == SOFT && set.soak > 0f) return set.soak * (0.8f + 0.2f * Mth.sin(t * 0.3f + q));
+            return 0f;
+        }
         if (role == EMIT && i > 0f) i *= 1f - 0.3f * set.shimmer * hash(seed, q * 7 + ul, vi + (int) (t * 0.6f));
-        // cloth and plate take the light by their own painting: a bright texel more, a dark one less, so the piece still reads
-        if (!line && i > 0f) i *= 0.5f + 0.65f * ((c.lum[k] & 255) / 255f);
+        if (!line && i > 0f) {
+            // cloth and plate take the light by their own painting, so the piece still reads: its bright texels more
+            // (grain +1) or its dark ones (grain -1: the light sits in the cracks)
+            float lum = (c.lum[k] & 255) / 255f;
+            i *= 0.5f + 0.65f * (lum * (1f + set.grain) + (1f - lum) * (1f - set.grain)) * 0.5f;
+            // rows of scales or feathers: a wave of shade running down them
+            if (set.ripple > 0f) i *= 1f - 0.35f * set.ripple * (0.5f + 0.5f * Mth.sin(t * 0.45f - v * 1.4f + q * 0.7f));
+        }
+        if (i > 0f && off > 0f) i *= 1f + 0.35f * set.tips * Math.min(off, 3f) / 3f; // what stands off the arm burns a little brighter
         return i > 0f ? i * set.gain(role) : i;
+    }
+
+    /** The types whose light grows back from the hand (the rest run to the fist). */
+    private static boolean fromHand(FxStyle style) {
+        return style == FxStyle.HEAT || style == FxStyle.SHADOW || style == FxStyle.MIND || style == FxStyle.SOUL || style == FxStyle.SPIRIT
+                || style == FxStyle.FROST;
     }
 
     // ---- drawing ------------------------------------------------------------------------------------------------------
@@ -484,8 +583,12 @@ final class ArmourLight {
                         alpha = 0.62f * fade * Math.min(1f, -i);
                     } else {
                         // the lines are crisp; cloth and plate are tinted, never painted out
-                        colour = mix(style.mid, style.core, Mth.clamp((i - 0.55f) * 2.2f + flash, 0f, 1f));
-                        alpha = fade * Mth.clamp(c.role[k] >= TRIM ? 0.25f + 0.75f * i : 0.1f + 0.55f * i, 0f, 1f);
+                        // never all the way to the core's white but at a release: a line that is a wide plate, lit white by a
+                        // passing pulse, was a blown-out patch in the film of all 29 sets
+                        colour = mix(style.mid, style.core, Mth.clamp(Mth.clamp((i - 0.55f) * 2.2f, 0f, 1f) * 0.7f + flash, 0f, 1f));
+                        // (the second film: lines at 0.25 + 0.75 of their light painted the wide cuff plates out, and a floor
+                        // of 0.1 under every cloth and plate cell hazed the whole arm; the piece must keep its own colours)
+                        alpha = fade * (c.role[k] >= TRIM ? Math.min(0.78f + 0.2f * flash, 0.18f + 0.55f * i) : Math.min(1f, 0.62f * i));
                     }
                     int argb = (colour & 0xFFFFFF) | (Math.round(alpha * 255) << 24);
                     for (int v = 0; v < 12; v += 3) vc.addVertex(pose, p[at + v] + lx, p[at + v + 1] + ly, p[at + v + 2] + lz).setColor(argb);

@@ -1053,7 +1053,7 @@ MOVE_SOUNDS = {"hymn": {"swing": "cast"}, "refrain": {"swing": "cast", "impact":
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 300,
+    "stance": 160,
     "intro": {"pose": "kneel", "move": "wake"},  # she waits sunk down on her curled arms, and rises
     "phases": [
         {"pool": [

@@ -344,7 +344,9 @@ public final class Embers {
         }
         HearthService.player(sp).respawnAtHearth = true;
         HearthService.player(sp).respawnHearth = h.owner;
-        if (h.owner.equals(sp.getUUID()) && h.hearthfire() && h.rooms.isEmpty()) {
+        // only before the first room: once one was read the card says to right-click the fire for the guide, and that
+        // must never lift the coal, whatever the last scan read (SPEC §27.14)
+        if (h.owner.equals(sp.getUUID()) && h.hearthfire() && !h.hadRoom()) {
             lift(sp, level, h);
             return;
         }

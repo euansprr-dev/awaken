@@ -148,10 +148,13 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
             // the wall beside you: brackets of the fungus have come through it, each a dark cap with its gills glowing along
             // the underside, and a light in the air beside some of those, so the shafts and the narrow ways are lit from their
             // own walls. (The first pass set gills, stalk and cap cell by cell at random, and in the real game every wall read
-            // as a chequer of five blocks; a wall is rock now, with whole brackets in it and moss creeping up from its foot.)
+            // as a chequer of five blocks; a wall is rock now, with whole brackets in it and moss creeping up from its foot.
+            // Once rooms had lumps, piers and banked ground there was twice the wall for them to come through, and a room read
+            // as lit cubes scattered on the dark again: in a room a bracket is half as common now, and the room is lit by its
+            // roof's clusters and its well instead.)
             int ax = x + wx, az = z + wz;
             BlockState at = v.get(ax, y, az);
-            double edge = shaft || narrow ? 0.3 : 0.42;
+            double edge = shaft || narrow ? 0.3 : 0.56;
             if (at == m.stone || at == m.loam || at == m.veined) {
                 if (bracket(ax, y, az) > edge) {
                     boolean under = up <= 0 || bracket(ax, y - 1, az) <= edge;
@@ -226,7 +229,7 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xbfe8e0, 0.7F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x4a8a90, 0.5F).light(lord.cx, lord.feet + 4, lord.cz, 0x80e0d8, 18, 0.8F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): wells grown through: round hollows, a well you walk round, caps to cross on. */
@@ -234,5 +237,18 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.OVAL, Cave.Form.RING, Cave.Form.PIT, Cave.Form.RIFT), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
                 List.of(Arena.Plan.ROTUNDA, Arena.Plan.RING), List.of(Chasm.Kind.PILLARS, Chasm.Kind.HANGERS, Chasm.Kind.FORD, Chasm.Kind.STEPS), false, 2.3, 4);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): sprouts everywhere off the way, threads of it over the earth, moss drifted against the rock, roots that glow. */
+    @Override
+    protected Trim trim(Sporewell.M m) {
+        return new Trim(named("fungal_rock_stairs"), named("fungal_rock_stairs"), named("fungal_moss_drift"), named("fungal_spores"),
+                namedAll("glowcap_sprouts", "glowcap_sprouts", "mycelium_threads"), namedAll("lumen_roots"), 1.3);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xa8f0e0;
     }
 }

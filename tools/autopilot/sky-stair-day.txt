@@ -1,0 +1,144 @@
+# The sky platform by day (SPEC §17.9): the stair from the ground, the wings' hall and the case from the pier, a climb
+# with the rope up the stair's stones, and the core's answer below rank C ("Come back at rank C. These wings will wait
+# for you."). Third person for the climb.
+# Run on CI: tools/tour-ci.sh tools/autopilot/sky-stair-day.txt 1800
+world sky_stair_day survival 4251
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+# the opening skipped, as the dusk tour does: the wake-up scene holds the view on the city's roofs through every teleport
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd time set 5500
+cmd awaken ascent grant none
+cmd awaken ascent grant tether
+cmd awaken ascent sky goto stair
+arms waitserver 100
+wait 100
+hud off
+shot sky_day_00_approach
+cmd awaken ascent sky goto deck
+wait 60
+cmd awaken ascent pier
+wait 40
+look 135 -4
+wait 10
+shot sky_day_02_case_from_pier
+cmd awaken ascent sky goto stair
+wait 80
+camera back
+hud on
+shot sky_day_03_foot
+cmd awaken ascent pilot run stair
+wait 40
+shotnow sky_day_10_climb
+wait 40
+shotnow sky_day_11_climb
+wait 40
+shotnow sky_day_12_climb
+wait 40
+shotnow sky_day_13_climb
+wait 40
+shotnow sky_day_14_climb
+wait 40
+shotnow sky_day_15_climb
+wait 40
+shotnow sky_day_16_climb
+wait 40
+shotnow sky_day_17_climb
+wait 40
+shotnow sky_day_18_climb
+wait 40
+shotnow sky_day_19_climb
+wait 20
+shotnow sky_day_20_top
+wait 20
+shotnow sky_day_21_top
+wait 20
+shotnow sky_day_22_top
+wait 20
+shotnow sky_day_23_top
+wait 20
+shotnow sky_day_24_top
+wait 20
+shotnow sky_day_25_top
+wait 20
+shotnow sky_day_26_top
+wait 20
+shotnow sky_day_27_top
+wait 20
+shotnow sky_day_28_top
+wait 20
+shotnow sky_day_29_top
+wait 20
+shotnow sky_day_30_top
+wait 20
+shotnow sky_day_31_top
+wait 20
+shotnow sky_day_32_top
+wait 20
+shotnow sky_day_33_top
+wait 20
+shotnow sky_day_34_top
+wait 20
+shotnow sky_day_35_top
+wait 20
+shotnow sky_day_36_top
+wait 20
+shotnow sky_day_37_top
+wait 20
+shotnow sky_day_38_top
+wait 20
+shotnow sky_day_39_top
+wait 20
+shotnow sky_day_40_top
+wait 20
+shotnow sky_day_41_top
+wait 20
+shotnow sky_day_42_top
+wait 20
+shotnow sky_day_43_top
+wait 20
+shotnow sky_day_44_top
+wait 20
+shotnow sky_day_45_top
+wait 20
+shotnow sky_day_46_top
+wait 20
+shotnow sky_day_47_top
+wait 20
+shotnow sky_day_48_top
+wait 20
+shotnow sky_day_49_top
+wait 20
+shotnow sky_day_50_top
+wait 20
+shotnow sky_day_51_top
+wait 20
+shotnow sky_day_52_top
+wait 20
+shotnow sky_day_53_top
+wait 20
+shotnow sky_day_54_top
+wait 20
+shotnow sky_day_55_top
+cmd awaken ascent pilot stop
+camera first
+look 135 -10
+wait 20
+shotnow sky_day_99_first_person
+info
+quit

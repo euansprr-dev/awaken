@@ -300,7 +300,7 @@ public final class Sleep {
             for (int dx = -r; dx <= r; dx++)
                 for (int dz = -r; dz <= r; dz++) {
                     m.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
-                    if (!level.isLoaded(m)) continue;
+                    if (!dev.awaken.core.api.Ready.loaded(level, m)) continue;
                     if (test.test(level.getBlockState(m))) return Optional.of(m.immutable());
                 }
         return Optional.empty();

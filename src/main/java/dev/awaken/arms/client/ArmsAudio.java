@@ -52,6 +52,16 @@ final class ArmsAudio {
         play(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
     }
 
+    /** A deflect's clash by its size and what met the blade (SPEC §25 "The clash"); size -1 (the switch off) is the deflect before it. */
+    static void clash(Player p, @Nullable Entity by, int size) {
+        ArmsSounds.Voice[] mix = size < 0 ? null : ArmsSounds.clash(size, ArmsSounds.edge(by));
+        if (mix == null) {
+            deflect(p);
+            return;
+        }
+        for (ArmsSounds.Voice v : mix) playOne(p, v.sound().get(), v.volume(), v.pitch());
+    }
+
     static void block(Player p) {
         play(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
         play(p, ArmsSounds.BLOCK_STRUCK.get(), 1.0F, 1.0F);

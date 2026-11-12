@@ -44,13 +44,13 @@ final class HearthRoutes implements RoadHooks.HearthRoads {
             List<Vec3> pts = new ArrayList<>();
             boolean loaded = true;
             for (int i = start; dir > 0 ? i <= k : i >= k; i += dir) {
-                loaded &= level.isLoaded(BlockPos.containing(r.x()[i], r.y()[i], r.z()[i]));
+                loaded &= dev.awaken.core.api.Ready.loaded(level, BlockPos.containing(r.x()[i], r.y()[i], r.z()[i]));
                 pts.add(new Vec3(r.x()[i], r.y()[i] + 1, r.z()[i]));
             }
             for (int s = 1; s <= over && loaded; s++) {
                 double x = ox + (tx - ox) * s / over, z = oz + (tz - oz) * s / over;
                 BlockPos at = BlockPos.containing(x, 0, z);
-                if (!level.isLoaded(at)) {
+                if (!dev.awaken.core.api.Ready.loaded(level, at)) {
                     loaded = false;
                     break;
                 }

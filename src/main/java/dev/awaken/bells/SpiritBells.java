@@ -110,7 +110,7 @@ final class SpiritBells {
             BellCatalog.Def d = BellCatalog.of(e.getKey());
             if (k.done || Bells.has(p, d.id())) continue;
             double dx = p.getX() - k.pos.getX() - 0.5, dz = p.getZ() - k.pos.getZ() - 0.5;
-            if (dx * dx + dz * dz > NEAR * NEAR || !level.isLoaded(k.pos) || !done(level, d.id(), k, p, dx * dx + dz * dz, mine)) continue;
+            if (dx * dx + dz * dz > NEAR * NEAR || !dev.awaken.core.api.Ready.loaded(level, k.pos) || !done(level, d.id(), k, p, dx * dx + dz * dz, mine)) continue;
             k.done = true;
             BellWorld.get(level.getServer()).setDirty();
             level.playSound(null, k.pos, BellContent.note(d.no()), SoundSource.AMBIENT, 1.5F, 1.2F);

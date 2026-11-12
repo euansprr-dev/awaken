@@ -137,6 +137,8 @@ final class SwingTests {
     }
 
     private static final Set<String> TWO_HANDED = Set.of("katana", "greatblade", "maul", "spear", "glaive", "scythe", "warstaff");
+    /** The heavies that chop down from a charge held raised (swing_studio.RAISED_HEAVY; SPEC §25 "The Maul's charge is held raised"). */
+    private static final Set<String> RAISED_HEAVY = Set.of(Arms.LONGSWORD, Arms.AXE, Arms.MAUL, Arms.GREATBLADE);
 
     /**
      * The baked file's feel rules: every swish starts on the press or after it and before the blow's active ticks end,
@@ -182,6 +184,24 @@ final class SwingTests {
                 x = at.x / -at.z * f / (16F / 9F);
                 y = at.y / -at.z * f;
                 h.assertTrue(at.z < -0.2F && Math.abs(x) < 2F && Math.abs(y) < 2.2F, a.id() + "'s charge keeps its hand by the frame (" + x + ", " + y + ")");
+                // the Maul's is held raised, its fist above the middle of the screen (Euan 2026-11-11: "instead of actually
+                // like bringing it up as if you were going to hit down", of the hammer held low and leaning ahead)
+                if (a.id().equals(Arms.MAUL) && st.offHand() != null) {
+                    // and its haft stands up from the fists, never leaning ahead of them as a hammer presented (the old
+                    // hold's leaned 31 degrees ahead): up the haft is from the off hand to the sword hand
+                    Vector3f up = q.transform(new Vector3f(st.hand()).sub(st.offHand()), new Vector3f()).normalize();
+                    h.assertTrue(y > 0F && up.y > 0.9F && up.z > -0.05F, "the Maul's charge holds it raised (fist " + x + ", " + y + "; haft " + up + ")");
+                }
+                // every heavy that chops down charges raised, the way it is about to go (Euan 2026-11-11: "It should actually
+                // charge in the direction it's about to go in"; the Axe, then the Longsword and the Greatblade): its fist by
+                // the middle's height on the sword side, and the hand's up (the weapon's way within 32 degrees) tipped toward
+                // that shoulder and up, never leaning far ahead (the old holds' tops leaned in toward the middle or straight up
+                // and 30 degrees or more ahead)
+                if (RAISED_HEAVY.contains(a.id())) {
+                    Vector3f up = q.transform(new Vector3f(0F, 1F, 0F));
+                    h.assertTrue(x > 0F && y > -0.1F && up.x > 0.25F && up.y > 0.6F && up.z > -0.4F,
+                            a.id() + "'s charge holds it raised toward the sword shoulder (fist " + x + ", " + y + "; up " + up + ")");
+                }
             }
             boolean two = TWO_HANDED.contains(a.id());
             h.assertTrue((st.offHand() != null) == two && (st.vanillaOffHand() != null) == two,

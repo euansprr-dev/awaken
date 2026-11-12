@@ -52,6 +52,16 @@ final class LensFrame {
     // the Air (SPEC §22 "Steady Light"): the sun's own direction (under the horizon by night), how much of the Air is on,
     // the game's sky colour this frame and its stars' brightness
     private float airSunX, airSunY = 1f, airSunZ, airOn, skyR, skyG, skyB, stars;
+    // a land with a sky of its own (lens_air.glsl, airLand): its horizon's colour, and how far the sky is the land's
+    private float landR, landG, landB, landK;
+
+    /** This frame's land (SPEC §22 "The Air in other worlds"): its horizon's colour, and 1 where the Air draws the land's own sky. */
+    void land(float r, float g, float b, float k) {
+        landR = r;
+        landG = g;
+        landB = b;
+        landK = k;
+    }
 
     /** This frame's Air: toward the sun, its strength (0: off), the game's sky colour and star brightness. */
     void air(float sunX, float sunY, float sunZ, float on, float r, float g, float b, float starBrightness) {
@@ -84,6 +94,33 @@ final class LensFrame {
         litY = y;
         litZ = z;
         litOn = on;
+    }
+
+    // development (/awaken lens paths): the light pass marks which part of the Sun Pass answered each pixel
+    private boolean paths;
+
+    void paths(boolean on) {
+        paths = on;
+    }
+
+    // the small shade's reach (texels 30 to 33, w): how wide a texel of the light buffer may be on a surface, in the
+    // art's pixels (sixteenths of a block), before the depth-made contact shadows and the ambient shade fade out, each
+    // a start and an end (an end not past its start: no fade)
+    private float contactFrom, contactTo, ambientFrom, ambientTo;
+
+    void small(float contactFrom, float contactTo, float ambientFrom, float ambientTo) {
+        this.contactFrom = contactFrom;
+        this.contactTo = contactTo;
+        this.ambientFrom = ambientFrom;
+        this.ambientTo = ambientTo;
+    }
+
+    // the edge's hold (texel 34, w): how much of a contact shadow whose caster the screen can no longer see is let go
+    // each frame (0: none is kept, the shadow goes out with its caster)
+    private float edgeHold;
+
+    void edgeHold(float letGo) {
+        edgeHold = letGo;
     }
 
     /** This frame's clouds (L4): the layer's base height (0: Lens draws none), cover 0..1, wind drift in blocks, colour. */
@@ -143,8 +180,13 @@ final class LensFrame {
         put(12, (float) (x - Math.floor(x / ring) * ring), (float) y, (float) (z - Math.floor(z / ring) * ring), frame);
         put(13, valid ? (float) (x - prevX) : 0f, valid ? (float) (y - prevY) : 0f, valid ? (float) (z - prevZ) : 0f, valid ? 1f : 0f);
         put(14, lightX, lightY, lightZ, light);
-        // (15 w, 20 zw and 21 w: the lit air, whether it is there and the camera's place in its volume, in blocks from
-        // its corner)
+        // (15 w, 20 zw and 28 w: the lit air, whether it is there and the camera's place in its volume, in blocks from
+        // its corner. Its z rode in texel 21's w, and the world's own projection copies the whole of texel 21 over
+        // this one every frame (LensClient; its w is 0): the shader took the camera to stand at the volume's z edge,
+        // so every surface more than two blocks to the camera's +z was judged by a slice of air some 70 blocks away,
+        // open sky as a rule, and "sure of the sun" there: no shadow. A tree's shadow was whole from one side and gone
+        // from the other, with a straight edge that followed the camera, Euan 11 and 12 Nov. Nothing rides on a texel
+        // that anything else writes.)
         float lcx = (float) (x - litX), lcy = (float) (y - litY), lcz = (float) (z - litZ);
         put(15, height != null ? ring : 0f, height != null ? height.maxTop() : -64f, LensHeightfield.TRUSTED, litOn && height != null ? 1f : 0f);
         put(16, zeroToOne ? 1f : 0f, moon ? 1f : 0f, rain, 0.05f);
@@ -162,17 +204,24 @@ final class LensFrame {
         plateCount = dev.awaken.holo.client.HoloWorld.lensPlates(plates);
         int stormCount = dev.awaken.living.client.StormSky.lensCells(storms, x, y, z);
         put(20, plateCount, stormCount, lcx, lcy);
-        // 21: the sun on screen (uv; z 1 when it is ahead), the estimate WorldProjection's replaces
-        put(SUN, sunU, sunV, sunFront, lcz);
+        // 21: the sun on screen (uv; z 1 when it is ahead), the estimate WorldProjection's replaces: all four
+        // components of it, so nothing else lives here
+        put(SUN, sunU, sunV, sunFront, 0f);
         // 22-23: the Air (lens_air.glsl)
         put(22, airSunX, airSunY, airSunZ, airOn);
         put(23, skyR, skyG, skyB, stars);
         for (int k = 0; k < dev.awaken.holo.client.HoloWorld.MAX; k++) {
             int o = k * 9, t = 24 + k * 3;
             boolean on = k < plateCount;
-            put(t, on ? plates[o] : 0f, on ? plates[o + 1] : 0f, on ? plates[o + 2] : 0f, 0f);
-            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f, 0f);
-            put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f, 0f);
+            // (the plates' fourth components are spare: texels 24, 25, 26 carry the land's horizon and 27 its share;
+            // 28 the camera's z in the lit air's volume; 29 the development view of the Sun Pass's parts; 30 to 33 the
+            // small shade's reach: the contact shadows' fade, then the ambient shade's; 34 the edge's hold)
+            put(t, on ? plates[o] : 0f, on ? plates[o + 1] : 0f, on ? plates[o + 2] : 0f,
+                    k == 0 ? landR : k == 1 ? landK : k == 2 ? contactFrom : k == 3 ? ambientTo : 0f);
+            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f,
+                    k == 0 ? landG : k == 1 ? lcz : k == 2 ? contactTo : k == 3 ? edgeHold : 0f);
+            put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f,
+                    k == 0 ? landB : k == 1 ? (paths ? 1f : 0f) : k == 2 ? ambientFrom : 0f);
         }
         // 42-47: up to two storm cells, three texels each (layout in lens_storm_frame.glsl)
         for (int k = 0; k < dev.awaken.living.client.StormSky.MAX; k++) {

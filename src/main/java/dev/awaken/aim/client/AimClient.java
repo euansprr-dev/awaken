@@ -41,6 +41,10 @@ public final class AimClient {
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(ClientTickEvent.Pre.class, e -> key());
         bus.addListener(ClientTickEvent.Post.class, e -> Lock.tick(Minecraft.getInstance()));
+        // the ring's own moments (SPEC §68.2): the boss whose ring shows without a lock, the guard going up, how it answered
+        bus.addListener(ClientTickEvent.Post.class, e -> Reticle.tick(Minecraft.getInstance()));
+        dev.awaken.core.api.Strikes.installAnswers(Reticle::onAnswer);
+        bus.addListener(net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingOut.class, e -> Reticle.reset());
         bus.addListener(RenderFrameEvent.Pre.class, e -> Lock.frame(Minecraft.getInstance(), e.getPartialTick().getGameTimeDeltaPartialTick(false)));
         bus.addListener(CalculatePlayerTurnEvent.class, Lock::turn);
         bus.addListener(ExtractLevelRenderStateEvent.class, Reticle::extract);
@@ -63,10 +67,14 @@ public final class AimClient {
         boolean clicked = false;
         while (KEY.consumeClick()) clicked = true;
         if (!clicked || mc.player == null || mc.gui.screen() != null || !AimConfig.enabled() || Lock.paused(mc)) return;
-        if (Lock.press(mc) && KEY.same(mc.options.keyPickItem)) {
+        // a press the lock didn't want may be a ping (SPEC §70.2): in a party it points at what the crosshair is on
+        if ((Lock.press(mc) || freePress.getAsBoolean()) && KEY.same(mc.options.keyPickItem)) {
             while (mc.options.keyPickItem.consumeClick()) {
-                // spent on the lock
+                // spent on the lock, or on the ping
             }
         }
     }
+
+    /** What a press does when it neither locked nor let go; true if it used the press. Set by the together module. */
+    public static java.util.function.BooleanSupplier freePress = () -> false;
 }

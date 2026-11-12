@@ -3,7 +3,7 @@
  "id": "bell_warden",
  "moves": "bell_warden",
  "duel": true,
- "stance": 280,
+ "stance": 150,
  "intro": {
   "pose": "kneel",
   "move": "wake"

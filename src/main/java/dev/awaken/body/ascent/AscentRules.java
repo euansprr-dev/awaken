@@ -65,8 +65,36 @@ public final class AscentRules {
     public static final double DOUBLE_JUMP = 0.52;
     /** An air dash: once an airtime, along the look's heading at this speed (or a third faster than you were going). */
     public static final double DASH_SPEED = 0.95, DASH_GAIN = 1.33, DASH_LIFT = 0.08;
+    /**
+     * How long a sprint press the air dash couldn't take yet is kept (ticks): one made on the rope (a swing, a pull), in
+     * a glide that can't fly, or in the tick of a double jump goes the first tick the dash can (SPEC §17.32, "The dash's
+     * press").
+     */
+    public static final int DASH_KEPT = 6;
+
+    /**
+     * Whether sprint was pressed this tick (SPEC §17.32, "The dash's press"): the key going down, or a real press since
+     * the last tick ({@code taps}: a held key let go and pressed again inside one tick, a toggle sprint's click), which
+     * the key's state alone can't show. A held key is no press, and the key's repeats are none either.
+     */
+    public static boolean sprintPress(boolean down, boolean was, int taps) {
+        return down && !was || taps > 0;
+    }
+
+    /** Whether a sprint press kept at {@code pressedAt} is still the dash's at {@code now} ({@link #DASH_KEPT}). */
+    public static boolean dashKept(int pressedAt, int now) {
+        return now >= pressedAt && now - pressedAt <= DASH_KEPT;
+    }
     /** A dive slam: from at least this high, straight down at this speed; the landing's shock reaches this far. */
     public static final double SLAM_MIN_HEIGHT = 4, SLAM_SPEED = 1.7, SLAM_RADIUS = 3.5;
+    /**
+     * The aimed dive (SPEC §17.33): attack in a leap's carry flies the body down to the point under the crosshair. The
+     * look finds it within DIVE_REACH of the eye, at least DIVE_DROP_MIN under the feet. It flies at DIVE_SPEED (under
+     * the slam's 1.7, so its landing never hits harder), reached over DIVE_RAMP ticks. After DIVE_MAX_TICKS the carry
+     * takes the body back. Once an airtime, and DIVE_COOL ticks from one dive's start to the next.
+     */
+    public static final double DIVE_REACH = 24, DIVE_DROP_MIN = 1, DIVE_SPEED = 1.6;
+    public static final int DIVE_RAMP = 3, DIVE_MAX_TICKS = 30, DIVE_COOL = 40;
 
     // ---- carry: the momentum you keep after letting go ------------------------------------------------------------
     public static final double CARRY_DRAG_H = 0.988, CARRY_DRAG_V = 0.98;
@@ -96,6 +124,9 @@ public final class AscentRules {
     public static final double SOAR_FLAP = 0.38;
 
     /** A body's point and velocity: the hand point on a rope, the feet otherwise. Plain fields, nothing allocated. */
+    /** The spring off a top (SPEC §62): the leap's speed along the look and its rise. */
+    public static final double SPRING_SPEED = 0.6, SPRING_UP = 0.46;
+
     public static final class Kin {
         public double x, y, z, vx, vy, vz;
 
@@ -499,26 +530,6 @@ public final class AscentRules {
 
     // ---- carry ------------------------------------------------------------------------------------------------------
 
-    /**
-     * The slow beat at a big leap's apex (weight, SPEC §17.15): a carry flying fast ({@link #SLOW_SPEED}+) and well up
-     * ({@link #SLOW_HEIGHT}+ over the ground) hangs at the top of its arc, {@link #SLOW_TICKS} ticks at {@link #SLOW}
-     * of time (once per {@link #SLOW_EVERY}): the same arc, slower.
-     */
-    public static final double SLOW = 0.45, SLOW_SPEED = 0.7, SLOW_HEIGHT = 6;
-    public static final int SLOW_TICKS = 8, SLOW_EVERY = 60;
-
-    /** One tick of the carry at {@code s} of time: gravity, drag and travel all scaled (no steering for the beat). */
-    public static void carryStepSlow(Kin k, double s) {
-        k.vy -= G * s;
-        double dh = Math.pow(CARRY_DRAG_H, s);
-        k.vx *= dh;
-        k.vz *= dh;
-        k.vy *= Math.pow(CARRY_DRAG_V, s);
-        k.x += k.vx * s;
-        k.y += k.vy * s;
-        k.z += k.vz * s;
-    }
-
     /** One tick of flying free after letting go: gravity, light drag, and input that bends the path without adding speed. */
     public static void carryStep(Kin k, float yaw, double fwd, double right, double[] scratch) {
         carryStep(k, yaw, fwd, right, scratch, CARRY_DRAG_H);
@@ -547,6 +558,50 @@ public final class AscentRules {
         k.x += k.vx;
         k.y += k.vy;
         k.z += k.vz;
+    }
+
+    // ---- the aimed dive (SPEC §17.33) ---------------------------------------------------------------------------------
+
+    /** Whether feet at (fx, fy, fz) may dive to (tx, ty, tz): at least DIVE_DROP_MIN under them, within the dive's reach. */
+    public static boolean diveTo(double fx, double fy, double fz, double tx, double ty, double tz) {
+        double dx = tx - fx, dy = ty - fy, dz = tz - fz;
+        return -dy >= DIVE_DROP_MIN && dx * dx + dy * dy + dz * dz <= (DIVE_REACH + 1.62) * (DIVE_REACH + 1.62);
+    }
+
+    /** The dive's speed on its {@code age}th tick (0: the press's tick): up to DIVE_SPEED over DIVE_RAMP whole ticks. */
+    public static double diveSpeed(int age) {
+        return DIVE_SPEED * Math.min(1, (age + 1) / (double) DIVE_RAMP);
+    }
+
+    /**
+     * One tick of the aimed dive, with no gravity and no drag: straight at the point at the dive's speed. Once the point is
+     * nearer than a tick's flight, the step goes onto it and a quarter block lower, so the floor under it stops the
+     * feet and the landing is read there. After that, straight down at the dive's speed. Returns whether the point has been
+     * reached ({@code there}: it had been, before this tick).
+     */
+    public static boolean diveStep(Kin k, double tx, double ty, double tz, int age, boolean there) {
+        double sp = diveSpeed(age);
+        if (there) {
+            k.vx = 0;
+            k.vy = -sp;
+            k.vz = 0;
+        } else {
+            double dx = tx - k.x, dy = ty - k.y, dz = tz - k.z, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (d <= sp) {
+                k.vx = dx;
+                k.vy = dy - 0.25;
+                k.vz = dz;
+                there = true;
+            } else {
+                k.vx = dx / d * sp;
+                k.vy = dy / d * sp;
+                k.vz = dz / d * sp;
+            }
+        }
+        k.x += k.vx;
+        k.y += k.vy;
+        k.z += k.vz;
+        return there;
     }
 
     // ---- glide ------------------------------------------------------------------------------------------------------

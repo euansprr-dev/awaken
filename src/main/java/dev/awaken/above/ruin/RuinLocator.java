@@ -25,7 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Finds Precursor ruins without generating chunks: walks the structure sets' placement grids (pure maths), then checks
- * the start biome for the nearest candidates only. Results per chunk are cached for the session. Used by the
+ * the start biome for the nearest candidates only. Results per chunk are cached for the session; a game's lookup on the
+ * server thread has the land's samples taken on a thread of their own and finds them on a later call. Used by the
  * Scanner's sky omens, the Observatory and {@code /awaken above ruin locate}.
  */
 public final class RuinLocator {
@@ -35,7 +36,7 @@ public final class RuinLocator {
 
     private static final Map<Long, Boolean> VALID = new ConcurrentHashMap<>();
     private static final int MAX_UNCACHED = 8;
-    private static long cachedSeed;
+    private static volatile long cachedSeed;
 
     private static long key(ChunkPos chunk, RuinKind kind) {
         return chunk.pack() * 31 + kind.ordinal();
@@ -49,15 +50,121 @@ public final class RuinLocator {
         return VALID.containsKey(key(chunk, kind));
     }
 
+    // ---- off the server thread (SPEC §12 LandFirst, §17.11) ------------------------------------------------------------
+
+    /**
+     * A budget at least this big is a command's or a test's: its spots are worked out on the spot, wherever it asks. A
+     * game's own lookups (the Horizon, the windways, the markers, the scanner: 4-14) never are on the server thread.
+     */
+    static final int ASK_NOW = 32;
+    /** At most this many spots wait to be worked out (a later call asks again for the rest). */
+    static final int MOST_WAITING = 64;
+    /** While land comes in round a player each spot waits this long at most first: a trickle, never the generator's cores. */
+    static final long HOLD_NS = 2_000_000_000L;
+    private static final java.util.Set<Long> WORKING = ConcurrentHashMap.newKeySet();
+    private static java.util.concurrent.@Nullable ExecutorService finder;
+
+    private static synchronized java.util.concurrent.ExecutorService finder() {
+        if (finder == null) finder = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "Awaken ruin finder");
+            t.setDaemon(true);
+            t.setPriority(Thread.MIN_PRIORITY);
+            return t;
+        });
+        return finder;
+    }
+
+    /**
+     * Whether the spot takes the ruin, or null while that's being worked out. On the server thread a spot not known yet
+     * is worked out on the finder's thread (each is a noise column: tens of milliseconds with Tectonic, and Euan's join of
+     * 12 Nov stood 32 s in them), unless {@code now}; anywhere else, at once.
+     */
+    private static @Nullable Boolean known(ServerLevel level, RuinKind kind, Holder<Structure> structure, ChunkPos chunk, boolean now) {
+        long k = key(chunk, kind);
+        Boolean v = VALID.get(k);
+        if (v != null) return v;
+        if (now || !level.getServer().isSameThread()) return valid(level, kind, structure, chunk);
+        if (WORKING.size() < MOST_WAITING && WORKING.add(k)) {
+            long seed = cachedSeed;
+            finder().execute(() -> {
+                try {
+                    dev.awaken.core.api.LandFirst.hold(HOLD_NS);
+                    // never into the next world's answers
+                    if (level.getServer().isRunning() && cachedSeed == seed) valid(level, kind, structure, chunk);
+                } catch (RuntimeException e) {
+                    dev.awaken.Awaken.LOG.warn("[above] working out a {} ruin's spot at {} failed: {}", kind, chunk, e.toString());
+                } finally {
+                    WORKING.remove(k);
+                }
+            });
+        }
+        return null;
+    }
+
     private static boolean valid(ServerLevel level, RuinKind kind, Holder<Structure> structure, ChunkPos chunk) {
         return VALID.computeIfAbsent(key(chunk, kind), k -> {
-            int x = chunk.getMiddleBlockX(), z = chunk.getMiddleBlockZ();
             ChunkGenerator gen = level.getChunkSource().getGenerator();
+            // the spaced kinds are asked exactly as generation asks (the rule's neighbours must get the same answer there)
+            if (RuinSpacing.spaced(kind)) return RuinSpacing.validAt(kind, chunk, structure.value(), gen, level.getChunkSource().randomState(), level,
+                    level.uncachedBiomeResolver());
+            int x = chunk.getMiddleBlockX(), z = chunk.getMiddleBlockZ();
             Heightmap.Types hm = kind == RuinKind.OCEAN ? Heightmap.Types.OCEAN_FLOOR_WG : Heightmap.Types.WORLD_SURFACE_WG;
             int y = gen.getFirstOccupiedHeight(x, z, hm, level, level.getChunkSource().randomState());
             Holder<net.minecraft.world.level.biome.Biome> biome = level.getUncachedNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z));
             return structure.value().biomes().contains(biome);
         });
+    }
+
+    // ---- land made before the rule (SPEC §17.11 "Room between them") ------------------------------------------------
+
+    /** Spots the rule passes over, as their saved chunks have them: whether a start of the kind stands there. */
+    private static final Map<Long, Boolean> OLD = new ConcurrentHashMap<>();
+    private static final java.util.Set<Long> ASKED = ConcurrentHashMap.newKeySet();
+
+    /** The rule was turned off or on (a dev's seam check): what the saved chunks said is asked again. */
+    static void forgetOldLand() {
+        OLD.clear();
+        ASKED.clear();
+    }
+
+    /** The server stopped: the next world may share the seed but not the save. */
+    public static void forgetSave() {
+        forgetOldLand();
+        VALID.clear();
+        cachedSeed = 0;
+    }
+
+    /**
+     * Whether a spot the rule passes over holds a start all the same: land made before the rule keeps what stands in it.
+     * A loaded chunk is read at once; a saved one off the server thread (the answer is false until it comes, so a later
+     * call finds it); a chunk never made holds nothing.
+     */
+    static boolean standsFromBefore(ServerLevel level, RuinKind kind, Holder<Structure> structure, ChunkPos chunk) {
+        long k = key(chunk, kind);
+        Boolean known = OLD.get(k);
+        if (known != null) return known;
+        var loaded = level.getChunkSource().getChunkNow(chunk.x(), chunk.z());
+        if (loaded != null) {
+            var start = loaded.getStartForStructure(structure.value());
+            boolean stands = start != null && start.isValid();
+            OLD.put(k, stands);
+            return stands;
+        }
+        if (ASKED.add(k)) {
+            String id = kind.structure.identifier().toString();
+            level.getChunkSource().chunkMap.read(chunk)
+                    .thenAccept(tag -> OLD.put(k, tag.map(t -> holdsStart(t, id)).orElse(false)))
+                    .exceptionally(e -> {
+                        ASKED.remove(k);
+                        return null;
+                    });
+        }
+        return false;
+    }
+
+    /** Whether a saved chunk's data holds a valid start of this structure. */
+    static boolean holdsStart(net.minecraft.nbt.CompoundTag chunk, String structureId) {
+        return structureId.equals(chunk.getCompoundOrEmpty("structures").getCompoundOrEmpty("starts").getCompoundOrEmpty(structureId).getStringOr("id", ""));
     }
 
     /** Approximate centre of a ruin that starts in this chunk. */
@@ -118,18 +225,37 @@ public final class RuinLocator {
         candidates.sort(Comparator.comparingDouble(Candidate::dist));
         List<Found> out = new ArrayList<>();
         // Each uncached candidate costs a terrain height sample; cap them per call (results are cached, so repeated
-        // calls finish the job) to keep one call to a few milliseconds.
-        int checks = 0;
+        // calls finish the job). On the server thread the samples are taken on the finder's thread ({@link #known}).
+        int[] checks = {0};
+        RuinSpacing.Grids grids = RuinSpacing.Grids.of(level.registryAccess(), state.getLevelSeed());
+        var structures = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
+        boolean now = maxUncached >= ASK_NOW;
+        // the spacing rule's neighbours cost a sample each too, from the same budget (null: not known yet, ask later)
+        RuinSpacing.Ground ground = (k, chunk) -> {
+            var s = structures.get(k.structure);
+            if (s.isEmpty()) return false;
+            if (!cached(level, k, chunk)) {
+                if (checks[0] >= maxUncached) return null;
+                checks[0]++;
+            }
+            return known(level, k, s.get(), chunk, now);
+        };
         for (Candidate c : candidates) {
             if (out.size() >= max) break;
             BlockPos p = center(c.chunk(), origin.getY());
             boolean discovered = data != null && data.hasRuinNear(p, 48);
             if (undiscoveredOnly && discovered) continue;
             if (!cached(level, c.kind(), c.chunk())) {
-                if (checks >= maxUncached) continue;
-                checks++;
+                if (checks[0] >= maxUncached) continue;
+                checks[0]++;
             }
-            if (!valid(level, c.kind(), c.structure(), c.chunk())) continue;
+            // not known yet (worked out off the server thread): a later call finds it
+            if (!Boolean.TRUE.equals(known(level, c.kind(), c.structure(), c.chunk(), now))) continue;
+            if (grids != null && RuinSpacing.spaced(c.kind())) {
+                Boolean keeps = RuinSpacing.keeps(c.kind(), c.chunk(), grids, ground);
+                if (keeps == null) continue; // out of samples: a later call finishes it (they are cached)
+                if (!keeps && !standsFromBefore(level, c.kind(), c.structure(), c.chunk())) continue;
+            }
             out.add(new Found(c.kind(), p, discovered, c.dist()));
         }
         return out;

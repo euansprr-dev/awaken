@@ -176,6 +176,10 @@ def main(argv):
             assert n in names, f"{e.id} points at {n}, which no spec renders"
     if "--json" not in argv:
         todo = [s for s in sounds if not only or any(s.name.startswith(o) for o in only)]
+        # the sound audit (SPEC §66) remade these from the game's own recordings: they are not rendered any more
+        import sound_audit
+        gone = sound_audit.replaced_files()
+        todo = [s for s in todo if s.name not in gone]
         gtodo = [g for g in groups if not only or any(os.path.basename(f).startswith(o) for f in g.files for o in only)]
         print(f"rendering {len(todo)} of {len(sounds)} files, {len(gtodo)} of {len(groups)} groups")
         for s in todo:
@@ -187,6 +191,8 @@ def main(argv):
             g.write_manifest()  # keeps the last measured numbers
     write_events(events, lang)
     patch_biomes(biomes)
+    import sound_audit
+    sound_audit.build()  # the audit's rows back over the events just written (SPEC §66.2)
     ours = ("music_", "ui_", "amb_")
     stale = [f for f in os.listdir(SOUNDS) if f.endswith(".ogg") and f.startswith(ours) and f[:-4] not in names] \
         if os.path.isdir(SOUNDS) else []

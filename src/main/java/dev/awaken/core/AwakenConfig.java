@@ -42,6 +42,8 @@ public final class AwakenConfig {
     public static final ModConfigSpec.BooleanValue WARDS = B.comment("Precursor wards: blocks placed near Precursor sites crumble after 3 s and come back,",
                     "and a site's own walls can't be broken (SPEC §17)")
             .define("wards", true);
+    public static final ModConfigSpec.BooleanValue FINDS = B.comment("Finds (SPEC 58): the small things to find and do in the overworld, in new chunks. Off: none are placed; ones already standing keep working.")
+            .define("finds", true);
     public static final ModConfigSpec.BooleanValue WILDS = B.comment("The Wilds: how you arrived, the Horizon line, biome discoveries and sky-only rewards (SPEC §17)")
             .define("wilds", true);
     public static final ModConfigSpec.BooleanValue GATE_WORLDS = B.comment("Gate Worlds: new gates' floors become worlds of their theme (SPEC §38).",
@@ -50,6 +52,10 @@ public final class AwakenConfig {
     public static final ModConfigSpec.BooleanValue GATE_REALMS = B.comment("Realms: new gates can be whole places instead of floors (SPEC §50.7).",
                     "Off: new gates are made as before. Realms already standing keep working.")
             .define("gateRealms", false);
+    public static final ModConfigSpec.BooleanValue GATE_OPEN_LANDS = B.comment("Open lands: new gates can be a land under an open sky (SPEC §50.7 and §38.11).",
+                    "Off (12 Nov, until they are fixed): new gates are the dungeon runs, the places under a roof and the cave worlds,",
+                    "and a gate standing on an open land that nobody has entered is made again as one of those. A gate someone has been in keeps what it is.")
+            .define("gateOpenLands", false);
     public static final ModConfigSpec.BooleanValue GATE_WORLDS_DEPTH = B.comment("Gate Worlds' depth: new gates' places get ground that rises and falls,",
                     "walls and roofs that change with height, and wild growth away from the way (SPEC §38.14).",
                     "Off: new gates are made as before it (content version 6). Gates already made keep what they have.")
@@ -131,14 +137,17 @@ public final class AwakenConfig {
                         "Lens is off, like a cutscene, and hand the frame back after. Never while an Iris shaderpack is on.")
                 .define("lensInScenes", true);
         /**
-         * AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom), CINEMATIC (Lens 2: sun
-         * shadows, contact shadows, AO, filmic light, light shafts) or ULTRA (the same at higher quality, SPEC §22).
+         * AWAKEN's own light layer (dev.awaken.lens): OFF, SWIFT (horizon haze and soft bloom), LITE (the Air's sky, fog,
+         * clouds and rays with no shadow work, SPEC §22 "Lite"), CINEMATIC (Lens 2: sun shadows, contact shadows, AO,
+         * filmic light, light shafts) or ULTRA (the same at higher quality, SPEC §22).
          */
-        public enum LensLook { OFF, SWIFT, CINEMATIC, ULTRA, VFX }
+        public enum LensLook { OFF, SWIFT, LITE, CINEMATIC, ULTRA, VFX }
 
         public static final ModConfigSpec.EnumValue<LensLook> LENS = C
                 .comment("Lens, AWAKEN's light layer: OFF, SWIFT (haze, bloom and a look for each dimension; built for 120 fps),",
-                        "CINEMATIC (adds sun shadows, ambient occlusion, warm and cool light and light shafts; 90+ fps), ULTRA",
+                        "LITE (adds Lens's own sky, far fog, block clouds, night sky and sun rays, with no shadows: the look of",
+                        "the air at the least cost, for a laptop), CINEMATIC (adds sun shadows, ambient occlusion, warm and cool",
+                        "light and light shafts; 90+ fps), ULTRA",
                         "(the same at higher quality; 60+ fps) or VFX (Lens stays off and ImmersiveVFX draws instead; without",
                         "that mod it reads as SWIFT). It steps aside while an Iris shaderpack is on.")
                 .defineEnum("lens", LensLook.SWIFT);
@@ -152,6 +161,11 @@ public final class AwakenConfig {
                         "it, soft clouds in the game's own block shapes (drawn whatever the Clouds video setting says), stronger",
                         "sunlight against deeper shade, and shadows on the textures' pixel grid. Off: Lens as it was before.")
                 .define("lensAir", true);
+        public static final ModConfigSpec.ConfigValue<String> LENS_GRADE = C
+                .comment("Lens's grade: your choice of colour and atmosphere over every place's own look. \"awaken\" is the look as",
+                        "built; \"vivid\" has an azure sky, bright greens, warm light and a paler haze. The Look page steps through",
+                        "them. A grade is a file, assets/<namespace>/lens_grade/<id>.json, so a resource pack can add its own.")
+                .define("lensGrade", "awaken");
         public static final ModConfigSpec.BooleanValue LENS_SUN_PASS = C
                 .comment("The Sun Pass (Cinematic and Ultra): shadows from a map of the blocks near you, so a shadow is the block's",
                         "own shape and the sun comes in under trees, through doorways and under arches. Off: the height-map shadows.")

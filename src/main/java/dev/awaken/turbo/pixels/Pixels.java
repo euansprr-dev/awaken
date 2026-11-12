@@ -114,6 +114,11 @@ public final class Pixels {
      * logs what's in force;
      * {@code pixels gpu on|off|reset|<label>} times the world pass and the upscale on the GPU (PixelsTiming).
      */
+    /** Measurement only: marks this frame in the GPU timing's trace (bits the caller chooses; nothing while timing is off). */
+    public static void mark(int bits) {
+        PixelsTiming.mark(bits);
+    }
+
     public static String autopilot(String arg) {
         String[] a = arg.trim().toLowerCase(Locale.ROOT).split("\\s+");
         if (a[0].equals("gpu")) {

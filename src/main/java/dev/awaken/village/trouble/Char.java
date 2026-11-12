@@ -31,7 +31,7 @@ final class Char {
         int x0 = p.ox + q.x0() - 1, x1 = p.ox + q.x1() + 1, z0 = p.oz + q.z0() - 1, z1 = p.oz + q.z1() + 1;
         int y0 = p.baseY + q.lift(), y1 = p.baseY + q.lift() + q.top() + 3;
         int eave = p.baseY + q.lift() + Math.max(3, q.eave());
-        if (!level.isLoaded(new BlockPos(x0, y0, z0)) || !level.isLoaded(new BlockPos(x1, y0, z1))) return 0;
+        if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(x0, y0, z0)) || !dev.awaken.core.api.Ready.loaded(level, new BlockPos(x1, y0, z1))) return 0;
         int n = 0;
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         // footings up, so what's left of a course knows whether the one under it still stands

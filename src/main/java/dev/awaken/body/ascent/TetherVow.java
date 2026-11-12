@@ -122,6 +122,9 @@ final class TetherVow {
 
     /** The vault whose blueprint holds {@code pos}, or null (not a vault, or its turn can't be read: an old layout). */
     static @Nullable Site siteAt(ServerLevel level, BlockPos pos) {
+        // a player flying faster than the land is made: its structure references aren't there to read yet (asking waits for
+        // the generator: 1.2 s a time in a flight at 32 blocks a second, tour pulse-flight-ci); the next look finds it
+        if (!dev.awaken.core.api.Ready.at(level, pos)) return null;
         StructureStart start = level.structureManager().getStructureWithPieceAt(pos, Above.RUINS_TAG);
         if (!start.isValid() || !(start.getStructure() instanceof PrecursorRuinStructure prs) || !prs.kind().isVault()) return null;
         // the piece's own box (the blueprint's): the start's is padded on every side
@@ -220,7 +223,14 @@ final class TetherVow {
 
     /** The vault's line is theirs to take: their rank answers it and the door stands open. */
     static boolean ready(ServerPlayer p, Site s) {
+        // The Way Up (SPEC §63.2): the rank that won the Ringer's chain is the proof, whatever this vault's door asks
+        if (dev.awaken.body.BodyConfig.wayUp()) return Progression.rank(p).ordinal() >= RANK.ordinal();
         return Progression.rank(p).ordinal() >= s.needs().ordinal() && s.doorOpen(p.level());
+    }
+
+    /** The rank this vault's line waits for: its door's, or with The Way Up the chain's (D) at any vault. */
+    static Rank needs(Site s) {
+        return dev.awaken.body.BodyConfig.wayUp() ? RANK : s.needs();
     }
 
     /**
@@ -229,16 +239,19 @@ final class TetherVow {
      * most once in {@link #STIR_EVERY} per vault and state.
      */
     static void stir(ServerPlayer p, Site s, long now) {
-        boolean short_ = Progression.rank(p).ordinal() < s.needs().ordinal();
+        Rank needs = needs(s);
+        boolean short_ = Progression.rank(p).ordinal() < needs.ordinal();
         BlockPos vault = s.box().getCenter();
         Stirred last = STIRRED.get(p.getUUID());
         if (last != null && last.vault().equals(vault) && last.short_() == short_ && now - last.at() < STIR_EVERY && now >= last.at()) return;
         STIRRED.put(p.getUUID(), new Stirred(vault, short_, now));
         if (short_) dev.awaken.core.api.Promises.seen(p, dev.awaken.above.block.DoorCoreBlock.key(s.door()), s.door(), dev.awaken.core.api.Promises.Need.rank(s.needs().label), "A sealed vault");
+        // with The Way Up a ranked hunter is never turned away for a sealed door: nothing to stir for
+        if (!short_ && dev.awaken.body.BodyConfig.wayUp()) return;
         BlockPos to = short_ ? s.mast() : s.door();
-        AwakenNet.send(p, new AscentPayloads.Vow(STIR, s.needs().ordinal(), short_ ? 1 : 0, 0, to.getX() + 0.5, to.getY() + 0.5, to.getZ() + 0.5));
+        AwakenNet.send(p, new AscentPayloads.Vow(STIR, needs.ordinal(), short_ ? 1 : 0, 0, to.getX() + 0.5, to.getY() + 0.5, to.getZ() + 0.5));
         dev.awaken.core.DirectorLog.log(p, "ascent", "a vault stirs at " + vault.toShortString() + (short_
-                ? ": its line waits for " + s.needs().label + "-rank" : ": its door is still sealed"));
+                ? ": its line waits for " + needs.label + "-rank" : ": its door is still sealed"));
     }
 
     static boolean stirred(ServerPlayer p) {

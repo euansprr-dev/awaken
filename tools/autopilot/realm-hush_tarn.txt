@@ -1,0 +1,112 @@
+# The Hush Tarn (SPEC 50.9, "Rolled lands"): the Basin in the Frost Monastery's country, one roll of it (seed 1, rank C, the lowest it opens at),
+# walked from the way in at the lip of the top bench, down bench by bench, over the ice to the monastery. The land is rolled, so nothing here
+# names a place: a camera stands at the way in, then at each leg in the order you walk them. Difficulty normal with the camera in creative.
+world autopilot_realm_hush_tarn creative 20261116
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty normal
+cmd gamerule send_command_feedback false
+
+# straight in at the way in: no gate has to form in the overworld first. Not in the Realm, no tour.
+cmd awaken gate realm_enter C awaken:hush_tarn 1
+need realm
+hud off
+wait 30
+# the first thing you see, exactly as you arrive: the whole bowl from the lip, the lake and the monastery on its island
+wait 300
+shot hush_tarn_way_in
+cmd awaken gate realm_at MOUTH 0 0 9 10
+look 180 8
+wait 200
+shot hush_tarn_painting
+cmd awaken gate realm_at MOUTH 0 0 1 -4
+look 0 -4
+wait 200
+shot hush_tarn_arch
+
+# leg by leg, down the benches
+cmd awaken gate realm_leg FIGHT 0 14 4
+wait 200
+shot hush_tarn_first_den
+cmd awaken gate realm_leg AMBUSH 0 14 5
+wait 200
+shot hush_tarn_first_hairpin
+cmd awaken gate realm_leg BREATHER 0 9 4
+wait 200
+shot hush_tarn_ledge
+cmd awaken gate realm_leg FIGHT 1 14 4
+wait 200
+shot hush_tarn_second_den
+cmd awaken gate realm_leg MOVEMENT 0 4 2
+wait 200
+shot hush_tarn_bridge
+cmd awaken gate realm_leg MOVEMENT 0 14 7
+wait 200
+shot hush_tarn_crevasse
+cmd awaken gate realm_leg FIGHT 2 14 4
+wait 200
+shot hush_tarn_third_den
+cmd awaken gate realm_leg AMBUSH 1 14 5
+wait 200
+shot hush_tarn_second_hairpin
+cmd awaken gate realm_leg HIDDEN 0 8 3
+wait 200
+shot hush_tarn_hidden
+cmd awaken gate realm_leg WARDEN 0 18 5
+wait 200
+shot hush_tarn_landing
+# the monastery from the shore, from halfway over the ice, and from under its gate
+cmd awaken gate realm_at WARDEN 0 0 3 -6
+look 180 -8
+wait 200
+shot hush_tarn_from_the_shore
+cmd awaken gate realm_at LORD 0 0 2 58
+look 180 -16
+wait 200
+shot hush_tarn_on_the_ice
+cmd awaken gate realm_at LORD 0 14 4 60
+look 172 -12
+wait 200
+shot hush_tarn_keep
+# the Lord's door from the ice in front of it, shut and then open; the court; the keep over the court; the way you came
+cmd awaken gate realm_leg LORD 0 30 2
+wait 200
+shot hush_tarn_door
+cmd awaken gate realm_heart
+wait 40
+shot hush_tarn_door_open
+cmd awaken gate realm_at LORD 0 0 3 16
+look 180 -20
+wait 200
+shot hush_tarn_court
+cmd awaken gate realm_at LORD 0 0 12 6
+look 0 14
+wait 200
+shot hush_tarn_looking_back
+cmd awaken gate realm_at LORD 0 60 46 80
+look 149 26
+wait 300
+shot hush_tarn_from_above
+cmd awaken gate realm_at MOUTH 0 0 1 -3
+look 0 0
+wait 100
+shot hush_tarn_way_home
+# the first look again with Lens's own sky off (the Air): the land under its biome's own sky and fog
+lens air off
+cmd awaken gate realm_at MOUTH 0 0 0 0
+look 180 0
+wait 200
+shot hush_tarn_way_in_no_air
+cmd awaken gate realm_at MOUTH 0 0 9 10
+look 180 8
+wait 200
+shot hush_tarn_painting_no_air
+quit

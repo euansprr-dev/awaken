@@ -194,7 +194,8 @@ final class LivingCommands {
                         return 1;
                     })));
             l.then(Commands.literal("near").requires(AwakenCommands.admin())
-                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 200))
+                    // (to 480: inside the 512 blocks a happening's tell reaches, far enough back to see a whole storm)
+                    .then(Commands.argument("distance", IntegerArgumentType.integer(4, 480))
                             .executes(c -> faceHappening(c.getSource().getPlayerOrException(), IntegerArgumentType.getInteger(c, "distance")))));
             l.then(Commands.literal("happenings").requires(AwakenCommands.admin()).executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
@@ -344,25 +345,39 @@ final class LivingCommands {
         return p.position().add(f.scale(forward)).add(r.scale(side));
     }
 
-    /** The wonders of the regions round a point (every 500 blocks out to a radius), nearest first; only of {@code only} when given. */
-    private static java.util.List<dev.awaken.living.wonder.Wonders.Site> wonderSites(ServerLevel level, int cx, int cz, int radius, dev.awaken.living.wonder.Wonders.Kind only) {
+    /**
+     * The wonders of the regions round a point (every 500 blocks out to a radius), nearest first, at most {@code want}; only
+     * of {@code only} when given. A quick look (no cave probes) picks the regions, nearest first; each is then asked as
+     * worldgen asks it (SPEC §21.11), which may move its wonder or leave it none.
+     */
+    private static java.util.List<dev.awaken.living.wonder.Wonders.Site> wonderSites(ServerLevel level, int cx, int cz, int radius, dev.awaken.living.wonder.Wonders.Kind only, int want) {
         RegionMap map = RegionService.map(level.getServer());
-        var terrain = dev.awaken.living.wonder.WonderFeature.terrain(level, level.getChunkSource().getGenerator());
+        var gen = level.getChunkSource().getGenerator();
+        var quick = dev.awaken.living.wonder.WonderFeature.quickTerrain(level, gen);
+        var terrain = dev.awaken.living.wonder.WonderFeature.terrain(level, gen);
         java.util.Set<Long> seen = new java.util.HashSet<>();
-        java.util.List<dev.awaken.living.wonder.Wonders.Site> out = new java.util.ArrayList<>();
+        java.util.List<dev.awaken.living.wonder.Wonders.Site> rough = new java.util.ArrayList<>();
         for (int dx = -radius; dx <= radius; dx += 500)
             for (int dz = -radius; dz <= radius; dz += 500) {
                 var r = map.regionAt(cx + dx, cz + dz);
                 if (!seen.add(r.id())) continue;
-                var s = dev.awaken.living.wonder.Wonders.siteOf(level.getSeed(), map, r, terrain);
-                if (s != null && (only == null || s.kind() == only)) out.add(s);
+                var s = dev.awaken.living.wonder.Wonders.siteOf(level.getSeed(), map, r, quick);
+                if (s != null && (only == null || s.kind() == only)) rough.add(s);
             }
-        out.sort(java.util.Comparator.comparingDouble(s -> (double) (s.x() - cx) * (s.x() - cx) + (double) (s.z() - cz) * (s.z() - cz)));
+        java.util.Comparator<dev.awaken.living.wonder.Wonders.Site> nearest = java.util.Comparator.comparingDouble(s -> (double) (s.x() - cx) * (s.x() - cx) + (double) (s.z() - cz) * (s.z() - cz));
+        rough.sort(nearest);
+        java.util.List<dev.awaken.living.wonder.Wonders.Site> out = new java.util.ArrayList<>();
+        for (var q : rough) {
+            if (out.size() >= want) break;
+            var s = dev.awaken.living.wonder.Wonders.siteOf(level.getSeed(), map, map.regionAt(q.x(), q.z()), terrain);
+            if (s != null) out.add(s);
+        }
+        out.sort(nearest);
         return out;
     }
 
     private static int wonderList(ServerPlayer p) {
-        for (var s : wonderSites((ServerLevel) p.level(), p.getBlockX(), p.getBlockZ(), 3000, null).stream().limit(8).toList()) {
+        for (var s : wonderSites((ServerLevel) p.level(), p.getBlockX(), p.getBlockZ(), 3000, null, 8)) {
             double d = Math.sqrt((double) (s.x() - p.getBlockX()) * (s.x() - p.getBlockX()) + (double) (s.z() - p.getBlockZ()) * (s.z() - p.getBlockZ()));
             p.sendSystemMessage(Component.literal(s.kind().display + " in " + s.regionName() + " at " + s.x() + ", " + s.z() + " (" + Math.round(d) + " m)"));
         }
@@ -377,7 +392,7 @@ final class LivingCommands {
             return 0;
         }
         ServerLevel level = (ServerLevel) p.level();
-        var sites = wonderSites(level, p.getBlockX(), p.getBlockZ(), 9000, kind);
+        var sites = wonderSites(level, p.getBlockX(), p.getBlockZ(), 9000, kind, 1);
         if (sites.isEmpty()) {
             p.sendSystemMessage(Component.literal("None of that kind within 9,000 blocks."));
             return 0;

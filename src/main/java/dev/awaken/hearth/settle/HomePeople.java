@@ -242,7 +242,7 @@ public final class HomePeople {
             var e = it.next();
             if (now - e.getValue() < 30) continue;
             BlockPos p = BlockPos.of(e.getKey());
-            if (!level.isLoaded(p)) {
+            if (!dev.awaken.core.api.Ready.loaded(level, p)) {
                 it.remove();
                 continue;
             }

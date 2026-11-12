@@ -242,7 +242,7 @@ public final class CinderWorkings extends GeneratedCrawl<CinderWorkings.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xffc890, 0.8F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x7a2a12, 0.45F).light(lord.cx, lord.feet + 4, lord.cz, 0xff8030, 18, 0.9F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): a mine: tall cuts along the seam, benches of spoil, timbers over the workings, a square pit-head shaft. */
@@ -250,5 +250,18 @@ public final class CinderWorkings extends GeneratedCrawl<CinderWorkings.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.RIFT, Cave.Form.OVAL, Cave.Form.TERRACE, Cave.Form.PIT), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
                 List.of(Arena.Plan.TIERS, Arena.Plan.RING), List.of(Chasm.Kind.BEAMS, Chasm.Kind.BRIDGE, Chasm.Kind.FALLING, Chasm.Kind.STEPS), true, 2.2, 4);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): spoil heaped at the foot of the cuts, ash drifted over it, cinders, crystals where the heat was. */
+    @Override
+    protected Trim trim(CinderWorkings.M m) {
+        return new Trim(named("ember_basalt_stairs"), named("ember_basalt_stairs"), named("ember_ash_drift"), named("ember_cinders"),
+                namedAll("ember_crystal"), List.of(), 0.7);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xff9a50;
     }
 }

@@ -45,7 +45,9 @@ public final class AscentRemote {
 
     static void seen(AscentPayloads.Seen msg) {
         AscentState st = AscentState.byId(msg.state());
-        if (st == null) return;
+        // the local player's state is its own prediction's alone (the server shows it to everyone else)
+        Minecraft mc = Minecraft.getInstance();
+        if (st == null || mc.player != null && msg.entityId() == mc.player.getId()) return;
         Slot s = of(msg.entityId());
         if (st == AscentState.NONE) {
             if (s != null) {
@@ -95,6 +97,27 @@ public final class AscentRemote {
                         msg.what() == AscentPayloads.EV_DOUBLE ? new net.minecraft.world.phys.Vec3(0, 1, 0) : e.getLookAngle(), 0.3F);
             }
             case AscentPayloads.EV_DIVE -> AscentSounds.local(e, AscentContent.WINGS_FOLD.get(), 0.8F, 0.7F);
+            // the aimed dive (SPEC §17.33): the swoop as it goes, the smash and a ring where it lands
+            case AscentPayloads.EV_AIM_DIVE -> AscentSounds.local(e, AscentContent.DIVE.get(), 1F, 1F);
+            case AscentPayloads.EV_DIVE_LAND -> {
+                AscentSounds.local(e, AscentContent.DIVE_LAND.get(), Math.min(1F, 0.45F + msg.speed() * 0.35F), 1F);
+                AscentFx.ring(e.getX(), e.getY() + 0.15, e.getZ(), new net.minecraft.world.phys.Vec3(0, 1, 0), 0.42F);
+            }
+            // Rope and Wings (SPEC §62): the moves as others see and hear them
+            case AscentPayloads.EV_SLING -> AscentSounds.move(e, "sling", AscentContent.LAUNCH.get(), 0.6F, 1.1F);
+            case AscentPayloads.EV_SPRING -> AscentSounds.move(e, "spring", AscentContent.LAUNCH.get(), 0.6F, 1.1F);
+            case AscentPayloads.EV_FLARE -> {
+                WingLayer.flare(e.getId());
+                AscentSounds.move(e, "flare", AscentContent.FLAP.get(), 0.5F, 0.72F);
+            }
+            case AscentPayloads.EV_TAKEOFF -> {
+                AscentSounds.move(e, "takeoff", AscentContent.WINGS_OPEN.get(), 0.9F, 1F);
+                AscentFx.ring(e.getX(), e.getY() + 0.1, e.getZ(), new net.minecraft.world.phys.Vec3(0, 1, 0), 0.45F);
+            }
+            case AscentPayloads.EV_STRIKE -> {
+                AscentSounds.move(e, "strike", AscentContent.LAUNCH.get(), 0.9F, 0.9F);
+                AscentFx.ring(e.getX(), e.getY() + 0.9, e.getZ(), e.getLookAngle(), 0.45F);
+            }
             case AscentPayloads.EV_SLAM_LAND -> {
                 AscentSounds.local(e, AscentContent.BOOM.get(), 0.7F, 1.35F);
                 AscentFx.ring(e.getX(), e.getY() + 0.15, e.getZ(), new net.minecraft.world.phys.Vec3(0, 1, 0), 0.5F);

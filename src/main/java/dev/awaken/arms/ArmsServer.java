@@ -291,7 +291,18 @@ final class ArmsServer {
     static void heavy(ServerPlayer p, ArmsState s, Archetypes.Loaded style, Archetype.MoveDef heavy, int held, long now, int seq) {
         LivingEntity target = target(p, s.aimed);
         Archetype.MoveDef exec = style.move(Archetype.Move.EXECUTION);
-        if (exec != null && target != null && Arms.broken(target) && p.distanceTo(target) <= exec.reach() + target.getBbWidth()) {
+        boolean reach = exec != null && target != null && p.distanceTo(target) <= exec.reach() + target.getBbWidth();
+        if (target != null && !(target instanceof Player)) {
+            // a heavy let go on a body that kneels, or just got up: in the play log, to read a fight's kneels back (SPEC §68.6)
+            Posture tp = posture(target);
+            if (tp.brokenUntil > now - 20) {
+                dev.awaken.Awaken.LOG.info("[arms] heavy let go after {} ticks held on {}: {}, {}", held,
+                        net.minecraft.world.entity.EntityType.getKey(target.getType()).getPath(),
+                        tp.brokenUntil > now ? "kneeling with " + (tp.brokenUntil - now) + " ticks left" : "up again " + (now - tp.brokenUntil) + " ticks ago",
+                        exec != null && Arms.broken(target) && reach ? "an Execution" : !reach ? "out of the Execution's reach" : "a plain heavy");
+            }
+        }
+        if (exec != null && target != null && Arms.broken(target) && reach) {
             begin(p, s, style, Archetype.Move.EXECUTION, -1, 0, now, seq);
             return;
         }
@@ -715,6 +726,8 @@ final class ArmsServer {
         }
         pendingCap = def.bossCap();
         pendingRiposte = s.move == Archetype.Move.RIPOSTE;
+        // a heavy held through with the meter full is the Art even on a broken stance: it ends a beaten body as the Execution does
+        pendingExecution = s.move == Archetype.Move.EXECUTION || s.move == Archetype.Move.ART;
         boolean primed = ArmsForge.bladePrimed(p, s, now);
         if (primed) pendingMotion *= ArmsForge.BLADE_PRIME;
         pendingLanded = false;
@@ -737,6 +750,7 @@ final class ArmsServer {
         // blow) swallowed or shrank blows at random, shown by the game and gone on the server (SPEC §25 "Weight in the Hand")
         int cooldown = t.damageCooldownTime;
         t.damageCooldownTime = 0;
+        boolean worn = dev.awaken.core.api.Lasting.wornOut(p.getMainHandItem());
         try {
             if (speed != null) speed.addOrUpdateTransientModifier(FULL_STRENGTH_MOD);
             p.attack(t);
@@ -744,7 +758,10 @@ final class ArmsServer {
             if (speed != null) speed.removeModifier(FULL_STRENGTH);
             pendingBy = pendingTarget = -1;
             pendingPush = false;
+            pendingExecution = false;
         }
+        // the blow that used its last use: it is worn out from here (never destroyed, SPEC §68.1), and its owner is told once
+        if (!worn && dev.awaken.core.api.Lasting.wornOut(p.getMainHandItem())) dev.awaken.core.api.Lasting.tell(p, p.getMainHandItem(), true);
         HitWhy.body(s.moveSeq, t.getId(), now, pendingLanded ? HitWhy.LANDED : HitWhy.NO_DAMAGE, cooldown, 0F);
         if (!pendingLanded) {
             // struck, and nothing took (an invulnerable body, another mod's refusal): the hands hear a dull knock, so a blow
@@ -868,12 +885,16 @@ final class ArmsServer {
         if (by != null && by.getId() == pendingBy && victim.getId() == pendingTarget && src.getDirectEntity() == by) {
             float amount = e.getAmount() * pendingMotion;
             Posture post = posture(victim);
-            amount = ArmsRules.capExecution(amount, victim.getMaxHealth(), pendingCap, ArmsRules.lordly(post.max));
+            amount = ArmsRules.capExecution(amount, victim.getMaxHealth(), pendingCap, ArmsRules.lordly(post.max), Strikes.duelist(victim));
             e.setAmount(amount);
             pendingLanded = true;
             // a blow in an opening (a boss that starts nothing after a phrase) breaks its stance faster; one on a duel
             // body standing braced barely moves it, a riposte excepted (SPEC §47.3)
             int posture = ArmsRules.hitPosture(pendingPosture, Strikes.opening(victim), pendingRiposte, Strikes.duelist(victim));
+            // a worn-out weapon fills a stance half as fast, as it hits half as hard (its attack damage is halved at the item)
+            if (by instanceof ServerPlayer wielder && dev.awaken.core.api.Lasting.wornOut(wielder.getMainHandItem())) {
+                posture = Math.round(posture * dev.awaken.core.api.Lasting.WORN_OUT_SHARE);
+            }
             if (by instanceof ServerPlayer sp) addPosture(victim, posture, sp);
             return;
         }
@@ -962,9 +983,20 @@ final class ArmsServer {
         boolean inArc = from != null ? inFront(p, from, g.angle()) : e.getOriginalBlockedDamage() > 0;
         boolean untold = Arms.untold(src);
         ArmsRules.Answer a = ArmsRules.guard(g, kind, p.getTicksUsingItem(), heldTicks, grace, s.lockedOut, inArc, untold);
+        // on Gentle a held guard stops an amber blow as it stops a white-gold one (SPEC §70.4); a timed deflect earns as before
+        if (a == ArmsRules.Answer.GUARD_BREAK && dev.awaken.core.api.FightsHooks.gentle(p)) a = ArmsRules.Answer.BLOCK;
         float incoming = e.getDamageContainer().getNewDamage();
         Entity by = src.getEntity();
         long now = now(p);
+        int why = ArmsRules.missWhy(g, p.getTicksUsingItem(), heldTicks, grace, s.lockedOut, untold);
+        // what the guard did with a creature's blow, in the play log, so a fight can be read back (SPEC §68.6)
+        if (by instanceof LivingEntity && !(by instanceof Player) && kind != Strikes.Kind.NONE) {
+            dev.awaken.Awaken.LOG.info("[arms] guard: {} {}'s {} blow, raised {} ticks before it (deflect window {}{}, grace {}){}{}{}",
+                    a, net.minecraft.world.entity.EntityType.getKey(by.getType()).getPath(), kind, p.getTicksUsingItem() - heldTicks,
+                    g.deflect(), untold ? " +" + ArmsRules.UNTOLD_DEFLECT + " untold" : "", grace,
+                    s.lockedOut ? ", raised again too soon after lowering it" : "", inArc ? "" : ", from outside the guard",
+                    a == ArmsRules.Answer.BLOCK || a == ArmsRules.Answer.GUARD_BREAK ? (why == ArmsRules.MISS_LATE ? " (late)" : why == ArmsRules.MISS_TOO_SOON ? " (too soon)" : " (early)") : "");
+        }
         switch (a) {
             case DEFLECT -> {
                 e.setBlockedDamage(incoming);
@@ -977,8 +1009,11 @@ final class ArmsServer {
                 // mastery III: a charged deflect; an untold blow's wider window pays a little less
                 float charged = ArmsMastery.deflect(ArmsMastery.step(p, style)) * (untold ? ArmsRules.UNTOLD_REWARD : 1F);
                 resonance(p, s, ArmsRules.RESONANCE_DEFLECT * charged);
+                boolean broke = false;
                 if (by instanceof LivingEntity attacker && src.getDirectEntity() == by) {
+                    long stood = attacker instanceof Player ? 0 : posture(attacker).brokenUntil;
                     addPosture(attacker, (int) ((kind == Strikes.Kind.HEAVY ? ArmsRules.DEFLECT_POSTURE_HEAVY : ArmsRules.DEFLECT_POSTURE_LIGHT) * charged), p);
+                    broke = !(attacker instanceof Player) && posture(attacker).brokenUntil != stood; // this deflect broke its stance
                     // a flier's dive turned aside brings it down (SPEC §40): the opening a fight in the air needs
                     Strikes.ground(attacker, Aim.GROUNDED_TICKS);
                     // its limb recoils, and a phrase's last blow turned aside staggers it (SPEC §47.3)
@@ -991,8 +1026,8 @@ final class ArmsServer {
                     boolean back = src.getDirectEntity() != null && Strikes.returnShot(src.getDirectEntity(), p);
                     stop(p, s, src, from, true, 0F, by, back);
                 } else {
-                    soundForOthers(p, ArmsSounds.DEFLECT.get(), 1.0F, 1.0F);
-                    answer(p, s, ArmsPayloads.DEFLECT, by);
+                    // the biggest clash also answers a blow whose deflect left the body reeling (its phrase's last, SPEC §68.3)
+                    clash(p, s, by, ArmsRules.clashSize(kind, broke || by instanceof LivingEntity reeler && Strikes.reeling(reeler)));
                 }
             }
             case BLOCK -> {
@@ -1008,16 +1043,23 @@ final class ArmsServer {
                     soundForOthers(p, ArmsSounds.BLOCK.get(), 1.0F, 1.0F);
                     soundForOthers(p, ArmsSounds.BLOCK_STRUCK.get(), 1.0F, 1.0F);
                     soundForOthers(p, ArmsSounds.BLOCK_STEEL.get(), 1.0F, 1.0F);
-                    answer(p, s, ArmsPayloads.BLOCK, by);
+                    answer(p, s, ArmsPayloads.BLOCK, by, why); // the ring says why it was only a block
                 }
             }
             case GUARD_BREAK -> {
                 e.setBlockedDamage(incoming * g.heavyReduction());
                 s.guardBreak = true; // after this blow resolves: the guard drops and can't rise for a moment
                 soundForOthers(p, ArmsSounds.GUARD_BREAK.get(), 1.0F, 1.0F);
-                answer(p, s, ArmsPayloads.GUARD_BREAK, by);
+                answer(p, s, ArmsPayloads.GUARD_BREAK, by, why);
             }
-            case PASS -> e.setBlocked(false);
+            case PASS -> {
+                e.setBlocked(false);
+                // the guard was up and the blow went past it: the ring says it came from the side, or can't be guarded at all.
+                // Only to the fighter: nothing happened to the blade for anyone else to see.
+                if (by instanceof LivingEntity && !(by instanceof Player) && kind != Strikes.Kind.NONE) {
+                    AwakenNet.send(p, new ArmsPayloads.Result(s.seq, ArmsPayloads.GUARD_PASS, by.getId(), kind.blockable() ? ArmsPayloads.PASS_SIDE : ArmsPayloads.PASS_UNGUARDABLE, 0));
+                }
+            }
         }
     }
 
@@ -1116,9 +1158,24 @@ final class ArmsServer {
     }
 
     private static void answer(ServerPlayer p, ArmsState s, int what, @Nullable Entity by) {
+        answer(p, s, what, by, 0);
+    }
+
+    private static void answer(ServerPlayer p, ArmsState s, int what, @Nullable Entity by, int aux) {
         int id = by == null ? -1 : by.getId();
-        AwakenNet.send(p, new ArmsPayloads.Result(s.seq, what, id, 0, 0));
-        seen(p, new ArmsPayloads.Seen(p.getId(), what, id, 0, 0));
+        AwakenNet.send(p, new ArmsPayloads.Result(s.seq, what, id, aux, 0));
+        seen(p, new ArmsPayloads.Seen(p.getId(), what, id, aux, 0));
+    }
+
+    /**
+     * A blade's deflect answered as a clash of its size (SPEC §25 "The clash"): those near hear its metal by what met the
+     * blade, a stance it broke draws the body's own voice, and the fighter's hands play the rest on the answer (its aux).
+     */
+    static void clash(ServerPlayer p, ArmsState s, @Nullable Entity by, int size) {
+        s.lastClash = size;
+        ArmsSounds.playClash(p.level(), p, p.getX(), p.getY(), p.getZ(), size, ArmsSounds.edge(by));
+        if (size == ArmsRules.CLASH_BREAK && by instanceof net.minecraft.world.entity.Mob m) m.playAmbientSound();
+        answer(p, s, ArmsPayloads.DEFLECT, by, size);
     }
 
     /** Gives the blow just held for this player what it does after it lands; false if none was held this tick. */
@@ -1316,17 +1373,17 @@ final class ArmsServer {
     static Posture posture(LivingEntity e) {
         Posture p = e.getData(ArmsContent.POSTURE);
         int stance = Strikes.stance(e); // a duel boss's own size (SPEC §47.3)
-        if (stance > 0) p.max = stance;
+        if (stance > 0) p.max = (int) Math.round(stance * dev.awaken.core.api.FightsHooks.partyStance(e)); // grown for a party as its health is (SPEC §70.3)
         else if (p.max <= 0) {
             MobRole role = e.getExistingDataOrNull(CoreApi.MOB_ROLE.get());
-            p.max = ArmsRules.postureMax(CreatureTag.of(e), role == null ? MobRole.Role.NONE : role.role());
+            p.max = (int) Math.round(ArmsRules.postureMax(CreatureTag.of(e), role == null ? MobRole.Role.NONE : role.role()) * dev.awaken.core.api.FightsHooks.partyStance(e));
         }
         return p;
     }
 
     /** Fills a stance; full, it breaks: the wind-up ends, the body sags, a heavy becomes an Execution. */
     static void addPosture(LivingEntity target, int amount, ServerPlayer by) {
-        if (amount > 0 && dev.awaken.core.api.RidingHooks.rider(by)) amount = Math.max(1, Math.round(amount * dev.awaken.core.api.RidingHooks.HIT_SHARE)); // a rider's blows move a stance as they hurt (SPEC §55)
+        amount = dev.awaken.core.api.FightsHooks.stance(target, amount, by); // its back turned: a quarter more (SPEC §70.3)
         if (amount <= 0 || target instanceof Player) return;
         Posture p = posture(target);
         long now = now(target);
@@ -1340,6 +1397,8 @@ final class ArmsServer {
         if (breaks) {
             int ticks = lord ? ArmsRules.BROKEN_TICKS_LORD : ArmsRules.BROKEN_TICKS;
             p.brokenUntil = now + ticks;
+            dev.awaken.Awaken.LOG.info("[arms] stance broken: {} kneels {} ticks (by {})",
+                    net.minecraft.world.entity.EntityType.getKey(target.getType()).getPath(), ticks, by.getName().getString());
             p.nextBreakAt = now + ArmsRules.BREAK_COOLDOWN;
             p.value = 0;
             stance(target, p, now);
@@ -1353,10 +1412,59 @@ final class ArmsServer {
         }
     }
 
+    /** Whether the Arms blow now being delivered is an Execution's or the weapon's Art (set for the length of its {@code attack}). */
+    private static boolean pendingExecution;
+
+    /**
+     * Whether this damage is an Execution's blow (or the Art's, which a full meter makes of the same held heavy) landing
+     * now: the finisher, and the one blow that ends a beaten body (SPEC §68.4).
+     */
+    static boolean executing(DamageSource source) {
+        Entity by = source.getEntity();
+        return pendingExecution && by != null && by.getId() == pendingBy && source.getDirectEntity() == by;
+    }
+
+    /**
+     * A body beaten to its last point (SPEC §68.4): its stance is broken for {@code ticks}, whatever it held and whenever
+     * it last broke, so a heavy released on it is the Execution; {@code by} and those near are told, as for any break.
+     */
+    static void beaten(LivingEntity target, int ticks, ServerPlayer by) {
+        if (target instanceof Player) return;
+        Posture p = posture(target);
+        long now = now(target);
+        p.value = 0;
+        p.brokenUntil = now + ticks;
+        p.nextBreakAt = now + ticks + ArmsRules.BREAK_COOLDOWN;
+        stance(target, p, now);
+        sound(target, ArmsSounds.BREAK.get(), 1.0F, 0.8F);
+        AwakenNet.send(by, new ArmsPayloads.Result(state(by).seq, ArmsPayloads.BREAK, target.getId(), ticks, 0));
+        seen(by, new ArmsPayloads.Seen(target.getId(), ArmsPayloads.BREAK, by.getId(), ticks, 0));
+    }
+
+    /**
+     * A duel body begins or stops fighting (SPEC §47.3 "Held while it fights"): drained up to the moment it begins, then
+     * held; let go, the grace before draining starts again, so walking away from a red blow keeps the work done.
+     */
+    static void hold(LivingEntity target, boolean fighting) {
+        if (target instanceof Player) return;
+        Posture p = posture(target);
+        if (p.held == fighting) return;
+        long now = now(target);
+        if (fighting) {
+            p.settle(now, ArmsRules.lordly(p.max));
+            p.held = true;
+        } else {
+            p.held = false;
+            p.lastHitAt = Math.max(p.lastHitAt, now);
+        }
+        stance(target, p, now); // the clients near stop (or start) draining it, and a duel body's plate shows it from now
+    }
+
     /** Everyone near the creature (the fighter too) gets its stance on every change; their clients drain it themselves. */
     private static void stance(LivingEntity target, Posture p, long now) {
         int broken = (int) Math.max(0, p.brokenUntil - now);
-        ArmsPayloads.Seen msg = new ArmsPayloads.Seen(target.getId(), ArmsPayloads.POSTURE, broken, Math.round(p.value * 10), p.max);
+        ArmsPayloads.Seen msg = new ArmsPayloads.Seen(target.getId(), p.held ? ArmsPayloads.POSTURE_HELD : ArmsPayloads.POSTURE, broken,
+                Math.round(p.value * 10), p.max);
         if (!(target.level() instanceof ServerLevel level)) return;
         for (ServerPlayer o : level.players()) if (o.distanceToSqr(target) < 48 * 48) AwakenNet.send(o, msg);
     }

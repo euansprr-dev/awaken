@@ -1,0 +1,20 @@
+c_tree
+  ref 1 vs ref 2 (noise)           mean  7.04  p99 132  p99.9 225  over5 15.595%  max 255
+  ref 2 vs ref 3 (noise)           mean  6.79  p99 121  p99.9 205  over5 15.391%  max 255
+  new 1 vs new 2 (noise)           mean  8.71  p99 148  p99.9 240  over5 21.004%  max 255
+  new 2 vs new 3 (noise)           mean  8.50  p99 146  p99.9 236  over5 20.527%  max 255
+  ref 3 vs new 1 (across)          mean 17.02  p99 180  p99.9 246  over5 49.435%  max 255
+  ref 1 vs new 1 (across)          mean 16.55  p99 177  p99.9 248  over5 46.554%  max 255
+  ref 2 vs new 2 (across)          mean 15.01  p99 166  p99.9 250  over5 46.696%  max 255
+  ref 3 vs new 3 (across)          mean 15.05  p99 175  p99.9 251  over5 46.984%  max 255
+walk check (red: the walks differ; green: walked), pixels of the shot
+  k_t1000_own.png        differ        0 (0.0000%)  walked  1350454 (16.3%)
+  k_t1000_tree.png       differ        0 (0.0000%)  walked  2538966 (30.6%)
+  k_t11000_own.png       differ        0 (0.0000%)  walked  2495534 (30.1%)
+  k_t11000_tree.png      differ        0 (0.0000%)  walked  3152632 (38.0%)
+  k_t11000_west.png      differ        0 (0.0000%)  walked  4168555 (50.3%)
+  k_t1950_own.png        differ        0 (0.0000%)  walked  1037156 (12.5%)
+  k_t1950_tree.png       differ        0 (0.0000%)  walked  1149988 (13.9%)
+  k_t1950_west.png       differ        0 (0.0000%)  walked  1047655 (12.6%)
+  k_t5000_own.png        differ        0 (0.0000%)  walked   560900 (6.8%)
+  k_t5000_tree.png       differ        0 (0.0000%)  walked   249978 (3.0%)

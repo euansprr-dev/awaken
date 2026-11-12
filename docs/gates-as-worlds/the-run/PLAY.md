@@ -1,9 +1,16 @@
 # The Run: how to play it, and what to look for
 
-Everything here is on branch `claude/gates-as-worlds-plan-fcb81b`. It is not in `build/awaken-v1` and not in the play copy
-until someone merges it. The new gates are behind the `gateRealms` switch (off), so the quickest way in is the command.
+The nineteen gates, the variety pass and depth and air are in `build/awaken-v1`. The new gates are behind the `gateRealms`
+switch, off unless a world turns it on.
 
 ## Getting in
+
+**From the world** (11 Nov): set `gateRealms = true` in `config/awaken-synced.toml` and every new gate whose theme and rank
+have a finished Realm is one (the seventeen rolled kinds, The Broodwarren, The Hour Crypt, Amber Reach; a blueprint is
+finished when it says `"ready": true`). Gates already standing stay the old kind, and so do themes and ranks with no Realm
+yet. Nobody has walked into one from the world before: every walk so far used the command.
+
+**By command:**
 
 Stand anywhere in the overworld, as an admin:
 
@@ -44,6 +51,22 @@ every leg is cut like. No two legs need be alike:
 
 Each kind has its own share of these (a palace has galleries and naves, a nest has pits and round cells). The same seed
 still gives two kinds the same order of legs, but each cuts them its own way. Seed 1 is a great delve in every kind.
+
+Since 11 Nov every rolled room also has **depth and air**:
+
+- The ground rises and falls in half blocks. The way through a room is worn level; off it the floor stands higher, rolls,
+  and banks up against the walls. Ways have half a step along their sides.
+- Built places have pilasters on their walls and beams under their roofs. Dug places have roofs that swell, dip and come
+  down in lumps at the walls.
+- Stairs stand at the foot of walls and hang where a roof steps. Drifts lie along the walls. Plants grow in clumps that
+  thicken away from the way. Small bits lie underfoot and things hang from high roofs. Each kind uses its own theme's.
+- Each kind has its own fog, its own things drifting in the air, its own colour of light, its own ambient sound and music
+  (Minecraft's own recordings), and its own Lens look. The Unlit Stair has no sound at all.
+- In a gulf there is still water and a low mist; over every fight a soft light colours the mist.
+- Light comes down into every room through a slot in its roof (two in a Lord's hall): a pool of real light on the floor,
+  with dust turning in it. There is no beam in the air: three ways of drawing one as sprites were tried and taken out
+  (SPEC 50.9, "Air").
+- The long walls of gulfs and stairwells are cut into bays between piers (built places) or scooped out (dug ones).
 
 Every rolled gate takes any whole number as the seed: `... awaken:catacombs 2` is a different dungeon. Change `E` for another rank
 to make everything in it stronger. `/awaken gate leave` gets you out. Play in survival: an ambush does not spring for a

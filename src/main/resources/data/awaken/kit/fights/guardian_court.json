@@ -3,7 +3,7 @@
  "id": "guardian_court",
  "moves": "guardian_court",
  "duel": true,
- "stance": 300,
+ "stance": 160,
  "intro": {
   "pose": "kneel",
   "move": "wake"

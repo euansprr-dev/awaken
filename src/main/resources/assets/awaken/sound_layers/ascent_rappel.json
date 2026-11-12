@@ -1,0 +1,18 @@
+{
+ "awaken:ascent.rappel_pay": [
+  {
+   "delay": 0,
+   "pitch": 0.9,
+   "sound": "minecraft:block.wool.step",
+   "volume": 0.6
+  }
+ ],
+ "awaken:ascent.rappel_pay_glass": [
+  {
+   "delay": 0,
+   "pitch": 1.2,
+   "sound": "minecraft:block.amethyst_block.step",
+   "volume": 0.3
+  }
+ ]
+}

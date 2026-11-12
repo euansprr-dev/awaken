@@ -3,5 +3,10 @@
   "subtitles.awaken.aim.lock": "Lock taken",
   "subtitles.awaken.aim.switch": "Lock moves",
   "subtitles.awaken.aim.release": "Lock released",
-  "subtitles.awaken.aim.break": "Locked creature falls"
+  "subtitles.awaken.aim.break": "Locked creature falls",
+  "awaken.aim.too_early": "Too early",
+  "awaken.aim.too_late": "Too late",
+  "awaken.aim.too_soon": "Raised again too soon",
+  "awaken.aim.from_side": "It came from the side",
+  "awaken.aim.dodge_it": "Dodge that one"
 }

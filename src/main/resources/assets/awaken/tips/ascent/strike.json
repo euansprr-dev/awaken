@@ -1,0 +1,10 @@
+{
+  "text": "On the rope or in the air, look at a creature that is out of reach and press {key.attack}. The rope catches it and pulls you in feet first, and you come off the hit with your air moves back.",
+  "short": "{key.attack} at a creature out of reach",
+  "priority": 60,
+  "show_for": 220,
+  "retire_after_done": 3,
+  "retire_after_shown": 3,
+  "cooldown": 900,
+  "awake": "after"
+}

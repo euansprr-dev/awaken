@@ -221,7 +221,7 @@ public final class SealedWing extends GeneratedCrawl<SealedWing.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xd8f4ff, 0.6F);
         if (lord != null) air.light(lord.cx, lord.feet + 4, lord.cz, 0xbff0ff, 20, 0.7F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): a laboratory: bays, a walk round a core, a pit with something in it, conduits to cross on. */
@@ -229,5 +229,18 @@ public final class SealedWing extends GeneratedCrawl<SealedWing.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.HALL, Cave.Form.PIERS, Cave.Form.PIT, Cave.Form.RING), List.of(Arena.Plan.SQUARE, Arena.Plan.RING),
                 List.of(Arena.Plan.SQUARE, Arena.Plan.ROTUNDA), List.of(Chasm.Kind.BEAMS, Chasm.Kind.HANGERS, Chasm.Kind.FALLING, Chasm.Kind.BRIDGE), true, 2.6, 5);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): panel coved at floor and roof, moss that got in from somewhere, screws, cables and lights let down. */
+    @Override
+    protected Trim trim(SealedWing.M m) {
+        return new Trim(named("lab_panel_stairs"), named("lab_panel_stairs"), named("lab_moss_drift"), named("lab_screws"),
+                namedAll("lab_moss"), namedAll("lab_cables", "lab_light"), 0.6);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xe0f4ff;
     }
 }

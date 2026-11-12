@@ -265,7 +265,7 @@ final class LiveHand {
         double m = InscribeScene.MARK;
         double px = m * (u * InscribeScene.rx - v * InscribeScene.fx), pz = m * (u * InscribeScene.rz - v * InscribeScene.fz);
         Vec3 c = InscribeScene.centre, o = cam.position();
-        double dx = c.x + px - o.x, dy = InscribeScene.slateY + 0.035 - o.y, dz = c.z + pz - o.z;
+        double dx = c.x + px - o.x, dy = InscribeScene.slateY + InscribeScene.lift - o.y, dz = c.z + pz - o.z;
         var fw = cam.forwardVector();
         var up = cam.upVector();
         var left = cam.leftVector();

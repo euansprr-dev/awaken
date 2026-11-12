@@ -6,25 +6,24 @@
   "theme": "mirror_palace",
   "ranks": [
     "C",
-    "B"
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:silvered_halls",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:gate_mirror_palace"
+      "awaken:realm/silvered_halls"
     ],
     "lens": "silvered_halls",
     "air": [
-      "mist",
       "shaft_dust",
-      "smoke",
       "dust",
-      "drips",
-      "bats",
-      "rats"
+      "stars"
     ]
   },
   "life": {

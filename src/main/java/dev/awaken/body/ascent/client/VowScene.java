@@ -25,6 +25,8 @@ final class VowScene {
     private VowScene() {}
 
     static int stage = -1, age;
+    /** Whether the mast's lesson has begun in this vow (it waits for the rope's title). */
+    private static boolean mast;
     static double mx, my, mz, ax, ay, az;
     /** The lines on screen: a title (large) and a line under it, each with when it started and how long it stays. */
     private static Component title, line;
@@ -44,6 +46,8 @@ final class VowScene {
                 LensClient.override("awaken:vow", 40);
                 AscentSounds.duck(80);
                 AscentSounds.local(p, AscentContent.VOW_CALL.get(), 1F, 1F);
+                // nothing else is drawn over the vault's moment (SPEC §63.3): a tour showed its words under a discovery card
+                dev.awaken.core.api.Notices.client().claim(dev.awaken.core.api.Notices.Tier.CRITICAL, "ascent");
                 say(Component.translatable("awaken.ascent.vow.call"), 70, false);
             }
             case 1 -> { // the line
@@ -53,16 +57,25 @@ final class VowScene {
                 AscentSounds.local(p, AscentContent.VOW_LINE.get(), 1F, 1F);
                 FeelDirector.launch(1F);
                 if (!Double.isNaN(ax)) AscentMoves.zipTo(p, ax, ay, az);
-                say(Component.translatable("awaken.ascent.vow.line"), 90, true);
+                mast = false;
+                // the rope is named in the Unlock title as it pulls you up (SPEC §71.2); the old line without The Way Up
+                if (dev.awaken.body.BodyConfig.wayUp()) WayClient.show(dev.awaken.body.ascent.AscentUnlocks.ROPE);
+                else say(Component.translatable("awaken.ascent.vow.line"), 90, true);
             }
             case 2 -> { // kept
                 LensClient.clearOverride(40);
                 AscentSounds.local(p, AscentContent.REMEMBER.get(), 1F, 1.1F);
                 AscentFlow.gain(1F);
                 FeelDirector.remember();
-                say(Component.translatable("awaken.ascent.vow.kept"), 110, true);
-                line = null;
+                // a small line under the crosshair now: the big words were the title's
+                say(Component.translatable("awaken.ascent.vow.kept"), 110, !dev.awaken.body.BodyConfig.wayUp());
+                if (!dev.awaken.body.BodyConfig.wayUp()) line = null;
                 stage = -1;
+                // the rope's card of keys; the mast's prompt goes with it
+                if (dev.awaken.body.BodyConfig.wayUp()) {
+                    if (Lesson.kind() == Lesson.Kind.ROPE_MAST) Lesson.end(true);
+                    else Lesson.card(dev.awaken.body.ascent.WayUp.Rung.ROPE);
+                }
             }
             case 4 -> { // the vault stirs: short of its rank, or its door still sealed
                 mx = v.mx();
@@ -79,6 +92,7 @@ final class VowScene {
                 LensClient.clearOverride(40);
                 say(Component.translatable("awaken.ascent.vow.lapsed"), 90, false);
                 stage = -1;
+                if (Lesson.kind() == Lesson.Kind.ROPE_MAST) Lesson.end(false);
             }
         }
     }
@@ -102,6 +116,10 @@ final class VowScene {
 
     static void tick(LocalPlayer p) {
         clock++;
+        // the call and the line hold tips and the System's other messages back (the gifts' scene already does)
+        boolean busy = stage == 0 || stage == 1 && age < 240;
+        dev.awaken.core.api.TipHooks.client().hold(VowScene.class, busy);
+        dev.awaken.core.api.Notices.client().hold(VowScene.class, busy);
         if (stage < 0) return;
         age++;
         RandomSource r = p.getRandom();
@@ -135,11 +153,16 @@ final class VowScene {
             if (stirShort && age == 50) say(Component.translatable("awaken.ascent.vow.waits", stirRank), 110, false);
             if (age >= 60) stage = -1;
         } else if (stage == 1) {
-            if (age == 50) {
-                say(Component.translatable("awaken.ascent.vow.how", AwakenKeys.ROPE.getTranslatedKeyMessage()), 160, false);
+            boolean way = dev.awaken.body.BodyConfig.wayUp();
+            if (way && !mast && age >= 50 && !dev.awaken.core.api.Unlocks.client().pending()) {
+                // The Way Up: your own key on the mast, and a gold figure swinging to it once (SPEC §63.3), after the
+                // rope's title has had the screen
+                mast = true;
+                Lesson.begin(Lesson.Kind.ROPE_MAST, new Vec3(mx, my, mz), Lesson.arcPath(p.position(), new Vec3(mx, my - 1.5, mz), 3.5));
             }
+            if (!way && age == 50) say(Component.translatable("awaken.ascent.vow.how", AwakenKeys.ROPE.getTranslatedKeyMessage()), 160, false);
             if (age == 100) LensClient.clearOverride(60);
-            if (age == 220) say(Component.translatable("awaken.ascent.vow.mast"), 100000, false);
+            if (age == 220 && !way) say(Component.translatable("awaken.ascent.vow.mast"), 100000, false);
             // the mast calls: a slow ring of light round its tip
             if (age % 30 == 0) AscentFx.ring(mx, my, mz, new Vec3(0, 1, 0), 0.6F);
         }
@@ -156,7 +179,8 @@ final class VowScene {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.gui.hud.isHidden()) return;
         float pt = dt.getGameTimeDeltaPartialTick(false);
-        int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * 0.28F);
+        // under the director's big card when one is up (arriving at a vault for the first time is also a discovery)
+        int cx = g.guiWidth() / 2, y = (int) (g.guiHeight() * (dev.awaken.core.api.Notices.client().showing() ? 0.60F : 0.28F));
         if (title != null) {
             float a = env(clock + pt - titleAt, titleFor);
             if (a <= 0.01F && clock - titleAt > titleFor) title = null;

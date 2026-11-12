@@ -167,6 +167,8 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         if (!picks && v.hidden() > 0) {
             String more = v.door() == ArmsArmoury.HALE && !v.hiddenRank().isEmpty()
                     ? "Hale keeps more patterns. He shows you more at " + v.hiddenRank() + "-rank."
+                    : v.rack() && !v.hiddenRank().isEmpty()
+                    ? "Hale keeps more patterns in the city. He'll send them out to you at " + v.hiddenRank() + "-rank."
                     : "More patterns wait in the world.";
             List<FormattedCharSequence> lines = font.split(Component.literal(more), listW - 4);
             y += 4;
@@ -275,7 +277,7 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
         button(g, dx, "Track", known && !tracked, mouseX, mouseY);
         if (tracked) button(g, dx, "Stop tracking", true, mouseX, mouseY);
         var entry = entry(d.style());
-        if (entry != null && v.door() == ArmouryCache.HALE && entry.state() == 1) {
+        if (entry != null && (v.door() == ArmouryCache.HALE || v.rack()) && entry.state() == 1) {
             button(g, dx + 88, "Buy pattern · " + entry.price() + " essence", entry.afford(), mouseX, mouseY);
         } else if (entry != null && v.door() == ArmouryCache.FORGE && entry.state() == 0 && !d.style().equals("longsword")) {
             button(g, dx + 88, "Draw a copy", entry.afford(), mouseX, mouseY);
@@ -479,7 +481,7 @@ final class ArmouryScreen extends Screen implements dev.awaken.signal.client.Qui
             }
         }
         var entry = entry(d.style());
-        if (entry != null && v.door() == ArmouryCache.HALE && entry.state() == 1 && entry.afford() && buttonHit(dx + 88, "Buy pattern · " + entry.price() + " essence", mx, my)) {
+        if (entry != null && (v.door() == ArmouryCache.HALE || v.rack()) && entry.state() == 1 && entry.afford() && buttonHit(dx + 88, "Buy pattern · " + entry.price() + " essence", mx, my)) {
             ArmouryCache.ask(ArmsArmoury.BUY, d.style(), d.tier());
             return true;
         }

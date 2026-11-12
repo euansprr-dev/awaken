@@ -107,7 +107,7 @@ final class WildTalents {
         for (int i = 0; i < 8; i++) {
             int x = m.getBlockX() + r.nextInt(11) - 5, z = m.getBlockZ() + r.nextInt(11) - 5;
             p.set(x, m.getBlockY() + r.nextInt(3) - 1, z);
-            if (!level.hasChunkAt(p) || !level.getBlockState(p).isAir()) continue;
+            if (!dev.awaken.core.api.Ready.at(level, p) || !level.getBlockState(p).isAir()) continue;
             BlockState shroom = (r.nextBoolean() ? Blocks.RED_MUSHROOM : Blocks.BROWN_MUSHROOM).defaultBlockState();
             if (!shroom.canSurvive(level, p) || HearthHooks.inside(level, p)) continue;
             level.setBlock(p, shroom, Block.UPDATE_ALL);

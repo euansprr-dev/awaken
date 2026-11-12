@@ -39,7 +39,7 @@ public final class MobsModule {
                 : src.getDirectEntity() instanceof net.minecraft.world.entity.projectile.EvokerFangs f && f.getOwner() instanceof AwakenMob
                 ? Strikes.Kind.HEAVY : null);
         Strikes.installTells(e -> e instanceof AwakenMob m ? m.telegraphTicks() > 0 && m.tellKind() != Strikes.Kind.NONE
-                ? new Strikes.Tell(m.telegraphTicks(), m.tellKind()) : null : dev.awaken.mobs.entity.ToldBite.tellOf(e));
+                ? new Strikes.Tell(m.telegraphTicks(), m.tellKind(), m.tellFor()) : null : dev.awaken.mobs.entity.ToldBite.tellOf(e));
         // beasts on vanilla bodies bite told (SPEC §47.2)
         Strikes.installBiters(dev.awaken.mobs.entity.ToldBite::new);
         // the duel (SPEC §47.3): a deflect answered by the boss's fight, its openings, a white-gold shot sent back
@@ -52,6 +52,16 @@ public final class MobsModule {
             @Override
             public boolean opening(LivingEntity e) {
                 return e instanceof dev.awaken.mobs.entity.AwakenBoss b && b.inOpening();
+            }
+
+            @Override
+            public boolean atLastStand(LivingEntity e) {
+                return e instanceof dev.awaken.mobs.entity.AwakenBoss b && b.beaten();
+            }
+
+            @Override
+            public boolean reeling(LivingEntity e) {
+                return e instanceof dev.awaken.mobs.entity.AwakenBoss b && b.reeling();
             }
 
             @Override

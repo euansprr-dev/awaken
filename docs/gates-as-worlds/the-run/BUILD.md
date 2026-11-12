@@ -135,6 +135,48 @@ gate, not a loop. The three builder sessions stay idle unless a stage is clearly
 - Still true and not fixed: nothing has been played by a person. Ambush, doors, traps, the fall catch, hidden pay and the
   shortcut have only been compiled, unit-checked and (ambush, hidden) touched by a tour.
 
+- 11 Nov, about 02:10 local. The first real-game walk with depth, air and the gate monsters in it (The Stopped Works, run
+  42875088993) read like this: rooms and monsters good, but the fog too far out to see indoors, nothing in a room's air, and
+  the long walls of the gulf and the stairwell dead flat. Fixed in three commits: every kind's fog nearer and its haze
+  thicker (`kinds_air.py`); a well of light in every room with a beam down it, and mist on the biggest floors
+  (`GeneratedCrawl.wells`, `airOf`); bays or scoops cut one cell back into gulf and stairwell walls (`Chasm.walls`,
+  `Shaft.walls`), never beside anything to stand on. The offline bench on five kinds: nothing floats, every site reached.
+  All seventeen kinds walked again on that tip (tag w2).
+  - The bench's picture maker has flat light, so bays barely show in its pictures; judge them in the real game's.
+  - The bench's "settled: N in the open" line is the kit tidying away a few hanging things whose roof block is not one it
+    counts as holding (a lamp, a glass). It is not a fault and was there before this pass.
+
+- 11 Nov, about 03:25 local. The first two walks with wells in them (The Root Cellars 42882402964, The Lower Combs
+  42882379885) showed a lit slot in each roof and nothing under it. Two causes, both fixed in `868404dfc`:
+  - A light at the roof of a tall room never reaches its floor. A well now has unseen lights down its middle.
+  - **Nothing in Lens reads Gate Air in this build.** A land's shafts, mist layers and lights reach the client and only its
+    small life uses them (motes, moths, wisps over water). SPEC 38.3 says Lens marches them; no code does. So a beam is now
+    glowing wisps (`beams`) and room mist is wisps on the floor (`floor_mist`), both new small-life kinds in
+    `gates/client/WorldAir`. If the shader work wants real beams in gates, the data is already sent.
+  - The Sporewells' room walls had too many lit brackets once rooms had lumps and piers; halved (`ee482d836`).
+  - A gallery's shot can have flat pale squares in it (The Sunken Stacks, run 42875164141; The Bone Roads, run
+    42912016753). I first took them for Lens's tiled passes. They are the spitters' own spray: `RealmTraps` sends
+    Minecraft's llama-spit particle, whose first frames are a plain square, and the tour's camera stands in the line of
+    fire, so a few of them fill a corner of the view. Lens is not at fault. The spray wants a sprite of its own (a
+    follow-up, not done here).
+  - A kind whose seed rolls one fight or no trap repeats a shot in its tour (The Cinder Workings on 383). Harmless.
+
+- 11 Nov, about 05:15 local. **Beams and floor mist as sprites: tried three ways, all taken out** (`302155533`).
+  1. Faint wisps: nothing drew. Minecraft's particle shader throws away anything under a tenth opaque. (It also took a
+     round to find that the client stops at 260 sprites and takes a land's list in order, so what is late in the list of
+     a kind full of fireflies is never reached. Shaft dust is first in every list now.)
+  2. Upright bars and wisps just over a tenth, 16 pixel sprites: sheets of glass with stepped edges, a veil when one
+     stood on you (run 42904471985).
+  3. Fine-grained 64 pixel sprites: patches of static (run 42909997245).
+  What stays: unseen lights down each well, so the pool reaches the floor; shaft dust's fairer share; the rolled kinds'
+  tours wait ten seconds before each shot so the air has filled. A real beam is Lens marching the shafts it is already
+  sent, or a renderer of the gates' own with its own pipeline: Euan's call, on the page.
+- The same morning, all seventeen kinds were read on the final geometry (tag w4, runs 42896117252 to 42896313750, 187
+  shots, no tour errors): no broken builds. Dimmest: the crossings of The Hollow Hills, The Green Dark and The Unlit
+  Stair. Camera faults, not world faults: the ambush shots of The Green Dark and The Hollow Hills and the Warden shot of
+  The Tallow Runs stand with a rock or pillar in their face.
+- The results page is version 9; its second half is built from `page/` (see `page/README.md`).
+
 ## Stage 1 design (as first thought through; what was built is in SPEC 50.9)
 
 - **Legs are data on the land.** `Land.Leg(String id, Kind kind, int x, int y, int z, int radius, int pack, List<String> exits)`,

@@ -113,6 +113,12 @@ final class GateCommands {
                                     return 0;
                                 }
                                 var at = dev.awaken.gates.realms.Realms.world(g.realm.orElseThrow().cell(), (int) Math.round(view[0]), (int) view[1] + IntegerArgumentType.getInteger(c, "up"), (int) Math.round(view[2]));
+                                // a room's ground rises toward its walls and things hang from its roof: a camera that came out inside
+                                // something walks toward the leg until its head is in the air
+                                var leg = dev.awaken.gates.realms.Realms.world(g.realm.orElseThrow().cell(), (int) view[4], (int) view[1] + IntegerArgumentType.getInteger(c, "up"), (int) view[5]);
+                                for (int i = 0; i < 16 && !(p.level().getBlockState(at).isAir() && p.level().getBlockState(at.above()).isAir()) && !at.equals(leg); i++) {
+                                    at = at.offset(Integer.signum(leg.getX() - at.getX()), 0, Integer.signum(leg.getZ() - at.getZ()));
+                                }
                                 p.teleportTo(p.level(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), (float) view[3], back == 0 ? 18F : 10F, true);
                                 if (p.isCreative()) {
                                     p.getAbilities().flying = true;
@@ -120,6 +126,91 @@ final class GateCommands {
                                 }
                                 return 1;
                             }))))));
+            // tours: stand <back> blocks short of the n-th haunt of a kind (SPEC 50.9 "Who lives there"; counted out from the way
+            // in, on the way in's side of it), <up> over the ground there, looking at it. From 51 to 92 back the haunt fills.
+            gate.then(Commands.literal("realm_haunt").requires(AwakenCommands.admin())
+                    .then(Commands.argument("kind", StringArgumentType.word()).then(Commands.argument("index", IntegerArgumentType.integer(0))
+                            .then(Commands.argument("back", IntegerArgumentType.integer()).then(Commands.argument("up", IntegerArgumentType.integer()).executes(c -> {
+                                ServerPlayer p = c.getSource().getPlayerOrException();
+                                GateRecord g = dev.awaken.gates.run.Runs.gateOf(p);
+                                var plan = g == null ? null : dev.awaken.gates.realms.Realms.plan(g);
+                                if (plan == null) {
+                                    c.getSource().sendFailure(Component.literal("You're not in a Realm."));
+                                    return 0;
+                                }
+                                var kind = dev.awaken.gates.realms.RealmCountry.Kind.valueOf(StringArgumentType.getString(c, "kind").toUpperCase());
+                                var h = dev.awaken.gates.realms.RealmCountry.nth(plan.land(), plan.seed(), kind, IntegerArgumentType.getInteger(c, "index"));
+                                if (h == null) {
+                                    c.getSource().sendFailure(Component.literal("This land has no such " + kind + "."));
+                                    return 0;
+                                }
+                                var mouth = plan.land().mouth();
+                                int back = IntegerArgumentType.getInteger(c, "back");
+                                double dx = mouth.x() - h.x(), dz = mouth.z() - h.z(), l = Math.max(1, Math.hypot(dx, dz));
+                                int x = h.x() + (int) Math.round(dx / l * back), z = h.z() + (int) Math.round(dz / l * back);
+                                int y = Math.max(plan.land().ground(x, z) + 1, h.y()) + IntegerArgumentType.getInteger(c, "up");
+                                var at = dev.awaken.gates.realms.Realms.world(g.realm.orElseThrow().cell(), x, y, z);
+                                float yaw = (float) Math.toDegrees(Math.atan2(dx, -dz)), pitch = (float) Math.toDegrees(Math.atan2(y - h.y() - 1, Math.max(1, back)));
+                                p.teleportTo(p.level(), at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), yaw, pitch, true);
+                                if (p.isCreative()) {
+                                    p.getAbilities().flying = true;
+                                    p.onUpdateAbilities();
+                                }
+                                c.getSource().sendSuccess(() -> Component.literal(h.kind() + " at " + h.x() + " " + h.y() + " " + h.z()), false);
+                                return 1;
+                            }))))));
+            // tours: a trial's stand as if taken (SPEC 17.10), so the bars past it open
+            gate.then(Commands.literal("realm_stand").requires(AwakenCommands.admin())
+                    .then(Commands.argument("move", StringArgumentType.word()).executes(c -> {
+                        if (dev.awaken.gates.realms.RealmTrial.take(c.getSource().getPlayerOrException(), StringArgumentType.getString(c, "move"))) return 1;
+                        c.getSource().sendFailure(Component.literal("No stand of that move here."));
+                        return 0;
+                    })));
+            // tours: a slam as if one had landed where you stand (SPEC 17.10), so what only a slam moves can be walked past
+            gate.then(Commands.literal("realm_slam").requires(AwakenCommands.admin()).executes(c -> {
+                net.minecraft.server.level.ServerPlayer p = c.getSource().getPlayerOrException();
+                dev.awaken.gates.realms.RealmTrial.slam(p, p.getX(), p.getY(), p.getZ());
+                return 1;
+            }));
+            // tours: stand on the Lord hall's floor just past the heart's line (SPEC §50.8), where one look of the old rule ended the fight
+            gate.then(Commands.literal("realm_edge").requires(AwakenCommands.admin()).executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                GateRecord g = dev.awaken.gates.run.Runs.gateOf(p);
+                var plan = g == null ? null : dev.awaken.gates.realms.Realms.plan(g);
+                if (plan == null) {
+                    c.getSource().sendFailure(Component.literal("You're not in a Realm."));
+                    return 0;
+                }
+                int cell = g.realm.orElseThrow().cell();
+                var lvl = p.level();
+                int[] at = dev.awaken.gates.realms.RealmLive.pastTheLine(plan.land(), (x, y, z) -> {
+                    var pos = dev.awaken.gates.realms.Realms.world(cell, x, y, z);
+                    return !lvl.getBlockState(pos).getCollisionShape(lvl, pos).isEmpty();
+                });
+                if (at != null) {
+                    var lord = plan.land().site(dev.awaken.gates.realms.Land.SiteKind.LORD);
+                    var pos = dev.awaken.gates.realms.Realms.world(cell, at[0], at[1], at[2]);
+                    // facing back toward the Lord, the way a fighter who just leapt clear would
+                    float yaw = (float) Math.toDegrees(Math.atan2(lord.z() - at[2], lord.x() - at[0])) - 90F;
+                    p.teleportTo(lvl, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, Set.of(), yaw, 10F, true);
+                    dev.awaken.Awaken.LOG.info("[realms] gate {}: realm_edge put {} at {} {} {}, {} blocks from the Lord's place, outside the heart", g.id, p.getName().getString(), at[0], at[1], at[2], at[3]);
+                    return 1;
+                }
+                c.getSource().sendFailure(Component.literal("This hall has no open floor past the heart's line."));
+                return 0;
+            }));
+            // tours and tests: the Lord's fight as the server sees it, in the log; "hurt <n>" lands a blow of yours on it first
+            gate.then(Commands.literal("realm_lord").requires(AwakenCommands.admin()).executes(GateCommands::realmLord)
+                    .then(Commands.literal("hurt").then(Commands.argument("amount", IntegerArgumentType.integer(1)).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        GateRecord g = dev.awaken.gates.run.Runs.gateOf(p);
+                        var level = dev.awaken.gates.realms.Realms.level(c.getSource().getServer());
+                        if (g == null || g.realm.isEmpty() || level == null) return 0;
+                        if (g.boss.map(level::getEntity).orElse(null) instanceof net.minecraft.world.entity.LivingEntity l) {
+                            l.hurtServer(level, p.damageSources().playerAttack(p), IntegerArgumentType.getInteger(c, "amount"));
+                        }
+                        return realmLord(c);
+                    }))));
             gate.then(Commands.literal("realm_heart").requires(AwakenCommands.admin()).executes(c -> {
                 GateRecord g = dev.awaken.gates.run.Runs.gateOf(c.getSource().getPlayerOrException());
                 if (g == null || g.realm.isEmpty()) return 0;
@@ -499,6 +590,21 @@ final class GateCommands {
         lines.addAll(g.trace);
         lines.add("invariants: no theme from the last 3 · no layout from the last 2 · modifiers within budget · twist at least every 12");
         for (String l : lines) c.getSource().sendSuccess(() -> Component.literal(l).withStyle(ChatFormatting.GRAY), false);
+        return 1;
+    }
+
+    /** The Lord's fight in a Realm, said and logged (SPEC §68.6): its health, the door and who is in the fight. */
+    private static int realmLord(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        GateRecord g = dev.awaken.gates.run.Runs.gateOf(c.getSource().getPlayerOrException());
+        if (g == null || g.realm.isEmpty()) return 0;
+        var st = dev.awaken.gates.realms.RealmData.get(c.getSource().getServer()).state(g.id);
+        var level = dev.awaken.gates.realms.Realms.level(c.getSource().getServer());
+        var boss = level == null ? null : g.boss.map(level::getEntity).orElse(null);
+        String hp = boss instanceof net.minecraft.world.entity.LivingEntity l ? Math.round(l.getHealth()) + "/" + Math.round(l.getMaxHealth()) : "not loaded";
+        String line = "Lord " + g.boss.map(u -> u.toString().substring(0, 8)).orElse("none") + " " + hp + " hp, woken " + st.lordWoken
+                + ", door " + (st.doorShut ? "shut" : "open") + ", " + st.fighters.size() + " in the fight";
+        dev.awaken.Awaken.LOG.info("[realms] gate {}: {}", g.id, line);
+        c.getSource().sendSuccess(() -> Component.literal(line), false);
         return 1;
     }
 }

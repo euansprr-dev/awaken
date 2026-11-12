@@ -6,21 +6,27 @@
   "theme": "fungal_hollow",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:sporewells",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:gate_fungal_hollow"
+      "awaken:realm/sporewells"
     ],
     "lens": "sporewells",
     "air": [
-      "mist",
       "shaft_dust",
-      "dust",
+      "mist",
+      "spores",
+      "fireflies",
       "drips",
       "moths"
     ]

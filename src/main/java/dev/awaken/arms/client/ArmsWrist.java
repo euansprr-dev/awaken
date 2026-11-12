@@ -97,8 +97,11 @@ final class ArmsWrist {
         if (!GOING.isEmpty()) GOING.keySet().removeIf(id -> level.getEntity(id) == null);
     }
 
-    /** The turn of the weapon in a holder's right or left arm now, into {@code out}; false when no move turns it. */
-    static boolean turn(int holder, boolean left, Quaternionf out) {
+    /**
+     * The turn of the weapon in a holder's right or left arm now, into {@code out}; false when no move turns it.
+     * {@code faced}: a one-faced weapon (FpSwings.faced3), the move's turned keys where it has them.
+     */
+    static boolean turn(int holder, boolean left, boolean faced, Quaternionf out) {
         Going g = GOING.get(holder);
         Minecraft mc = Minecraft.getInstance();
         if (g == null || mc.level == null) return false;
@@ -110,7 +113,7 @@ final class ArmsWrist {
             return true;
         }
         float t = g.held() ? 0F : since;
-        if (t > FpSwings.wristLength(g.style(), g.move()) || !FpSwings.wrist(g.style(), g.move(), left, STRAIGHT, t, out)) return false;
+        if (t > FpSwings.wristLength(g.style(), g.move()) || !FpSwings.wrist(g.style(), g.move(), left, STRAIGHT, faced, t, out)) return false;
         if (g.held() && since < g.fade()) SQUARE.slerp(out, ArmsHands.easeInOutSine(since / g.fade()), out);
         return true;
     }

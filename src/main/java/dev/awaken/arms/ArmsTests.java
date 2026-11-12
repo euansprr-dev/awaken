@@ -42,6 +42,7 @@ final class ArmsTests {
     static void register() {
         AwakenTests.register("arms_timeline", 20, ArmsTests::timeline);
         AwakenTests.register("arms_defence_rules", 20, ArmsTests::defenceRules);
+        AwakenTests.register("arms_kneel_full", 20, ArmsTests::kneelFull);
         AwakenTests.register("arms_strike_arc", 60, ArmsTests::strikeArc);
         HitNowTests.register(); // SPEC §47.1: the client's sweep and the server's
         WeightTests.register(); // SPEC §25 "Weight in the Hand": the blow's direction, the hands' word, the layers, walls, grass
@@ -73,6 +74,7 @@ final class ArmsTests {
         AwakenTests.register("arms_attack_key", 20, ArmsTests::attackKey);
         AwakenTests.register("arms_strikes_things", 40, ArmsTests::strikesThings);
         AwakenTests.register("arms_untold_parry", 40, ArmsTests::untoldParry);
+        AwakenTests.register("arms_clash", 60, ArmsTests::clash);
         AwakenTests.register("arms_shots", 80, ArmsTests::shots);
         AwakenTests.register("arms_sources", 20, ArmsTests::sources);
     }
@@ -462,13 +464,23 @@ final class ArmsTests {
                 boolean carried = st.stance() != null && i > 0;
                 for (boolean left : new boolean[]{false, true}) {
                     for (boolean straight : new boolean[]{false, true}) { // with Bendable Cuboids' elbows and without
-                        for (float t : def.windup() > 0 && !carried ? new float[]{0, len} : new float[]{len}) {
-                            if (FpSwings.wrist(st, e.getKey(), left, straight, t, q)) {
-                                h.assertTrue(Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + "'s wrist starts and ends square"
-                                        + (straight ? " (straight arms)" : ""));
+                        for (boolean faced : new boolean[]{false, true}) { // and a one-faced weapon's turned keys
+                            for (float t : def.windup() > 0 && !carried ? new float[]{0, len} : new float[]{len}) {
+                                if (FpSwings.wrist(st, e.getKey(), left, straight, faced, t, q)) {
+                                    h.assertTrue(Math.abs(Math.abs(q.w) - 1) < 1e-3F, a.id() + " " + e.getKey() + "'s wrist starts and ends square"
+                                            + (straight ? " (straight arms)" : "") + (faced ? " (one-faced)" : ""));
+                                }
                             }
                         }
                     }
+                }
+                // first person, a one-faced weapon's turn in the fist (WeaponRenderer): at most a half turn, home by the end
+                FpSwings.Clip clip = st.moves().get(e.getKey());
+                if (clip != null && clip.turn().length > 0) {
+                    h.assertTrue(clip.turn().length == clip.size(), a.id() + " " + e.getKey() + " has a turn a key");
+                    for (float u : clip.turn()) h.assertTrue(Math.abs(u) <= 1.0001F, a.id() + " " + e.getKey() + " turns at most half round");
+                    h.assertTrue(Math.abs(FpSwings.turn(st, e.getKey(), 0)) < 1e-3F && Math.abs(FpSwings.turn(st, e.getKey(), def.total() + 1)) < 1e-3F,
+                            a.id() + " " + e.getKey() + "'s turn in the fist starts and ends square");
                 }
             }
             if (a.id().equals("spear")) { // a haft is held down it in third person: the wrist turns it there (arms_holds.grip3)
@@ -485,6 +497,24 @@ final class ArmsTests {
                 float turned = (float) Math.toDegrees(2 * Math.acos(Math.min(1, Math.abs(q.w))));
                 h.assertTrue(turned > 15F, a.id() + "'s first strike turns the blade into the cut on its hit (" + turned + " degrees)");
             }
+        }
+        // a one-sided head (SPEC §25 "One-faced heads"; Euan 2026-11-11, the Toll "facing the wrong way and hitting with the
+        // wrong end"): its own turns; the Toll, its mouth the other side from the forged mauls' front face, turned over in
+        // third person's hold too; and its bell mouth (its design's -x, the item's upper left) away from the eye in either
+        // first-person hand, as the engine applies the hold (ItemTransform.apply: rotationXYZ, a left hand's y and z turned back)
+        h.assertTrue(FpSwings.faced3("bell_warden_maul") && FpSwings.flipped3("bell_warden_maul"),
+                "the Toll strikes with its bell's one face (fp_swings faced3), turned over in third person (flipped3)");
+        for (String hook : new String[]{"beastbound_chainblade", "veilwoven_chainblade", "lantern_broker_chainblade"}) {
+            h.assertTrue(FpSwings.faced3(hook), hook + " cuts with its hook's inside only (fp_swings faced3)");
+        }
+        com.google.gson.JsonObject display = json("/assets/awaken/models/item/bell_warden_maul_in_hand.json").getAsJsonObject("display");
+        for (String side : new String[]{"firstperson_righthand", "firstperson_lefthand"}) {
+            com.google.gson.JsonArray r = display.getAsJsonObject(side).getAsJsonArray("rotation");
+            float k = side.endsWith("lefthand") ? -1F : 1F;
+            org.joml.Vector3f mouth = new org.joml.Quaternionf().rotationXYZ((float) Math.toRadians(r.get(0).getAsFloat()),
+                    k * (float) Math.toRadians(r.get(1).getAsFloat()), k * (float) Math.toRadians(r.get(2).getAsFloat()))
+                    .transform(new org.joml.Vector3f(-1F, 1F, 0F).normalize());
+            h.assertTrue(mouth.z < -0.5F, "the Toll's bell mouth faces away from the eye in " + side + " (" + mouth + ")");
         }
         float[] m = new float[6];
         float[] old = new float[6];
@@ -641,6 +671,10 @@ final class ArmsTests {
         h.assertTrue(Math.abs(p.value - ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false)) < 1e-4, "the server's settle is the same rule");
         p.settle(100 + ArmsRules.POSTURE_IDLE_TICKS + 20, false);
         h.assertTrue(Math.abs(p.value - ArmsRules.drained(20, ArmsRules.POSTURE_IDLE_TICKS + 20, false)) < 1e-4, "and never drains the same time twice");
+        float was = p.value;
+        p.held = true;
+        p.settle(100 + ArmsRules.POSTURE_IDLE_TICKS * 20, false);
+        h.assertTrue(p.value == was, "held (a duel body fighting), none drains however long (SPEC §47.3)");
         h.assertTrue(ArmsRules.lookedAt(170, -170) && !ArmsRules.lookedAt(90, 0), "the focus is looked at within 60 degrees, across the wrap");
         h.succeed();
     }
@@ -758,6 +792,23 @@ final class ArmsTests {
         h.succeed();
     }
 
+    /** SPEC §68.6: against a kneeling body every heavy is full at its min. */
+    static void kneelFull(GameTestHelper h) {
+        for (Archetypes.Loaded a : Archetypes.all()) {
+            Archetype.MoveDef heavy = a.move(Archetype.Move.HEAVY);
+            if (heavy == null || heavy.charge().isEmpty()) continue;
+            Archetype.Charge c = heavy.charge().get();
+            h.assertTrue(ArmsRules.fullAt(c, false) == c.glint(), a.id() + ": a charge is full at its glint");
+            h.assertTrue(ArmsRules.fullAt(c, true) == c.min(), a.id() + ": against a kneeling body, full the moment it is a charge");
+            Archetype.MoveDef exec = a.move(Archetype.Move.EXECUTION);
+            // press to hit on a kneel: the charge's min, the release, the Execution's windup
+            int pressToHit = c.min() + 1 + (exec == null ? 0 : exec.windup());
+            h.assertTrue(pressToHit + 20 <= ArmsRules.BROKEN_TICKS_LORD, a.id() + ": a heavy begun as a Lord kneels lands with time to spare ("
+                    + pressToHit + " ticks of " + ArmsRules.BROKEN_TICKS_LORD + ")");
+        }
+        h.succeed();
+    }
+
     static void defenceRules(GameTestHelper h) {
         Archetype.Guard g = longsword().def().guard();
         h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 0, 0, false, true) == ArmsRules.Answer.DEFLECT, "the raise's first tick deflects");
@@ -771,6 +822,11 @@ final class ArmsTests {
         // the grace: a raise that arrived after the blow, within the grace, still deflects as the player saw it
         h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 2, 2, false, true) == ArmsRules.Answer.DEFLECT, "held 2 ticks, grace 2: a deflect");
         h.assertTrue(ArmsRules.guard(g, Strikes.Kind.LIGHT, 0, 3, 2, false, true) == ArmsRules.Answer.BLOCK, "beyond the grace: a block");
+        // why a guard only blocked, for the ring's word (SPEC §68.6)
+        h.assertTrue(ArmsRules.missWhy(g, g.deflect() + 2, 0, 0, false, false) == ArmsRules.MISS_EARLY, "raised too early");
+        h.assertTrue(ArmsRules.missWhy(g, 1, 0, 0, true, false) == ArmsRules.MISS_TOO_SOON, "raised again too soon: the lockout");
+        h.assertTrue(ArmsRules.missWhy(g, g.deflect() + 2, 0, 0, true, false) == ArmsRules.MISS_EARLY, "locked out, but early anyway");
+        h.assertTrue(ArmsRules.missWhy(g, 0, 3, 2, false, false) == ArmsRules.MISS_LATE, "raised after the blow, past the grace");
         h.assertTrue(ArmsRules.grace(20) == 0 && ArmsRules.grace(150) == 2 && ArmsRules.grace(300) == 3 && ArmsRules.grace(900) == ArmsRules.GRACE_MAX,
                 "grace: none near, 2 ticks at 150 ms, capped at 3");
         Archetype.Dodge d = longsword().def().dodge();
@@ -784,8 +840,10 @@ final class ArmsTests {
         h.assertTrue(ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.BOSS) == ArmsRules.POSTURE_LORD
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.ELITE) == ArmsRules.POSTURE_ELITE
                 && ArmsRules.postureMax(CreatureTag.NONE, MobRole.Role.NONE) == ArmsRules.POSTURE_NORMAL, "stances by role");
-        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true) == 150 && ArmsRules.capExecution(20, 1000, 0.08F, true) == 100
-                        && ArmsRules.capExecution(500, 1000, 0.08F, false) == 500, "an Execution takes 10-15% of a Lord (SPEC §47.3)");
+        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true, false) == 150 && ArmsRules.capExecution(20, 1000, 0.08F, true, false) == 100
+                        && ArmsRules.capExecution(500, 1000, 0.08F, false, false) == 500, "an Execution takes 10-15% of a Lord (SPEC §47.3)");
+        h.assertTrue(ArmsRules.capExecution(500, 1000, 0.08F, true, true) == 100 && ArmsRules.capExecution(20, 1000, 0.08F, true, true) == 70,
+                "and 7-10% of a duel body, which breaks twice as often (SPEC §47.3)");
         h.assertTrue(ArmsRules.focusTurn(20, 0) == ArmsRules.FOCUS_TURN && ArmsRules.focusTurn(90, 0) == 0, "soft focus turns at most 15°, only near");
         h.succeed();
     }
@@ -1064,6 +1122,69 @@ final class ArmsTests {
         h.assertTrue(toldGain > 0 && Math.abs(untoldGain - toldGain * ArmsRules.UNTOLD_REWARD) < 1e-3,
                 "an untold deflect pays " + ArmsRules.UNTOLD_REWARD + " of a told one: " + untoldGain + " vs " + toldGain);
         done(h, p, q);
+    }
+
+    /**
+     * The clash (SPEC §25 "The clash"): a deflect is answered by the size of the blow it turned aside (a light one, a heavy
+     * one, the one that broke its stance), each size bigger than the last and the deflect before it kept for the switch;
+     * its metal by what met the blade, no layer pitched above 1.2 (Euan 2026-11-11: "a very small ding").
+     */
+    static void clash(GameTestHelper h) {
+        h.assertTrue(ArmsRules.clashSize(Strikes.Kind.LIGHT, false) == ArmsRules.CLASH_LIGHT && ArmsRules.clashSize(Strikes.Kind.HEAVY, false) == ArmsRules.CLASH_HEAVY
+                && ArmsRules.clashSize(Strikes.Kind.LIGHT, true) == ArmsRules.CLASH_BREAK && ArmsRules.clashSize(Strikes.Kind.HEAVY, true) == ArmsRules.CLASH_BREAK,
+                "a broken stance outranks a heavy, a heavy a light");
+        ArmsRules.Clash was = ArmsRules.TODAY;
+        h.assertTrue(was.freezeMs() == 100 && was.kickPitch() == 1.8F && was.kickRoll() == 1.2F && was.fov() == -0.035F && was.fovTicks() == 9
+                && was.light() == 0F && was.shakeTicks() == 0 && ArmsRules.clash(-1) == was, "the switch off keeps the deflect before it");
+        for (int z = ArmsRules.CLASH_LIGHT; z <= ArmsRules.CLASH_BREAK; z++) {
+            ArmsRules.Clash c = ArmsRules.clash(z);
+            h.assertTrue(c.freezeMs() > was.freezeMs() && c.kickPitch() > was.kickPitch() && c.fov() < was.fov() && c.shakeTicks() > was.shakeTicks()
+                    && c.light() >= was.light(), "size " + z + " is bigger than the one before: " + c);
+            h.assertTrue(c.edges() == (z == ArmsRules.CLASH_BREAK), "only a broken stance flashes the frame's edges");
+            for (ArmsSounds.Edge e : ArmsSounds.Edge.values()) {
+                ArmsSounds.Voice[] v = ArmsSounds.clash(z, e);
+                h.assertTrue(v != null && v.length >= 3, "size " + z + " on " + e + " has its metal and what it met");
+                for (ArmsSounds.Voice one : v) {
+                    // guard.steel's own recordings already play at 1.2
+                    float max = one.sound() == ArmsSounds.BLOCK_STEEL ? 1F : ArmsSounds.CLASH_PITCH_MAX;
+                    h.assertTrue(one.pitch() <= max, "size " + z + " on " + e + ": a layer pitched to " + one.pitch());
+                }
+            }
+            was = c;
+        }
+        // what met the blade
+        Mob bare = put(h, EntityTypes.ZOMBIE, -2.5, 4.5, 60);
+        h.assertTrue(ArmsSounds.edge(bare) == ArmsSounds.Edge.BEAST, "a bare zombie's blow is a body's");
+        bare.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
+        h.assertTrue(ArmsSounds.edge(bare) == ArmsSounds.Edge.STEEL, "with an iron sword it is steel");
+        bare.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_AXE));
+        h.assertTrue(ArmsSounds.edge(bare) == ArmsSounds.Edge.WOOD, "with a wooden axe, wood");
+        h.assertTrue(ArmsSounds.edge(put(h, EntityTypes.IRON_GOLEM, -2.5, 2.5, 100)) == ArmsSounds.Edge.STONE, "an iron golem's fist rings as its body");
+        Identifier ringer = Awaken.id("proving_ringer");
+        h.assertTrue(BuiltInRegistries.ENTITY_TYPE.containsKey(ringer) && BuiltInRegistries.ENTITY_TYPE.getValue(ringer).builtInRegistryHolder().is(ArmsSounds.CLASH_BELL),
+                "the Ringer strikes with a bell (#awaken:clash_bell)");
+        // three real deflects: a light blow, a heavy one, and a light one on a stance one short of breaking
+        ServerPlayer light = fighter(h, 1.5, 0.5, 0F), heavy = fighter(h, 3.5, 0.5, 0F), breaker = fighter(h, 5.5, 0.5, 0F);
+        Mob zl = put(h, EntityTypes.ZOMBIE, 1.5, 1.9, 60), zh = put(h, EntityTypes.ZOMBIE, 3.5, 1.9, 60), zb = put(h, EntityTypes.ZOMBIE, 5.5, 1.9, 60);
+        Posture stance = ArmsServer.posture(zb);
+        stance.value = stance.max - 1;
+        stance.lastHitAt = ArmsServer.now(zb); // just struck: nothing drains before the deflect
+        deflectBy(h, light, zl, Strikes.Kind.LIGHT);
+        deflectBy(h, heavy, zh, Strikes.Kind.HEAVY);
+        deflectBy(h, breaker, zb, Strikes.Kind.LIGHT);
+        h.assertTrue(ArmsServer.state(light).lastClash == ArmsRules.CLASH_LIGHT, "a light blow turned aside is the light clash: " + ArmsServer.state(light).lastClash);
+        h.assertTrue(ArmsServer.state(heavy).lastClash == ArmsRules.CLASH_HEAVY, "a heavy one is the heavy clash: " + ArmsServer.state(heavy).lastClash);
+        h.assertTrue(ArmsServer.posture(zb).broken(ArmsServer.now(breaker)) && ArmsServer.state(breaker).lastClash == ArmsRules.CLASH_BREAK,
+                "the deflect that broke its stance is the biggest: " + ArmsServer.state(breaker).lastClash);
+        done(h, light, heavy, breaker);
+    }
+
+    /** Raises p's guard and lets {@code by} strike it on the raise's first tick with a blow of {@code kind}: it is deflected. */
+    private static void deflectBy(GameTestHelper h, ServerPlayer p, Mob by, Strikes.Kind kind) {
+        raise(p);
+        float hp = p.getHealth();
+        Strikes.deliver(by, kind, () -> by.doHurtTarget(h.getLevel(), p));
+        h.assertTrue(ArmsServer.state(p).raiseDeflected && p.getHealth() == hp, kind + " blow on the raise is deflected");
     }
 
     /** Raises p's guard, lets {@code by} strike it on the raise's first tick, and returns the Resonance the deflect paid. */

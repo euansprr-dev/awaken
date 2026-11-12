@@ -1,0 +1,73 @@
+# The cave mouths in Euan's New World V20 (11 Nov) that the floating-camp scan found loose blocks at, remade from its seed
+# with the pack's terrain (as floating-camp.txt).
+#  - The doline at -1565 67 -806 (floor y 50): its winding way breaks up through the floor under two moss carpets
+#    (-1563..-1562 50 -809) and the ledge's last stones; a ledge stone stands off the wall at -1564 58 -803.
+#  - The doline at -1672 79 -248: a moss carpet over the way down at -1674 64 -250.
+#  - The cleft at -2472 70 -280 over a lake: the approach's old shelf, worn to scree, hangs a block under the lip.
+# After the fix: nothing over the hole, the ledge against the rock, no sheet over the lake.
+# Look for: nothing floating or cut off. The first far teleport holds the server while the land is made (90 s on the
+# runner), so each place waits long after its first teleport.
+# ci knobs: PACK=perf,world TECTONIC=awakened RD=10
+#   tools/tour-ci.sh tools/autopilot/floating-doline.txt 2400
+world floating_doline creative 3761469094609221698
+waitworld
+wait 40
+cmd awaken opening skip
+wait 30
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 20
+key dismiss
+screen close
+window 1440 900
+info
+camera first
+hud off
+opt fov 70
+cmd time set 6000
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:night_vision 100000 0 true
+cmd gamemode spectator
+wait 40
+
+# ---- the doline at -1565 67 -806 (floor y 50, the way out east) ----
+cmd tp @s -1565 150 -806
+wait 2400
+cmd tp @s -1565 84 -806 0 89
+wait 300
+shot doline_above
+cmd tp @s -1565 53 -802 -162 25
+wait 200
+shot doline_floor_north
+cmd tp @s -1566 57 -809 -22 5
+wait 100
+shot doline_ledge_south
+cmd tp @s -1559 52 -806 90 15
+wait 100
+shot doline_floor_west
+# ---- the doline at -1672 79 -248 (its carpet at -1674 64 -250) ----
+cmd tp @s -1672 150 -248
+wait 900
+cmd tp @s -1672 90 -248 0 89
+wait 200
+shot doline2_above
+cmd tp @s -1670 66 -246 135 30
+wait 100
+shot doline2_floor
+# ---- the cleft at -2472 70 -280 over the lake (its lip at y 69, z -279..-272) ----
+cmd tp @s -2472 150 -262
+wait 900
+cmd tp @s -2470 66 -252 180 -8
+wait 200
+shot cleft_lake_north
+cmd tp @s -2486 73 -270 -110 18
+wait 100
+shot cleft_lake_side
+quit

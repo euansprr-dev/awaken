@@ -66,12 +66,17 @@ final class StilledPlacer {
             return;
         }
         int ridge = TheLull.ridge(server);
-        List<StilledSpots.Spot> fixed = StilledSpots.fixed(c.getX(), c.getZ(), ridge, firstHamlet(level, c, ridge), level.getSeed());
+        // a Far Landing world (SPEC §67): the stone people sit round the landing, where the game starts; Aldo stays by the skiff
+        BlockPos l = TheLull.landing(server);
+        int[] landing = l == null ? null : new int[]{l.getX(), l.getZ()};
+        List<StilledSpots.Spot> fixed = StilledSpots.fixed(c.getX(), c.getZ(), ridge, landing == null ? firstHamlet(level, c, ridge) : null, level.getSeed(), landing);
         for (ServerPlayer p : level.players()) {
             if (p.isSpectator()) continue;
             List<StilledSpots.Spot> near = new ArrayList<>();
             for (StilledSpots.Spot s : fixed) if (Math.hypot(s.x() - p.getX(), s.z() - p.getZ()) < RESOLVE) near.add(s);
-            near.addAll(StilledSpots.cells(c.getX(), c.getZ(), ridge, level.getSeed(), p.getBlockX(), p.getBlockZ(), RESOLVE));
+            near.addAll(landing == null ? StilledSpots.cells(c.getX(), c.getZ(), ridge, level.getSeed(), p.getBlockX(), p.getBlockZ(), RESOLVE)
+                    : StilledSpots.cells(landing[0], landing[1], StilledSpots.LANDING_CLEAR, level.getSeed(), p.getBlockX(), p.getBlockZ(), RESOLVE,
+                    c.getX(), c.getZ(), ridge));
             for (StilledSpots.Spot s : near) {
                 if (data.placed.containsKey(s.id())) continue;
                 Ready r = READY.get(s.id());
@@ -84,7 +89,7 @@ final class StilledPlacer {
                     skip(data, s.id());
                     continue;
                 }
-                if (Math.hypot(r.at().getX() - p.getX(), r.at().getZ() - p.getZ()) > NEAR || !level.isLoaded(r.at())) continue;
+                if (Math.hypot(r.at().getX() - p.getX(), r.at().getZ() - p.getZ()) > NEAR || !dev.awaken.core.api.Ready.loaded(level, r.at())) continue;
                 place(level, data, r, fixed);
             }
         }
@@ -98,7 +103,7 @@ final class StilledPlacer {
         for (Map.Entry<String, Long> e : data.placed.entrySet()) {
             if (e.getValue() == Stilled.SKIPPED) continue;
             BlockPos at = BlockPos.of(e.getValue());
-            if (!level.isLoaded(at) || !(level.getBlockEntity(at) instanceof StilledBlockEntity be)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, at) || !(level.getBlockEntity(at) instanceof StilledBlockEntity be)) continue;
             String name = be.name;
             level.removeBlock(at, false);
             level.sendParticles(new net.minecraft.core.particles.BlockParticleOption(net.minecraft.core.particles.ParticleTypes.BLOCK,
@@ -253,7 +258,7 @@ final class StilledPlacer {
                 for (int dz = -ring; dz <= ring; dz++) {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) continue;
                     int x = near.getX() + dx, z = near.getZ() + dz;
-                    if (!level.isLoaded(new BlockPos(x, 0, z))) continue;
+                    if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(x, 0, z))) continue;
                     int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
                     BlockPos feet = new BlockPos(x, y, z);
                     if (fits(level, feet)) return feet;

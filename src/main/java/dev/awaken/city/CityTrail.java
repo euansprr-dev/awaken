@@ -37,7 +37,7 @@ final class CityTrail {
         for (int x = -HALF - 2; x <= HALF + 2; x++)
             for (int z = PATH_END_Z - 2; z <= -l.reach + 8; z++) {
                 int wx = l.cx + x, wz = l.cz + z;
-                if (!owns(l, wx, wz) || !level.hasChunkAt(m.set(wx, l.streetY, wz))) continue;
+                if (!owns(l, wx, wz) || !dev.awaken.core.api.Ready.at(level, m.set(wx, l.streetY, wz))) continue;
                 for (int y = l.streetY - 16; y <= l.streetY + 64; y++) {
                     BlockState s = level.getBlockState(m.set(wx, y, wz));
                     if (!tree(s)) continue;

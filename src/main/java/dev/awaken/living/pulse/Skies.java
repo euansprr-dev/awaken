@@ -74,7 +74,7 @@ final class Skies {
         @Override
         public void start(ServerLevel level, Happening h, HappeningDef def) {
             BlockPos at = h.from;
-            if (!level.hasChunkAt(at) || !level.getBlockState(at).canBeReplaced()) return;
+            if (!dev.awaken.core.api.Ready.at(level, at) || !level.getBlockState(at).canBeReplaced()) return;
             RandomSource r = level.getRandom();
             level.setBlock(at, Blocks.BARREL.defaultBlockState(), 3);
             if (level.getBlockEntity(at) instanceof BarrelBlockEntity barrel) {
@@ -97,7 +97,7 @@ final class Skies {
             for (Direction d : Direction.Plane.HORIZONTAL) {
                 if (r.nextFloat() < 0.6F) {
                     BlockPos b = Behaviours.surface(level, at.getX() + d.getStepX() * (1 + r.nextInt(2)), at.getZ() + d.getStepZ() * (1 + r.nextInt(2)));
-                    if (level.getBlockState(b).canBeReplaced() && Behaviours.dry(level, b)) level.setBlock(b, Blocks.BONE_BLOCK.defaultBlockState(), 3);
+                    if (dev.awaken.core.api.Ready.at(level, b) && level.getBlockState(b).canBeReplaced() && Behaviours.dry(level, b)) level.setBlock(b, Blocks.BONE_BLOCK.defaultBlockState(), 3);
                 }
             }
         }
@@ -124,7 +124,7 @@ final class Skies {
         public void tick(ServerLevel level, Happening h, HappeningDef def, long now) {
             float t = h.progress(now);
             Vec3 c = h.along(t);
-            int y = level.hasChunkAt(Pulse.at(c)) ? Behaviours.surface(level, (int) c.x, (int) c.z).getY() : (int) c.y;
+            int y = dev.awaken.core.api.Ready.at(level, Pulse.at(c)) ? Behaviours.surface(level, (int) c.x, (int) c.z).getY() : (int) c.y;
             h.centre = new Vec3(c.x, y, c.z);
             RandomSource r = level.getRandom();
             if (r.nextFloat() > 0.35F) return;
@@ -133,7 +133,7 @@ final class Skies {
             double a = r.nextDouble() * Math.PI * 2, d = r.nextDouble() * 20;
             int x = (int) Math.floor(c.x + dx / len * StormCell.RAIN_AHEAD + Math.cos(a) * d);
             int z = (int) Math.floor(c.z + dz / len * StormCell.RAIN_AHEAD + Math.sin(a) * d);
-            if (!level.hasChunkAt(new BlockPos(x, 0, z))) return;
+            if (!dev.awaken.core.api.Ready.at(level, new BlockPos(x, 0, z))) return;
             StormCell.strike(level, Behaviours.surface(level, x, z));
         }
     }

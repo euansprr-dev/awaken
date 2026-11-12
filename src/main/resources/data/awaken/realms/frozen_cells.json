@@ -6,22 +6,26 @@
   "theme": "frost_monastery",
   "ranks": [
     "C",
-    "B"
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:frozen_cells",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:gate_frost_monastery"
+      "awaken:realm/frozen_cells"
     ],
     "lens": "frozen_cells",
     "air": [
-      "mist",
       "shaft_dust",
-      "dust",
-      "drips"
+      "mist",
+      "snow",
+      "wind",
+      "dust"
     ]
   },
   "life": {

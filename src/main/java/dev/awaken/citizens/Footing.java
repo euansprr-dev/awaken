@@ -58,7 +58,7 @@ public final class Footing {
     /** Standable where the chunk is loaded; true where it isn't (checked again when a body goes there). */
     public static boolean standableIfLoaded(Level level, double x, double y, double z) {
         int bx = (int) Math.floor(x), by = (int) Math.floor(y + 0.01), bz = (int) Math.floor(z);
-        if (!level.isLoaded(new BlockPos(bx, by, bz))) return true;
+        if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(bx, by, bz))) return true;
         return standable(level, bx, by, bz);
     }
 
@@ -70,7 +70,7 @@ public final class Footing {
     public static double open(Level level, double x, double y, double z) {
         int bx = (int) Math.floor(x), by = (int) Math.floor(y + 0.01), bz = (int) Math.floor(z);
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos(bx, by, bz);
-        if (!level.isLoaded(m)) return y;
+        if (!dev.awaken.core.api.Ready.loaded(level, m)) return y;
         int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bx, bz);
         for (int dy : DY) {
             int fy = by + dy;
@@ -109,7 +109,7 @@ public final class Footing {
                 for (int dy : DY) {
                     double cost = flat + dy * dy * 1.5;
                     if (cost >= best) continue;
-                    if (!level.isLoaded(new BlockPos(bx + dx, by + dy, bz + dz)) || !standable(level, bx + dx, by + dy, bz + dz)) continue;
+                    if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(bx + dx, by + dy, bz + dz)) || !standable(level, bx + dx, by + dy, bz + dz)) continue;
                     best = cost;
                     out[0] = cx;
                     out[1] = by + dy;

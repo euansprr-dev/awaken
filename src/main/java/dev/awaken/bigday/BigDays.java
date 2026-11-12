@@ -96,7 +96,7 @@ public final class BigDays {
             return true;
         }
         ServerLevel level = p.level().getServer().overworld();
-        if (!level.isLoaded(at)) return false;
+        if (!dev.awaken.core.api.Ready.loaded(level, at)) return false;
         return !(level.getBlockEntity(at) instanceof ChestBlockEntity c) || c.isEmpty();
     }
     static final String TAG = "awaken_raid", LORD = "awaken_raid_lord";
@@ -197,7 +197,7 @@ public final class BigDays {
         if (!household(level, h, REACH).isEmpty()) {
             Vec3 b = bearing(h.pos, breach);
             BlockPos from = h.pos.offset((int) (b.x * 44), 0, (int) (b.z * 44)), to = h.pos.offset((int) (-b.x * 90), 0, (int) (-b.z * 90));
-            if (level.isLoaded(from)) r.stream.addAll(KinHome.stream(level, from, to, 4));
+            if (dev.awaken.core.api.Ready.loaded(level, from)) r.stream.addAll(KinHome.stream(level, from, to, 4));
         }
         Awaken.LOG.info("[bigday] raid warned at {} for play-day {} from {} ({})", h.pos.toShortString(), day, breach.toShortString(), theme);
     }
@@ -384,7 +384,7 @@ public final class BigDays {
         // nearest the breach first: the side they came from
         List<BlockPos> candidates = new ArrayList<>();
         for (BlockPos q : BlockPos.betweenClosed(h.pos.offset(-radius, -4, -radius), h.pos.offset(radius, 8, radius))) {
-            if (!level.isLoaded(q)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, q)) continue;
             double dot = (q.getX() - h.pos.getX()) * b.x + (q.getZ() - h.pos.getZ()) * b.z;
             if (dot <= 0) continue;
             if (breakable(level.getBlockState(q))) candidates.add(q.immutable());
@@ -438,7 +438,7 @@ public final class BigDays {
         ChestBlockEntity best = null;
         int most = 0;
         for (BlockPos q : BlockPos.betweenClosed(h.pos.offset(-radius, -6, -radius), h.pos.offset(radius, 10, radius))) {
-            if (!level.isLoaded(q) || !(level.getBlockEntity(q) instanceof ChestBlockEntity c)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, q) || !(level.getBlockEntity(q) instanceof ChestBlockEntity c)) continue;
             int food = 0;
             for (int i = 0; i < c.getContainerSize(); i++) if (c.getItem(i).has(DataComponents.FOOD)) food++;
             if (food > most) {
@@ -470,7 +470,7 @@ public final class BigDays {
     private static void mend(ServerLevel level, BigDayData d, Home home) {
         if (home.mending.isEmpty() || level.getGameTime() % MEND_EVERY >= 20) return;
         Broken b = home.mending.getFirst();
-        if (!level.isLoaded(b.pos())) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, b.pos())) return;
         home.mending.removeFirst();
         if (level.getBlockState(b.pos()).isAir()) {
             level.setBlock(b.pos(), b.state(), 2 | 16);
@@ -522,7 +522,7 @@ public final class BigDays {
     }
 
     private static @Nullable BlockPos ground(ServerLevel level, BlockPos near) {
-        if (!level.isLoaded(near)) return null;
+        if (!dev.awaken.core.api.Ready.loaded(level, near)) return null;
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, near.getX(), near.getZ());
         return y <= level.getMinY() ? null : new BlockPos(near.getX(), y, near.getZ());
     }

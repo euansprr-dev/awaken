@@ -6,19 +6,23 @@
   "theme": "precursor_lab",
   "ranks": [
     "C",
-    "B"
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:sealed_wing",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:gate_precursor_lab"
+      "awaken:realm/sealed_wing"
     ],
     "lens": "sealed_wing",
     "air": [
       "shaft_dust",
+      "steam",
       "dust"
     ]
   },

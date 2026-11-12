@@ -128,14 +128,14 @@ final class HomeWalk {
         if (v != 0) return v == 1;
         BlockPos p = BlockPos.of(cell);
         reads += 3;
-        boolean ok = p.getY() >= yMin && p.getY() <= yMax && level.isLoaded(p) && stand(level, p);
+        boolean ok = p.getY() >= yMin && p.getY() <= yMax && dev.awaken.core.api.Ready.loaded(level, p) && stand(level, p);
         standCache.put(cell, ok ? (byte) 1 : (byte) 2);
         return ok;
     }
 
     private boolean passable(long cell) {
         BlockPos p = BlockPos.of(cell);
-        if (!level.isLoaded(p)) return false;
+        if (!dev.awaken.core.api.Ready.loaded(level, p)) return false;
         reads++;
         return passable(level, p, level.getBlockState(p));
     }

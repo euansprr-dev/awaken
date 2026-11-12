@@ -105,7 +105,7 @@ public final class Bolts {
         if (--b.life < 0 || b.owner.isRemoved() || b.owner.level() != b.level) return true;
         Vec3 from = b.pos;
         Vec3 to = from.add(b.vel);
-        if (!b.level.isLoaded(net.minecraft.core.BlockPos.containing(to))) return true;
+        if (!dev.awaken.core.api.Ready.loaded(b.level, net.minecraft.core.BlockPos.containing(to))) return true;
         BlockHitResult wall = b.level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty()));
         Vec3 end = wall.getType() == HitResult.Type.MISS ? to : wall.getLocation();
         LivingEntity target = firstTarget(b, from, end);

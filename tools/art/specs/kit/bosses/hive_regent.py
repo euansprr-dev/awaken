@@ -476,6 +476,7 @@ FIGHT = {
     "schemaVersion": 2,
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
+    "finish": True,  # dies only to a finishing blow: one of the three pilots (SPEC §68.4)
     # it watches you and answers (SPEC §48): a drink brings the dive, a guard kept up brings the Sting
     "mind": {
         "cooldowns": {"rain": 240, "dive": 60},
@@ -488,7 +489,7 @@ FIGHT = {
             {"on": "PAUSED", "moves": ["dive", "volley"], "chance": 0.9, "cooldown": 200, "then": [["cut_b"]]},
         ],
     },
-    "stance": 240,
+    "stance": 130,
     "intro": {"pose": "idle", "move": "emerge"},
     "phases": [
         {"pool": [

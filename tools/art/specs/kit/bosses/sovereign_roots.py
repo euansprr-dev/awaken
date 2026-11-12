@@ -973,7 +973,7 @@ MOVE_SOUNDS = {"gulp": {"impact": "eat"}, "holdfast": {"swing": "swing_light", "
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 360,
+    "stance": 200,
     "intro": {"pose": "idle", "move": "arrive"},  # still as a stone, then its eyes open and it croaks
     "phases": [
         {"pool": [

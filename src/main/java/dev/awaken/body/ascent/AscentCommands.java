@@ -13,12 +13,13 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * {@code /awaken ascent} (game masters, Phase 0): {@code grant <all|none|tether|wings|skyborn>} sets the tiers you
  * hold, {@code sandbox} grows a grove of giant trees and a launch tower in front of you and puts you on the tower,
- * {@code pilot <line>} runs a line of the tour pilot on your client (scripted input: the autopilot can't hold keys).
+ * {@code pilot <line>} runs a line of the tour pilot on your client (scripted input: the autopilot can't hold keys),
+ * {@code aether full} fills the server's Aether meter (tours).
  */
 final class AscentCommands {
     private AscentCommands() {}
 
-    private static final String[] GRANTS = {"all", "none", "tether", "wings", "skyborn"};
+    private static final String[] GRANTS = {"all", "none", "tether", "leaper", "wings", "skyborn"};
 
     static void register() {
         AwakenCommands.add((root, ctx) -> {
@@ -27,6 +28,12 @@ final class AscentCommands {
                     .suggests((c, b) -> SharedSuggestionProvider.suggest(GRANTS, b))
                     .executes(c -> grant(c.getSource(), StringArgumentType.getString(c, "what")))));
             ascent.then(Commands.literal("sandbox").executes(c -> sandbox(c.getSource())));
+            // the server's own Aether, full (tours: the Sovereign's form asks the server for a full meter, and the
+            // pilot's "aether" line fills only the client's)
+            ascent.then(Commands.literal("aether").then(Commands.literal("full").executes(c -> {
+                AscentServer.motion(c.getSource().getPlayerOrException()).aether = 1;
+                return 1;
+            })));
             // replays "your body remembers" for the tiers held (Wings if none): for tours and the clip recorder
             ascent.then(Commands.literal("remember").executes(c -> {
                 ServerPlayer p = c.getSource().getPlayerOrException();
@@ -34,6 +41,55 @@ final class AscentCommands {
                 AwakenNet.send(p, new AscentPayloads.Remember(bits != 0 ? bits : 0b111, AscentPayloads.REMEMBER));
                 return 1;
             }));
+            // tours: from beside a sky platform's core onto its pier, facing off its end (the first flight, SPEC §63.2)
+            ascent.then(Commands.literal("pier").executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                net.minecraft.core.BlockPos me = p.blockPosition();
+                for (net.minecraft.core.BlockPos q : net.minecraft.core.BlockPos.betweenClosed(me.offset(-20, -6, -20), me.offset(20, 6, 20))) {
+                    if (!p.level().getBlockState(q).is(AscentContent.WING_CORE.get())) continue;
+                    int pier = dev.awaken.above.ruin.SkyRig.PIER;
+                    p.teleportTo(p.level(), q.getX() + pier - 3.5, q.getY() + 1.0, q.getZ() + pier - 3.5, java.util.Set.of(), -45F, 5F, true);
+                    return 1;
+                }
+                c.getSource().sendFailure(Component.literal("No Wing Core within 20 blocks"));
+                return 0;
+            }));
+            // The Way Up (SPEC §63): your road as the server reads it, read again now (tours, and "why is nothing lit?")
+            ascent.then(Commands.literal("way").executes(c -> {
+                ServerPlayer p = c.getSource().getPlayerOrException();
+                WayUp.read(p, AscentServer.now(p));
+                WayMemory m = WayUp.memory(p);
+                WayUp.Rung r = WayUp.waiting(p);
+                net.minecraft.core.BlockPos at = r == null ? null : m.place(r);
+                String line = "Way up: " + (r == null ? "nothing waits" : r + " waits" + (at == null ? ", no place yet" : " at " + at.toShortString()
+                        + " (" + WayUp.whereFrom(p, at) + ")")) + "; told " + m.told() + ", done " + m.done() + ", owed " + m.owed()
+                        + (m.leapGate() >= 0 ? ", the Gauntlet's gate " + m.leapGate() : "");
+                c.getSource().sendSuccess(() -> Component.literal(line).withStyle(ChatFormatting.AQUA), false);
+                return 1;
+            }));
+            // a gift's scene by name, as its grant would play it (tours: the Lesson's strip and cards without the fight)
+            ascent.then(Commands.literal("scene").then(Commands.argument("what", StringArgumentType.word())
+                    .suggests((c, b) -> SharedSuggestionProvider.suggest(java.util.List.of("wings", "leap", "leap_edge", "sky", "sky_edge", "sovereign", "wings_edge"), b))
+                    .executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        int mode = switch (StringArgumentType.getString(c, "what")) {
+                            case "wings" -> AscentPayloads.GIFT_WINGS;
+                            case "leap" -> AscentPayloads.GIFT_LEAP;
+                            case "leap_edge" -> AscentPayloads.LEAP_EDGE;
+                            case "sky" -> AscentPayloads.GIFT_SKY;
+                            case "sky_edge" -> AscentPayloads.SKY_EDGE;
+                            case "sovereign" -> AscentPayloads.GIFT_SOVEREIGN;
+                            case "wings_edge" -> AscentPayloads.WINGS_EDGE;
+                            default -> -1;
+                        };
+                        if (mode < 0) {
+                            c.getSource().sendFailure(Component.literal("scene wings, leap, leap_edge, sky, sky_edge, sovereign or wings_edge"));
+                            return 0;
+                        }
+                        AwakenNet.send(p, new AscentPayloads.Remember(AscentServer.tiers(p), mode));
+                        if (mode == AscentPayloads.GIFT_WINGS) WayUp.firstFlight(p, p.blockPosition().offset(-dev.awaken.above.ruin.SkyRig.PIER, -1, -dev.awaken.above.ruin.SkyRig.PIER));
+                        return 1;
+                    })));
             // the Tether Vow at the world's spawn vault: there, wait for its chunks, then stand in its forecourt (tours)
             ascent.then(Commands.literal("vow").then(Commands.literal("goto").executes(c -> vowGoto(c.getSource(), false))));
             // the same, with the vault's sealed door opened first (the vow needs it open: tours at C-rank)
@@ -53,9 +109,21 @@ final class AscentCommands {
             // the nearest Tether Spire: you on its plaza beside the column (tours)
             ascent.then(Commands.literal("spire").then(Commands.literal("goto").executes(c -> spireGoto(c.getSource()))));
             // the nearest sky platform: rigged if it isn't yet, and you under its first ring (tours)
-            ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource(), false))
+            ascent.then(Commands.literal("sky").then(Commands.literal("goto").executes(c -> skyGoto(c.getSource(), 0))
                     // tours: on the deck beside the core instead (its ward refuses a block there, SPEC §17.29)
-                    .then(Commands.literal("deck").executes(c -> skyGoto(c.getSource(), true)))));
+                    .then(Commands.literal("deck").executes(c -> skyGoto(c.getSource(), 1)))
+                    // tours: on the ground short of the stair's lowest stone, facing it (SPEC §17.9)
+                    .then(Commands.literal("stair").executes(c -> skyGoto(c.getSource(), 2))))
+                    // tours: a view of the platform, out from its middle along the pier's diagonal turned by turn
+                    // degrees, up over the deck, facing the core (set spectator first: nothing holds you there)
+                    .then(Commands.literal("view").then(Commands.argument("out", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(0, 400))
+                            .then(Commands.argument("up", com.mojang.brigadier.arguments.DoubleArgumentType.doubleArg(-300, 200))
+                                    .executes(c -> skyView(c.getSource(), com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "out"),
+                                            com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "up"), 0F))
+                                    .then(Commands.argument("turn", com.mojang.brigadier.arguments.FloatArgumentType.floatArg(-360, 360))
+                                            .executes(c -> skyView(c.getSource(), com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "out"),
+                                                    com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(c, "up"),
+                                                    com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "turn"))))))));
             ascent.then(Commands.literal("crown").then(Commands.literal("grow")
                     .then(Commands.literal("colossus").executes(c -> crownGrow(c.getSource(), dev.awaken.terrain.hero.HeroTree.ELDER_COLOSSUS, 7919L))
                             .then(Commands.argument("seed", com.mojang.brigadier.arguments.LongArgumentType.longArg())
@@ -130,7 +198,18 @@ final class AscentCommands {
         return t;
     }
 
-    private static int skyGoto(CommandSourceStack src, boolean deck) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+    private static double viewOut, viewUp;
+    private static float viewTurn;
+
+    /** A view of the nearest platform for a tour's shot (where 3): see the "view" command. */
+    private static int skyView(CommandSourceStack src, double out, double up, float turn) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
+        viewOut = out;
+        viewUp = up;
+        viewTurn = turn;
+        return skyGoto(src, 3);
+    }
+
+    private static int skyGoto(CommandSourceStack src, int where) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
         net.minecraft.server.level.ServerLevel level = src.getServer().overworld();
         // vanilla's own search: only starts that really generated
@@ -156,11 +235,56 @@ final class AscentCommands {
                 int cx = box.minX() + 24, cz = box.minZ() + 24, deckY = box.minY() + 12;
                 if (!level.getBlockState(new net.minecraft.core.BlockPos(cx, deckY + 1, cz)).is(AscentContent.WING_CORE.get())) {
                     dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
+                } else {
+                    // a platform rigged before the hall or the arch gets them now (the views look at both)
+                    if (!dev.awaken.above.ruin.SkyRig.hallPlaced(level, cx, deckY, cz)) dev.awaken.above.ruin.SkyRig.rigHall(level, cx, deckY, cz);
+                    if (!dev.awaken.above.ruin.SkyRig.archPlaced(level, cx, deckY, cz)) dev.awaken.above.ruin.SkyRig.rigArch(level, cx, deckY, cz);
+                }
+                if (where == 3) {
+                    double a = Math.toRadians(45 + viewTurn);
+                    double vx = cx + 0.5 + Math.cos(a) * viewOut, vz = cz + 0.5 + Math.sin(a) * viewOut, vy = deckY + viewUp;
+                    double fx = cx + 0.5 - vx, fy = deckY + 2 - (vy + 1.62), fz = cz + 0.5 - vz;
+                    float yaw = (float) Math.toDegrees(Math.atan2(-fx, fz));
+                    float pitch = (float) -Math.toDegrees(Math.atan2(fy, Math.hypot(fx, fz)));
+                    p.teleportTo(level, vx, vy, vz, java.util.Set.of(), yaw, pitch, true);
+                    dev.awaken.Awaken.LOG.info("[ascent] sky view: the platform at {}, {} (deck {}) from {} out, {} up, turned {}", cx, cz, deckY,
+                            viewOut, viewUp, viewTurn);
+                    return 1;
+                }
+                if ((where == 2 || dev.awaken.above.ruin.SkyRig.STAIR) && !dev.awaken.above.ruin.SkyRig.stairPlaced(level, cx, deckY, cz)) {
+                    dev.awaken.above.ruin.SkyRig.rigStair(level, cx, deckY, cz);
                 }
                 var l = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
                 var first = l.rings().getLast();
                 int fg = dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz);
-                if (deck) p.teleportTo(level, cx + 5.5, deckY + 1, cz + 0.5, java.util.Set.of(), 90, 35, true);
+                if (where == 2) {
+                    // six blocks short of the lowest stone, from where the stone below it would have stood
+                    // the stair stands by now: read back from its stones (worked out from the land again it has none)
+                    var stones = dev.awaken.above.ruin.SkyRig.stairStanding(level, cx, deckY, cz);
+                    if (stones.isEmpty()) {
+                        src.sendFailure(Component.literal("The platform at " + cx + ", " + cz + " has no stair standing"));
+                        return 0;
+                    }
+                    var helix = dev.awaken.above.ruin.SkyRig.helix(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.Stair.DEFAULT, level.getMinY());
+                    var low = stones.getFirst();
+                    var next = helix.get(Math.min(helix.size() - 1, stones.size()));
+                    double dx = low.x() - next.x(), dz = low.z() - next.z(), d = Math.max(1e-6, Math.hypot(dx, dz));
+                    double sx = low.x() + 0.5 - dx / d * 6, sz = low.z() + 0.5 - dz / d * 6;
+                    // the ground there, found from the lowest stone's own height down: the column's height is no use, since
+                    // the stone a whole turn up (ten stones on, eleven degrees back) hangs over this very spot, and the
+                    // heightmap stood the player on it, 120 blocks up, looking down
+                    var foot = new net.minecraft.core.BlockPos.MutableBlockPos((int) Math.floor(sx), low.top() + 3, (int) Math.floor(sz));
+                    while (foot.getY() < low.top() + 24 && !level.getBlockState(foot).getCollisionShape(level, foot).isEmpty()) foot.move(0, 1, 0);
+                    while (foot.getY() > level.getMinY() + 1 && level.getBlockState(foot.below()).getCollisionShape(level, foot.below()).isEmpty()) foot.move(0, -1, 0);
+                    int gy = foot.getY();
+                    float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
+                    float pitch = (float) -Math.toDegrees(Math.atan2(low.top() + 1 - (gy + 1.62), 6));
+                    p.teleportTo(level, sx, gy, sz, java.util.Set.of(), yaw, pitch, true);
+                    dev.awaken.Awaken.LOG.info("[ascent] sky goto stair: the platform at {}, {} (deck {}), {} stones, the lowest at {} {} {}", cx, cz,
+                            deckY, stones.size(), low.x(), low.top(), low.z());
+                    return 1;
+                }
+                if (where == 1) p.teleportTo(level, cx + 5.5, deckY + 1, cz + 0.5, java.util.Set.of(), 90, 35, true);
                 else p.teleportTo(level, first.getX() + 0.5, fg, first.getZ() + 0.5, java.util.Set.of(), 0, -80, true);
                 dev.awaken.Awaken.LOG.info("[ascent] sky goto: the platform at {}, {} (deck {}), under its first ring {}", cx, cz, deckY,
                         first.toShortString());
@@ -358,6 +482,7 @@ final class AscentCommands {
                     | AscentPayloads.Tier.SKYBORN.bit();
             case "none" -> 0;
             case "tether" -> AscentPayloads.Tier.TETHER.bit();
+            case "leaper" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit();
             case "wings" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit();
             case "skyborn" -> AscentPayloads.Tier.TETHER.bit() | AscentPayloads.Tier.LEAPER.bit() | AscentPayloads.Tier.WINGS.bit()
                     | AscentPayloads.Tier.SKYBORN.bit();
@@ -379,8 +504,9 @@ final class AscentCommands {
         if (AscentServer.tiers(p) == 0) grant(src, "all");
         int n = AscentSandbox.build(p);
         src.sendSuccess(() -> Component.literal("Sandbox: " + n + " giant trees ahead, and a city street behind the tower. Hold the rope "
-                + "key (Left Alt) in the air to swing: it finds something good to swing from where you're heading, lets go at the top, "
-                + "and keeps swinging while you hold it. Tap it at a ledge to pull yourself up. Space jumps off the rope. Space in the "
+                + "key (Left Alt) in the air to swing: it finds something good to swing from where you're heading and swings you back "
+                + "and forth for as long as you hold it. Let go as the rope glows to fly the furthest; hold forward to swing higher. "
+                + "Tap it at a ledge to pull yourself up. Space jumps off the rope. Space in the "
                 + "air opens the wings; Space again while gliding takes flight (Ctrl to boost).").withStyle(ChatFormatting.AQUA), false);
         return n;
     }

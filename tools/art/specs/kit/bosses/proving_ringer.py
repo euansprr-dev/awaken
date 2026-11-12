@@ -307,7 +307,8 @@ MOVE_SOUNDS = {"drain": {"swing": "cast"}}
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside bell throws its arm back
     "duel": True,
-    "stance": 260,  # tuned with the sim (SPEC §47.4)
+    "finish": True,  # dies only to a finishing blow: one of the three pilots (SPEC §68.4)
+    "stance": 140,  # tuned with the sim (SPEC §47.4)
     "intro": {"pose": "idle", "move": "drop"},
     "phases": [
         # in the water: swings in twos and threes, the clang that rings through the water, the lash at range, the toll

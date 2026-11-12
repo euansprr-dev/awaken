@@ -8,9 +8,15 @@ import java.util.List;
  * One finished room scan: the closed rooms, the furniture that isn't in one (and why), how many of each piece of
  * furniture the radius holds ({@code furniture[Furniture.ordinal()]}; trophies count only when mounted), what the land
  * round the rooms has (for Comfort), and the faces of each material family over every room (the home's Style).
+ * {@code whole}: every chunk the scan met was loaded; a partial scan met unloaded land, so a room there may be missing
+ * from it (SPEC §28.2, "Read whole"; the Hearth keeps the rooms such a scan couldn't see).
  */
-public record Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, int[] families, Yard yard) {
+public record Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, int[] families, Yard yard, boolean whole) {
     public static final Scan EMPTY = new Scan(List.of(), List.of(), new int[Furniture.COUNT], Land.NONE, new int[Materials.FAMILIES], Yard.NONE);
+
+    public Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, int[] families, Yard yard) {
+        this(rooms, misses, furniture, land, families, yard, true);
+    }
 
     public Scan(List<Room> rooms, List<Miss> misses, int[] furniture, Land land, int[] families) {
         this(rooms, misses, furniture, land, families, Yard.NONE);

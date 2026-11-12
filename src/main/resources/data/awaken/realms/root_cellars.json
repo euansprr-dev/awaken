@@ -6,25 +6,30 @@
   "theme": "overgrown_temple",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:root_cellars",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:realm/keep_hall"
+      "awaken:realm/root_cellars"
     ],
     "lens": "root_cellars",
     "air": [
-      "mist",
       "shaft_dust",
-      "smoke",
-      "dust",
+      "mist",
+      "spores",
       "drips",
-      "bats",
-      "rats"
+      "moths",
+      "fireflies",
+      "petals"
     ]
   },
   "life": {

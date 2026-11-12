@@ -92,8 +92,82 @@ public final class Tiles {
         return on(pass) ? null : depth;
     }
 
+    // Straight out (SPEC §22 "Steady Light", the trim): where the frame's last picture is drawn. A Lens chain ends
+    // "composite into swap, then copy swap into the main target": a whole screen read and written again to move a
+    // picture. While Pixels lends the main target a smaller texture, the picture's next stop is Pixels' upscale, which
+    // can read any texture: so the composite draws straight into the one Pixels will read, and the copy is skipped.
+    private static final Identifier SWAP = Identifier.withDefaultNamespace("swap"), MAIN = Identifier.withDefaultNamespace("main");
+    private static @Nullable GpuTextureView straight;
+    private static boolean straightUsed, straightLast, loggedStraight;
+    private static @Nullable Boolean forcedStraight;
+
+    /** Pixels, before a frame's post effects: the texture its upscale can read this frame (null: none, the chain as written). */
+    public static void straightOut(@Nullable GpuTextureView view) {
+        straight = view;
+        straightUsed = false;
+    }
+
+    /**
+     * Pixels, after a frame's post effects: whether the composite drew into the texture given to {@link #straightOut}.
+     * The offer ends here; the answer is kept for the autopilot's report (which runs in a tick, between frames).
+     */
+    public static boolean straightTaken() {
+        straightLast = straightUsed;
+        straight = null;
+        straightUsed = false;
+        return straightLast;
+    }
+
+    // the chains whose tail is "composite into swap, copy into main" (the measuring chains are left as written)
+    private static boolean tail(String pass) {
+        return pass.startsWith("awaken:lens_cinematic/") || pass.startsWith("awaken:lens_ultra/") || pass.startsWith("awaken:lens_swift/")
+                || pass.startsWith("awaken:lens_lite/") || pass.startsWith("awaken:lens_cinematic_tiles/") || pass.startsWith("awaken:lens_ultra_tiles/");
+    }
+
+    /** A pass's colour target: Pixels' texture for the pass that draws into swap, when one was given and it fits. */
+    public static GpuTextureView colour(String pass, Identifier output, GpuTextureView view) {
+        try {
+            GpuTextureView to = straight;
+            if (to == null || forcedStraight == Boolean.FALSE || !SWAP.equals(output) || !tail(pass) || !on(pass)) return view;
+            // light to lay over the picture this frame (LensGlow): the chain's last pass lays it as it copies, so it runs
+            if (dev.awaken.lens.client.LensGlow.laid()) return view;
+            if (to.getWidth(0) != view.getWidth(0) || to.getHeight(0) != view.getHeight(0)) return view;
+            straightUsed = true;
+            if (!loggedStraight) {
+                loggedStraight = true;
+                Awaken.LOG.info("[tiles] {}: the composite draws straight into the upscale's source, the copy back is skipped", pass);
+            }
+            return to;
+        } catch (RuntimeException e) {
+            fail(e);
+            return view;
+        }
+    }
+
+    /**
+     * Whether a pass is left out this frame: the copy of swap into the main target, once the composite went straight out;
+     * and in Lens's Tiles twins, the one of their two composites this frame doesn't need (LensClient.leftOut; the calm
+     * one comes first, so with this hook gone both draw and the twin's own is what stays).
+     */
+    public static boolean skip(String pass, Identifier output) {
+        if (failed) return false;
+        return straightUsed && MAIN.equals(output) && tail(pass) || dev.awaken.lens.client.LensClient.leftOut(pass);
+    }
+
+    /** Autopilot {@code lens straight on|off|setting}: the A/B switch for straight out alone. */
+    public static String straight(String arg) {
+        forcedStraight = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "straight out " + (forcedStraight != null ? forcedStraight : "with Tiles") + (straightLast ? " (used last frame)" : " (not used last frame)");
+    }
+
     private static @Nullable GpuBuffer lensBlock;
     private static @Nullable Boolean forcedBlock;
+    // the hook has handed a Lens pass the live block (the mixin is in and runs)
+    private static boolean blockSeen;
 
     /** Lens's live uniform block (lens.client.LensBlock), set each frame it's written. */
     public static void lensBlock(GpuBuffer buffer) {
@@ -107,7 +181,19 @@ public final class Tiles {
             loggedBlock = true;
             Awaken.LOG.info("[tiles] {}: Lens's values from one uniform block", pass);
         }
+        blockSeen = true;
         return lensBlock;
+    }
+
+    /**
+     * Whether Lens's passes get the live block (SPEC §22 "Steady 60"): the hook has handed it over and still would. While
+     * this holds, Lens may run a chain whose composite reads its values from the block alone (LensClient's twins); a frame
+     * that loses it mid-way (Tiles off on a failure) draws the game's own picture, and the next tick runs the chain as
+     * written.
+     */
+    public static boolean blockLive() {
+        // (as uniform() decides for any Lens pass)
+        return blockSeen && lensBlock != null && forcedBlock != Boolean.FALSE && on("awaken:lens_");
     }
 
     /** Autopilot {@code lens block on|off|setting}: the A/B switch for the uniform block alone (Tiles' other parts stay). */

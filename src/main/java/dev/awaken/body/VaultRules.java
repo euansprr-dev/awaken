@@ -45,6 +45,11 @@ public final class VaultRules {
     public static final double CLEAR = 0.06, MARGIN = 0.04;
     /** The floor beyond may be up to a step higher, or this much lower (deeper: up onto the top instead, never over). */
     public static final double DROP = 2.0, STEP = 0.6;
+    /**
+     * From the air (SPEC §17.32, a leap or a jump pressed in the air): no step under the legs (vanilla steps up only on
+     * the ground), and a top this little over the feet is crossed too.
+     */
+    public static final double AIR_STEP = 0.1, AIR_RISE_MIN = 0.1;
     /** The face this far in front of the body: walking, running (a running vault takes off early in its stride). */
     public static final double REACH_WALK = 0.6, REACH_RUN = 1.3;
     /**
@@ -170,17 +175,24 @@ public final class VaultRules {
      */
     public static @Nullable Vault find(BlockGetter level, CollisionContext ctx, double px, double py, double pz, float yaw,
                                        double reach, boolean run, double speed) {
+        return find(level, ctx, px, py, pz, yaw, reach, run, speed, false);
+    }
+
+    /** The same; {@code air}: the body is in the air (no step under the legs, a top from {@link #AIR_RISE_MIN} over the feet). */
+    public static @Nullable Vault find(BlockGetter level, CollisionContext ctx, double px, double py, double pz, float yaw,
+                                       double reach, boolean run, double speed, boolean air) {
+        double lift = air ? AIR_STEP : STEP;
         double dx = -Mth.sin(yaw * Mth.DEG_TO_RAD), dz = Mth.cos(yaw * Mth.DEG_TO_RAD);
         Scratch sc = SCRATCH.get();
         BlockPos.MutableBlockPos m = sc.m;
         // nothing at all in the way of the legs within reach: the cheap answer (the free-run asks every tick)
         double rx = dx * (reach + W), rz = dz * (reach + W);
-        if (!BodyRules.blocked(level, ctx, m, px + Math.min(0, rx) - W, py + STEP, pz + Math.min(0, rz) - W,
+        if (!BodyRules.blocked(level, ctx, m, px + Math.min(0, rx) - W, py + lift, pz + Math.min(0, rz) - W,
                 px + Math.max(0, rx) + W, py + 1.2, pz + Math.max(0, rz) + W)) return null;
         // 1. the face: the first step where the legs would run into something; then exactly where they touch
         double sTouch = -1;
         for (double s = 0; s <= reach + 1e-6; s += STEP_S) {
-            if (legs(level, ctx, m, px + dx * s, py, pz + dz * s)) {
+            if (legs(level, ctx, m, px + dx * s, py, pz + dz * s, lift)) {
                 sTouch = s;
                 break;
             }
@@ -189,7 +201,7 @@ public final class VaultRules {
         double lo = Math.max(0, sTouch - STEP_S), hi = sTouch;
         for (int i = 0; i < 6; i++) {
             double mid = (lo + hi) / 2;
-            if (legs(level, ctx, m, px + dx * mid, py, pz + dz * mid)) hi = mid;
+            if (legs(level, ctx, m, px + dx * mid, py, pz + dz * mid, lift)) hi = mid;
             else lo = mid;
         }
         double sFree = lo; // the body's centre this far along still clears the face
@@ -199,7 +211,7 @@ public final class VaultRules {
         double[] t = sc.t;
         for (double s = sTouch; s <= sTouch + EXTENT_MAX + 2 * W / SQUARE_MIN + 1e-6; s += STEP_S) {
             double cx = px + dx * s, cz = pz + dz * s;
-            scan(level, ctx, m, cx - W + 1e-3, cz - W + 1e-3, cx + W - 1e-3, cz + W - 1e-3, py + STEP, py + HIGH_MAX + 0.01, t);
+            scan(level, ctx, m, cx - W + 1e-3, cz - W + 1e-3, cx + W - 1e-3, cz + W - 1e-3, py + lift, py + HIGH_MAX + 0.01, t);
             if (t[0] == Double.POSITIVE_INFINITY) return null; // it reaches over any vault (a wall too high, an overhang)
             if (Double.isNaN(t[0])) {
                 sClear = s;
@@ -213,13 +225,13 @@ public final class VaultRules {
         hi = sClear;
         for (int i = 0; i < 6; i++) {
             double mid = (lo + hi) / 2, cx = px + dx * mid, cz = pz + dz * mid;
-            scan(level, ctx, m, cx - W + 1e-3, cz - W + 1e-3, cx + W - 1e-3, cz + W - 1e-3, py + STEP, top + 0.01, t);
+            scan(level, ctx, m, cx - W + 1e-3, cz - W + 1e-3, cx + W - 1e-3, cz + W - 1e-3, py + lift, top + 0.01, t);
             if (Double.isNaN(t[0])) hi = mid;
             else lo = mid;
         }
         sClear = hi;
         double rise = top - py;
-        if (rise < LOW_MIN || rise > HIGH_MAX + 1e-6) return null;
+        if (rise < (air ? AIR_RISE_MIN : LOW_MIN) || rise > HIGH_MAX + 1e-6) return null;
         // 3. the rail: where the way's centre line crosses the top (or either side of it: a lone post off the middle)
         if (!plant(level, ctx, sc, px, pz, dx, dz, sFree, sClear, top)) return null;
         double hx = sc.plant[0], hy = sc.plant[1], hz = sc.plant[2], rail = sc.rail[0], sPlant = sc.rail[2];
@@ -227,7 +239,7 @@ public final class VaultRules {
         if (rail > RAIL_MAX + 1e-6 || square < SQUARE_MIN) return null;
         if (sClear - sFree - 2 * W / square > EXTENT_MAX + 1e-6) return null; // a deep base: get up on it first
         // standing on the ground: solid from a step's height to the top under the hand (never a beam over open space)
-        if (!solid(level, ctx, m, hx, hz, py + STEP, hy - 0.05)) return null;
+        if (!solid(level, ctx, m, hx, hz, py + lift, hy - 0.05)) return null;
         boolean low = rise <= LOW_MAX + 1e-6;
         Vault v;
         // a wall walked at: up onto its coping (a walk; on a block there's no hang to climb out of: the block's top
@@ -271,9 +283,9 @@ public final class VaultRules {
                 sc.plant[0], sc.plant[1], sc.plant[2], sc.rail[0], true, false);
     }
 
-    /** The legs' box at centre (x, z), feet at y: a step's height doesn't count as running into something. */
-    private static boolean legs(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, double x, double y, double z) {
-        return BodyRules.blocked(level, ctx, m, x - W, y + STEP, z - W, x + W, y + 1.2, z + W);
+    /** The legs' box at centre (x, z), feet at y: a step's height ({@code lift}; none in the air) isn't running into something. */
+    private static boolean legs(BlockGetter level, CollisionContext ctx, BlockPos.MutableBlockPos m, double x, double y, double z, double lift) {
+        return BodyRules.blocked(level, ctx, m, x - W, y + lift, z - W, x + W, y + 1.2, z + W);
     }
 
     /**

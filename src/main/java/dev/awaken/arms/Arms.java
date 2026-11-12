@@ -92,6 +92,12 @@ public final class Arms {
         return p == null || p.max <= 0 ? 0 : p.value / p.max;
     }
 
+    /** Whether a creature's stance is held now: a duel body fighting doesn't drain (server, SPEC §47.3). */
+    public static boolean held(LivingEntity e) {
+        Posture p = e.getExistingDataOrNull(ArmsContent.POSTURE);
+        return p != null && p.held;
+    }
+
     /** Whether a creature's stance is broken right now (server). */
     public static boolean broken(LivingEntity e) {
         Posture p = e.getExistingDataOrNull(ArmsContent.POSTURE);

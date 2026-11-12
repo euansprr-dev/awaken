@@ -1,0 +1,67 @@
+{
+ "ring": {
+  "note": "Real frames from the game (CI run 42977120489), taken on consecutive client ticks through one Swing on a test stage. Measured on all eighteen frames the ring appears in, it has four sizes only: 377, 317, 266 and 223 pixels. The game's formula gives 372, 323, 273 and 223. It is still at the fourth size as the bell comes across, and in the next frame it is gone.",
+  "frames": [
+   {
+    "file": "ring_ring_swing_02.jpg",
+    "alt": "First size",
+    "caption": "First size"
+   },
+   {
+    "file": "ring_ring_swing_05.jpg",
+    "alt": "Second size",
+    "caption": "Second size"
+   },
+   {
+    "file": "ring_ring_swing_10.jpg",
+    "alt": "Third size",
+    "caption": "Third size"
+   },
+   {
+    "file": "ring_ring_swing_14.jpg",
+    "alt": "Fourth size",
+    "caption": "Fourth size"
+   },
+   {
+    "file": "ring_ring_swing_18.jpg",
+    "alt": "The bell comes across. The ring is still open.",
+    "caption": "The bell comes across. The ring is still open."
+   },
+   {
+    "file": "ring_ring_swing_20.jpg",
+    "alt": "Gone",
+    "caption": "Gone"
+   }
+  ]
+ },
+ "death": {
+  "note": "And this is how a boss dies today, in real frames from the same run (the Ringer on a test stage, killed by command, a frame every quarter second or so): the whole body flashes Minecraft's red, it folds forward for two seconds, and it leaves in Minecraft's white puff.",
+  "frames": [
+   {
+    "file": "death_death_00.jpg",
+    "alt": "The blow: Minecraft's red flash",
+    "caption": "The blow: Minecraft's red flash"
+   },
+   {
+    "file": "death_death_10.jpg",
+    "alt": "It starts to fold",
+    "caption": "It starts to fold"
+   },
+   {
+    "file": "death_death_30.jpg",
+    "alt": "Folded, for two seconds",
+    "caption": "Folded, for two seconds"
+   },
+   {
+    "file": "death_death_50.jpg",
+    "alt": "Minecraft's white puff",
+    "caption": "Minecraft's white puff"
+   },
+   {
+    "file": "death_death_60.jpg",
+    "alt": "Gone",
+    "caption": "Gone"
+   }
+  ]
+ }
+}

@@ -1,0 +1,59 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "awaken:block/skiff_sail_band",
+    "t": "awaken:block/skiff_sail_band"
+  },
+  "elements": [
+    {
+      "from": [
+        -8,
+        0,
+        7
+      ],
+      "to": [
+        0,
+        16,
+        9
+      ],
+      "faces": {
+        "down": {
+          "texture": "#t",
+          "uv": [
+            4.0,
+            7,
+            1.0,
+            9
+          ]
+        },
+        "up": {
+          "texture": "#t",
+          "uv": [
+            4.0,
+            7,
+            1.0,
+            9
+          ]
+        },
+        "north": {
+          "texture": "#t",
+          "uv": [
+            1.0,
+            0,
+            4.0,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#t",
+          "uv": [
+            4.0,
+            0,
+            1.0,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

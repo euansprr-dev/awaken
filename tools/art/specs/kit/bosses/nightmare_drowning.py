@@ -849,7 +849,7 @@ MOVE_SOUNDS = {"undertow": {"swing": "pull", "impact": ""}, "rush": {"swing": "s
 FIGHT = {
     # a duel (SPEC §47.3): it fights in phrases and opens up after each one; a turned-aside blow throws it back
     "duel": True,
-    "stance": 300,
+    "stance": 160,
     "intro": {"pose": "kneel", "move": "arrive"},  # it lies on the floor like a rock until its head comes out
     "phases": [
         {"pool": [

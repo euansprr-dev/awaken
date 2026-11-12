@@ -149,7 +149,7 @@ public final class Lamps {
             if ((++walked & 63) == 0 && System.nanoTime() > until) return;
             long c = j.queue.dequeueLong();
             m.set(c);
-            if (!level.isLoaded(m) || !level.getBlockState(m).isAir()) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, m) || !level.getBlockState(m).isAir()) continue;
             int x = m.getX(), y = m.getY(), z = m.getZ();
             // the cell nearest its lattice cube's middle keeps the cube's light
             long cube = BlockPos.asLong(Math.floorDiv(x, LATTICE), Math.floorDiv(y, LATTICE), Math.floorDiv(z, LATTICE));
@@ -199,7 +199,7 @@ public final class Lamps {
         boolean any = false;
         while (j.next < j.lights.length && j.dist[j.next] <= front) {
             m.set(j.lights[j.next++]);
-            if (!level.isLoaded(m) || !level.getBlockState(m).isAir()) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, m) || !level.getBlockState(m).isAir()) continue;
             level.setBlock(m, light, Block.UPDATE_ALL);
             j.placed.add(m.asLong());
             any = true;
@@ -220,7 +220,7 @@ public final class Lamps {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (long c : l.lights()) {
             m.set(c);
-            if (level.isLoaded(m) && level.getBlockState(m).is(Blocks.LIGHT)) level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            if (dev.awaken.core.api.Ready.loaded(level, m) && level.getBlockState(m).is(Blocks.LIGHT)) level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         }
         sync(level);
     }

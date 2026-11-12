@@ -1,0 +1,1070 @@
+<title>Rope and Wings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* One reading column; pictures and the two live models break out to the full width of the column. */
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --sunk:#e9edf2; --ink:#101826; --muted:#566275; --line:#d6dde6;
+  --accent:#0a6fbd; --accent-soft:#dcecf9; --gold:#a8690a; --gold-soft:#f6ead3; --good:#17734a; --bad:#b04a1c;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1219; --surface:#141c27; --sunk:#0f161f; --ink:#e7edf5; --muted:#95a3b6; --line:#263241;
+  --accent:#5ab6fb; --accent-soft:#12314a; --gold:#eeb655; --gold-soft:#3a2d14; --good:#5fd39a; --bad:#f29a66; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1219; --surface:#141c27; --sunk:#0f161f; --ink:#e7edf5; --muted:#95a3b6; --line:#263241;
+  --accent:#5ab6fb; --accent-soft:#12314a; --gold:#eeb655; --gold-soft:#3a2d14; --good:#5fd39a; --bad:#f29a66; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding-block:36px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px}
+section{display:flex;flex-direction:column;gap:18px;min-width:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-0.01em}
+h1{font-size:clamp(2.2rem,6vw,3.6rem);line-height:1.02;font-weight:700}
+h2{font-size:clamp(1.5rem,3.4vw,2.05rem);line-height:1.12;font-weight:600}
+h3{font-size:1.12rem;line-height:1.25;font-weight:600}
+p{margin:0;max-width:68ch}
+.eyebrow{font:600 0.74rem/1 var(--mono);letter-spacing:0.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:1.14rem;color:var(--ink);max-width:62ch}
+.muted{color:var(--muted)} .small{font-size:0.88rem}
+header{display:flex;flex-direction:column;gap:16px}
+blockquote{margin:0;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;font-size:0.98rem;color:var(--ink)}
+blockquote footer{margin-top:10px;font:500 0.8rem var(--mono);color:var(--muted)}
+.four{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tile b{font-family:var(--display);font-size:1.02rem}
+.tile .now{color:var(--muted);font-size:0.9rem} .tile .then{font-size:0.94rem}
+.num{font:600 1.5rem/1.1 var(--mono);color:var(--accent);font-variant-numeric:tabular-nums}
+.tile.gold .num{color:var(--gold)}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure img{width:100%;height:auto;display:block;border-radius:5px;border:1px solid var(--line);background:var(--sunk)}
+figcaption{font-size:0.86rem;color:var(--muted)}
+figcaption b{color:var(--ink);font-weight:600}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:0.92rem;min-width:560px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 0.72rem var(--mono);letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.n,th.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.hi{color:var(--good);font-weight:600} td.lo{color:var(--bad);font-weight:600}
+ul.find{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+ul.find li{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;min-width:0}
+ul.find li .k{font:600 0.72rem/1.9 var(--mono);color:var(--accent);white-space:nowrap}
+ul.find li b{font-family:var(--display)}
+ul.find li span.ev{grid-column:2;font-size:0.86rem;color:var(--muted)}
+.demo{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+#wingview{width:100%;height:clamp(300px,56vw,560px);background:#0b1524;position:relative}
+#wingview.nogl::after{content:"This view needs WebGL. The pictures below show the same model.";position:absolute;inset:0;display:grid;place-items:center;color:#cfe0f2;padding:20px;text-align:center}
+#ropeview{width:100%;height:clamp(300px,44vw,400px);display:block;background:#cfe2f3}
+.bar{display:flex;flex-wrap:wrap;gap:10px 18px;padding:12px 14px;border-top:1px solid var(--line);align-items:center}
+.seg{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.seg .lab{font:600 0.7rem var(--mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+button{font:500 0.9rem var(--body);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+button:disabled{opacity:0.5;cursor:default}
+.cap{padding:10px 14px;font-size:0.86rem;color:var(--muted);border-top:1px solid var(--line)}
+.cap b{color:var(--ink)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.box ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.box li{max-width:60ch}
+pre.mermaid{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;margin:0;overflow-x:auto}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h3{display:flex;gap:12px;align-items:baseline}
+.card h3 small{font:600 0.8rem var(--mono);color:var(--accent);flex:none}
+.card .rec{color:var(--muted);font-size:0.94rem}
+.card .rec b{color:var(--ink)}
+.ans{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ans .st{font:500 0.78rem var(--mono);color:var(--muted)}
+textarea{width:100%;font:400 0.92rem/1.4 var(--body);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:8px 10px;resize:vertical;min-height:38px}
+.tally{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font:500 0.86rem var(--mono);color:var(--muted)}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{display:flex;gap:8px;align-items:center;background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:7px 11px;font-size:0.92rem;cursor:pointer}
+.checks input{accent-color:var(--accent);width:16px;height:16px}
+a{color:var(--accent)}
+code{font:0.86em var(--mono);background:var(--sunk);padding:1px 5px;border-radius:3px}
+details.more summary{cursor:pointer;font:600 0.95rem var(--display);padding:6px 0;color:var(--ink)}
+details.more[open] summary{margin-bottom:10px}
+.note{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:4px;font-size:0.93rem;max-width:72ch}
+@media (max-width:520px){ul.find li{grid-template-columns:1fr} ul.find li span.ev{grid-column:1}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Movement plan · approved 10 Nov 2026 · built the same day</span>
+  <h1>Rope and Wings</h1>
+  <p class="lede">The rope works only where the world is tall, and even there it hangs on too long and stops at every landing. The wings are one flat sheet. Powers that move you do nothing in the air. This plan fixes those three things and adds six moves worth earning.</p>
+  <div class="note"><b>Approved, 10 Nov.</b> “Yeah, this looks fantastic. Like, make this one-to-one. The only thing is for the flying animation for the wings, it needs to be better … it clips a bit and it just doesn't look professional. But everything else is amazing. Go ahead and build all of this one-to-one.” The flying beat has been remade: press Flying in the wing model below.</div>
+  <blockquote>
+    “analyze the entire movement system in the game. So more so like the later movement, like the rope, the wings, the things like that. And I want to massively optimize the enjoyability of that and the satisfaction that comes from it. The rope, like this kind of swinging, needs to be massively optimized. Right now it's just not good, in my opinion. It's not where it needs to be. Like, I want it to be a bit more guided, and it should feel like you're basically playing like a kind of, in a sense, a Spider-Man game nearly. And then the wings need to be massively improved in terms of visual quality. That's the biggest thing. It's like right now they look a bit rushed. I want them to truly feel cinematic and awesome when you have them, like truly, truly awesome. And then obviously it should be thought out how they tie it. They link the powers and everything, so you can make sure you can use powers in the air. And any kind of extra movement that comes to, from these, that makes it like them better and more satisfying to have, and like something that's truly insane, awesome to unlock, would be awesome. Like, really push these to the maximum satisfaction level.”
+    <footer>Euan, 10 Nov 2026</footer>
+  </blockquote>
+</header>
+
+<section id="built">
+  <span class="eyebrow">Built</span>
+  <h2>All of it is in the game, and nobody has played it yet</h2>
+  <p>Everything below was built on 10 Nov, on the branch <code>claude/movement-plan-e38dfa</code>, and waits for your hands. These pictures are from the game itself, taken by a tour on GitHub. The wings match the model on this page box for box; their beat is the remade one.</p>
+  <p class="small">The first tour caught two faults. With only the rope key held, the rope never threw again after a landing: fixed, and the first three pictures are from a tour that held only forward and the rope, never jump. The Sovereign's six wings drew as garbage on the test machine: that took five more tours. The test machine's graphics draw wrongly once a frame carries more than about a megabyte of moving geometry, and six wings were that much by themselves. A feather is now sent in less than half the bytes. In the last tour all 62 pictures of the six wings were whole: every state at dusk and by day, and the real form in flight.</p>
+  <div class="shots"><figure><img src="shots/built_wood_sling.jpg" alt="The rope in a real forest. Only forward and the rope are held. The line is a sling: it throws the runner up and over the next treetop."><figcaption><b>The rope in a real forest.</b> Only forward and the rope are held. The line is a sling: it throws the runner up and over the next treetop.</figcaption></figure>
+    <figure><img src="shots/built_wood_water.jpg" alt="The same run, twelve seconds on. Still in the air, the chain unbroken through every landing."><figcaption><b>The same run, twelve seconds on.</b> Still in the air, the chain unbroken through every landing.</figcaption></figure>
+    <figure><img src="shots/built_lane.jpg" alt="Giant trees. A swing thrown from the ground with the key held. In the first tour the rope never threw again after a landing."><figcaption><b>Giant trees.</b> A swing thrown from the ground with the key held. In the first tour the rope never threw again after a landing.</figcaption></figure>
+    <figure><img src="shots/built_hover_back.jpg" alt="The first wings, in the game. Held open in a hover with &lt;code&gt;/awaken wings show hover&lt;/code&gt;, at dusk, from behind. 231 boxes a wing."><figcaption><b>The first wings, in the game.</b> Held open in a hover with <code>/awaken wings show hover</code>, at dusk, from behind. 231 boxes a wing.</figcaption></figure>
+    <figure><img src="shots/built_day_open.jpg" alt="By day. The same wings, open."><figcaption><b>By day.</b> The same wings, open.</figcaption></figure>
+    <figure><img src="shots/built_skyborn_hover.jpg" alt="Skyborn, hovering in real flight. A larger pair and a smaller pair under it, seen from the front."><figcaption><b>Skyborn, hovering in real flight.</b> A larger pair and a smaller pair under it, seen from the front.</figcaption></figure>
+    <figure><img src="shots/built_glide_front.jpg" alt="A real glide, from the front. The body lies on the air and the wings carry it."><figcaption><b>A real glide, from the front.</b> The body lies on the air and the wings carry it.</figcaption></figure>
+    <figure><img src="shots/built_skyborn_open.jpg" alt="Skyborn&#x27;s two pairs, from behind."><figcaption><b>Skyborn's two pairs, from behind.</b></figcaption></figure>
+    <figure><img src="shots/built_takeoff.jpg" alt="The takeoff. Look up, hold sneak, jump: the wings beat you off the ground."><figcaption><b>The takeoff.</b> Look up, hold sneak, jump: the wings beat you off the ground.</figcaption></figure>
+    <figure><img src="shots/built_sovereign_back.jpg" alt="The Sovereign&#x27;s six gold wings and the ring, in the game. Held open with &lt;code&gt;/awaken wings show open sovereign&lt;/code&gt;, from behind."><figcaption><b>The Sovereign's six gold wings and the ring, in the game.</b> Held open with <code>/awaken wings show open sovereign</code>, from behind.</figcaption></figure>
+    <figure><img src="shots/built_sovereign_front.jpg" alt="The same from the front."><figcaption><b>The same from the front.</b></figcaption></figure>
+    <figure><img src="shots/built_sovereign_form.jpg" alt="The real form, in flight. The pale gold over everything is the form&#x27;s own colour look, from the day the form was made."><figcaption><b>The real form, in flight.</b> The pale gold over everything is the form's own colour look, from the day the form was made.</figcaption></figure></div>
+  <ul class="find">
+    <li><span class="k">Try 1</span><div><b>The rope in any wood.</b> Sprint, jump and hold the rope. It should throw you up and over the treetops one after another, and keep going when your feet touch down.</div><span class="ev">Measured with a bot that holds only forward and the rope, never jump: an oak wood at 152 blocks in 15 seconds and a lane of giant trees at 261, where running covers 75. No hard hit on a rope. One tree alone is taken 87 times in 100 from a sprint jump. In the game itself the lane went faster than that, and a real forest slower: 104 blocks in the first 15 seconds.</span></li>
+    <li><span class="k">Try 2</span><div><b>The wings.</b> Type <code>/awaken wings show hover</code> to hold your wings open and walk round them in third person. Also <code>open</code>, <code>glide</code>, <code>fly</code>, <code>dive</code>, <code>land</code>, <code>folded</code>, and a rung after it: <code>skyborn</code> or <code>sovereign</code>. <code>/awaken wings show off</code> gives them back.</div><span class="ev">In first person you barely see your wings: only the tips come in at the edges of the screen on a beat. <code>/awaken wings set fp_back 1.0</code> and <code>fp_up 0.25</code> move them while the game runs.</span></li>
+    <li><span class="k">Try 3</span><div><b>A power in the air.</b> Dash or leap while gliding: the push should carry. Hold a power's key or the use key in flight: the flight keeps its line while you look around.</div><span class="ev">Checked by tests, not yet by anyone's hands.</span></li>
+    <li><span class="k">Try 4</span><div><b>The new moves.</b> Land slowly and level on your wings (the flare). On the ground, look up, hold sneak a moment and jump (the takeoff, once you can fly). On the rope, attack a creature that is out of reach (the rope strike, at rope mastery 5).</div><span class="ev">The Tasks page shows the next move and how far its mastery has come.</span></li>
+    <li><span class="k">Hear</span><div><b>The sounds.</b> Every movement sound is now layers of Minecraft's own recordings. Nobody has heard them in the game yet.</div><span class="ev">Old sounds: set <code>movementScores = false</code> in <code>awaken-feel-client.toml</code>. The same file turns the new wings and the guided rope off.</span></li>
+  </ul>
+  <p><b>Two things for you to decide.</b></p>
+  <p><b>1. The rope on the tallest tree.</b> The sling needs a treetop ahead of you and above your hand, as the plan says. On the tallest tree around there is nothing above, so you cross its crown, walk off the edge, fall and sling again from the ground. In the forest tour that left three or four seconds between throws, twice in fifteen seconds. I can let the held rope also take the next crown ahead when it is level with you or a little lower, so you skip from crown to crown and stay in the canopy. It isn't in the plan, so it isn't built. Say yes and I'll build it.</p>
+  <p><b>2. The wings in sunlight.</b> By day the light layer's shadows fall on the wings. One pair reads as feathers in the sun, and I like it (the "By day" picture). The Sovereign's three gold pairs shadow one another and go patchy grey. If wings should stay pure light, never shaded, that is a small rule in the light layer itself, which is another session's code. Say which you want.</p>
+  <p class="small">Also found while reading the game's drawing code, and fixed: with the video setting Improved Transparency turned on, the game would have stopped the moment any wings were drawn. It is off on your Mac, so you would not have met it. And seen but left alone: by day, high over bright cloud, the Sovereign form's own colour look (from the day the form was made) blooms the whole screen pale gold.</p>
+  <p class="small">What differs from the plan below: the sling aims higher and throws harder than first written (the first numbers failed at a single tree); a pull up a wall is limited by a check of its path, not by 16 blocks; the two rope-paying-out loops keep their old sound. One old fault went with it: a double jump, a dash or opening your wings from a run used to drop your speed across the ground to nothing, and now keeps it.</p>
+</section>
+
+<section>
+  <span class="eyebrow">The short version</span>
+  <div class="four">
+    <div class="tile"><b>The rope</b><span class="num">120 → 253</span><span class="now">Blocks crossed in 15 seconds among giant trees by a player who holds the key. In an ordinary wood the rope never fires at all.</span><span class="then">It lets go sooner, keeps going through a landing, and gets a second answer for low places: the sling. Oak wood 103 → 203.</span></div>
+    <div class="tile"><b>The wings</b><span class="num">14 → 230</span><span class="now">Pieces in one wing. Today it is 14 flat strips with a painting stretched over them.</span><span class="then">Feathers of light, each one a box, with real poses. Turn the model below.</span></div>
+    <div class="tile"><b>Powers in the air</b><span class="num">0 → all</span><span class="now">A Dash in a glide spends its energy and moves you nowhere. A blink closes your wings.</span><span class="then">One rule: a push carries, a blink keeps your wings, a cast shows.</span></div>
+    <div class="tile gold"><b>New moves</b><span class="num">6</span><span class="now">The sling, the spring, the rope strike, the flare, the skim, the takeoff.</span><span class="then">And six gold wings for the Sovereign.</span></div>
+  </div>
+</section>
+
+<section id="found">
+  <span class="eyebrow">What I found</span>
+  <h2>The rope does nothing in most of the world</h2>
+  <p>I read all of the movement code, ran the game on GitHub's machines to photograph it, and ran the rope's own bench on trees of real size, played the way you play: holding the key. I can't feel a swing, so I measured it.</p>
+  <div class="shots"><figure><img src="shots/rope_wood.jpg" alt="A real oak forest. Nothing here is tall enough to swing from. Of nine presses, five missed and four pulled the runner up onto a treetop and left them standing on it."><figcaption><b>A real oak forest.</b> Nothing here is tall enough to swing from. Of nine presses, five missed and four pulled the runner up onto a treetop and left them standing on it.</figcaption></figure>
+    <figure><img src="shots/rope_lane.jpg" alt="Giant trees, rope held the whole time. One rope went out, hopped off after two ticks, and the runner landed. Then seven seconds of running with the key still down."><figcaption><b>Giant trees, rope held the whole time.</b> One rope went out, hopped off after two ticks, and the runner landed. Then seven seconds of running with the key still down.</figcaption></figure>
+    <figure><img src="shots/rope_crown.jpg" alt="The same lane, through your own eyes. One swing, then the rope pulled 41 blocks into a tree&#x27;s crown, hit it hard and left the runner standing in the leaves."><figcaption><b>The same lane, through your own eyes.</b> One swing, then the rope pulled 41 blocks into a tree's crown, hit it hard and left the runner standing in the leaves.</figcaption></figure>
+    <figure><img src="shots/rope_fist.jpg" alt="On the rope in first person. The fist sits in the middle of the view, over where you are going."><figcaption><b>On the rope in first person.</b> The fist sits in the middle of the view, over where you are going.</figcaption></figure>
+    <figure><img src="shots/rope_street.jpg" alt="A street of towers. The rope at its best: fitted swings that bend round the walls. After each let-go the runner hung in the air for one to two seconds."><figcaption><b>A street of towers.</b> The rope at its best: fitted swings that bend round the walls. After each let-go the runner hung in the air for one to two seconds.</figcaption></figure></div>
+  <ul class="find">
+    <li><span class="k">Rope 1</span><div><b>An ordinary wood gives the rope nothing.</b> A swing needs something 10 blocks over the ground. An oak's trunk is 4 to 6 blocks, a birch's 5 to 7, a spruce's 5 to 8, with a block or two of leaves on top.</div><span class="ev">Measured: in an oak wood and a spruce wood of real size the rope fired 0 times in 40 runs. The body covered 103 blocks in 15 seconds, the same as on open plains.</span></li>
+    <li><span class="k">Rope 2</span><div><b>The rope's own test never saw a real wood.</b> The forest it was tested in on 28 Oct has trees 13 to 21 blocks tall.</div><span class="ev">Read in <code>SwingBench</code>.</span></li>
+    <li><span class="k">Rope 3</span><div><b>Held, the rope hangs on too long.</b> It lets go 95 degrees past the bottom, when you are moving up and no longer forward. Then you hang in the air until the next rope.</div><span class="ev">Measured: a player who only holds the key covers 120 blocks in 15 seconds among giant trees, 166 in the city. The 28 Oct test passed at 190 and 243 because its bot let go by hand at the right moment. In the tour, after each let-go the runner moved forward slower than a walk for one to two seconds.</span></li>
+    <li><span class="k">Rope 4</span><div><b>A landing ends the chain.</b> With the key still held, nothing more is thrown until you let go and press again. In the lane of giant trees the runner threw one rope and then ran for seven seconds.</div><span class="ev">Read in code (the held rope throws again only in the air) and seen in the tour.</span></li>
+    <li><span class="k">Rope 5</span><div><b>It can still pull you into the thing.</b> When a swing meets a wall the rope pulls you up it. In the lane that was a 41-block pull into a tree's crown and a hard bump.</div><span class="ev">Seen in one of two lane runs in the tour: the bump took 1.16 blocks a tick of speed. It is what you said on 28 Oct.</span></li>
+    <li><span class="k">Rope 6</span><div><b>Your rope key and your jump share one thumb.</b> The rope is on Left Option and jump is on Space, so “Space jumps off the rope” can't be pressed while you hold the rope. You can only hold.</div><span class="ev">Read from your key settings. The plan makes holding enough.</span></li>
+    <li><span class="k">Rope 7</span><div><b>In first person the fist is in the middle of the view,</b> over the place you are swinging toward.</div><span class="ev">Seen in the pictures.</span></li>
+    <li><span class="k">Rope 8</span><div><b>The rope's four main sounds ring.</b> The throw, the bite, the let-go and the snap each start with a held high tone, the kind you called synthetic on 9 Nov.</div><span class="ev">Measured with the ding checker: 8 of the 24 movement sounds ring, and all 24 are synthesised.</span></li>
+  </ul>
+  <div class="scroll"><table>
+    <tr><th>The game's own bench: a player who only holds the key, 15 s, 40 runs</th><th class="n">Oak wood</th><th class="n">Spruce wood</th><th class="n">Giant trees</th><th class="n">City</th><th class="n">Hard hits on a rope</th></tr>
+    <tr><td>Today</td><td class="n lo">103 blocks, no rope</td><td class="n lo">101, no rope</td><td class="n lo">120</td><td class="n lo">166</td><td class="n">0</td></tr>
+    <tr><td>The simple repair: let low anchors swing</td><td class="n lo">76</td><td class="n lo">91</td><td class="n lo">94</td><td class="n lo">142</td><td class="n">0</td></tr>
+    <tr><td>The proposal: let go at 55 degrees, and the sling</td><td class="n hi">203</td><td class="n hi">198</td><td class="n hi">253</td><td class="n hi">265</td><td class="n">0</td></tr>
+  </table></div>
+  <p class="small muted">The simple repair makes it worse: short swings add no speed and the planner starts taking low anchors in tall places. The proposal's two changes are a rough first version, under a hundred lines, run inside the game's own collision bench. It still leaves a hard bump in free flight in a few runs (1 in 40 in the oak wood, 5 in the spruce wood, 3 among giant trees). The build removes those; the gate is zero. Run it yourself: <code>docs/movement/proof/run.sh</code>.</p>
+
+  <h2>The wings are one flat sheet</h2>
+  <div class="shots"><figure><img src="shots/wing_back.jpg" alt="Gliding, from behind. A flat sheet seen edge-on is a line."><figcaption><b>Gliding, from behind.</b> A flat sheet seen edge-on is a line.</figcaption></figure>
+    <figure><img src="shots/wing_front.jpg" alt="Flying, from the front. One see-through sheet a side."><figcaption><b>Flying, from the front.</b> One see-through sheet a side.</figcaption></figure>
+    <figure><img src="shots/wing_hover.jpg" alt="Hovering. The same sheet, stood up in a V."><figcaption><b>Hovering.</b> The same sheet, stood up in a V.</figcaption></figure>
+    <figure><img src="shots/wing_fp.jpg" alt="Flying, through your own eyes. An arm, whatever you hold, and a corner of pale blue."><figcaption><b>Flying, through your own eyes.</b> An arm, whatever you hold, and a corner of pale blue.</figcaption></figure>
+    <figure><img src="shots/wing_sovereign.jpg" alt="The Sovereign&#x27;s form. The same sheet, tinted gold."><figcaption><b>The Sovereign's form.</b> The same sheet, tinted gold.</figcaption></figure></div>
+  <ul class="find">
+    <li><span class="k">Wings 1</span><div><b>One sheet, no feathers.</b> Each wing is 14 flat strips, one piece thick, with a soft painting of feathers stretched along it. It is see-through and it is not made of boxes.</div><span class="ev">Read in <code>WingLayer</code>; seen in the pictures.</span></li>
+    <li><span class="k">Wings 2</span><div><b>A beat doesn't push down.</b> The flap turns the wing toward your head and back. Standing, that looks like a beat. Flying belly down, the wings scissor forward and never press on the air.</div><span class="ev">Read in code. Press Flying in the model below with Today selected: it runs the game's own numbers.</span></li>
+    <li><span class="k">Wings 3</span><div><b>Every rung wears the same wing.</b> Wings, Skyborn and Sovereign share one sheet. The Sovereign's is tinted gold.</div><span class="ev">Read in code; seen in the pictures.</span></li>
+    <li><span class="k">Wings 4</span><div><b>Closed, they vanish.</b> There is no folded wing. Opening is a single ease from nothing.</div><span class="ev">Read in code.</span></li>
+  </ul>
+
+  <h2>Powers and the air don't meet</h2>
+  <ul class="find">
+    <li><span class="k">Air 1</span><div><b>A power's push is lost.</b> While you swing, glide or fly, the game sets your motion from the move's own speed every tick. A Dash, the new air versions of Haymaker and Spirit Palm, Nova's lift and the new Updraft power all ask your body to move, and it doesn't.</div><span class="ev">Read on both sides of the code. Not yet shown by a test; that test is the first thing built.</span></li>
+    <li><span class="k">Air 2</span><div><b>A blink closes your wings.</b> Any jump of more than 3 blocks that the move didn't ask for ends it.</div><span class="ev">Read in code.</span></li>
+    <li><span class="k">Air 3</span><div><b>A cast's gesture is hidden in flight.</b> The flying pose plays over it.</div><span class="ev">Read in code (the two animation layers' order).</span></li>
+    <li><span class="k">Air 4</span><div><b>You fly where you look.</b> You can't look at something beside or below you without turning toward it.</div><span class="ev">Read in code.</span></li>
+    <li><span class="k">Air 5</span><div><b>On the rope your weapon is put away</b> and nothing you do reaches an enemy.</div><span class="ev">SPEC §24.</span></li>
+  </ul>
+</section>
+
+<section id="rope">
+  <span class="eyebrow">The proposal · the rope</span>
+  <h2>The line finds the way</h2>
+  <p>Hold the rope and it takes the best line there is: a swing where something stands tall, a sling where it doesn't, a pull up and over a wall in the way. In open sky it still does nothing, as you decided on 28 Oct.</p>
+  <div class="demo">
+    <canvas id="ropeview" aria-label="Two runners in the same place: today's rope above, the proposed rope below"></canvas>
+    <div class="bar">
+      <div class="seg"><span class="lab">Place</span><button type="button" data-rope-scene="wood" aria-pressed="true">An ordinary wood</button><button type="button" data-rope-scene="tall" aria-pressed="false">Giant trees</button><button type="button" data-rope-scene="open" aria-pressed="false">Open plain</button></div>
+      <button type="button" id="ropeplay">Pause</button>
+    </div>
+    <div class="cap"><b id="ropestat">15 s</b><br>A side-on sketch of the two rules, on the same ground and the same clock. Blue is a swing, orange is a sling. Its distances are set to sit near the bench's; the bench's own numbers are in the table above.</div>
+  </div>
+  <div class="two">
+    <div class="box"><h3>The sling</h3><ul>
+      <li>It needs something ahead of you and above your hand: a tree's crown, a roof's edge, a hill's crest, 6 to 30 blocks on.</li>
+      <li>The rope bites it, pulls you toward a point just over it, and lets go before you reach it, so you fly on over the top.</li>
+      <li>Before it throws, it plays the whole flight forward with your body's box and takes the first one that hits nothing. The swing already does this.</li>
+      <li>Never the ground you stand on. Never open sky.</li>
+    </ul></div>
+    <div class="box"><h3>The swing, where it already works</h3><ul>
+      <li>Held, the rope lets go at about 55 degrees, while you are still moving forward. Today it hangs on to 95. It waits longer only when letting go would throw you at something.</li>
+      <li>Your own let-go in the window keeps its extra snap, so timing it yourself is still faster than holding.</li>
+      <li>Land with the key held and you hop straight into the next rope. Today a landing ends it.</li>
+      <li>A pull up a wall is taken only when the way to it is clear and short. Otherwise the swing lets go early and looks again.</li>
+    </ul></div>
+    <div class="box"><h3>Where it attaches</h3><ul>
+      <li>The marker says what a press would do: a ring for a swing, a chevron for a sling, a bracket for a pull up a wall.</li>
+      <li>Arriving on a top with forward held, you spring straight off it and the next rope goes. Without forward you stand on it, as now.</li>
+      <li>In first person the fist moves down to the frame's lower corner, out of the way of where you are going.</li>
+      <li>Your keys stay as they are. Holding is enough: nothing on the rope needs Space.</li>
+    </ul></div>
+    <div class="box"><h3>What stays exactly as it is</h3><ul>
+      <li>The giant trees, the city, the ring ladders, the Tether Spires, the vault's first line, the rappel.</li>
+      <li>The server checks every anchor. A refused rope still becomes free flight, never a pull back.</li>
+      <li>A switch turns the new rule off and gives back today's rope exactly.</li>
+    </ul></div>
+  </div>
+  <pre class="mermaid">
+flowchart LR
+  K["Rope held, in the air"] --> S{"Something tall enough to swing from?"}
+  S -- yes --> SW["Swing: lets go in the window"]
+  S -- no --> L{"A top ahead and above?"}
+  L -- yes --> SL["Sling: pulls, lets go before it"]
+  L -- no --> W{"A wall in the way?"}
+  W -- yes --> Z["Pull up and over it"]
+  W -- no --> N["Nothing: keep falling"]
+  SW --> K
+  SL --> K
+  Z --> K
+  </pre>
+</section>
+
+<section id="wings">
+  <span class="eyebrow">The proposal · the wings</span>
+  <h2>Feathers of light, in boxes</h2>
+  <p>Twenty-two flight feathers hang from three bones under two rows of smaller ones. Every feather is a slab one texel thick with a stepped point. No slants, no curves, nothing Minecraft doesn't have. They are light, so they glow under the Look you play on.</p>
+  <div class="demo">
+    <div id="wingview" role="img" aria-label="A blocky figure with wings you can turn: today's wing and the proposed wing"></div>
+    <div class="bar">
+      <div class="seg"><span class="lab">Show</span><button type="button" data-wing-which="both" aria-pressed="true">Side by side</button><button type="button" data-wing-which="old" aria-pressed="false">Today</button><button type="button" data-wing-which="new" aria-pressed="false">Proposed</button></div>
+      <div class="seg"><span class="lab">Rung</span><button type="button" data-wing-tier="wings" aria-pressed="true">Wings</button><button type="button" data-wing-tier="skyborn" aria-pressed="false">Skyborn</button><button type="button" data-wing-tier="sovereign" aria-pressed="false">Sovereign</button></div>
+    </div>
+    <div class="bar">
+      <div class="seg"><span class="lab">Doing</span><button type="button" data-wing-state="folded" aria-pressed="false">Folded</button><button type="button" data-wing-state="unfold" aria-pressed="false">Opening</button><button type="button" data-wing-state="glide" aria-pressed="false">Gliding</button><button type="button" data-wing-state="beat" aria-pressed="false">Flying</button><button type="button" data-wing-state="dive" aria-pressed="false">Diving</button><button type="button" data-wing-state="hover" aria-pressed="true">Hovering</button><button type="button" data-wing-state="land" aria-pressed="false">Landing</button></div>
+    </div>
+    <div class="cap"><b id="wingcap">Hovering</b><br>Drag to turn it. Today's wing is rebuilt from the game's own numbers and its own painting. The proposed wing is a model of the boxes and the motion for this page; in the game it is drawn by the same layer that draws wings now.</div>
+  </div>
+  <div class="two">
+    <div class="box"><h3>How they move</h3><ul>
+      <li><b>Opening:</b> the folded wings lift and draw back, then spread out from the body feather by feather, then settle.</li>
+      <li><b>A beat</b> is one smooth cycle. The wing bends along its length and the tip trails. It goes down spread, and comes back up with the wrist folded. The inner wing stays over your back, so nothing cuts through the body.</li>
+      <li><b>A dive</b> tucks them into a W. <b>A landing</b> cups them forward and sheds a few square motes of light.</li>
+    </ul></div>
+    <div class="box"><h3>A look for each rung</h3><ul>
+      <li><b>Wings:</b> one pair, about six blocks across. Today's is a little over four.</li>
+      <li><b>Skyborn:</b> a larger pair, and a second smaller pair beneath it.</li>
+      <li><b>The Sovereign's form:</b> six gold wings and a turning halo of boxes, for its thirty seconds.</li>
+    </ul></div>
+    <div class="box"><h3>When they are closed</h3><ul>
+      <li>After you land they fold onto your back, stay four seconds, and fade into a small lit mark between your shoulders.</li>
+      <li>The mark is worn from the day the wings are given.</li>
+    </ul></div>
+    <div class="box"><h3>Through your own eyes</h3><ul>
+      <li>The leading edge and the long feathers sit at the sides of the frame.</li>
+      <li>On a beat the tips sweep through the top corners. In a dive the folded wrists close in. Nothing is drawn across the middle of your view.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section id="air">
+  <span class="eyebrow">The proposal · the air</span>
+  <h2>One rule for powers in the air</h2>
+  <div class="scroll"><table>
+    <tr><th>You do this</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td>Dash while gliding</td><td>The energy is spent. You don't move.</td><td>The dash adds its speed to your glide.</td></tr>
+    <tr><td>Blink while gliding</td><td>Your wings close and you fall.</td><td>You arrive still gliding, at the same speed.</td></tr>
+    <tr><td>Haymaker from the air (the powers session's new air version)</td><td>It is meant to drive you into the ground. On a rope or on wings it can't.</td><td>It does, from any state.</td></tr>
+    <tr><td>Cast Updraft under open wings</td><td>Its lift is Minecraft's Levitation, which open wings ignore.</td><td>The column is real air: your wings ride it up.</td></tr>
+    <tr><td>Look at a creature beside you while flying</td><td>You turn and fly at it.</td><td>Hold your guard (or a power you hold to charge): you keep your line and look anywhere. Let go and you fly where you look again.</td></tr>
+    <tr><td>Cast in flight, seen by others</td><td>The flying pose hides the cast.</td><td>The arms cast over the flying pose.</td></tr>
+    <tr><td>Swing a weapon in flight</td><td>Your arms stay out at your sides.</td><td>They come in for the swing and go back out.</td></tr>
+  </table></div>
+  <p>One side still decides. Your hands cast in the air exactly as on the ground, the server accepts or refuses the cast as it does today, and its answer never changes what is on your screen.</p>
+</section>
+
+<section id="moves">
+  <span class="eyebrow">The proposal · moves worth earning</span>
+  <h2>Six moves and a crown</h2>
+  <div class="scroll"><table>
+    <tr><th>Move</th><th>When it is yours</th><th>What you do</th><th>What it gives you</th></tr>
+    <tr><td><b>The sling</b></td><td>With the rope</td><td>Hold the rope where nothing stands tall</td><td>The rope works anywhere there is something above you</td></tr>
+    <tr><td><b>The spring</b></td><td>Tether mastery 3</td><td>Hold forward as a pull arrives on a top</td><td>Rooftops and treetops without stopping</td></tr>
+    <tr><td><b>The rope strike</b></td><td>Tether mastery 5</td><td>Attack with a creature in the rope's reach</td><td>The rope pulls you in feet first and you bounce off upward with your air moves back</td></tr>
+    <tr><td><b>The flare</b></td><td>With the wings</td><td>Come down slow and level</td><td>A landing that is a moment: the wings cup, your feet touch, light falls</td></tr>
+    <tr><td><b>The skim</b></td><td>Wings mastery 3</td><td>Fly within 2.5 blocks of ground, water or a wall at speed</td><td>Your speed lasts about twice as long, a wake follows you, Flow rises</td></tr>
+    <tr><td><b>The takeoff</b></td><td>With Skyborn</td><td>Look up, crouch for a moment, then jump</td><td>Straight up 14 blocks into flight, for a tenth of your Aether. Today it takes four presses of jump.</td></tr>
+    <tr><td><b>Six wings</b></td><td>Sovereign</td><td>Take the form</td><td>Six gold wings and a halo for the form's thirty seconds</td></tr>
+  </table></div>
+  <p>None of these asks for timing. The rope's own let-go is the one timed thing, and it always was. Each move shows on the Tasks page as a step, with a short tip in plain words the first time it is yours.</p>
+  <h3>Sound</h3>
+  <p>All 24 movement sounds are remade from Minecraft's own recordings, named in the game's sound list so none of Mojang's audio is in the repo. First picks: the throw from a fishing rod's cast and a crossbow, the bite from a trident in the ground, the strain from a crossbow being drawn, the wings from an elytra and a dragon's wingbeat, the wind from the elytra's own loop, the boom from the Warden's. You get a local listening page with two alternates for each before any go in.</p>
+</section>
+
+<section id="proof">
+  <span class="eyebrow">Proof, cost, risk</span>
+  <h2>How you will know it is better</h2>
+  <div class="two">
+    <div class="box"><h3>Before it reaches you</h3><ul>
+      <li>The bench gains real woods, hills and a street of stair roofs. Gates: no hard hit on a rope anywhere, no stopped run, nowhere slower than today, the oak wood at 190 blocks or more.</li>
+      <li>One test per mechanism: the sling's choice, a refused rope not thrown again, a push in every state, a blink that keeps your wings, the aim hold, the rope strike decided by the server.</li>
+      <li>The whole suite on GitHub once, and one tour of pictures.</li>
+    </ul></div>
+    <div class="box"><h3>Then your hands</h3><ul>
+      <li>Ten minutes: the rope through a wood and through Carillon, the wings at each rung, one fight from the air.</li>
+      <li>The rope's numbers already change live with <code>/awaken rope tune on</code>. The wings get the same.</li>
+      <li>Each part has its own switch back to today.</li>
+    </ul></div>
+  </div>
+  <div class="scroll"><table>
+    <tr><th>Stage</th><th>What</th><th class="n">Hours of building</th></tr>
+    <tr><td>0</td><td>The truth: why ropes are refused, real woods in the bench, the test that shows a push is lost</td><td class="n">1 to 2</td></tr>
+    <tr><td>1</td><td>The rope: sling, let-go, spring, refusals, marker</td><td class="n">4 to 6</td></tr>
+    <tr><td>2</td><td>The wings: feathers, poses, three rungs, first person, far-off forms</td><td class="n">5 to 7</td></tr>
+    <tr><td>3</td><td>The air: pushes, blinks, casts shown, the aim hold, Updraft, weapons</td><td class="n">4 to 5</td></tr>
+    <tr><td>4</td><td>Moves: flare, skim, takeoff, rope strike</td><td class="n">4 to 5</td></tr>
+    <tr><td>5</td><td>Sound: 24 scores, the new moves', your listening page</td><td class="n">2 to 3</td></tr>
+    <tr><td>6</td><td>Tips, Tasks steps, SPEC, the one test pass</td><td class="n">2 to 3</td></tr>
+    <tr><td></td><td><b>All of it, coded whole and tested once at the end</b></td><td class="n"><b>22 to 31</b></td></tr>
+  </table></div>
+  <p class="small muted">Scaled from this repo: the assisted swing was one working day on 28 Oct, and the powers session built 13,000 lines in about five hours today. What could move it: the wings' poses after your first look, and the rope's numbers after your first ten minutes.</p>
+  <details class="more"><summary>What happens when it can't</summary>
+  <div class="scroll"><table>
+    <tr><th>When</th><th>What you get</th></tr>
+    <tr><td>Nothing above and ahead of you</td><td>A press is the miss it is today. Held, the rope stays quiet.</td></tr>
+    <tr><td>Every sling ahead would hit something</td><td>It isn't thrown. You keep running or falling, and it looks again two ticks later.</td></tr>
+    <tr><td>The block the rope bit is gone when it arrives</td><td>You fly on free, as today. The rope leaves that block alone for a second.</td></tr>
+    <tr><td>The creature you rope-strike dies or moves out of reach</td><td>The rope lets go and you fly on. No blow is counted.</td></tr>
+    <tr><td>A blink would put you inside a wall</td><td>The move ends and you fall from there, as today.</td></tr>
+    <tr><td>Thirty players with wings in view</td><td>Past 48 blocks every other feather is drawn, past 96 a few broad slabs.</td></tr>
+    <tr><td>Reduced motion is on</td><td>No motes, no tremble, half the beat's swing.</td></tr>
+  </table></div>
+  </details>
+  <div class="note"><b>What I could not check.</b> How the rope feels in your hands. I measured where it fires, how fast it goes and when it lets go, and I am inferring the feel from that. The box at the bottom asks what you felt, so the build aims at the right thing.</div>
+  <p class="small muted">Elsewhere: Spider-Man 2 ships with its swing assist at the top of ten settings, which its makers say was the standard in the earlier games (<a href="https://www.gamesradar.com/marvels-spider-man-2-has-adjustable-swing-assist-as-well-as-fall-damage-so-you-can-really-put-peter-and-miles-through-their-paces">GamesRadar</a>, <a href="https://mp1st.com/news/marvels-spider-man-2-will-let-players-scale-swing-assist-dev-reveals-max-assist-was-standard-in-past-games">MP1st</a>). Its makers decided early that webs had to attach to real buildings (<a href="https://www.theringer.com/2018/9/24/17895602/marvels-spider-man-swing-success">The Ringer</a>). That is the same rule as yours: full help, and never a rope in open sky.</p>
+</section>
+
+<section id="decide">
+  <span class="eyebrow">For you</span>
+  <h2>Twelve decisions</h2>
+  <p>You said yes to all of it in chat on 10 Nov, with one change: the flying beat, remade above. The cards stay as the record. Tap any of them if you change your mind and I will see it.</p>
+  <div class="card" id="card-feel">
+    <h3><small>First</small><span>What did the swing do that you didn't like?</span></h3>
+    <p class="rec">Tick any that fit. This is the one thing I can't measure.</p>
+    <div class="checks" id="feel">
+      <label><input type="checkbox" id="feel-nothing" data-f="nothing">Often nothing to grab</label>
+      <label><input type="checkbox" id="feel-slow" data-f="slow">Too slow or floaty</label>
+      <label><input type="checkbox" id="feel-hits" data-f="hits">I hit things</label>
+      <label><input type="checkbox" id="feel-aim" data-f="aim">It doesn't go where I want</label>
+      <label><input type="checkbox" id="feel-flicker" data-f="flicker">The rope flickers or stutters</label>
+      <label><input type="checkbox" id="feel-stiff" data-f="stiff">The body looks stiff</label>
+      <label><input type="checkbox" id="feel-camera" data-f="camera">The camera</label>
+      <label><input type="checkbox" id="feel-sound" data-f="sound">The sounds</label>
+    </div>
+    <textarea id="feel-note" rows="1" placeholder="Anything else? (optional)" aria-label="What else the swing did"></textarea>
+    <span class="st small muted" id="feel-st"></span>
+  </div>
+  <div class="tally"><span id="tally">Loading your answers…</span><button type="button" id="allyes" hidden>Yes to everything left</button></div>
+  <div class="cards" id="cards"></div>
+</section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>window.WING_TODAY_PNG="data:image/png;base64,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";
+</script>
+<script>// The wing studio (docs/movement): the proposed wings, in boxes only, beside today's wing rebuilt from the numbers in
+// body/ascent/client/WingLayer.java. A sketch of shape and motion for the approval page, not the game's renderer.
+// Units are texels (1/16 of a block); the figure faces away from the first camera (-z), its back toward +z.
+(function () {
+  const host = document.getElementById('wingview');
+  if (!host || !window.THREE) { if (host) host.classList.add('nogl'); return; }
+  const T = THREE, D = Math.PI / 180;
+  let renderer;
+  try { renderer = new T.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'low-power' }); }
+  catch (e) { host.classList.add('nogl'); return; }
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  host.appendChild(renderer.domElement);
+  const scene = new T.Scene();
+  const cam = new T.PerspectiveCamera(34, 1, 1, 2000);
+
+  // ---- sky: a dusk gradient (the wings are light, so they are shown against a dim sky) ----
+  function skyTex(top, mid, low) {
+    const c = document.createElement('canvas'); c.width = 4; c.height = 256;
+    const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
+    gr.addColorStop(0, top); gr.addColorStop(0.55, mid); gr.addColorStop(1, low);
+    g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
+    return new T.CanvasTexture(c);
+  }
+  const SKY = { cool: skyTex('#0b1524', '#1d3350', '#5b6f86'), gold: skyTex('#140f1c', '#3a2a35', '#8a6a4a') };
+  scene.background = SKY.cool;
+
+  // ---- boxes with baked face shading (flat colour, no lights: the wings are emissive in the game) ----
+  const MAT = new T.MeshBasicMaterial({ vertexColors: true });
+  const FACE = [0.80, 0.80, 1.0, 0.62, 0.93, 0.72];
+  function box(w, h, d, hex, x, y, z) {
+    const g = new T.BoxGeometry(w, h, d), col = new T.Color(hex), a = new Float32Array(72);
+    for (let f = 0; f < 6; f++) for (let v = 0; v < 4; v++) {
+      const i = (f * 4 + v) * 3; a[i] = col.r * FACE[f]; a[i + 1] = col.g * FACE[f]; a[i + 2] = col.b * FACE[f];
+    }
+    g.setAttribute('color', new T.BufferAttribute(a, 3));
+    const m = new T.Mesh(g, MAT); m.position.set(x || 0, y || 0, z || 0); return m;
+  }
+
+  // ---- the figure: a plain blocky body (not a skin), 32 texels tall ----
+  function makeFigure() {
+    const root = new T.Group(), body = new T.Group();
+    root.add(body);
+    const C = { suit: 0x39424f, trim: 0x566273, skin: 0xb9a48c, dark: 0x262c36 };
+    body.add(box(8, 12, 4, C.suit, 0, 18, 0));
+    body.add(box(8, 2, 4.2, C.trim, 0, 13, 0));
+    const head = box(8, 8, 8, C.skin, 0, 28, 0); body.add(head);
+    body.add(box(8.3, 3, 8.3, C.dark, 0, 31, 0));
+    const arms = [], legs = [];
+    for (const s of [-1, 1]) {
+      const a = new T.Group(); a.position.set(s * 6, 23, 0); a.add(box(4, 12, 4, C.suit, 0, -5, 0)); a.add(box(4, 3, 4.1, C.skin, 0, -10.5, 0));
+      body.add(a); arms.push(a);
+      const l = new T.Group(); l.position.set(s * 2, 12, 0); l.add(box(4, 12, 4, C.dark, 0, -6, 0)); l.add(box(4.1, 3, 4.1, C.trim, 0, -10.5, 0));
+      body.add(l); legs.push(l);
+    }
+    // the mount between the shoulder blades (the wing core's mark): dark plate, a lit core
+    body.add(box(7, 5, 2, 0x1c222b, 0, 20.5, 3));
+    const core = box(1.6, 1.6, 0.6, 0xdff8ff, 0, 20.5, 4.2); body.add(core);
+    return { root, body, arms, legs, core };
+  }
+
+  // ---- palettes ----
+  const PAL = {
+    light: { root: 0xf4fdff, mid: 0xc4ecff, outer: 0x86cdff, tip: 0xeefcff, shaft: 0xffffff, cov: 0xe2f7ff, cov2: 0xf6feff, spar: 0xeafaff, halo: '120,196,255' },
+    sky: { root: 0xf6fbff, mid: 0xb8dcff, outer: 0x7fa8ff, tip: 0xf0f6ff, shaft: 0xffffff, cov: 0xdcecff, cov2: 0xf4f9ff, spar: 0xe8f2ff, halo: '128,170,255' },
+    gold: { root: 0xfffbea, mid: 0xffe9a8, outer: 0xffc85a, tip: 0xfff7d6, shaft: 0xffffff, cov: 0xfff1c4, cov2: 0xfffbe6, spar: 0xfff4cf, halo: '255,196,96' }
+  };
+
+  function haloTex(rgb) {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(' + rgb + ',0.9)'); gr.addColorStop(0.35, 'rgba(' + rgb + ',0.32)'); gr.addColorStop(1, 'rgba(' + rgb + ',0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return new T.CanvasTexture(c);
+  }
+  const HALO = {};
+  for (const k in PAL) HALO[k] = haloTex(PAL[k].halo);
+
+  // ---- one feather: a slab one texel thick whose point is steps, a raised shaft, colour by length ----
+  function feather(L, W, pal) {
+    const g = new T.Group(); g.matrixAutoUpdate = false;
+    const a = Math.max(2, Math.round(L * 0.42)), b = Math.max(a + 1, L - 4);
+    g.add(box(W, a, 1, pal.root, 0, a / 2, 0));
+    g.add(box(W, b - a, 1, pal.mid, 0, a + (b - a) / 2, 0));
+    if (L - 1 > b) g.add(box(Math.max(1, W - 1), L - 1 - b, 1, pal.outer, 0, b + (L - 1 - b) / 2, 0));
+    g.add(box(Math.max(1, W - 2), 1, 1, pal.tip, 0, L - 0.5, 0));
+    g.add(box(0.6, Math.max(1, L - 4), 0.3, pal.shaft, 0, (L - 4) / 2 + 0.5, 0.62));
+    g.userData.L = L;
+    return g;
+  }
+
+  const BONE = [9, 13, 14];
+  const PRIM = [21, 24, 26, 28, 28, 27, 25, 22, 18], SEC = [15, 16, 17, 18, 19, 19, 20, 20], TER = [10, 12, 13, 14, 15];
+
+  function makeWing(side, cfg) {
+    const pal = PAL[cfg.pal], g = new T.Group();
+    g.scale.setScalar(cfg.k);
+    g.rotation.z = -side * cfg.roll * D;
+    const w = { side, cfg, g, spars: [], knuckles: [], prim: [], sec: [], ter: [], cov: [], cov2: [], halos: [] };
+    for (let i = 0; i < 3; i++) {
+      const s = new T.Group(); s.matrixAutoUpdate = false; s.add(box(2, BONE[i] + 1, 2, pal.spar, 0, BONE[i] / 2, 0)); g.add(s); w.spars.push(s);
+    }
+    for (let i = 0; i < 2; i++) { const k = box(2.4, 2.4, 2.4, pal.spar); g.add(k); w.knuckles.push(k); }
+    for (let i = 0; i < TER.length; i++) { const f = feather(TER[i], 3, pal); g.add(f); w.ter.push(f); }
+    for (let i = 0; i < SEC.length; i++) { const f = feather(SEC[i], 3, pal); g.add(f); w.sec.push(f); }
+    for (let i = 0; i < PRIM.length; i++) { const f = feather(PRIM[i], 3, pal); g.add(f); w.prim.push(f); }
+    const covPal = { root: pal.cov2, mid: pal.cov, outer: pal.cov, tip: pal.mid, shaft: pal.shaft };
+    for (let i = 0; i < 13; i++) { const f = feather(i < 4 ? 6 : i < 9 ? 8 : 9, 3, covPal); g.add(f); w.cov.push(f); }
+    const cov2Pal = { root: pal.cov2, mid: pal.cov2, outer: pal.cov, tip: pal.cov, shaft: pal.shaft };
+    for (let i = 0; i < 11; i++) { const f = feather(i < 4 ? 4 : 5, 3, cov2Pal); g.add(f); w.cov2.push(f); }
+    for (let i = 0; i < 3; i++) {
+      const sp = new T.Sprite(new T.SpriteMaterial({ map: HALO[cfg.pal], blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.2 }));
+      g.add(sp); w.halos.push(sp);
+    }
+    return w;
+  }
+
+  // ---- posing: three bones in the wing's own plane, flapped about the body's long axis, feathers hung from them ----
+  const J = [new T.Vector3(), new T.Vector3(), new T.Vector3(), new T.Vector3()];
+  const dv = new T.Vector3(), nv = new T.Vector3(), wv = new T.Vector3(), fv = new T.Vector3(), pv = new T.Vector3(), M = new T.Matrix4();
+  function rotY(v, ang) { const c = Math.cos(ang), s = Math.sin(ang), x = v.x * c + v.z * s, z = -v.x * s + v.z * c; v.x = x; v.z = z; return v; }
+  function ease(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function place(f, side, px, py, pz, ang, phi, off, louvre, lenK) {
+    // length along the feather's own direction in the wing plane (ang), turned with its bone's flap (phi)
+    fv.set(side * Math.cos(ang), Math.sin(ang), 0); rotY(fv, -side * phi);
+    nv.set(0, 0, 1); rotY(nv, -side * phi);
+    wv.crossVectors(fv, nv);
+    if (louvre) { // the upstroke: each feather turns about its own shaft and lets the air through
+      const c = Math.cos(louvre), s = Math.sin(louvre), wx = wv.x * c + nv.x * s, wy = wv.y * c + nv.y * s, wz = wv.z * c + nv.z * s;
+      nv.set(nv.x * c - wv.x * s, nv.y * c - wv.y * s, nv.z * c - wv.z * s); wv.set(wx, wy, wz);
+    }
+    M.makeBasis(wv, fv, nv);
+    M.elements[4] *= lenK; M.elements[5] *= lenK; M.elements[6] *= lenK;
+    M.setPosition(px + nv.x * off, py + nv.y * off, pz + nv.z * off);
+    f.matrix.copy(M);
+  }
+
+  function poseWing(w, P, glow) {
+    const s = w.side, ph = [P.p0, P.p0 + P.p1, P.p0 + P.p1 + P.p2], an = [P.a0 * D, P.a1 * D, P.a2 * D];
+    J[0].set(0, 0, 0);
+    for (let i = 0; i < 3; i++) {
+      dv.set(s * Math.cos(an[i]), Math.sin(an[i]), 0); rotY(dv, -s * ph[i] * D);
+      J[i + 1].copy(J[i]).addScaledVector(dv, BONE[i]);
+      nv.set(0, 0, 1); rotY(nv, -s * ph[i] * D); wv.crossVectors(dv, nv);
+      M.makeBasis(wv, dv, nv); M.setPosition(J[i].x, J[i].y, J[i].z); w.spars[i].matrix.copy(M);
+    }
+    w.knuckles[0].position.copy(J[1]); w.knuckles[1].position.copy(J[2]);
+    const c = P.casc;
+    const along = (f, a, b) => pv.copy(a).lerp(b, f);
+    // sp: where on the span (0 the shoulder, 1 the elbow, 2 the wrist, 3 the tip); the flap eases in across each joint
+    const fl = sp => (P.p0 + P.p1 * ease((sp - 0.7) / 0.7) + P.p2 * ease((sp - 1.7) / 0.7)) * D;
+    for (let i = 0; i < w.ter.length; i++) {
+      const t = i / (w.ter.length - 1), ci = ease((c - 0.05 * t) / 0.6);
+      along(0.12 + 0.86 * t, J[0], J[1]);
+      place(w.ter[i], s, pv.x, pv.y, pv.z, lerp(-90, P.ter + (t - 0.5) * 8, ci) * D, fl(0.12 + 0.86 * t), i * 0.16 - 0.4, 0, lerp(0.8, 1, ci));
+    }
+    for (let i = 0; i < w.sec.length; i++) {
+      const t = i / (w.sec.length - 1), ci = ease((c - 0.1 - 0.15 * t) / 0.6);
+      along(0.04 + 0.94 * t, J[1], J[2]);
+      place(w.sec[i], s, pv.x, pv.y, pv.z, lerp(-90, P.sec + t * (P.fanIn - P.sec) * 0.55, ci) * D, fl(1.04 + 0.94 * t), 0.5 + i * 0.16, P.louvre * 0.5 * D, lerp(0.8, 1, ci));
+    }
+    for (let i = 0; i < w.prim.length; i++) {
+      const t = i / (w.prim.length - 1), ci = ease((c - 0.25 - 0.3 * t) / 0.45);
+      along(0.08 + 0.92 * t, J[2], J[3]);
+      const open = lerp(P.fanIn, P.fanOut, Math.pow(t, 0.85));
+      place(w.prim[i], s, pv.x, pv.y, pv.z, lerp(-97 + 9 * t, open, ci) * D, fl(2.08 + 0.92 * t), 1.9 + i * 0.16, P.louvre * D, lerp(0.66, 1, ci));
+    }
+    for (let i = 0; i < w.cov.length; i++) {
+      const t = i / (w.cov.length - 1), ci = ease((c - 0.2 * t) / 0.6);
+      const b = t < 0.3 ? 0 : t < 0.68 ? 1 : 2, f = b === 0 ? t / 0.3 : b === 1 ? (t - 0.3) / 0.38 : (t - 0.68) / 0.32;
+      along(0.06 + 0.9 * f, J[b], J[b + 1]);
+      const base = b === 0 ? P.ter : b === 1 ? P.sec : lerp(P.fanIn, P.fanOut, f * 0.7);
+      place(w.cov[i], s, pv.x, pv.y, pv.z, lerp(-90, base, ci) * D, fl(b + 0.06 + 0.9 * f), 3.6 + (i % 2) * 0.2, 0, 1);
+    }
+    for (let i = 0; i < w.cov2.length; i++) {
+      const t = i / (w.cov2.length - 1), ci = ease((c - 0.2 * t) / 0.6);
+      const b = t < 0.3 ? 0 : t < 0.68 ? 1 : 2, f = b === 0 ? t / 0.3 : b === 1 ? (t - 0.3) / 0.38 : (t - 0.68) / 0.32;
+      along(0.1 + 0.86 * f, J[b], J[b + 1]);
+      const base = b === 0 ? P.ter : b === 1 ? P.sec : lerp(P.fanIn, P.fanOut, f * 0.6);
+      place(w.cov2[i], s, pv.x, pv.y, pv.z, lerp(-90, base, ci) * D, fl(b + 0.1 + 0.86 * f), 4.7 + (i % 2) * 0.2, 0, 1);
+    }
+    for (let i = 0; i < 3; i++) {
+      const h = w.halos[i]; h.position.copy(J[i + 1]).addScaledVector(J[i], 0.0); h.position.y -= 7 * c;
+      const sc = (30 + i * 10) * (0.5 + 0.5 * c); h.scale.set(sc, sc * 1.25, 1); h.material.opacity = (0.1 + 0.14 * glow) * (0.3 + 0.7 * c);
+    }
+  }
+
+  // ---- today's wing, from WingLayer's own numbers (model space: x to the left, y down, z behind; a unit is 16 texels) ----
+  const W_FOLD = [[0.35, -0.45, 0.75], [0.12, 0.9, 0.35], [0.06, 1, 0.25]], W_OPEN = [[0.92, -0.38, 0.12], [1, -0.04, 0.1], [0.9, 0.22, 0.3]];
+  const W_SWEEP = [0, 0.3, 0.55], W_BONE = [0.55, 0.78, 0.92], W_FEATHER = [0.55, 1.05, 1.2, 0.55], W_U = [0, 0.3, 0.66, 1], STRIPS = 14;
+  function oldFeather(u) { for (let i = 0; i < 3; i++) if (u <= W_U[i + 1]) return lerp(W_FEATHER[i], W_FEATHER[i + 1], (u - W_U[i]) / (W_U[i + 1] - W_U[i])); return W_FEATHER[3]; }
+  function makeOld() {
+    const g = new T.Group(), n = STRIPS * 2 * 4, pos = new Float32Array(n * 3), uv = new Float32Array(n * 2), idx = [];
+    for (let q = 0; q < STRIPS * 2; q++) idx.push(q * 4, q * 4 + 1, q * 4 + 2, q * 4, q * 4 + 2, q * 4 + 3);
+    const geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.BufferAttribute(pos, 3)); geo.setAttribute('uv', new T.BufferAttribute(uv, 2)); geo.setIndex(idx);
+    const tex = new T.Texture(); const img = new Image();
+    img.onload = () => { tex.image = img; tex.needsUpdate = true; }; img.src = window.WING_TODAY_PNG || '';
+    tex.magFilter = T.LinearFilter;
+    const body = new T.Mesh(geo, new T.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.58, color: 0xa8dcff, side: T.DoubleSide, depthWrite: false }));
+    const glow = new T.Mesh(geo, new T.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.24, color: 0x7fc0ff, side: T.DoubleSide, depthWrite: false, blending: T.AdditiveBlending }));
+    glow.scale.setScalar(1.07);
+    g.add(body); g.add(glow); body.frustumCulled = glow.frustumCulled = false;
+    g.position.set(0, 24, 0);
+    return { g, pos, uv, geo };
+  }
+  const LX = [0, 0, 0, 0], LY = [0, 0, 0, 0], LZ = [0, 0, 0, 0];
+  function poseOld(o, spread, beat, sweep) {
+    let q = 0; const P = o.pos, UV = o.uv;
+    for (const side of [1, -1]) {
+      LX[0] = side * 0.1; LY[0] = 0.1; LZ[0] = 0.17;
+      for (let b = 0; b < 3; b++) {
+        let dx = lerp(W_FOLD[b][0], W_OPEN[b][0], spread), dy = lerp(W_FOLD[b][1], W_OPEN[b][1], spread);
+        const dz = lerp(W_FOLD[b][2], W_OPEN[b][2] + W_SWEEP[b] * sweep, spread);
+        const a = beat * (0.55 + 0.25 * b) * spread, c = Math.cos(a), sn = Math.sin(a), rx = dx * c - dy * sn, ry = dx * sn + dy * c;
+        dx = rx; dy = ry;
+        const l = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        LX[b + 1] = LX[b] + side * dx / l * W_BONE[b]; LY[b + 1] = LY[b] + dy / l * W_BONE[b]; LZ[b + 1] = LZ[b] + dz / l * W_BONE[b];
+      }
+      let fy = lerp(0.3, 0.95, spread), fz = lerp(1, 0.32, spread); const fl = Math.sqrt(fy * fy + fz * fz); fy /= fl; fz /= fl;
+      let px = 0, py = 0, pz = 0, tx0 = 0, ty0 = 0, tz0 = 0, pu = 0;
+      for (let i = 0; i <= STRIPS; i++) {
+        const u = i / STRIPS, bu = u * 3, b = Math.min(2, Math.floor(bu)), f = bu - b;
+        const x = lerp(LX[b], LX[b + 1], f), y = lerp(LY[b], LY[b + 1], f), z = lerp(LZ[b], LZ[b + 1], f);
+        let len = oldFeather(u) * lerp(0.55, 1, spread); if (u > 0.68 && (i & 1) === 1) len *= 0.8;
+        const tx = x + side * 0.05 * u, ty = y + fy * len, tz = z + fz * len;
+        if (i > 0) {
+          const u0 = side < 0 ? 1 - pu : pu, u1 = side < 0 ? 1 - u : u, v = [px, py, pz, u0, 0, x, y, z, u1, 0, tx, ty, tz, u1, 1, tx0, ty0, tz0, u0, 1];
+          for (let k = 0; k < 4; k++) {
+            const o3 = (q * 4 + k) * 3, o2 = (q * 4 + k) * 2;
+            P[o3] = -v[k * 5] * 16; P[o3 + 1] = -v[k * 5 + 1] * 16; P[o3 + 2] = v[k * 5 + 2] * 16; UV[o2] = v[k * 5 + 3]; UV[o2 + 1] = 1 - v[k * 5 + 4];
+          }
+          q++;
+        }
+        px = x; py = y; pz = z; tx0 = tx; ty0 = ty; tz0 = tz; pu = u;
+      }
+    }
+    o.geo.attributes.position.needsUpdate = true; o.geo.attributes.uv.needsUpdate = true;
+    o.g.visible = spread > 0.01;
+  }
+  function oldBeat(t) { if (t < 4) return -Math.sin(t / 4 * Math.PI / 2); if (t >= 12) return 0; const u = (t - 4) / 8; return -Math.cos(u * Math.PI / 2) + 0.35 * Math.sin(u * Math.PI); }
+
+  // ---- states: what the bones and feathers do, as a function of time in the state (seconds) ----
+  const FOLD = { a0: 92, a1: 38, a2: -101, p0: 16, p1: 10, p2: 8, fanIn: -92, fanOut: -89, sec: -90, ter: -92, casc: 0, louvre: 0, bob: 0 };
+  const OPEN = { a0: 66, a1: 16, a2: -18, p0: 8, p1: 0, p2: 0, fanIn: -72, fanOut: -8, sec: -84, ter: -97, casc: 1, louvre: 0, bob: 0 };
+  const GLIDE = { a0: 50, a1: 6, a2: -15, p0: 6, p1: 5, p2: 7, fanIn: -70, fanOut: -13, sec: -86, ter: -95, casc: 1, louvre: 0, bob: 0 };
+  const DIVE = { a0: 26, a1: -128, a2: -64, p0: 22, p1: 2, p2: 4, fanIn: -84, fanOut: -70, sec: -100, ter: -98, casc: 1, louvre: 0, bob: 0 };
+  const FLARE = { a0: 64, a1: 18, a2: -6, p0: -34, p1: -12, p2: -10, fanIn: -78, fanOut: 2, sec: -84, ter: -96, casc: 1, louvre: 0, bob: 0 };
+  function mix(A, B, t) { const o = {}; for (const k in A) o[k] = lerp(A[k], B[k], t); return o; }
+  function backOut(x) { x = Math.max(0, Math.min(1, x)); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); }
+  // a beat: one smooth cycle. Down takes 42% of it and up the rest; each part eases in and out, so nothing jumps where
+  // the cycle loops. The shoulder moves little (the inner wing stays over the back and never cuts the body); the bend
+  // runs out along the wing a little late at each joint, so the tip trails; on the way up the wrist folds and the long
+  // feathers close, and on the way down they spread. `lift`: how far the wing also rises and falls in its own plane
+  // (an upright hover's beat), `amp` scales the whole stroke.
+  function beat(base, t, period, amp, lift) {
+    const u = (t % period) / period, d = 0.42;
+    const th = u < d ? Math.PI * u / d : Math.PI * (1 + (u - d) / (1 - d)), o = Object.assign({}, base);
+    const sn = Math.sin(th), up = th > Math.PI ? sn * sn : 0, dn = th > Math.PI ? 0 : sn * sn;
+    o.p0 = base.p0 + amp * 9 * Math.cos(th);
+    o.p1 = base.p1 + amp * 25 * Math.cos(th - 0.55);
+    o.p2 = base.p2 + amp * 15 * Math.cos(th - 1.15);
+    o.a0 = base.a0 + lift * 9 * Math.cos(th);
+    o.a1 = base.a1 + lift * 7 * Math.cos(th - 0.5) - amp * 8 * up;
+    o.a2 = base.a2 - amp * 18 * up;
+    o.fanOut = base.fanOut - amp * 9 * up + amp * 5 * dn;
+    o.fanIn = base.fanIn - amp * 3 * up;
+    o.louvre = 0;
+    o.bob = -1.3 * amp * Math.cos(th - 0.7);
+    return o;
+  }
+  const STATES = {
+    folded: { body: { pitch: 0 }, f: () => FOLD, old: () => [0, 0, 0], glow: 0.2, label: 'Folded on your back' },
+    unfold: {
+      body: { pitch: 0 }, glow: 1, label: 'Opening',
+      f: t => {
+        if (t < 0.22) { const k = ease(t / 0.22); const o = mix(FOLD, FOLD, 0); o.a0 = FOLD.a0 + 6 * k; o.p0 = FOLD.p0 + 18 * k; o.a1 = FOLD.a1 + 14 * k; return o; }
+        const k = backOut((t - 0.22) / 0.42), A = mix(FOLD, OPEN, k); A.casc = Math.min(1, (t - 0.22) / 0.5 * 1.25);
+        A.p0 = lerp(FOLD.p0 + 18, OPEN.p0, k); if (t > 0.64) { const s = Math.exp(-(t - 0.64) * 6) * Math.sin((t - 0.64) * 14); A.fanOut += 7 * s; A.p2 += 6 * s; A.casc = 1; }
+        return A;
+      },
+      old: t => { const ticks = t * 20; return [1 - Math.pow(1 - 0.32, ticks), oldBeat(ticks), 0]; }
+    },
+    glide: {
+      body: { pitch: -80 }, glow: 0.6, label: 'Gliding', speed: 1,
+      f: t => { const o = Object.assign({}, GLIDE), w = Math.sin(t * 9) * 0.6 + Math.sin(t * 23) * 0.4; o.p2 += w * 1.6; o.fanOut += w * 1.2; o.p0 += Math.sin(t * 1.3) * 1.5; return o; },
+      old: t => [1, 0.06 * Math.sin(t * 20 * 0.21), 0.35]
+    },
+    beat: {
+      body: { pitch: -74 }, glow: 0.9, label: 'Flying', speed: 1.4,
+      f: t => beat(GLIDE, t, 0.95, 1, 0),
+      old: t => [1, oldBeat((t * 20) % 18), 0.5]
+    },
+    dive: {
+      body: { pitch: -128 }, glow: 0.5, label: 'Diving', speed: 2.4,
+      f: t => { const o = Object.assign({}, DIVE), w = Math.sin(t * 31) * 0.5 + Math.sin(t * 47) * 0.5; o.fanOut += w * 1.5; o.p2 += w; return o; },
+      old: t => [1, 0.06 * Math.sin(t * 20 * 0.21), 1]
+    },
+    hover: {
+      body: { pitch: -8 }, glow: 1, label: 'Hovering',
+      f: t => beat(mix(OPEN, GLIDE, 0.3), t, 1.6, 0.9, 1),
+      old: t => [1, oldBeat((t * 20) % 18), 0]
+    },
+    land: {
+      body: { pitch: -26 }, glow: 1, label: 'Landing',
+      f: t => { const k = ease(t / 0.3), o = mix(GLIDE, FLARE, k); if (t > 0.3) { const s = Math.exp(-(t - 0.3) * 4) * Math.sin((t - 0.3) * 11); o.p0 += 8 * s; o.fanOut += 5 * s; } return o; },
+      old: t => [1, oldBeat(Math.min(12, t * 20)), 0]
+    }
+  };
+
+  // ---- tiers: the wings grow with you: one pair, two, then three and a halo ----
+  const TIERS = {
+    wings: { sky: 'cool', pairs: [{ k: 0.94, roll: 0, pal: 'light', lag: 0 }] },
+    skyborn: { sky: 'cool', pairs: [{ k: 1.18, roll: -6, pal: 'sky', lag: 0 }, { k: 0.6, roll: 44, pal: 'sky', lag: 0.12 }] },
+    sovereign: { sky: 'gold', halo: true, pairs: [{ k: 0.82, roll: -50, pal: 'gold', lag: 0 }, { k: 1.26, roll: -2, pal: 'gold', lag: 0.1 }, { k: 0.86, roll: 40, pal: 'gold', lag: 0.2 }] }
+  };
+
+  const rigNew = makeFigure(), rigOld = makeFigure();
+  scene.add(rigNew.root); scene.add(rigOld.root);
+  const oldWing = makeOld(); rigOld.body.add(oldWing.g);
+  const wingsHolder = new T.Group(); wingsHolder.position.set(0, 21, 4.0); rigNew.body.add(wingsHolder);
+  let wings = [], haloRing = null;
+  function buildTier(name) {
+    while (wingsHolder.children.length) wingsHolder.remove(wingsHolder.children[0]);
+    wings = [];
+    const tier = TIERS[name];
+    tier.pairs.forEach((cfg, pi) => {
+      for (const s of [1, -1]) { const w = makeWing(s, cfg); w.g.position.set(s * 3.2, 0, pi * 0.9); wingsHolder.add(w.g); wings.push(w); }
+    });
+    if (haloRing) { rigNew.body.remove(haloRing); haloRing = null; }
+    if (tier.halo) {
+      haloRing = new T.Group(); haloRing.position.set(0, 38.5, 0);
+      for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; const b = box(2, 1, 1.4, i % 2 ? 0xffe9a8 : 0xfffbea, Math.cos(a) * 7, 0, Math.sin(a) * 7); b.rotation.y = -a + Math.PI / 2; haloRing.add(b); }
+      const sp = new T.Sprite(new T.SpriteMaterial({ map: HALO.gold, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.35 })); sp.scale.set(30, 12, 1); haloRing.add(sp);
+      rigNew.body.add(haloRing);
+    }
+    scene.background = SKY[tier.sky];
+  }
+
+  // motes shed from the wingtips on a beat (square, never a soft sprite)
+  const MOTES = []; const moteMat = new T.MeshBasicMaterial({ color: 0xeafaff, transparent: true, opacity: 0.9, blending: T.AdditiveBlending, depthWrite: false });
+  for (let i = 0; i < 48; i++) { const m = new T.Mesh(new T.BoxGeometry(1, 1, 1), moteMat); m.visible = false; scene.add(m); MOTES.push({ m, life: 0, vx: 0, vy: 0, vz: 0 }); }
+  let moteAt = 0;
+  function shed(x, y, z, vy) {
+    const o = MOTES[moteAt++ % MOTES.length]; o.life = 0.5 + Math.random() * 0.4; o.m.visible = true; o.m.position.set(x, y, z);
+    o.vx = (Math.random() - 0.5) * 8; o.vy = vy + (Math.random() - 0.5) * 6; o.vz = 8 + Math.random() * 14;
+  }
+
+  // ---- view state ----
+  let state = 'hover', tier = 'wings', which = 'both', tState = 0.25, fromP = null, blend = 1, lastP = Object.assign({}, OPEN);
+  let az = 0.5, el = 0.12, drag = null, auto = true, pitchNow = -8, speedNow = 0;
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) auto = false;
+
+  function setState(s) { if (!STATES[s]) return; fromP = Object.assign({}, lastP); blend = 0; state = s; tState = 0; sync(); }
+  function setTier(t) { if (!TIERS[t]) return; tier = t; buildTier(t); sync(); }
+  function setWhich(w) { which = w; layout(); sync(); }
+  function sync() {
+    document.querySelectorAll('[data-wing-state]').forEach(b => b.setAttribute('aria-pressed', b.dataset.wingState === state));
+    document.querySelectorAll('[data-wing-tier]').forEach(b => b.setAttribute('aria-pressed', b.dataset.wingTier === tier));
+    document.querySelectorAll('[data-wing-which]').forEach(b => b.setAttribute('aria-pressed', b.dataset.wingWhich === which));
+    const cap = document.getElementById('wingcap');
+    if (cap) cap.textContent = STATES[state].label + (which === 'both' ? ' · left: today · right: proposed' : which === 'old' ? ' · today' : ' · proposed');
+  }
+  function layout() {
+    const gap = which === 'both' ? 46 : 0;
+    rigOld.root.visible = which !== 'new'; rigNew.root.visible = which !== 'old';
+    rigOld.root.position.x = which === 'both' ? -gap : 0; rigNew.root.position.x = which === 'both' ? gap : 0;
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-wing-state],[data-wing-tier],[data-wing-which]'); if (!b) return;
+    if (b.dataset.wingState) setState(b.dataset.wingState);
+    if (b.dataset.wingTier) setTier(b.dataset.wingTier);
+    if (b.dataset.wingWhich) setWhich(b.dataset.wingWhich);
+  });
+  const el0 = renderer.domElement;
+  el0.style.touchAction = 'pan-y'; el0.style.cursor = 'grab'; el0.style.width = '100%'; el0.style.height = '100%'; el0.style.display = 'block';
+  el0.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, az, el }; auto = false; el0.setPointerCapture(e.pointerId); el0.style.cursor = 'grabbing'; });
+  el0.addEventListener('pointermove', e => { if (!drag) return; az = drag.az - (e.clientX - drag.x) * 0.01; el = Math.max(-0.6, Math.min(1.2, drag.el + (e.clientY - drag.y) * 0.008)); });
+  const up = () => { drag = null; el0.style.cursor = 'grab'; };
+  el0.addEventListener('pointerup', up); el0.addEventListener('pointercancel', up);
+
+  function resize() {
+    const w = host.clientWidth, h = host.clientHeight; if (!w || !h) return;
+    renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
+  }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(host); window.addEventListener('resize', resize);
+
+  function poseBody(rig, pitch, t, moving, bob) {
+    rig.body.rotation.x = pitch * D;
+    // the body turns about its chest so the figure stays in frame
+    rig.body.position.set(0, 0, 0);
+    const prone = Math.min(1, Math.abs(pitch) / 80);
+    rig.root.position.y = lerp(0, 18, prone) + (moving && !bob ? Math.sin(t * 2.1) * 0.8 : 0) + (bob || 0);
+    rig.root.position.z = lerp(0, -14, prone);
+    for (let i = 0; i < 2; i++) {
+      const s = i ? 1 : -1;
+      rig.arms[i].rotation.set(lerp(0.05, 0.35, prone), 0, s * lerp(0.08, 0.32, prone));
+      rig.legs[i].rotation.set(lerp(0, 0.12, prone) + (prone < 0.3 ? 0 : s * 0.05), 0, s * 0.02);
+    }
+  }
+
+  let last = performance.now(), visible = true;
+  if (window.IntersectionObserver) new IntersectionObserver(es => { visible = es[0].isIntersecting; }).observe(host);
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!visible) return;
+    draw(dt, now);
+  }
+  function draw(dt, now) {
+    tState += dt; blend = Math.min(1, blend + dt / 0.32);
+    const S = STATES[state];
+    let P = S.f(tState);
+    if (fromP && blend < 1 && state !== 'unfold') P = mix(fromP, P, ease(blend));
+    lastP = P;
+    pitchNow += (S.body.pitch - pitchNow) * Math.min(1, dt * 7);
+    speedNow += ((S.speed || 0) - speedNow) * Math.min(1, dt * 3);
+    const moving = !!S.speed;
+    poseBody(rigNew, pitchNow, tState, moving, P.bob); poseBody(rigOld, pitchNow, tState, moving, 0);
+    const prev = wings.length ? wings[0]._p0 : 0;
+    for (const w of wings) {
+      const lag = w.cfg.lag;
+      let Pw = P;
+      if (lag) { Pw = S.f(Math.max(0, tState - lag)); if (fromP && blend < 1 && state !== 'unfold') Pw = mix(fromP, Pw, ease(blend)); }
+      poseWing(w, Pw, S.glow);
+      w._p0 = Pw.p0 + Pw.p1 + Pw.p2;
+    }
+    // a hard downstroke sheds a few motes of light from the tips
+    if (dt > 0 && wings.length && which !== 'old' && prev - wings[0]._p0 > 110 * dt && Math.random() < 0.5) {
+      for (const w of wings) if (w.cfg.k > 0.9) { J[3].set(0, 0, 0); w.g.updateWorldMatrix(true, false); pv.set(w.side * 34, -6, 0).applyMatrix4(w.g.matrixWorld); shed(pv.x, pv.y, pv.z, -4); }
+    }
+    for (const o of MOTES) { if (o.life <= 0) continue; o.life -= dt; o.m.position.x += o.vx * dt; o.m.position.y += o.vy * dt; o.m.position.z += o.vz * dt * (0.4 + speedNow); const k = Math.max(0, o.life); o.m.scale.setScalar(0.35 + 0.7 * k); if (o.life <= 0) o.m.visible = false; }
+    rigNew.core.scale.setScalar(1 + 0.25 * Math.sin(now / 400));
+    if (haloRing) haloRing.rotation.y += dt * 0.5;
+    const od = S.old(tState); poseOld(oldWing, od[0], od[1], od[2]);
+    if (auto) az += dt * 0.22;
+    const R = (which === 'both' ? 205 : 150) * Math.max(1, 1.45 / cam.aspect), ty = 26;
+    cam.position.set(Math.sin(az) * Math.cos(el) * R, ty + Math.sin(el) * R, Math.cos(az) * Math.cos(el) * R);
+    cam.lookAt(0, ty, 2);
+    renderer.render(scene, cam);
+  }
+  buildTier(tier);
+  if (host.clientWidth < 560) which = 'new';
+  layout(); sync(); resize();
+  requestAnimationFrame(frame);
+  window.WingStudio = {
+    setState, setTier, setWhich, setView: (a, e) => { az = a; el = e; auto = false; },
+    // a still of a state at a time (for checking the page's pictures)
+    still: (s, t, a, e) => { state = s; tState = t; blend = 1; fromP = null; az = a; el = e; auto = false; pitchNow = STATES[s].body.pitch; speedNow = STATES[s].speed || 0; sync(); draw(0, performance.now()); }
+  };
+})();
+</script>
+<script>// The rope race (docs/movement): today's rule beside the proposed one, side on, in the same place, on the same clock.
+// A 2D sketch of the rules for the approval page (the numbers under it come from the game's own bench, proof/run.sh).
+// Blocks and ticks, gravity 0.08 a tick as in the game. Trees stand behind the runner's line: only the ground stops it.
+(function () {
+  const cv = document.getElementById('ropeview'); if (!cv) return;
+  // the sling's pull and top speed, set so the sketch's distances sit near the bench's (which has trunks to fly round)
+  let SL_PULL = 0.1, SL_TOP = 0.75, BOOST = 1.0;
+  const g = cv.getContext('2d'), G = 0.08, HAND = 1.55;
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let scene = 'wood', running = !reduced, raf = 0;
+
+  function rng(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+  function world(kind) {
+    const r = rng(kind === 'wood' ? 21 : kind === 'tall' ? 7 : 3), t = [];
+    let x = 10;
+    while (x < 900) {
+      if (kind === 'wood') { t.push({ x, h: 6 + Math.floor(r() * 4), w: 2.5, giant: false }); x += 5 + Math.floor(r() * 4); }
+      else if (kind === 'tall') { t.push({ x, h: 26 + Math.floor(r() * 13), w: 6, giant: true }); x += 15 + Math.floor(r() * 5); }
+      else { t.push({ x: x + 30, h: 6 + Math.floor(r() * 2), w: 2.5, giant: false }); x += 70 + Math.floor(r() * 30); }
+    }
+    return t;
+  }
+  function gauss(v, b, s) { const q = (v - b) / s; return Math.exp(-q * q); }
+
+  function runner(rule) {
+    return { rule, x: 0, y: 0, vx: 0.36, vy: 0, ground: true, gt: 0, mode: 'run', ax: 0, ay: 0, len: 0, fit: 0, caught: false, age: 0, cool: 0, trail: [], ropes: 0, t: 0, say: '' };
+  }
+  // today's planner, side on (AscentSwing.plan): an anchor 4+ over the hand, 30 to 82 degrees up, a rope of 8+ whose
+  // low point keeps the feet 2.5 over the ground: so the anchor has to stand 10 or more over the ground
+  function findSwing(p, trees) {
+    let best = null, bs = 0; const hy = p.y + HAND;
+    for (const tr of trees) {
+      const dx = tr.x - p.x, dy = tr.h - hy; if (dx < 2 || dx > 44) continue;
+      const len = Math.hypot(dx, dy), el = Math.atan2(dy, dx) * 180 / Math.PI;
+      if (dy < 4 || len < 8 || len > 44 || el < 30 || el > 82) continue;
+      const rad = Math.min(len, tr.h - 2.5 - HAND); if (rad < 6 || rad < len * 0.7) continue;
+      const sc = gauss(el, 50, 15) * gauss(rad, 26, 9); if (sc > bs) { bs = sc; best = { x: tr.x, y: tr.h, len, fit: rad }; }
+    }
+    return best;
+  }
+  // the proposed sling: a top ahead and above; the rope pulls toward a point over it and lets go before it
+  function findSling(p, trees) {
+    let best = null, bs = 0; const hy = p.y + HAND;
+    for (const tr of trees) {
+      const dx = tr.x - p.x, rise = tr.h + 2.4 - hy; if (dx < 6 || dx > 30 || rise < 1 || rise > dx * 1.2) continue;
+      const sc = gauss(dx, 16, 9) * (0.5 + 0.5 * gauss(rise, 5, 5)); if (sc > bs) { bs = sc; best = { x: tr.x, y: tr.h + 2.4 }; }
+    }
+    return best;
+  }
+  function step(p, trees) {
+    p.t++; if (p.cool > 0) p.cool--;
+    if (p.mode === 'swing') {
+      p.age++;
+      let hx = p.x, hy = p.y + HAND;
+      p.vy -= G;
+      if (p.len > p.fit && p.vy < 0) p.len = Math.max(p.fit, p.len - 0.4);
+      let rx = hx - p.ax, ry = hy - p.ay, r = Math.hypot(rx, ry), nx = rx / r, ny = ry / r;
+      if (-ny > 0.2) { let d = 0.02 * Math.min(1, (-ny - 0.2) / 0.5); if (Math.hypot(p.vx, p.vy) < 0.9 && p.vx >= 0) d *= 3; p.vx += -ny * d; p.vy += nx * d; }
+      p.vx *= 0.998; p.vy *= 0.998;
+      hx += p.vx; hy += p.vy; rx = hx - p.ax; ry = hy - p.ay; r = Math.hypot(rx, ry);
+      if (r >= p.len) {
+        nx = rx / r; ny = ry / r; hx = p.ax + nx * p.len; hy = p.ay + ny * p.len;
+        const out = p.vx * nx + p.vy * ny;
+        if (out > 0) { const s0 = Math.hypot(p.vx, p.vy); p.vx -= nx * out; p.vy -= ny * out; if (!p.caught) { p.caught = true; const s = Math.hypot(p.vx, p.vy), k = Math.min(s0, s + out * 0.65); if (s > 1e-6) { p.vx *= k / s; p.vy *= k / s; } } }
+      }
+      p.x = hx; p.y = hy - HAND;
+      const ang = Math.acos(Math.max(-1, Math.min(1, -(hy - p.ay) / p.len))) * 180 / Math.PI, past = hx > p.ax;
+      // today the rope lets go at the top (the speed spent); proposed: in the window, while it is still fast
+      const letGo = p.rule === 'new' ? (p.vy > 0 && past && ang > 58) || (past && (ang > 95 || p.vx < 0.15)) : past && (ang > 95 || p.vx < 0.15 || (p.vy < -0.02 && ang > 8));
+      if (letGo || p.age > 140) { if (p.rule === 'new' && p.vy > 0) { p.vx *= BOOST; } p.mode = 'air'; p.cool = 2; }
+      if (p.y <= 0) { p.y = 0; p.mode = 'run'; p.ground = true; }
+    } else if (p.mode === 'sling') {
+      p.age++;
+      const hx = p.x, hy = p.y + HAND, dx = p.ax - hx, dy = p.ay - hy, h = Math.abs(dx), d = Math.hypot(dx, dy);
+      if (h < 4.5 || p.age > 34 || Math.atan2(dy, h) > 50 * Math.PI / 180) {
+        const tt = h / Math.max(0.3, p.vx); p.vy = Math.max(p.vy, Math.min(0.9, dy / Math.max(1, tt) + 0.5 * G * tt)); p.mode = 'air'; p.cool = 2;
+      } else {
+        p.vx += dx / d * SL_PULL; p.vy += dy / d * SL_PULL - G * 0.4;
+        const s = Math.hypot(p.vx, p.vy); if (s > SL_TOP) { p.vx *= SL_TOP / s; p.vy *= SL_TOP / s; }
+        p.x += p.vx; p.y += p.vy;
+      }
+    } else {
+      if (p.ground) {
+        p.vx = 0.36; p.gt++;
+        if (p.gt > 4) { p.vy = 0.42; p.ground = false; p.gt = 0; }
+      } else { p.vy = (p.vy - G) * 0.98; p.vx *= 0.988; }
+      p.x += p.vx; p.y += p.vy;
+      if (p.y <= 0) { p.y = 0; p.vy = 0; p.ground = true; }
+      if (!p.ground && p.cool === 0 && p.y > 0.2) {
+        const s = findSwing(p, trees);
+        if (s) { p.mode = 'swing'; p.ax = s.x; p.ay = s.y; p.len = s.len; p.fit = s.fit; p.caught = false; p.age = 0; p.ropes++; p.vx = Math.max(p.vx, 0.75); }
+        else if (p.rule === 'new') { const q = findSling(p, trees); if (q) { p.mode = 'sling'; p.ax = q.x; p.ay = q.y; p.age = 0; p.ropes++; } }
+      }
+    }
+    if (p.t % 2 === 0) { p.trail.push(p.x, p.y, p.mode === 'swing' ? 1 : p.mode === 'sling' ? 2 : 0); if (p.trail.length > 600) p.trail.splice(0, 3); }
+  }
+
+  let trees = world(scene), A = runner('old'), B = runner('new');
+  const SECS = 15;
+  function reset() { trees = world(scene); A = runner('old'); B = runner('new'); out(); }
+  function out() {
+    const e = document.getElementById('ropestat'); if (!e) return;
+    const s = Math.min(SECS, A.t / 20).toFixed(1);
+    e.textContent = s + ' s · today ' + Math.round(A.x) + ' blocks, ' + A.ropes + ' ropes · proposed ' + Math.round(B.x) + ' blocks, ' + B.ropes + ' ropes';
+    document.querySelectorAll('[data-rope-scene]').forEach(b => b.setAttribute('aria-pressed', b.dataset.ropeScene === scene));
+    const pl = document.getElementById('ropeplay'); if (pl) pl.textContent = running ? 'Pause' : 'Play';
+  }
+
+  function lane(p, y0, hgt, label, W, px) {
+    const tall = scene === 'tall', ground = y0 + hgt - 14, camX = p.x - W / px * 0.3;
+    const X = x => (x - camX) * px, Y = y => ground - y * px;
+    const sky = g.createLinearGradient(0, y0, 0, y0 + hgt); sky.addColorStop(0, '#9cc4ee'); sky.addColorStop(1, '#dcecf7');
+    g.fillStyle = sky; g.fillRect(0, y0, W, hgt);
+    g.save(); g.beginPath(); g.rect(0, y0, W, hgt); g.clip();
+    for (const tr of trees) {
+      const x = X(tr.x); if (x < -80 || x > W + 80) continue;
+      const tw = (tr.giant ? 3 : 1) * px;
+      g.fillStyle = tr.giant ? '#4a3626' : '#6b4f33'; g.fillRect(Math.round(x - tw / 2), Y(tr.h - 1), Math.ceil(tw), tr.h * px);
+      g.fillStyle = tr.giant ? '#2f5d34' : '#4d8a3f'; g.fillRect(Math.round(x - tr.w * px), Y(tr.h), Math.ceil(tr.w * 2 * px), (tr.giant ? 7 : 3) * px);
+      g.fillStyle = tr.giant ? '#3d7442' : '#62a552'; g.fillRect(Math.round(x - (tr.w - 1) * px), Y(tr.h + (tr.giant ? 2 : 1)), Math.ceil((tr.w - 1) * 2 * px), (tr.giant ? 2 : 1) * px);
+    }
+    g.fillStyle = '#5c9a48'; g.fillRect(0, ground, W, 4); g.fillStyle = '#7a5a3c'; g.fillRect(0, ground + 4, W, 10);
+    // the path flown: where a rope carried it, the line is the rope's colour
+    for (let i = 0; i + 2 < p.trail.length; i += 3) {
+      const m = p.trail[i + 2]; g.fillStyle = m === 1 ? 'rgba(20,110,200,0.75)' : m === 2 ? 'rgba(210,120,20,0.85)' : 'rgba(40,50,60,0.3)';
+      g.fillRect(Math.round(X(p.trail[i])) - 1, Math.round(Y(p.trail[i + 1] + 0.9)) - 1, m ? 3 : 2, m ? 3 : 2);
+    }
+    if (p.mode === 'swing' || p.mode === 'sling') {
+      g.strokeStyle = p.mode === 'swing' ? '#1d7fe0' : '#e08a1d'; g.lineWidth = 2; g.beginPath(); g.moveTo(X(p.x), Y(p.y + HAND)); g.lineTo(X(p.ax), Y(p.mode === 'sling' ? p.ay - 2.4 : p.ay)); g.stroke();
+    }
+    const bw = Math.max(3, 0.6 * px), bh = Math.max(7, 1.8 * px);
+    g.fillStyle = '#1d2530'; g.fillRect(Math.round(X(p.x) - bw / 2), Math.round(Y(p.y) - bh), Math.round(bw), Math.round(bh));
+    g.fillStyle = '#e9c9a4'; g.fillRect(Math.round(X(p.x) - bw / 2), Math.round(Y(p.y) - bh), Math.round(bw), Math.max(2, Math.round(bh * 0.25)));
+    g.restore();
+    g.fillStyle = 'rgba(15,22,30,0.78)'; g.fillRect(8, y0 + 8, g.measureText(label).width + 16, 22);
+    g.fillStyle = '#fff'; g.fillText(label, 16, y0 + 23);
+    if (tall) { g.fillStyle = 'rgba(15,22,30,0.7)'; }
+  }
+  function draw() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1), W = cv.clientWidth, H = cv.clientHeight;
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.font = '600 13px system-ui, sans-serif';
+    const hgt = (H - 6) / 2, px = scene === 'tall' ? Math.min(4.6, hgt / 48) : Math.min(11, hgt / 16);
+    g.clearRect(0, 0, W, H);
+    lane(A, 0, hgt, 'Today: ' + (A.mode === 'swing' ? 'swinging' : A.ropes === 0 && A.t > 40 ? 'nothing tall enough to swing from' : 'running'), W, px);
+    lane(B, hgt + 6, hgt, 'Proposed: ' + (B.mode === 'swing' ? 'swinging' : B.mode === 'sling' ? 'the sling' : 'between ropes'), W, px);
+  }
+  let acc = 0, last = 0;
+  function frame(now) {
+    raf = requestAnimationFrame(frame);
+    const dt = Math.min(100, now - (last || now)); last = now;
+    if (running) { acc += dt; while (acc >= 50) { acc -= 50; if (A.t < SECS * 20) { step(A, trees); step(B, trees); } else if (A.t++ > SECS * 20 + 50) reset(); } out(); }
+    draw();
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-rope-scene]'); if (b) { scene = b.dataset.ropeScene; reset(); if (!running) { for (let i = 0; i < SECS * 20; i++) { step(A, trees); step(B, trees); } out(); draw(); } }
+    if (e.target.id === 'ropeplay') { running = !running; out(); }
+  });
+  if (!running) { for (let i = 0; i < SECS * 20; i++) { step(A, trees); step(B, trees); } }
+  out(); raf = requestAnimationFrame(frame);
+  window.RopeRace = { tune: (a, b, c) => { SL_PULL = a; SL_TOP = b; BOOST = c; }, finish: () => { reset(); for (let i = 0; i < SECS * 20; i++) { step(A, trees); step(B, trees); } out(); draw(); return [Math.round(A.x), A.ropes, Math.round(B.x), B.ropes]; }, scene: s => { scene = s; reset(); } };
+})();
+</script>
+<script>
+const DECISIONS=[
+ ["The rope's rule: swing where something stands tall, sling where it doesn't, and never in open sky.","Yes. The sling took the oak wood from 103 blocks to 203 in the bench, and your 28 Oct rule about open sky is kept."],
+ ["Held, the rope lets go while you are still moving forward (about 55 degrees), and a landing no longer ends the chain. Your own let-go in the window keeps its extra snap.","Yes. For a player who holds the key this doubled the giant trees in the bench, 120 blocks to 253."],
+ ["Your keys stay as they are, with the rope on Left Option. Holding is enough: nothing on the rope will need Space.","Yes, keep them. If you would rather have the rope on a mouse button, say so in the note."],
+ ["The wings are rebuilt as feathers of light in boxes, as in the model above.","Yes. It is the biggest change you asked for, and it stays inside Minecraft's shapes."],
+ ["Each rung gets its own wings: one pair, then two for Skyborn, then six gold wings and a halo while the Sovereign's form lasts.","Yes. Each rung should look like a step up from across a field."],
+ ["Closed wings fold onto your back for four seconds after you land, then fade into a small lit mark between your shoulders.","Yes. Tell me in the note if you would rather they stay on your back always, or vanish at once."],
+ ["Powers work in the air: a push carries, a blink keeps your wings, a cast shows in flight, and Updraft lifts open wings.","Yes."],
+ ["The aim hold: while you hold your guard in flight (or a power you hold to charge), you keep your line and can look anywhere.","Yes. It is what makes a fight from the air possible."],
+ ["The six moves: the sling, the spring, the rope strike, the flare, the skim, the takeoff.","Yes to all six. Name any you would drop in the note."],
+ ["All 24 movement sounds are remade from Minecraft's own recordings, with a local listening page for your ear first.","Yes. Eight of them ring today."],
+ ["Left for later: slowed time and broken ground for the Sovereign, and wings you can dress or recolour.","Yes, leave them. Neither is needed for what you asked."],
+ ["Build all of it in one session, about 22 to 31 hours, then one test pass, then your ten minutes.","Yes, in that order."]
+];
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cardsEl=document.getElementById("cards"),tally=document.getElementById("tally"),allYes=document.getElementById("allyes");
+let db=null,dbReady=false,canWrite=true,answers={};
+cardsEl.innerHTML=DECISIONS.map((d,i)=>{const id="d"+(i+1);return `<div class="card" id="card-${id}"><h3><small>${i+1}</small><span>${esc(d[0])}</span></h3><p class="rec"><b>My recommendation:</b> ${esc(d[1])}</p><div class="ans"><button type="button" id="${id}-yes" data-id="${id}" data-v="yes" aria-pressed="false">Yes</button><button type="button" id="${id}-no" data-id="${id}" data-v="no" aria-pressed="false">No</button><span class="st" id="${id}-st"></span></div><textarea id="${id}-note" data-id="${id}" rows="1" placeholder="Anything to change? (optional)" aria-label="Note on decision ${i+1}"></textarea></div>`}).join("");
+function renderAns(){
+  let yes=0,no=0;
+  DECISIONS.forEach((d,i)=>{const id="d"+(i+1),a=answers[id]||{};
+    if(a.answer==="yes")yes++;if(a.answer==="no")no++;
+    const y=document.getElementById(id+"-yes"),n=document.getElementById(id+"-no"),t=document.getElementById(id+"-note");
+    y.setAttribute("aria-pressed",a.answer==="yes");n.setAttribute("aria-pressed",a.answer==="no");
+    y.disabled=n.disabled=t.disabled=!canWrite||!db;
+    if(document.activeElement!==t&&(a.note||"")!==t.value)t.value=a.note||"";
+  });
+  const f=answers.feel||{},ticks=f.ticks||[];
+  document.querySelectorAll("#feel input").forEach(c=>{c.checked=ticks.includes(c.dataset.f);c.disabled=!canWrite||!db;});
+  const fn=document.getElementById("feel-note");fn.disabled=!canWrite||!db;if(document.activeElement!==fn&&(f.note||"")!==fn.value)fn.value=f.note||"";
+  const left=DECISIONS.length-yes-no;
+  tally.textContent=!dbReady?"Loading your answers…":!db?"Answers can't be saved in this view. Open the page while signed in.":`${yes} yes · ${no} no · ${left} to answer`;
+  allYes.hidden=!(db&&canWrite&&left>0);
+}
+async function save(id,patch,stEl){
+  if(!db)return;
+  const st=stEl||document.getElementById(id+"-st");
+  const base=id==="feel"?{ticks:[],note:""}:{answer:null,note:""};
+  const next=Object.assign(base,answers[id],patch,{at:new Date().toISOString()});
+  answers[id]=next;renderAns();st.textContent="saving…";
+  try{await db.doc("answers/"+id).set(next);st.textContent="saved";}
+  catch(e){if(e&&(e.code==="permission_denied"||e.code==="not_granted"||e.code==="invalid_argument")){canWrite=false;st.textContent="only Euan can answer";renderAns();}else st.textContent="not saved, try again";}
+}
+cardsEl.addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(b){const id=b.dataset.id,cur=answers[id]&&answers[id].answer;save(id,{answer:cur===b.dataset.v?null:b.dataset.v});}});
+cardsEl.addEventListener("change",e=>{if(e.target.matches("textarea"))save(e.target.dataset.id,{note:e.target.value.trim()});});
+document.getElementById("feel").addEventListener("change",()=>{const ticks=[...document.querySelectorAll("#feel input:checked")].map(c=>c.dataset.f);save("feel",{ticks},document.getElementById("feel-st"));});
+document.getElementById("feel-note").addEventListener("change",e=>save("feel",{note:e.target.value.trim()},document.getElementById("feel-st")));
+allYes.addEventListener("click",async()=>{for(let i=1;i<=DECISIONS.length;i++){const id="d"+i;if(!(answers[id]&&answers[id].answer))await save(id,{answer:"yes"});}});
+renderAns();
+(async()=>{
+  try{db=window.claude&&window.claude.use?await window.claude.use("db"):null;}catch(e){db=null;}
+  dbReady=true;
+  if(!db){renderAns();return;}
+  try{const user=await window.claude.use("user");if(user&&(await user.can("data.write"))===false)canWrite=false;}catch(e){}
+  const timer=setTimeout(renderAns,10000);
+  db.collection("answers").onSnapshot(snap=>{clearTimeout(timer);for(const d of snap.docs)if(d.exists)answers[d.id]=Object.assign({},d.data());renderAns();},()=>{clearTimeout(timer);renderAns();});
+  renderAns();
+})();
+</script>

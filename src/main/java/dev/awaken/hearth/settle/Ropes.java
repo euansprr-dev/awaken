@@ -75,13 +75,13 @@ final class Ropes {
                 case SOUTH -> new BlockPos(a.getX() + k, y, b.getZ() + 1);
                 default -> new BlockPos(a.getX() + k, y, a.getZ() - 1);
             };
-            if (!level.isLoaded(wall) || !level.getBlockState(wall).isFaceSturdy(level, wall, d)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, wall) || !level.getBlockState(wall).isFaceSturdy(level, wall, d)) continue;
             BlockPos start = wall.relative(d);
             int n = 0;
             BlockPos end = null;
             for (int i = 0; i <= MAX; i++) {
                 BlockPos c = start.relative(d, i);
-                if (!h.contains(c) || !level.isLoaded(c)) break;
+                if (!h.contains(c) || !dev.awaken.core.api.Ready.loaded(level, c)) break;
                 BlockState s = level.getBlockState(c);
                 if (!s.isAir()) {
                     if (s.isFaceSturdy(level, c, d.getOpposite()) && !inside(r, c)) end = c;

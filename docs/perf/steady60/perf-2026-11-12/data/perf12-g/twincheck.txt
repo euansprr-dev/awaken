@@ -1,0 +1,9 @@
+n_own
+  ref 1 vs ref 2 (noise)           mean  5.68  p99  81  p99.9 164  over5 18.554%  max 255
+  ref 2 vs ref 3 (noise)           mean  5.34  p99  78  p99.9 157  over5 17.704%  max 255
+n_tree
+  ref 1 vs ref 2 (noise)           mean  6.88  p99 133  p99.9 231  over5 14.873%  max 247
+  ref 2 vs ref 3 (noise)           mean  6.19  p99 111  p99.9 225  over5 14.707%  max 246
+twin check (where two composites of one frame differ, by the most in any channel), pixels of the shot
+  t_own_notlite.png          one step        0   2-4 steps        0   more        0   (0.0000% of 3840x2160)
+  t_tree_notlite.png         one step        0   2-4 steps        0   more        0   (0.0000% of 3840x2160)

@@ -21,6 +21,7 @@ public final class AscentContent {
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
     static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);
     static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(Awaken.MODID);
+    static final DeferredRegister.Entities ENTITIES = DeferredRegister.createEntities(Awaken.MODID);
     static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(Awaken.MODID);
     static final DeferredRegister<net.minecraft.world.level.block.entity.BlockEntityType<?>> BLOCK_ENTITIES =
             DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, Awaken.MODID);
@@ -63,7 +64,10 @@ public final class AscentContent {
     public static final DeferredHolder<SoundEvent, SoundEvent> UPDRAFT = sound("ascent.updraft");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_CALL = sound("ascent.vow_call");
     public static final DeferredHolder<SoundEvent, SoundEvent> VOW_LINE = sound("ascent.vow_line");
-    // the rappel and the fittings (tools/art/specs/audio_rappel.py)
+    /** The aimed dive (SPEC §17.33): the phantom's swoop as it goes, the mace's smash where it lands (vanilla recordings). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> DIVE = sound("ascent.dive");
+    public static final DeferredHolder<SoundEvent, SoundEvent> DIVE_LAND = sound("ascent.dive_land");
+    // the rappel and the fittings (the game's own recordings: tools/art/specs/audit_rest.py, SPEC §66.7)
     public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PAY = sound("ascent.rappel_pay");
     public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_PAY_GLASS = sound("ascent.rappel_pay_glass");
     public static final DeferredHolder<SoundEvent, SoundEvent> RAPPEL_CATCH = sound("ascent.rappel_catch");
@@ -88,6 +92,21 @@ public final class AscentContent {
             BLOCK_ENTITIES.register("wing_core", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(WingCoreBlockEntity::new,
                     WING_CORE.get()));
 
+    /** The Lesson's figure of light (SPEC §71): made by a client for itself, never summoned, sent or saved. */
+    public static final DeferredHolder<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<LessonFigure>> FIGURE =
+            ENTITIES.registerEntityType("lesson_figure", LessonFigure::new, net.minecraft.world.entity.MobCategory.MISC,
+                    b -> b.sized(0.6F, 1.8F).eyeHeight(1.62F).clientTrackingRange(8).updateInterval(1).noSave().noSummon());
+
+    /** A stand of the Leaper's Gauntlet (SPEC §71.3): a low plate that gives one of the leap's moves; unbreakable, alight. */
+    public static final net.neoforged.neoforge.registries.DeferredBlock<LeapStandBlock> LEAP_STAND = BLOCKS.registerBlock("leap_stand",
+            LeapStandBlock::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_ORANGE).strength(-1F, 3600000F)
+                    .sound(net.minecraft.world.level.block.SoundType.COPPER).lightLevel(s -> 9).noOcclusion().noLootTable());
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.BlockItem> LEAP_STAND_ITEM =
+            ITEMS.registerSimpleBlockItem(LEAP_STAND);
+    public static final Supplier<net.minecraft.world.level.block.entity.BlockEntityType<LeapStandBlockEntity>> LEAP_STAND_BE =
+            BLOCK_ENTITIES.register("leap_stand", () -> new net.minecraft.world.level.block.entity.BlockEntityType<>(LeapStandBlockEntity::new,
+                    LEAP_STAND.get()));
+
     /** A Tether Spire's crown: it times the climb and keeps the spire's records (SPEC §17.11); unbreakable, alight. */
     public static final net.neoforged.neoforge.registries.DeferredBlock<SpireCrownBlock> SPIRE_CROWN = BLOCKS.registerBlock("spire_crown",
             SpireCrownBlock::new, p -> p.mapColor(net.minecraft.world.level.material.MapColor.COLOR_CYAN).strength(-1F, 3600000F)
@@ -111,6 +130,13 @@ public final class AscentContent {
     /** Motes of the Signal's light: sparks where a rope bites, feathers off the wings, the shock ring's grit. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MOTE = PARTICLES.register("ascent_mote", () -> new SimpleParticleType(false));
 
+    static {
+        // the scores' layers (SPEC §62): each names one of the game's own recordings in sounds.json (ascent_scores.py)
+        for (int i = 0; i < AscentScoreTable.NAMES.length; i++) {
+            for (int j = 0; j < AscentScoreTable.DELAYS[i].length; j++) sound("ascent.score." + AscentScoreTable.NAMES[i] + "." + j);
+        }
+    }
+
     private static DeferredHolder<SoundEvent, SoundEvent> sound(String path) {
         return SOUNDS.register(path, () -> SoundEvent.createVariableRangeEvent(Awaken.id(path)));
     }
@@ -122,11 +148,11 @@ public final class AscentContent {
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
-        modBus.addListener((net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent e) -> {
-            if (!e.getTabKey().equals(dev.awaken.core.CoreModule.TAB_KEY)) return;
-            e.accept(IRON_LINE.get());
-            e.accept(GOLD_REEL.get());
-            e.accept(DEEPGLASS_LINE.get());
-        });
+        ENTITIES.register(modBus);
+        modBus.addListener((net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent e) -> e.put(FIGURE.get(), LessonFigure.createAttributes().build()));
+        // the rope's fittings with the climbing gear; the movement blocks with the courses
+        dev.awaken.core.api.Tabs.fill(dev.awaken.core.api.Tabs.Shelf.CLIMBING, IRON_LINE, GOLD_REEL, DEEPGLASS_LINE);
+        dev.awaken.core.api.Tabs.fill(dev.awaken.core.api.Tabs.Shelf.COURSES, ANCHOR_RING_ITEM, UPDRAFT_VENT_ITEM, SPIRE_CROWN_ITEM, WING_CORE_ITEM,
+                LEAP_STAND_ITEM);
     }
 }

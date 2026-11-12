@@ -72,6 +72,19 @@ public final class Wonders {
         default boolean structureNear(int x, int z, int chunks) {
             return false;
         }
+
+        /**
+         * Whether land in the box is cut before the surface is written (a cave place open to the sky, SPEC §34.1): the
+         * noise still says ground there, so whatever stood on it would hang over the hole. A wonder keeps off it.
+         */
+        default boolean cut(int x0, int z0, int x1, int z1, int y0, int y1) {
+            return false;
+        }
+
+        /** Whether {@link #cut} is really asked: a quick terrain (a census, a command's first look) doesn't, and its sites are kept apart. */
+        default boolean seesCuts() {
+            return false;
+        }
     }
 
     /** A wonder: its kind and the region it belongs to, its heart and the ground level there, and its plan (blocks relative to the heart, at the ground block's level). */
@@ -100,9 +113,17 @@ public final class Wonders {
 
     private static final Site NONE = new Site(Kind.BELL_TREE, -1, "", 0, 0, 0, new Plan());
     private static final ConcurrentHashMap<Long, Site> CACHE = new ConcurrentHashMap<>();
+    /** Regions whose wonder is being worked out off the server thread (see {@link #near(long, RegionMap, Terrain, int, int, int, int, int, boolean)}). */
+    private static final Set<Long> PENDING = ConcurrentHashMap.newKeySet();
 
     public static void reset() {
         CACHE.clear();
+        PENDING.clear();
+    }
+
+    /** A region's key in the cache: what a quick terrain decides is kept apart from what a full one does. */
+    private static long key(long seed, RegionMap.Region r, Terrain t) {
+        return mix(seed, r.id()) * 2 + (t.seesCuts() ? 1 : 0);
     }
 
     private static long mix(long a, long b) {
@@ -116,7 +137,31 @@ public final class Wonders {
     /** This region's wonder, or null (the Commons has none; steep, wet or crowded ground finds no place). */
     public static @Nullable Site siteOf(long seed, RegionMap map, RegionMap.Region r, Terrain t) {
         if (r.commons()) return null;
-        Site s = CACHE.computeIfAbsent(mix(seed, r.id()), k -> make(seed, map, r, t));
+        Site s = CACHE.computeIfAbsent(key(seed, r, t), k -> make(seed, map, r, t));
+        return s == NONE ? null : s;
+    }
+
+    /**
+     * This region's wonder if it is worked out already; otherwise null now, and it is worked out on a background thread
+     * for the next ask. The server thread asks this way: a region's first look runs its cave probes (SPEC §34.1), which
+     * would stall a tick.
+     */
+    static @Nullable Site siteKnown(long seed, RegionMap map, RegionMap.Region r, Terrain t) {
+        if (r.commons()) return null;
+        long k = key(seed, r, t);
+        Site s = CACHE.get(k);
+        if (s == null) {
+            if (PENDING.add(k)) {
+                dev.awaken.core.api.LandFirst.later().execute(() -> {
+                    try {
+                        siteOf(seed, map, r, t);
+                    } finally {
+                        PENDING.remove(k);
+                    }
+                });
+            }
+            return null;
+        }
         return s == NONE ? null : s;
     }
 
@@ -127,6 +172,8 @@ public final class Wonders {
         if (fits.isEmpty()) return NONE;
         long h = mix(seed, r.id());
         Kind kind = fits.get((int) Math.floorMod(h >>> 20, (long) fits.size()));
+        Plan plan = null;
+        int[] extent = null;
         for (int attempt = 0; attempt < 6; attempt++) {
             double angle = ((h >>> 8) & 0xFFFF) / 65536.0 * Math.PI * 2 + attempt * 1.9;
             double dist = 70 + ((h >>> 28) & 0x7F) + attempt * 10;
@@ -142,12 +189,31 @@ public final class Wonders {
             int[] sorted = hs.clone();
             java.util.Arrays.sort(sorted);
             int y = sorted[2];
-            Plan plan = new Plan();
-            RandomSource rnd = RandomSource.create(mix(h, kind.ordinal()));
-            build(kind, plan, rnd, family(map.landOf(r).group()));
+            if (plan == null) { // the same plan at every attempt (its seed is the region's)
+                plan = new Plan();
+                build(kind, plan, RandomSource.create(mix(h, kind.ordinal())), family(map.landOf(r).group()));
+                extent = extent(plan, kind.clear);
+            }
+            // a cave place open to the sky under any of it (cut before the wonder is written): the next spot (SPEC §21.11)
+            if (t.cut(x + extent[0], z + extent[1], x + extent[2], z + extent[3], y - CUT_BELOW, y + CUT_ABOVE)) continue;
             return new Site(kind, r.id(), r.name(), x, y, z, plan);
         }
         return NONE;
+    }
+
+    /** How far under and over the ground a cave place's box may reach and still not touch a thing on the surface. */
+    static final int CUT_BELOW = 6, CUT_ABOVE = 12;
+
+    /** The plan's footprint and the ground it clears, with a few blocks round: min dx, min dz, max dx, max dz. */
+    private static int[] extent(Plan plan, int clear) {
+        int x0 = -clear, z0 = -clear, x1 = clear, z1 = clear;
+        for (long k : plan.blocks.keySet()) {
+            x0 = Math.min(x0, BlockPos.getX(k));
+            z0 = Math.min(z0, BlockPos.getZ(k));
+            x1 = Math.max(x1, BlockPos.getX(k));
+            z1 = Math.max(z1, BlockPos.getZ(k));
+        }
+        return new int[]{x0 - 3, z0 - 3, x1 + 3, z1 + 3};
     }
 
     /** The materials of the land round (the region's group: cold, hot or green). */
@@ -157,6 +223,11 @@ public final class Wonders {
 
     /** Wonders within {@code radius} of the box (x0, z0)-(x1, z1): the regions at nine points across it and their sites. */
     public static List<Site> near(long seed, RegionMap map, Terrain t, int x0, int z0, int x1, int z1, int radius) {
+        return near(seed, map, t, x0, z0, x1, z1, radius, true);
+    }
+
+    /** As {@link #near(long, RegionMap, Terrain, int, int, int, int, int)}; without {@code wait} a region not worked out yet is left out this time (the server thread's way). */
+    public static List<Site> near(long seed, RegionMap map, Terrain t, int x0, int z0, int x1, int z1, int radius, boolean wait) {
         Set<Long> seen = new HashSet<>();
         List<Site> out = new ArrayList<>(2);
         int ex0 = x0 - radius, ez0 = z0 - radius, ex1 = x1 + radius, ez1 = z1 + radius;
@@ -164,7 +235,7 @@ public final class Wonders {
             for (int j = 0; j < 3; j++) {
                 RegionMap.Region r = map.regionAt(ex0 + (ex1 - ex0) * i / 2, ez0 + (ez1 - ez0) * j / 2);
                 if (!seen.add(r.id())) continue;
-                Site s = siteOf(seed, map, r, t);
+                Site s = wait ? siteOf(seed, map, r, t) : siteKnown(seed, map, r, t);
                 if (s != null && s.x() >= ex0 && s.x() <= ex1 && s.z() >= ez0 && s.z() <= ez1) out.add(s);
             }
         return out;

@@ -125,6 +125,12 @@ public final class BodyRules {
     public static final double MANTLE_STEP = 0.6;
     /** How far in front of the body the ledge's face may be: the client, and the server (it may be a tick behind). */
     public static final double MANTLE_REACH = 0.6, MANTLE_REACH_SERVER = 1.1;
+    /**
+     * From the air (SPEC §17.32, a leap or a jump pressed in the air): a lip from this little over the feet up to
+     * {@link #MANTLE_MAX} is climbed (on the ground vanilla's jump takes the low ones). The server looks from its own
+     * body and up to {@link #AIR_LAG} above and below it (a body moving fast up or down may be a step apart).
+     */
+    public static final double AIR_MANTLE_MIN = 0.1, AIR_LAG = 0.6;
     public static final float MANTLE_EXHAUSTION = 0.05F;
 
     // ---- momentum hits and trips ------------------------------------------------------------------------------------
@@ -411,6 +417,12 @@ public final class BodyRules {
      * over the player's head on the way up; and the way over the lip is clear.
      */
     public static @Nullable Ledge findLedge(BlockGetter level, CollisionContext ctx, double px, double py, double pz, float yaw, double reach) {
+        return findLedge(level, ctx, px, py, pz, yaw, reach, MANTLE_MIN);
+    }
+
+    /** The same, with the lowest lip over the feet given ({@link #AIR_MANTLE_MIN} from the air). */
+    public static @Nullable Ledge findLedge(BlockGetter level, CollisionContext ctx, double px, double py, double pz, float yaw, double reach,
+                                            double min) {
         double dx = -Mth.sin(yaw * Mth.DEG_TO_RAD), dz = Mth.cos(yaw * Mth.DEG_TO_RAD);
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         double w = HALF_WIDTH;
@@ -438,7 +450,7 @@ public final class BodyRules {
             surface(level, ctx, m, sx - 0.01, sz - 0.01, sx + 0.01, sz + 0.01, py + 0.01, hi, top);
             if (!Double.isNaN(top[0])) lip = Math.min(lip, top[0]);
         }
-        if (lip - py < MANTLE_MIN - 1e-6 || lip - py > MANTLE_MAX + 1e-6) return null;
+        if (lip - py < min - 1e-6 || lip - py > MANTLE_MAX + 1e-6) return null;
         // 3. the feet's new place: a body width past the face, on whatever top is there (the lip's, or a step over it)
         double f = face + 2 * w + 0.05;
         double tx = px + dx * f, tz = pz + dz * f;

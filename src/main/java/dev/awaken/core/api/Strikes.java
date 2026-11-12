@@ -114,7 +114,17 @@ public final class Strikes {
     // ---- tells (both sides: the client draws them, the server's rules may read them) --------------------------------
 
     /** A body winding up a blow: ticks left until it lands, and its class. */
-    public record Tell(int ticks, Kind kind) {}
+    public record Tell(int ticks, Kind kind, int target) {
+        /** A tell for everyone (a body that doesn't say whom it aims at). */
+        public Tell(int ticks, Kind kind) {
+            this(ticks, kind, -1);
+        }
+
+        /** Whether this blow is this entity's to answer: aimed at them, or at nobody in particular (SPEC §70.3). */
+        public boolean aimedAt(int entityId) {
+            return target < 0 || target == entityId;
+        }
+    }
 
     public interface TellSource {
         @Nullable Tell tell(Entity e);
@@ -129,6 +139,93 @@ public final class Strikes {
     /** The blow this body is winding up, or null. */
     public static @Nullable Tell tell(Entity e) {
         return tells.tell(e);
+    }
+
+    // ---- the blow that is coming, on one clock (client, SPEC §68.2) ---------------------------------------------------
+
+    /**
+     * When a told blow will reach the one watching, for what is drawn about it (the ring that closes on it, the glint on
+     * the hand). A {@link Tell}'s count is a server's number sent now and then; this is one continuous clock, the body's
+     * own, and it runs to the tick the blow lands, which is after the tell itself has ended. The mobs module's client
+     * installs it.
+     */
+    public interface Coming {
+        /** Ticks until this body's told blow reaches you, with the frame's fraction; NaN when none is coming. */
+        default double left(Entity e, float partialTick) {
+            return Double.NaN;
+        }
+
+        /** Whether the blow now told will reach where you stand (false: it will pass you by, and is drawn dim). */
+        default boolean reaches(Entity e) {
+            return true;
+        }
+
+        /** The class of the blow {@link #left} counts down to; NONE when none is coming. */
+        default Kind kind(Entity e) {
+            return Kind.NONE;
+        }
+
+        /** Whether that blow can be answered at the moment it lands (a blow of its body's: not a shot's or a wave's release). */
+        default boolean lands(Entity e) {
+            return true;
+        }
+    }
+
+    private static Coming coming = new Coming() {};
+
+    public static void installComing(Coming c) {
+        coming = c;
+    }
+
+    public static double left(Entity e, float partialTick) {
+        return coming.left(e, partialTick);
+    }
+
+    public static boolean reaches(Entity e) {
+        return coming.reaches(e);
+    }
+
+    public static Kind comingKind(Entity e) {
+        return coming.kind(e);
+    }
+
+    public static boolean lands(Entity e) {
+        return coming.lands(e);
+    }
+
+    // ---- how a guard answered (client, SPEC §68.2) --------------------------------------------------------------------
+
+    /**
+     * What became of a blow at the local player's guard: turned aside, blocked, the guard broken, struck, or gone past a
+     * guard that was up (PASSED: from outside its front, or a blow no guard stops).
+     */
+    public enum Answer { DEFLECT, BLOCK, GUARD_BREAK, STRUCK, PASSED }
+
+    /**
+     * Why a guard that was up didn't turn the blow aside (SPEC §68.6): raised too early, too late, again too soon after
+     * lowering it, the blow came from the side, or it can't be guarded (dodge it). NONE where there is nothing to say.
+     */
+    public enum Why { NONE, EARLY, LATE, TOO_SOON, SIDE, UNGUARDABLE }
+
+    public interface AnswerSink {
+        void answered(Answer answer, int attackerId, Why why);
+    }
+
+    private static AnswerSink answers = (a, id, why) -> {};
+
+    /** The ring's side (aim): it bursts on a deflect and says why a guard missed. */
+    public static void installAnswers(AnswerSink sink) {
+        answers = sink;
+    }
+
+    /** Arms' client says how the local player's guard answered a blow of {@code attackerId}'s (-1 unknown). */
+    public static void answered(Answer answer, int attackerId) {
+        answers.answered(answer, attackerId, Why.NONE);
+    }
+
+    /** The same, with why a guard that was up missed. */
+    public static void answered(Answer answer, int attackerId, Why why) {
+        answers.answered(answer, attackerId, why);
     }
 
     // ---- stagger (server) -------------------------------------------------------------------------------------------
@@ -209,6 +306,16 @@ public final class Strikes {
             return false;
         }
 
+        /** Whether the body is beaten to its last point and waits for the blow that ends it (both sides, SPEC §68.4). */
+        default boolean atLastStand(LivingEntity e) {
+            return false;
+        }
+
+        /** Whether the body is reeling: its phrase's last blow was turned aside (the biggest clash, SPEC §68.3). */
+        default boolean reeling(LivingEntity e) {
+            return false;
+        }
+
         /** Whether the body fights as a duel: braced outside its openings, its stance falls to deflects and punishes. */
         default boolean duelist(LivingEntity e) {
             return false;
@@ -254,6 +361,14 @@ public final class Strikes {
         duel.deflected(attacker, kind);
     }
 
+    public static boolean reeling(LivingEntity e) {
+        return duel.reeling(e);
+    }
+
+    public static boolean atLastStand(LivingEntity e) {
+        return duel.atLastStand(e);
+    }
+
     public static boolean opening(LivingEntity e) {
         return duel.opening(e);
     }
@@ -281,6 +396,20 @@ public final class Strikes {
     public interface Postures {
         /** Fills a body's stance as a blow of {@code by}'s would (Arms: full, it breaks). */
         void add(LivingEntity target, int amount, Player by);
+
+        /**
+         * A body beaten to its last point (SPEC §68.4): its stance is broken for {@code ticks}, whatever it held, so the
+         * blow that ends it is the finisher on a broken stance, and {@code by} and those near are told it is open.
+         */
+        default void beaten(LivingEntity target, int ticks, Player by) {}
+
+        /** Whether this damage is an Execution's blow landing now (the finisher on a broken stance). */
+        default boolean executing(DamageSource source) {
+            return false;
+        }
+
+        /** A duel body begins or stops fighting: held, its stance doesn't drain (SPEC §47.3 "Held while it fights"). */
+        default void hold(LivingEntity target, boolean fighting) {}
     }
 
     private static Postures postures = (target, amount, by) -> {};
@@ -292,5 +421,20 @@ public final class Strikes {
     /** A blow of {@code by}'s that isn't a swing (a shot sent back) fills the body's stance. */
     public static void posture(LivingEntity target, int amount, Player by) {
         postures.add(target, amount, by);
+    }
+
+    /** A body beaten to its last point is held open for the blow that ends it (SPEC §68.4). */
+    public static void beaten(LivingEntity target, int ticks, Player by) {
+        postures.beaten(target, ticks, by);
+    }
+
+    /** Whether this damage is an Execution's blow landing now: the one blow that ends a beaten body (SPEC §68.4). */
+    public static boolean executing(DamageSource source) {
+        return postures.executing(source);
+    }
+
+    /** A duel body began ({@code true}) or stopped fighting: while it fights its stance holds (SPEC §47.3). */
+    public static void holdStance(LivingEntity target, boolean fighting) {
+        postures.hold(target, fighting);
     }
 }

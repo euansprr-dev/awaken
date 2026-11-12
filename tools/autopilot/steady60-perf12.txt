@@ -1,0 +1,180 @@
+# Steady 60 after the shadow fix (12 Nov; Euan: "the FPS is now at like a pretty stable like 50 to 55 ... before we were
+# getting over 60"). His own world (New World V20, seed 3761469094609221698), pack and settings, on the Dell at 4K,
+# fullscreen; his morning hour (the save's clock reads 1921) held; the jungle where he stood by the tree.
+# Raw windows (vsync off, no cap) measure what a frame costs; "played" windows (vsync on, 60 cap) are what he sees.
+# Each of the Sun Pass's parts off in turn, then the probe chains (one group of passes nulled) for each pass's cost.
+# WORLD="New World V20" tools/steady60-tour.sh tools/autopilot/steady60-perf12.txt perf12-base
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1950
+cmd awaken living calm
+screen close
+key dismiss
+screen close
+display DELL fullscreen
+wait 200
+info
+camera first
+hud on
+pixels gpu on
+pixels config
+wait 900
+# ---- 1. where he stood when he quit (his own place and view, creative, the hand drawn)
+cmd gamemode creative
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 300
+opt vsync 0
+opt maxFps 260
+lens cost
+pixels gpu reset
+perf own_raw_still 12
+pixels gpu own_raw_still
+lens cost
+shot p1_own
+opt vsync 1
+opt maxFps 60
+wait 60
+pixels gpu reset
+perf own_played_still 12
+pixels gpu own_played_still
+# ---- 2. the tree's shadow toward him (the run's start: 18 blocks west of the trunk, looking at it)
+cmd gamemode spectator
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 200
+opt vsync 0
+opt maxFps 260
+pixels gpu reset
+perf tree_raw_still 12
+pixels gpu tree_raw_still
+lens cost
+shot p2_tree
+turn 1.5 240
+pixels gpu reset
+perf tree_raw_turn 12
+pixels gpu tree_raw_turn
+opt vsync 1
+opt maxFps 60
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 60
+pixels gpu reset
+perf tree_played_still 12
+pixels gpu tree_played_still
+turn 1.5 240
+pixels gpu reset
+perf tree_played_turn 12
+pixels gpu tree_played_turn
+# ---- 3. running through the trees: east at the trunk and back, four legs of 5 s at 5.6 blocks a second
+opt vsync 0
+opt maxFps 260
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_raw
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_raw
+lens cost
+opt vsync 1
+opt maxFps 60
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 60
+perfstart run_played
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_played
+lens cost
+# ---- 4. the parts: the lit air off (every pixel that may be shaded walks), the walk off (the heightfield alone)
+opt vsync 0
+opt maxFps 260
+cmd tp @s -1543.5 69 -715.5 -90 20
+lens rays off
+wait 100
+pixels gpu reset
+perf tree_raw_norays 12
+pixels gpu tree_raw_norays
+lens rays setting
+lens sunpass off
+wait 100
+pixels gpu reset
+perf tree_raw_nosunpass 12
+pixels gpu tree_raw_nosunpass
+lens sunpass setting
+wait 100
+pixels gpu reset
+perf tree_raw_again 12
+pixels gpu tree_raw_again
+# ---- 5. each pass's cost: the chain with one group nulled (tools/lens/probes.py), the same view; read against
+# probe_none (a probe chain never takes straight out, so the real chain is not the base)
+lens chain cinematic_none
+wait 60
+pixels gpu reset
+perf probe_none 10
+pixels gpu probe_none
+lens chain cinematic_light
+wait 60
+pixels gpu reset
+perf probe_light 10
+pixels gpu probe_light
+lens chain cinematic_composite
+wait 60
+pixels gpu reset
+perf probe_composite 10
+pixels gpu probe_composite
+lens chain cinematic_clouds
+wait 60
+pixels gpu reset
+perf probe_clouds 10
+pixels gpu probe_clouds
+lens chain cinematic_prefilter
+wait 60
+pixels gpu reset
+perf probe_prefilter 10
+pixels gpu probe_prefilter
+lens chain cinematic_shafts
+wait 60
+pixels gpu reset
+perf probe_shafts 10
+pixels gpu probe_shafts
+lens chain cinematic_bloom
+wait 60
+pixels gpu reset
+perf probe_bloom 10
+pixels gpu probe_bloom
+lens chain off
+lens off
+wait 100
+pixels gpu reset
+perf lensoff_raw 10
+pixels gpu lensoff_raw
+lens cinematic
+wait 100
+pixels gpu reset
+perf tree_raw_last 10
+pixels gpu tree_raw_last
+lens cost
+quit

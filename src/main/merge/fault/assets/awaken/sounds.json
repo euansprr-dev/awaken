@@ -3,7 +3,10 @@
     "subtitle": "subtitles.awaken.fault.tell",
     "sounds": [
       {
-        "name": "awaken:ui_fault_tell"
+        "name": "minecraft:block.beacon.deactivate",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.7
       }
     ]
   },
@@ -11,7 +14,10 @@
     "subtitle": "subtitles.awaken.fault.tear",
     "sounds": [
       {
-        "name": "awaken:ui_fault_tear"
+        "name": "minecraft:block.respawn_anchor.deplete",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 0.8
       }
     ]
   },
@@ -19,7 +25,10 @@
     "subtitle": "subtitles.awaken.fault.voice",
     "sounds": [
       {
-        "name": "awaken:ui_fault_voice"
+        "name": "minecraft:block.sculk_sensor.clicking",
+        "type": "event",
+        "volume": 0.5,
+        "pitch": 0.7
       }
     ]
   },
@@ -27,7 +36,10 @@
     "subtitle": "subtitles.awaken.fault.drop",
     "sounds": [
       {
-        "name": "awaken:ui_fault_drop"
+        "name": "minecraft:block.beacon.deactivate",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.6
       }
     ]
   },
@@ -35,7 +47,10 @@
     "subtitle": "subtitles.awaken.fault.mend",
     "sounds": [
       {
-        "name": "awaken:ui_fault_mend"
+        "name": "minecraft:block.beacon.activate",
+        "type": "event",
+        "volume": 0.6,
+        "pitch": 1.0
       }
     ]
   },
@@ -43,7 +58,10 @@
     "subtitle": "subtitles.awaken.fault.flicker",
     "sounds": [
       {
-        "name": "awaken:ui_fault_flicker"
+        "name": "minecraft:block.redstone_torch.burnout",
+        "type": "event",
+        "volume": 0.4,
+        "pitch": 1.4
       }
     ]
   }

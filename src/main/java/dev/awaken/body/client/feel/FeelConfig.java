@@ -52,10 +52,31 @@ public final class FeelConfig {
             .comment("Station scenes: at a crafting table the view leans in and your hands lay each ingredient on its square of the table",
                     "(sneak + use for the plain screen).")
             .define("stationScenes", true);
+    public static final ModConfigSpec.BooleanValue STATION_BENCH = B
+            .comment("Station scenes: the view goes to the station's own place (over a table's near edge), the same from wherever you",
+                    "stand (SPEC §65.1). Off: the view turns and zooms from your own eyes, as it did before.")
+            .define("stationBenchView", true);
     public static final ModConfigSpec.BooleanValue ROPE_ASSIST = B
             .comment("The assisted rope swing: the rope picks a good anchor along your heading, fits its length, swings you round what's",
                     "in the way and lets go at the top (SPEC §17.31). Off: the rope bites where you look and swings as it always did.")
             .define("ropeAssist", true);
+    public static final ModConfigSpec.BooleanValue ROPE_GUIDE = B
+            .comment("The rope finds the way (SPEC §62): where nothing stands tall enough to swing from, the rope slings you past a top",
+                    "ahead; a held rope lets go while it still goes forward and carries on through a landing. Off: the assisted swing",
+                    "exactly as it was. Needs ropeAssist.")
+            .define("ropeGuide", true);
+    public static final ModConfigSpec.BooleanValue ROPE_HOLD = B
+            .comment("The held rope (SPEC §62): the rope never lets go by itself. It swings you back and forth like a real rope until",
+                    "you let go of the key; forward pumps the swing, back slows it to a hang. Off: the rope lets go at the top of its arc",
+                    "and before a wall by itself, as it did before. Needs ropeAssist.")
+            .define("ropeHold", true);
+    public static final ModConfigSpec.BooleanValue WINGS_FEATHERS = B
+            .comment("Wings of feathers (SPEC §62): each wing is feathers of light in boxes, with a look for each rung of the ladder.",
+                    "Off: the single sheet the wings were before.")
+            .define("wingsFeathers", true);
+    public static final ModConfigSpec.BooleanValue MOVEMENT_SCORES = B
+            .comment("Movement sounds made from Minecraft's own recordings (SPEC §62). Off: the sounds as they were (Classic).")
+            .define("movementScores", true);
     public static final ModConfigSpec SPEC = B.build();
 
     public static void register() {
@@ -126,6 +147,42 @@ public final class FeelConfig {
         }
     }
 
+    /** The held rope (SPEC §62): letting go of the key is the only let-go of a swing. */
+    public static boolean ropeHold() {
+        try {
+            return !SPEC.isLoaded() || ROPE_HOLD.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** The rope finds the way (SPEC §62): the sling, the earlier let-go, the chain through a landing. */
+    public static boolean ropeGuide() {
+        try {
+            return !SPEC.isLoaded() || ROPE_GUIDE.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Wings as feathers in boxes (SPEC §62); off, the old sheet. */
+    public static boolean wingsFeathers() {
+        try {
+            return !SPEC.isLoaded() || WINGS_FEATHERS.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Movement sounds as scores of Minecraft's recordings (SPEC §62); off, the synthesised ones. */
+    public static boolean movementScores() {
+        try {
+            return !SPEC.isLoaded() || MOVEMENT_SCORES.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
     /** First person: hands and feet through the moves (Hands P1-P3). */
     public static boolean fpMoves() {
         try {
@@ -139,6 +196,15 @@ public final class FeelConfig {
     public static boolean stations() {
         try {
             return !SPEC.isLoaded() || STATIONS.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** Station scenes: the view goes to the station's own place (SPEC §65.1). */
+    public static boolean stationBench() {
+        try {
+            return !SPEC.isLoaded() || STATION_BENCH.get();
         } catch (RuntimeException e) {
             return true;
         }

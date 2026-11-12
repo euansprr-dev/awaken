@@ -6,21 +6,27 @@
   "theme": "hive",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:tallow_runs",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:realm/wax_hollow"
+      "awaken:realm/tallow_runs"
     ],
     "lens": "tallow_runs",
     "air": [
-      "mist",
-      "embers",
       "shaft_dust",
+      "mist",
+      "smoke",
+      "embers",
       "dust",
       "drips",
       "moths"

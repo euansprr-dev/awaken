@@ -44,6 +44,14 @@ public class AwakenBoss extends AwakenMob {
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_KIT =
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     /** The degrees a kit body leans into the blow it's making (SPEC §47.15). */
+    /**
+     * The aim a blow has committed to (SPEC §68.2), so a client can work out where the blow will be and not only where
+     * the body is now: bit 0 set once it is known, then the facing it turns to (10 bits, 360/1024 degrees), the step it
+     * takes before the blow (6 bits signed, tenths of a block), its run through the blow (6 bits, twentieths) and its dip
+     * (4 bits signed, half blocks). 0 until the move's lock.
+     */
+    private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> DATA_KIT_AIM =
+            net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     private static final net.minecraft.network.syncher.EntityDataAccessor<Byte> DATA_KIT_LEAN =
             net.minecraft.network.syncher.SynchedEntityData.defineId(AwakenBoss.class, net.minecraft.network.syncher.EntityDataSerializers.BYTE);
     /** Where a kit body leans from, as a share of its height. */
@@ -88,6 +96,7 @@ public class AwakenBoss extends AwakenMob {
         b.define(DATA_KIT, 0);
         b.define(DATA_KIT_AT, 0);
         b.define(DATA_KIT_LEAN, (byte) 0);
+        b.define(DATA_KIT_AIM, 0);
     }
 
     /** An intro or transition with no roar of its own: the boss's voice, loud and low. */
@@ -163,7 +172,7 @@ public class AwakenBoss extends AwakenMob {
         if (super.stagger(ticks)) reelTicks = Math.max(reelTicks, ticks);
     }
 
-    boolean reeling() {
+    public boolean reeling() {
         return reelTicks > 0;
     }
 
@@ -181,6 +190,31 @@ public class AwakenBoss extends AwakenMob {
     @Override
     protected net.minecraft.world.entity.InterpolationHandler createInterpolationHandler() {
         return net.minecraft.world.entity.LinearInterpolationHandler.create(this);
+    }
+
+    private boolean turningOnPurpose;
+
+    /**
+     * In the middle of a phrase a boss keeps the one it is fighting (SPEC §70.3): another player's blow doesn't turn it.
+     * It changes at an opening, by its fight's own choice ({@link #turnTo}). Alone this never comes up.
+     */
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        LivingEntity now = getTarget();
+        if (!turningOnPurpose && target != now && target instanceof Player && now instanceof Player held && now.isAlive() && !now.isRemoved()
+                && now.level() == level() && fight != null && fight.midPhrase() && dev.awaken.core.api.FightsHooks.pair()
+                && !dev.awaken.core.api.FightsHooks.kneeling(held)) return;
+        super.setTarget(target);
+    }
+
+    /** It turns to someone else on purpose: its fight's choice at an opening. */
+    void turnTo(LivingEntity target) {
+        turningOnPurpose = true;
+        try {
+            super.setTarget(target);
+        } finally {
+            turningOnPurpose = false;
+        }
     }
 
     /** Where clients are told it is: while a move carries it, ahead by what their glide lags, so the run keeps the clip's clock (SPEC §48.8). */
@@ -289,6 +323,45 @@ public class AwakenBoss extends AwakenMob {
         if (entityData.get(DATA_KIT) != v) entityData.set(DATA_KIT, v);
     }
 
+    /** Server: the aim this move's blow has committed to, from its lock on; {@code known} false as a move begins. */
+    void syncKitAim(boolean known, float turn, float step, float run, float dip) {
+        int v = 0;
+        if (known) {
+            int yaw = Math.round(Mth.positiveModulo(turn, 360F) * 1024F / 360F) & 0x3FF;
+            int st = Mth.clamp(Math.round(step * 10F), -32, 31) & 0x3F, rn = Mth.clamp(Math.round(run * 20F), 0, 63), dp = Mth.clamp(Math.round(dip * 2F), -8, 7) & 0xF;
+            v = 1 | yaw << 1 | st << 11 | rn << 17 | dp << 23;
+        }
+        if (entityData.get(DATA_KIT_AIM) != v) entityData.set(DATA_KIT_AIM, v);
+    }
+
+    /** An ability of any of its phases by name, or null (both sides: the bestiary is shared). */
+    public dev.awaken.mobs.def.@Nullable Ability abilityNamed(String name) {
+        for (dev.awaken.mobs.def.MobDef.Phase ph : def().phases) for (dev.awaken.mobs.def.Ability a : ph.abilities()) if (a.name().equals(name)) return a;
+        return null;
+    }
+
+    /** Whether the playing move's blow has committed to its aim (from its lock on). */
+    public boolean kitAimed() {
+        return (entityData.get(DATA_KIT_AIM) & 1) != 0;
+    }
+
+    /** The facing its blow turns to, the blocks it steps before it, its run through it and its dip (once {@link #kitAimed}). */
+    public float kitAimTurn() {
+        return ((entityData.get(DATA_KIT_AIM) >> 1) & 0x3FF) * 360F / 1024F;
+    }
+
+    public float kitAimStep() {
+        return ((entityData.get(DATA_KIT_AIM) >> 11 & 0x3F) << 26 >> 26) / 10F;
+    }
+
+    public float kitAimRun() {
+        return (entityData.get(DATA_KIT_AIM) >> 17 & 0x3F) / 20F;
+    }
+
+    public float kitAimDip() {
+        return ((entityData.get(DATA_KIT_AIM) >> 23 & 0xF) << 28 >> 28) / 2F;
+    }
+
     void syncKitLean(int degrees) {
         byte b = (byte) Mth.clamp(degrees, -60, 60);
         if (entityData.get(DATA_KIT_LEAN) != b) entityData.set(DATA_KIT_LEAN, b);
@@ -370,8 +443,32 @@ public class AwakenBoss extends AwakenMob {
         shieldTicks = Math.max(shieldTicks, ticks);
     }
 
+    boolean shielded() {
+        return shieldTicks > 0;
+    }
+
+    /** Whether Arms holds its stance now (SPEC §47.3 "Held while it fights"), as it was last told. */
+    private boolean stanceHeld;
+
+    /** A duel body tells Arms when it begins and stops fighting: while it fights, its stance doesn't drain. */
+    private void holdStance(boolean fighting) {
+        if (fighting == stanceHeld) return;
+        stanceHeld = fighting;
+        dev.awaken.core.api.Strikes.holdStance(this, fighting);
+    }
+
     @Override
     protected void customServerAiStep(ServerLevel level) {
+        if (beatenTicks > 0) {
+            // it stays down; left alone too long it dies its plain death, so a fight can never be left stuck
+            breakTicks = Math.max(breakTicks, 10);
+            if (++beatenTicks > BEATEN_TICKS) {
+                finishing = true;
+                ServerPlayer by = beatenBy == null ? null : level.getServer().getPlayerList().getPlayer(beatenBy);
+                hurtServer(level, by != null ? damageSources().playerAttack(by) : damageSources().genericKill(), Float.MAX_VALUE);
+                return;
+            }
+        }
         if (breakTicks > 0) breakTicks--;
         if (reelTicks > 0) reelTicks--;
         if (shieldTicks > 0) {
@@ -385,13 +482,16 @@ public class AwakenBoss extends AwakenMob {
             if (isAlive()) {
                 long t0 = System.nanoTime();
                 f.tick(level);
+                if (f.duel()) holdStance(f.fighting());
                 FightWatch.kit(System.nanoTime() - t0);
                 // its clock goes to whoever is near, fighting or not: a pace that stopped (a reel against a beast, the
                 // player it chased fallen) held its body still on their screen until the clock went stale
                 dev.awaken.mobs.net.MobsNet.fighting(this);
+                // while it fights a player the world's autosave waits: a save's stall is a blow you can't read (SPEC §68.5)
+                if (getTarget() instanceof Player || beatenTicks > 0) FightSaves.fighting(level);
             }
-            if (!f.busy()) checkPhase(level);
-        } else if (abilities != null && abilities.active() == null) checkPhase(level);
+            if (!f.busy() && beatenTicks == 0) checkPhase(level); // a beaten body crosses no more thresholds
+        } else if (abilities != null && abilities.active() == null && beatenTicks == 0) checkPhase(level);
         if (tickCount % 20 == 0) arena(level);
     }
 
@@ -476,7 +576,15 @@ public class AwakenBoss extends AwakenMob {
         Player near = level.getNearestPlayer(home.x, home.y, home.z, radius + 16, p -> !p.isSpectator() && !((Player) p).isCreative());
         if (near == null) {
             lonelyTicks += 20;
-            if (lonelyTicks >= 600 && (getHealth() < getMaxHealth() || phase > 0)) reset(level);
+            if (lonelyTicks >= 600 && (getHealth() < getMaxHealth() || phase > 0)) {
+                // the one rule that heals a Lord in place (SPEC §47.14 "Left alone"): said in the log and to whoever was fighting it
+                dev.awaken.Awaken.LOG.info("[fights] {} had nobody within {} blocks for {}s: healed from {}/{} and starts over",
+                        net.minecraft.world.entity.EntityType.getKey(getType()), radius + 16, lonelyTicks / 20, Math.round(getHealth()), Math.round(getMaxHealth()));
+                Component told = Component.literal(d.name + " had nobody to fight for half a minute, so it has healed and the fight starts over.");
+                double far = radius + 96;
+                for (ServerPlayer p : level.players()) if (!p.isSpectator() && p.distanceToSqr(home) <= far * far) p.sendSystemMessage(told);
+                reset(level);
+            }
         } else {
             lonelyTicks = 0;
             if (!introduced && getTarget() != null) {
@@ -513,8 +621,89 @@ public class AwakenBoss extends AwakenMob {
         if (fight != null) fight.reset();
     }
 
+    // ---- the last stand and the finishing blow (SPEC §68.4) -------------------------------------------------------------
+
+    /** How long a beaten body waits for the blow that ends it before it dies its plain death (ticks). */
+    public static final int BEATEN_TICKS = 400;
+    /** The rule's switch ({@code /awaken bosses finishing on|off}): off, every boss dies as it did before. */
+    public static volatile boolean finishingBlows = true;
+    /** Ticks it has been beaten (0: it isn't), and whether the blow that ends it is landing (its death goes through). */
+    private int beatenTicks;
+    private boolean finishing;
+    /** Who beat it: the kill is theirs even when nobody ends it and it dies its plain death. */
+    private java.util.@Nullable UUID beatenBy;
+
+    /** Beaten to its last point (both sides): it kneels, harms nobody, and only a finishing blow ends it. */
+    public boolean beaten() {
+        return flag(F_BEATEN);
+    }
+
+    /** Whether this body dies only to a finishing blow: its fight script says so, and the rule is on. */
+    private boolean finishable() {
+        var k = kit();
+        return finishingBlows && k != null && k.fight() != null && k.fight().finish();
+    }
+
+    /**
+     * A blow that would kill it (SPEC §68.4). A player's blow doesn't: it is held at its last point, beaten, and waits. The
+     * one blow that ends it is an Execution's, on it beaten or taking its last health; then it dies as it always did, and
+     * everyone near is told whose blow it was. Anything that isn't a player's (a fall, the void, a command) kills it plainly.
+     */
+    private boolean lastStand(DamageSource source) {
+        if (isRemoved() || dead || finishing || !(level() instanceof ServerLevel sl) || !finishable()) return false;
+        if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) || !(source.getEntity() instanceof ServerPlayer by)) return false;
+        if (beaten() || Strikes.executing(source)) {
+            finishing = true;
+            dev.awaken.mobs.net.MobsNet.finish(this, by, endingTicks());
+            Finishers.safe(by, sl.getGameTime() + endingTicks() + 20);
+            return false;
+        }
+        setHealth(1F);
+        damageCooldownTime = 0; // the blow that beat it set this: the one that ends it lands at once
+        beatenTicks = 1;
+        beatenBy = by.getUUID();
+        setFlag(F_BEATEN, true);
+        setTarget(null);
+        stagger(BEATEN_TICKS); // every move stops, and it kneels (FightRunner's broken pose)
+        bringDown(BEATEN_TICKS + 100); // a flier comes down to be finished (Strikes.ground leaves a kit flier to its script)
+        Strikes.beaten(this, BEATEN_TICKS, by);
+        // its helpers fall with it: the fight is over but for one blow
+        for (AwakenMob m : sl.getEntitiesOfClass(AwakenMob.class, getBoundingBox().inflate(48), m -> m != this && m.isAlive())) {
+            if (m.getPersistentData().getIntOr("awaken_summoner", -1) == getId()) m.kill(sl);
+        }
+        if (bar != null) bar.setProgress(0F);
+        playLevelSound(MobSounds.BOSS_TOLL.get(), 1.6F, 0.7F);
+        return true;
+    }
+
+    /** How long its own ending holds the body once it dies: its death clip's length, as {@link #tickDeath} keeps it. */
+    private int endingTicks() {
+        var k = kit();
+        var clip = k == null ? null : k.rig().clip("death");
+        return clip == null ? 20 : Math.min(80, Math.round(clip.length() * 20) + 6);
+    }
+
+    @Override
+    public void die(DamageSource source) {
+        if (lastStand(source)) return;
+        super.die(source);
+    }
+
+    /** Client: how a body that fell to a finishing blow leaves (its own light, installed by the mobs client). */
+    public static java.util.function.@Nullable Consumer<AwakenBoss> vanish;
+
+    /** A body that fell to a finishing blow never leaves in vanilla's white puff. */
+    @Override
+    public void makePoofParticles() {
+        var how = vanish;
+        if (beaten() && how != null) how.accept(this);
+        else super.makePoofParticles();
+    }
+
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
+        // beaten, only the finishing blow ends it (and what nothing withstands)
+        if (beaten() && !finishing && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && !Strikes.executing(source)) return false;
         if (shieldTicks > 0 && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             level.sendParticles(ParticleTypes.ENCHANTED_HIT, getX(), getY() + getBbHeight() * 0.6, getZ(), 6, 0.5, 0.5, 0.5, 0.1);
             return false;

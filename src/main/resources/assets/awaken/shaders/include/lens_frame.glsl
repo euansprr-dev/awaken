@@ -12,21 +12,48 @@
 //   17   x seconds, wrapping every hour (ripples, shimmer); y 1 when clouds and light are spread over frames
 //   18-19 the clouds (lens_clouds.glsl)
 //   20   x the Holo world plates drawn this frame, y the storm cells
-//   21   the sun on screen: xy uv, z 1 when it is ahead of the camera (WorldProjection)
+//   21   the sun on screen: xy uv, z 1 when it is ahead of the camera (WorldProjection, which writes all four
+//        components every frame: nothing else can live in this texel)
 //   24-41 each plate: camera-relative centre,
 //        half-width and half-height vectors (3 texels a plate); 42-47 the storm cells (lens_storm_frame.glsl)
+//        (their w's are spare: 24-27 the land's horizon, lens_air.glsl; 28 the camera's z in the lit air's volume;
+//        29 the development view of the Sun Pass's parts, lens_light.fsh; 30 to 33 the small shade's reach: how wide a
+//        light texel may be, in the art's pixels, where the contact shadows fade from and to, then the ambient shade;
+//        34 the edge's hold: how much of a contact shadow the screen can no longer see is let go each frame, 0 none
+//        kept)
 
 #include <awaken:lens_block.glsl>
 
+#ifdef LENS_UNIFORMS
+vec4 F(int i) { return LensF[i]; }
+#elif defined(PROBE_NUDGE)
+// (measurement only, tools/lens/twincheck.py: every value one step of its last bit up, the rounding control)
+vec4 F(int i) { return (LensUse.x > 0.5 ? LensF[i] : texelFetch(FrameSampler, ivec2(i, 0), 0)) * 1.00000012; }
+#else
 vec4 F(int i) { return LensUse.x > 0.5 ? LensF[i] : texelFetch(FrameSampler, ivec2(i, 0), 0); }
+#endif
 
 mat4 frameMat(int i) { return mat4(F(i), F(i + 1), F(i + 2), F(i + 3)); }
+
+// PROBE_PRECISE (measurement only, tools/lens/twincheck.py; the shader that defines it turns on GL_ARB_gpu_shader5): the
+// sums that lead to the light buffer's neighbour pick kept in source order, none fused, to see whether the twin's
+// rounding can be pinned. Without it every line below is as it was.
+#ifdef PROBE_PRECISE
+#define LENS_P precise
+vec3 unproject(mat4 inv, vec2 uv, float depth, bool zeroToOne) {
+    precise vec4 w = inv * vec4(uv * 2.0 - 1.0, zeroToOne ? depth : depth * 2.0 - 1.0, 1.0);
+    precise vec3 r = w.xyz / w.w;
+    return r;
+}
+#else
+#define LENS_P
 
 // camera-relative world position of a depth sample (reversed-Z: the sky keeps the cleared 0)
 vec3 unproject(mat4 inv, vec2 uv, float depth, bool zeroToOne) {
     vec4 w = inv * vec4(uv * 2.0 - 1.0, zeroToOne ? depth : depth * 2.0 - 1.0, 1.0);
     return w.xyz / w.w;
 }
+#endif
 
 // a camera-relative point on screen: xy uv, z the depth value it would store
 vec3 project(mat4 vp, vec3 p, bool zeroToOne) {
@@ -54,7 +81,14 @@ float unpackDistanceCode(vec2 ba) {
     return (floor(ba.x * 255.0 + 0.5) * 256.0 + floor(ba.y * 255.0 + 0.5)) / 65535.0;
 }
 
+#ifdef PROBE_PRECISE
+float distanceCode(float d) {
+    precise float v = log2(d + 1.0) / 13.0;
+    return d <= 0.0 ? 0.0 : clamp(v, 1.0 / 65535.0, 1.0);
+}
+#else
 float distanceCode(float d) { return d <= 0.0 ? 0.0 : clamp(log2(d + 1.0) / 13.0, 1.0 / 65535.0, 1.0); }
+#endif
 
 // interleaved gradient noise, stepped every frame (temporal accumulation averages it away)
 float ign(vec2 p, float frame) {
@@ -73,7 +107,14 @@ float unpackHeight(vec2 v) {
 }
 
 // the same distance code in one byte (the light buffer's alpha: about 3.6% steps), 0 for sky
+#ifdef PROBE_PRECISE
+float packDistance8(float d) {
+    precise float q = floor(distanceCode(d) * 255.0 + 0.5);
+    return d <= 0.0 ? 0.0 : max(1.0, q) / 255.0;
+}
+#else
 float packDistance8(float d) { return d <= 0.0 ? 0.0 : max(1.0, floor(distanceCode(d) * 255.0 + 0.5)) / 255.0; }
+#endif
 
 // whether a camera-relative surface point lies on one of this frame's Holo world plates (glass that writes its depth at
 // a creature's distance): Lens keeps its light, ambient occlusion and haze off them, as for the panels within arm's reach

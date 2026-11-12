@@ -210,7 +210,7 @@ public final class GreenDark extends GeneratedCrawl<VineSeat.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0xc8f0a0, 0.7F);
         if (lord != null) air.mist(lord.feet + 1, 5, 0x3a6a3a, 0.5F).light(lord.cx, lord.feet + 5, lord.cz, 0xd8e070, 18, 0.8F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): jungle caves: hollows with a bank along one side, a great trunk to walk round, fallen trunks and wet stones to cross on. */
@@ -218,5 +218,18 @@ public final class GreenDark extends GeneratedCrawl<VineSeat.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.OVAL, Cave.Form.TERRACE, Cave.Form.RING, Cave.Form.RIFT), List.of(Arena.Plan.RING, Arena.Plan.TIERS),
                 List.of(Arena.Plan.RING, Arena.Plan.TIERS, Arena.Plan.ROTUNDA), List.of(Chasm.Kind.BEAMS, Chasm.Kind.FORD, Chasm.Kind.PILLARS, Chasm.Kind.LEDGES, Chasm.Kind.HANGERS), false, 2.5, 5);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): everything grows: ferns and moss underfoot, leaves drifted, vines from every roof. */
+    @Override
+    protected Trim trim(VineSeat.M m) {
+        return new Trim(named("minecraft:cobbled_deepslate_stairs"), named("minecraft:cobbled_deepslate_stairs"), named("temple_moss_drift"), named("temple_leaves"),
+                namedAll("temple_fern", "temple_fern", "minecraft:moss_carpet", "minecraft:fern"), namedAll("temple_vines"), 1.5);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xd8ffb0;
     }
 }

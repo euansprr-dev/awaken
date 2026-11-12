@@ -173,6 +173,9 @@ final class Carve {
         }
     }
 
+    /** How deep a floored way's rubble goes into a hollow under it. */
+    static final int FLOOR_DEEP = 3;
+
     /**
      * A walkable passage from a to b (feet levels): a round bore {@code r} across, wandering by up to {@code wander}
      * sideways, its floor never steeper than a block a block (a long drop is stretched along its length), at least 3
@@ -183,8 +186,12 @@ final class Carve {
     }
 
     /**
-     * As above; {@code floored} lays rubble under the bore where natural air has eaten the rock it would walk on. Cut
-     * the higher end first: a later stretch clears what an earlier one laid in its way. Each chunk reads only its own columns.
+     * As above; {@code floored} lays rubble under the bore where natural air has eaten the rock it would walk on, down to
+     * {@link #FLOOR_DEEP} or to the rock, so where the way crosses a hollow its stair is one ramp of rubble held at its ends
+     * and not treads that touch only at their corners, crumbs and lone blocks in the air (SPEC §42.4 "Settled": one deep,
+     * a way across a hollow left about nine patches; two deep, three; three deep, one). The bore is cut from its higher end
+     * whichever way it was asked, so a later stretch clears what an earlier one laid in its way and nothing is laid in a
+     * stretch already cut. Each chunk reads only its own columns.
      */
     static void tunnel(Sink s, double ax, double ay, double az, double bx, double by, double bz, double r, double wander, long seed, boolean floored) {
         double dx = bx - ax, dz = bz - az, dy = by - ay;
@@ -194,7 +201,9 @@ final class Carve {
         int bx0 = (int) Math.floor(Math.min(ax, bx) - r - wander - 2), bx1 = (int) Math.ceil(Math.max(ax, bx) + r + wander + 2);
         int bz0 = (int) Math.floor(Math.min(az, bz) - r - wander - 2), bz1 = (int) Math.ceil(Math.max(az, bz) + r + wander + 2);
         if (!s.touches(bx0, bz0, bx1, bz1)) return;
-        for (int i = 0; i <= steps; i++) {
+        boolean up = by > ay;
+        for (int n = 0; n <= steps; n++) {
+            int i = up ? steps - n : n;
             double t = i / (double) steps;
             // the wander fades in and out at the ends, so the bore meets its rooms square
             double side = (2 * noise(seed, t * 40, 0, 0, 9) - 1) * wander * Math.sin(Math.PI * t);
@@ -207,7 +216,11 @@ final class Carve {
                 // three high in the middle, two at the edge of the bore
                 int top = hd < r - 0.6 ? 2 : 1;
                 for (int oy = 0; oy <= top; oy++) air(s, ix + ox, iy + oy, iz + oz);
-                if (floored && s.inside(ix + ox, iy - 1, iz + oz) && s.get(ix + ox, iy - 1, iz + oz).isAir()) s.set(ix + ox, iy - 1, iz + oz, rubble(iy - 1));
+                if (floored && s.inside(ix + ox, iy - 1, iz + oz) && s.get(ix + ox, iy - 1, iz + oz).isAir()) {
+                    s.set(ix + ox, iy - 1, iz + oz, rubble(iy - 1));
+                    for (int d = 2; d <= FLOOR_DEEP && s.inside(ix + ox, iy - d, iz + oz) && s.get(ix + ox, iy - d, iz + oz).isAir(); d++)
+                        s.set(ix + ox, iy - d, iz + oz, rubble(iy - d));
+                }
             }
         }
     }
@@ -216,8 +229,13 @@ final class Carve {
 
     /** A vine on the face of the solid block on side {@code toWall} of (x, y, z), if that cell is air. */
     static void vine(Sink s, int x, int y, int z, Direction toWall) {
+        vine(s, x, y, z, toWall, false);
+    }
+
+    /** As above, and hung from the block over it too ({@code up}): the top of a fall of vines under a ledge. */
+    static void vine(Sink s, int x, int y, int z, Direction toWall, boolean up) {
         if (!s.inside(x, y, z) || !s.get(x, y, z).isAir()) return;
-        BlockState v = Blocks.VINE.defaultBlockState().setValue(VineBlock.getPropertyForFace(toWall), true);
+        BlockState v = Blocks.VINE.defaultBlockState().setValue(VineBlock.getPropertyForFace(toWall), true).setValue(VineBlock.UP, up);
         s.set(x, y, z, v);
     }
 

@@ -32,11 +32,43 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
   Approved by Euan on 10 Nov, asked about the hook by name: "Yes, turn it on". On by default. CLAUDE.md's Turbo
   list still needs its line (this session may not edit that file).
   A smaller chunk batch from the server was tried and dropped (batch-1).
+- **The trim** (10 Nov, "apply all of the other ones. Let's make this GREAT"; SPEC §22 "The trim"): straight out (the
+  composite draws into the texture Pixels upscales, the chain's last copy skipped; `lens straight` switches it), the
+  near clouds walked inside the composite, a small sky buffer for wisps and galaxy, the sun map swept on a worker,
+  the wide glow in one pass, Lens's tick work standing back after a late frame. 16 passes became 14, three
+  frame-size passes became two (one with straight out. It had never engaged before 3913eb455: it was left out with
+  Steady on, and it counted a list of effects that always holds the game's own "end_of_frame" slot. First seen
+  engaging in run 42865863453: the picture matches with it on and off, with Steady on and off). **Frame times not measured yet**: that needs a quiet Mac
+  (`tools/steady60-tour.sh tools/autopilot/steady60-dell-5.txt`). Pictures checked on CI
+  (`steady60-trim-ci.txt`, `steady60-still-ci.txt`).
+- **Grades** (10 Nov, his three pictures of a vibrant look; SPEC §22 "Grades"): a colour and atmosphere choice over
+  every look. A grade is a file (`assets/awaken/lens_grade/<id>.json`), the setting is `lensGrade`, the Look page
+  has a COLOUR GRADE row, autopilot `lens grade <id>`. Ships Awaken (the look as built, the default) and Vivid.
+  Compared on CI with `steady60-grade-ci.txt` (final run 42865865221 on the merged tip 00547a97b). He has seen the
+  first build's pictures, not the game.
 - **Tick work evened out** (autopilot `lens cost`): a 0.5 ms limit a tick for the heightfield and the block map, near
   re-reads in turn.
 - Euan's notes, 10 Nov, three rounds, all acted on: bright rims at dusk; dark un-fogged patches; "the atmosphere
   between you and the fog"; then clouds too see-through (sections showed), rays wanted, shadows with more weight, no
   shadows under particles, "really surprise me" with the sky, the night above all.
+
+- **His first play, 11 Nov** (Cinematic, Vivid, 16 chunks; pictures and runs in `docs/perf/steady60/play-2026-11-11/`):
+  - The screen's edges losing their shade, the cave mouth, the held torch's pool: fixed, in build since 1791215d8.
+  - "Brown fog but low quality" at the start of a dry biome: the game's own fog in the biome's colour against the
+    Air's sky. Under the Air the game's fog now takes the Air's horizon colour (SPEC §22 "The game's fog under the
+    Air"; `LensClient.fogColour`, `LensAir`). Before and after on CI: runs 42959640767, 42959804603.
+  - "The custom storm is still the old clouds": the **block storm** (`lens_storm_blocks.glsl`), walked in the
+    composite beside the layer's blocks. Run 42959983512. Its frame time is not measured.
+  - **Lite**, a tier between Swift and Cinematic for a laptop: the Air's sky, fog, clouds, storm and rays, none of
+    Lens 2's light, no tick work (SPEC §22 "Lite"; `lens_lite.json`). Run 42960037101. Its pace on an M1 is not
+    measured, and the five-card Look page (with ImmersiveVFX) is unseen.
+
+  - Later the same day: **the spotlight at arm's length** (a wall, a door or a ceiling within 1.25 blocks stood in
+    the game's raw light, a disc that moved with him): Lens now tells the hand by the game's own hand depth
+    (`LensHand`, `PixelsHooks.handTarget()`), runs 42985161194 before and 42988235690 after. **Glasswater**, the
+    Air's own water on Lite and Cinematic (`lens_water.glsl`): first drawn on a pixel grid, which he turned down as
+    glitchy; rebuilt smooth at dd769ccd5, unseen. **The Air in other worlds**: every world but the overworld keeps
+    its own sky and fog colours under the Air (`airLand`), for the gate worlds; its run was unread at the hand-over.
 
 ## Numbers (the Dell, his settings; SPEC §22 has them all, data in `docs/perf/steady60/data/`)
 - First pass, quiet Mac (dell-6): 11.2 ms GPU, 78 fps uncapped; as played 98.6% on time standing, 98.9% turning, 95.2%
@@ -52,13 +84,21 @@ https://claude.ai/artifact/Rt4U8jC2pCgf7Nc6axTXZg (source in the session's scrat
   Air at 92.2 to 95.6%. The late frames are the game's own chunk work on the render thread.
 
 ## To do, in order
+0. **Owed from the second half of 11 Nov**: his eye on the smooth water (and a real lake or sea: it was only ever
+   pictured on a built pool), on a gate world's sky (Cinder Crown red, Amber Reach amber), and on the spotlight fix
+   in his own house; the water's frame time; the sun's rays coming out hard-edged under a low sun near the cloud
+   layer (the world-moods planner's dusk shot).
+0b. **Owed from 11 Nov**: his eye on the block storm, Lite (and its five-card Look page) and the steppe's air; frame
+   times of the storm and of Lite on a quiet Mac (and Lite on an M1, if one can be had); a strike caught at its
+   brightest. Open in the light: the ground under a slide or crawl (the hand's own depth), exact light under cover
+   (the game's light in a texture), shadows on land the game has already fogged.
 1. **Flying to 98% on time**: about 95% now over loaded land with Chunk pacing, 77 to 84% over land never seen.
    Left, in order: the pass-by-pass trim below (every millisecond of GPU time is a millisecond of spare for the CPU's
    spikes), the game's client light engine (it copies its section maps each frame that changed any), Sodium's rebuild
    task preparation, the other modules' client ticks (Atlas, Wild Tint, Kin, Delve: their owners'), and new land (the
    integrated server's world generation).
-2. **The Budget**: a pass-by-pass trim of the older Cinematic steps on the Dell (the probe chains,
-   `tools/lens/probes.py`): the game alone is 2.8 ms and Cinematic-before 8.9, so they are most of the frame.
+2. **The Budget**: the trim is built (above); measure it on a quiet Mac, then go on with the composite itself (still
+   the largest pass) using the probe chains (`tools/lens/probes.py`).
 3. **Frame record** on the Look page (on-time share, `/awaken look report`).
 4. Far Sight off by default on Cinematic and Ultra (LookPresets, config default); Look page rows for `lensAir` and
    `lensSunPass`.

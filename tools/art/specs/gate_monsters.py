@@ -764,13 +764,23 @@ def film(per=8, shrink=2, only=None, name="pick"):
             pitch = -6 if flies else 4
             # a shooter that keeps its range backs away from anything nearer than five blocks (and out of the frame):
             # its dummy stands eight off, and the camera further back to hold them both
+            if flies:
+                # it circles its target between dives, 3.5 blocks + its width out (7 if it shoots): the camera stands
+                # outside that ring, or a big flier fills the picture with one side of itself (the Swarm Mind did)
+                # (its drawn body reaches well past its box: twice its larger side, and four blocks of air)
+                ring = (7.0 if "RANGED" in defs[m.id]["line"] else 3.5 + w) + 2.0 * max(w, h) + 4.0
+                dist = max(dist, ring)
             ranged = "RANGED" in defs[m.id]["line"] and not flies
             far = 8.5 if ranged else 4.8
             if ranged:
                 dist += 3.0
             moves_n = len(defs[m.id]["abilities"])
-            out += [f"# {m.id} ({m.name})", "cmd kill @e[tag=p]", "cmd kill @e[tag=d]", "wait 4", "cmd kill @e[type=item]",
-                    "cmd kill @e[type=awaken:gel_sample]", "cmd kill @e[type=minecraft:experience_orb]",
+            # the stage is cleared of everything but the camera before each monster, and again once what was killed has
+            # finished falling (44 ticks: the longest fall is 40) to take what it dropped. A summoner's brood and a
+            # Warden's copies are not the monster the script summoned, and left alone they fought the next four monsters'
+            # dummies on film (the Waking's Night Terrors, all through the Sky Archipelago's reel)
+            out += [f"# {m.id} ({m.name})", "cmd kill @e[type=!minecraft:player,distance=..160]", "wait 44",
+                    "cmd kill @e[type=!minecraft:player,distance=..160]", "wait 4",
                     f"cmd tp @s {-dist + 0.5:.1f} {eye - 1.62:.2f} {(0.5 + far) / 2:.1f} -90 {pitch}", f"look -90 {pitch}", "wait 6",
                     f'cmd summon minecraft:husk 0.5 201 {far} {{NoAI:1b,Silent:1b,PersistenceRequired:1b,Tags:["d"],Health:500f,'
                     'attributes:[{id:"minecraft:max_health",base:500.0d}],Rotation:[180f,0f]}',
@@ -780,7 +790,7 @@ def film(per=8, shrink=2, only=None, name="pick"):
             for k in range(moves_n):
                 out += [f"cmd awaken admin monster act {k}", f"cmd awaken ascent pilot rec {m.id}_m{k} 76 {shrink}", "wait 80"]
             out += ["cmd kill @e[tag=p]", f"cmd awaken ascent pilot rec {m.id}_death 50 {shrink}", "wait 54"]
-        out += ["cmd kill @e[tag=p]", "cmd kill @e[tag=d]", "wait 10", "cmd gamemode creative", "info", "quit"]
+        out += ["cmd kill @e[type=!minecraft:player,distance=..160]", "wait 10", "cmd gamemode creative", "info", "quit"]
         with open(os.path.join(folder, f"monsters-film-{n}.txt"), "w") as f:
             f.write("\n".join(out) + "\n")
     print(f"tools/autopilot/monsters-film-{name}.txt" if only else

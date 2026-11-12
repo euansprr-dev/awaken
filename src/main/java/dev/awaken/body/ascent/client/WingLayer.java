@@ -3,7 +3,11 @@ package dev.awaken.body.ascent.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.awaken.Awaken;
+import dev.awaken.body.ascent.AscentContent;
+import dev.awaken.body.ascent.AscentPayloads;
 import dev.awaken.body.ascent.AscentState;
+import dev.awaken.body.ascent.WingForm;
+import dev.awaken.body.client.feel.FeelConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.player.PlayerModel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -17,23 +21,99 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import org.joml.Matrix4f;
 
 /**
- * Wings of light on a player's back (the Ascent's Wings tier; Phase 0's placeholder, built to be the real thing's
- * skeleton). Each wing is a jointed leading edge (shoulder, elbow, wrist, tip) with a fan of feathers trailing from it:
- * they unfold from the back on deploying (a beat of anticipation, then the spread), flex with every beat, sweep back as
- * speed builds, and fold back down on landing. Drawn twice, a translucent feathered body and an additive glow, so
- * they read as light by day and by night. No vanilla elytra, no vanilla model: geometry from {@link #wing}.
+ * Wings of light on a player's back (the Ascent's Wings tier).
+ * <p>
+ * <b>Feathers</b> (SPEC §62, the look since 10 Nov 2026): each wing is {@link WingForm}'s three bones and 46 feathers in
+ * boxes, drawn by {@link WingFeathers}. What the wings do is a state of their own, read from what the body does: they
+ * open (a gather, a spread that runs out feather by feather, a settle), glide, beat in flight, tuck for a dive, beat
+ * slow and whole in a hover, cup forward as the feet touch down, fold onto the back, stay there four seconds and fade
+ * into the mark between the shoulder blades. A change of state is a 0.32 s crossfade from wherever the feathers were.
+ * Each rung of the ladder has its own wings: one pair; Skyborn a larger pair and a smaller under it; the Sovereign's form
+ * three gold pairs and a turning halo.
+ * <p>
+ * <b>Classic</b> ({@code wingsFeathers} off): the single sheet the wings were before, unchanged, kept for one release.
  */
 final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     static final Identifier TEXTURE = Awaken.id("textures/ascent/wing.png");
     static final Identifier GLOW = Awaken.id("textures/ascent/wing_glow.png");
 
-    /** How open each player's wings are, eased per tick: [entity, spread0, spread1, beat phase...]. */
+    /** What feathered wings are doing. */
+    static final int FOLDED = 0, UNFOLD = 1, GLIDING = 2, FLYING = 3, DIVING = 4, HOVERING = 5, LANDING = 6, GATHER = 7;
+    /** How brightly the halos burn in each. */
+    private static final float[] GLOW_BY = {0.2F, 1F, 0.6F, 0.9F, 0.5F, 1F, 1F, 0.7F};
+    /** A change of state crossfades over this many ticks (0.32 s). */
+    private static final float BLEND_TICKS = 6.4F;
+    /** Folded wings stay on the back this long, then fade into the mark. */
+    private static final int FOLDED_TICKS = 80;
+
+    /**
+     * Your own wings (SPEC §62, Euan 12 Nov 2026: "we should barely be able to see them when they're flapping ... but
+     * you still know you have them"). They are drawn in the camera's own frame, not the body's: a figure {@code fpBack}
+     * blocks behind the eye and {@code fpUp} over it, lying along the view in flight (a glide, a beat, a dive) and
+     * standing in it for a hover, a landing or an opening (the two crossfade with the pose). Each wing is turned toward
+     * the view about its root by {@code fpSweep} degrees, and gives way so the turn and the tip's own swing forward never
+     * pass {@code fpReach}. Only the outer feathers ever reach the frame, at its outer edges, as a beat lifts them past
+     * the shoulder; the frame is scaled by the real field of view against a 70 degree 16:9 one, so that holds at any
+     * field of view or window shape. An offline render of this code decided the numbers (tools/ascent/fpwings.py).
+     * Blocks, degrees; and how solid they are this close.
+     */
+    static float fpBack = 1.0F, fpUp = 0.25F, fpSweep = 60F, fpReach = 65F, fpAlpha = 0.8F;
+    /** Your own eyes see no pair larger than the first rung's (Skyborn's 1.18 and the Sovereign's 1.26 reached a fifth of the frame). */
+    private static final float FP_SIZE = 0.94F;
+    /** A wing lying along the view, and standing in it (degrees from the view's line). */
+    private static final float LEAN_FLAT = 0, LEAN_UP = 90;
+
+    /** One view of a slot's wings this frame (the renderers run after every submit, so each view keeps its own). */
+    private static final class View {
+        final float[][] pose = new float[3][WingForm.N];
+        float[][] pairs = WingForm.PAIRS_WINGS;
+        int[] pal = WingFeathers.LIGHT;
+        float alpha, glow, turn;
+        int lod;
+        boolean first, ring;
+        /**
+         * For your own eyes: each pair as drawn (no larger than the first rung's, and a main pair not rolled: Skyborn's
+         * 6 degree roll tipped its outer feathers into view), and each wing's turn out of model space (left, right).
+         */
+        final float[][] drawn = new float[3][3];
+        final Matrix4f[] fpTurn = {new Matrix4f(), new Matrix4f(), new Matrix4f(), new Matrix4f(), new Matrix4f(), new Matrix4f()};
+        /** A renderer a pair (each pair is its own draw: WingPipelines.feather), and the halos'. */
+        final SubmitNodeCollector.CustomGeometryRenderer[] feathers = {(pose, vc) -> feathers(pose, vc, 0), (pose, vc) -> feathers(pose, vc, 1),
+                (pose, vc) -> feathers(pose, vc, 2)};
+        final SubmitNodeCollector.CustomGeometryRenderer lights = this::lights;
+
+        /**
+         * Through your own eyes a pair raised over the shoulders (the Sovereign's upper pair, 50 degrees up) is not
+         * drawn: set ahead of the eye like the rest, it lay across the top of the view as two slabs (tour 42899604284).
+         */
+        private boolean hidden(int i) {
+            return i >= pairs.length || probePairs > 0 && i >= probePairs || first && pairs[i][1] < -30;
+        }
+
+        private void feathers(PoseStack.Pose pose, VertexConsumer vc, int i) {
+            if (hidden(i)) return;
+            WingFeathers.pair(pose, vc, this.pose[i], 0, first ? drawn[i] : pairs[i], i, pal, alpha, lod, first, fpTurn[2 * i], fpTurn[2 * i + 1]);
+            if (i == 0 && ring && !first) WingFeathers.ring(pose, vc, turn, alpha);
+        }
+
+        private void lights(PoseStack.Pose pose, VertexConsumer vc) {
+            // no halos through your own eyes: a soft glow at the frame's edge reads as a smear on the screen
+            if (!probeHalos || first) return;
+            WingFeathers.faceEye(pose, AscentRender.eye());
+            for (int i = 0; i < pairs.length; i++) if (!hidden(i)) WingFeathers.halos(pose, vc, this.pose[i], 0, pairs[i], i, pal[WingFeathers.HALO], glow, alpha);
+            if (ring && !first) WingFeathers.ringGlow(pose, vc, alpha);
+        }
+    }
+
+    /** One player's wings. */
     private static final class Wings {
         int entity = -1;
+        // classic: how open the sheet is, eased per tick
         float spread, spreadO, beat, beatO, sweep, sweepO;
-        int lastFlap = -100;
+        int lastFlap = -100, flapDone = -100;
         boolean open;
         // what this frame draws (the renderers run after every submit, so each slot keeps its own)
         float dSpread, dBeat, dSweep;
@@ -45,6 +125,24 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
                 SovereignClient.radiant(entity) ? 0x9CFFE6A8 : 0x94A8DCFF, 1F);
         final SubmitNodeCollector.CustomGeometryRenderer glow = (pose, vc) -> wings(pose, vc, this,
                 SovereignClient.radiant(entity) ? 0x48FFC05A : 0x3C7FC0FF, 1.07F);
+
+        // feathers: the state, the client tick it began, the pose it left (the crossfade's start)
+        int mode = FOLDED, modeAt = -1000;
+        final float[] from = new float[WingForm.N];
+        /** Where the first-person figure leaned when the state began (the crossfade's start, degrees). */
+        float leanFrom = LEAN_UP;
+        /** How far out of the mark the wings are (0 hidden, 1 there), eased per tick. */
+        float show, showO;
+        /** What the body is doing this tick (from touch()). */
+        AscentState state = AscentState.NONE;
+        double speed, hspeed, vy;
+        boolean flourish, flew, skyborn;
+        /** A takeoff's crouch: how far the folded wings are lifted (0 none). */
+        float gather;
+        int gatherAt = -100;
+        /** The flare's approach or landing last heard (the wings cup only for a landing that is one). */
+        int flareAt = -100;
+        final View third = new View(), own = new View();
     }
 
     private static final Wings[] WINGS = new Wings[32];
@@ -65,6 +163,79 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     private static Wings find(int id) {
         for (Wings w : WINGS) if (w.entity == id) return w;
         return null;
+    }
+
+    private static Wings slot(Entity e) {
+        Wings w = find(e.getId());
+        if (w != null) return w;
+        for (Wings f : WINGS) if (f.entity < 0) {
+            f.entity = e.getId();
+            f.spread = f.spreadO = 0;
+            f.beat = f.beatO = 0;
+            f.sweep = f.sweepO = 0;
+            f.lastFlap = AscentMoves.ticks; // opening is a beat
+            f.flapDone = f.lastFlap;
+            f.mode = FOLDED;
+            f.modeAt = AscentMoves.ticks - 1000;
+            System.arraycopy(WingForm.FOLD, 0, f.from, 0, WingForm.N);
+            f.leanFrom = LEAN_UP;
+            f.show = f.showO = 0;
+            f.flew = f.flourish = false;
+            f.gather = 0;
+            f.gatherAt = f.flareAt = -100;
+            f.state = AscentState.NONE;
+            return f;
+        }
+        return null;
+    }
+
+    // ---- who bears wings (the mark shows on a back whose wings are closed) ---------------------------------------------
+
+    /** Others seen with their wings open this session, and whether in flight (Skyborn's two pairs): entity ids. */
+    private static final int[] SEEN = new int[64];
+    private static final boolean[] SEEN_SKY = new boolean[64];
+
+    static {
+        java.util.Arrays.fill(SEEN, -1);
+    }
+
+    private static void seen(int id, boolean soar) {
+        int free = -1;
+        for (int i = 0; i < SEEN.length; i++) {
+            if (SEEN[i] == id) {
+                SEEN_SKY[i] |= soar;
+                return;
+            }
+            if (SEEN[i] < 0 && free < 0) free = i;
+        }
+        if (free < 0) free = Math.floorMod(id, SEEN.length);
+        SEEN[free] = id;
+        SEEN_SKY[free] = soar;
+    }
+
+    private static int seenAt(int id) {
+        for (int i = 0; i < SEEN.length; i++) if (SEEN[i] == id) return i;
+        return -1;
+    }
+
+    private static boolean bearer(int id) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.getId() == id) return AscentMoves.has(AscentPayloads.Tier.WINGS);
+        return seenAt(id) >= 0;
+    }
+
+    private static boolean skyborn(int id) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.getId() == id) return AscentMoves.has(AscentPayloads.Tier.SKYBORN);
+        int i = seenAt(id);
+        return i >= 0 && SEEN_SKY[i];
+    }
+
+    static void reset() {
+        studioEntity = studioMode = studioRung = -1;
+        java.util.Arrays.fill(SEEN, -1);
+        for (Wings w : WINGS) w.entity = -1;
+        for (int i = 0; i < FLOURISH.length; i++) FLOURISH[i] = -1;
     }
 
     /** Wings opened for a moment outside any state (a scene): entity ids and the client tick they fold at. */
@@ -89,17 +260,145 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         if (w != null) w.lastFlap = AscentMoves.ticks;
     }
 
+    /**
+     * A takeoff's crouch (SPEC §62): the folded wings come out of the mark and lift, {@code k} of the way (call every
+     * tick of the crouch; they settle back by themselves when the calls stop).
+     */
+    static void gather(Entity e, float k) {
+        Wings w = slot(e);
+        if (w == null) return;
+        w.gather = Mth.clamp(k, 0, 1);
+        w.gatherAt = AscentMoves.ticks;
+    }
+
+    /**
+     * The flare (SPEC §62): this entity is coming down slow and level, or has just landed so. Open wings begin to cup;
+     * wings that close on the ground within a moment of it finish the flare and shed light instead of just folding.
+     */
+    static void flare(int entityId) {
+        Wings w = find(entityId);
+        if (w != null) w.flareAt = AscentMoves.ticks;
+    }
+
+    // ---- the studio (a look tour, /awaken wings show) ------------------------------------------------------------------
+
+    /** An entity whose wings are held in one state (-1 none) and at one rung (-1 its own; 0 wings, 1 Skyborn, 2 the Sovereign's form). */
+    private static int studioEntity = -1, studioMode = -1, studioRung = -1;
+    static final String[] MODES = {"folded", "open", "glide", "fly", "dive", "hover", "land", "gather"};
+
+    /**
+     * Holds this entity's wings in a state by name (see {@link #MODES}; "off" lets go) at a rung ("wings", "skyborn",
+     * "sovereign", or "" for its own), so they can be looked at from every side without flying. False for a name it
+     * doesn't know.
+     */
+    static boolean studio(int entityId, String mode, String rung) {
+        if (mode.equals("off")) {
+            studioEntity = studioMode = studioRung = -1;
+            return true;
+        }
+        int m = java.util.Arrays.asList(MODES).indexOf(mode);
+        if (m < 0) return false;
+        studioEntity = entityId;
+        studioMode = m;
+        studioRung = switch (rung) {
+            case "wings" -> 0;
+            case "skyborn" -> 1;
+            case "sovereign" -> 2;
+            default -> -1;
+        };
+        Wings w = find(entityId);
+        if (w != null && w.mode == m && m != FOLDED) w.mode = FOLDED; // asked for again: the state plays from the fold
+        return true;
+    }
+
+    /**
+     * Probes for a look tour or a slow machine (/awaken wings set probe_*): a level of detail forced on every wing (-1
+     * none), the most pairs drawn (0 all), the Sovereign's ring and the halos drawn or not. They change what is drawn,
+     * never the wings' state.
+     */
+    private static int probeLod = -1, probePairs = 0;
+    private static boolean probeRing = true, probeHalos = true;
+    /** A probe: this many vertices of no size sent ahead of the wings (or after them), in the feathers' own format. */
+    private static int probePad;
+    private static boolean probePadAfter;
+    private static final SubmitNodeCollector.CustomGeometryRenderer PAD = (pose, vc) -> {
+        for (int i = 0; i < probePad; i++) {
+            vc.addVertex(pose, 0, 0.4F, 0.2F).setColor(0x00FFFFFF).setUv(0.5F, 0.5F).setOverlay(net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY)
+                    .setLight(net.minecraft.util.LightCoordsUtil.FULL_BRIGHT).setNormal(pose, 0, 1, 0);
+        }
+    };
+
+    /** A number of the wings' look set by name while the game runs (/awaken wings set); false for a name it doesn't know. */
+    static boolean tune(String key, float value) {
+        switch (key) {
+            case "fp_back" -> fpBack = value;
+            case "fp_up" -> fpUp = value;
+            case "fp_sweep" -> fpSweep = value;
+            case "fp_reach" -> fpReach = value;
+            case "fp_alpha" -> fpAlpha = Mth.clamp(value, 0, 1);
+            case "probe_lod" -> probeLod = (int) value;
+            case "probe_pairs" -> probePairs = (int) value;
+            case "probe_ring" -> probeRing = value != 0;
+            case "probe_halos" -> probeHalos = value != 0;
+            case "probe_lean" -> WingPipelines.lean = value != 0;
+            case "probe_plain" -> WingPipelines.plain = value != 0;
+            case "probe_pad" -> probePad = Math.max(0, (int) value) / 4 * 4;
+            case "probe_pad_after" -> probePadAfter = value != 0;
+            default -> {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static int rungOf(Wings w) {
+        if (w.entity == studioEntity && studioRung >= 0) return studioRung;
+        return SovereignClient.radiant(w.entity) ? 2 : w.skyborn ? 1 : 0;
+    }
+
+    /** True on the tick a feathered wing's downstroke begins (the beat's sound and the air it moves follow the wing). */
+    static boolean downstroke(int entityId) {
+        Wings w = find(entityId);
+        if (w == null) return false;
+        int age = AscentMoves.ticks - w.modeAt;
+        return w.mode == FLYING && age % WingForm.FLY_TICKS == 0 || w.mode == HOVERING && age % WingForm.HOVER_TICKS == 0;
+    }
+
+    /** Whether your own wings are drawn through your own eyes now: open, never folded or lifting for a takeoff (they would fill the view). */
+    static boolean inView(int entityId) {
+        Wings w = find(entityId);
+        return w != null && w.mode != FOLDED && w.mode != GATHER;
+    }
+
+    /** What this entity's feathered wings are doing (FOLDED when it has none out). */
+    static int mode(int entityId) {
+        Wings w = find(entityId);
+        return w == null ? FOLDED : w.mode;
+    }
+
+    /** How far the beat lifts and drops the body this frame, in texels along its own up (the figure rides its wings). */
+    static float bob(int entityId, float pt) {
+        Wings w = find(entityId);
+        if (w == null || !FeelConfig.wingsFeathers() || FeelConfig.reduced() || w.mode != FLYING && w.mode != HOVERING) return 0;
+        poseNow(w, pt, 0, TMP);
+        return TMP[WingForm.BOB];
+    }
+
     static void tick() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
         // anyone with wings open gets a slot; slots ease shut and free themselves
-        if (mc.player != null) touch(mc.player, AscentMoves.state(), AscentMoves.speed(), AscentMoves.flapAt);
+        if (mc.player != null) {
+            AscentMoves.velocity(VEL);
+            touch(mc.player, AscentMoves.state(), AscentMoves.speed(), AscentMoves.flapAt, Math.sqrt(VEL[0] * VEL[0] + VEL[2] * VEL[2]), VEL[1], false);
+        }
         for (AscentRemote.Slot r : AscentRemote.SLOTS) {
             if (r.entity < 0) continue;
             Entity e = mc.level.getEntity(r.entity);
             if (e != null) {
                 double vx = e.getX() - e.xo, vy = e.getY() - e.yo, vz = e.getZ() - e.zo;
-                touch(e, r.state, Math.sqrt(vx * vx + vy * vy + vz * vz), -100);
+                if (r.state.wings) seen(r.entity, r.state == AscentState.SOAR);
+                touch(e, r.state, Math.sqrt(vx * vx + vy * vy + vz * vz), -100, Math.sqrt(vx * vx + vz * vz), vy, false);
             }
         }
         for (int i = 0; i < FLOURISH.length; i++) {
@@ -111,7 +410,12 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
                 continue;
             }
             // one slow beat in the middle, the wings showing their whole span
-            touch(e, AscentState.GLIDE, 0, left == 22 ? AscentMoves.ticks : -100);
+            if (e != mc.player) seen(e.getId(), false);
+            touch(e, AscentState.GLIDE, 0, left == 22 ? AscentMoves.ticks : -100, 0, 0, true);
+        }
+        if (studioEntity >= 0) {
+            Entity held = mc.level.getEntity(studioEntity);
+            if (held != null) slot(held);
         }
         for (Wings w : WINGS) {
             if (w.entity < 0) continue;
@@ -128,31 +432,251 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
             w.spread += (target - w.spread) * (w.open ? 0.32F : 0.16F);
             int since = AscentMoves.ticks - w.lastFlap;
             w.beat = since < 12 ? beatCurve(since) : 0.06F * Mth.sin(AscentMoves.ticks * 0.21F + w.entity);
-            if (!w.open && w.spread < 0.01F) w.entity = -1;
+            featherTick(mc, w, e);
+            if (!w.open && w.spread < 0.01F && w.show <= 0 && w.mode == FOLDED) w.entity = -1;
             w.open = false; // refreshed by touch() every tick while the state lasts
         }
     }
 
-    private static void touch(Entity e, AscentState st, double speed, int flapAt) {
+    private static final double[] VEL = new double[3];
+
+    private static void touch(Entity e, AscentState st, double speed, int flapAt, double hspeed, double vy, boolean flourish) {
         if (!st.wings) return;
-        Wings w = find(e.getId());
-        if (w == null) {
-            for (Wings f : WINGS) if (f.entity < 0) {
-                w = f;
-                w.entity = e.getId();
-                w.spread = w.spreadO = 0;
-                w.beat = w.beatO = 0;
-                w.sweep = w.sweepO = 0;
-                w.lastFlap = AscentMoves.ticks; // opening is a beat
-                break;
-            }
-            if (w == null) return;
-        }
+        Wings w = slot(e);
+        if (w == null) return;
+        // a scene's flourish only holds wings open that nothing else has: a body really flying keeps its own wings' state
+        if (flourish && w.open && !w.flourish) return;
         w.open = true;
+        w.state = st;
+        w.speed = speed;
+        w.hspeed = hspeed;
+        w.vy = vy;
+        w.flourish = flourish;
+        if (!flourish) w.flew = true;
         if (flapAt > w.lastFlap) w.lastFlap = flapAt;
         float sweepTarget = (float) Mth.clamp((speed - 0.8) / 1.6, 0, 1);
         w.sweep += (sweepTarget - w.sweep) * 0.15F;
     }
+
+    // ---- feathers: what the wings do --------------------------------------------------------------------------------
+
+    private static final float[] TMP = new float[WingForm.N], TIP = new float[3];
+    private static final double[] F = new double[9];
+
+    private static void set(Wings w, int mode) {
+        // the crossfade starts from wherever the feathers are this tick
+        poseNow(w, 0, 0, TMP);
+        System.arraycopy(TMP, 0, w.from, 0, WingForm.N);
+        w.leanFrom = leanNow(w, 0);
+        w.mode = mode;
+        w.modeAt = AscentMoves.ticks;
+    }
+
+    private static void featherTick(Minecraft mc, Wings w, Entity e) {
+        w.showO = w.show;
+        w.skyborn = skyborn(w.entity);
+        int age = AscentMoves.ticks - w.modeAt;
+        boolean gathering = AscentMoves.ticks - w.gatherAt <= 1;
+        if (w.entity == studioEntity && studioMode >= 0) {
+            // held for looking at: the one state, played from its start, and nothing else decides
+            w.show = Math.min(1, w.show + 0.34F);
+            w.gather = 1;
+            if (w.mode != studioMode) set(w, studioMode);
+            return;
+        }
+        if (w.open) {
+            w.show = Math.min(1, w.show + 0.34F);
+            if (w.mode == FOLDED || w.mode == GATHER) {
+                // a takeoff's wings are already lifted: the opening starts at its spread
+                boolean lifted = w.mode == GATHER;
+                set(w, UNFOLD);
+                if (lifted) w.modeAt -= 4;
+            } else if (w.mode != UNFOLD || age >= 13) {
+                // coming in to land slow and level, the wings cup before the feet touch
+                int next = AscentMoves.ticks - w.flareAt <= 1 && !w.flourish ? LANDING : pick(w);
+                if (next != w.mode) set(w, next);
+                else if (w.mode == FLYING && w.lastFlap > w.flapDone) set(w, FLYING); // a flap you asked for starts a fresh stroke
+            }
+            w.flapDone = w.lastFlap;
+            if (!FeelConfig.reduced() && FeelConfig.wingsFeathers()) shed(mc, w, e);
+        } else if (gathering) {
+            w.show = Math.min(1, w.show + 0.34F);
+            if (w.mode != GATHER) set(w, GATHER);
+        } else {
+            switch (w.mode) {
+                case FOLDED -> {
+                    if (age > FOLDED_TICKS) w.show = Math.max(0, w.show - 0.1F);
+                }
+                case LANDING -> {
+                    // cupped already on the way down: the touch sheds its light once, then the wings fold
+                    if (w.flew && !FeelConfig.reduced() && FeelConfig.wingsFeathers() && AscentMoves.ticks - w.flareAt <= 3) burst(mc, w, e);
+                    w.flew = false;
+                    if (age >= WingForm.LAND_TICKS) set(w, FOLDED);
+                }
+                case GATHER -> set(w, FOLDED);
+                default -> {
+                    // closed: a flare cups the wings as the feet touch; anything else folds them where they are
+                    boolean flare = w.flew && !w.flourish && w.mode != UNFOLD && AscentMoves.ticks - w.flareAt <= 3;
+                    set(w, flare ? LANDING : FOLDED);
+                    if (flare && !FeelConfig.reduced() && FeelConfig.wingsFeathers()) burst(mc, w, e);
+                    w.flew = false;
+                }
+            }
+        }
+    }
+
+    /** Glide, beat, tuck or hover, from what the body is doing (with a margin either side, so it never flickers). */
+    private static int pick(Wings w) {
+        if (w.flourish) return HOVERING;
+        boolean dive = w.mode == DIVING ? w.vy < -0.45 * w.speed && w.speed > 0.7 : w.vy < -0.6 * w.speed && w.speed > 0.9;
+        if (dive) return DIVING;
+        if (w.state != AscentState.SOAR) return GLIDING;
+        double still = w.mode == HOVERING ? 0.6 : 0.45;
+        return w.hspeed < still && Math.abs(w.vy) < still ? HOVERING : FLYING;
+    }
+
+    /** The pose of this slot's wings now, {@code lag} seconds behind (a second or third pair follows the first). */
+    private static void poseNow(Wings w, float pt, float lag, float[] out) {
+        int age = AscentMoves.ticks - w.modeAt;
+        float t = Math.max(0, (age + pt) / 20F - lag);
+        boolean reduced = FeelConfig.reduced();
+        float amp = reduced ? 0.5F : 1F, tremble = reduced ? 0 : 1;
+        switch (w.mode) {
+            case UNFOLD -> WingForm.unfold(t, out);
+            // the tips tremble more the faster the air goes by (the model's own tremble at a middling speed)
+            case GLIDING -> {
+                float sweep = Mth.lerp(pt, w.sweepO, w.sweep);
+                WingForm.glide(t, sweep, tremble * (0.6F + 0.8F * sweep), out);
+            }
+            // the beats count whole ticks round their own cycle (never a float of time that grows)
+            case FLYING -> WingForm.beat(WingForm.GLIDE, (Math.floorMod(age, WingForm.FLY_TICKS) + pt) / 20F - lag, WingForm.FLY_PERIOD, amp, 0, out);
+            case DIVING -> WingForm.dive(t, tremble, out);
+            case HOVERING -> WingForm.beat(WingForm.HOVER, (Math.floorMod(age, WingForm.HOVER_TICKS) + pt) / 20F - lag, WingForm.HOVER_PERIOD,
+                    0.9F * amp, 1, out);
+            case LANDING -> WingForm.land(t, out);
+            case GATHER -> WingForm.gather(WingForm.ease(w.gather), out);
+            default -> System.arraycopy(WingForm.FOLD, 0, out, 0, WingForm.N);
+        }
+        float b = (age + pt) / BLEND_TICKS;
+        if (b < 1) WingForm.mix(w.from, out, WingForm.ease(b), out);
+    }
+
+    /** How the first-person figure leans in a state: along the view in flight, standing in it otherwise. */
+    private static float leanOf(int mode) {
+        return mode == GLIDING || mode == FLYING || mode == DIVING ? LEAN_FLAT : LEAN_UP;
+    }
+
+    /** The first-person figure's lean now, crossfaded with the pose (the same whole-tick clock and ease). */
+    private static float leanNow(Wings w, float pt) {
+        float b = (AscentMoves.ticks - w.modeAt + pt) / BLEND_TICKS, to = leanOf(w.mode);
+        return b >= 1 ? to : Mth.lerp(WingForm.ease(b), w.leanFrom, to);
+    }
+
+    /** A smooth minimum of a and b, rounded over r. */
+    private static float smin(float a, float b, float r) {
+        float h = Mth.clamp(0.5F + 0.5F * (b - a) / r, 0, 1);
+        return b + (a - b) * h - r * h * (1 - h);
+    }
+
+    private static final Matrix4f FP_ROT = new Matrix4f();
+
+    /**
+     * Your own wings' place this frame (see {@link #fpBack}): each pair's drawn size and roll, and each wing's turn out of
+     * model space (blocks; x left, y down from the neck, z off the back) into the camera's (x right, y up, z behind).
+     */
+    private static void placeFirst(Wings w, View v, float pt) {
+        float lean = leanNow(w, pt) * Mth.DEG_TO_RAD, sl = Mth.sin(lean), cl = Mth.cos(lean);
+        // the figure: its left to the camera's left, its feet along the head's way back (lying) or down (standing), its back up or behind
+        FP_ROT.set(-1, 0, 0, 0, 0, -sl, cl, 0, 0, cl, sl, 0, 0, 0, 0, 1);
+        for (int i = 0; i < v.pairs.length; i++) {
+            float[] pair = v.pairs[i], d = v.drawn[i], p = v.pose[i];
+            d[0] = Math.min(pair[0], FP_SIZE);
+            d[1] = Math.abs(pair[1]) <= 10 ? 0 : pair[1];
+            d[2] = pair[2];
+            // a wing swung forward (toward the belly) reaches into the view by the sine of the lean: the turn gives way
+            float psi = smin(fpSweep, fpReach + (p[WingForm.P0] + p[WingForm.P1] + p[WingForm.P2]) * sl, 8F) * Mth.DEG_TO_RAD;
+            float my = WingFeathers.ROOT_Y / 16F, mz = (WingFeathers.ROOT_Z + i * WingFeathers.PAIR_Z) / 16F;
+            float ry = fpUp - my * sl + mz * cl, rz = fpBack + my * cl + mz * sl;
+            for (int k = 0; k < 2; k++) {
+                int s = k == 0 ? 1 : -1;
+                float rx = -s * WingFeathers.ROOT_X / 16F;
+                // turned about the camera's up through its root, its outer end toward the view
+                v.fpTurn[2 * i + k].translation(rx, ry, rz).rotateY(-s * psi).translate(-rx, fpUp - ry, fpBack - rz).mul(FP_ROT);
+            }
+        }
+    }
+
+    /** A hard downstroke sheds a few square motes of light from the tips of the large wings. */
+    private static void shed(Minecraft mc, Wings w, Entity e) {
+        int age = AscentMoves.ticks - w.modeAt, phase;
+        if (w.mode == FLYING) phase = age % WingForm.FLY_TICKS;
+        else if (w.mode == HOVERING) phase = age % WingForm.HOVER_TICKS - 2;
+        else return;
+        if (phase < 2 || phase > 5 || mc.level == null || mc.level.getRandom().nextBoolean()) return;
+        float[][] pairs = pairs(w);
+        poseNow(w, 0, 0, TMP);
+        AscentAnims.frame(e, 1F, F);
+        for (int i = 0; i < pairs.length; i++) {
+            if (pairs[i][0] <= 0.9F) continue;
+            for (int s = -1; s <= 1; s += 2) mote(mc, e, s, pairs[i], i, -0.06, 0.03);
+        }
+    }
+
+    /** The flare: feathers of light fall from both wings as the feet touch. */
+    private static void burst(Minecraft mc, Wings w, Entity e) {
+        if (mc.level == null) return;
+        float[][] pairs = pairs(w);
+        poseNow(w, 0, 0, TMP);
+        AscentAnims.frame(e, 1F, F);
+        for (int n = 0; n < 5; n++) {
+            for (int s = -1; s <= 1; s += 2) mote(mc, e, s, pairs[0], 0, -0.02, 0.09);
+        }
+    }
+
+    /** One mote near a wing's tip (the pose in TMP, the body's frame in F), drifting down and back. */
+    private static void mote(Minecraft mc, Entity e, int s, float[] pair, int index, double fall, double scatter) {
+        WingFeathers.tip(TMP, 0, s, pair, index, TIP);
+        var r = mc.level.getRandom();
+        // model space (x left, y down from the neck, z behind) out through the figure's frame (facing, up, right), which
+        // turns about a point 0.9 over the feet
+        double left = TIP[0] * 0.9375 * (0.55 + 0.45 * r.nextDouble()), up = 1.407 - TIP[1] * 0.9375 - 0.9, back = TIP[2] * 0.9375;
+        double x = e.getX() - F[6] * left + F[3] * up - F[0] * back;
+        double y = e.getY() + 0.9 - F[7] * left + F[4] * up - F[1] * back;
+        double z = e.getZ() - F[8] * left + F[5] * up - F[2] * back;
+        mc.level.addParticle(AscentContent.MOTE.get(), x, y, z, (r.nextDouble() - 0.5) * scatter, fall + (r.nextDouble() - 0.5) * scatter,
+                (r.nextDouble() - 0.5) * scatter);
+    }
+
+    private static float[][] pairs(Wings w) {
+        int rung = rungOf(w);
+        return rung == 2 ? WingForm.PAIRS_SOVEREIGN : rung == 1 ? WingForm.PAIRS_SKYBORN : WingForm.PAIRS_WINGS;
+    }
+
+    /** Fills a view for this frame; false when there is nothing to draw. */
+    private static boolean prepare(Wings w, View v, float pt, int lod, boolean first) {
+        float show = Mth.lerp(pt, w.showO, w.show);
+        if (show < 0.02F) return false;
+        int rung = rungOf(w);
+        boolean radiant = rung == 2;
+        v.pairs = pairs(w);
+        v.pal = radiant ? WingFeathers.GOLD : rung == 1 ? WingFeathers.SKY : WingFeathers.LIGHT;
+        for (int i = 0; i < v.pairs.length; i++) poseNow(w, pt, v.pairs[i][2], v.pose[i]);
+        if (first) placeFirst(w, v, pt);
+        v.alpha = show * (first ? fpAlpha : 1F);
+        // through your own eyes the opening comes in as it spreads: folded, the wings would pass across the middle of the view
+        if (first && w.mode == UNFOLD) v.alpha *= WingForm.ease((AscentMoves.ticks - w.modeAt + pt - 3) / 9F);
+        v.glow = GLOW_BY[w.mode];
+        v.lod = probeLod >= 0 ? Math.min(2, probeLod) : lod;
+        v.first = first;
+        v.ring = radiant && probeRing;
+        // the halo turns half a radian a second: a whole turn in 251 ticks
+        v.turn = (AscentMoves.ticks % 251 + pt) / 251F * Mth.TWO_PI;
+        return true;
+    }
+
+    /** The mark's core breathes: a quarter larger and back, every 50 ticks. */
+    private static float markPulse = 1;
+    private static final SubmitNodeCollector.CustomGeometryRenderer MARK = (pose, vc) -> WingFeathers.mount(pose, vc, 0xDFF8FF, 1F, markPulse);
 
     /** One beat: down hard (to -1) over 4 ticks, back up past level over 8. */
     private static float beatCurve(int t) {
@@ -164,8 +688,27 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     @Override
     public void submit(PoseStack poseStack, SubmitNodeCollector out, int lightCoords, AvatarRenderState state, float yRot, float xRot) {
         Wings w = find(state.id);
-        if (w == null) return;
         float pt = state.partialTick;
+        if (FeelConfig.wingsFeathers()) {
+            boolean mark = !state.isInvisible && bearer(state.id);
+            if (w == null && !mark) return;
+            int lod = WingForm.lod(state.distanceToCameraSq);
+            poseStack.pushPose();
+            getParentModel().body.translateAndRotate(poseStack);
+            if (probePad > 0 && !probePadAfter) out.submitCustomGeometry(poseStack, WingPipelines.pad(), PAD);
+            if (mark && lod < 2) {
+                markPulse = 1 + 0.25F * Mth.sin((AscentMoves.ticks % 50 + pt) / 50F * Mth.TWO_PI);
+                out.submitCustomGeometry(poseStack, WingPipelines.feather(0), MARK);
+            }
+            if (w != null && prepare(w, w.third, pt, lod, false)) {
+                for (int i = 0; i < w.third.pairs.length; i++) out.submitCustomGeometry(poseStack, WingPipelines.feather(i), w.third.feathers[i]);
+                if (lod < 2) out.order(1).submitCustomGeometry(poseStack, WingPipelines.halo(), w.third.lights);
+            }
+            if (probePad > 0 && probePadAfter) out.submitCustomGeometry(poseStack, WingPipelines.pad(), PAD);
+            poseStack.popPose();
+            return;
+        }
+        if (w == null) return;
         float spread = Mth.lerp(pt, w.spreadO, w.spread), beat = Mth.lerp(pt, w.beatO, w.beat), sweep = Mth.lerp(pt, w.sweepO, w.sweep);
         if (spread < 0.01F) return;
         poseStack.pushPose();
@@ -175,10 +718,18 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         poseStack.popPose();
     }
 
-    /** First person: your own wings, drawn in the world from the body (only their tips reach into view). */
+    /**
+     * First person: your own wings. Feathered, {@code ps} is the camera's own frame scaled to a 70 degree view (see
+     * {@link #fpBack}); classic, the body's model space.
+     */
     static boolean drawFirstPerson(PoseStack ps, SubmitNodeCollector out, Entity e, float pt) {
         Wings w = find(e.getId());
         if (w == null) return false;
+        if (FeelConfig.wingsFeathers()) {
+            if (!prepare(w, w.own, pt, 0, true)) return false;
+            for (int i = 0; i < w.own.pairs.length; i++) out.submitCustomGeometry(ps, WingPipelines.feather(i), w.own.feathers[i]);
+            return true;
+        }
         float spread = Mth.lerp(pt, w.spreadO, w.spread), beat = Mth.lerp(pt, w.beatO, w.beat), sweep = Mth.lerp(pt, w.sweepO, w.sweep);
         if (spread < 0.01F) return false;
         w.dFirst = true;
@@ -200,7 +751,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         out.order(1).submitCustomGeometry(ps, glow, w.glow);
     }
 
-    // ---- geometry: model space (x to the player's left, y down, z behind) ---------------------------------------------
+    // ---- classic geometry: model space (x to the player's left, y down, z behind) ---------------------------------------
 
     private static final float[] LX = new float[4], LY = new float[4], LZ = new float[4];
     private static final float[] FEATHER = {0.55F, 1.05F, 1.2F, 0.55F};

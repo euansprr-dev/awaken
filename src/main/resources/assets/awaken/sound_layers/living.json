@@ -1,0 +1,10 @@
+{
+ "awaken:living.scan": [
+  {
+   "delay": 0,
+   "pitch": 1.5,
+   "sound": "minecraft:block.sculk_sensor.clicking",
+   "volume": 0.3
+  }
+ ]
+}

@@ -28,7 +28,7 @@ public final class WaveSurface {
     /** The y of the top block of the ground near {@code y} in this column, or {@link #NONE} (a wall, a drop, an unloaded chunk). */
     public static int top(Level level, BlockPos.MutableBlockPos p, int x, int y, int z, int up, int down) {
         p.set(x, y, z);
-        if (!level.isLoaded(p)) return NONE;
+        if (!dev.awaken.core.api.Ready.loaded(level, p)) return NONE;
         boolean above = stands(level, p.setY(y + up + 1), level.getBlockState(p));
         for (int cy = y + up; cy >= y - down; cy--) {
             p.setY(cy);

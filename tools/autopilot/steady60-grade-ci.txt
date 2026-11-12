@@ -1,0 +1,145 @@
+# The grades side by side on CI (SPEC §22 "Grades"): a garden (flowers, wheat, a pond, an oak, a cherry) in a forest's
+# green, each view once with the look as built and once with Vivid: the morning, the flowers from above, the sky,
+# golden hour, dusk toward the sun, night, rain. Then the Look page with its Colour grade row, and Swift under both.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-grade-ci.txt 1800
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s 0.5 121 0.5 -90 20
+cmd forceload add -32 -32 32 32
+wait 200
+cmd fill -20 120 -20 24 120 20 minecraft:grass_block
+cmd fillbiome -20 112 -20 24 135 0 minecraft:forest
+cmd fillbiome -20 112 1 24 135 20 minecraft:forest
+cmd fill 3 121 -3 5 121 -3 minecraft:poppy
+cmd fill 3 121 -2 6 121 -2 minecraft:dandelion
+cmd fill 4 121 0 6 121 0 minecraft:allium
+cmd fill 3 121 2 5 121 2 minecraft:cornflower
+cmd fill 6 121 3 8 121 3 minecraft:orange_tulip
+cmd fill 5 121 -5 8 121 -5 minecraft:pink_tulip
+cmd setblock 7 121 1 minecraft:oxeye_daisy
+cmd setblock 2 121 1 minecraft:azure_bluet
+cmd fill 2 120 5 6 120 8 minecraft:farmland[moisture=7]
+cmd fill 2 121 5 6 121 8 minecraft:wheat[age=7]
+cmd fill 12 119 2 18 119 8 minecraft:stone
+cmd fill 12 120 2 18 120 8 minecraft:water
+cmd fill 10 121 -4 10 125 -4 minecraft:oak_log
+cmd fill 8 124 -6 12 126 -2 minecraft:oak_leaves[persistent=true]
+cmd fill 9 127 -5 11 127 -3 minecraft:oak_leaves[persistent=true]
+cmd fill 10 121 -4 10 125 -4 minecraft:oak_log
+cmd fill 15 121 -10 15 124 -10 minecraft:cherry_log
+cmd fill 13 124 -12 17 126 -8 minecraft:cherry_leaves[persistent=true]
+cmd fill 15 121 -10 15 124 -10 minecraft:cherry_log
+cmd fill 9 121 5 10 121 6 minecraft:flowering_azalea_leaves[persistent=true]
+cmd fill 20 121 -2 20 124 -2 minecraft:birch_log
+cmd fill 18 124 -4 22 126 0 minecraft:birch_leaves[persistent=true]
+cmd fill 20 121 -2 20 124 -2 minecraft:birch_log
+cmd tp @s 0.5 121 0.5 -90 12
+camera first
+hud on
+lookswitch cinematic
+wait 400
+cmd time set 4000
+look -90 12
+wait 200
+lens grade awaken
+wait 60
+shot g1_morning_awaken
+lens grade vivid
+wait 30
+shot g1_morning_vivid
+look -100 38
+wait 60
+lens grade awaken
+wait 30
+shot g2_flowers_awaken
+lens grade vivid
+wait 30
+shot g2_flowers_vivid
+look -60 -35
+wait 60
+lens grade awaken
+wait 30
+shot g3_sky_awaken
+lens grade vivid
+wait 30
+shot g3_sky_vivid
+cmd time set 6000
+look 0 16
+wait 200
+lens grade awaken
+wait 30
+shot g4_noon_wheat_awaken
+lens grade vivid
+wait 30
+shot g4_noon_wheat_vivid
+cmd time set 11300
+look -90 8
+wait 200
+lens grade awaken
+wait 30
+shot g5_golden_awaken
+lens grade vivid
+wait 30
+shot g5_golden_vivid
+cmd time set 12400
+look 90 -6
+wait 200
+lens grade awaken
+wait 30
+shot g6_dusk_awaken
+lens grade vivid
+wait 30
+shot g6_dusk_vivid
+cmd time set 18000
+look -90 -12
+wait 200
+lens grade awaken
+wait 30
+shot g7_night_awaken
+lens grade vivid
+wait 30
+shot g7_night_vivid
+cmd time set 5000
+cmd weather rain 1000000
+look -90 10
+wait 400
+lens grade awaken
+wait 30
+shot g8_rain_awaken
+lens grade vivid
+wait 30
+shot g8_rain_vivid
+cmd weather clear 1000000
+cmd time set 4000
+lens grade setting
+look -90 12
+wait 200
+screen look
+wait 30
+shot g9_look_page
+screen close
+lookswitch swift
+wait 120
+lens grade awaken
+wait 30
+shot g10_swift_awaken
+lens grade vivid
+wait 30
+shot g10_swift_vivid
+lens grade setting
+quit

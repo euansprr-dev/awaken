@@ -45,8 +45,33 @@ public final class LensClient {
     private LensClient() {}
 
     static final Identifier SWIFT = Awaken.id("lens_swift");
+    // Lite (SPEC §22 "Lite"): the Air without Lens 2's light. It reads the frame's values (the view, the sun, the clouds,
+    // storm cells) and none of the light's textures (no heightfield, block map, sun map or lit air, and none of their
+    // tick work)
+    static final Identifier LITE = Awaken.id("lens_lite");
+    // the hand's own depth (LensHand): which pixels are the hand and what it holds
+    // (a chain's "awaken:lens_hand_depth" is this path: the game reads a chain's textures from textures/effect/. The
+    // first build registered the bare name, the chain found nothing there and read the game's missing-texture
+    // checkerboard as the hand: two quarters of the screen unlit, run 42985247494)
+    static final Identifier HAND = Awaken.id("textures/effect/lens_hand_depth.png");
+    private static LensHand hand;
+    // light other parts of the mod draw for Lens to lay over its picture (LensGlow, SPEC §22 "Light over the Air")
+    static final Identifier GLOW = Awaken.id("textures/effect/lens_glow.png");
+    private static LensGlow glow;
     static final Identifier CINEMATIC = Awaken.id("lens_cinematic");
     static final Identifier ULTRA = Awaken.id("lens_ultra");
+    // their Tiles twins (SPEC §22 "Steady 60"; tools/lens/block.py): the same chains with the composite that reads Lens's
+    // values from the uniform block alone, run while Tiles hands that block over
+    static final Identifier CINEMATIC_TILES = Awaken.id("lens_cinematic_tiles");
+    static final Identifier ULTRA_TILES = Awaken.id("lens_ultra_tiles");
+    // the twins' two composites, by their place in the chain (tools/lens/block.py checks them): the calm one, then the
+    // twin's own; Tiles leaves one out every frame (leftOut)
+    private static final int CALM_AT = 12, FULL_AT = 13;
+    private static final String CINEMATIC_CALM = CINEMATIC_TILES + "/" + CALM_AT, CINEMATIC_FULL = CINEMATIC_TILES + "/" + FULL_AT,
+            ULTRA_CALM = ULTRA_TILES + "/" + CALM_AT, ULTRA_FULL = ULTRA_TILES + "/" + FULL_AT;
+    // this frame's choice (afterLevel): the calm composite runs only once LensBlock has found the frame calm
+    private static String leaveCinematic = CINEMATIC_CALM, leaveUltra = ULTRA_CALM;
+    private static boolean calmLast;
     /** Lens 2 (SPEC §22): the frame's matrices in floats ({@code awaken:lens_frame}) and the terrain's heights. */
     static final Identifier FRAME = Awaken.id("textures/effect/lens_frame.png");
     static final Identifier HEIGHT = Awaken.id("textures/effect/lens_height.png");
@@ -64,6 +89,9 @@ public final class LensClient {
     static final Identifier BLOCKS = Awaken.id("textures/effect/lens_blocks.png");
     // the lit air (SPEC §22 "Steady Light"): which air near the camera the sun reaches, for its rays
     private static LensLit litAir;
+    // the sun map (SPEC §22): the height the sun reaches in each column, swept on a worker in place of a pass
+    private static LensSunMap sunMap;
+    static final Identifier SUNMAP = Awaken.id("textures/effect/lens_sunmap.png");
     static final Identifier LIT = Awaken.id("textures/effect/lens_lit.png");
     private static boolean sunPass = true;
     private static @org.jspecify.annotations.Nullable Boolean forcedSunPass;
@@ -107,7 +135,7 @@ public final class LensClient {
         String out = String.format(java.util.Locale.ROOT,
                 "tick cost over %d ticks, mean/worst ms: heightfield %.3f/%.2f, block map %.3f/%.2f, lit air %.3f/%.2f%s", costTicks,
                 costSum[0] / 1.0e6 / n, costMax[0] / 1.0e6, costSum[1] / 1.0e6 / n, costMax[1] / 1.0e6, costSum[2] / 1.0e6 / n, costMax[2] / 1.0e6,
-                litAir != null ? "; " + litAir.report() : "");
+                (litAir != null ? "; " + litAir.report() : "") + (sunMap != null ? "; " + sunMap.report() : ""));
         java.util.Arrays.fill(costSum, 0L);
         java.util.Arrays.fill(costMax, 0L);
         costTicks = 0;
@@ -119,6 +147,8 @@ public final class LensClient {
         return rays && litAir != null ? litAir.at(x, y, z) : -1f;
     }
     private static boolean lit, sunHere;
+    // the chain reads the frame's values: Cinematic, Ultra and Lite
+    private static boolean framed;
     private static float lightStrength, rain, warmth;
     private static boolean moonLight;
     // toward the light (the sun, or the moon by night) and the sunrise colour (0xRRGGBB), for the ambient particles
@@ -139,6 +169,8 @@ public final class LensClient {
     private static String biomeFor;
     private static int biomeClock;
     private static final float[] current = Look.neutral(), target = Look.neutral();
+    // the look as drawn: `current` with the player's grade over it (LensGrades)
+    private static final float[] graded = Look.neutral();
     // the place's own look (the biome's, else the dimension's; or a story moment's), before any place look over it
     private static final float[] base = Look.neutral();
     // place looks over the biome's (SPEC §28.5: a plain cave's own, a seep's violet), each weighted 0..1 by its owner
@@ -152,6 +184,16 @@ public final class LensClient {
     private static @org.jspecify.annotations.Nullable String overrideLook;
     private static boolean overrideChanged;
     private static float ease = 0.06f;
+    // a power's look (SPEC §22 "A power's look"): what it changes, laid over the place's own look once that has eased
+    // and under the player's grade; `accent` is what is laid now, eased toward the look's shift or back to rest
+    private static @org.jspecify.annotations.Nullable String accentLook;
+    private static final float[] accentTo = new float[Look.SIZE], accent = new float[Look.SIZE], accented = Look.neutral();
+    private static boolean accentStale, accentLaid;
+    private static float accentEase = 0.3f;
+    static {
+        Looks.shift(null, accentTo);
+        Looks.shift(null, accent);
+    }
     // a story scene keeps Lens on although the setting is off (a cutscene): after it, this many ticks to fade to neutral
     private static int linger;
     private static boolean wasOff;
@@ -183,6 +225,23 @@ public final class LensClient {
         return "air " + (forcedAir != null ? forcedAir : "from the setting");
     }
 
+    /** Autopilot {@code lens grade <id>|setting}: a grade for the following scenes (SPEC §22 "Grades"). */
+    public static String grade(String arg) {
+        return LensGrades.force(arg);
+    }
+
+    /** The grade in use, by the name the Look page shows. */
+    public static String gradeName() {
+        return LensGrades.current().name();
+    }
+
+    /** The Look page's click: the next grade ({@code step} 1) or the one before (-1), set now and saved. Returns its name. */
+    public static String stepGrade(int step) {
+        var g = LensGrades.next(step);
+        LensGrades.choose(g);
+        return g.name();
+    }
+
     /** Autopilot {@code lens temporal on|off|setting}: the A/B switch for the interleaved clouds and light. */
     public static String temporal(String arg) {
         forcedTemporal = switch (arg.trim()) {
@@ -195,6 +254,33 @@ public final class LensClient {
 
     // measurement only (autopilot `lens chain <id>`): a probe chain in place of Cinematic's or Ultra's (tools/lens/probes.py)
     private static @org.jspecify.annotations.Nullable Identifier forcedChain, lastForced;
+
+    // measurement only (autopilot `lens twin off|setting`): Cinematic and Ultra as written even while the block is live
+    private static boolean noTwin;
+
+    /** Autopilot {@code lens twin off|setting}: the A/B switch for the Tiles twins (SPEC §22 "Steady 60"). */
+    public static String twin(String arg) {
+        noTwin = arg.trim().equals("off");
+        return "twin " + (noTwin ? "off" : "with Tiles' block") + (dev.awaken.turbo.tiles.Tiles.blockLive() ? " (block live)" : " (block not live)");
+    }
+
+    // measurement only (autopilot `lens calm off|setting`): the twin's own composite every frame, calm or not
+    private static boolean noCalm;
+
+    /** Autopilot {@code lens calm off|setting}: the A/B switch for the twins' calm composite (SPEC §22 "Steady 60"). */
+    public static String calm(String arg) {
+        noCalm = arg.trim().equals("off");
+        return "calm composite " + (noCalm ? "off" : "on calm frames") + (calmLast ? " (last frame calm)" : " (last frame not calm)");
+    }
+
+    /**
+     * Tiles, for each post pass: whether it is left out this frame. Each Tiles twin has two composites, both drawing the
+     * whole of swap from the same inputs, and one is left out: the calm one, unless this frame's values (LensBlock.calm,
+     * read from the very block the composites read) have every path it lacks switched off; then the twin's own.
+     */
+    public static boolean leftOut(String pass) {
+        return pass.equals(leaveCinematic) || pass.equals(leaveUltra);
+    }
 
     /** Autopilot {@code lens chain <name>|off}: runs awaken:lens_probe_<name> instead of the Look's chain (Cinematic or Ultra on). */
     public static String chain(String name) {
@@ -212,8 +298,10 @@ public final class LensClient {
         modBus.addListener(AddClientReloadListenersEvent.class, e -> e.addListener(Awaken.id("lens_looks"),
                 (ResourceManagerReloadListener) manager -> {
                     Looks.reload(manager);
+                    LensGrades.reload(manager);
                     lookFor = null; // re-resolve the current place's look
                     biomeFor = null;
+                    accentStale = true;
                     java.util.Arrays.fill(placeStale, true);
                     WorldProjection.recheck();
                 }));
@@ -222,13 +310,32 @@ public final class LensClient {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, e -> tick());
         // after every other fog listener (Blight, the Veil): Lens hazes toward the fog the player actually sees
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ViewportEvent.RenderFog.class, LensClient::frame);
+        // (before the others that shape the fog's colour: the edge hold pales it, Far Sight reads it last)
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ViewportEvent.ComputeFogColor.class, LensClient::fogColour);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterLevel.class, LensClient::afterLevel);
+        // last of all after the level: whatever drew light for Lens to lay has drawn it by now
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, RenderLevelStageEvent.AfterLevel.class, e -> LensGlow.settle());
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent.class, LensParticles::register);
         modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, LensParticles::pipelines);
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.ExtractLevelRenderStateEvent.class, LensClient::extract);
-        // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own)
+        // development: /awaken lens projection off|on|check (A/B shots of the CPU's estimate against the world's own);
+        // /awaken lens sunpass|rays off|on|setting and /awaken lens paths on|off (the Sun Pass's parts one at a time, in
+        // play: which of them a shadow that changes with where you stand comes from)
         NeoForge.EVENT_BUS.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
                 net.minecraft.commands.Commands.literal(Awaken.MODID).then(net.minecraft.commands.Commands.literal("lens")
+                        .then(lensSwitch("sunpass", LensClient::sunPass))
+                        .then(lensSwitch("rays", LensClient::rays))
+                        .then(lensSwitch("paths", LensClient::paths))
+                        .then(lensSwitch("edgehold", LensClient::edgeHold))
+                        .then(lensSwitch("accent", LensClient::accentSwitch))
+                        .then(net.minecraft.commands.Commands.literal("small")
+                                .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                        .executes(c -> {
+                                            String line = small(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "what"));
+                                            Awaken.LOG.info("[lens] {}", line);
+                                            Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(line));
+                                            return 1;
+                                        })))
                         .then(net.minecraft.commands.Commands.literal("projection")
                                 .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
                                         .executes(c -> {
@@ -242,7 +349,93 @@ public final class LensClient {
         });
     }
 
+    /** A client command {@code /awaken lens <name> <what>} that sets one development switch and says what it is now. */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<net.minecraft.commands.CommandSourceStack> lensSwitch(
+            String name, java.util.function.Function<String, String> set) {
+        return net.minecraft.commands.Commands.literal(name)
+                .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
+                        .executes(c -> {
+                            String line = set.apply(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "what"));
+                            Awaken.LOG.info("[lens] {}", line);
+                            Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(line));
+                            return 1;
+                        }));
+    }
+
+    // The small shade's reach (SPEC §22 "The small shade's reach"): how wide a texel of the light buffer may be on a
+    // surface, in the art's pixels (sixteenths of a block), where the contact shadows fade from and to, then the
+    // ambient shade; an end not past its start leaves that shade whole at every distance.
+    private static final float[] SMALL = {0.6f, 2.2f, 0f, 0f};
+    private static float @org.jspecify.annotations.Nullable [] forcedSmall;
+    /** The light buffer's height in texels (the chains' {@code awaken:lens_light} target). */
+    private static final float LIGHT_ROWS = 540f;
+
+    /**
+     * {@code /awaken lens small <contact from> <contact to> <ambient from> <ambient to>} (autopilot {@code lens small}):
+     * where the depth-made contact shadows and the ambient shade fade out, as the width of a light texel in the art's
+     * pixels, for A/B shots and for tuning in play; {@code setting} puts the built-in reach back. An end not past its
+     * start: no fade. The answer says what the numbers come to in blocks at the view in use.
+     */
+    public static String small(String arg) {
+        String[] w = arg.trim().split("\\s+");
+        if (w.length == 4) {
+            try {
+                forcedSmall = new float[] {Float.parseFloat(w[0]), Float.parseFloat(w[1]), Float.parseFloat(w[2]), Float.parseFloat(w[3])};
+            } catch (NumberFormatException e) {
+                return "lens small: four numbers (contact from, to; ambient from, to) or 'setting'";
+            }
+        } else {
+            forcedSmall = null;
+        }
+        float[] s = forcedSmall != null ? forcedSmall : SMALL;
+        // a texel is one art pixel wide this many blocks off, at the view in use
+        double fov = Minecraft.getInstance().options.fov().get();
+        double one = LIGHT_ROWS / (2.0 * Math.tan(Math.toRadians(fov / 2.0))) / 16.0;
+        return String.format(java.util.Locale.ROOT, "small shade%s: contact shadows fade from %s to %s, ambient shade from %s to %s",
+                forcedSmall != null ? "" : " (built in)", reach(s[0], s[1], one, true), reach(s[0], s[1], one, false),
+                reach(s[2], s[3], one, true), reach(s[2], s[3], one, false));
+    }
+
+    // The edge's hold (SPEC §22 "The edge's hold"): how much of a contact shadow the screen can no longer see is let go
+    // each frame. The light buffer mixes a frame in at about a seventh, so 0.12 lets a held shadow go in about a second
+    // at 60 frames a second; 0 keeps none (the shadow goes out with what cast it).
+    private static final float EDGE_HOLD = 0.12f;
+    private static @org.jspecify.annotations.Nullable Boolean forcedEdgeHold;
+
+    /** {@code /awaken lens edgehold off|on|setting} (autopilot {@code lens edgehold}): the edge's hold, for A/B in play. */
+    public static String edgeHold(String arg) {
+        forcedEdgeHold = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "edge hold " + (forcedEdgeHold != null ? (forcedEdgeHold ? "on" : "off") : "on (built in)");
+    }
+
+    /** One end of a reach in words: the texel width in art pixels and the blocks that is at this view, or "never". */
+    private static String reach(float from, float to, double blocksAtOne, boolean start) {
+        if (to <= from) return start ? "nowhere" : "nowhere (whole at every distance)";
+        float v = start ? from : to;
+        return String.format(java.util.Locale.ROOT, "%.1f px (%.0f blocks)", v, v * blocksAtOne);
+    }
+
+    private static boolean showPaths;
+
+    /**
+     * {@code /awaken lens paths on|off}: marks on every lit surface which part of the Sun Pass answered it, over the
+     * answer itself (lens_light.fsh, pathMark): plain where the heightfield found nothing over the ray or a block
+     * stopped the walk, lines across the sun's way where the lit air was sure, lines along it where the walk left the
+     * map in the open, a checker where the walk met a section not read yet. For a shadow that changes with where you
+     * stand: the mark under it says which part changed its mind.
+     */
+    public static String paths(String arg) {
+        showPaths = arg.trim().equals("on");
+        return "sun pass paths " + (showPaths ? "on: lines across the sun's way = lit air, lines along it = walk left the map, checker = not read yet" : "off");
+    }
+
     private static void tick() {
+        // measurement only (the GPU timing's trace): a tick ran in this frame, and whether the governor stood Lens back
+        dev.awaken.turbo.pixels.Pixels.mark(tickBudget() < 500_000L ? 128 | 64 : 128);
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null || mc.level == null) {
@@ -251,7 +444,14 @@ public final class LensClient {
             snap = true;
             active = false;
             lit = false;
+            framed = false;
             overrideLook = null;
+            accentLook = null;
+            accentMoment = null;
+            accentStale = false;
+            accentLaid = false;
+            Looks.shift(null, accentTo);
+            Looks.shift(null, accent);
             linger = 0;
             tear = tearStep = crush = crushTarget = bloomBoost = bloomTarget = 0f;
             java.util.Arrays.fill(placeWeight, 0f);
@@ -272,24 +472,45 @@ public final class LensClient {
         if (linger > 0) linger--;
         boolean on = (!off || scene && !vfx && scenesAllowed()) && !Companions.shaderPackActive();
         Identifier want = !on ? null : switch (setting) {
+            case LITE -> LITE;
             case CINEMATIC -> CINEMATIC;
             case ULTRA -> ULTRA;
             default -> SWIFT;
         };
-        if (want != null && want != SWIFT && forcedChain != null) want = forcedChain;
+        if (want != null && want != SWIFT && want != LITE && forcedChain != null) want = forcedChain;
+        // Steady 60 (SPEC §22): while Tiles hands Lens's passes the live uniform block, Cinematic and Ultra run their twins,
+        // whose composite reads its values from the block alone: the very values it reads now, without a texture read
+        // beside each that made it a per-pixel register (some 4 ms of a 4K frame). A development view keeps the chain as
+        // written (the twin has none)
+        if (debug == 0 && !noTwin && dev.awaken.turbo.tiles.Tiles.blockLive()) {
+            if (want == CINEMATIC) want = CINEMATIC_TILES;
+            else if (want == ULTRA) want = ULTRA_TILES;
+        }
+        // Lite is the Air and nothing else: its chain has no other sky to fall back to
+        if (want == LITE && forcedAir == null) air = true;
         // the server replaces this list whenever it syncs post effects, so Lens re-asserts itself every tick, first
         List<Identifier> effects = player.getActivePostEffects();
         if (lastForced != null && lastForced != want) effects.remove(lastForced);
         lastForced = want == forcedChain ? forcedChain : null;
         if (want != SWIFT) effects.remove(SWIFT);
+        if (want != LITE) effects.remove(LITE);
         if (want != CINEMATIC) effects.remove(CINEMATIC);
         if (want != ULTRA) effects.remove(ULTRA);
-        boolean wasLit = lit;
-        lit = want == CINEMATIC || want == ULTRA || want != null && want == forcedChain;
+        if (want != CINEMATIC_TILES) effects.remove(CINEMATIC_TILES);
+        if (want != ULTRA_TILES) effects.remove(ULTRA_TILES);
+        boolean wasFramed = framed;
+        lit = want == CINEMATIC || want == ULTRA || want == CINEMATIC_TILES || want == ULTRA_TILES || want != null && want == forcedChain;
+        framed = lit || want == LITE;
         if (want != null) {
             ensureParams();
+            if (framed) ensureFrame();
             if (lit) ensureLight();
-            if (lit && !wasLit) lensFrame.reset();
+            // A chain that starts or comes back starts its histories afresh. Each chain keeps its own (the light
+            // buffer's, the clouds'), and they stay as they were when it last ran: switched from Cinematic to Lite and
+            // back, the frame values never stopped (Lite reads them too), so Cinematic took its light of a quarter
+            // of a minute ago, from wherever the camera then looked, for last frame's (Euan, playing, 12 Nov: "I also
+            // turned off cinematic mode then back on, and the shadows broke"; SPEC §22 "A Look switched back to")
+            if (framed && (!wasFramed || want != ran)) lensFrame.reset();
             int at = effects.indexOf(want);
             if (at != 0) {
                 if (at > 0) effects.remove(at);
@@ -297,6 +518,10 @@ public final class LensClient {
             }
         }
         active = want != null;
+        ran = want;
+        // (the game's own answer: a chain that failed to load or compile draws nothing, and nothing may be handed to
+        // its last pass to lay. The lookup is the game's cache; it loads the chain the first time, as the frame would)
+        chainRuns = want != null && mc.getShaderManager().getPostChain(want, net.minecraft.client.renderer.LevelTargetBundle.MAIN_TARGETS) != null;
 
         ResourceKey<Level> dim = mc.level.dimension();
         String biome = biomeFor;
@@ -343,6 +568,8 @@ public final class LensClient {
             heightfield.tick(mc.level, at.getX() >> 4, at.getZ() >> 4);
             long t1 = System.nanoTime();
             if (sunPass && blocks != null) blocks.tick(mc.level, at.getX(), at.getY(), at.getZ());
+            if (sunMap != null) sunMap.tick(heightfield, moonLight ? -sunDir.x : sunDir.x, moonLight ? -sunDir.y : sunDir.y,
+                    moonLight ? -sunDir.z : sunDir.z, at.getX(), at.getZ());
             cost(0, t1 - t0);
             cost(1, System.nanoTime() - t1);
         }
@@ -356,11 +583,36 @@ public final class LensClient {
         } else if (litAir != null) {
             litAir.forget();
         }
-        if (lit && !scene) LensParticles.tick(mc, want == ULTRA, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null,
+        if (lit && !scene) LensParticles.tick(mc, want == ULTRA || want == ULTRA_TILES, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null,
                 air && sunHere, sunDir.y, rain);
         // a hard cut on joining a world
         float k = snap ? 1f : ease;
         for (int i = 0; i < Look.SIZE; i++) current[i] += (target[i] - current[i]) * k;
+        // a power's look over it: never over a story moment's (that plays as authored), never while Lens is off. It is
+        // laid after the place's own slow easing, at its own pace, so a cast's look arrives with the cast
+        if (accentStale) {
+            Looks.shift(accentLook, accentTo);
+            accentStale = false;
+        }
+        boolean accentShown = accentLook != null && overrideLook == null && !off;
+        float[] shown = current;
+        if (accentShown || accentLaid) {
+            accentLaid = false;
+            for (int i = 0; i < Look.SIZE; i++) {
+                boolean scale = Look.scales(i);
+                float rest = scale ? 1f : 0f;
+                accent[i] += ((accentShown ? accentTo[i] : rest) - accent[i]) * (snap ? 1f : accentEase);
+                if (Math.abs(accent[i] - rest) > 0.0005f) accentLaid = true;
+                else if (!accentShown) accent[i] = rest;
+                float v = scale ? current[i] * accent[i] : current[i] + accent[i];
+                accented[i] = i == Look.WARMTH ? v : Math.max(0f, v);
+            }
+            shown = accented;
+        }
+        // the player's grade over it; a story moment's look plays as it was authored, and with Lens off there is no
+        // grade over the plain frame a scene eases back to
+        LensGrades.tick(overrideLook != null || off);
+        LensGrades.apply(shown, graded);
         snap = false;
         if (tearStep > 0) {
             tear = Math.min(1f, tear + tearStep);
@@ -399,6 +651,68 @@ public final class LensClient {
             placeStale[layer] = true;
         }
         placeWeight[layer] = lookId == null ? 0f : Math.clamp(weight, 0f, 1f);
+    }
+
+    /**
+     * A power's look over the place's own (SPEC §22 "A power's look"): {@code lookId} (an exact key in lens/*.json, such
+     * as {@code awaken:cast_beam}) is read as what it changes from the default look, and that is laid over wherever the
+     * player stands, under their grade, eased in over about {@code fadeTicks}. The place keeps its own look and the
+     * player their grade: unlike a story moment's look ({@link #override}), which replaces both and wins over this while
+     * it plays. Only while Lens draws ({@link #active()}); one at a time, the last set.
+     */
+    public static void accent(String lookId, int fadeTicks) {
+        if (accentAsMoment) { // the A/B switch: as it was, through the moment channel
+            if (overrideLook != null && !overrideLook.equals(accentMoment)) return;
+            accentMoment = lookId;
+            override(lookId, fadeTicks);
+            return;
+        }
+        accentEase = rate(fadeTicks);
+        if (lookId.equals(accentLook)) return;
+        accentLook = lookId;
+        accentStale = true;
+    }
+
+    /** The power's look laid now ({@link #accent}), or null. */
+    public static @org.jspecify.annotations.Nullable String accenting() {
+        if (accentMoment != null) return accentMoment.equals(overrideLook) ? accentMoment : null;
+        return accentLook;
+    }
+
+    /** The power's look eased away over about {@code fadeTicks}. */
+    public static void clearAccent(int fadeTicks) {
+        if (accentMoment != null) {
+            if (accentMoment.equals(overrideLook)) clearOverride(fadeTicks);
+            accentMoment = null;
+        }
+        if (accentLook == null) return;
+        accentLook = null;
+        accentStale = true;
+        accentEase = rate(fadeTicks);
+    }
+
+    // the A/B switch for a power's look: laid over the place (as built), or through the moment channel as it was
+    private static boolean accentAsMoment;
+    private static @org.jspecify.annotations.Nullable String accentMoment;
+
+    /**
+     * {@code /awaken lens accent off|on} (autopilot {@code lens accent}): a power's look laid over the place's own and
+     * under the grade (on, as built), or in place of both as it was until 12 Nov (off), for A/B in play. Takes hold with
+     * the next cast.
+     */
+    public static String accentSwitch(String arg) {
+        accentAsMoment = arg.trim().equals("off");
+        return "a power's look " + (accentAsMoment ? "replaces the place's look and the grade (as it was)" : "is laid over the place's look, under the grade (built in)");
+    }
+
+    /** Autopilot {@code lens look}: the look as drawn now (the place's, a power's over it, the grade over that), in numbers. */
+    public static String lookNow() {
+        float[] s = LensGrades.shader();
+        return String.format(java.util.Locale.ROOT,
+                "exposure %.3f contrast %.3f saturation %.3f warmth %.3f bloom %.3f vignette %.3f; grade vibrance %.2f azure %.2f leaf %.2f; %s",
+                graded[Look.EXPOSURE], graded[Look.CONTRAST], graded[Look.SATURATION], graded[Look.WARMTH], graded[Look.BLOOM], graded[Look.VIGNETTE],
+                s[0], s[4], s[5],
+                overrideLook != null ? "a moment's look, " + overrideLook : accentLook != null ? "a power's look over the place's, " + accentLook : "the place's own");
     }
 
     /** The moment's look playing now ({@link #override}), or null for the place's own. */
@@ -475,23 +789,47 @@ public final class LensClient {
      * overworld sky); otherwise their own fallback draws them (SPEC §22 "Storm cells").
      */
     public static boolean drawsStormCells() {
-        return active && lit && sunHere && lensFrame != null;
+        return active && framed && sunHere && lensFrame != null;
     }
+
+    /**
+     * Whether this frame's chain lays LensGlow's layer over its picture: the chains that read the frame (Lite, Cinematic,
+     * Ultra, whose last pass is lens_lay), never during a story's tear from black, which nothing may show through,
+     * and never while the chain itself failed to load (light drawn for a pass that never runs would be lost: the
+     * power effects vanished whole in run 43203754646, whose chains a bad input had kept from loading).
+     */
+    static boolean laysLight() {
+        return active && framed && chainRuns && glow != null && tear <= 0f && tearStep <= 0f;
+    }
+
+    /** Whether the chain Lens asserted this tick is one the game can run (it loaded and compiled). */
+    private static boolean chainRuns;
 
     private static float rate(int fadeTicks) {
         // about 95% of the way after fadeTicks
         return fadeTicks <= 1 ? 1f : (float) (1.0 - Math.pow(0.05, 1.0 / fadeTicks));
     }
 
-    private static void ensureLight() {
+    /** The frame's values, for every chain that reads them (Lite too). */
+    private static void ensureFrame() {
         if (lensFrame != null) return;
-        // registered before the chain that reads them first loads: a post pass keeps the texture it found then
+        // registered before the chain that reads it first loads: a post pass keeps the texture it found then
         lensFrame = new LensFrame();
+        Minecraft.getInstance().getTextureManager().register(FRAME, lensFrame.texture);
+    }
+
+    /** The chain Lens last asserted (a different one this tick: its histories are not last frame's). */
+    private static @org.jspecify.annotations.Nullable Identifier ran;
+
+    private static void ensureLight() {
+        if (heightfield != null) return;
+        // registered before the chain that reads them first loads: a post pass keeps the texture it found then
         heightfield = new LensHeightfield();
         blocks = new LensBlocks();
-        Minecraft.getInstance().getTextureManager().register(FRAME, lensFrame.texture);
         Minecraft.getInstance().getTextureManager().register(HEIGHT, heightfield.texture);
         litAir = new LensLit();
+        sunMap = new LensSunMap();
+        Minecraft.getInstance().getTextureManager().register(SUNMAP, sunMap.texture);
         Minecraft.getInstance().getTextureManager().register(BLOCKS, blocks.texture);
         Minecraft.getInstance().getTextureManager().register(LIT, litAir.texture);
         Awaken.LOG.info("[lens] light ready (heightfield {}x{}, {} mips)", LensHeightfield.SIZE, LensHeightfield.SIZE, LensHeightfield.LEVELS);
@@ -512,7 +850,7 @@ public final class LensClient {
         }
         starBrightness = sky.starBrightness;
         // (with the Air on, Lens's clouds are part of its sky: drawn whatever the Clouds video setting says)
-        cloudsHere = active && lit && current[Look.CLOUDS] > 0f && net.minecraft.util.ARGB.alpha(state.cloudColor) > 0
+        cloudsHere = active && framed && current[Look.CLOUDS] > 0f && net.minecraft.util.ARGB.alpha(state.cloudColor) > 0
                 && (air || e.getOptionsRenderState().cloudStatus != net.minecraft.client.CloudStatus.OFF);
         if (!cloudsHere) return;
         cloudColour = state.cloudColor;
@@ -523,13 +861,24 @@ public final class LensClient {
     /** Just before the post effects: Lens 2's frame values (the exact matrices this frame drew with, the light). */
     private static void afterLevel(RenderLevelStageEvent.AfterLevel e) {
         if (!active) return;
-        if (lit && lensFrame != null) writeFrame(e);
+        if (framed && lensFrame != null) writeFrame(e);
+        // the hand is drawn next, into a depth of its own: Lens's light is for the world and stops at the hand, which
+        // it can only tell from a wall at arm's length by that depth (SPEC §22 "Reach and cover")
+        if (params != null && hand != null) {
+            var handTarget = dev.awaken.turbo.pixels.PixelsHooks.handTarget();
+            params.hand(hand.point(handTarget != null ? handTarget.getDepthTextureView() : null));
+            params.uploadIfChanged();
+        }
         // both textures are written for this frame: the same values as one uniform block (Tiles binds it on Apple's path)
         if (params != null) {
             if (block == null) block = new LensBlock();
-            block.write(lit ? lensFrame : null, params);
-            if (lit && lensFrame != null && WorldProjection.ready()) {
-                // the world's own matrices and sun over the CPU's estimate (LensFrame's texels 0-11 and 21)
+            calmLast = block.write(framed ? lensFrame : null, params);
+            boolean calm = calmLast && !noCalm;
+            leaveCinematic = calm ? CINEMATIC_FULL : CINEMATIC_CALM;
+            leaveUltra = calm ? ULTRA_FULL : ULTRA_CALM;
+            if (framed && lensFrame != null && WorldProjection.ready()) {
+                // the world's own matrices and sun over the CPU's estimate (LensFrame's texels 0-11 and 21, whole: a
+                // value of the frame's own must never ride in one of them)
                 var encoder = RenderSystem.getDevice().createCommandEncoder();
                 encoder.copyTextureToBuffer(WorldProjection.output(), block.buffer, 0L, LensClient::nothing, 0, 0, 0, 12, 1);
                 encoder.copyTextureToBuffer(WorldProjection.output(), block.buffer, LensFrame.SUN * 16L, LensClient::nothing, 0, WorldProjection.SUN, 0, 1, 1);
@@ -542,7 +891,21 @@ public final class LensClient {
 
     private static void nothing() {}
 
+    // the governor (SPEC §22 "Steady Light", the trim): when a frame came late, Lens's own tick work stands back for a
+    // second (a third of its usual time a tick), so what little the CPU has to spare goes to the game's own spikes
+    private static long lastFrameNanos, lateNanos;
+
+    /** What a tick of the heightfield's or the block map's reading may take now, in nanoseconds. */
+    static long tickBudget() {
+        return System.nanoTime() - lateNanos < 1_000_000_000L ? 150_000L : 500_000L;
+    }
+
     private static void writeFrame(RenderLevelStageEvent.AfterLevel e) {
+        long nowNanos = System.nanoTime();
+        // (19 ms: past the 16.7 of a frame at 60 with room for the clock's own wobble; a faster screen's frames never
+        // reach it unless they are late too)
+        if (lastFrameNanos != 0L && nowNanos - lastFrameNanos > 19_000_000L && nowNanos - lastFrameNanos < 250_000_000L) lateNanos = nowNanos;
+        lastFrameNanos = nowNanos;
         var state = e.getLevelRenderState();
         float lx = moonLight ? -sunDir.x : sunDir.x, ly = moonLight ? -sunDir.y : sunDir.y, lz = moonLight ? -sunDir.z : sunDir.z;
         // the clouds' cover: the look's, thickening toward overcast in rain and storms (not for the rain a Rolling Storm
@@ -554,9 +917,18 @@ public final class LensClient {
         double drift = ((ticks % 768_000L) + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) * 0.04;
         lensFrame.clouds(cloudsHere ? cloudHeight : 0f, cover, drift, cloudColour);
         lensFrame.air(sunDir.x, sunDir.y, sunDir.z, air && sunHere ? 1f : 0f, skyR, skyG, skyB, starBrightness);
+        // a land with a sky of its own (every world but the overworld): the Air draws the land's colours, its horizon
+        // the game's fog colour with the look's haze tint over it (SPEC §22 "The Air in other worlds")
+        float tintMix = graded[Look.HAZE_TINT_MIX];
+        lensFrame.land(fogR + (graded[Look.HAZE_TINT] - fogR) * tintMix, fogG + (graded[Look.HAZE_TINT + 1] - fogG) * tintMix,
+                fogB + (graded[Look.HAZE_TINT + 2] - fogB) * tintMix, ownSky() ? 1f : 0f);
         lensFrame.blocks(sunPass && sunHere && blocks != null ? LensBlocks.TRUSTED : 0f, blocks != null ? blocks.minY() : 0f);
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
                 rays && litAir.valid());
+        lensFrame.paths(showPaths);
+        float[] small = forcedSmall != null ? forcedSmall : SMALL;
+        lensFrame.small(small[0], small[1], small[2], small[3]);
+        lensFrame.edgeHold(forcedEdgeHold == Boolean.FALSE ? 0f : EDGE_HOLD);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
         if (WorldProjection.ready()) {
@@ -566,10 +938,62 @@ public final class LensClient {
         }
     }
 
+    private static final float[] AIR_FOG = new float[3];
+    // the game's fog colour this frame, as its terrain was fogged with it
+    private static float fogR, fogG, fogB;
+
+    /** Whether this world's sky is its own under the Air: every world but the overworld (its biomes say its colours). */
+    private static boolean ownSky() {
+        Minecraft mc = Minecraft.getInstance();
+        return mc.level != null && mc.level.dimension() != Level.OVERWORLD;
+    }
+
+    /**
+     * The game's fog under the Air (SPEC §22): while Lens draws the sky, the game's own fog takes the Air's horizon colour
+     * toward where the camera looks. The game still fogs land whole by itself (the last tenth of the render distance, a
+     * chunk fading in, the edge hold's mist) in the biome's fog colour, which its own sky shares at the horizon. The
+     * Air's sky does not, so where a biome has a fog colour of its own (the Glass Steppe's is sand) that land stood as
+     * flat sand shapes on a blue sky (Euan, playing, 11 Nov: "it's like brown fog but low quality").
+     */
+    private static void fogColour(ViewportEvent.ComputeFogColor e) {
+        if (!active || !framed || !air || !sunHere) return;
+        Camera camera = e.getCamera();
+        // water, lava and powder snow keep their own fog; so do blindness and darkness, which black it out
+        if (camera.getFluidInCamera() != net.minecraft.world.level.material.FogType.NONE) return;
+        if (camera.entity() instanceof net.minecraft.world.entity.LivingEntity living
+                && (living.hasEffect(net.minecraft.world.effect.MobEffects.BLINDNESS) || living.hasEffect(net.minecraft.world.effect.MobEffects.DARKNESS))) return;
+        Minecraft mc = Minecraft.getInstance();
+        // (the sun as the last frame had it: this is asked before the frame's own values are worked out)
+        if (mc.level == null || sunDir.lengthSquared() < 0.5f) return;
+        // a land with a sky of its own keeps its fog: there the Air's horizon is that colour, not the other way round
+        if (ownSky()) return;
+        var forward = camera.forwardVector();
+        float hx = forward.x(), hz = forward.z(), len = (float) Math.sqrt(hx * hx + hz * hz);
+        if (len < 1.0e-3f) {
+            // straight up or down: the way the camera is turned
+            float yaw = camera.yRot() * Mth.DEG_TO_RAD;
+            hx = -Mth.sin(yaw);
+            hz = Mth.cos(yaw);
+            len = 1f;
+        }
+        dev.awaken.lens.LensAir.horizon(hx / len, hz / len, sunDir.x, sunDir.y, sunDir.z, rain, AIR_FOG);
+        // the game's own darkening toward the void, kept (FogRenderer.computeFogColor)
+        float range = mc.level.getLevelData().voidDarknessOnsetRange();
+        float dark = Mth.clamp((range + mc.level.getMinY() - (float) camera.position().y) / range, 0f, 1f);
+        float keep = (1f - dark) * (1f - dark);
+        e.setRed(AIR_FOG[0] * keep);
+        e.setGreen(AIR_FOG[1] * keep);
+        e.setBlue(AIR_FOG[2] * keep);
+    }
+
     private static void ensureParams() {
         if (params != null) return;
         params = new LensParams();
         Minecraft.getInstance().getTextureManager().register(PARAMS, params.texture);
+        hand = new LensHand();
+        Minecraft.getInstance().getTextureManager().register(HAND, hand);
+        glow = LensGlow.make();
+        Minecraft.getInstance().getTextureManager().register(GLOW, glow);
         Minecraft.getInstance().getTextureManager().register(FAR_DEPTH, dev.awaken.compat.client.FarTerrain.depthTexture());
         zeroToOne = RenderSystem.getDevice().getDeviceInfo().isZZeroToOne();
         Awaken.LOG.info("[lens] ready ({} depth)", zeroToOne ? "zero-to-one" : "minus-one-to-one");
@@ -580,7 +1004,7 @@ public final class LensClient {
         if (!active || params == null) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
-        if (lit) WorldProjection.want();
+        if (framed) WorldProjection.want();
         float partial = (float) e.getPartialTick();
         // the camera's far plane, as Camera.update sets it
         float far = Math.max(mc.options.getEffectiveRenderDistance() * 16 * 4f, mc.options.cloudRange().get() * 16f);
@@ -644,11 +1068,15 @@ public final class LensClient {
         }
         float underTarget = roof > eye.y + 0.5 ? 1f : 0f;
         under += (underTarget - under) * (1f - (float) Math.exp(-dt * 6.0));
-        params.write(debug, current, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
+        fogR = fog.color.x();
+        fogG = fog.color.y();
+        fogB = fog.color.z();
+        params.write(debug, graded, far, zeroToOne, u, v, visible, sunset, sr, sg, sb, fog.color.x(), fog.color.y(), fog.color.z(),
                 // a far renderer moves vanilla's chunk fog out; Lens's haze keeps vanilla's render distance
                 FarTerrain.renderDistanceFogEnd(fog.renderDistanceEnd), fog.environmentalEnd, tear > 0 ? Math.min(1f, tear + tearStep * partial) : 0f, crush, bloomBoost,
                 UiHooks.focus(), motion, motionX, motionY,
-                FarTerrain.active(), FarTerrain.readable(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far(), under);
+                FarTerrain.active(), FarTerrain.readable(), FarTerrain.reverseZ(), FarTerrain.zeroToOne(), FarTerrain.near(), FarTerrain.far(), under,
+                LensGrades.shader(), framed && !lit);
         params.uploadIfChanged();
     }
 

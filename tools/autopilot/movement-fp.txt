@@ -1,0 +1,492 @@
+# The feathered wings through your own eyes (SPEC §62 "First person", 12 Nov 2026): barely seen, only the tips at the
+# frame's outer edges on a beat. Held in each state by the studio (every rung, at 70 and 110 degrees, shots every two
+# ticks through a whole beat), then in real flight: a glide, flight with beats and a turn, a dive. Shots only.
+# Look tour: tools/tour-ci.sh tools/autopilot/movement-fp.txt 2400
+# ci knobs: LENS=cinematic
+world movement_fp survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 1280 720
+gui 0
+hud on
+info
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule fall_damage false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd forceload add 1968 -256 2047 255
+# ---- the sandbox on a floor at y 150: the lane of giant trees and the street ----
+cmd tp @s 2000.5 152 0.5 0 0
+wait 200
+cmd fill 1970 150 -250 2030 150 -1 minecraft:grass_block
+cmd fill 1970 150 0 2030 150 250 minecraft:grass_block
+cmd tp @s 2000.5 152 0.5 0 0
+wait 120
+cmd fill 1970 150 -250 2030 150 -1 minecraft:grass_block
+cmd fill 1970 150 0 2030 150 250 minecraft:grass_block
+cmd tp @s 2000.5 152 0.5 0 0
+wait 120
+cmd tp @s 2000.5 151 0.5 0 0
+wait 10
+cmd awaken ascent grant all
+cmd awaken ascent sandbox
+wait 200
+screen close
+cmd fill 1997 290 -3 2003 290 3 minecraft:polished_deepslate
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 20
+# ---- held in each state, 70 degrees ----
+opt fov 70
+wait 10
+# wings
+cmd awaken ascent pilot wings open wings
+wait 8
+shotnow fpw_70_wings_open_01
+wait 8
+shotnow fpw_70_wings_open_02
+wait 8
+cmd awaken ascent pilot wings glide wings
+wait 12
+shotnow fpw_70_wings_glide
+cmd awaken ascent pilot wings dive wings
+wait 12
+shotnow fpw_70_wings_dive
+cmd awaken ascent pilot wings fly wings
+wait 8
+shotnow fpw_70_wings_fly_01
+wait 2
+shotnow fpw_70_wings_fly_02
+wait 2
+shotnow fpw_70_wings_fly_03
+wait 2
+shotnow fpw_70_wings_fly_04
+wait 2
+shotnow fpw_70_wings_fly_05
+wait 2
+shotnow fpw_70_wings_fly_06
+wait 2
+shotnow fpw_70_wings_fly_07
+wait 2
+shotnow fpw_70_wings_fly_08
+wait 2
+shotnow fpw_70_wings_fly_09
+wait 2
+shotnow fpw_70_wings_fly_10
+cmd awaken ascent pilot wings land wings
+shotnow fpw_70_wings_land_01
+wait 2
+shotnow fpw_70_wings_land_02
+wait 2
+shotnow fpw_70_wings_land_03
+wait 2
+shotnow fpw_70_wings_land_04
+wait 2
+shotnow fpw_70_wings_land_05
+wait 2
+shotnow fpw_70_wings_land_06
+cmd awaken ascent pilot wings hover wings
+wait 6
+shotnow fpw_70_wings_hover_01
+wait 2
+shotnow fpw_70_wings_hover_02
+wait 2
+shotnow fpw_70_wings_hover_03
+wait 2
+shotnow fpw_70_wings_hover_04
+wait 2
+shotnow fpw_70_wings_hover_05
+wait 2
+shotnow fpw_70_wings_hover_06
+wait 2
+shotnow fpw_70_wings_hover_07
+wait 2
+shotnow fpw_70_wings_hover_08
+# skyborn
+cmd awaken ascent pilot wings open skyborn
+wait 8
+shotnow fpw_70_skyborn_open_01
+wait 8
+shotnow fpw_70_skyborn_open_02
+wait 8
+cmd awaken ascent pilot wings glide skyborn
+wait 12
+shotnow fpw_70_skyborn_glide
+cmd awaken ascent pilot wings dive skyborn
+wait 12
+shotnow fpw_70_skyborn_dive
+cmd awaken ascent pilot wings fly skyborn
+wait 8
+shotnow fpw_70_skyborn_fly_01
+wait 2
+shotnow fpw_70_skyborn_fly_02
+wait 2
+shotnow fpw_70_skyborn_fly_03
+wait 2
+shotnow fpw_70_skyborn_fly_04
+wait 2
+shotnow fpw_70_skyborn_fly_05
+wait 2
+shotnow fpw_70_skyborn_fly_06
+wait 2
+shotnow fpw_70_skyborn_fly_07
+wait 2
+shotnow fpw_70_skyborn_fly_08
+wait 2
+shotnow fpw_70_skyborn_fly_09
+wait 2
+shotnow fpw_70_skyborn_fly_10
+cmd awaken ascent pilot wings land skyborn
+shotnow fpw_70_skyborn_land_01
+wait 2
+shotnow fpw_70_skyborn_land_02
+wait 2
+shotnow fpw_70_skyborn_land_03
+wait 2
+shotnow fpw_70_skyborn_land_04
+wait 2
+shotnow fpw_70_skyborn_land_05
+wait 2
+shotnow fpw_70_skyborn_land_06
+# sovereign
+cmd awaken ascent pilot wings open sovereign
+wait 8
+shotnow fpw_70_sovereign_open_01
+wait 8
+shotnow fpw_70_sovereign_open_02
+wait 8
+cmd awaken ascent pilot wings glide sovereign
+wait 12
+shotnow fpw_70_sovereign_glide
+cmd awaken ascent pilot wings dive sovereign
+wait 12
+shotnow fpw_70_sovereign_dive
+cmd awaken ascent pilot wings fly sovereign
+wait 8
+shotnow fpw_70_sovereign_fly_01
+wait 2
+shotnow fpw_70_sovereign_fly_02
+wait 2
+shotnow fpw_70_sovereign_fly_03
+wait 2
+shotnow fpw_70_sovereign_fly_04
+wait 2
+shotnow fpw_70_sovereign_fly_05
+wait 2
+shotnow fpw_70_sovereign_fly_06
+wait 2
+shotnow fpw_70_sovereign_fly_07
+wait 2
+shotnow fpw_70_sovereign_fly_08
+wait 2
+shotnow fpw_70_sovereign_fly_09
+wait 2
+shotnow fpw_70_sovereign_fly_10
+cmd awaken ascent pilot wings land sovereign
+shotnow fpw_70_sovereign_land_01
+wait 2
+shotnow fpw_70_sovereign_land_02
+wait 2
+shotnow fpw_70_sovereign_land_03
+wait 2
+shotnow fpw_70_sovereign_land_04
+wait 2
+shotnow fpw_70_sovereign_land_05
+wait 2
+shotnow fpw_70_sovereign_land_06
+cmd awaken ascent pilot wings hover sovereign
+wait 6
+shotnow fpw_70_sovereign_hover_01
+wait 2
+shotnow fpw_70_sovereign_hover_02
+wait 2
+shotnow fpw_70_sovereign_hover_03
+wait 2
+shotnow fpw_70_sovereign_hover_04
+wait 2
+shotnow fpw_70_sovereign_hover_05
+wait 2
+shotnow fpw_70_sovereign_hover_06
+wait 2
+shotnow fpw_70_sovereign_hover_07
+wait 2
+shotnow fpw_70_sovereign_hover_08
+cmd awaken ascent pilot wings off
+wait 40
+# ---- held in each state, 110 degrees ----
+opt fov 110
+wait 10
+# wings
+cmd awaken ascent pilot wings open wings
+wait 8
+shotnow fpw_110_wings_open_01
+wait 8
+shotnow fpw_110_wings_open_02
+wait 8
+cmd awaken ascent pilot wings glide wings
+wait 12
+shotnow fpw_110_wings_glide
+cmd awaken ascent pilot wings dive wings
+wait 12
+shotnow fpw_110_wings_dive
+cmd awaken ascent pilot wings fly wings
+wait 8
+shotnow fpw_110_wings_fly_01
+wait 2
+shotnow fpw_110_wings_fly_02
+wait 2
+shotnow fpw_110_wings_fly_03
+wait 2
+shotnow fpw_110_wings_fly_04
+wait 2
+shotnow fpw_110_wings_fly_05
+wait 2
+shotnow fpw_110_wings_fly_06
+wait 2
+shotnow fpw_110_wings_fly_07
+wait 2
+shotnow fpw_110_wings_fly_08
+wait 2
+shotnow fpw_110_wings_fly_09
+wait 2
+shotnow fpw_110_wings_fly_10
+cmd awaken ascent pilot wings land wings
+shotnow fpw_110_wings_land_01
+wait 2
+shotnow fpw_110_wings_land_02
+wait 2
+shotnow fpw_110_wings_land_03
+wait 2
+shotnow fpw_110_wings_land_04
+wait 2
+shotnow fpw_110_wings_land_05
+wait 2
+shotnow fpw_110_wings_land_06
+cmd awaken ascent pilot wings hover wings
+wait 6
+shotnow fpw_110_wings_hover_01
+wait 2
+shotnow fpw_110_wings_hover_02
+wait 2
+shotnow fpw_110_wings_hover_03
+wait 2
+shotnow fpw_110_wings_hover_04
+wait 2
+shotnow fpw_110_wings_hover_05
+wait 2
+shotnow fpw_110_wings_hover_06
+wait 2
+shotnow fpw_110_wings_hover_07
+wait 2
+shotnow fpw_110_wings_hover_08
+# skyborn
+cmd awaken ascent pilot wings open skyborn
+wait 8
+shotnow fpw_110_skyborn_open_01
+wait 8
+shotnow fpw_110_skyborn_open_02
+wait 8
+cmd awaken ascent pilot wings glide skyborn
+wait 12
+shotnow fpw_110_skyborn_glide
+cmd awaken ascent pilot wings dive skyborn
+wait 12
+shotnow fpw_110_skyborn_dive
+cmd awaken ascent pilot wings fly skyborn
+wait 8
+shotnow fpw_110_skyborn_fly_01
+wait 2
+shotnow fpw_110_skyborn_fly_02
+wait 2
+shotnow fpw_110_skyborn_fly_03
+wait 2
+shotnow fpw_110_skyborn_fly_04
+wait 2
+shotnow fpw_110_skyborn_fly_05
+wait 2
+shotnow fpw_110_skyborn_fly_06
+wait 2
+shotnow fpw_110_skyborn_fly_07
+wait 2
+shotnow fpw_110_skyborn_fly_08
+wait 2
+shotnow fpw_110_skyborn_fly_09
+wait 2
+shotnow fpw_110_skyborn_fly_10
+cmd awaken ascent pilot wings land skyborn
+shotnow fpw_110_skyborn_land_01
+wait 2
+shotnow fpw_110_skyborn_land_02
+wait 2
+shotnow fpw_110_skyborn_land_03
+wait 2
+shotnow fpw_110_skyborn_land_04
+wait 2
+shotnow fpw_110_skyborn_land_05
+wait 2
+shotnow fpw_110_skyborn_land_06
+# sovereign
+cmd awaken ascent pilot wings open sovereign
+wait 8
+shotnow fpw_110_sovereign_open_01
+wait 8
+shotnow fpw_110_sovereign_open_02
+wait 8
+cmd awaken ascent pilot wings glide sovereign
+wait 12
+shotnow fpw_110_sovereign_glide
+cmd awaken ascent pilot wings dive sovereign
+wait 12
+shotnow fpw_110_sovereign_dive
+cmd awaken ascent pilot wings fly sovereign
+wait 8
+shotnow fpw_110_sovereign_fly_01
+wait 2
+shotnow fpw_110_sovereign_fly_02
+wait 2
+shotnow fpw_110_sovereign_fly_03
+wait 2
+shotnow fpw_110_sovereign_fly_04
+wait 2
+shotnow fpw_110_sovereign_fly_05
+wait 2
+shotnow fpw_110_sovereign_fly_06
+wait 2
+shotnow fpw_110_sovereign_fly_07
+wait 2
+shotnow fpw_110_sovereign_fly_08
+wait 2
+shotnow fpw_110_sovereign_fly_09
+wait 2
+shotnow fpw_110_sovereign_fly_10
+cmd awaken ascent pilot wings land sovereign
+shotnow fpw_110_sovereign_land_01
+wait 2
+shotnow fpw_110_sovereign_land_02
+wait 2
+shotnow fpw_110_sovereign_land_03
+wait 2
+shotnow fpw_110_sovereign_land_04
+wait 2
+shotnow fpw_110_sovereign_land_05
+wait 2
+shotnow fpw_110_sovereign_land_06
+cmd awaken ascent pilot wings hover sovereign
+wait 6
+shotnow fpw_110_sovereign_hover_01
+wait 2
+shotnow fpw_110_sovereign_hover_02
+wait 2
+shotnow fpw_110_sovereign_hover_03
+wait 2
+shotnow fpw_110_sovereign_hover_04
+wait 2
+shotnow fpw_110_sovereign_hover_05
+wait 2
+shotnow fpw_110_sovereign_hover_06
+wait 2
+shotnow fpw_110_sovereign_hover_07
+wait 2
+shotnow fpw_110_sovereign_hover_08
+cmd awaken ascent pilot wings off
+wait 40
+# ---- real flight, 70 degrees: off the deck into a glide, flight with beats and a banked turn, a dive ----
+opt fov 70
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run glide
+wait 12
+shotnow fpw_real_glide_01
+wait 12
+shotnow fpw_real_glide_02
+wait 12
+shotnow fpw_real_glide_03
+wait 12
+shotnow fpw_real_glide_04
+wait 12
+shotnow fpw_real_glide_05
+wait 12
+shotnow fpw_real_glide_06
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run soar
+wait 14
+shotnow fpw_real_soar_01
+wait 7
+shotnow fpw_real_soar_02
+wait 7
+shotnow fpw_real_soar_03
+wait 7
+shotnow fpw_real_soar_04
+wait 7
+shotnow fpw_real_soar_05
+wait 7
+shotnow fpw_real_soar_06
+wait 7
+shotnow fpw_real_soar_07
+wait 7
+shotnow fpw_real_soar_08
+wait 7
+shotnow fpw_real_soar_09
+wait 7
+shotnow fpw_real_soar_10
+wait 7
+shotnow fpw_real_soar_11
+wait 7
+shotnow fpw_real_soar_12
+wait 7
+shotnow fpw_real_soar_13
+wait 7
+shotnow fpw_real_soar_14
+wait 7
+shotnow fpw_real_soar_15
+wait 7
+shotnow fpw_real_soar_16
+wait 7
+shotnow fpw_real_soar_17
+wait 7
+shotnow fpw_real_soar_18
+wait 7
+shotnow fpw_real_soar_19
+wait 7
+shotnow fpw_real_soar_20
+cmd awaken ascent pilot stop
+cmd tp @s 2000.5 291 -2.5 0 10
+camera first
+wait 10
+cmd awaken ascent pilot run boom
+wait 10
+shotnow fpw_real_dive_01
+wait 10
+shotnow fpw_real_dive_02
+wait 10
+shotnow fpw_real_dive_03
+wait 10
+shotnow fpw_real_dive_04
+wait 10
+shotnow fpw_real_dive_05
+wait 10
+shotnow fpw_real_dive_06
+wait 10
+shotnow fpw_real_dive_07
+wait 10
+shotnow fpw_real_dive_08
+cmd awaken ascent pilot stop
+wait 20
+quit

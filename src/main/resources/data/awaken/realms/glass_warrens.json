@@ -6,21 +6,26 @@
   "theme": "glass_desert",
   "ranks": [
     "D",
-    "C"
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:glass_warrens",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:gate_glass_desert"
+      "awaken:realm/glass_warrens"
     ],
     "lens": "glass_warrens",
     "air": [
       "shaft_dust",
+      "sand",
       "dust",
-      "embers"
+      "wind"
     ]
   },
   "life": {

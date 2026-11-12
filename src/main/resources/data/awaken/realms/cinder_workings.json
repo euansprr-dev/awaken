@@ -6,25 +6,29 @@
   "theme": "ember_mines",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:cinder_workings",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:gate_ember_mines"
+      "awaken:realm/cinder_workings"
     ],
     "lens": "cinder_workings",
     "air": [
-      "mist",
       "shaft_dust",
       "smoke",
+      "ash",
+      "embers",
       "dust",
-      "drips",
-      "bats",
-      "rats"
+      "steam"
     ]
   },
   "life": {

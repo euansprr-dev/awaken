@@ -1,0 +1,54 @@
+slot.sh: tour slot taken by look-steady-60 after 0s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+p_own_calm.png
+p_rain.png
+t_dusk_west_calm.png
+t_night_sky_calm.png
+t_own_calm.png
+t_own_control.png
+t_sky_calm.png
+t_tree_calm.png
+t_ultra_own_calm.png
+t_ultra_tree_calm.png
+t_west_calm.png
+[02:51:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:51:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart run_played_calm
+[02:51:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[02:51:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[02:51:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[02:51:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:51:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[02:51:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[02:51:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:52:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[02:52:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[02:52:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:52:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[02:52:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[02:52:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:52:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf run_played_calm frames=1155 avg_fps=57.2 p50=17.26ms p95=21.50ms p99=24.32ms max=52.87ms tick_p95=7.22ms heap=3180/8192MB fb=3840x2160 load=2.8 occluded=false minimized=false
+[02:52:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[02:52:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_played_calm: run_played_calm samples=1156 world_p50=14.81ms world_p95=17.58ms world_p99=18.27ms upscale_p50=0.44ms upscale_p99=1.28ms
+[02:52:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_played_calm
+[02:52:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] cmd gamemode creative
+[02:52:13] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+[02:52:13] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:52:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens calm off: calm composite off (calm last frame)
+[02:52:19] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:52:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[02:52:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[02:52:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_played_full 10
+[02:52:34] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_played_full frames=597 avg_fps=59.5 p50=16.76ms p95=19.49ms p99=22.12ms max=48.03ms tick_p95=11.13ms heap=1836/8192MB fb=3840x2160 load=2.8 occluded=false minimized=false
+[02:52:34] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_played_full: own_played_full samples=598 world_p50=14.68ms world_p95=15.57ms world_p99=15.66ms upscale_p50=0.45ms upscale_p99=0.95ms
+[02:52:34] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_played_full
+[02:52:34] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens calm setting: calm composite on calm frames (not calm last frame)
+[02:52:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:52:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[02:52:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[02:52:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_played_calm 10
+[02:52:50] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_played_calm frames=600 avg_fps=59.8 p50=16.90ms p95=19.20ms p99=20.18ms max=22.38ms tick_p95=7.61ms heap=3308/8192MB fb=3840x2160 load=2.4 occluded=false minimized=false
+[02:52:50] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_played_calm: own_played_calm samples=601 world_p50=13.75ms world_p95=14.88ms world_p99=15.03ms upscale_p50=0.44ms upscale_p99=1.18ms
+[02:52:50] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_played_calm
+[02:52:50] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens calm setting: calm composite on calm frames (calm last frame)
+[02:52:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit

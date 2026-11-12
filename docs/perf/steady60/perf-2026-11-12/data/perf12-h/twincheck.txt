@@ -1,0 +1,10 @@
+twin check (where two composites of one frame differ, by the most in any channel), pixels of the shot
+  t_dusk_west_calm.png       one step       39   2-4 steps        0   more        0   (0.0005% of 3840x2160)
+  t_night_sky_calm.png       one step       45   2-4 steps        0   more        9   (0.0007% of 3840x2160)
+  t_own_calm.png             one step      167   2-4 steps        0   more        9   (0.0021% of 3840x2160)
+  t_own_control.png          one step    89937   2-4 steps    62689   more   319841   (5.6962% of 3840x2160)
+  t_sky_calm.png             one step      241   2-4 steps        0   more        0   (0.0029% of 3840x2160)
+  t_tree_calm.png            one step       51   2-4 steps        0   more        0   (0.0006% of 3840x2160)
+  t_ultra_own_calm.png       one step      157   2-4 steps        0   more        0   (0.0019% of 3840x2160)
+  t_ultra_tree_calm.png      one step      151   2-4 steps        0   more        0   (0.0018% of 3840x2160)
+  t_west_calm.png            one step       84   2-4 steps        0   more        0   (0.0010% of 3840x2160)

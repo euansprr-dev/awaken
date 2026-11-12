@@ -7,6 +7,13 @@
 
 float airOn() { return F(22).w; }
 
+// A land with a sky of its own (SPEC §22 "The Air in other worlds"): every world but the overworld says its sky's and
+// its fog's colours in its biomes, and there the Air draws those and not its own model. Frame texels 24, 25, 26 w
+// (the spare of the Holo plates' texels): the land's horizon (its fog colour as the game has it now, the look's haze
+// tint over it); 27 w: how far the sky is the land's (0 the Air's own, 1 the land's). Its zenith is texel 23's sky
+// colour, the game's.
+vec4 airLand() { return vec4(F(24).w, F(25).w, F(26).w, F(27).w); }
+
 // the hour by the sun's height: x day, y dusk or dawn (it peaks as the sun crosses the horizon), z night
 vec3 airHour(float sy) {
     float day = smoothstep(-0.06, 0.30, sy);
@@ -42,7 +49,18 @@ vec3 airSky(vec3 dir, vec3 sun, float rain) {
     c += vec3(0.020, 0.030, 0.055) * pow(max(dot(dir, -sun), 0.0), 6.0) * hr.z;
     // rain and storm: toward a cool grey as bright as the sky was
     float l = dot(c, vec3(0.299, 0.587, 0.114));
-    return mix(c, vec3(l) * vec3(0.90, 0.95, 1.02) * 0.82, rain * 0.85);
+    c = mix(c, vec3(l) * vec3(0.90, 0.95, 1.02) * 0.82, rain * 0.85);
+    // a land's own sky: its sky colour overhead (a little deeper at the top), its horizon below, in the model's own
+    // shape, with the sun's glow in its air. The game's colours already carry the land's hour and weather
+    vec4 land = airLand();
+    if (land.a > 0.0) {
+        vec3 lz = F(23).rgb;
+        vec3 cl = mix(lz * 0.80, lz, smoothstep(0.0, 1.0, pow(up, 1.5)));
+        cl = mix(cl, land.rgb, pow(up, 4.0));
+        cl += glowC * glow * 0.6 * (1.0 - cl);
+        c = mix(c, cl, land.a);
+    }
+    return c;
 }
 
 // the fog's colour for land seen in a direction: the sky that stands behind it there (the horizon's, for land seen
@@ -97,15 +115,23 @@ vec3 airStarLayer(vec3 rd, float scale, float keep, float size, float seconds, f
 }
 
 // the galaxy: a soft band across the sky with dark lanes through it and a warmer, brighter heart
-vec4 airGalaxy(vec3 rd) {
-    const vec3 pole = vec3(0.3162, 0.4743, 0.8222);
-    float b = dot(rd, pole), band = exp(-b * b * 13.0);
-    if (band < 0.01) return vec4(0.0);
+const vec3 AIR_GALAXY_POLE = vec3(0.3162, 0.4743, 0.8222);
+
+// how far into the band a direction of the turning sky is (0..1): cheap, for the stars that crowd along it
+float airGalaxyBand(vec3 rd) {
+    float b = dot(rd, AIR_GALAXY_POLE);
+    return exp(-b * b * 13.0);
+}
+
+// its light: noise, so it is drawn once a frame into the small sky buffer (lens_airsky.fsh) and read from there
+vec3 airGalaxy(vec3 rd) {
+    float band = airGalaxyBand(rd);
+    if (band < 0.01) return vec3(0.0);
     float n = airFbm(rd * 3.4 + 1.7), lanes = airFbm(rd * 7.5 - 4.1);
-    float heart = pow(max(dot(rd, normalize(cross(pole, vec3(0.0, 1.0, 0.0)))), 0.0), 3.0);
+    float heart = pow(max(dot(rd, normalize(cross(AIR_GALAXY_POLE, vec3(0.0, 1.0, 0.0)))), 0.0), 3.0);
     float glow = band * (0.30 + 0.95 * n) * (1.0 - 0.6 * smoothstep(0.46, 0.66, lanes) * band);
     vec3 col = mix(vec3(0.16, 0.24, 0.56), vec3(0.46, 0.34, 0.66), n) + vec3(0.60, 0.38, 0.22) * heart * 0.7;
-    return vec4(col * glow * (0.20 + 0.30 * heart), band);
+    return col * glow * (0.20 + 0.30 * heart);
 }
 
 // a shooting star: one chance every nine seconds, a short bright streak that falls and fades
@@ -124,31 +150,37 @@ vec3 airMeteor(vec3 dir, float seconds) {
     return vec3(0.88, 0.94, 1.0) * (smoothstep(0.0024, 0.0006, across) * step(0.0, along) * smoothstep(tail, 0.0, along) * 1.7);
 }
 
-// everything the night adds to the sky in a direction (before the clouds): stars in three sizes, more of the small
-// ones along the galaxy, the galaxy itself, a shooting star now and then
+// how the night's light fades toward the horizon
+float airNightRise(vec3 dir) { return dir.y < -0.02 ? 0.0 : smoothstep(-0.02, 0.10, dir.y); }
+
+// what the night adds to the sky in a direction that must be sharp (before the clouds): stars in four sizes, more of
+// the small ones along the galaxy, a shooting star now and then, the moon's halo. The galaxy's own light is the sky
+// buffer's (airSlow)
 vec3 airNight(vec3 dir, vec3 sun, float seconds) {
     if (dir.y < -0.02) return vec3(0.0);
     vec3 rd = airStarDir(dir, sun);
-    vec4 gal = airGalaxy(rd);
-    vec3 c = gal.rgb;
+    float band = airGalaxyBand(rd);
     // (a sky full of them: a dust of faint ones, thick along the galaxy; the small; the middling; and the few bright
     // ones with their four points)
-    c += airStarLayer(rd, 230.0, 0.075 + 0.20 * gal.a, 0.16, seconds, 0.0) * 0.50;
-    c += airStarLayer(rd, 140.0, 0.085 + 0.10 * gal.a, 0.11, seconds, 0.0) * 0.85;
+    vec3 c = airStarLayer(rd, 230.0, 0.075 + 0.20 * band, 0.16, seconds, 0.0) * 0.50;
+    c += airStarLayer(rd, 140.0, 0.085 + 0.10 * band, 0.11, seconds, 0.0) * 0.85;
     c += airStarLayer(rd, 70.0, 0.085, 0.075, seconds, 0.0) * 1.25;
     c += airStarLayer(rd, 27.0, 0.085, 0.036, seconds, 1.0) * 1.8;
     c += airMeteor(dir, seconds);
     // a wide soft halo round the moon
     float mu = max(dot(dir, -sun), 0.0);
     c += vec3(0.10, 0.13, 0.20) * (pow(mu, 90.0) * 0.9 + pow(mu, 14.0) * 0.18);
-    return c * smoothstep(-0.02, 0.10, dir.y);
+    return c * airNightRise(dir);
 }
 
 // The high layer: thin wisps far above the block clouds, drawn out along the wind in chunky pixels of their own. They
 // give the day sky a second depth, take the sunset from below before anything else does, and drift at their own pace.
-// rgb their colour, a how much of the sky they cover in this direction.
-vec4 airWisps(vec3 dir, vec2 at, float camY, vec3 sun, float rain, float seconds) {
-    if (dir.y < 0.05) return vec4(0.0);
+// airWispAlpha is how much of the sky they cover in a direction (noise: the sky buffer's), airWispColour their colour.
+float airWispAlpha(vec3 dir, vec2 at, float camY, vec3 sun, float rain, float seconds) {
+    if (dir.y < 0.05) return 0.0;
+    vec3 hr = airHour(sun.y);
+    float much = (0.34 * hr.x + 0.50 * hr.y) * (1.0 - 0.5 * rain);
+    if (much <= 0.0) return 0.0;
     float t = (680.0 - camY) / dir.y;
     vec2 q = (at + dir.xz * t + vec2(seconds * 2.2, 0.0)) / 26.0;
     // (bent by a slow drift, so no streak is a ruled line)
@@ -157,11 +189,27 @@ vec4 airWisps(vec3 dir, vec2 at, float camY, vec3 sun, float rain, float seconds
     // feathered streaks, longer along the sun's own east-west line (they gather toward it at dawn and dusk), in patches
     // with open sky between
     float n = airFbm(vec3(q * vec2(0.028, 0.066), 3.3)) * (0.70 + 0.6 * airNoise(vec3(q * vec2(0.008, 0.011), 9.1)));
+    return smoothstep(0.44, 0.72, n) * much * smoothstep(0.05, 0.22, dir.y) * (1.0 - smoothstep(2600.0, 7000.0, t));
+}
+
+vec3 airWispColour(vec3 dir, vec3 sun, float rain) {
     vec3 hr = airHour(sun.y);
-    float a = smoothstep(0.44, 0.72, n) * (0.34 * hr.x + 0.50 * hr.y) * smoothstep(0.05, 0.22, dir.y) * (1.0 - smoothstep(2600.0, 7000.0, t));
-    if (a <= 0.0) return vec4(0.0);
     float side = 0.5 + 0.5 * dot(normalize(dir.xz + vec2(1.0e-5)), normalize(sun.xz + vec2(1.0e-5)));
     vec3 day = vec3(1.0, 0.99, 0.97), dusk = mix(vec3(0.74, 0.58, 0.86), vec3(1.0, 0.60, 0.44), side), night = vec3(0.07, 0.09, 0.16);
     vec3 c = mix(mix(night, day, hr.x), dusk, hr.y * 0.9);
-    return vec4(mix(c, vec3(dot(c, vec3(0.3, 0.59, 0.11))) * 0.8, rain * 0.8), a * (1.0 - 0.5 * rain));
+    return mix(c, vec3(dot(c, vec3(0.3, 0.59, 0.11))) * 0.8, rain * 0.8);
 }
+
+// The sky's slow parts for a direction, as the sky buffer holds them (lens_airsky.fsh writes this, the composite reads
+// it back with airSlowGalaxy and airSlowWisp): rgb the galaxy's light with the night's share and its rise from the
+// horizon, as a square root (the dark end keeps its steps in 8 bits); a the wisps' cover, doubled.
+const float AIR_SLOW_GALAXY = 1.6;
+
+vec4 airSlow(vec3 dir, vec2 at, float camY, vec3 sun, float rain, float seconds) {
+    float dark = smoothstep(0.06, -0.20, sun.y) * (1.0 - rain) * airNightRise(dir);
+    vec3 gal = dark > 0.0 ? airGalaxy(airStarDir(dir, sun)) * dark : vec3(0.0);
+    return vec4(sqrt(gal * AIR_SLOW_GALAXY), airWispAlpha(dir, at, camY, sun, rain, seconds) * 2.0);
+}
+
+vec3 airSlowGalaxy(vec4 slow) { return slow.rgb * slow.rgb * (1.0 / AIR_SLOW_GALAXY); }
+float airSlowWisp(vec4 slow) { return slow.a * 0.5; }

@@ -30,12 +30,18 @@ public final class AscentClient {
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent e) -> e.register(SovereignClient.ASCEND));
         modBus.addListener((RegisterParticleProvidersEvent e) -> e.registerSpriteSet(AscentContent.MOTE.get(), MoteParticle.Provider::new));
         modBus.addListener(AscentClient::onAddLayers);
+        // the feathered wings' own pipelines (SPEC §62)
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, WingPipelines::onRegister);
         // on a rope the body hangs, never crouches (sneak is the rope's own key there: reeling in, the rappel)
         modBus.addListener((net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEvent e) -> e.registerEntityModifier(
                 new com.google.common.reflect.TypeToken<net.minecraft.client.renderer.entity.EntityRenderer<net.minecraft.world.entity.Entity,
                         net.minecraft.client.renderer.entity.state.EntityRenderState>>() {}, AscentAnims::modify));
-        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) ->
-                e.registerBlockEntityRenderer(AscentContent.UPDRAFT_VENT_BE.get(), UpdraftRenderer::new));
+        modBus.addListener((EntityRenderersEvent.RegisterRenderers e) -> {
+            e.registerBlockEntityRenderer(AscentContent.UPDRAFT_VENT_BE.get(), UpdraftRenderer::new);
+            // the Lesson's figure of light (SPEC §71)
+            e.registerEntityRenderer(AscentContent.FIGURE.get(), LessonFigureRenderer::new);
+            e.registerBlockEntityRenderer(AscentContent.WING_CORE_BE.get(), WingCaseRenderer::new);
+        });
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_flow"), AscentFlow::render));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
@@ -46,21 +52,35 @@ public final class AscentClient {
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.HOTBAR, dev.awaken.Awaken.id("ascent_notes"), AscentNotes::render));
         modBus.addListener((net.neoforged.neoforge.client.event.RegisterGuiLayersEvent e) -> e.registerAbove(
                 net.neoforged.neoforge.client.gui.VanillaGuiLayers.CONTEXTUAL_INFO_BAR, dev.awaken.Awaken.id("ascent_aether"), AscentFlow::renderAether));
+        // a cast in the air shows over the flight (SPEC §62)
+        dev.awaken.core.api.PlayerClips.onCast(AscentAnims::cast);
         FeelDirector.init(modBus);
+        // The Way Up (SPEC §63): the place that woke, and the Lesson at every unlock
+        WayClient.init(modBus);
         RopeTuning.init();
         // the Tab glance shows the Aether (SPEC §40.7)
         dev.awaken.core.api.HudState.installAether(() -> AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.SKYBORN) ? AscentMoves.aether : -1);
         var bus = NeoForge.EVENT_BUS;
         // before the Awakened Body's own moves: an airborne state owns the body and the body's moves stand aside
         bus.addListener(EventPriority.HIGH, MovementInputUpdateEvent.class, AscentMoves::onInput);
+        // the sprint key's real presses, a held key let go and pressed again between two ticks included (the air dash's
+        // press, SPEC §17.32); a repeat of a held key is none
+        bus.addListener(net.neoforged.neoforge.client.event.InputEvent.Key.class, e -> AscentMoves.sprintKey(
+                e.getAction() == com.mojang.blaze3d.platform.InputConstants.PRESS && Minecraft.getInstance().options.keySprint.matches(e.getKeyEvent())));
+        bus.addListener(net.neoforged.neoforge.client.event.InputEvent.MouseButton.Pre.class, e -> AscentMoves.sprintKey(
+                e.getAction() == com.mojang.blaze3d.platform.InputConstants.PRESS && Minecraft.getInstance().options.keySprint.matches(
+                        com.mojang.blaze3d.platform.InputConstants.Type.MOUSE.getOrCreate(e.getButton()))));
         // first person (core.api.FirstPerson): the hands through every state of the ladder
         dev.awaken.core.api.FirstPerson.view((pt, v) -> {
             if (dev.awaken.body.client.feel.FeelConfig.fpMoves()) AscentFp.viewPose(pt, v);
         });
         bus.addListener(ClientTickEvent.Post.class, e -> tick());
+        // the movement's sounds as scores of the game's own recordings (SPEC §62)
+        bus.addListener(net.neoforged.neoforge.client.event.sound.PlaySoundEvent.class, AscentScores::onPlay);
         bus.addListener(ExtractLevelRenderStateEvent.class, AscentRender::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, AscentRender::onSubmit);
-        bus.addListener(SubmitCustomGeometryEvent.class, WindwayRenderer::onSubmit);
+        // the windways' and updrafts' gusts: a pass of their own after the level (SPEC §17.12, "The look")
+        bus.addListener(net.neoforged.neoforge.client.event.RenderLevelStageEvent.AfterLevel.class, WindwayRenderer::onAfterLevel);
         bus.addListener(RenderFrameEvent.Post.class, e -> ClipRecorder.frame());
         // the whole figure turns with the flight (after the body's own lean, LOW, and the casts' at LOWEST)
         bus.addListener(EventPriority.HIGH, RenderPlayerEvent.Pre.class, AscentAnims::onPre);
@@ -78,6 +98,7 @@ public final class AscentClient {
             AscentPilot.stop();
             AscentRoutes.stop();
             AscentAnims.reset();
+            WingLayer.reset();
             FeelDirector.reset();
         });
     }
@@ -102,6 +123,8 @@ public final class AscentClient {
         });
         event.register(AscentPayloads.Pilot.TYPE, (msg, ctx) -> AscentPilot.line(msg.line()));
         event.register(AscentPayloads.Stop.TYPE, (msg, ctx) -> AscentMoves.refused(msg.state()));
+        // a push on a body the Ascent holds (SPEC §62): into its state's velocity at the next step
+        event.register(AscentPayloads.Push.TYPE, (msg, ctx) -> AscentMoves.pushed(msg.x(), msg.y(), msg.z()));
         event.register(AscentPayloads.Remember.TYPE, (msg, ctx) -> AscentScene.remember(msg.bits(), msg.mode()));
         event.register(AscentPayloads.Vow.TYPE, (msg, ctx) -> VowScene.on(msg));
         event.register(AscentPayloads.Record.TYPE, (msg, ctx) -> AscentNotes.record(msg.chain()));

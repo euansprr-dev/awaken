@@ -1,0 +1,76 @@
+# The Hall at a Fitting Stand (SPEC 44.14, 52): the hover state on a suit and on a weapon, then one suit to a stand:
+# boots stood on it, the Hall opening on that suit, the boots taken from the suit itself, another suit saying why it waits.
+# Built on the band tour's world (the Hall's own tour worlds forceload a platform at y 200, which has crashed world
+# generation on CI since 10 Nov). Run on CI: tools/tour-ci.sh tools/autopilot/hall-stand.txt 1500
+world autopilot_hall_stand creative 27132713
+waitworld
+gui 0
+window 1708 960
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 6000
+# open ground outside the city
+cmd spreadplayers ~1400 ~ 0 10 false @s
+wait 200
+screen close
+cmd awaken hall pattern wildhide
+cmd awaken hall pattern bellguard
+cmd awaken hall pattern amberwing
+cmd awaken hall pattern rootwarden
+# a floor, a Fitting Stand three blocks ahead and a works table beside it
+cmd fill ~-3 ~-1 ~-1 ~3 ~-1 ~6 minecraft:polished_deepslate
+cmd fill ~-3 ~ ~1 ~3 ~3 ~6 minecraft:air
+cmd setblock ~ ~ ~3 awaken:fitting_stand[facing=north]
+cmd setblock ~2 ~ ~3 minecraft:crafting_table
+wait 20
+cmd tp @s ~ ~ ~ 0 15
+wait 20
+use
+wait 100
+shot hs_01_terraces_at_stand
+cmd awaken hall view hover 1
+wait 20
+shot hs_02_suit_hover
+cmd awaken hall view hover 3
+wait 20
+shot hs_02b_suit_hover_far
+cmd awaken hall view wing 0
+wait 60
+cmd awaken hall view hover 3
+wait 20
+shot hs_03_weapon_hover
+screen close
+wait 10
+# ---- one suit to a stand: the boots stood on it ----
+cmd awaken hall fit wildhide 3
+wait 20
+use
+wait 110
+shot hs_04_held_opens_on_suit
+cmd awaken hall suit wildhide 3
+wait 70
+shot hs_05_boots_on_stand
+screenkey esc
+wait 70
+cmd awaken hall view hover 0
+wait 20
+shot hs_06_terraces_held
+cmd awaken hall suit bellguard 1
+wait 70
+shot hs_07_other_suit_waits
+screen close
+wait 10
+quit

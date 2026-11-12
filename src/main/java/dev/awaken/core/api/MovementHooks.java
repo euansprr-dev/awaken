@@ -40,6 +40,11 @@ public final class MovementHooks {
         default boolean remembered(Player p, String move) { return false; }
         /** Mastery points on an Ascent track (RUNNER, TETHER, LEAPER, WINGS, SKYBORN, SOVEREIGN), no chain link. Server. */
         default void addMastery(ServerPlayer p, String track, int points) {}
+        /**
+         * A push on a player the body holds in the air (a rope, wings, flight; SPEC §62): true when the body took it (it
+         * joins that state's velocity on the player's client). False: the caller pushes the player the game's way. Server.
+         */
+        default boolean push(ServerPlayer p, Vec3 push) { return false; }
     }
 
     /** Client side: the local player's power key sent a cast. */
@@ -125,6 +130,17 @@ public final class MovementHooks {
     /** Mastery on an Ascent track from outside the body (a dream's finish), without a chain link. */
     public static void addMastery(ServerPlayer p, String track, int points) {
         access.addMastery(p, track, points);
+    }
+
+    /**
+     * Pushes a player (server): added to their motion as the game does, and synced. While the Ascent holds the body (on a
+     * rope, on wings, in flight) its own client moves it, so the push is carried into that state's velocity instead of
+     * being lost (SPEC §62, "a push carries"). Use this rather than setting a player's motion directly.
+     */
+    public static void push(ServerPlayer p, Vec3 push) {
+        if (access.push(p, push)) return;
+        p.setDeltaMovement(p.getDeltaMovement().add(push));
+        p.needsSync = true;
     }
 
     public static void clientCastStarting(Player p, String powerId, String family, boolean motionPredicted) {

@@ -6,8 +6,13 @@
   "theme": "hive",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:honey_highlands",
     "water": 62

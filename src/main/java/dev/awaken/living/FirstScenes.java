@@ -78,6 +78,23 @@ public final class FirstScenes {
             "Go on, then. Good luck. Come back now and then and tell me what it looks like. I haven't seen past that ridge in eleven years."};
     /** The line that holds the coal out. */
     static final int COAL = 12;
+
+    /**
+     * Her lines in a world played far from Carillon (SPEC §67): the skiff after Aldo, the coal for a home "out there", and
+     * the way back in her goodbye. The rest are the same.
+     */
+    static final String[] ILSE_FAR = far(ILSE);
+    static final int COAL_FAR = COAL + 1;
+
+    private static String[] far(String[] base) {
+        java.util.List<String> l = new java.util.ArrayList<>(java.util.List.of(base));
+        int aldo = 8;
+        l.add(aldo + 1, "There's an old skiff up on the ridge. It flies itself, out on the wind to the far country and back again. That's where hunters start now. Nobody from the city can stay out there, so nobody will bother you.");
+        int coal = COAL + 1;
+        l.set(coal, l.get(coal).replace("Put the coal down wherever you want to live,", "Put the coal down wherever you want to live in the far country,"));
+        l.set(l.size() - 1, "Go on, then. Good luck. The skiff will bring you back here whenever you want. Come and tell me what it looks like. I haven't seen past that ridge in eleven years.");
+        return l.toArray(String[]::new);
+    }
     /** Her first line (ticks into the scene), the letters a moment after it, the pause between lines, and how long her hand stays out. */
     static final int L1 = 16, DELIVER = 70, GAP = 12, WAIT = 20 * 30;
     /** After the coal is taken, before her next line. */
@@ -91,15 +108,20 @@ public final class FirstScenes {
         final Wayfarer ilse;
         final BlockPos fire;
         final boolean coal;
+        /** Her lines, and the one that holds the coal out (a Far Landing world has its own). */
+        final String[] say;
+        final int coalAt;
         int age, tookAt = -1, offeredAt = -1;
         /** The next of her lines to say, and when (the scene's age). */
         int next, nextAt = L1;
         boolean delivered, offered, completing;
 
-        Run(Wayfarer ilse, BlockPos fire, boolean coal) {
+        Run(Wayfarer ilse, BlockPos fire, boolean coal, boolean far) {
             this.ilse = ilse;
             this.fire = fire;
             this.coal = coal;
+            this.say = far ? ILSE_FAR : ILSE;
+            this.coalAt = far ? COAL_FAR : COAL;
         }
     }
 
@@ -170,7 +192,7 @@ public final class FirstScenes {
         ServerLevel level = server.overworld();
         BlockPos col = c.offset(-3, 0, 3);
         var src = level.getChunkSource();
-        int y = level.hasChunkAt(col) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, col.getX(), col.getZ())
+        int y = dev.awaken.core.api.Ready.at(level, col) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, col.getX(), col.getZ())
                 : src.getGenerator().getBaseHeight(col.getX(), col.getZ(), Heightmap.Types.WORLD_SURFACE_WG, level, src.randomState());
         return col.atY(y);
     }
@@ -214,7 +236,7 @@ public final class FirstScenes {
         if (RUNS.containsKey(p.getUUID())) return;
         BlockPos fire = Camp.fire(p.level().getServer());
         if (fire == null) fire = ilse.blockPosition();
-        Run r = new Run(ilse, fire, wantsCoal(p));
+        Run r = new Run(ilse, fire, wantsCoal(p), dev.awaken.core.api.TheLull.farLanding(p.level().getServer()));
         RUNS.put(p.getUUID(), r);
         ilse.getNavigation().stop();
         AwakenNet.send(p, new LivingNet.FirstScene(LivingNet.FirstScene.BEGIN, ilse.getId(), fire, r.coal ? 1 : 0, ""));
@@ -236,10 +258,10 @@ public final class FirstScenes {
         Run r = RUNS.get(p.getUUID());
         if (r == null) return;
         if (what == LivingNet.FirstSceneReady.TOOK && r.offered && r.tookAt < 0) took(p, r);
-        else if (what == LivingNet.FirstSceneReady.SKIP && r.next < COAL) {
+        else if (what == LivingNet.FirstSceneReady.SKIP && r.next < r.coalAt) {
             // a held skip: on to the coal (with a fire already, to her last two lines)
             if (!r.delivered) delivered(p, r);
-            r.next = COAL;
+            r.next = r.coalAt;
             r.nextAt = r.age + 1;
         }
     }
@@ -293,9 +315,9 @@ public final class FirstScenes {
             return true;
         }
         if (a < r.nextAt) return true;
-        if (r.next >= ILSE.length) return false;
+        if (r.next >= r.say.length) return false;
         int i = r.next++;
-        if (i == COAL) {
+        if (i == r.coalAt) {
             if (r.coal) {
                 offer(p, r);
                 return true;
@@ -304,8 +326,8 @@ public final class FirstScenes {
             complete(p, r);
             i = r.next++;
         }
-        line(p, "Ilse", ILSE[i], hold(ILSE[i]));
-        r.nextAt = a + hold(ILSE[i]) + GAP;
+        line(p, "Ilse", r.say[i], hold(r.say[i]));
+        r.nextAt = a + hold(r.say[i]) + GAP;
         return true;
     }
 
@@ -338,7 +360,7 @@ public final class FirstScenes {
         r.offeredAt = r.age;
         Item ember = BuiltInRegistries.ITEM.getValue(EMBER);
         if (ember != Items.AIR) r.ilse.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(ember));
-        line(p, "Ilse", ILSE[COAL], hold(ILSE[COAL]));
+        line(p, "Ilse", r.say[r.coalAt], hold(r.say[r.coalAt]));
         AwakenNet.send(p, new LivingNet.FirstScene(LivingNet.FirstScene.OFFER, r.ilse.getId(), r.fire, 0, ""));
     }
 

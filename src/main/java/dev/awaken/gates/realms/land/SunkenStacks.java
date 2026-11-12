@@ -204,7 +204,7 @@ public final class SunkenStacks extends GeneratedCrawl<SunkenStacks.M> {
     public dev.awaken.gates.world.FloorAir air() {
         AirPlan air = new AirPlan().shaft(0, rockTop(), 4, 0, mouthFeet(), 4, 3, 0x9fd8e8, 0.7F);
         if (lord != null) air.mist(lord.feet + 1, 4, 0x2a5a6a, 0.4F).light(lord.cx, lord.feet + 4, lord.cz, 0x7fe0e8, 20, 0.7F);
-        return air.build();
+        return airOf(air);
     }
 
     /** What this kind is cut like (SPEC §50.9, "No two alike"): a library: long reading halls, galleries along one side, flooded floors with what is left to step on. */
@@ -212,5 +212,18 @@ public final class SunkenStacks extends GeneratedCrawl<SunkenStacks.M> {
     protected Style style() {
         return new Style(List.of(Cave.Form.HALL, Cave.Form.PIERS, Cave.Form.CROSS, Cave.Form.TERRACE), List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE),
                 List.of(Arena.Plan.NAVE, Arena.Plan.SQUARE, Arena.Plan.ROTUNDA), List.of(Chasm.Kind.FORD, Chasm.Kind.BRIDGE, Chasm.Kind.BEAMS, Chasm.Kind.FALLING), true, 2.8, 5);
+    }
+
+    /** Its small pieces (SPEC §50.9 "Depth"): fallen stone at the foot of the walls, drifts of wet paper, scraps, kelp hanging where the water was. */
+    @Override
+    protected Trim trim(SunkenStacks.M m) {
+        return new Trim(named("archive_stone_stairs"), named("archive_stone_stairs"), named("archive_paper_drift"), named("archive_scraps"),
+                namedAll("archive_paper"), namedAll("archive_kelp"), 0.8);
+    }
+
+    /** The colour of its light in the air (the same as its biome's). */
+    @Override
+    protected int airTint() {
+        return 0xbfeee0;
     }
 }

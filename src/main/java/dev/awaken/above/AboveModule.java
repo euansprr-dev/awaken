@@ -36,7 +36,12 @@ public final class AboveModule {
         CloneVats.init();
         FrameModules.init();
         Halo.init();
-        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, e -> Power.clear());
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, e -> {
+            Power.clear();
+            // what a save's chunks said about the spots the spacing rule passes over is that save's alone
+            dev.awaken.above.ruin.RuinLocator.forgetSave();
+            dev.awaken.above.ruin.RuinSpacing.set(true);
+        });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, e -> Scanning.forget(e.getEntity().getUUID()));
         AboveCommands.register();
         AboveTests.register();

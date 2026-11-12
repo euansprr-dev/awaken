@@ -6,21 +6,25 @@
   "theme": "frost_monastery",
   "ranks": [
     "C",
-    "B"
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:rime_hollows",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:gate_frost_monastery"
+      "awaken:realm/rime_hollows"
     ],
     "lens": "rime_hollows",
     "air": [
-      "mist",
       "shaft_dust",
-      "dust",
+      "mist",
+      "snow",
+      "wind",
       "drips"
     ]
   },

@@ -45,7 +45,7 @@ public final class SeepHearts {
      */
     public static @Nullable LivingEntity spawn(ServerLevel level, BlockPos socket) {
         BlockPos at = stand(level, socket);
-        if (!level.hasChunkAt(at) || !level.areEntitiesLoaded(ChunkPos.pack(at))) return null;
+        if (!dev.awaken.core.api.Ready.at(level, at) || !level.areEntitiesLoaded(ChunkPos.pack(at))) return null;
         LivingEntity there = at(level, at);
         if (there != null) return there;
         if (!level.getBlockState(at).getCollisionShape(level, at).isEmpty()) return null;

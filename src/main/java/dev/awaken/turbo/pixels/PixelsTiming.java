@@ -29,6 +29,9 @@ final class PixelsTiming {
     // samples since the last report, in milliseconds
     private static final float[] WORLD = new float[1 << 14], UPSCALE = new float[1 << 14];
     private static int count;
+    // what else this frame did (Pixels.mark: bits a caller chooses), kept per slot and per sample for the trace
+    private static int pending;
+    private static final int[] marks = new int[RING], FLAGS = new int[1 << 14];
 
     static void enable(boolean enable) {
         if (enable == on) return;
@@ -45,8 +48,16 @@ final class PixelsTiming {
         }
     }
 
+    static void mark(int bits) {
+        if (on) pending |= bits;
+    }
+
     static void stamp(int which) {
         if (!on) return;
+        if (which == BEFORE_WORLD) {
+            marks[slot] = pending;
+            pending = 0;
+        }
         RenderSystem.getDevice().createCommandEncoder().writeTimestamp(pools[slot], which);
         written[slot] |= 1 << which;
     }
@@ -60,6 +71,7 @@ final class PixelsTiming {
             if (v[0].isPresent() && v[1].isPresent() && v[2].isPresent()) {
                 WORLD[count] = (v[1].getAsLong() - v[0].getAsLong()) * periodNs / 1e6f;
                 UPSCALE[count] = (v[2].getAsLong() - v[1].getAsLong()) * periodNs / 1e6f;
+                FLAGS[count] = marks[next];
                 count++;
             }
         }
@@ -71,6 +83,16 @@ final class PixelsTiming {
     static String report(String label) {
         if (!on) return "gpu timing is off";
         if (count == 0) return label + ": no GPU samples";
+        // the frames in order (world ms, upscale ms, marks) beside the frame traces, for the slow frames' company
+        try {
+            java.nio.file.Path dir = net.minecraft.client.Minecraft.getInstance().gameDirectory.toPath().resolve("perf-traces");
+            java.nio.file.Files.createDirectories(dir);
+            StringBuilder b = new StringBuilder(count * 16);
+            for (int i = 0; i < count; i++) b.append(String.format(Locale.ROOT, "%.3f %.3f %d%n", WORLD[i], UPSCALE[i], FLAGS[i]));
+            java.nio.file.Files.writeString(dir.resolve("gpu_" + label.replaceAll("[^A-Za-z0-9_.-]", "_") + ".txt"), b);
+        } catch (java.io.IOException e) {
+            Awaken.LOG.warn("[pixels] gpu trace: {}", e.toString());
+        }
         float[] w = Arrays.copyOf(WORLD, count), u = Arrays.copyOf(UPSCALE, count);
         Arrays.sort(w);
         Arrays.sort(u);
@@ -83,6 +105,7 @@ final class PixelsTiming {
 
     static void reset() {
         count = 0;
+        pending = 0;
     }
 
     private static float pct(float[] sorted, double q) {

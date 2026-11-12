@@ -1,0 +1,275 @@
+# Steady 60, fourth pass (12 Nov; run again as perf12-e after the first run stayed windowed): the Tiles twin (SPEC §22 "Steady 60") against the chain as written, on his world, pack
+# and settings on the Dell, fullscreen, the windows of steady60-perf12.txt, each case twice and alternating
+# (`lens twin off` is the chain as written, as it ran before; `lens twin setting` the twin while Tiles' block is live).
+# First the twin check (tools/lens/twincheck.py): both composites of one frame from the same inputs, magenta where they
+# differ at all (t_*.png; tools/lens/walkcompare.py counts them), with a control that does change the picture.
+# WORLD="New World V20" tools/steady60-tour.sh tools/autopilot/steady60-perf12-d.txt perf12-e
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1950
+cmd awaken living calm
+screen close
+key dismiss
+screen close
+# (windowed first, then fullscreen: with his options already saying fullscreen, setting it again changed nothing and
+# the game stayed in its small window, 12 Nov)
+display DELL
+wait 100
+display DELL fullscreen
+wait 200
+info
+camera first
+hud off
+pixels gpu on
+cmd gamemode spectator
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 900
+# ---- 1. the twin check: views, suns, Ultra, and the control
+lens chain cinematic_twincheck
+wait 60
+shotnow t_tree
+lens chain cinematic_twincheck_control
+wait 40
+shotnow t_tree_control
+lens chain cinematic_twincheck_same
+wait 40
+shotnow t_tree_same
+lens chain cinematic_twincheck_u
+wait 40
+shotnow t_tree_u
+lens chain cinematic_twincheck_nodbg
+wait 40
+shotnow t_tree_nodbg
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 60
+shotnow t_own_nodbg
+lens chain cinematic_twincheck_u
+wait 40
+shotnow t_own_u
+lens chain cinematic_twincheck_same
+wait 40
+shotnow t_own_same
+lens chain cinematic_twincheck
+wait 40
+shotnow t_own
+cmd tp @s -1535.03 72 -725.14 -151.9 -35
+wait 40
+shotnow t_sky
+cmd tp @s -1543.5 69 -715.5 90 20
+wait 40
+shotnow t_west
+cmd time set 12600
+wait 60
+shotnow t_dusk_west
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 40
+shotnow t_dusk_tree
+cmd time set 18000
+cmd tp @s -1535.03 72 -725.14 -151.9 -35
+wait 60
+shotnow t_night_sky
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 40
+shotnow t_night_own
+cmd time set 1950
+lens chain ultra_twincheck
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 60
+shotnow t_ultra_tree
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 40
+shotnow t_ultra_own
+lens chain off
+lens twin setting
+# ---- 2. where he stood (creative, the hand drawn, the HUD on)
+hud on
+cmd gamemode creative
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 300
+opt vsync 0
+opt maxFps 260
+lens twin off
+wait 100
+pixels gpu reset
+perf own_raw_still_written_1 10
+pixels gpu own_raw_still_written_1
+lens twin setting
+wait 100
+pixels gpu reset
+perf own_raw_still_twin_1 10
+pixels gpu own_raw_still_twin_1
+lens twin off
+wait 100
+pixels gpu reset
+perf own_raw_still_written_2 10
+pixels gpu own_raw_still_written_2
+lens twin setting
+wait 100
+pixels gpu reset
+perf own_raw_still_twin_2 10
+pixels gpu own_raw_still_twin_2
+lens cost
+shot p_own_twin
+opt vsync 1
+opt maxFps 60
+lens twin off
+wait 100
+pixels gpu reset
+perf own_played_still_written 10
+pixels gpu own_played_still_written
+lens twin setting
+wait 100
+pixels gpu reset
+perf own_played_still_twin 10
+pixels gpu own_played_still_twin
+# ---- 3. the tree, standing and turning
+cmd gamemode spectator
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 100
+opt vsync 0
+opt maxFps 260
+lens twin off
+wait 100
+pixels gpu reset
+perf tree_raw_still_written 10
+pixels gpu tree_raw_still_written
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 20
+turn 1.5 240
+pixels gpu reset
+perf tree_raw_turn_written 12
+pixels gpu tree_raw_turn_written
+lens twin setting
+wait 100
+pixels gpu reset
+perf tree_raw_still_twin 10
+pixels gpu tree_raw_still_twin
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 20
+turn 1.5 240
+pixels gpu reset
+perf tree_raw_turn_twin 12
+pixels gpu tree_raw_turn_twin
+opt vsync 1
+opt maxFps 60
+cmd tp @s -1543.5 69 -715.5 -90 20
+lens twin off
+wait 100
+pixels gpu reset
+perf tree_played_still_written 10
+pixels gpu tree_played_still_written
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 20
+turn 1.5 240
+pixels gpu reset
+perf tree_played_turn_written 12
+pixels gpu tree_played_turn_written
+cmd tp @s -1543.5 69 -715.5 -90 20
+lens twin setting
+wait 100
+pixels gpu reset
+perf tree_played_still_twin 10
+pixels gpu tree_played_still_twin
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 20
+turn 1.5 240
+pixels gpu reset
+perf tree_played_turn_twin 12
+pixels gpu tree_played_turn_twin
+# ---- 4. running through the trees: four legs of 5 s, as steady60-perf12.txt
+opt vsync 0
+opt maxFps 260
+lens twin off
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_raw_written
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_raw_written
+lens twin setting
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_raw_twin
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_raw_twin
+opt vsync 1
+opt maxFps 60
+lens twin off
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_played_written
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_played_written
+lens twin setting
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_played_twin
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_played_twin
+lens cost
+# ---- 5. still water in view (a pool cut into this copy of the world), for the water's code in the twin check
+lens twin setting
+opt vsync 0
+opt maxFps 260
+hud off
+cmd fill -1534 71 -734 -1528 71 -729 minecraft:water
+cmd tp @s -1535.03 72 -725.14 -151.9 30
+lens chain cinematic_twincheck
+wait 100
+shotnow t_water
+lens chain cinematic_twincheck_control
+wait 40
+shotnow t_water_control
+lens chain off
+quit

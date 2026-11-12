@@ -285,12 +285,13 @@ public final class CarrierView {
         float h = Carriers.CREST * (1F - done * 0.8F);
         int segs = Mth.clamp((int) (r * 7), 20, 96);
         if (shade) {
-            band(vc, c.x(), y, c.z(), r - 0.8F, r, 0, h * 0.9F, segs, argb(dark(v.cls), 0F), argb(dark(v.cls), 0.35F * k));
+            band(vc, c.x(), y, c.z(), r - 0.55F, r, 0, h * 0.9F, segs, argb(dark(v.cls), 0F), argb(dark(v.cls), 0.35F * k));
             return;
         }
-        // the crest: a sloped wall, the theme's colour at its foot, the class's at its lip
-        band(vc, c.x(), y, c.z(), r - 0.9F, r, 0, h, segs, argb(v.theme, 0F), argb(v.cls, 0.75F * k));
-        band(vc, c.x(), y, c.z(), r - 0.05F, r + 0.05F, h - 0.18F, h + 0.04F, segs, argb(hot(v.cls, 0.55F), 0.95F * k), argb(hot(v.cls, 0.55F), 0.95F * k));
+        // the crest: a steep wall as high as it's judged (knee height: a jump clears it), the theme's colour at its foot,
+        // the class's at its lip
+        band(vc, c.x(), y, c.z(), r - 0.6F, r, 0, h, segs, argb(v.theme, 0F), argb(v.cls, 0.75F * k));
+        band(vc, c.x(), y, c.z(), r - 0.05F, r + 0.05F, h - 0.12F, h + 0.04F, segs, argb(hot(v.cls, 0.55F), 0.95F * k), argb(hot(v.cls, 0.55F), 0.95F * k));
         // its front along the ground, and how far it will roll
         band(vc, c.x(), y, c.z(), r, r + 0.35F, 0.02F, 0.02F, segs, argb(v.cls, 0.5F * k), argb(v.cls, 0F));
         if (t <= v.end()) band(vc, c.x(), y, c.z(), c.to() - 0.06F, c.to() + 0.06F, 0.02F, 0.02F, Mth.clamp((int) (c.to() * 5), 20, 80),

@@ -1,0 +1,132 @@
+{
+ "awaken:delve.cave_creak": [
+  {
+   "delay": 250,
+   "pitch": 0.8,
+   "sound": "minecraft:block.gravel.fall",
+   "volume": 0.8
+  },
+  {
+   "chance": 0.7,
+   "delay": 600,
+   "pitch": 0.7,
+   "sound": "minecraft:block.gravel.hit",
+   "volume": 0.6
+  }
+ ],
+ "awaken:delve.cave_fall": [
+  {
+   "delay": 0,
+   "pitch": 0.6,
+   "sound": "minecraft:block.deepslate.break",
+   "volume": 1.0
+  },
+  {
+   "delay": 150,
+   "pitch": 0.7,
+   "sound": "minecraft:block.gravel.break",
+   "volume": 0.8
+  },
+  {
+   "chance": 0.8,
+   "delay": 350,
+   "pitch": 0.6,
+   "sound": "minecraft:block.gravel.break",
+   "volume": 0.6
+  }
+ ],
+ "awaken:delve.fork_strike": [
+  {
+   "delay": 0,
+   "pitch": 1.0,
+   "sound": "minecraft:block.amethyst_block.hit",
+   "volume": 0.9
+  }
+ ],
+ "awaken:delve.heavy_charge": [
+  {
+   "delay": 600,
+   "pitch": 0.6,
+   "sound": "minecraft:item.crossbow.loading_middle",
+   "volume": 0.6
+  }
+ ],
+ "awaken:delve.heavy_strike": [
+  {
+   "delay": 0,
+   "pitch": 0.7,
+   "sound": "minecraft:block.deepslate.break",
+   "volume": 0.8
+  }
+ ],
+ "awaken:delve.piton_set": [
+  {
+   "delay": 0,
+   "pitch": 0.8,
+   "sound": "minecraft:block.stone.hit",
+   "volume": 0.8
+  }
+ ],
+ "awaken:delve.rope_pay": [
+  {
+   "delay": 0,
+   "pitch": 0.9,
+   "sound": "minecraft:item.lead.untied",
+   "volume": 0.6
+  }
+ ],
+ "awaken:delve.strike.deepglass": [
+  {
+   "chance": 0.35,
+   "delay": 0,
+   "pitch": 1.5,
+   "sound": "minecraft:block.glass.break",
+   "spread": 0.08,
+   "volume": 0.12
+  }
+ ],
+ "awaken:delve.strike_last": [
+  {
+   "chance": 0.8,
+   "delay": 100,
+   "pitch": 1.0,
+   "sound": "minecraft:block.gravel.hit",
+   "volume": 0.5
+  }
+ ],
+ "awaken:delve.true_strike": [
+  {
+   "delay": 0,
+   "pitch": 1.25,
+   "sound": "minecraft:block.deepslate.break",
+   "volume": 0.3
+  }
+ ],
+ "awaken:delve.vein_gives": [
+  {
+   "delay": 0,
+   "pitch": 0.7,
+   "sound": "minecraft:item.mace.smash_ground",
+   "volume": 0.5
+  },
+  {
+   "delay": 150,
+   "pitch": 0.8,
+   "sound": "minecraft:block.nether_ore.break",
+   "volume": 0.6
+  },
+  {
+   "delay": 300,
+   "pitch": 0.7,
+   "sound": "minecraft:block.gravel.break",
+   "volume": 0.6
+  },
+  {
+   "chance": 0.8,
+   "delay": 550,
+   "pitch": 0.8,
+   "sound": "minecraft:block.gravel.fall",
+   "volume": 0.5
+  }
+ ]
+}

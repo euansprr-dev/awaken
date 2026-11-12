@@ -1,0 +1,143 @@
+# The Way Up (SPEC 63.8): the Lessons of Rope and Wings' six moves, the ones a tour can reach without mastery.
+# On a stone floor built in the open sky (nothing to swing from, nothing overhead): the takeoff's (standing outdoors
+# with flight: the keys held at the top with an arrow and the gold figure rising; then looking up, the caps on the ring
+# in the sky; the takeoff made and its card), the flare's (a glide down onto the floor), the K rows with a line a move,
+# and the sling's (a low block sixteen ahead: the key on its top, the pull over it, the card).
+# Flight is a dev grant here (no rung is handed down, so no lesson is owed).
+# The world must be five minutes old before the standing lesson may show (the director's settling time), so the script
+# sprints twice. "[ascent] the way up: the X lesson shows" in latest.log says which lessons began, and when.
+# Run on CI: tools/tour-ci.sh tools/autopilot/way-up-moves.txt 1800
+world autopilot_way_up_moves survival 4245
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd tick sprint 6200
+# the sprint must be over before anything is timed
+wait 2400
+cmd tick sprint stop
+wait 20
+cmd tick sprint 4000
+wait 1200
+cmd tick sprint stop
+wait 40
+cmd gamerule advance_time false
+cmd time set 5500
+hud on
+camera first
+# ---- the stage: a floor in the open sky ----
+cmd fill -294 250 -20 -270 250 110 minecraft:smooth_stone
+cmd tp @s -282.5 251 -16.5 0 0
+wait 60
+# ---- the takeoff, standing outdoors with flight ----
+cmd awaken ascent aether full
+cmd awaken ascent pilot aether 1
+wait 20
+# the lesson begins within a quarter second of flight being held (the road is already told), and its gold figure
+# stands a second and rises for two and a half, six blocks ahead: a shot every third of a second from the grant
+cmd awaken ascent grant skyborn
+wait 4
+shotnow moves_00a_standing
+wait 4
+shotnow moves_00b_standing
+wait 4
+shotnow moves_00c_standing
+wait 4
+shotnow moves_00d_standing
+wait 4
+shotnow moves_00e_standing
+wait 4
+shotnow moves_00f_standing
+wait 4
+shotnow moves_00g_standing
+wait 4
+shotnow moves_00h_standing
+wait 4
+shotnow moves_00i_standing
+wait 4
+shotnow moves_00j_standing
+wait 4
+shotnow moves_00k_standing
+wait 4
+shotnow moves_00l_standing
+wait 60
+shotnow moves_01_takeoff_standing
+cmd tp @s ~ ~ ~ ~ -50
+wait 14
+shotnow moves_05_takeoff_looking_up
+cmd awaken ascent pilot aether 1
+cmd awaken ascent pilot hold sneak 60
+wait 22
+cmd awaken ascent pilot hold jump 3
+wait 10
+shotnow moves_06_takeoff_made
+wait 25
+shotnow moves_07_takeoff_card
+# fold, and back to the floor
+cmd awaken ascent pilot stop
+wait 4
+cmd awaken ascent pilot hold sneak 6
+wait 30
+cmd tp @s -282.5 251 -16.5 0 0
+wait 100
+# ---- the flare: a glide down onto the floor ----
+cmd tp @s -282.5 268 -16.5 0 6
+wait 5
+cmd awaken ascent pilot hold jump 2
+wait 6
+cmd awaken ascent pilot hold jump 2
+wait 14
+shotnow moves_08_glide
+wait 14
+shotnow moves_09_glide
+wait 14
+shotnow moves_10_glide
+wait 14
+shotnow moves_11_glide
+wait 14
+shotnow moves_12_glide
+wait 14
+shotnow moves_13_glide
+wait 14
+shotnow moves_14_glide
+wait 14
+shotnow moves_15_glide
+wait 20
+shotnow moves_16_landed
+wait 140
+# ---- the K rows: a line a move, and the next one only as a diamond ----
+screen band powers
+wait 30
+shotnow moves_17_k_rows
+screen close
+# ---- the sling: a low block sixteen ahead, nothing tall enough to swing from ----
+cmd tp @s -282.5 251 -16.5 0 0
+cmd fill -288 251 0 -276 254 5 minecraft:stone
+# on foot the lesson looks twice a second for a top a held rope would sling you over
+wait 50
+shotnow moves_18_sling_on_foot
+wait 20
+shotnow moves_19_sling_on_foot
+cmd awaken ascent pilot hold tether 40
+wait 8
+shotnow moves_20_sling_pull
+wait 12
+shotnow moves_21_sling_over
+wait 20
+shotnow moves_22_sling_card
+wait 20
+shotnow moves_23_sling_card
+info
+quit

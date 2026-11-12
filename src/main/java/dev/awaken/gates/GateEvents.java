@@ -58,6 +58,7 @@ final class GateEvents {
         bus.addListener(GateEvents::onExplode);
         bus.addListener(GateEvents::onEntityInteract);
         RunEvents.register(bus);
+        dev.awaken.gates.realms.RealmTrial.register(bus);
     }
 
     private static void onServerTick(ServerTickEvent.Post e) {
@@ -69,6 +70,7 @@ final class GateEvents {
         Breaks.tick(server);
         GateCard.tick(server);
         dev.awaken.gates.worlds.WorldLive.tick(server);
+        dev.awaken.gates.realms.RealmTrial.tickServer(server);
         int t = server.getTickCount();
         if (t % 100 == 50) {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -101,6 +103,7 @@ final class GateEvents {
         dev.awaken.gates.run.Twists.resetAll();
         dev.awaken.gates.run.RigDirector.resetAll();
         dev.awaken.gates.worlds.WorldLive.clear();
+        dev.awaken.gates.realms.RealmLive.resetAll();
     }
 
     private static void onLogin(PlayerEvent.PlayerLoggedInEvent e) {
@@ -111,7 +114,10 @@ final class GateEvents {
     }
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent e) {
-        if (e.getEntity() instanceof ServerPlayer p) RunEvents.onLogout(p);
+        if (e.getEntity() instanceof ServerPlayer p) {
+            RunEvents.onLogout(p);
+            dev.awaken.gates.realms.RealmTrial.left(p);
+        }
     }
 
     private static void onRespawn(PlayerEvent.PlayerRespawnEvent e) {
@@ -123,6 +129,7 @@ final class GateEvents {
     private static void onDimension(PlayerEvent.PlayerChangedDimensionEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         GatePayloads.syncBeacons(p);
+        dev.awaken.gates.realms.RealmTrial.left(p);
         Hud.send(p);
     }
 
@@ -173,6 +180,11 @@ final class GateEvents {
             return;
         }
         if (e.getLevel() instanceof ServerLevel gl && staleInCell(gl, e.getEntity(), e.loadedFromDisk())) {
+            e.setCanceled(true);
+            return;
+        }
+        // a Realm Lord whose fight was put to rest while its chunk was away: its hall wakes a fresh one (SPEC §50.8)
+        if (e.loadedFromDisk() && e.getLevel() instanceof ServerLevel rl && dev.awaken.gates.realms.RealmLive.strayLord(rl.getServer(), e.getEntity())) {
             e.setCanceled(true);
             return;
         }

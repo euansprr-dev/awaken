@@ -55,7 +55,7 @@ final class HundredPeal {
     /** The Kinsong: how far it reaches, how long the land's beasts stay calm, and how long till the Deep's things come. */
     static final int KINSONG_REACH = 48, KINSONG_CALM = 20 * 60, KINSONG_HUNTED = 20 * 30, KINSONG_AGAIN = 20 * 60 * 5;
     static final String KINSONG = "kinsong", KINSONG_NAME = "The Kinsong",
-            KINSONG_WORDS = "Calms the land's beasts round you: a stampede stops, a frightened herd settles, an angry beast lies down, and a Gnawed one is let go.";
+            KINSONG_WORDS = "Calms the land's beasts round you: a frightened herd settles, an angry beast lies down, and a Gnawed one is let go.";
     /** The Deep's own creatures, which come for whoever plays the Kinsong. */
     static final List<String> DEEP_THEMES = List.of("awaken:abyssal_shrine", "awaken:nightmare", "awaken:bell_crypt");
 
@@ -215,7 +215,7 @@ final class HundredPeal {
         for (int i = 0; i < n; i++) {
             double a = r.nextDouble() * Math.PI * 2, d = 18 + r.nextInt(9);
             BlockPos col = BlockPos.containing(p.getX() + Math.cos(a) * d, p.getY(), p.getZ() + Math.sin(a) * d);
-            if (!level.isLoaded(col)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, col)) continue;
             BlockPos at = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, col);
             LivingEntity e = MobHooks.spawnThemed(level, theme, i == 0 ? MobRole.Role.ELITE : MobRole.Role.NORMAL, at, lv, Set.of(), "");
             if (e instanceof Mob m) {
@@ -266,7 +266,7 @@ final class HundredPeal {
         @Override
         public @org.jspecify.annotations.Nullable BlockPos roost(ServerLevel level, BlockPos anchor) {
             BellWorld.Home h = BellWorld.get(level.getServer()).peek(anchor);
-            return h == null || h.roost == null || !level.isLoaded(h.roost) || !level.getBlockState(h.roost).is(BellContent.FOUND_BELL.get()) ? null : h.roost;
+            return h == null || h.roost == null || !dev.awaken.core.api.Ready.loaded(level, h.roost) || !level.getBlockState(h.roost).is(BellContent.FOUND_BELL.get()) ? null : h.roost;
         }
 
         @Override

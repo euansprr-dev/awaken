@@ -1,6 +1,7 @@
 package dev.awaken.terrain.glass;
 
 import dev.awaken.Awaken;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.terrain.block.BlockSet;
 import dev.awaken.terrain.block.CrystalClusterBlock;
 import net.minecraft.core.registries.Registries;
@@ -31,7 +32,7 @@ import java.util.List;
 public final class GlassBlocks {
     private GlassBlocks() {}
 
-    private static final BlockSet SET = new BlockSet();
+    private static final BlockSet SET = new BlockSet(Tabs.Shelf.LANDS);
 
     public static final ResourceKey<Feature> GLASSBARK_TREE = ResourceKey.create(Registries.FEATURE, Awaken.id("lands/glassbark"));
     public static final ResourceKey<Feature> TALL_GLASSBARK_TREE = ResourceKey.create(Registries.FEATURE, Awaken.id("lands/tall_glassbark"));

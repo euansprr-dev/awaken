@@ -1,0 +1,129 @@
+# Facing, e: the forged picks dig
+# Written by tools/art/facing_tour.py (SPEC §25 "One-faced heads"): each pick's form held and digging stone (the Mattock earth too), first person and from behind
+# ci knobs: PACK=perf,feel,comfort,world
+world armsfacinge creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -8 200 -6 8 200 9 minecraft:polished_deepslate
+cmd fill -8 201 -6 8 206 8 minecraft:air
+cmd fill -8 201 9 8 205 9 minecraft:stone
+cmd fill 2 201 8 7 204 8 minecraft:dirt
+cmd fill -7 201 8 -2 204 8 minecraft:stone
+wait 200
+camera first
+opt fov 70
+wait 4
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_delver
+wait 60
+arms film fp_delver_stone_1p_rest 8 1 3
+wait 9
+arms film fp_delver_stone_1p 16 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 17
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_breaker
+wait 60
+arms film fp_breaker_stone_1p_rest 8 1 3
+wait 9
+arms film fp_breaker_stone_1p 16 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 17
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 60
+arms film fp_mattock_stone_1p_rest 8 1 3
+wait 9
+arms film fp_mattock_stone_1p 16 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 17
+cmd tp @s 4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 60
+arms film fp_mattock_dirt_1p_rest 8 1 3
+wait 9
+arms film fp_mattock_dirt_1p 16 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 17
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_sounder
+wait 60
+arms film fp_sounder_stone_1p_rest 8 1 3
+wait 9
+arms film fp_sounder_stone_1p 16 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 17
+camera back
+opt fov 50
+wait 4
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_delver
+wait 60
+arms film fp_delver_stone_3p_rest 8 1 3
+wait 9
+arms film fp_delver_stone_3p 16 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 17
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_breaker
+wait 60
+arms film fp_breaker_stone_3p_rest 8 1 3
+wait 9
+arms film fp_breaker_stone_3p 16 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 17
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 60
+arms film fp_mattock_stone_3p_rest 8 1 3
+wait 9
+arms film fp_mattock_stone_3p 16 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 17
+cmd tp @s 4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 60
+arms film fp_mattock_dirt_3p_rest 8 1 3
+wait 9
+arms film fp_mattock_dirt_3p 16 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 17
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_sounder
+wait 60
+arms film fp_sounder_stone_3p_rest 8 1 3
+wait 9
+arms film fp_sounder_stone_3p 16 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 17
+quit

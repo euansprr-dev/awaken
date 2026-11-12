@@ -2,7 +2,7 @@ package dev.awaken.gates;
 
 import com.mojang.serialization.MapCodec;
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.gates.block.GateBlocks;
 import dev.awaken.gates.block.RigBlocks;
 import dev.awaken.gates.entity.EchoGhost;
@@ -34,7 +34,6 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -412,7 +411,7 @@ public final class GatesRegistry {
         return h == null ? null : h.get();
     }
 
-    // the Gate Rig (tools/art/specs/audio_rig.py): the collapse, the mirrors and the light, the wells, the cave-in
+    // the Gate Rig (the game's own recordings: tools/art/specs/audit_gates.py, SPEC §66.8): the collapse, the mirrors and the light, the wells, the cave-in
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_CRACK = sound("gate.rig.crack");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_FALL = sound("gate.rig.fall");
     public static final DeferredHolder<SoundEvent, SoundEvent> SND_RIG_KNIT = sound("gate.rig.knit");
@@ -554,7 +553,36 @@ public final class GatesRegistry {
         GateExterior.init(modBus);
         dev.awaken.gates.world.Interiors.init();
         modBus.addListener(GatesRegistry::attributes);
-        modBus.addListener(GatesRegistry::creativeTab);
+        // a gate's own pieces; then the worlds' blocks, each followed by the slabs, stairs and drifts cut from it
+        Tabs.fill(Tabs.Shelf.GATE_PIECES, (p, out) -> {
+            for (var item : List.of(FRAME_ITEM, FRAME_CRACKED_ITEM, SHRINE_ITEM, SEAL_ITEM, CACHE_ITEM, BARS_ITEM, RUNE_ITEM, ENTRANCE_ITEM,
+                    LANTERN_ITEM, UPDRAFT_ITEM)) out.accept(item.get());
+            for (var item : SET_ITEMS) out.accept(item.get());
+            for (var item : RIG_ITEMS) out.accept(item.get());
+        });
+        Tabs.fill(Tabs.Shelf.GATE_WORLD_BLOCKS, GatesRegistry::worldBlocks);
+        Tabs.icon(Tabs.Tab.GATE_WORLDS, () -> FRAME_ITEM.get().getDefaultInstance());
+    }
+
+    private static void worldBlocks(net.minecraft.world.item.CreativeModeTab.ItemDisplayParameters p, net.minecraft.world.item.CreativeModeTab.Output out) {
+        java.util.Map<String, String> baseOf = new java.util.HashMap<>();
+        for (var d : dev.awaken.gates.block.DepthBlocks.DEFS) baseOf.put(d.name(), d.base());
+        java.util.Map<String, List<DeferredItem<BlockItem>>> cut = new java.util.HashMap<>();
+        String last = "";
+        for (var item : DEPTH_ITEMS) {
+            // bits are cut from nothing: they go with the world's block before them in the table
+            String base = baseOf.getOrDefault(item.getId().getPath(), "");
+            if (!base.isEmpty()) last = base;
+            if (!last.isEmpty()) cut.computeIfAbsent(last, k -> new java.util.ArrayList<>()).add(item);
+        }
+        java.util.Set<DeferredItem<BlockItem>> shown = new java.util.HashSet<>();
+        for (var list : List.of(INTERIOR_ITEMS, WORLD_ITEMS, THEME_ITEMS)) {
+            for (var item : list) {
+                out.accept(item.get());
+                for (var c : cut.getOrDefault(item.getId().getPath(), List.of())) if (shown.add(c)) out.accept(c.get());
+            }
+        }
+        for (var item : DEPTH_ITEMS) if (shown.add(item)) out.accept(item.get());
     }
 
     private static void attributes(EntityAttributeCreationEvent e) {
@@ -562,17 +590,5 @@ public final class GatesRegistry {
         e.put(GHOST.get(), EchoGhost.createAttributes().build());
         e.put(HOLLOW.get(), HollowFollower.createAttributes().build());
         e.put(HOARDER.get(), GateHoarder.createAttributes().build());
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent e) {
-        if (!e.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (var item : List.of(FRAME_ITEM, FRAME_CRACKED_ITEM, SHRINE_ITEM, SEAL_ITEM, CACHE_ITEM, BARS_ITEM, RUNE_ITEM, ENTRANCE_ITEM,
-                LANTERN_ITEM, UPDRAFT_ITEM)) e.accept(item.get());
-        for (var item : INTERIOR_ITEMS) e.accept(item.get());
-        for (var item : WORLD_ITEMS) e.accept(item.get());
-        for (var item : THEME_ITEMS) e.accept(item.get());
-        for (var item : SET_ITEMS) e.accept(item.get());
-        for (var item : DEPTH_ITEMS) e.accept(item.get());
-        for (var item : RIG_ITEMS) e.accept(item.get());
     }
 }

@@ -23,10 +23,10 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_tether_vow", 200, AscentTests::tetherVow);
         AwakenTests.register("ascent_aether", 40, AscentTests::aether);
         AwakenTests.register("ascent_sprint_flies_again", 20, AscentTests::sprintFliesAgain);
+        AwakenTests.register("ascent_dash_press", 20, AscentTests::dashPress);
         AwakenTests.registerIsolated("ascent_sky_rig", 100, AscentTests::skyRig);
         AwakenTests.registerIsolated("ascent_tether_spire", 100, AscentTests::tetherSpire);
         AwakenTests.register("ascent_windway", 20, AscentTests::windway);
-        AwakenTests.register("ascent_slow_beat", 20, AscentTests::slowBeat);
         AwakenTests.register("ascent_hero_crowns", 100, AscentTests::heroCrowns);
         AwakenTests.register("ascent_aerial_kill", 40, AscentTests::aerialKill);
         AwakenTests.register("ascent_sovereign", 40, AscentTests::sovereign);
@@ -34,6 +34,8 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_rappel", 60, AscentRappelTests::rappel);
         // the assisted swing (SPEC §17.31)
         AscentSwingTests.register();
+        // Rope and Wings: the air's contract, its moves, the wings' form (SPEC §62)
+        AirTests.register();
     }
 
     /** A taut rope holds the hand on its sphere through a long swing, whatever the input. */
@@ -378,6 +380,9 @@ final class AscentTests {
         var box = new net.minecraft.world.level.levelgen.structure.BoundingBox(o.getX(), o.getY(), o.getZ(),
                 o.getX() + size.x() - 1, o.getY() + size.y() - 1, o.getZ() + size.z() - 1);
         net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
+        // the vault's own lock (its door's rank, its door open) is the rule with The Way Up off; with it on the chain is the
+        // proof at any vault (way_up_road)
+        dev.awaken.body.BodyConfig.wayOverride = false;
         try {
             for (int rot = 0; rot < 4; rot++) {
                 TetherVow.Site site = new TetherVow.Site(box, rot, 1);
@@ -472,6 +477,7 @@ final class AscentTests {
             h.assertTrue(!TetherVow.running(p) && (p.getData(AscentContent.MEMORY).flags() & AscentMemory.VOW_KEPT) != 0, "the vow is kept at the mast");
             h.assertFalse(TetherVow.eligible(p), "and never offered again");
         } finally {
+            dev.awaken.body.BodyConfig.wayOverride = null;
             TetherVow.forget(p);
             dev.awaken.above.block.DoorCoreBlock.forget(p.getUUID());
             wipe(level, box);
@@ -514,6 +520,24 @@ final class AscentTests {
         h.assertTrue(AscentRules.sprintTakesFlight(true, true, false, 0.3), "a press takes a plain glide into flight");
         h.assertTrue(AscentRules.sprintTakesFlight(true, true, true, 0.01), "a press always tries (the weak beat if it can't)");
         h.assertFalse(AscentRules.sprintTakesFlight(false, true, false, 1), "sprint held into a plain glide (a run off a cliff) stays a glide");
+        h.succeed();
+    }
+
+    /**
+     * The air dash's press (SPEC §17.32, "The dash's press"; 12 Nov 2026, Euan: "air dashes don't work after any movement
+     * like double jump, wings, or rope"): a held sprint is no press, a re-tap inside one tick and a toggle's click are;
+     * a press the rope or a double jump's tick couldn't take is the dash's for six ticks, no longer.
+     */
+    private static void dashPress(GameTestHelper h) {
+        h.assertFalse(AscentRules.sprintPress(true, true, 0), "sprint held from the run is no press (it never dashes by itself)");
+        h.assertTrue(AscentRules.sprintPress(true, false, 0), "sprint going down is a press");
+        h.assertTrue(AscentRules.sprintPress(true, true, 1), "a held sprint let go and pressed again inside one tick is a press");
+        h.assertTrue(AscentRules.sprintPress(false, true, 1), "a toggle sprint's click that turns it off is a press too");
+        h.assertFalse(AscentRules.sprintPress(false, true, 0), "letting sprint go is no press");
+        h.assertTrue(AscentRules.dashKept(100, 100) && AscentRules.dashKept(100, 100 + AscentRules.DASH_KEPT),
+                "a press kept on the rope dashes at a let-go up to " + AscentRules.DASH_KEPT + " ticks on");
+        h.assertFalse(AscentRules.dashKept(100, 101 + AscentRules.DASH_KEPT), "a press kept longer than that is gone");
+        h.assertFalse(AscentRules.dashKept(-1000, 0), "nothing kept, nothing dashes");
         h.succeed();
     }
 
@@ -592,32 +616,76 @@ final class AscentTests {
         net.minecraft.server.level.ServerLevel level = h.getLevel();
         BlockPos o = h.absolutePos(BlockPos.ZERO);
         int cx = o.getX(), cz = o.getZ(), deckY = level.getMaxY() - 20;
-        dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz);
+        dev.awaken.above.ruin.SkyRig.rig(level, cx, deckY, cz, false);
         var placed = dev.awaken.above.ruin.SkyRig.layout(cx, deckY, cz, dev.awaken.above.ruin.SkyRig.groundUnder(level, cx, cz));
         h.assertTrue(level.getBlockState(placed.core()).is(AscentContent.WING_CORE.get())
                 && level.getBlockState(placed.rings().getFirst()).is(AscentContent.ANCHOR_RING.get()), "the core and the rings are placed");
-        // the core: by movement, wings; by a tower, nothing
+        // the wings' hall: its mark under the core, the case's rail joined into a ring, a portal's corner opened
+        h.assertTrue(dev.awaken.above.ruin.SkyRig.hallPlaced(level, cx, deckY, cz), "the hall's mark is under the core");
+        var rail = level.getBlockState(placed.core().offset(2, 0, 0));
+        h.assertTrue(rail.is(net.minecraft.world.level.block.Blocks.POLISHED_DEEPSLATE_WALL)
+                && rail.getValue(net.minecraft.world.level.block.WallBlock.NORTH) != net.minecraft.world.level.block.state.properties.WallSide.NONE, "the case's rail, joined");
+        h.assertTrue(level.getBlockState(placed.core().offset(4, 0, 4)).isAir(), "the pier's corner of the cabin is a portal");
+        // the arch stands over the pier's root, clear of the walk
+        for (int[] c : dev.awaken.above.ruin.SkyRig.archCells()) {
+            h.assertTrue(c[1] >= 4 || Math.abs(c[0] - c[2]) > 1, "the arch's " + c[0] + ", " + c[1] + ", " + c[2] + " stands in the walk off the pier");
+            h.assertFalse(level.getBlockState(new BlockPos(cx + c[0], deckY + c[1], cz + c[2])).isAir(), "the arch stands at " + c[0] + ", " + c[1] + ", " + c[2]);
+        }
+        h.assertTrue(dev.awaken.above.ruin.SkyRig.archPlaced(level, cx, deckY, cz), "the arch's light is its mark");
+        // the core (SPEC §17.9): the rank first, then the way up; each refusal its own
         net.minecraft.server.level.ServerPlayer p = h.makeMockServerPlayerInLevel();
         var real = dev.awaken.core.api.ArrivalHooks.installed();
         try {
-            boolean[] moved = {false};
+            boolean[] moved = {true}, line = {true};
             dev.awaken.core.api.ArrivalHooks.install(new dev.awaken.core.api.ArrivalHooks.Tracker() {
                 @Override
                 public boolean byMovement(net.minecraft.server.level.ServerPlayer pl) {
                     return moved[0];
                 }
+
+                @Override
+                public boolean byLine(net.minecraft.server.level.ServerPlayer pl) {
+                    return moved[0] && line[0];
+                }
             });
+            // a long look round the deck before walking in: the last 20 s all standing still
             AscentMotion m = AscentServer.motion(p);
-            for (int i = 0; i < 400; i++) m.mark(true);
-            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "a tower gets nothing");
-            moved[0] = true;
-            h.assertFalse(WingCoreBlockEntity.reached(p, placed.core()) || Ascent.has(p, Ascent.Tier.WINGS), "the long way at E: the core waits for C");
+            for (int i = 0; i < 400; i++) m.mark(false);
+            h.assertTrue(WingCoreBlockEntity.judge(p) == WingCoreBlockEntity.Refusal.RANK
+                    && !WingCoreBlockEntity.reached(p, placed.core()) && !Ascent.has(p, Ascent.Tier.WINGS), "up by rope at E: the core asks for C first");
             while (dev.awaken.progression.Progression.rank(p).ordinal() < WingCoreBlockEntity.RANK.ordinal()) dev.awaken.progression.Progression.passReassessment(p);
-            h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS), "the long way at C gets wings");
+            moved[0] = false;
+            h.assertTrue(WingCoreBlockEntity.judge(p) == WingCoreBlockEntity.Refusal.BUILT
+                    && !WingCoreBlockEntity.reached(p, placed.core()) && !Ascent.has(p, Ascent.Tier.WINGS), "a tower gets nothing");
+            moved[0] = true;
+            line[0] = false;
+            h.assertTrue(WingCoreBlockEntity.judge(p) == WingCoreBlockEntity.Refusal.LINE
+                    && !WingCoreBlockEntity.reached(p, placed.core()) && !Ascent.has(p, Ascent.Tier.WINGS), "a pearl or a flight gets nothing, told apart from a tower");
+            line[0] = true;
+            h.assertTrue(WingCoreBlockEntity.reached(p, placed.core()) && Ascent.has(p, Ascent.Tier.WINGS),
+                    "up its rings by rope at C gets wings, however long they stood on the deck");
+            // the core is never used up (Euan, 11 Nov 2026: two people both take their wings from one core, each by
+            // their own rank and their own climb): a second hunter is asked the rank, then given wings, and the first
+            // keeps theirs
+            net.minecraft.server.level.ServerPlayer second = h.makeMockServerPlayerInLevel();
+            try {
+                AscentMotion m2 = AscentServer.motion(second);
+                for (int i = 0; i < 400; i++) m2.mark(true);
+                h.assertFalse(WingCoreBlockEntity.reached(second, placed.core()) || Ascent.has(second, Ascent.Tier.WINGS),
+                        "a second hunter at E is asked the rank, whoever took wings before");
+                while (dev.awaken.progression.Progression.rank(second).ordinal() < WingCoreBlockEntity.RANK.ordinal()) {
+                    dev.awaken.progression.Progression.passReassessment(second);
+                }
+                h.assertTrue(WingCoreBlockEntity.reached(second, placed.core()) && Ascent.has(second, Ascent.Tier.WINGS),
+                        "a second hunter at C gets wings from the same core");
+                h.assertTrue(Ascent.has(p, Ascent.Tier.WINGS), "and the first keeps theirs");
+            } finally {
+                level.getServer().getPlayerList().remove(second);
+            }
         } finally {
             dev.awaken.core.api.ArrivalHooks.install(real);
             level.getServer().getPlayerList().remove(p);
-            for (BlockPos q : BlockPos.betweenClosed(cx - 1, placed.chainBottom() - 1, cz - 1, cx + 20, deckY + 2, cz + 20)) {
+            for (BlockPos q : BlockPos.betweenClosed(cx - 5, placed.chainBottom() - 1, cz - 5, cx + 20, deckY + 5, cz + 20)) {
                 if (!level.getBlockState(q).isAir()) level.setBlock(q, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(),
                         net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
             }
@@ -810,17 +878,6 @@ final class AscentTests {
             if (t > 40 && !Windways.holds(w, k.x, k.y, k.z)) return new double[]{t, 1, -1, k.y};
         }
         return new double[]{t, 0, -1, k.y};
-    }
-    /** The slow beat (SPEC §17.15): at 0.45 of time the carry flies the same arc, slower (within a few percent). */
-    private static void slowBeat(GameTestHelper h) {
-        AscentRules.Kin a = new AscentRules.Kin().set(0, 0, 0, 0.9, 0.1, 0), b = new AscentRules.Kin().set(0, 0, 0, 0.9, 0.1, 0);
-        double[] scratch = new double[2];
-        for (int t = 0; t < 9; t++) AscentRules.carryStep(a, 0, 0, 0, scratch);
-        for (int t = 0; t < 20; t++) AscentRules.carryStepSlow(b, 0.45);
-        double da = Math.hypot(a.x, a.y), err = Math.hypot(a.x - b.x, a.y - b.y);
-        h.assertTrue(err < da * 0.06 && b.vy < a.vy + 0.05 && b.vy > a.vy - 0.05,
-                "20 slow ticks fly 9 ticks' arc: " + String.format("(%.2f, %.2f) vs (%.2f, %.2f)", b.x, b.y, a.x, a.y));
-        h.succeed();
     }
     /**
      * The hero trees' crowns (SPEC §17.16), from each tree's own blueprint over eight seeds: the crown on the highest

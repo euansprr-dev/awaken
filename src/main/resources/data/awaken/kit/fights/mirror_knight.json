@@ -3,7 +3,7 @@
  "id": "mirror_knight",
  "moves": "mirror_knight",
  "duel": true,
- "stance": 280,
+ "stance": 150,
  "intro": {
   "pose": "idle",
   "move": "wake"

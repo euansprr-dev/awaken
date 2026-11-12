@@ -107,7 +107,10 @@ public final class Inscribe {
         SESSIONS.put(p.getUUID(), s);
         be.set(p.getUUID(), piece, InscribingTableBlockEntity.BOOK, 0, 0);
         level.playSound(null, be.getBlockPos(), EnchantContent.BOOK_OPEN.get(), SoundSource.BLOCKS, 0.9F, 1F);
-        AwakenNet.send(p, new EnchantPayloads.Open(be.getBlockPos(), s.id, s.slot, study));
+        Pages.door(p, "opened", null);
+        // the facing rides along: a table that has just turned from a vanilla one may not have reached the client yet
+        AwakenNet.send(p, new EnchantPayloads.Open(be.getBlockPos(), s.id, s.slot, study,
+                be.getBlockState().getValue(InscribingTableBlock.FACING).get2DDataValue()));
     }
 
     /** Whether there's anything to do with this piece here: something you know fits it, or something on it to scrape. */
@@ -129,6 +132,7 @@ public final class Inscribe {
         if (k.table) return;
         k.table = true;
         Known.save(p, k);
+        Pages.door(p, "table set", null);
     }
 
     // ---- acts ---------------------------------------------------------------------------------------------------------
@@ -223,9 +227,6 @@ public final class Inscribe {
         s.lastStroke = now;
     }
 
-    /** The pitches over the new enchantment's note for the others on the piece at its wake: a major third, a fifth, an octave. */
-    private static final float[] CHORD = {1.26F, 1.498F, 2F};
-
     /** The last stroke lifted: write it onto the same piece, refund a clean hand, remember its mark. */
     static void finish(ServerPlayer p, ServerLevel level, InscribingTableBlockEntity be, Session s) {
         Holder<Enchantment> h = s.ench;
@@ -243,20 +244,17 @@ public final class Inscribe {
         Known k = Known.of(p);
         boolean remembered = clean && k.remember(e.id());
         k.written++;
+        Pages.door(p, clean ? "written clean" : s.memory ? "written from memory" : "written", e);
         Known.save(p, k);
         s.snapshot = hand.copy();
         s.ench = null;
         s.entry = null;
         be.set(p.getUUID(), s.snapshot, InscribingTableBlockEntity.WAKE, e.no(), e.colour());
+        // the wake's own voice with a bell's long resonance low under it. (The piece's chord, each other enchantment's
+        // note pitched a third, a fifth and an octave up, is gone: a stack of pitched chimes at the peak is the high tone
+        // Euan asked to be rid of, 2026-11-09. SPEC §45.18)
         level.playSound(null, s.pos, EnchantContent.WAKE.get(), SoundSource.BLOCKS, 1F, 1F);
-        // the piece's chord: the new one's note, and each other enchantment on it a third, a fifth, an octave above
-        level.playSound(null, s.pos, EnchantContent.note(e.family()), SoundSource.BLOCKS, 0.8F, 1F);
-        int voice = 0;
-        for (var on : hand.getEnchantments().entrySet()) {
-            Inscriptions.Entry o = Inscriptions.of(on.getKey());
-            if (o == null || o == e || voice >= CHORD.length) continue;
-            level.playSound(null, s.pos, EnchantContent.note(o.family()), SoundSource.BLOCKS, 0.55F, CHORD[voice++]);
-        }
+        level.playSound(null, s.pos, EnchantContent.WAKE_UNDER.get(), SoundSource.BLOCKS, 1F, 1F);
         AwakenNet.send(p, new EnchantPayloads.Done(s.id, e.no(), to, refund, clean, remembered, card(e, h, to, hand, refund, clean, s.memory)));
     }
 
@@ -299,7 +297,7 @@ public final class Inscribe {
         SESSIONS.remove(p.getUUID());
         refund(p, s);
         ServerLevel level = p.level().getServer().getLevel(s.dim);
-        if (level != null && level.isLoaded(s.pos) && level.getBlockEntity(s.pos) instanceof InscribingTableBlockEntity be
+        if (level != null && dev.awaken.core.api.Ready.loaded(level, s.pos) && level.getBlockEntity(s.pos) instanceof InscribingTableBlockEntity be
                 && p.getUUID().equals(be.writer())) be.clear();
         AwakenNet.send(p, new EnchantPayloads.Closed(s.id, line));
         if (!line.isEmpty()) p.sendSystemMessage(Component.literal(line), true);
@@ -353,7 +351,7 @@ public final class Inscribe {
         if (s == null) return;
         refund(p, s);
         ServerLevel level = p.level().getServer().getLevel(s.dim);
-        if (level != null && level.isLoaded(s.pos) && level.getBlockEntity(s.pos) instanceof InscribingTableBlockEntity be) be.clear();
+        if (level != null && dev.awaken.core.api.Ready.loaded(level, s.pos) && level.getBlockEntity(s.pos) instanceof InscribingTableBlockEntity be) be.clear();
     }
 
     // ---- lapis ----------------------------------------------------------------------------------------------------------

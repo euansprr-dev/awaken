@@ -413,7 +413,7 @@ final class LivingTests {
             // SPEC §21.12, the wide world (rules 3): bigger regions, ranks rolled by odds that shift with distance, calm ways everywhere
             RegionMap.Probe plain = (x, z) -> RegionMap.Land.PLAIN;
             RegionMap map = new RegionMap(1234L, 0, 0, plain, 3);
-            h.assertTrue(RegionMap.RULES == 3 && map.pitch() == 1600, "a new world's regions are 1,600 apart: " + map.pitch());
+            h.assertTrue(RegionMap.RULES >= 3 && map.pitch() == 1600, "a new world's regions are 1,600 apart: " + map.pitch());
             h.assertTrue(map.levelAt(0, 0) == 1 && map.levelAt(240, 0) == 1, "the Commons' ramp starts at 1");
             int worstNear = 0, lowest800 = 99;
             for (int k = 0; k < 24; k++) {
@@ -871,8 +871,9 @@ final class LivingTests {
             h.assertTrue(made >= 25, "most regions have one: " + made);
             h.assertTrue(kinds.size() >= 4, "and they differ: " + kinds);
             // with the real generator's ground and the real structure sets: every kind can be found somewhere within 9,000 blocks of the centre
+            // (the quick terrain: the caves' probes over 1,300 regions would take minutes; they only move a wonder a few steps)
             dev.awaken.living.wonder.Wonders.reset();
-            var real = dev.awaken.living.wonder.WonderFeature.terrain(level, level.getChunkSource().getGenerator());
+            var real = dev.awaken.living.wonder.WonderFeature.quickTerrain(level, level.getChunkSource().getGenerator());
             java.util.Map<dev.awaken.living.wonder.Wonders.Kind, Integer> census = new java.util.EnumMap<>(dev.awaken.living.wonder.Wonders.Kind.class);
             java.util.Set<Long> seen2 = new java.util.HashSet<>();
             int cx = map.regionAt(0, 0).heartX(), cz = map.regionAt(0, 0).heartZ();
@@ -938,6 +939,27 @@ final class LivingTests {
                 }
             }
             h.assertTrue(made >= 50, "regions have their secrets: " + made);
+            // on a slope every column of a secret stands on its own ground, its blocks moved with it (nothing hangs off the hill)
+            dev.awaken.living.wonder.Secrets.reset();
+            var slope = new dev.awaken.living.wonder.Wonders.Terrain() {
+                public int ground(int x, int z) { return 90 + (int) Math.round(20 * Math.sin(x / 40.0)); }
+                public int seaLevel() { return 63; }
+            };
+            int settled = 0;
+            java.util.Set<Long> sloped = new java.util.HashSet<>();
+            for (int gx = -3; gx <= 3; gx++) for (int gz = -3; gz <= 3; gz++) {
+                RegionMap.Region r = map.regionAt(gx * 800, gz * 800);
+                if (!sloped.add(r.id())) continue;
+                for (var s : dev.awaken.living.wonder.Secrets.of(seed, map, r, slope)) {
+                    settled++;
+                    for (long col : s.plan().columns()) {
+                        int dx = net.minecraft.core.BlockPos.getX(col), dz = net.minecraft.core.BlockPos.getZ(col);
+                        h.assertTrue(s.y() + s.plan().foot(dx, dz) == slope.ground(s.x() + dx, s.z() + dz), s.key() + ": column " + dx + "," + dz + " stands on its ground");
+                    }
+                }
+            }
+            h.assertTrue(settled > 0, "secrets settle on a slope");
+            dev.awaken.living.wonder.Secrets.reset();
             for (int rank = 0; rank <= 5; rank++) for (boolean brush : new boolean[]{false, true}) {
                 var table = level.getServer().reloadableRegistries().getLootTable(dev.awaken.living.wonder.Secrets.table(rank, brush));
                 h.assertTrue(table != net.minecraft.world.level.storage.loot.LootTable.EMPTY, "a loot table for rank " + rank + (brush ? " (brushed)" : ""));

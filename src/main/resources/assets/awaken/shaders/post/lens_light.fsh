@@ -23,6 +23,7 @@ uniform sampler2D BlocksSampler;
 uniform sampler2D LitSampler;    // LensBlocks: which blocks near the camera stop the sun (the Sun Pass)
 uniform sampler2D FrameSampler;
 uniform sampler2D ParamsSampler;
+uniform sampler2D HandSampler;      // the hand's own depth (LensHand): 0 where there is no hand
 
 #include <awaken:lens_frame.glsl>
 #include <awaken:lens_height.glsl>
@@ -44,7 +45,11 @@ layout(std140) uniform LensConfig {
 
 layout(location = 0) out vec4 fragColor;
 
+#ifdef LENS_UNIFORMS
+vec4 P(int i) { return LensP[i]; }
+#else
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
+#endif
 
 // The Sun Pass (SPEC §22 "Steady Light"; frame texel 17: z the block map's trusted reach in blocks, 0 without one;
 // w its lowest y): from o toward the light through the block map, block by block. Where the heightfield has one top
@@ -52,6 +57,11 @@ vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, iv
 // is the block's own shape. Returns what gets through; status 0 when the walk settled it (a block stopped the sun), 1
 // when the ray left the map in the open at tOut (the heightfield carries on from there), 2 where the map isn't read
 // yet (the heightfield's own answer stands).
+// What the walk reads (Steady 60, 12 Nov; SPEC §22 "The walk's reads"): it steps through every cell as it always did,
+// and only leaves out reads whose answer it already has. The map's open map (LensBlocks, rows 1024 to 1031: one texel a
+// 4x4-block column, a bit for every 4 blocks of height, set where all 64 blocks are read and open) says where a whole
+// stretch of air is open, so no texel there is fetched; and a texel is fetched once for as long as the walk stays in
+// it (a section's column holds 16 blocks). Same cells, same order, same answers: only fewer fetches.
 float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
     vec4 f17 = F(17);
     vec3 cam = F(12).xyz;
@@ -63,6 +73,9 @@ float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
     float t = 0.0;
     status = 1;
     tOut = 0.0;
+    // the open map's texel the walk is in and its bits; the block texel last fetched and its bits
+    ivec2 openAt = ivec2(-1), fineAt = ivec2(-1);
+    uint open = 0u, bits = 0u;
     for (int i = 0; i < 72; i++) {
         // into the next block the ray crosses (never the one it starts in: a stair's own step, a slab's own top)
         if (next.x < next.y && next.x < next.z) {
@@ -80,8 +93,20 @@ float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
         }
         tOut = t;
         if (abs(float(c.x) + 0.5 - cam.x) > reach || abs(float(c.z) + 0.5 - cam.z) > reach || float(c.y) < yMin || float(c.y) >= yMin + 128.0) return 1.0;
-        vec4 raw = texelFetch(BlocksSampler, ivec2(c.x & 127, (c.z & 127) * 8 + ((c.y >> 4) & 7)), 0);
-        uint bits = uint(raw.r * 255.0 + 0.5) | (uint(raw.g * 255.0 + 0.5) << 8) | (uint(raw.b * 255.0 + 0.5) << 16) | (uint(raw.a * 255.0 + 0.5) << 24);
+        // (a cell in a stretch the open map knows is open: the texel would say open, so it isn't fetched)
+        ivec2 oa = ivec2(((c.x >> 4) & 7) * 16 + ((c.z >> 2) & 3) * 4 + ((c.x >> 2) & 3), 1024 + ((c.z >> 4) & 7));
+        if (oa != openAt) {
+            openAt = oa;
+            vec4 ro = texelFetch(BlocksSampler, oa, 0);
+            open = uint(ro.r * 255.0 + 0.5) | (uint(ro.g * 255.0 + 0.5) << 8) | (uint(ro.b * 255.0 + 0.5) << 16) | (uint(ro.a * 255.0 + 0.5) << 24);
+        }
+        if (((open >> uint((c.y & 127) >> 2)) & 1u) != 0u) continue;
+        ivec2 fa = ivec2(c.x & 127, (c.z & 127) * 8 + ((c.y >> 4) & 7));
+        if (fa != fineAt) {
+            fineAt = fa;
+            vec4 raw = texelFetch(BlocksSampler, fa, 0);
+            bits = uint(raw.r * 255.0 + 0.5) | (uint(raw.g * 255.0 + 0.5) << 8) | (uint(raw.b * 255.0 + 0.5) << 16) | (uint(raw.a * 255.0 + 0.5) << 24);
+        }
         if (bits == 0xFFFFFFFFu) {
             status = 2;
             return 1.0;
@@ -105,8 +130,8 @@ float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
 }
 
 // the lit air (LensLit; SPEC §22 "Steady Light"): the camera's place in its volume, in blocks from the volume's corner,
-// and w whether the texture holds one (frame texels 15, 20 and 21)
-vec4 litCam() { return vec4(F(20).zw, F(21).w, F(15).w); }
+// and w whether the texture holds one (frame texels 15, 20 and 28; never 21, which the world's projection rewrites)
+vec4 litCam() { return vec4(F(20).zw, F(28).w, F(15).w); }
 
 // how much of the sun reaches a point of air w (camera-relative) by the lit air: x the light, y how far to trust it
 // (0 outside the volume, rising over its outer blocks). Smooth across x and y by the texture's own filter; across z
@@ -139,7 +164,12 @@ float litSure(vec3 a) {
 }
 
 // the heightfield, from o (a point in the world's ring) toward the light: 0 under solid blocks, dimmed through leaves
-float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof);
+// leafy: whether the ray passes anywhere under a column's leaves (so inside the block map the walk must have its say)
+float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof, out bool leafy);
+
+// how deep a crown is taken to be where only its top is known (the heightfield): leaves shade a ray in the top
+// seven blocks of their column and no lower
+const float CANOPY = 7.0;
 
 // where the block map's walk would stop for a ray that meets nothing: the edge of the map's trusted box round the
 // camera, or 72 blocks' worth of cells, as a distance along l (o in the world's ring). The lit air's sure pixels go on
@@ -156,13 +186,28 @@ float walkEnd(vec3 o, vec3 l) {
 
 // how much of the sun reaches a surface point: the heightfield's answer, and where that is shade and the block map
 // reaches, the map's (the heightfield can only say "something stands between"; the map knows what and where)
+// Development (/awaken lens paths on; frame texel 29 w): which part answered a pixel, marked over its answer v in the
+// world's own blocks so it holds still. 1 the lit air was sure of the sun (lines across the sun's way, one a block),
+// 2 the walk left the map in the open (lines along the sun's way), 3 the walk met a section not read yet and the
+// heightfield's answer stands (a checker, four squares a block). A mark is the answer turned over, so it shows on
+// lit ground and in shade alike. Plain: the heightfield found nothing over the ray, or a block stopped the walk.
+float pathMark(int path, vec3 o, float v) {
+    if (F(29).w < 0.5) return v;
+    bool mark = path == 1 ? fract(o.x) < 0.12 : path == 2 ? fract(o.z) < 0.12 : (fract(o.x * 2.0) < 0.5) != (fract(o.z * 2.0) < 0.5);
+    return mark ? (v > 0.5 ? 0.0 : 1.0) : v;
+}
+
 float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     vec4 f12 = F(12), f15 = F(15);
     if (f15.x < 1.0) return 1.0;
     vec3 o = p + vec3(f12.x, f12.y, f12.z) + n * 0.06;
-    float vis = heightRay(o, l, noise, ultra, true);
-    if (vis > 0.97 || F(17).z <= 0.0) return vis;
+    bool leafy, more;
+    float vis = heightRay(o, l, noise, ultra, true, leafy);
+    if (F(17).z <= 0.0) return vis;
     if (max(abs(o.x - f12.x), abs(o.z - f12.z)) > F(17).z - 1.0) return vis;
+    // inside the map: lit only if nothing at all stands over the ray, leaves at any height included (the walk knows
+    // where they really are)
+    if (vis > 0.97 && !leafy) return vis;
     // (most of a forest's pixels come this far; the lit air settles the ones well inside the sun or the shade for
     // three texture reads, and the walk is left for the edges, where its exactness shows)
     // (sure of the sun: the walk would have found nothing, so only the walk is saved, and the land beyond the map has
@@ -170,42 +215,64 @@ float sunVisibility(vec3 p, vec3 n, vec3 l, float noise, bool ultra) {
     // than the walk does, so where it called a block dark and the walk beside it found the sun, the difference lay on
     // open grass as a patchwork under a low sun, Euan 2026-11-10; a pixel in shade walks, and meets what shades it
     // within a few blocks anyway)
-    if (litSure(p + n * 0.55) == 1.0) return heightRay(o + l * walkEnd(o, l), l, noise, ultra, false);
+    if (litSure(p + n * 0.55) == 1.0) return pathMark(1, o, heightRay(o + l * walkEnd(o, l), l, noise, ultra, false, more));
     int status;
     float tOut;
     float through = blockRay(o, l, status, tOut);
-    if (status == 2) return vis;
+    if (status == 2) return pathMark(3, o, vis);
     if (status == 0) return 0.0;
     // out of the map in the open: the land beyond it, by the heightfield from there
-    return through * heightRay(o + l * tOut, l, noise, ultra, false);
+    return pathMark(2, o, through * heightRay(o + l * tOut, l, noise, ultra, false, more));
 }
 
-float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof) {
+// Leaves: the heightfield knows a column's top with its leaves (r) and without (g), not where the crown ends below.
+// It took the whole column under r for leaves, a curtain to the ground: every ray that passed under a crown was
+// shaded, and since the block map (which knows better) reaches 46 blocks from the camera, a tall tree's shade on the
+// ground was a slab with a straight edge that came and went as the camera moved (Euan, playing, 11 Nov: "the shadow
+// moves as I move ... if I move completely to the left of the tree, then the entire shadow of the tree basically
+// disappears"). A crown now shades only in its top CANOPY blocks, so beyond the map a tree casts its crown's shadow
+// and light passes under it, which is what the map finds too.
+float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof, out bool leafy) {
+    leafy = false;
     vec4 f12 = F(12), f15 = F(15);
-    // under a roof or in a cave: nothing from the sun (the composite fades its model out there). A heightmap counts a
-    // slab, a stair or a fence as its whole block, so its own column only shadows from a block above the surface
     ivec2 own = ivec2(floor(o.xz));
-    if (roof && o.y < heightAt(own, 0).g - 1.0) return 0.0;
     float maxH = f15.y, trust = f15.z, horiz = max(length(l.xz), 1.0e-3), vis = 1.0;
-    // near: every column the ray crosses, at its lowest point over it (where it enters: it climbs), so a step's or a
-    // wall's shadow is whole to its far edge. Point samples spaced like the far march skip the thin wedge of a low
-    // occluder near the end of its shadow, which faded it and cut it off in a stepped edge (Euan 2026-10-29)
     ivec2 c = own, dirI = ivec2(l.x >= 0.0 ? 1 : -1, l.z >= 0.0 ? 1 : -1);
     vec2 per = 1.0 / max(abs(l.xz), vec2(1.0e-5));
     vec2 next = (vec2(c) + max(vec2(dirI), 0.0) - o.xz) * vec2(dirI) * per;
+    // Under solid: in the ground, in a cave, or under a roof with open air beneath it (a bridge, an arch, a table).
+    // Only the last can see the sun, and only where the ray leaves this column still under the roof's underside;
+    // from the others nothing (the composite fades its model out there). A heightmap counts a slab, a stair or a fence
+    // as its whole block, so its own column only shadows from a block above the surface
+    if (roof) {
+        vec4 top = heightAll(own, 0);
+        if (o.y < top.g - 1.0 && !(o.y >= top.a - 1.0 && o.y + max(l.y, 0.0) * min(next.x, next.y) < top.b)) return 0.0;
+    }
+    // near: every column the ray crosses, between where it comes in and where it goes out (it climbs), so a step's or
+    // a wall's shadow is whole to its far edge. Point samples spaced like the far march skip the thin wedge of a low
+    // occluder near the end of its shadow, which faded it and cut it off in a stepped edge (Euan 2026-10-29)
+    // A column is solid under its floor (a) and from its roof's underside up to its top (b to g): for most columns
+    // that is everything under the top. Before the heightfield held b and a, a roof with air under it was solid to
+    // the ground, and beyond the block map a bridge, an arch or a table threw a slab's shadow from its feet (the
+    // stone table of run 43001230601), right only once the camera came within 46 blocks.
     float t = 0.0;
     int nearCells = ultra ? 16 : 10;
     for (int i = 0; i < nearCells; i++) {
         if (next.x < next.y) { t = next.x; next.x += per.x; c.x += dirI.x; }
         else { t = next.y; next.y += per.y; c.y += dirI.y; }
-        float y = o.y + l.y * (l.y >= 0.0 ? t : min(next.x, next.y));
-        if (y > maxH) return vis;
+        float tOut = min(next.x, next.y);
+        float lo = o.y + l.y * (l.y >= 0.0 ? t : tOut), hi = o.y + l.y * (l.y >= 0.0 ? tOut : t);
+        if (lo > maxH) return vis;
         if (max(abs(float(c.x) + 0.5 - f12.x), abs(float(c.y) + 0.5 - f12.z)) > trust) return vis;
-        vec2 h = heightAt(c, 0);
-        if (y < h.g) return 0.0;
-        if (y < h.r) {
-            vis *= exp(-0.9 * (min(next.x, next.y) - t));
-            if (vis < 0.03) return 0.0;
+        vec4 h = heightAll(c, 0);
+        if (lo < h.a || (hi >= h.b && lo < h.g)) return 0.0;
+        if (lo < h.r) {
+            leafy = true;
+            // (through the crown itself: where the ray, between coming in and going out, is in its top blocks)
+            if (hi > h.r - CANOPY) {
+                vis *= exp(-0.9 * (tOut - t));
+                if (vis < 0.03) return 0.0;
+            }
         }
     }
     // far: steps each longer than the last from there, the same reach as before
@@ -221,11 +288,16 @@ float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof) {
         // far steps test a whole cell (the max mips), so a long stride can't step over a ridge
         int lvl = int(clamp(log2(s * horiz) + 0.5, 0.0, 4.0));
         ivec2 cell = ivec2(floor(q.xz));
-        vec2 h = heightAt(cell, lvl) - (lvl == 0 && cell == own ? 1.0 : 0.0);
-        if (q.y < h.g) return 0.0;
+        vec4 h = heightAll(cell, lvl);
+        if (lvl == 0 && cell == own) h.rga -= 1.0;
+        float up = q.y + max(l.y, 0.0) * s;
+        if (q.y < h.a || (up >= h.b && q.y < h.g)) return 0.0;
         if (q.y < h.r) {
-            vis *= exp(-0.9 * s);
-            if (vis < 0.03) return 0.0;
+            leafy = true;
+            if (up > h.r - CANOPY) {
+                vis *= exp(-0.9 * s);
+                if (vis < 0.03) return 0.0;
+            }
         }
         t += s;
     }
@@ -233,7 +305,11 @@ float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof) {
 }
 
 // the depth buffer, a short way toward the light: what the heightfield can't hold (mobs, grass, slabs, block edges)
-float contactShadow(vec3 p, vec3 n, vec3 l, float dist, float noise, mat4 vp, bool z01, float zFar, bool ultra) {
+// known: how far the answer can be trusted. The march sees only what is on the screen: 0 where it ran off the screen
+// before it was through (what stands between here and the light from there on can't be seen), less than 1 for a hit
+// met within 4% of the screen's edge, 1 otherwise. What isn't known is the caller's to settle (the edge's hold).
+float contactShadow(vec3 p, vec3 n, vec3 l, float dist, float noise, mat4 vp, bool z01, float zFar, bool ultra, out float known) {
+    known = 1.0;
     int steps = ultra ? 12 : 6;
     float len = clamp(0.35 + dist * 0.025, 0.35, 3.0);
     // the Air (frame texel 22 w): near the eye the small things cast whole shadows, a block and a half long (a flower,
@@ -247,15 +323,20 @@ float contactShadow(vec3 p, vec3 n, vec3 l, float dist, float noise, mat4 vp, bo
     for (int i = 0; i < steps; i++) {
         float t = (float(i) + noise) / float(steps);
         vec3 s = project(vp, o + l * (len * t * t + 0.01), z01);
-        if (s.x <= 0.0 || s.y <= 0.0 || s.x >= 1.0 || s.y >= 1.0) break;
+        if (s.x <= 0.0 || s.y <= 0.0 || s.x >= 1.0 || s.y >= 1.0) {
+            known = 0.0;
+            break;
+        }
         float sd = texelFetch(DepthSampler, ivec2(s.xy * InSize), 0).r;
         float zs = linearDepth(sd, zFar, z01), zq = linearDepth(s.z, zFar, z01);
         float delta = zq - zs;
         // something stands between this point and the light: in front of the ray, but not a wall far in front of it.
-        // Toward the screen's edge a hit counts less, so contact shadows fade out there rather than end in a line where
-        // the march runs off the screen (what's off it is the heightfield's, which never depends on the screen)
-        if (zs > 1.25 && delta > 0.015 + zq * 0.003 && delta < 0.5 + zq * 0.02)
-            return 1.0 - smoothstep(0.0, 0.04, min(min(s.x, s.y), min(1.0 - s.x, 1.0 - s.y)));
+        // Toward the screen's edge a hit is known less, so contact shadows fade out there rather than end in a line
+        // where the march runs off the screen (what's off it is the heightfield's, which never depends on the screen)
+        if (zs > 1.25 && delta > 0.015 + zq * 0.003 && delta < 0.5 + zq * 0.02) {
+            known = smoothstep(0.0, 0.04, min(min(s.x, s.y), min(1.0 - s.x, 1.0 - s.y)));
+            return 0.0;
+        }
     }
     return 1.0;
 }
@@ -371,6 +452,27 @@ vec4 history(vec3 p, bool sky, bool z01) {
     return wsum > 0.0 ? vec4(acc / wsum, wsum) : vec4(0.0);
 }
 
+// The small shade's reach (SPEC §22; frame texels 30 to 33, w). The contact shadows and the ambient shade are made
+// from this buffer's own depth, one sample a texel, and what casts them in a meadow is a blade, a stem or a petal: one
+// or two of the art's pixels wide. Near the eye a texel is far smaller than that and the shade is the plant's own.
+// Far off a texel spans several blades and the gaps between them, and its one sample lands on a blade in one frame and
+// on the ground behind it in the next, as the plants sway and the camera breathes: the shade flips, and a far meadow
+// is a flicker of dark flecks (Euan, playing at 4K, 12 Nov: "there's so much going on in such a small area of view ...
+// right now I'm on native 4K and it still just looks very shimmery"). So the small shade is kept while the buffer can
+// see what casts it, and let go as it can't.
+// texelArt: how wide one of this buffer's texels is on a surface at this pixel's depth, in the art's pixels
+// (sixteenths of a block). It follows the view: a wider view or a smaller buffer lets go sooner, a spyglass keeps
+// the shade of the far grass it brings near.
+float texelArt(mat4 inv, vec2 uv, float depth, vec3 p, bool z01) {
+    return length(unproject(inv, uv + vec2(0.0, 1.0 / OutSize.y), depth, z01) - p) * 16.0;
+}
+
+// how much of a small shade is kept where a texel is `art` pixels wide: all of it up to `from`, none past `to` (`to`
+// not past `from`: all of it everywhere)
+float smallKeep(float art, float from, float to) {
+    return to > from ? 1.0 - smoothstep(from, to, art) : 1.0;
+}
+
 void main() {
     bool z01 = F(16).x > 0.5, ultra = Quality > 1.5;
     ivec2 last = ivec2(InSize) - 1;
@@ -399,10 +501,14 @@ void main() {
         return;
     }
     float vis = 1.0, ao = 1.0, vol = 0.0;
-    // the hand and the holo glass (within arm's reach, or a world plate over a creature) are never shadowed
-    if (!sky && dist >= 1.25 && !onPlate(p)) {
+    // the hand and the holo glass (a world plate over a creature) are never shadowed. The hand by its own depth where
+    // Lens has it (parameter texel 26 r): by reach instead, a wall, a door or a ceiling within arm's length went
+    // unshadowed with it, a disc of raw light that moved with the camera (Euan, playing, 11 Nov: "this spotlight effect")
+    bool hand = P(26).r > 0.5 ? texture(HandSampler, texCoord).r > 0.0 : dist < 1.25;
+    if (!sky && !hand && !onPlate(p)) {
         vec3 n = normalAt(px, p, depth, inv, z01, InSize);
         mat4 vp = frameMat(4);
+        float art = texelArt(inv, uv, depth, p, z01);
         // (a face turned from the light is left to the composite, except inside the Sun Pass's block map, where the
         // block it belongs to shades it exactly)
         bool mapped = F(17).z > 0.0 && max(abs(p.x), abs(p.z)) < F(17).z - 1.0;
@@ -416,24 +522,61 @@ void main() {
             // from the centre of its 1/16-block texel, so every screen pixel of that texel gets one answer and a
             // shadow's edge runs along texel edges, like the art it falls on; the sun's disc is narrower
             vec3 ps = p;
+            float still = noise;
             if (F(22).w > 0.0) {
                 vec3 an = abs(n);
-                if (max(an.x, max(an.y, an.z)) > 0.99) {
-                    vec3 w = p + vec3(f12.x, f12.y, f12.z);
-                    ps = mix((floor(w * 16.0) + 0.5) / 16.0, w, step(0.99, an)) - vec3(f12.x, f12.y, f12.z);
-                }
                 // a low sun's shadows are long and their edges wide: the disc grows as it sinks
                 rad *= 0.2 + 2.8 * (1.0 - smoothstep(0.08, 0.42, f14.y)) * (1.0 - F(16).y);
+                // (a block's face only. The texels are the world's, a sixteenth of a block on its own grid: a creature's
+                // side is square to the world now and then, and its shade was then cut along a grid that is not its
+                // skin's and does not move with it, stair-steps that crawled as it walked. Euan, playing, 11 Nov:
+                // "actual artifacts in the shadows, where the shadows have jagged edges or like zigzags")
+                if (max(an.x, max(an.y, an.z)) > 0.99 && (F(15).x < 1.0 || blockFace(p + vec3(f12.x, f12.y, f12.z), n))) {
+                    vec3 w = p + vec3(f12.x, f12.y, f12.z), tex = floor(w * 16.0);
+                    ps = mix((tex + 0.5) / 16.0, w, step(0.99, an)) - vec3(f12.x, f12.y, f12.z);
+                    // close to the eye a texel is many screen pixels, and its light must hold still from frame to
+                    // frame: it asks along the sun's own line (no disc: a disc sampled once a texel made a shadow's edge
+                    // a dither of light and dark texels, a broken grid, that changed every frame: the shimmer, Euan
+                    // 2026-11-10), with a march jitter of its own that never changes. A shadow there is each texel
+                    // wholly lit or wholly shaded. From 10 to 18 blocks the disc and the frame's noise come back,
+                    // and the frames soften the edge as before
+                    float crisp = 1.0 - smoothstep(10.0, 18.0, dist);
+                    rad *= 1.0 - crisp;
+                    if (crisp > 0.0) still = fract(sin(dot(tex, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+                }
             }
             l = normalize(l + (a1 * cos(ang) + cross(l, a1) * sin(ang)) * rad);
-            vis = sunVisibility(ps, n, l, noise, ultra);
-            if (vis > 0.0 && dist < 96.0) vis *= contactShadow(ps, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
+            vis = sunVisibility(ps, n, l, still, ultra);
+            float keepContact = smallKeep(art, F(30).w, F(31).w), contact = 1.0, known = 1.0;
+            if (vis > 0.0 && dist < 96.0 && keepContact > 0.0)
+                contact = contactShadow(ps, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra, known);
             // the clouds' moving shadows
             if (vis > 0.0) vis *= cloudShadow(p, f14.xyz, cloudParams(), f12.y);
             // and a storm cell's, long across the land when the sun is low
             if (vis > 0.0) vis *= stormShadow(p, f14.xyz, f12.y);
+            // The contact shadows last, over the light as it is without them: their share of it as marched, and where
+            // the march could not see (it ran off the screen, or met its hit at the very edge), the edge's hold.
+            // A flower's, a fence's or a mob's shadow is made from the screen alone, so when what casts it slid off
+            // the screen's edge the shadow, still in view, went out with it, and came back when it slid in again: a
+            // strip along the sun's side of the screen as wide as the shadows are long, a block and a half near the
+            // eye (Euan, playing, 12 Nov: "on the very left edge of my screen, I can see the shadows disappearing
+            // basically as I turn my camera. And the closer the thing is to me, the more obvious that is"). What the
+            // march can't see is not "lit": it is what it was. Last frame's light for this surface, over the light
+            // without the contact shadows, is the share they had then; that is kept, let go a little each frame
+            // (frame texel 34 w: about a second in all, so a mob that has walked off leaves no shadow standing), and
+            // the march has its say again as far as it knows. Without a history the unknown is lit, as before.
+            if (vis > 0.0 && keepContact > 0.0) {
+                float share = mix(1.0, contact, keepContact);
+                if (known < 1.0) {
+                    float hold = F(34).w;
+                    float was = hold > 0.0 && hist.w > 0.4 ? mix(clamp(hist.r / vis, 0.0, 1.0), 1.0, hold) : 1.0;
+                    share = mix(was, share, known);
+                }
+                vis *= share;
+            }
         }
-        if (dist < 96.0) ao = ambient(p, n, noise, noise2, vp, z01, zFar, ultra);
+        float keepAmbient = smallKeep(art, F(32).w, F(33).w);
+        if (dist < 96.0 && keepAmbient > 0.0) ao = mix(1.0, ambient(p, n, noise, noise2, vp, z01, zFar, ultra), keepAmbient);
     }
     float strength = f14.w * P(6).a * P(19).r;
     if (strength > 0.0 && F(15).x > 0.0) vol = volume(normalize(p), sky ? (ultra ? 320.0 : 192.0) : min(dist, ultra ? 320.0 : 192.0), f14.xyz, strength, noise2, ultra);

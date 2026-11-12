@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "name": "The High Caps",
+  "line": "They grew up out of the sea one after another, each taller than the last. You can walk from one to the next, if you don't look down.",
+  "form": "land",
+  "theme": "fungal_hollow",
+  "ranks": [
+    "E",
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
+  ],
+  "land": {
+    "program": "awaken:fungal_country",
+    "water": 62,
+    "params": {
+      "landform": 4
+    }
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/high_caps"
+    ],
+    "lens": "high_caps",
+    "air": [
+      "spores",
+      "stars",
+      "mist"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 6
+  },
+  "heart": {
+    "lord": "mother_of_spores",
+    "seat": "the_last_cap"
+  },
+  "moods": [
+    "cyan_moon"
+  ],
+  "ready": true
+}

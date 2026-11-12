@@ -55,7 +55,7 @@ final class RealmHush {
         BlockPos door = null;
         for (Land.Edit e : land.change("wake_" + i)) {
             BlockPos at = Realms.world(ref.cell(), e.x(), e.y(), e.z());
-            if (!level.isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
             level.setBlock(at, e.state(), Block.UPDATE_CLIENTS);
             if (door == null) door = at;
         }

@@ -56,6 +56,7 @@ public final class BodyClient {
         dev.awaken.core.api.FirstPerson.reducedMotion = dev.awaken.body.client.feel.FeelConfig::reduced;
         dev.awaken.core.api.FirstPerson.touchesOn = dev.awaken.body.client.feel.FeelConfig::fpTouches;
         dev.awaken.core.api.FirstPerson.stationsOn = dev.awaken.body.client.feel.FeelConfig::stations;
+        dev.awaken.core.api.FirstPerson.stationBench = dev.awaken.body.client.feel.FeelConfig::stationBench;
         dev.awaken.core.api.FirstPerson.world("body_grip", 100, (pt, rig) -> dev.awaken.body.client.feel.FeelConfig.fpMoves() && GripView.pose(pt, rig));
         dev.awaken.core.api.FirstPerson.world("body_moves", 90, (pt, rig) -> dev.awaken.body.client.feel.FeelConfig.fpMoves() && BodyFp.worldPose(pt, rig));
         // around the cast animations' own lean (LOWEST / HIGHEST), so the two nest
@@ -91,6 +92,8 @@ public final class BodyClient {
         MovementHooks.installClient(new MovementHooks.ClientAccess() {
             @Override public void castStarting(net.minecraft.world.entity.player.Player p, String powerId, String family, boolean motionPredicted) {
                 ClientMoves.castStarting(p, powerId, family, motionPredicted);
+                // the Ascent hears it too: a cast's motion carries into a state, a blink keeps one (SPEC §62)
+                if (p == Minecraft.getInstance().player) dev.awaken.body.ascent.client.AscentMoves.castStarting(motionPredicted);
             }
 
             @Override public boolean ownsMovementKey(net.minecraft.world.entity.player.Player p) {

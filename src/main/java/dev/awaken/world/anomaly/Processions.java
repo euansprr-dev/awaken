@@ -76,7 +76,7 @@ final class Processions {
         double x = Mth.lerp(t, a.pos.getX(), a.target.getX()) + 0.5;
         double z = Mth.lerp(t, a.pos.getZ(), a.target.getZ()) + 0.5;
         int bx = Mth.floor(x), bz = Mth.floor(z);
-        double ground = level.hasChunkAt(bx, bz) ? Spots.surface(level, bx, bz).getY() : Mth.lerp(t, a.pos.getY(), a.target.getY());
+        double ground = dev.awaken.core.api.Ready.at(level, bx, bz) ? Spots.surface(level, bx, bz).getY() : Mth.lerp(t, a.pos.getY(), a.target.getY());
         return new Vec3(x, ground + 2.3, z);
     }
 
@@ -90,7 +90,7 @@ final class Processions {
         if (a.stage == Anomaly.CACHE) {
             if (now >= a.endsAt) return "the cache faded unopened";
             BlockPos at = a.focus();
-            if (level.hasChunkAt(at) && !level.getBlockState(at).is(AnomalyContent.SPIRIT_CACHE.get())) return "the cache is gone";
+            if (dev.awaken.core.api.Ready.at(level, at) && !level.getBlockState(at).is(AnomalyContent.SPIRIT_CACHE.get())) return "the cache is gone";
             return null;
         }
         if (now >= a.endsAt) return "nobody followed the lights";
@@ -151,7 +151,7 @@ final class Processions {
     /** The end of the path: the lights sink into a cache. */
     static boolean placeCache(ServerLevel level, AnomalyData data, Anomaly a, @Nullable ServerPlayer owner, long now) {
         int x = a.target.getX(), z = a.target.getZ();
-        if (!level.hasChunkAt(x, z)) return true; // wait until it's loaded
+        if (!dev.awaken.core.api.Ready.at(level, x, z)) return true; // wait until it's loaded
         BlockPos top = Spots.surface(level, x, z).above();
         BlockState here = level.getBlockState(top);
         if (!here.canBeReplaced() || !here.getFluidState().isEmpty()) return false;
@@ -207,7 +207,7 @@ final class Processions {
         }
         if (!removeBlocks || !a.cachePlaced) return;
         BlockPos at = a.focus();
-        if (level.hasChunkAt(at)) {
+        if (dev.awaken.core.api.Ready.at(level, at)) {
             if (level.getBlockState(at).is(AnomalyContent.SPIRIT_CACHE.get())) level.removeBlock(at, false);
         } else {
             data.removals().add(new AnomalyData.Removal(level.dimension().identifier().toString(), at));

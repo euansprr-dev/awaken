@@ -353,7 +353,7 @@ public final class AnomalyDirector {
             AnomalyData.Removal r = it.next();
             Identifier dim = Identifier.tryParse(r.dimension());
             ServerLevel level = dim == null ? null : s.getLevel(ResourceKey.create(Registries.DIMENSION, dim));
-            if (level != null && !level.hasChunkAt(r.pos())) continue; // wait for the chunk
+            if (level != null && !dev.awaken.core.api.Ready.at(level, r.pos())) continue; // wait for the chunk
             if (level != null && ours(level.getBlockState(r.pos()))) level.removeBlock(r.pos(), false);
             it.remove();
             data.setDirty();

@@ -6,22 +6,28 @@
   "theme": "drowned_archive",
   "ranks": [
     "D",
-    "C"
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:sunken_stacks",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:gate_drowned_archive"
+      "awaken:realm/sunken_stacks"
     ],
     "lens": "sunken_stacks",
     "air": [
-      "mist",
       "shaft_dust",
+      "mist",
+      "paper",
+      "drips",
       "dust",
-      "drips"
+      "pale_fish"
     ]
   },
   "life": {

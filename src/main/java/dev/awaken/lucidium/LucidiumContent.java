@@ -3,6 +3,7 @@ package dev.awaken.lucidium;
 import com.mojang.serialization.MapCodec;
 import dev.awaken.Awaken;
 import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.lucidium.block.DreamBellBlock;
 import dev.awaken.lucidium.block.DreamCloudBlock;
 import dev.awaken.lucidium.block.DreamRibbonBlock;
@@ -32,7 +33,6 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -137,16 +137,9 @@ public final class LucidiumContent {
         PARTICLES.register(modBus);
         ATTACHMENTS.register(modBus);
         TICKETS.register(modBus);
-        modBus.addListener(LucidiumContent::creativeTab);
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (!event.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        event.accept(DREAM_JOURNAL.get());
-        event.accept(DREAM_RESIDUE.get());
-        event.accept(DREAM_BELL_ITEM.get());
-        event.accept(DREAM_CLOUD_ITEM.get());
-        event.accept(DREAM_GLASS_ITEM.get());
-        event.accept(SHIFTING_STONE_ITEM.get());
+        // the Dream Journal with the gear, residue with the essence, the dream's blocks with the building blocks
+        Tabs.fill(Tabs.Shelf.GEAR, DREAM_JOURNAL);
+        Tabs.fill(Tabs.Shelf.ESSENCE, DREAM_RESIDUE);
+        Tabs.fill(Tabs.Shelf.DREAM_BLOCKS, DREAM_BELL_ITEM, DREAM_CLOUD_ITEM, DREAM_GLASS_ITEM, SHIFTING_STONE_ITEM);
     }
 }

@@ -3,6 +3,7 @@
  "id": "gearwright_colossus",
  "moves": "gearwright_colossus",
  "duel": true,
+ "finish": true,
  "mind": {
   "cooldowns": {
    "strikes": 240,
@@ -75,7 +76,7 @@
    }
   ]
  },
- "stance": 260,
+ "stance": 140,
  "intro": {
   "pose": "idle",
   "move": "chime"

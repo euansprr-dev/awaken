@@ -1,23 +1,59 @@
 # Runs AWAKEN's GameTests on GitHub's Linux machines, so the owner's Mac only compiles and runs screenshot tours.
 # Every push to an active branch runs the full suite; a newer push to the same branch cancels the older run.
 # The repo's default branch is build/awaken-v1, so its Gradle cache (Minecraft, NeoForge) serves every branch.
+#
+# Started by hand (tools/check-ci.sh, from any pushed branch) it can do one smaller thing instead, so a session can check
+# its work while the Mac is in use: mode "compile" (compileJava only), "tests" (only the GameTests whose names start with
+# one of the comma-separated prefixes in target), or "bench" (the gates' bench, SPEC 50.8: each land in target, a tour path
+# or a blueprint id, comma-separated, at each seed: anything floating, the walk to every site, the picture sheet).
+# Inputs reach the shell only through env and are checked before anything runs.
 name: GameTests
+run-name: ${{ inputs.mode && format('Check {0} {1} {2} {3}', inputs.mode, inputs.target, inputs.seeds, inputs.id) || github.event.head_commit.message || 'GameTests' }}
 
 on:
   push:
     branches: ['build/**', 'pack/**', 'lands/**', 'carillon/main', 'carillon/m*']
   workflow_dispatch:
+    inputs:
+      mode:
+        description: suite, compile, tests or bench
+        required: false
+        default: suite
+      target:
+        description: 'tests: name prefixes; bench: tour paths or blueprint ids (comma-separated)'
+        required: false
+        default: ''
+      seeds:
+        description: 'bench: seeds, space-separated (default 1)'
+        required: false
+        default: ''
+      id:
+        description: a tag to find this run by
+        required: false
+        default: ''
 
 concurrency:
-  group: gametests-${{ github.ref }}
-  cancel-in-progress: true
+  group: gametests-${{ github.ref }}-${{ inputs.mode || 'suite' }}-${{ inputs.target }}-${{ inputs.seeds }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   gametests:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
+    env:
+      MODE: ${{ inputs.mode || 'suite' }}
+      TARGET: ${{ inputs.target }}
+      SEEDS: ${{ inputs.seeds }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Inputs
+        run: |
+          for v in "$MODE" "$TARGET" "$SEEDS"; do
+            case "$v" in *[!A-Za-z0-9_:,./\ -]*) echo "refused: $v"; exit 2 ;; esac
+          done
+          case "$MODE" in suite|compile|tests|bench) ;; *) echo "mode must be suite, compile, tests or bench"; exit 2 ;; esac
+          if [ "$MODE" = tests ] || [ "$MODE" = bench ]; then [ -n "$TARGET" ] || { echo "mode $MODE needs a target"; exit 2; }; fi
 
       - uses: actions/setup-java@v4
         with:
@@ -27,13 +63,45 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Build
+        if: env.MODE == 'suite'
         run: ./gradlew --console=plain build
 
       - name: GameTests
+        if: env.MODE == 'suite'
         run: ./gradlew --console=plain runGameTestServer
 
+      - name: Compile only
+        if: env.MODE == 'compile'
+        run: ./gradlew --console=plain compileJava
+
+      - name: Named tests only
+        if: env.MODE == 'tests'
+        run: ./gradlew --console=plain runGameTestServer -Ptests="$TARGET"
+
+      - name: Bench
+        if: env.MODE == 'bench'
+        run: |
+          fail=0
+          for t in ${TARGET//,/ }; do
+            n=$(basename "$t" .txt); n=${n##*:}
+            for s in ${SEEDS:-1}; do
+              out="$PWD/run-bench/out/$n-$s"
+              AWAKEN_BENCH="$t" AWAKEN_BENCH_OUT="$out" AWAKEN_BENCH_ROOT="$PWD" AWAKEN_BENCH_SEED="$s" \
+                ./gradlew --console=plain runGameTestServer -Ptests=realm_bench > "bench-$n-$s.log" 2>&1 || true
+              echo "== $n seed $s"
+              if [ -f "$out/bench.txt" ]; then
+                grep -E '^(BENCH|floats|settled|reach|route|volume)' "$out/bench.txt" || true
+                grep -q '^floats: 0$' "$out/bench.txt" && grep -q '^reach: all ' "$out/bench.txt" || { fail=1; grep -E '^(float|unreached|  )' "$out/bench.txt" | head -40; }
+              else
+                echo "no report"; grep -E 'error:|FAILED|Exception|What went wrong' -A6 "bench-$n-$s.log" | head -60; fail=1
+              fi
+            done
+          done
+          { echo '```'; for f in run-bench/out/*/bench.txt; do echo "== $f"; grep -E '^(floats|settled|reach|route|volume)' "$f"; done; echo '```'; } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          exit $fail
+
       - name: Summary
-        if: always()
+        if: always() && (env.MODE == 'suite' || env.MODE == 'tests')
         run: |
           f=run/logs/latest.log
           if [ -f "$f" ]; then
@@ -43,7 +111,16 @@ jobs:
           fi
 
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && env.MODE == 'bench'
+        with:
+          name: bench
+          path: |
+            run-bench/out/
+            bench-*.log
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MODE != 'bench' && env.MODE != 'compile'
         with:
           name: gametest-logs
           path: run/logs/

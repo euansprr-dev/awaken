@@ -240,7 +240,7 @@ clip("fp_stair_bump", 4, off=[(0, REST, "linear"), (1, hand(0, 0.04, 0, 5), "eas
 # The Ascent (P3; SPEC §17). Its held states are fist stances in body.ascent.client.AscentFp (keep these numbers the
 # same there): on a rope the main fist holds it at ROPE_FIST (where the rope leaves the hand, AscentRender), on wings
 # both arms are out flat at the frame's edges (GLIDE_FIST). These are its moments.
-ROPE_FIST = fist(0.3, -0.02, -0.72)
+ROPE_FIST = fist(0.46, -0.3, -0.8)  # low in the frame's corner: the middle of the view is where the swing is going (SPEC §62)
 GLIDE_FIST = fist(0.86, -0.04, -0.86)
 
 # The rope: thrown with the main arm (a forward fling, the wrist flicked), then held where it leaves the hand.

@@ -76,7 +76,7 @@ public final class Sounding {
             float len = (float) Math.sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
             for (int r = 1; r <= radius; r++) {
                 m.set(from.getX() + Math.round(d[0] / len * r), from.getY() + Math.round(d[1] / len * r), from.getZ() + Math.round(d[2] / len * r));
-                if (!level.isLoaded(m)) break;
+                if (!dev.awaken.core.api.Ready.loaded(level, m)) break;
                 if (open(level.getBlockState(m)) && roomy(level, m)) {
                     out[k] = (byte) r;
                     break;

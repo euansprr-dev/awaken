@@ -1,0 +1,44 @@
+slot.sh: tour slot taken by look-steady-60 after 0s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+first_view.png
+[03:18:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[03:18:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[03:18:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:18:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[03:18:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[03:18:47] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:18:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[03:18:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[03:18:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:18:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[03:18:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[03:18:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:19:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf run_on_played frames=1182 avg_fps=58.6 p50=16.74ms p95=20.98ms p99=23.56ms max=36.81ms tick_p95=8.19ms heap=5718/8192MB fb=3840x2160 load=3.7 occluded=false minimized=false
+[03:19:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[03:19:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_on_played: run_on_played samples=1183 world_p50=13.87ms world_p95=16.88ms world_p99=18.17ms upscale_p50=0.43ms upscale_p99=1.21ms
+[03:19:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_on_played
+[03:19:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens cost: tick cost over 901 ticks, mean/worst ms: heightfield 0.133/1.36, block map 0.204/2.72, lit air 0.022/0.32; sweep 10.51 ms on its worker, upload 0.09 ms, 629 volumes; sun map sweep 5.04 ms on its worker, 447 sweeps
+[03:19:02] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens off
+[03:19:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] cmd tp @s -1560.5 69 -715.5 -90 12
+[03:19:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:19:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart run_off_played
+[03:19:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[03:19:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[03:19:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[03:19:10] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:19:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[03:19:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[03:19:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:19:20] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[03:19:20] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[03:19:20] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:19:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[03:19:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[03:19:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:19:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf run_off_played frames=1206 avg_fps=59.8 p50=16.36ms p95=20.37ms p99=22.66ms max=52.74ms tick_p95=7.30ms heap=1968/8192MB fb=3840x2160 load=3.3 occluded=false minimized=false
+[03:19:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[03:19:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_off_played: run_off_played samples=1207 world_p50=5.47ms world_p95=7.65ms world_p99=8.67ms upscale_p50=0.57ms upscale_p99=1.89ms
+[03:19:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_off_played
+[03:19:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens cinematic
+[03:19:33] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit

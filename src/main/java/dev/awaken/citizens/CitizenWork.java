@@ -244,7 +244,7 @@ final class CitizenWork implements Ledger.Work {
             int k = lampCursor;
             lampCursor = (lampCursor + 1) % lampHead.length;
             BlockPos pos = lampHead[k];
-            if (!level.isLoaded(pos)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, pos)) continue;
             BlockState s = level.getBlockState(pos);
             boolean ours = s.is(CitizensContent.STREET_LAMP.get());
             if (!ours && !s.is(Blocks.LANTERN)) {
@@ -269,7 +269,7 @@ final class CitizenWork implements Ledger.Work {
     /** The lamplighter's pole reaches the lamp: set it now, with a flare (or a wisp of smoke going out). */
     private void lampNow(int k, boolean light) {
         BlockPos pos = lampHead[k];
-        if (!edits || !level.isLoaded(pos)) return;
+        if (!edits || !dev.awaken.core.api.Ready.loaded(level, pos)) return;
         BlockState s = level.getBlockState(pos);
         if (s.is(CitizensContent.STREET_LAMP.get()) || s.is(Blocks.LANTERN)) {
             level.setBlock(pos, lampState(light ? LAMP_LIT : LAMP_OUT), Block.UPDATE_ALL);
@@ -290,7 +290,7 @@ final class CitizenWork implements Ledger.Work {
         darkDirty = true;
         d.setDirty();
         BlockPos pos = lampHead[k];
-        if (edits && level.isLoaded(pos) && (level.getBlockState(pos).is(CitizensContent.STREET_LAMP.get()) || level.getBlockState(pos).is(Blocks.LANTERN))) {
+        if (edits && dev.awaken.core.api.Ready.loaded(level, pos) && (level.getBlockState(pos).is(CitizensContent.STREET_LAMP.get()) || level.getBlockState(pos).is(Blocks.LANTERN))) {
             level.setBlock(pos, lampState(LAMP_BROKEN), Block.UPDATE_ALL);
             level.playSound(null, pos, SoundEvents.GLASS_BREAK, SoundSource.BLOCKS, 1f, 1f);
         }
@@ -371,7 +371,7 @@ final class CitizenWork implements Ledger.Work {
         BlockState ware = wares(st.good());
         for (int k = 0; k < 2; k++) {
             BlockPos low = new BlockPos(cx + st.counterX(k), g + 1, cz + st.counterZ(k));
-            if (!level.isLoaded(low)) return;
+            if (!dev.awaken.core.api.Ready.loaded(level, low)) return;
             if (set(low, COUNTER[st.facing()][open ? 1 : 0], true)) return;
             BlockState want = open && k < shown ? ware : Blocks.AIR.defaultBlockState();
             if (set(low.above(), want, false)) return;
@@ -428,7 +428,7 @@ final class CitizenWork implements Ledger.Work {
         BlockPos[] cells = lineCells.get(k);
         for (int t = 0; t < cells.length; t++) {
             BlockPos p = cells[t];
-            if (!level.isLoaded(p)) return;
+            if (!dev.awaken.core.api.Ready.loaded(level, p)) return;
             BlockState s = level.getBlockState(p);
             if (!s.is(CitizensContent.LAUNDRY.get())) continue;
             int cloth = t < d.cloths[k] ? 1 + (int) Math.floorMod(mixHash(k * 131 + t), 6L) : 0;
@@ -464,7 +464,7 @@ final class CitizenWork implements Ledger.Work {
         int k = bit;
         if (k < r.lines.size()) {
             BlockPos[] cells = lineCells.get(k);
-            for (BlockPos p : cells) if (!level.isLoaded(p)) return;
+            for (BlockPos p : cells) if (!dev.awaken.core.api.Ready.loaded(level, p)) return;
             for (BlockPos p : cells) {
                 if (level.getBlockState(p).isAir())
                     level.setBlock(p, CitizensContent.LAUNDRY.get().defaultBlockState().setValue(LaundryBlock.AXIS, lineAxis[k]), Block.UPDATE_CLIENTS);
@@ -476,7 +476,7 @@ final class CitizenWork implements Ledger.Work {
         if (k < r.smithies.size()) {
             Smithy s = r.smithies.get(k);
             BlockPos p = new BlockPos(cx + s.bx(), sy + s.bry() + 1, cz + s.bz());
-            if (!level.isLoaded(p)) return;
+            if (!dev.awaken.core.api.Ready.loaded(level, p)) return;
             if (level.getBlockState(p).isAir()) {
                 Direction face = Direction.fromYRot(r.pYaw[s.anvil()]);
                 level.setBlock(p, Blocks.ANVIL.defaultBlockState().setValue(net.minecraft.world.level.block.AnvilBlock.FACING, face.getClockWise()), Block.UPDATE_ALL);
@@ -488,7 +488,7 @@ final class CitizenWork implements Ledger.Work {
         if (k < r.washplaces.size()) {
             WashPlace w = r.washplaces.get(k);
             BlockPos p = new BlockPos(cx + w.tx(), sy + w.tRy() + 1, cz + w.tz());
-            if (!level.isLoaded(p)) return;
+            if (!dev.awaken.core.api.Ready.loaded(level, p)) return;
             if (level.getBlockState(p).isAir())
                 level.setBlock(p, Blocks.WATER_CAULDRON.defaultBlockState().setValue(net.minecraft.world.level.block.LayeredCauldronBlock.LEVEL, 3), Block.UPDATE_ALL);
             markFurnished(bit);
@@ -498,7 +498,7 @@ final class CitizenWork implements Ledger.Work {
         if (k < r.crates.length) {
             int[] cr = r.crates[k];
             BlockPos p = new BlockPos(cx + cr[0], sy + cr[1] + 1, cz + cr[2]);
-            if (!level.isLoaded(p)) return;
+            if (!dev.awaken.core.api.Ready.loaded(level, p)) return;
             if (level.getBlockState(p).isAir()) {
                 level.setBlock(p, CitizensContent.CARGO_CRATE.get().defaultBlockState(), Block.UPDATE_ALL);
                 if ((k & 1) == 0 && level.getBlockState(p.above()).isAir())
@@ -518,12 +518,12 @@ final class CitizenWork implements Ledger.Work {
         if (d.bellPos[b] != 0) return;
         Bell bell = r.bells.get(b);
         BlockPos probe = new BlockPos(cx + (bell.x0() + bell.x1()) / 2, sy, cz + (bell.z0() + bell.z1()) / 2);
-        if (!level.isLoaded(probe)) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, probe)) return;
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int x = bell.x0(); x <= bell.x1(); x++)
             for (int z = bell.z0(); z <= bell.z1(); z++) {
                 m.set(cx + x, sy, cz + z);
-                if (!level.isLoaded(m)) return;
+                if (!dev.awaken.core.api.Ready.loaded(level, m)) return;
             }
         for (int y = sy + 150; y > sy; y--)
             for (int x = bell.x0(); x <= bell.x1(); x++)
@@ -602,7 +602,7 @@ final class CitizenWork implements Ledger.Work {
             if (d.bellPos[b] > 0) {
                 BlockPos pos = BlockPos.of(d.bellPos[b]);
                 // (SPEC §28.7) a bell taken down (stolen, cracked) rings nothing: the ringer pulls at nothing
-                if (level.isLoaded(pos) && level.getBlockState(pos).is(Blocks.BELL)) {
+                if (dev.awaken.core.api.Ready.loaded(level, pos) && level.getBlockState(pos).is(Blocks.BELL)) {
                     if (level.getBlockEntity(pos) instanceof BellBlockEntity be) be.onHit(Direction.from2DDataValue((int) (p[2] & 3)));
                     boolean choir = "choir".equals(r.bells.get(b).landmark());
                     float pitch = alarm ? 1.15f : choir ? 0.84f : 0.92f + 0.05f * (b % 4);
@@ -641,7 +641,7 @@ final class CitizenWork implements Ledger.Work {
             if (rp.after() > now) continue;
             BlockPos p = BlockPos.of(rp.pos());
             if ((p.getX() - x) * (p.getX() - x) + (p.getZ() - z) * (p.getZ() - z) > 12 * 12) continue;
-            if (!level.isLoaded(p)) return false;
+            if (!dev.awaken.core.api.Ready.loaded(level, p)) return false;
             BlockState s = level.getBlockState(p);
             if (s.isAir() || s.canBeReplaced() || s.is(CitizensContent.CITY_FIRE.get()) || burnt(s) || s.is(CitizensContent.STREET_LAMP.get())) {
                 level.setBlock(p, rp.state(), Block.UPDATE_ALL);
@@ -773,7 +773,7 @@ final class CitizenWork implements Ledger.Work {
         if (plot < 0) return;
         dev.awaken.city.CityPlan.Plot pl = plan.plots.get(plot);
         BlockPos a = new BlockPos(cx + pl.x0(), sy, cz + pl.z0()), b = new BlockPos(cx + pl.x1(), sy, cz + pl.z1());
-        if (!level.isLoaded(a) || !level.isLoaded(b) || !level.isLoaded(new BlockPos(a.getX(), sy, b.getZ())) || !level.isLoaded(new BlockPos(b.getX(), sy, a.getZ())))
+        if (!dev.awaken.core.api.Ready.loaded(level, a) || !dev.awaken.core.api.Ready.loaded(level, b) || !dev.awaken.core.api.Ready.loaded(level, new BlockPos(a.getX(), sy, b.getZ())) || !dev.awaken.core.api.Ready.loaded(level, new BlockPos(b.getX(), sy, a.getZ())))
             return;
         long found = -1;
         int g = sy + pl.lift();
@@ -1133,7 +1133,7 @@ final class CitizenWork implements Ledger.Work {
     private boolean stallBusy(int s) {
         Stall st = r.stalls.get(s);
         BlockPos p = new BlockPos(cx + st.counterX(1), sy + r.pRy[st.keeper()] + 1, cz + st.counterZ(1));
-        if (!level.isLoaded(p)) return false;
+        if (!dev.awaken.core.api.Ready.loaded(level, p)) return false;
         return level.getBlockState(p) != COUNTER[st.facing()][d.stallOpen[s] != 0 ? 1 : 0];
     }
 
@@ -1176,7 +1176,7 @@ final class CitizenWork implements Ledger.Work {
     void forceLamps() {
         for (int k = 0; k < lampHead.length; k++) {
             BlockPos pos = lampHead[k];
-            if (!level.isLoaded(pos)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, pos)) continue;
             BlockState s = level.getBlockState(pos);
             if (s.is(CitizensContent.STREET_LAMP.get()) || s.is(Blocks.LANTERN)) level.setBlock(pos, lampState(d.lamps[k]), Block.UPDATE_ALL);
         }

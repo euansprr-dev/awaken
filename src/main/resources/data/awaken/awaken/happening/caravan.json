@@ -11,10 +11,10 @@
       2,
       6
     ],
-    "moon_weight": 3.0
+    "moon_weight": 1.5
   },
-  "duration_s": 360,
-  "weight": 1.5,
+  "duration_s": 75,
+  "weight": 0.4,
   "witness_radius": 40,
   "tell": "lanterns",
   "tell_radius": 8,

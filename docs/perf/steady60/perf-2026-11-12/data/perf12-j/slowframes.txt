@@ -1,0 +1,61 @@
+run_off_1          frames  1211  GPU p50  5.34  p95  7.73  p99  9.27  max 12.16  over p50+2 ms   6.7%  over 15 ms   0.0%
+  slowest 5% (>= 7.73 ms): 61 frames, 29 of them right after another slow one
+  a tick               in  33.4% of frames,  41.0% of the slow ones;  mean  5.54 ms with,  5.37 without
+run_off_2          frames  1211  GPU p50  5.35  p95  7.68  p99  8.96  max 10.78  over p50+2 ms   5.7%  over 15 ms   0.0%
+  slowest 5% (>= 7.68 ms): 61 frames, 33 of them right after another slow one
+  a tick               in  33.4% of frames,  45.9% of the slow ones;  mean  5.37 ms with,  5.30 without
+run_off_played     frames  1207  GPU p50  5.47  p95  7.65  p99  8.67  max 10.97  over p50+2 ms   6.3%  over 15 ms   0.0%
+  slowest 5% (>= 7.65 ms): 61 frames, 23 of them right after another slow one
+  a tick               in  33.5% of frames,  57.4% of the slow ones;  mean  5.82 ms with,  5.31 without
+run_on_1           frames  1164  GPU p50 14.64  p95 17.37  p99 17.82  max 18.54  over p50+2 ms  16.9%  over 15 ms  45.4%
+  slowest 5% (>= 17.37 ms): 60 frames, 5 of them right after another slow one
+  lit air upload       in   4.5% of frames,   3.3% of the slow ones;  mean 14.50 ms with, 14.85 without
+  lit air sweep        in   4.5% of frames,   3.3% of the slow ones;  mean 14.54 ms with, 14.85 without
+  sun map rows         in  34.7% of frames,  28.3% of the slow ones;  mean 14.85 ms with, 14.83 without
+  sun map sweep        in   4.4% of frames,   0.0% of the slow ones;  mean 14.69 ms with, 14.84 without
+  heightfield upload   in   2.4% of frames,   0.0% of the slow ones;  mean 13.85 ms with, 14.86 without
+  block map upload     in   5.2% of frames,   6.7% of the slow ones;  mean 15.02 ms with, 14.82 without
+  short budget         in  34.7% of frames,  28.3% of the slow ones;  mean 14.85 ms with, 14.83 without
+  a tick               in  34.7% of frames,  28.3% of the slow ones;  mean 14.85 ms with, 14.83 without
+  block map reads      in   5.1% of frames,   6.7% of the slow ones;  mean 15.07 ms with, 14.82 without
+run_on_2           frames  1170  GPU p50 14.47  p95 17.06  p99 17.89  max 26.02  over p50+2 ms  12.6%  over 15 ms  40.5%
+  slowest 5% (>= 17.06 ms): 59 frames, 13 of them right after another slow one
+  lit air upload       in   4.5% of frames,   3.4% of the slow ones;  mean 14.27 ms with, 14.43 without
+  lit air sweep        in   4.4% of frames,   1.7% of the slow ones;  mean 14.23 ms with, 14.44 without
+  sun map rows         in  34.4% of frames,  33.9% of the slow ones;  mean 14.52 ms with, 14.38 without
+  sun map sweep        in   4.4% of frames,   3.4% of the slow ones;  mean 14.52 ms with, 14.42 without
+  heightfield upload   in   0.7% of frames,   0.0% of the slow ones;  mean 14.27 ms with, 14.43 without
+  block map upload     in   5.6% of frames,   3.4% of the slow ones;  mean 14.62 ms with, 14.41 without
+  short budget         in  34.4% of frames,  33.9% of the slow ones;  mean 14.52 ms with, 14.38 without
+  a tick               in  34.4% of frames,  33.9% of the slow ones;  mean 14.52 ms with, 14.38 without
+  block map reads      in   5.4% of frames,   3.4% of the slow ones;  mean 14.60 ms with, 14.42 without
+run_on_played      frames  1183  GPU p50 13.87  p95 16.88  p99 18.17  max 20.20  over p50+2 ms  21.3%  over 15 ms  37.3%
+  slowest 5% (>= 16.88 ms): 61 frames, 21 of them right after another slow one
+  lit air upload       in   4.4% of frames,   4.9% of the slow ones;  mean 14.10 ms with, 14.28 without
+  lit air sweep        in   4.3% of frames,   3.3% of the slow ones;  mean 13.97 ms with, 14.29 without
+  sun map rows         in  34.2% of frames,  34.4% of the slow ones;  mean 14.29 ms with, 14.27 without
+  sun map sweep        in   4.2% of frames,   8.2% of the slow ones;  mean 14.28 ms with, 14.28 without
+  heightfield upload   in   0.8% of frames,   1.6% of the slow ones;  mean 14.39 ms with, 14.28 without
+  block map upload     in   5.2% of frames,   3.3% of the slow ones;  mean 14.36 ms with, 14.27 without
+  short budget         in  34.2% of frames,  34.4% of the slow ones;  mean 14.29 ms with, 14.27 without
+  a tick               in  34.2% of frames,  34.4% of the slow ones;  mean 14.29 ms with, 14.27 without
+  block map reads      in   5.1% of frames,   3.3% of the slow ones;  mean 14.37 ms with, 14.27 without
+start_off          frames   603  GPU p50  5.20  p95  7.56  p99  9.05  max 10.26  over p50+2 ms   6.8%  over 15 ms   0.0%
+  slowest 5% (>= 7.56 ms): 31 frames, 4 of them right after another slow one
+  a tick               in  33.3% of frames,  54.8% of the slow ones;  mean  5.56 ms with,  5.29 without
+start_on           frames   602  GPU p50 13.39  p95 14.40  p99 14.52  max 14.73  over p50+2 ms   0.0%  over 15 ms   0.0%
+  slowest 5% (>= 14.40 ms): 31 frames, 1 of them right after another slow one
+  lit air upload       in   6.8% of frames,   0.0% of the slow ones;  mean 13.32 ms with, 13.43 without
+  lit air sweep        in   6.6% of frames,   3.2% of the slow ones;  mean 13.30 ms with, 13.43 without
+  sun map rows         in  33.4% of frames,   6.5% of the slow ones;  mean 13.31 ms with, 13.48 without
+  sun map sweep        in   4.2% of frames,   0.0% of the slow ones;  mean 13.50 ms with, 13.42 without
+  short budget         in  33.4% of frames,   6.5% of the slow ones;  mean 13.31 ms with, 13.48 without
+  a tick               in  33.4% of frames,   6.5% of the slow ones;  mean 13.31 ms with, 13.48 without
+
+By where the run looks (the four legs as quarters of the window: east, west, east, west)
+run_on_1        east p50 13.41 p95 15.18 p99 16.82 | west p50 16.23 p95 17.63 p99 18.11 | slowest 5% in the west legs:  98%
+run_on_2        east p50 12.98 p95 15.14 p99 16.66 | west p50 15.79 p95 17.42 p99 18.42 | slowest 5% in the west legs:  95%
+run_on_played   east p50 13.05 p95 14.98 p99 16.01 | west p50 15.62 p95 17.39 p99 18.52 | slowest 5% in the west legs:  97%
+run_off_1       east p50  4.60 p95  6.77 p99  7.63 | west p50  5.81 p95  8.22 p99  9.76 | slowest 5% in the west legs:  92%
+run_off_2       east p50  4.45 p95  6.94 p99  8.64 | west p50  5.62 p95  8.00 p99  9.05 | slowest 5% in the west legs:  64%
+run_off_played  east p50  4.66 p95  6.94 p99  7.76 | west p50  6.00 p95  8.07 p99  8.88 | slowest 5% in the west legs:  84%

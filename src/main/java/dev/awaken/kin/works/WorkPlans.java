@@ -255,7 +255,7 @@ public final class WorkPlans {
         double bd = (double) r * r;
         for (BlockPos p : List.copyOf(STANDING)) {
             double d = p.distSqr(at);
-            if (d > bd || !level.isLoaded(p)) continue;
+            if (d > bd || !dev.awaken.core.api.Ready.loaded(level, p)) continue;
             if (level.getBlockEntity(p) instanceof WorkPlanBlockEntity be) {
                 best = be;
                 bd = d;

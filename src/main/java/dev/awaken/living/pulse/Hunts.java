@@ -42,10 +42,7 @@ final class Hunts {
         @Override
         public void start(ServerLevel level, Happening h, HappeningDef def) {
             RandomSource r = level.getRandom();
-            for (int i = 0; i < 5; i++) {
-                Entity e = Behaviours.bring(level, h, Behaviours.fauna("wisp_hound"), Behaviours.near(level, h.from, 4, r));
-                if (e != null) e.addTag(HUNT_TAG);
-            }
+            for (int i = 0; i < 5; i++) Behaviours.bringLater(level, h, Behaviours.fauna("wisp_hound"), Behaviours.near(level, h.from, 4, r), HUNT_TAG);
             Entity lead = Behaviours.bring(level, h, Behaviours.fauna("wisp_hound"), Behaviours.near(level, h.from, 2, r));
             if (lead != null) {
                 lead.addTag(HUNT_TAG);

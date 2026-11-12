@@ -29,6 +29,7 @@ public final class StilledModule {
             if (e.getState().is(StilledContent.STILLED.get()) || e.getState().is(StilledContent.LEFT_CHEST.get())) e.setCanceled(true);
         });
         Settlements.onShown(Stilled::shown);
+        dev.awaken.core.api.FarPost.installKeepsakes(Stilled::sendHome); // the Far Landing: a keepsake goes home through the skiff's hold (SPEC §67)
         dev.awaken.core.api.Destinations.doneWhen("stilled", Stilled::has);
         Sources.declare("a Stilled hands it over when you read them (world.stilled.Stilled)", "stilled_letter", "stilled_key", "stilled_keepsake");
         Sources.declare("sat down along the roads and at empty settlements' edges as players come near (world.stilled.StilledPlacer)", "stilled");

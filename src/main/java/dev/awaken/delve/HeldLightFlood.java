@@ -121,7 +121,7 @@ public final class HeldLightFlood {
                 int x = BlockPos.getX(nb), y = BlockPos.getY(nb), z = BlockPos.getZ(nb);
                 int dx = x - ox, dy = y - oy, dz = z - oz;
                 if (dx * dx + dy * dy + dz * dz > r2 || level.isOutsideBuildHeight(y) || seen.contains(nb)) continue;
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) continue;
                 m.set(x, y, z);
                 BlockState st = level.getBlockState(m);
                 if (st.isSolidRender()) {

@@ -21,10 +21,6 @@
       "width": 480,
       "height": 300
     },
-    "awaken:lens_eighth": {
-      "width": 240,
-      "height": 150
-    },
     "awaken:lens_wide": {
       "width": 240,
       "height": 150
@@ -953,23 +949,11 @@
     },
     {
       "vertex_shader": "minecraft:core/screenquad",
-      "fragment_shader": "awaken:post/lens_down",
+      "fragment_shader": "awaken:post/lens_downblur",
       "inputs": [
         {
           "sampler_name": "In",
           "target": "awaken:lens_quarter",
-          "bilinear": true
-        }
-      ],
-      "output": "awaken:lens_eighth"
-    },
-    {
-      "vertex_shader": "minecraft:core/screenquad",
-      "fragment_shader": "awaken:post/lens_blur",
-      "inputs": [
-        {
-          "sampler_name": "In",
-          "target": "awaken:lens_eighth",
           "bilinear": true
         }
       ],

@@ -284,7 +284,7 @@ final class Crowd {
         }
         // (SPEC §28.11) never into a block: the place itself if it's free, else the nearest free cell, else not yet
         int fx = (int) Math.floor(tmp[0]), fy = (int) Math.floor(tmp[1] + 0.01), fz = (int) Math.floor(tmp[2]);
-        if (!level.isLoaded(new BlockPos(fx, fy, fz))) return false;
+        if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(fx, fy, fz))) return false;
         if (rules && !Footing.standable(level, fx, fy, fz) && !Footing.nearest(level, tmp[0], tmp[1], tmp[2], Footing.NUDGE, tmp, Footing.NOBODY)) return false;
         CitizenBody b = CitizensContent.CITIZEN.get().create(level, EntitySpawnReason.MOB_SUMMONED);
         if (b == null) return false;
@@ -359,7 +359,7 @@ final class Crowd {
 
     /** Opens or shuts a wooden door at pos (its lower half); true when it was a door that changed. */
     private boolean door(BlockPos pos, boolean open) {
-        if (!level.isLoaded(pos)) return false;
+        if (!dev.awaken.core.api.Ready.loaded(level, pos)) return false;
         BlockState s = level.getBlockState(pos);
         if (!(s.getBlock() instanceof DoorBlock door) || !DoorBlock.isWoodenDoor(s)) return false;
         if (door.isOpen(s) == open) return false;

@@ -20,7 +20,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /** Zombie, skeleton, piglin and player-shaped creatures: held items, armour, our skin and glow layers. */
-class AwHumanoidRenderer<S extends HumanoidRenderState, M extends HumanoidModel<S>> extends HumanoidMobRenderer<AwakenMob, S, M> {
+class AwHumanoidRenderer<S extends HumanoidRenderState, M extends HumanoidModel<S>> extends HumanoidMobRenderer<AwakenMob, S, M>
+        implements BodyRest.Posed<S> {
     protected final MobDef def;
     private final Function<S, Identifier> base;
     private final Supplier<S> factory;
@@ -79,5 +80,15 @@ class AwHumanoidRenderer<S extends HumanoidRenderState, M extends HumanoidModel<
     @Override
     protected void scale(S state, PoseStack pose) {
         super.scale(state, pose);
+    }
+
+    /** The transforms submit makes before the model, so a lying body can be rested on the ground (SPEC §47.12). */
+    @Override
+    public void bodyChain(S s, PoseStack pose) {
+        pose.scale(s.scale, s.scale, s.scale);
+        setupRotations(s, pose, s.bodyRot, s.scale);
+        pose.scale(-1.0F, -1.0F, 1.0F);
+        scale(s, pose);
+        pose.translate(0.0F, -1.501F, 0.0F);
     }
 }

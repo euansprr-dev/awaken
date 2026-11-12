@@ -323,7 +323,7 @@ FIGHT = {
     # what answers your habit comes up more; its shots wear your most-used power's look
     "duel": True,
     "mirrors": True,
-    "stance": 300,  # tuned with the sim (SPEC §47.6)
+    "stance": 160,  # tuned with the sim (SPEC §47.6)
     "intro": {"pose": "idle", "move": "emerge"},
     "phases": [
         # it measures you: the rod in twos and threes, the Measure, the step-in, the Reading, the Verdict

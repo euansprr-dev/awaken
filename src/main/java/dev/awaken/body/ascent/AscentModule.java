@@ -16,6 +16,10 @@ public final class AscentModule {
 
     public static void init(IEventBus modBus) {
         AscentContent.register(modBus);
+        // The Way Up (SPEC §63): how each rung is earned and taught; its record is its own attachment, registered here
+        WayUp.init(modBus);
+        // the ladder's Unlock titles (SPEC §71.2): known to both sides before any is shown
+        AscentUnlocks.register();
         modBus.addListener(AscentModule::registerPayloads);
         var bus = NeoForge.EVENT_BUS;
         bus.addListener(AscentServer::onPlayerTick);
@@ -47,6 +51,8 @@ public final class AscentModule {
         AscentTrials.register();
         // each tier's tip as it's given (Carillon's tip system; SPEC §17.17)
         AscentTips.register();
+        // the moves the rope and the wings earn, on the Tasks page (SPEC §62)
+        AscentGoals.register();
         // promises (SPEC §27): the Ascent answers a rung's need, and a rung given re-reads the locks the player met
         dev.awaken.core.api.Promises.addAnswer((p, need) -> need.kind().equals(dev.awaken.core.api.Promises.TIER) && heldByName(p, need.value()));
         Ascent.onGranted((p, t) -> {
@@ -86,6 +92,10 @@ public final class AscentModule {
         r.playToServer(AscentPayloads.Event.TYPE, AscentPayloads.Event.STREAM_CODEC, (msg, ctx) -> {
             if (ctx.player() instanceof ServerPlayer sp) AscentServer.onEvent(sp, msg);
         });
+        r.playToServer(AscentPayloads.Strike.TYPE, AscentPayloads.Strike.STREAM_CODEC, (msg, ctx) -> {
+            if (ctx.player() instanceof ServerPlayer sp) AscentServer.onStrike(sp, msg);
+        });
+        r.playToClient(AscentPayloads.Push.TYPE, AscentPayloads.Push.STREAM_CODEC);
         r.playToClient(AscentPayloads.Seen.TYPE, AscentPayloads.Seen.STREAM_CODEC);
         r.playToClient(AscentPayloads.SeenEvent.TYPE, AscentPayloads.SeenEvent.STREAM_CODEC);
         r.playToClient(AscentPayloads.Tiers.TYPE, AscentPayloads.Tiers.STREAM_CODEC);

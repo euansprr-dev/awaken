@@ -127,7 +127,7 @@ final class Stars {
 
     /** The star hits: a crater, the sealed meteor in it, a boom. Returns false if it couldn't land (yet). */
     static boolean impact(ServerLevel level, AnomalyData data, Anomaly a) {
-        if (!level.hasChunkAt(a.pos)) return false;
+        if (!dev.awaken.core.api.Ready.at(level, a.pos)) return false;
         RandomSource r = level.getRandom();
         BlockPos meteor = carve(level, a.pos, r);
         if (meteor == null) return false;
@@ -162,7 +162,7 @@ final class Stars {
                 double d = Math.sqrt(dx * dx + dz * dz);
                 if (d > 3.4) continue;
                 int x = ground.getX() + dx, z = ground.getZ() + dz;
-                if (!level.hasChunkAt(x, z)) continue;
+                if (!dev.awaken.core.api.Ready.at(level, x, z)) continue;
                 BlockPos top = Spots.surface(level, x, z);
                 if (Math.abs(top.getY() - ground.getY()) > 2) continue; // a tree trunk or a ledge: not ours to dig
                 BlockState over = level.getBlockState(top.above());
@@ -208,12 +208,12 @@ final class Stars {
         if (a.paid) return "opened";
         if (!a.landed) {
             // the light normally lands it; if it never got there (its chunk didn't tick), land it anyway
-            if (now >= a.startedAt + FALL_TICKS + 20 && !impact(level, data, a) && level.hasChunkAt(a.pos)) return "no room for the star to land";
+            if (now >= a.startedAt + FALL_TICKS + 20 && !impact(level, data, a) && dev.awaken.core.api.Ready.at(level, a.pos)) return "no room for the star to land";
             return null;
         }
         if (now >= a.endsAt) return "the star burned out unopened";
         BlockPos at = a.target;
-        boolean loaded = level.hasChunkAt(at);
+        boolean loaded = dev.awaken.core.api.Ready.at(level, at);
         if (loaded && !level.getBlockState(at).is(AnomalyContent.FALLEN_STAR.get())) return "the star is gone";
         ServerPlayer owner = level.getServer().getPlayerList().getPlayer(a.owner);
         if (owner != null && !a.discovered && owner.level() == level && owner.isAlive() && Spots.horizontal(owner.blockPosition(), at) <= Rifts.SEEN) {
@@ -302,7 +302,7 @@ final class Stars {
     /** The guardian is slain or gone: the meteor cools and may be opened. */
     static void cool(ServerLevel level, AnomalyData data, Anomaly a, long now) {
         BlockPos at = a.target;
-        if (level.hasChunkAt(at)) {
+        if (dev.awaken.core.api.Ready.at(level, at)) {
             BlockState s = level.getBlockState(at);
             if (s.is(AnomalyContent.FALLEN_STAR.get()) && s.getValue(FallenStarBlock.SEALED)) {
                 level.setBlock(at, s.setValue(FallenStarBlock.SEALED, false), 3);
@@ -387,7 +387,7 @@ final class Stars {
         if (a.guardState == Anomaly.GUARD_UP && a.guard != null && level.getEntity(a.guard) instanceof LivingEntity g && g.isAlive()) fadeGuard(level, g);
         if (!removeBlocks || !a.landed) return;
         BlockPos at = a.target;
-        if (level.hasChunkAt(at)) {
+        if (dev.awaken.core.api.Ready.at(level, at)) {
             if (level.getBlockState(at).is(AnomalyContent.FALLEN_STAR.get())) {
                 level.removeBlock(at, false);
                 level.sendParticles(ParticleTypes.WHITE_ASH, at.getX() + 0.5, at.getY() + 0.5, at.getZ() + 0.5, 20, 0.4, 0.3, 0.4, 0.01);

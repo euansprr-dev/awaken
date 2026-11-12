@@ -76,6 +76,13 @@ public final class HearthService {
     /** Block reads a room scan may do per server tick (roughly 0.2-0.4 ms). */
     private static final int SCAN_BUDGET = 12_000;
     private static final int RESCAN_EVERY = 20 * 60 * 5;
+    /**
+     * A due scan waits this many checks (every 10 ticks: 15 s) for the rest of the home's land once its fire's chunk is
+     * loaded; a home that stays half loaded (a tiny view distance) is then read anyway, its unseen rooms kept.
+     */
+    static final int LAND_WAIT = 30;
+    /** After a partial scan, the next try at a whole one. */
+    private static final int PARTIAL_RETRY = 20 * 60;
 
     private static RoomScanner activeScan;
     private static final Deque<UUID> scanQueue = new ArrayDeque<>();
@@ -403,7 +410,7 @@ public final class HearthService {
         if (Integer.valueOf(server.getTickCount()).equals(RESPAWNING.get(sp.getUUID()))) return;
         ServerLevel level = server.getLevel(e.getSpawnLevel());
         BlockPos bed = e.getNewSpawn();
-        if (level == null || !level.isLoaded(bed) || !isBed(level.getBlockState(bed))) return;
+        if (level == null || !dev.awaken.core.api.Ready.loaded(level, bed) || !isBed(level.getBlockState(bed))) return;
         HearthPlayer hp = player(sp);
         String dim = e.getSpawnLevel().identifier().toString();
         Optional<HearthRecord> home = data(server).hearthsOf(sp.getUUID()).stream()
@@ -455,7 +462,7 @@ public final class HearthService {
         MinecraftServer server = sp.level().getServer();
         ServerLevel level = server.getLevel(bed.respawnData().globalPos().dimension());
         BlockPos at = bed.respawnData().pos();
-        if (level == null || level.isLoaded(at) && !isBed(level.getBlockState(at))) {
+        if (level == null || dev.awaken.core.api.Ready.loaded(level, at) && !isBed(level.getBlockState(at))) {
             sp.sendOverlayMessage(Component.literal("That bed is gone."));
             return;
         }
@@ -513,7 +520,7 @@ public final class HearthService {
         if (bed == null) return h;
         ServerLevel level = sp.level().getServer().getLevel(bed.respawnData().globalPos().dimension());
         BlockPos at = bed.respawnData().pos();
-        return level == null || level.isLoaded(at) && !isBed(level.getBlockState(at)) ? h : Optional.empty();
+        return level == null || dev.awaken.core.api.Ready.loaded(level, at) && !isBed(level.getBlockState(at)) ? h : Optional.empty();
     }
 
     /** The Hearth this player wakes at: the shared one whose Anchor they used last, else their home. */
@@ -696,7 +703,7 @@ public final class HearthService {
                     // a reading loaded from the save stands; its home is read again some time in the next few minutes
                     if (h.lastScan < 0) h.lastScan = now - RESCAN_EVERY + 20 * 30 + Math.floorMod(h.owner.hashCode(), 20 * 240);
                     if (h.scanAt == 0 && now - h.lastScan > RESCAN_EVERY) h.scanAt = now;
-                    if (h.scanAt != 0 && h.scanAt <= now && !scanQueue.contains(h.owner) && overworld.isLoaded(h.pos)) scanQueue.add(h.owner);
+                    if (h.scanAt != 0 && h.scanAt <= now && !scanQueue.contains(h.owner) && landReady(overworld, h)) scanQueue.add(h.owner);
                 }
             }
             UUID next = scanQueue.poll();
@@ -723,11 +730,35 @@ public final class HearthService {
     }
 
     /**
+     * (SPEC §28.2, "Read whole") A due scan waits for its home's whole land: every chunk its sweep covers loaded whole. Euan
+     * 2026-11-11 came home from a gate about 340 blocks east; his fire's chunk came into range first and the scan, due while
+     * he was away, ran before the chunk west of it, where his room stands, was there: no room, and "Build a room near your
+     * fire" unticked while he stood in it. A home whose fire is loaded but not all of its land waits {@link #LAND_WAIT}
+     * checks, then is read anyway: a partial scan keeps the rooms it couldn't see ({@link #onRoomsScanned}).
+     */
+    static boolean landReady(ServerLevel level, HearthRecord h) {
+        var chunks = level.getChunkSource();
+        if (chunks.getChunkNow(h.pos.getX() >> 4, h.pos.getZ() >> 4) == null) {
+            h.landWait = 0;
+            return false;
+        }
+        int r = h.radius();
+        int x0 = (h.pos.getX() - r) >> 4, x1 = (h.pos.getX() + r) >> 4, z0 = (h.pos.getZ() - r) >> 4, z1 = (h.pos.getZ() + r) >> 4;
+        for (int cx = x0; cx <= x1; cx++) {
+            for (int cz = z0; cz <= z1; cz++) {
+                if (chunks.getChunkNow(cx, cz) == null) return ++h.landWait > LAND_WAIT;
+            }
+        }
+        h.landWait = 0;
+        return true;
+    }
+
+    /**
      * The Anchor's flame shows the tier (SPEC §28.8): its block state follows the record (an upgrade, an old world's Anchor
      * loaded at tier I's state). One state read a second; a change only when they differ.
      */
     public static void showTier(ServerLevel level, HearthRecord h) {
-        if (h.hearthfire() || !level.isLoaded(h.pos)) return;
+        if (h.hearthfire() || !dev.awaken.core.api.Ready.loaded(level, h.pos)) return;
         BlockState s = level.getBlockState(h.pos);
         if (!(s.getBlock() instanceof dev.awaken.hearth.block.HearthAnchorBlock a)) return;
         int want = Math.max(1, Math.min(5, h.tier));
@@ -759,20 +790,32 @@ public final class HearthService {
 
     /**
      * Called when a room scan finishes: store the rooms and their reading, Comfort, Style and the land; update trophy
-     * bonuses; tell the owner about kinds of room new to this home.
+     * bonuses; tell the owner about kinds of room new to this home. A partial scan (it met unloaded land) adds what it read
+     * and keeps every room it knew that nothing it read stands over, and the misses, land and Style it had; a whole scan
+     * soon follows (SPEC §28.2, "Read whole"). Kinds of room are announced only the first time this home has them.
      */
     static void onRoomsScanned(MinecraftServer server, HearthRecord h, Scan scan) {
-        List<Room> rooms = scan.rooms();
+        List<Room> rooms = scan.whole() ? scan.rooms() : keepUnseen(h.rooms, scan.rooms());
         EnumSet<RoomType> before = EnumSet.noneOf(RoomType.class);
         for (Room r : h.rooms) before.addAll(r.types());
+        for (RoomType t : RoomType.values()) if (h.had(t)) before.add(t); // a kind met before isn't news again
+        long now = server.overworld().getGameTime();
         h.rooms = rooms;
-        h.misses = scan.misses();
-        h.furniture = scan.furniture();
-        h.lastScan = server.overworld().getGameTime();
-        h.land = Comfort.land(scan.land());
-        h.yard = scan.yard();
+        h.lastScan = now;
+        if (scan.whole()) {
+            h.misses = scan.misses();
+            h.furniture = scan.furniture();
+            h.land = Comfort.land(scan.land());
+            h.yard = scan.yard();
+            h.style = Comfort.style(scan.families());
+        } else {
+            int[] most = h.furniture.clone();
+            for (int k = 0; k < most.length && k < scan.furniture().length; k++) most[k] = Math.max(most[k], scan.furniture()[k]);
+            h.furniture = most;
+            h.scheduleScan(now, PARTIAL_RETRY);
+        }
         h.comfort = Comfort.of(rooms, h.land);
-        h.style = Comfort.style(scan.families());
+        h.remember(rooms);
         dirty(server);
         Set<String> trophies = new java.util.HashSet<>();
         EnumSet<RoomType> after = EnumSet.noneOf(RoomType.class);
@@ -810,6 +853,22 @@ public final class HearthService {
         }
     }
 
+    /** A partial scan's rooms, and every room it knew that none of them overlaps: land it couldn't read keeps its rooms. */
+    static List<Room> keepUnseen(List<Room> before, List<Room> read) {
+        List<Room> out = new ArrayList<>(read);
+        for (Room old : before) {
+            boolean met = false;
+            for (Room r : read) met |= overlaps(old, r);
+            if (!met) out.add(old);
+        }
+        return List.copyOf(out);
+    }
+
+    private static boolean overlaps(Room a, Room b) {
+        return a.min().getX() <= b.max().getX() && a.max().getX() >= b.min().getX() && a.min().getY() <= b.max().getY()
+                && a.max().getY() >= b.min().getY() && a.min().getZ() <= b.max().getZ() && a.max().getZ() >= b.min().getZ();
+    }
+
     /** Where the household stands in the radius: a room with nothing in it yet is still read (the first night's shelter). */
     static List<BlockPos> people(MinecraftServer server, HearthRecord h) {
         List<BlockPos> out = new ArrayList<>(2);
@@ -825,9 +884,10 @@ public final class HearthService {
         scanQueue.remove(h.owner);
     }
 
-    /** Starts a full scan right now (commands and tests). */
+    /** Starts a full scan right now (commands and tests), taken as it reads: whatever is loaded is the home. */
     public static List<Room> scanNow(ServerLevel level, HearthRecord h) {
-        RoomScanner s = new RoomScanner(level, h, people(level.getServer(), h), scan -> onRoomsScanned(level.getServer(), h, scan));
+        RoomScanner s = new RoomScanner(level, h, people(level.getServer(), h), scan -> onRoomsScanned(level.getServer(), h,
+                new Scan(scan.rooms(), scan.misses(), scan.furniture(), scan.land(), scan.families(), scan.yard(), true)));
         s.runToEnd();
         return h.rooms;
     }

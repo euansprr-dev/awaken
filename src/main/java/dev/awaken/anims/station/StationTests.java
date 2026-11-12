@@ -4,6 +4,7 @@ import dev.awaken.core.test.AwakenTests;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.ContainerLevelAccess;
@@ -30,6 +31,13 @@ public final class StationTests {
         AwakenTests.register("anims_station_right_drag", 20, StationTests::rightDrag);
         AwakenTests.register("anims_station_left_drag", 20, StationTests::leftDrag);
         AwakenTests.register("anims_station_shift_result", 20, StationTests::shiftResult);
+        AwakenTests.register("stations_bench_view", 20, StationTests::benchView);
+        AwakenTests.register("stations_hand_never_hides", 20, StationTests::handNeverHides);
+        AwakenTests.register("stations_hand_steady", 20, StationTests::handSteady);
+        AwakenTests.register("stations_presence", 40, StationTests::presence);
+        AwakenTests.register("stations_living_slots", 20, StationTests::livingSlots);
+        AwakenTests.register("stations_workstations", 20, StationTests::workstations);
+        AwakenTests.register("touch_every_block", 20, StationTests::touchEveryBlock);
     }
 
     private static final BlockPos TABLE = new BlockPos(0, 64, 0);
@@ -46,7 +54,7 @@ public final class StationTests {
 
     /**
      * Each ingredient sits centred on its drawn square of the table top, whichever way you face the table: the squares'
-     * middles are pixels 5, 8 and 11 of the top's 16, row 0 the far one; the result lies on the near border, everything
+     * middles are pixels 5, 8 and 11 of the top's 16, row 0 the far one; the result lies on the right border, everything
      * inside the table's own block (nothing can reach into a wall), and a ray down onto each picks it.
      */
     static void cells(GameTestHelper h) {
@@ -64,9 +72,11 @@ public final class StationTests {
                 h.assertTrue(px - reach >= 0 && px + reach <= 16 && pz - reach >= 0 && pz + reach <= 16 && p[1] > TABLE.getY() + 1,
                         "slot " + i + " stays on the table's own top " + facing);
                 if (i == 0) {
-                    // toward you: the way in runs from you to the table
-                    double toward = -((p[0] - TABLE.getX() - 0.5) * s.fx() + (p[2] - TABLE.getZ() - 0.5) * s.fz());
-                    h.assertTrue(toward > StationView.GRID_HALF, "the result lies on the near border, past the grid " + facing);
+                    // to your right as you face the table (vanilla's own side of the grid), level with the middle row
+                    double across = (p[0] - TABLE.getX() - 0.5) * s.rx() + (p[2] - TABLE.getZ() - 0.5) * s.rz();
+                    double far = (p[0] - TABLE.getX() - 0.5) * s.fx() + (p[2] - TABLE.getZ() - 0.5) * s.fz();
+                    h.assertTrue(across > StationView.GRID_HALF + StationView.RESULT_HALF && Math.abs(far) < 1e-6,
+                            "the result lies on the right border, past the grid " + facing);
                 } else {
                     int cx = (int) Math.round(px), cz = (int) Math.round(pz);
                     h.assertTrue(Math.abs(px - cx) < 1e-6 && Math.abs(pz - cz) < 1e-6 && (cx == 5 || cx == 8 || cx == 11) && (cz == 5 || cz == 8 || cz == 11),
@@ -129,6 +139,430 @@ public final class StationTests {
                 }
             }
         }
+        h.succeed();
+    }
+
+    /**
+     * The bench view (SPEC §65.1): a table's own view is the same from wherever you stand on one side of it, it looks
+     * down on the grid from over the near edge, every slot lies inside the room at seven window sizes with and without
+     * side panels, and a click on a slot's middle picks it.
+     */
+    static void benchView(GameTestHelper h) {
+        float[] view = new float[3];
+        double[] p = new double[3], q = new double[2], eye = new double[3], eye2 = new double[3];
+        Quaternionf rot = new Quaternionf();
+        int[][] ways = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        for (int[] way : ways) {
+            // twenty standing places on this side, one to four and a half blocks back and to either hand: one station, one view
+            StationView.Station first = null;
+            for (double d : new double[]{1.0, 1.6, 2.4, 3.3, 4.5}) {
+                for (double side : new double[]{-0.9, -0.3, 0.3, 0.9}) {
+                    if (Math.abs(side) >= d) continue;
+                    StationView.Station s = station(TABLE.getX() + 0.5 - way[0] * d - way[1] * side, TABLE.getZ() + 0.5 - way[1] * d + way[0] * side);
+                    if (first == null) first = s;
+                    h.assertTrue(s.equals(first), "every place on one side works the table the same way (" + d + ", " + side + ")");
+                }
+            }
+            StationView.benchEye(first, 0, eye);
+            double back = -((eye[0] - TABLE.getX() - 0.5) * first.fx() + (eye[2] - TABLE.getZ() - 0.5) * first.fz()), up = eye[1] - TABLE.getY() - 1;
+            double angle = Math.toDegrees(Math.atan2(up, back));
+            h.assertTrue(back > 0.5 && angle > 50 && angle < 58, "the first view is over the near edge, looking down about 54 degrees (" + angle + ")");
+            for (int b = 1; b < StationView.BENCHES; b++) {
+                StationView.benchEye(first, b, eye2);
+                h.assertTrue(eye2[1] < eye[1] + 1e-9 && eye2[1] > TABLE.getY() + 1.5, "view " + b + " is lower, and still over the top");
+            }
+            for (int[] scr : SCREENS) {
+                int w = scr[0], gh = scr[1];
+                float aspect = (float) w / gh;
+                for (boolean sides : new boolean[]{true, false}) {
+                    StationView.Layout l = StationView.layout(w, gh, 2, sides);
+                    for (int b = 0; b < StationView.BENCHES; b++) {
+                        StationView.benchEye(first, b, eye);
+                        StationView.frame(first, eye[0], eye[1], eye[2], l, w, gh, aspect, StationView.MAX_FOV, view);
+                        String at = "view " + b + " at " + w + "x" + gh + (sides ? " with JEI" : "");
+                        h.assertTrue(view[2] < StationView.MAX_FOV - 0.01F, "the bench view frames the table without opening past the most, " + at);
+                        // square on: the view looks straight along the way in (the result on the right border does not turn it)
+                        float along = (float) Math.toDegrees(Math.atan2(-first.fx(), first.fz()));
+                        h.assertTrue(Math.abs(net.minecraft.util.Mth.wrapDegrees(view[0] - along)) < 0.25F, "the bench view is square to the table, " + at
+                                + " (" + net.minecraft.util.Mth.wrapDegrees(view[0] - along) + ")");
+                        StationView.rotation(view[0], view[1], rot);
+                        for (int i = 0; i < 10; i++) {
+                            StationView.spot(first, i, p, 0);
+                            double ma = StationView.reach(first, i, 0) - 0.005, mi = StationView.reach(first, i, 2) - 0.005;
+                            for (int c = 0; c < 4; c++) {
+                                double a = (c & 1) == 0 ? -ma : ma, in = (c & 2) == 0 ? -mi : mi;
+                                boolean seen = StationView.project(p[0] + first.rx() * a + first.fx() * in, p[1], p[2] + first.rz() * a + first.fz() * in,
+                                        eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, q);
+                                h.assertTrue(seen && l.inRoom(q[0], q[1]), "slot " + i + " lies inside the room, " + at);
+                            }
+                            StationView.project(p[0], p[1], p[2], eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, q);
+                            int got = StationView.pick(first, l, eye[0], eye[1], eye[2], rot, view[2], aspect, q[0], q[1], w, gh);
+                            h.assertTrue(got == i, "a click on slot " + i + " picks it, " + at + " (got " + got + ")");
+                        }
+                    }
+                }
+            }
+        }
+        h.assertTrue(StationView.glideTicks(0.5) == 5 && StationView.glideTicks(4.5) == 9, "the view takes 5 ticks from beside the table to 9 from 4.5 blocks");
+        h.succeed();
+    }
+
+    /** His window (4K at GUI scale 9, and the tours' 1708 x 960 at 4): the size every hand check must hold at. */
+    private static final int[] HIS = {427, 240};
+    private static final StationView.Kind[] SCENES = {StationView.Kind.TABLE, StationView.Kind.ANVIL, StationView.Kind.SMITHING, StationView.Kind.GRINDSTONE,
+            StationView.Kind.STONECUTTER, StationView.Kind.CARTOGRAPHY, StationView.Kind.BREWING, StationView.Kind.FURNACE};
+
+    /** A scene's own first view, framed: the eye into {@code eye}, the look into {@code rot}, the field of view returned. */
+    private static float sceneView(StationView.Station s, StationView.Layout l, int w, int gh, double[] eye, Quaternionf rot, float[] view) {
+        if (s.kind() == StationView.Kind.FURNACE) StationView.mouthEye(s, 0, eye);
+        else StationView.benchEye(s, 0, eye);
+        StationView.frame(s, eye[0], eye[1], eye[2], l, w, gh, (float) w / gh, StationView.MAX_FOV, view);
+        StationView.rotation(view[0], view[1], rot);
+        return view[2];
+    }
+
+    /** Where a stack is held over a slot: a little over a bench's surface, out before a furnace's mouth or a stand. */
+    private static void held(StationView.Station s, int slot, double[] p) {
+        StationView.spot(s, slot, p, 0);
+        if (s.kind() == StationView.Kind.FURNACE) {
+            p[0] -= s.fx() * (StationView.FURNACE_DEPTH + StationView.FURNACE_HOLD);
+            p[2] -= s.fz() * (StationView.FURNACE_DEPTH + StationView.FURNACE_HOLD);
+        } else if (!s.kind().upright) p[1] += StationView.HOVER;
+    }
+
+    /**
+     * The carrying hand (SPEC §65.2), in every scene: your own arm at its own size, never drawn longer than it is. With
+     * a stack held over any slot, at eight window sizes, with and without side panels and for either hand, the arm's
+     * far end is under the inventory strip or off the frame (no cut end in view); where a window is too small for that
+     * even at the arm's largest, the scene has no arm. At his own window every bench and the furnace have their arm,
+     * and a table's is at its own size. On a table the arm never lies over the result and no square farther from you
+     * than the stack is under the sleeve (what is under it is shown through it).
+     */
+    static void handNeverHides(GameTestHelper h) {
+        float[] view = new float[3];
+        double[] p = new double[3], q = new double[2], eye = new double[3], arm = new double[8], tmp = new double[3];
+        Quaternionf rot = new Quaternionf();
+        int most = 0;
+        int[][] sizes = java.util.Arrays.copyOf(SCREENS, SCREENS.length + 1);
+        sizes[SCREENS.length] = HIS;
+        for (StationView.Kind kind : SCENES) {
+            StationView.Station s = new StationView.Station(TABLE, kind, 0, 1);
+            for (int[] scr : sizes) {
+                int w = scr[0], gh = scr[1];
+                float aspect = (float) w / gh;
+                for (boolean sides : new boolean[]{true, false}) {
+                    StationView.Layout l = StationView.layout(w, gh, sides ? 3 : 2, sides);
+                    float fov = sceneView(s, l, w, gh, eye, rot, view);
+                    double grow = StationView.armGrow(s, StationView.ARM_BACK, StationView.HAND_BACK, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, p, tmp);
+                    String where = kind + " at " + w + "x" + gh + (sides ? " with side panels" : "");
+                    if (scr == HIS && kind != StationView.Kind.BREWING) {
+                        h.assertTrue(grow <= StationView.GROW_MOST, "at his window the scene has its arm, " + where + " (it would need " + grow + " times its size)");
+                    }
+                    if (scr == HIS && kind == StationView.Kind.TABLE) h.assertTrue(grow <= 1.02, "at his window a table's arm is at its own size, " + where + " (" + grow + ")");
+                    if (grow > StationView.GROW_MOST) continue; // no arm in this scene at this window
+                    double size = Math.max(1, grow), model = StationView.ARM_BACK * size, half = StationView.FIST / 2 * size, back = StationView.HAND_BACK * size;
+                    for (int side = -1; side <= 1; side += 2) {
+                        for (int i = 0; i < kind.slots; i++) {
+                            String at = "slot " + i + ", " + where + (side > 0 ? ", right hand" : ", left hand");
+                            held(s, i, p);
+                            StationView.armTo(p[0], p[1], p[2], side, model, back, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, arm, tmp);
+                            h.assertTrue(arm[6] == 1 && Math.abs(arm[7] - model) < 1e-9, "the arm is never drawn longer than it is, " + at);
+                            boolean seen = StationView.project(arm[0] + arm[3] * arm[7], arm[1] + arm[4] * arm[7], arm[2] + arm[5] * arm[7], eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, q);
+                            h.assertTrue(!seen || StationView.hidden(l, q[0], q[1], w, gh),
+                                    "the arm's far end is under the strip or off the frame, " + at + " (at " + Math.round(q[0]) + "," + Math.round(q[1])
+                                            + ", strip " + l.px0() + ".." + l.px1() + " from " + l.py0() + ", size " + size + ")");
+                            if (kind != StationView.Kind.TABLE) continue;
+                            int row = i == 0 ? 1 : (i - 1) / 3, under = 0;
+                            for (int o = 0; o < 10; o++) {
+                                if (o == i || !StationView.sleeveOver(s, o, arm, arm[7], half, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, tmp, q)) continue;
+                                h.assertTrue(o != 0, "the arm never lies over the result, " + at);
+                                h.assertTrue((o - 1) / 3 >= row, "no square farther from you than the stack is under the sleeve (" + o + "), " + at);
+                                under++;
+                            }
+                            most = Math.max(most, under);
+                        }
+                    }
+                }
+            }
+        }
+        h.assertTrue(most <= 4, "at most four squares are ever under the sleeve (" + most + ")");
+        h.succeed();
+    }
+
+    /**
+     * Held still, a hand is still; moved, it moves without steps (SPEC §65.2, after the trembling hands of 11 Nov). The
+     * arm is a pure function of where the stack is held: the same place gives the same arm whatever was asked before,
+     * and as the held place crosses a station in 400 small steps the arm keeps its length while its line and its far
+     * end's place on screen change by a little at every step, never by a jump (its length moved in twentieths before,
+     * and its line swung with the pointer's speed).
+     */
+    static void handSteady(GameTestHelper h) {
+        float[] view = new float[3];
+        double[] p = new double[3], q = new double[2], q0 = new double[2], eye = new double[3], arm = new double[8], was = new double[8], tmp = new double[3];
+        Quaternionf rot = new Quaternionf();
+        int w = HIS[0], gh = HIS[1];
+        float aspect = (float) w / gh;
+        for (StationView.Kind kind : SCENES) {
+            StationView.Station s = new StationView.Station(TABLE, kind, 0, 1);
+            for (boolean sides : new boolean[]{true, false}) {
+                StationView.Layout l = StationView.layout(w, gh, sides ? 3 : 2, sides);
+                float fov = sceneView(s, l, w, gh, eye, rot, view);
+                double size = Mth.clamp(StationView.armGrow(s, StationView.ARM_BACK, StationView.HAND_BACK, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, p, tmp), 1, StationView.GROW_MOST);
+                double model = StationView.ARM_BACK * size, back = StationView.HAND_BACK * size;
+                String where = kind + (sides ? " with side panels" : "");
+                // the same place, asked twice with another between: the same arm
+                held(s, 0, p);
+                StationView.armTo(p[0], p[1], p[2], 1, model, back, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, was, tmp);
+                StationView.armTo(p[0] + 0.3, p[1], p[2] - 0.2, -1, model, back, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, arm, tmp);
+                StationView.armTo(p[0], p[1], p[2], 1, model, back, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, arm, tmp);
+                for (int k = 0; k < 8; k++) h.assertTrue(arm[k] == was[k], "the same held place gives the same arm, " + where);
+                // across the station, corner to corner at the height a stack is held, in 400 steps of under 4 mm
+                double y = p[1], x0 = TABLE.getX() + 0.5 - s.rx() * 0.5 - s.fx() * 0.45, z0 = TABLE.getZ() + 0.5 - s.rz() * 0.5 - s.fz() * 0.45;
+                double x1 = TABLE.getX() + 0.5 + s.rx() * 0.5 + s.fx() * 0.45, z1 = TABLE.getZ() + 0.5 + s.rz() * 0.5 + s.fz() * 0.45;
+                if (kind.upright) {
+                    // an upright station: across its face, foot to top
+                    x0 = TABLE.getX() + 0.5 - s.rx() * 0.45 - s.fx() * 0.55;
+                    z0 = TABLE.getZ() + 0.5 - s.rz() * 0.45 - s.fz() * 0.55;
+                    x1 = TABLE.getX() + 0.5 + s.rx() * 0.45 - s.fx() * 0.55;
+                    z1 = TABLE.getZ() + 0.5 + s.rz() * 0.45 - s.fz() * 0.55;
+                }
+                for (int side = -1; side <= 1; side += 2) {
+                    for (int step = 0; step <= 400; step++) {
+                        double u = step / 400.0, hy = kind.upright ? TABLE.getY() + 0.1 + 0.9 * u : y;
+                        StationView.armTo(Mth.lerp(u, x0, x1), hy, Mth.lerp(u, z0, z1), side, model, back, l, eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, arm, tmp);
+                        boolean seen = StationView.project(arm[0] + arm[3] * arm[7], arm[1] + arm[4] * arm[7], arm[2] + arm[5] * arm[7], eye[0], eye[1], eye[2], rot, fov, aspect, w, gh, q);
+                        if (step > 0) {
+                            double turn = Math.toDegrees(Math.acos(Mth.clamp(arm[3] * was[3] + arm[4] * was[4] + arm[5] * was[5], -1, 1)));
+                            String at = where + ", step " + step + (side > 0 ? ", right hand" : ", left hand");
+                            h.assertTrue(arm[6] == 1 && arm[7] == was[7], "the arm's length never changes, " + at + " (" + was[7] + " to " + arm[7] + ")");
+                            h.assertTrue(turn < 1.5, "the arm's line turns a little at a time, " + at + " (" + turn + " degrees)");
+                            if (seen && q0[0] == q0[0]) {
+                                h.assertTrue(Math.hypot(q[0] - q0[0], q[1] - q0[1]) < 4, "the arm's far end moves a little at a time on screen, " + at
+                                        + " (" + Math.hypot(q[0] - q0[0], q[1] - q0[1]) + " px)");
+                            }
+                        }
+                        System.arraycopy(arm, 0, was, 0, 8);
+                        q0[0] = seen ? q[0] : Double.NaN;
+                        q0[1] = q[1];
+                    }
+                    q0[0] = Double.NaN;
+                }
+            }
+        }
+        h.succeed();
+    }
+
+    /**
+     * Presence (SPEC §65.5): a player who opens a crafting table's menu just after using the table is marked as at it,
+     * with what lies on it; a slot they change is passed on as a beat, at most one every three ticks; a menu that is not
+     * the station's, or one opened without using a station, marks nobody; shutting the menu takes the mark away. A box
+     * shows its six largest stacks, one of each kind of thing, biggest first.
+     */
+    static void presence(GameTestHelper h) {
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        CraftingMenu m = menu(h, p);
+        StationPresence.Sent sent = new StationPresence.Sent();
+        h.assertTrue(StationPresence.kindOf(Blocks.CRAFTING_TABLE.defaultBlockState()) == StationPresence.BENCH
+                && StationPresence.kindOf(Blocks.FURNACE.defaultBlockState()) == StationPresence.KNEEL
+                && StationPresence.kindOf(Blocks.CHEST.defaultBlockState()) == StationPresence.BOX
+                && StationPresence.kindOf(Blocks.BARREL.defaultBlockState()) == StationPresence.BOX
+                && StationPresence.kindOf(Blocks.STONE.defaultBlockState()) == StationPresence.NONE, "each station is worked its own way");
+        h.assertTrue(StationPresence.menuFits(StationPresence.BENCH, m) && !StationPresence.menuFits(StationPresence.KNEEL, m)
+                && !StationPresence.menuFits(StationPresence.BOX, m), "a crafting menu is a table's and nothing else's");
+        // at the table, with a plank on a square
+        m.getSlot(5).set(new ItemStack(Items.OAK_PLANKS, 3));
+        java.util.List<ItemStack> first = StationPresence.shown(StationPresence.BENCH, m);
+        h.assertTrue(first.size() == 10 && first.get(5).is(Items.OAK_PLANKS) && first.get(5).getCount() == 3, "others see the ten slots of a table");
+        p.setData(StationPresence.AT, new StationPresence.At(StationPresence.BENCH, h.absolutePos(BlockPos.ZERO), (byte) 0, (byte) 1, 0, first));
+        sent.shown = first;
+        h.assertTrue(StationPresence.tick(p, sent) && p.getData(StationPresence.AT).beats() == 0, "nothing changed: no beat");
+        // a slot is changed: a beat with that slot; a second change straight after is seen but passes no beat
+        m.getSlot(2).set(new ItemStack(Items.OAK_PLANKS, 1));
+        h.assertTrue(StationPresence.tick(p, sent), "still at the table");
+        StationPresence.At at = p.getData(StationPresence.AT);
+        h.assertTrue(at.beats() == 1 && at.beatSlot() == 2 && at.shown().get(2).is(Items.OAK_PLANKS), "a changed slot is a beat with its number (" + at.beat() + ")");
+        m.getSlot(8).set(new ItemStack(Items.STICK, 1));
+        StationPresence.tick(p, sent);
+        at = p.getData(StationPresence.AT);
+        h.assertTrue(at.beats() == 1 && at.shown().get(8).is(Items.STICK), "a second change inside three ticks is seen, with no second beat");
+        // the menu shuts: they are no longer at it
+        p.containerMenu = p.inventoryMenu;
+        h.assertTrue(!StationPresence.tick(p, sent), "with the menu shut they have left the station");
+        // a box: the six largest stacks, like things together, biggest first
+        net.minecraft.world.SimpleContainer box = new net.minecraft.world.SimpleContainer(27);
+        box.setItem(0, new ItemStack(Items.COBBLESTONE, 10));
+        box.setItem(1, new ItemStack(Items.OAK_PLANKS, 30));
+        box.setItem(2, new ItemStack(Items.COBBLESTONE, 40));
+        for (int i = 0; i < 7; i++) box.setItem(5 + i, new ItemStack(i == 0 ? Items.STICK : i == 1 ? Items.COAL : i == 2 ? Items.BEEF : i == 3 ? Items.APPLE : i == 4 ? Items.BONE
+                : i == 5 ? Items.FLINT : Items.FEATHER, i + 1));
+        net.minecraft.world.inventory.ChestMenu chest = net.minecraft.world.inventory.ChestMenu.threeRows(2, p.getInventory(), box);
+        java.util.List<ItemStack> seen = StationPresence.shown(StationPresence.BOX, chest);
+        h.assertTrue(seen.size() == StationPresence.BOX_SHOWN && seen.get(0).is(Items.COBBLESTONE) && seen.get(0).getCount() == 50 && seen.get(1).is(Items.OAK_PLANKS),
+                "a box shows its six largest stacks, like things together, biggest first (" + seen + ")");
+        for (int i = 1; i < seen.size(); i++) h.assertTrue(seen.get(i).getCount() <= seen.get(i - 1).getCount(), "in order of size");
+        h.assertTrue(StationPresence.changedSlot(first, first) == -1 && StationPresence.changedSlot(first, StationPresence.shown(StationPresence.BENCH, m)) == 2,
+                "the first slot that differs is the one that changed");
+        h.succeed();
+    }
+
+    /**
+     * Living slots (SPEC §65.7): a stack sent from one slot to another without carrying it is one move with its count; a
+     * stack split across two slots is two; a change the pointer made is none; a tick that changed more than six slots is
+     * none (a Tidy shows its own).
+     */
+    static void livingSlots(GameTestHelper h) {
+        ItemStack[] was = new ItemStack[12], now = new ItemStack[12];
+        java.util.Arrays.fill(was, ItemStack.EMPTY);
+        java.util.Arrays.fill(now, ItemStack.EMPTY);
+        int[] out = new int[24];
+        was[2] = new ItemStack(Items.OAK_PLANKS, 16);
+        now[7] = new ItemStack(Items.OAK_PLANKS, 16);
+        h.assertTrue(SlotMoves.read(was, now, false, out) == 1 && out[0] == 2 && out[1] == 7 && out[2] == 16, "a shift-click is one move, from its slot to where it landed");
+        h.assertTrue(SlotMoves.read(was, now, true, out) == 0, "a stack the pointer carried is no move");
+        h.assertTrue(SlotMoves.read(was, was, false, out) == 0, "nothing changed, nothing moves");
+        // it topped up one stack and the rest went to an empty slot
+        was[7] = new ItemStack(Items.OAK_PLANKS, 60);
+        now[7] = new ItemStack(Items.OAK_PLANKS, 64);
+        now[8] = new ItemStack(Items.OAK_PLANKS, 12);
+        int n = SlotMoves.read(was, now, false, out);
+        h.assertTrue(n == 2 && out[2] + out[5] == 16, "a stack that filled one slot and spilled into the next is two moves (" + n + ")");
+        // a number key swaps two different stacks
+        java.util.Arrays.fill(was, ItemStack.EMPTY);
+        java.util.Arrays.fill(now, ItemStack.EMPTY);
+        was[0] = new ItemStack(Items.STICK, 4);
+        was[9] = new ItemStack(Items.COAL, 2);
+        now[0] = new ItemStack(Items.COAL, 2);
+        now[9] = new ItemStack(Items.STICK, 4);
+        h.assertTrue(SlotMoves.read(was, now, false, out) == 2, "a swap is two moves, one each way");
+        // a Tidy: more than six slots at once
+        for (int i = 0; i < 8; i++) {
+            was[i] = new ItemStack(Items.COBBLESTONE, i + 1);
+            now[i] = new ItemStack(Items.COBBLESTONE, 8 - i);
+        }
+        h.assertTrue(SlotMoves.read(was, now, false, out) == 0, "more than six slots changed in a tick: left to whoever made it");
+        h.succeed();
+    }
+
+    /**
+     * The six workstations (SPEC §65.8): each block is its kind (a grindstone only on the floor), each kind's slots lie
+     * on its own block, apart from one another, and from each of its three views, from all four sides, at four window
+     * sizes, every slot is inside the room and a click on its middle picks it.
+     */
+    static void workstations(GameTestHelper h) {
+        h.assertTrue(StationView.kindOf(Blocks.ANVIL.defaultBlockState()) == StationView.Kind.ANVIL
+                && StationView.kindOf(Blocks.DAMAGED_ANVIL.defaultBlockState()) == StationView.Kind.ANVIL
+                && StationView.kindOf(Blocks.SMITHING_TABLE.defaultBlockState()) == StationView.Kind.SMITHING
+                && StationView.kindOf(Blocks.STONECUTTER.defaultBlockState()) == StationView.Kind.STONECUTTER
+                && StationView.kindOf(Blocks.CARTOGRAPHY_TABLE.defaultBlockState()) == StationView.Kind.CARTOGRAPHY
+                && StationView.kindOf(Blocks.BREWING_STAND.defaultBlockState()) == StationView.Kind.BREWING
+                && StationView.kindOf(Blocks.LOOM.defaultBlockState()) == null, "each workstation is its own kind, and a loom has no scene");
+        var floor = Blocks.GRINDSTONE.defaultBlockState().setValue(net.minecraft.world.level.block.GrindstoneBlock.FACE,
+                net.minecraft.world.level.block.state.properties.AttachFace.FLOOR);
+        var wall = floor.setValue(net.minecraft.world.level.block.GrindstoneBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.WALL);
+        h.assertTrue(StationView.kindOf(floor) == StationView.Kind.GRINDSTONE && StationView.kindOf(wall) == null, "a grindstone has a scene only on the floor");
+        int[][] screens = {{320, 240}, {424, 238}, {640, 360}, {1280, 720}};
+        int[][] ways = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        float[] view = new float[3];
+        double[] p = new double[3], q = new double[2], eye = new double[3], o = new double[3];
+        Quaternionf rot = new Quaternionf();
+        for (StationView.Kind kind : new StationView.Kind[]{StationView.Kind.ANVIL, StationView.Kind.SMITHING, StationView.Kind.GRINDSTONE,
+                StationView.Kind.STONECUTTER, StationView.Kind.CARTOGRAPHY, StationView.Kind.BREWING}) {
+            for (int[] way : ways) {
+                StationView.Station s = new StationView.Station(TABLE, kind, way[0], way[1]);
+                for (int i = 0; i < kind.slots; i++) {
+                    StationView.spot(s, i, p, 0);
+                    h.assertTrue(p[0] > TABLE.getX() + 0.02 && p[0] < TABLE.getX() + 0.98 && p[2] > TABLE.getZ() + 0.02 && p[2] < TABLE.getZ() + 0.98
+                            && p[1] > TABLE.getY() && p[1] < TABLE.getY() + 1.05, kind + " slot " + i + " lies on its own block");
+                    for (int j = 0; j < i; j++) {
+                        StationView.spot(s, j, o, 0);
+                        double d = Math.sqrt((p[0] - o[0]) * (p[0] - o[0]) + (p[1] - o[1]) * (p[1] - o[1]) + (p[2] - o[2]) * (p[2] - o[2]));
+                        h.assertTrue(d > kind.half * 1.6, kind + " slots " + j + " and " + i + " are apart (" + d + ")");
+                    }
+                }
+                for (int b = 0; b < StationView.BENCHES; b++) {
+                    StationView.benchEye(s, b, eye);
+                    for (int[] scr : screens) {
+                        int w = scr[0], gh = scr[1];
+                        float aspect = (float) w / gh;
+                        StationView.Layout l = StationView.layout(w, gh, 2, true);
+                        StationView.frame(s, eye[0], eye[1], eye[2], l, w, gh, aspect, StationView.MAX_FOV, view);
+                        StationView.rotation(view[0], view[1], rot);
+                        // the station is seen whole and square on: the view looks along the way in, and (unless the
+                        // window is too small for it) the four corners of its top are inside the room
+                        float along = (float) Math.toDegrees(Math.atan2(-s.fx(), s.fz()));
+                        h.assertTrue(Math.abs(net.minecraft.util.Mth.wrapDegrees(view[0] - along)) < 0.25F,
+                                kind + " is looked at square on from view " + b + " at " + w + "x" + gh + " (" + net.minecraft.util.Mth.wrapDegrees(view[0] - along) + ")");
+                        if (kind != StationView.Kind.BREWING && view[2] < StationView.MAX_FOV - 0.01F) {
+                            for (int c = 0; c < 4; c++) {
+                                double a = (c & 1) == 0 ? -0.49 : 0.49, in = (c & 2) == 0 ? -0.49 : 0.49;
+                                h.assertTrue(StationView.project(TABLE.getX() + 0.5 + s.rx() * a + s.fx() * in, TABLE.getY() + kind.work, TABLE.getZ() + 0.5 + s.rz() * a + s.fz() * in,
+                                                eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, q) && l.inRoom(q[0], q[1]),
+                                        kind + "'s whole top is inside the room from view " + b + " at " + w + "x" + gh);
+                            }
+                        }
+                        for (int i = 0; i < kind.slots; i++) {
+                            StationView.spot(s, i, p, 0);
+                            String at = kind + " slot " + i + " from view " + b + " at " + w + "x" + gh;
+                            h.assertTrue(StationView.project(p[0], p[1], p[2], eye[0], eye[1], eye[2], rot, view[2], aspect, w, gh, q) && l.inRoom(q[0], q[1]),
+                                    at + " is inside the room");
+                            int got = StationView.pick(s, l, eye[0], eye[1], eye[2], rot, view[2], aspect, q[0], q[1], w, gh);
+                            h.assertTrue(got == i, at + " picks itself (got " + got + ")");
+                        }
+                    }
+                }
+            }
+        }
+        h.succeed();
+    }
+
+    /**
+     * Every block a player works has a touch (SPEC §65.9): vanilla's by class, ours by id (each id is a real block: a
+     * renamed block would lose its hand silently); what the hand holds decides a put from a take, and the Forge's blows
+     * from its palm; how high the thing is against the body is low, middle or high.
+     */
+    static void touchEveryBlock(GameTestHelper h) {
+        ItemStack none = ItemStack.EMPTY, stick = new ItemStack(Items.STICK);
+        Object[][] vanilla = {
+                {Blocks.OAK_DOOR, TouchKinds.Kind.PUSH}, {Blocks.OAK_TRAPDOOR, TouchKinds.Kind.PUSH}, {Blocks.OAK_FENCE_GATE, TouchKinds.Kind.PUSH},
+                {Blocks.LEVER, TouchKinds.Kind.LEVER}, {Blocks.STONE_BUTTON, TouchKinds.Kind.BUTTON}, {Blocks.CHEST, TouchKinds.Kind.LID},
+                {Blocks.ENDER_CHEST, TouchKinds.Kind.LID}, {Blocks.SHULKER_BOX, TouchKinds.Kind.LID}, {Blocks.BARREL, TouchKinds.Kind.HATCH},
+                {Blocks.SWEET_BERRY_BUSH, TouchKinds.Kind.PLUCK}, {Blocks.LODESTONE, TouchKinds.Kind.PALM}, {Blocks.RESPAWN_ANCHOR, TouchKinds.Kind.PALM},
+                {Blocks.BEACON, TouchKinds.Kind.PALM}, {Blocks.GRINDSTONE, TouchKinds.Kind.CRANK}, {Blocks.LECTERN, TouchKinds.Kind.PAGE},
+                {Blocks.OAK_SIGN, TouchKinds.Kind.PAGE}, {Blocks.ANVIL, TouchKinds.Kind.HAMMER}, {Blocks.SMITHING_TABLE, TouchKinds.Kind.HAMMER},
+                {Blocks.STONECUTTER, TouchKinds.Kind.SET}, {Blocks.LOOM, TouchKinds.Kind.SET}, {Blocks.CARTOGRAPHY_TABLE, TouchKinds.Kind.SET},
+                {Blocks.BREWING_STAND, TouchKinds.Kind.SET}, {Blocks.NOTE_BLOCK, TouchKinds.Kind.TAP},
+                {Blocks.REPEATER, TouchKinds.Kind.TAP}, {Blocks.COMPARATOR, TouchKinds.Kind.TAP}, {Blocks.DAYLIGHT_DETECTOR, TouchKinds.Kind.TAP},
+                {Blocks.BELL, TouchKinds.Kind.RING}, {Blocks.CAKE, TouchKinds.Kind.TAKE}};
+        for (Object[] row : vanilla) {
+            TouchKinds.Kind got = TouchKinds.of(((net.minecraft.world.level.block.Block) row[0]).defaultBlockState(), none);
+            h.assertTrue(got == row[1], row[0] + " is " + row[1] + " (got " + got + ")");
+        }
+        for (net.minecraft.world.level.block.Block b : new net.minecraft.world.level.block.Block[]{Blocks.JUKEBOX, Blocks.COMPOSTER, Blocks.DECORATED_POT,
+                Blocks.END_PORTAL_FRAME, Blocks.FLOWER_POT, Blocks.CHISELED_BOOKSHELF}) {
+            h.assertTrue(TouchKinds.of(b.defaultBlockState(), stick) == TouchKinds.Kind.PUT && TouchKinds.of(b.defaultBlockState(), none) == TouchKinds.Kind.TAKE,
+                    b + ": a thing in the hand is put, an empty hand takes");
+        }
+        h.assertTrue(TouchKinds.of(Blocks.STONE.defaultBlockState(), none) == null && TouchKinds.of(Blocks.CRAFTING_TABLE.defaultBlockState(), none) == null,
+                "a plain block has no touch, and a crafting table's hands are its scene's");
+        String[][] ours = {{"waystone", "PALM"}, {"conduit", "PALM"}, {"ascent_stone", "PALM"}, {"hearth_anchor", "PALM"}, {"stillpoint_shrine", "PALM"},
+                {"word_stone", "PALM"}, {"precursor_log_terminal", "PALM"}, {"precursor_door_core", "PALM"}, {"halo_return_pad", "PALM"},
+                {"anomaly_fallen_star", "PALM"}, {"well_lift", "PALM"}, {"reassessment_monolith", "PALM"}, {"waking_pick_stone", "PALM"}, {"hearthfire", "PALM"},
+                {"fitting_stand", "SET"}, {"foundry_crucible", "SET"}, {"storehouse_drop", "SET"}, {"work_plan", "SET"}, {"fabricator", "SET"},
+                {"broken_machine", "SET"}, {"trophy_mount", "SET"}, {"pattern_stand", "SET"}, {"bell_frame", "RING"}, {"found_bell", "RING"},
+                {"sleeping_bell", "RING"}, {"dream_bell", "RING"}, {"spire_board", "TEAR"}, {"ledger_desk", "PAGE"}, {"ghost_lever", "LEVER"},
+                {"carved_token", "TAKE"}, {"piton", "TAKE"}, {"veil_cache", "LID"}, {"anomaly_spirit_cache", "LID"}, {"left_chest", "LID"},
+                {"precursor_door", "PUSH"}, {"ghost_door", "PUSH"}, {"forge", "PALM"}};
+        for (String[] row : ours) {
+            var id = net.minecraft.resources.Identifier.fromNamespaceAndPath("awaken", row[0]);
+            var block = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(id);
+            h.assertTrue(block.isPresent(), "awaken:" + row[0] + " is a real block");
+            TouchKinds.Kind got = TouchKinds.of(block.get().defaultBlockState(), none);
+            h.assertTrue(got != null && got.name().equals(row[1]), "awaken:" + row[0] + " is " + row[1] + " (got " + got + ")");
+        }
+        var forge = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getOptional(net.minecraft.resources.Identifier.fromNamespaceAndPath("awaken", "forge"));
+        h.assertTrue(forge.isPresent() && TouchKinds.of(forge.get().defaultBlockState(), stick) == TouchKinds.Kind.HAMMER, "the Forge with a piece in the hand is blows");
+        h.assertTrue(TouchKinds.height(64, 64.3) == 0 && TouchKinds.height(64, 65) == 1 && TouchKinds.height(64, 65.6) == 2, "low, middle and high against the body");
+        for (TouchKinds.Kind k : TouchKinds.Kind.values()) h.assertTrue(k.reach != null, k + " has a body");
         h.succeed();
     }
 

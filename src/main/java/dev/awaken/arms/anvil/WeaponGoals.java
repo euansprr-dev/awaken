@@ -195,7 +195,7 @@ final class WeaponGoals {
         var level = p.level().getServer().getLevel(mem.anvil.dimension());
         if (level == null) return null;
         BlockPos pos = mem.anvil.pos();
-        if (level.isLoaded(pos) && !level.getBlockState(pos).is(AnvilContent.ANVIL.get())) {
+        if (dev.awaken.core.api.Ready.loaded(level, pos) && !level.getBlockState(pos).is(AnvilContent.ANVIL.get())) {
             mem.anvil = null;
             return null;
         }
@@ -208,7 +208,7 @@ final class WeaponGoals {
         if (now - mem.forgeAt < 40) return mem.forgeNear;
         mem.forgeAt = now;
         var level = p.level().getServer().getLevel(mem.anvil.dimension());
-        boolean loaded = level != null && level.isLoaded(anvil);
+        boolean loaded = level != null && dev.awaken.core.api.Ready.loaded(level, anvil);
         mem.forgePos = loaded ? WarAnvil.forge(level, anvil) : null;
         mem.forgeNear = mem.forgePos != null;
         mem.forgeCap = mem.forgePos == null ? 1 : HearthHooks.temperCap(p, mem.forgePos);

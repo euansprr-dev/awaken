@@ -1,0 +1,542 @@
+{
+ "seeds": 40,
+ "uses_today": {
+  "E": 220,
+  "D": 500,
+  "C": 1700,
+  "B": 2200,
+  "A": 2300,
+  "S": 2800
+ },
+ "proposed": {
+  "E": 900,
+  "D": 1300
+ },
+ "bosses": [
+  {
+   "id": "bell_warden",
+   "rank": "E",
+   "weapon": "wildhide_longsword",
+   "blows": {
+    "hunter": 125,
+    "dodger": 135,
+    "parrier": 118
+   },
+   "taken_per_min": {
+    "hunter": 12.6,
+    "dodger": 8.5,
+    "parrier": 14.6
+   },
+   "ttk": {
+    "hunter": 97,
+    "dodger": 86,
+    "parrier": 78
+   },
+   "uses_today": 220,
+   "uses_proposed": 900,
+   "worst_blows": 135,
+   "share_today": 0.614,
+   "share_proposed": 0.15
+  },
+  {
+   "id": "ember_tyrant",
+   "rank": "E",
+   "weapon": "wildhide_longsword",
+   "blows": {
+    "hunter": 155,
+    "dodger": 171,
+    "parrier": 127
+   },
+   "taken_per_min": {
+    "hunter": 9.2,
+    "dodger": 7.7,
+    "parrier": 13.6
+   },
+   "ttk": {
+    "hunter": 133,
+    "dodger": 113,
+    "parrier": 87
+   },
+   "uses_today": 220,
+   "uses_proposed": 900,
+   "worst_blows": 171,
+   "share_today": 0.777,
+   "share_proposed": 0.19
+  },
+  {
+   "id": "hive_regent",
+   "rank": "E",
+   "weapon": "wildhide_longsword",
+   "blows": {
+    "hunter": 94,
+    "dodger": 96,
+    "parrier": 88
+   },
+   "taken_per_min": {
+    "hunter": 6.8,
+    "dodger": 6.0,
+    "parrier": 5.5
+   },
+   "ttk": {
+    "hunter": 95,
+    "dodger": 84,
+    "parrier": 76
+   },
+   "uses_today": 220,
+   "uses_proposed": 900,
+   "worst_blows": 96,
+   "share_today": 0.436,
+   "share_proposed": 0.107
+  },
+  {
+   "id": "mother_of_spores",
+   "rank": "E",
+   "weapon": "wildhide_longsword",
+   "blows": {
+    "hunter": 107,
+    "dodger": 108,
+    "parrier": 98
+   },
+   "taken_per_min": {
+    "hunter": 8.7,
+    "dodger": 8.4,
+    "parrier": 5.1
+   },
+   "ttk": {
+    "hunter": 115,
+    "dodger": 93,
+    "parrier": 89
+   },
+   "uses_today": 220,
+   "uses_proposed": 900,
+   "worst_blows": 108,
+   "share_today": 0.491,
+   "share_proposed": 0.12
+  },
+  {
+   "id": "root_saint",
+   "rank": "E",
+   "weapon": "wildhide_longsword",
+   "blows": {
+    "hunter": 159,
+    "dodger": 177,
+    "parrier": 132
+   },
+   "taken_per_min": {
+    "hunter": 8.9,
+    "dodger": 6.1,
+    "parrier": 8.4
+   },
+   "ttk": {
+    "hunter": 124,
+    "dodger": 113,
+    "parrier": 88
+   },
+   "uses_today": 220,
+   "uses_proposed": 900,
+   "worst_blows": 177,
+   "share_today": 0.805,
+   "share_proposed": 0.197
+  },
+  {
+   "id": "drowned_archivist",
+   "rank": "D",
+   "weapon": "beastbound_longsword",
+   "blows": {
+    "hunter": 135,
+    "dodger": 145,
+    "parrier": 121
+   },
+   "taken_per_min": {
+    "hunter": 18.3,
+    "dodger": 16.9,
+    "parrier": 12.2
+   },
+   "ttk": {
+    "hunter": 107,
+    "dodger": 90,
+    "parrier": 80
+   },
+   "uses_today": 500,
+   "uses_proposed": 1300,
+   "worst_blows": 145,
+   "share_today": 0.29,
+   "share_proposed": 0.112
+  },
+  {
+   "id": "gearwright_colossus",
+   "rank": "D",
+   "weapon": "beastbound_longsword",
+   "blows": {
+    "hunter": 153,
+    "dodger": 162,
+    "parrier": 125
+   },
+   "taken_per_min": {
+    "hunter": 22.3,
+    "dodger": 17.4,
+    "parrier": 21.5
+   },
+   "ttk": {
+    "hunter": 116,
+    "dodger": 101,
+    "parrier": 81
+   },
+   "uses_today": 500,
+   "uses_proposed": 1300,
+   "worst_blows": 162,
+   "share_today": 0.324,
+   "share_proposed": 0.125
+  },
+  {
+   "id": "glass_serpent",
+   "rank": "D",
+   "weapon": "beastbound_longsword",
+   "blows": {
+    "hunter": 102,
+    "dodger": 99,
+    "parrier": 91
+   },
+   "taken_per_min": {
+    "hunter": 23.5,
+    "dodger": 22.7,
+    "parrier": 15.5
+   },
+   "ttk": {
+    "hunter": 104,
+    "dodger": 82,
+    "parrier": 78
+   },
+   "uses_today": 500,
+   "uses_proposed": 1300,
+   "worst_blows": 102,
+   "share_today": 0.204,
+   "share_proposed": 0.078
+  },
+  {
+   "id": "lantern_broker",
+   "rank": "D",
+   "weapon": "beastbound_longsword",
+   "blows": {
+    "hunter": 153,
+    "dodger": 156,
+    "parrier": 130
+   },
+   "taken_per_min": {
+    "hunter": 20.5,
+    "dodger": 19.2,
+    "parrier": 11.2
+   },
+   "ttk": {
+    "hunter": 113,
+    "dodger": 96,
+    "parrier": 81
+   },
+   "uses_today": 500,
+   "uses_proposed": 1300,
+   "worst_blows": 156,
+   "share_today": 0.312,
+   "share_proposed": 0.12
+  },
+  {
+   "id": "abbot_of_frost",
+   "rank": "C",
+   "weapon": "gatewrought_longsword",
+   "blows": {
+    "hunter": 123,
+    "dodger": 129,
+    "parrier": 111
+   },
+   "taken_per_min": {
+    "hunter": 28.7,
+    "dodger": 28.7,
+    "parrier": 22.0
+   },
+   "ttk": {
+    "hunter": 106,
+    "dodger": 87,
+    "parrier": 76
+   },
+   "uses_today": 1700,
+   "uses_proposed": 1700,
+   "worst_blows": 129,
+   "share_today": 0.076,
+   "share_proposed": 0.076
+  },
+  {
+   "id": "mirror_knight",
+   "rank": "C",
+   "weapon": "gatewrought_longsword",
+   "blows": {
+    "hunter": 161,
+    "dodger": 153,
+    "parrier": 125
+   },
+   "taken_per_min": {
+    "hunter": 18.0,
+    "dodger": 19.1,
+    "parrier": 15.1
+   },
+   "ttk": {
+    "hunter": 122,
+    "dodger": 96,
+    "parrier": 79
+   },
+   "uses_today": 1700,
+   "uses_proposed": 1700,
+   "worst_blows": 161,
+   "share_today": 0.095,
+   "share_proposed": 0.095
+  },
+  {
+   "id": "the_sleeper",
+   "rank": "C",
+   "weapon": "gatewrought_longsword",
+   "blows": {
+    "hunter": 125,
+    "dodger": 136,
+    "parrier": 118
+   },
+   "taken_per_min": {
+    "hunter": 30.9,
+    "dodger": 20.9,
+    "parrier": 30.4
+   },
+   "ttk": {
+    "hunter": 93,
+    "dodger": 82,
+    "parrier": 76
+   },
+   "uses_today": 1700,
+   "uses_proposed": 1700,
+   "worst_blows": 136,
+   "share_today": 0.08,
+   "share_proposed": 0.08
+  },
+  {
+   "id": "unit_zero",
+   "rank": "C",
+   "weapon": "gatewrought_longsword",
+   "blows": {
+    "hunter": 150,
+    "dodger": 154,
+    "parrier": 120
+   },
+   "taken_per_min": {
+    "hunter": 18.5,
+    "dodger": 21.3,
+    "parrier": 11.6
+   },
+   "ttk": {
+    "hunter": 124,
+    "dodger": 102,
+    "parrier": 81
+   },
+   "uses_today": 1700,
+   "uses_proposed": 1700,
+   "worst_blows": 154,
+   "share_today": 0.091,
+   "share_proposed": 0.091
+  },
+  {
+   "id": "sky_leviathan",
+   "rank": "B",
+   "weapon": "veilwoven_longsword",
+   "blows": {
+    "hunter": 96,
+    "dodger": 95,
+    "parrier": 92
+   },
+   "taken_per_min": {
+    "hunter": 29.4,
+    "dodger": 28.7,
+    "parrier": 21.7
+   },
+   "ttk": {
+    "hunter": 100,
+    "dodger": 76,
+    "parrier": 83
+   },
+   "uses_today": 2200,
+   "uses_proposed": 2200,
+   "worst_blows": 96,
+   "share_today": 0.044,
+   "share_proposed": 0.044
+  },
+  {
+   "id": "hollow_herald",
+   "rank": "A",
+   "weapon": "lordscale_longsword",
+   "blows": {
+    "hunter": 116,
+    "dodger": 108,
+    "parrier": 101
+   },
+   "taken_per_min": {
+    "hunter": 30.8,
+    "dodger": 32.9,
+    "parrier": 11.8
+   },
+   "ttk": {
+    "hunter": 111,
+    "dodger": 86,
+    "parrier": 84
+   },
+   "uses_today": 2300,
+   "uses_proposed": 2300,
+   "worst_blows": 116,
+   "share_today": 0.05,
+   "share_proposed": 0.05
+  },
+  {
+   "id": "proving_ringer",
+   "rank": "E",
+   "weapon": "wildhide_longsword",
+   "blows": {
+    "hunter": 209,
+    "dodger": 236,
+    "parrier": 173
+   },
+   "taken_per_min": {
+    "hunter": 10.7,
+    "dodger": 9.4,
+    "parrier": 9.6
+   },
+   "ttk": {
+    "hunter": 161,
+    "dodger": 150,
+    "parrier": 113
+   },
+   "uses_today": 220,
+   "uses_proposed": 900,
+   "worst_blows": 236,
+   "share_today": 1.073,
+   "share_proposed": 0.262
+  },
+  {
+   "id": "proving_examiner",
+   "rank": "D",
+   "weapon": "beastbound_longsword",
+   "blows": {
+    "hunter": 213,
+    "dodger": 237,
+    "parrier": 153
+   },
+   "taken_per_min": {
+    "hunter": 17.4,
+    "dodger": 15.5,
+    "parrier": 16.1
+   },
+   "ttk": {
+    "hunter": 163,
+    "dodger": 147,
+    "parrier": 98
+   },
+   "uses_today": 500,
+   "uses_proposed": 1300,
+   "worst_blows": 237,
+   "share_today": 0.474,
+   "share_proposed": 0.182
+  },
+  {
+   "id": "proving_unmade",
+   "rank": "C",
+   "weapon": "gatewrought_longsword",
+   "blows": {
+    "hunter": 205,
+    "dodger": 249,
+    "parrier": 158
+   },
+   "taken_per_min": {
+    "hunter": 21.5,
+    "dodger": 19.9,
+    "parrier": 17.4
+   },
+   "ttk": {
+    "hunter": 153,
+    "dodger": 151,
+    "parrier": 101
+   },
+   "uses_today": 1700,
+   "uses_proposed": 1700,
+   "worst_blows": 249,
+   "share_today": 0.146,
+   "share_proposed": 0.146
+  },
+  {
+   "id": "proving_sky_warden",
+   "rank": "B",
+   "weapon": "veilwoven_longsword",
+   "blows": {
+    "hunter": 221,
+    "dodger": 281,
+    "parrier": 176
+   },
+   "taken_per_min": {
+    "hunter": 27.3,
+    "dodger": 23.7,
+    "parrier": 20.5
+   },
+   "ttk": {
+    "hunter": 174,
+    "dodger": 174,
+    "parrier": 117
+   },
+   "uses_today": 2200,
+   "uses_proposed": 2200,
+   "worst_blows": 281,
+   "share_today": 0.128,
+   "share_proposed": 0.128
+  },
+  {
+   "id": "proving_keepers_shadow",
+   "rank": "A",
+   "weapon": "lordscale_longsword",
+   "blows": {
+    "hunter": 263,
+    "dodger": 293,
+    "parrier": 208
+   },
+   "taken_per_min": {
+    "hunter": 28.4,
+    "dodger": 26.7,
+    "parrier": 21.4
+   },
+   "ttk": {
+    "hunter": 193,
+    "dodger": 175,
+    "parrier": 127
+   },
+   "uses_today": 2300,
+   "uses_proposed": 2300,
+   "worst_blows": 293,
+   "share_today": 0.127,
+   "share_proposed": 0.127
+  },
+  {
+   "id": "proving_last_loop",
+   "rank": "S",
+   "weapon": "sovereign_longsword",
+   "blows": {
+    "hunter": 244,
+    "dodger": 301,
+    "parrier": 200
+   },
+   "taken_per_min": {
+    "hunter": 37.5,
+    "dodger": 35.2,
+    "parrier": 30.0
+   },
+   "ttk": {
+    "hunter": 180,
+    "dodger": 178,
+    "parrier": 125
+   },
+   "uses_today": 2800,
+   "uses_proposed": 2800,
+   "worst_blows": 301,
+   "share_today": 0.107,
+   "share_proposed": 0.107
+  }
+ ]
+}

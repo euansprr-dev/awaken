@@ -1,0 +1,435 @@
+<title>Rope and Wings</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* One reading column; pictures and the two live models break out to the full width of the column. */
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --sunk:#e9edf2; --ink:#101826; --muted:#566275; --line:#d6dde6;
+  --accent:#0a6fbd; --accent-soft:#dcecf9; --gold:#a8690a; --gold-soft:#f6ead3; --good:#17734a; --bad:#b04a1c;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1219; --surface:#141c27; --sunk:#0f161f; --ink:#e7edf5; --muted:#95a3b6; --line:#263241;
+  --accent:#5ab6fb; --accent-soft:#12314a; --gold:#eeb655; --gold-soft:#3a2d14; --good:#5fd39a; --bad:#f29a66; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1219; --surface:#141c27; --sunk:#0f161f; --ink:#e7edf5; --muted:#95a3b6; --line:#263241;
+  --accent:#5ab6fb; --accent-soft:#12314a; --gold:#eeb655; --gold-soft:#3a2d14; --good:#5fd39a; --bad:#f29a66; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);margin:0}
+.wrap{max-width:1040px;margin:0 auto;padding-block:36px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:56px}
+section{display:flex;flex-direction:column;gap:18px;min-width:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-0.01em}
+h1{font-size:clamp(2.2rem,6vw,3.6rem);line-height:1.02;font-weight:700}
+h2{font-size:clamp(1.5rem,3.4vw,2.05rem);line-height:1.12;font-weight:600}
+h3{font-size:1.12rem;line-height:1.25;font-weight:600}
+p{margin:0;max-width:68ch}
+.eyebrow{font:600 0.74rem/1 var(--mono);letter-spacing:0.09em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:1.14rem;color:var(--ink);max-width:62ch}
+.muted{color:var(--muted)} .small{font-size:0.88rem}
+header{display:flex;flex-direction:column;gap:16px}
+blockquote{margin:0;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;font-size:0.98rem;color:var(--ink)}
+blockquote footer{margin-top:10px;font:500 0.8rem var(--mono);color:var(--muted)}
+.four{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tile b{font-family:var(--display);font-size:1.02rem}
+.tile .now{color:var(--muted);font-size:0.9rem} .tile .then{font-size:0.94rem}
+.num{font:600 1.5rem/1.1 var(--mono);color:var(--accent);font-variant-numeric:tabular-nums}
+.tile.gold .num{color:var(--gold)}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+figure img{width:100%;height:auto;display:block;border-radius:5px;border:1px solid var(--line);background:var(--sunk)}
+figcaption{font-size:0.86rem;color:var(--muted)}
+figcaption b{color:var(--ink);font-weight:600}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:0.92rem;min-width:560px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 0.72rem var(--mono);letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.n,th.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.hi{color:var(--good);font-weight:600} td.lo{color:var(--bad);font-weight:600}
+ul.find{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+ul.find li{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;min-width:0}
+ul.find li .k{font:600 0.72rem/1.9 var(--mono);color:var(--accent);white-space:nowrap}
+ul.find li b{font-family:var(--display)}
+ul.find li span.ev{grid-column:2;font-size:0.86rem;color:var(--muted)}
+.demo{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+#wingview{width:100%;height:clamp(300px,56vw,560px);background:#0b1524;position:relative}
+#wingview.nogl::after{content:"This view needs WebGL. The pictures below show the same model.";position:absolute;inset:0;display:grid;place-items:center;color:#cfe0f2;padding:20px;text-align:center}
+#ropeview{width:100%;height:clamp(300px,44vw,400px);display:block;background:#cfe2f3}
+.bar{display:flex;flex-wrap:wrap;gap:10px 18px;padding:12px 14px;border-top:1px solid var(--line);align-items:center}
+.seg{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.seg .lab{font:600 0.7rem var(--mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+button{font:500 0.9rem var(--body);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+button:disabled{opacity:0.5;cursor:default}
+.cap{padding:10px 14px;font-size:0.86rem;color:var(--muted);border-top:1px solid var(--line)}
+.cap b{color:var(--ink)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.box ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.box li{max-width:60ch}
+pre.mermaid{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;margin:0;overflow-x:auto}
+.cards{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h3{display:flex;gap:12px;align-items:baseline}
+.card h3 small{font:600 0.8rem var(--mono);color:var(--accent);flex:none}
+.card .rec{color:var(--muted);font-size:0.94rem}
+.card .rec b{color:var(--ink)}
+.ans{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ans .st{font:500 0.78rem var(--mono);color:var(--muted)}
+textarea{width:100%;font:400 0.92rem/1.4 var(--body);color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:8px 10px;resize:vertical;min-height:38px}
+.tally{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font:500 0.86rem var(--mono);color:var(--muted)}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{display:flex;gap:8px;align-items:center;background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:7px 11px;font-size:0.92rem;cursor:pointer}
+.checks input{accent-color:var(--accent);width:16px;height:16px}
+a{color:var(--accent)}
+code{font:0.86em var(--mono);background:var(--sunk);padding:1px 5px;border-radius:3px}
+details.more summary{cursor:pointer;font:600 0.95rem var(--display);padding:6px 0;color:var(--ink)}
+details.more[open] summary{margin-bottom:10px}
+.note{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:4px;font-size:0.93rem;max-width:72ch}
+@media (max-width:520px){ul.find li{grid-template-columns:1fr} ul.find li span.ev{grid-column:1}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Movement plan · approved 10 Nov 2026 · built the same day</span>
+  <h1>Rope and Wings</h1>
+  <p class="lede">The rope works only where the world is tall, and even there it hangs on too long and stops at every landing. The wings are one flat sheet. Powers that move you do nothing in the air. This plan fixes those three things and adds six moves worth earning.</p>
+  <div class="note"><b>Approved, 10 Nov.</b> “Yeah, this looks fantastic. Like, make this one-to-one. The only thing is for the flying animation for the wings, it needs to be better … it clips a bit and it just doesn't look professional. But everything else is amazing. Go ahead and build all of this one-to-one.” The flying beat has been remade: press Flying in the wing model below.</div>
+  <blockquote>
+    “analyze the entire movement system in the game. So more so like the later movement, like the rope, the wings, the things like that. And I want to massively optimize the enjoyability of that and the satisfaction that comes from it. The rope, like this kind of swinging, needs to be massively optimized. Right now it's just not good, in my opinion. It's not where it needs to be. Like, I want it to be a bit more guided, and it should feel like you're basically playing like a kind of, in a sense, a Spider-Man game nearly. And then the wings need to be massively improved in terms of visual quality. That's the biggest thing. It's like right now they look a bit rushed. I want them to truly feel cinematic and awesome when you have them, like truly, truly awesome. And then obviously it should be thought out how they tie it. They link the powers and everything, so you can make sure you can use powers in the air. And any kind of extra movement that comes to, from these, that makes it like them better and more satisfying to have, and like something that's truly insane, awesome to unlock, would be awesome. Like, really push these to the maximum satisfaction level.”
+    <footer>Euan, 10 Nov 2026</footer>
+  </blockquote>
+</header>
+
+<section id="built">
+  <span class="eyebrow">Built</span>
+  <h2>All of it is in the game, and nobody has played it yet</h2>
+  <p>Everything below was built on 10 Nov, on the branch <code>claude/movement-plan-e38dfa</code>, and waits for your hands. These pictures are from the game itself, taken by a tour on GitHub. The wings match the model on this page box for box; their beat is the remade one.</p>
+  <p class="small">The first tour caught two faults. With only the rope key held, the rope never threw again after a landing: fixed, and the first three pictures are from a tour that held only forward and the rope, never jump. The Sovereign's six wings drew as garbage on the test machine: that took five more tours. The test machine's graphics draw wrongly once a frame carries more than about a megabyte of moving geometry, and six wings were that much by themselves. A feather is now sent in less than half the bytes. @@SOV_NOTE@@</p>
+  <div class="shots">@@BUILT_SHOTS@@</div>
+  <ul class="find">
+    <li><span class="k">Try 1</span><div><b>The rope in any wood.</b> Sprint, jump and hold the rope. It should throw you up and over the treetops one after another, and keep going when your feet touch down.</div><span class="ev">Measured with a bot that holds only forward and the rope, never jump: an oak wood at 152 blocks in 15 seconds and a lane of giant trees at 261, where running covers 75. No hard hit on a rope. One tree alone is taken 87 times in 100 from a sprint jump. In the game itself the lane went faster than that, and a real forest slower: 104 blocks in the first 15 seconds.</span></li>
+    <li><span class="k">Try 2</span><div><b>The wings.</b> Type <code>/awaken wings show hover</code> to hold your wings open and walk round them in third person. Also <code>open</code>, <code>glide</code>, <code>fly</code>, <code>dive</code>, <code>land</code>, <code>folded</code>, and a rung after it: <code>skyborn</code> or <code>sovereign</code>. <code>/awaken wings show off</code> gives them back.</div><span class="ev">In first person you barely see your wings: only the tips come in at the edges of the screen on a beat. <code>/awaken wings set fp_back 1.0</code> and <code>fp_up 0.25</code> move them while the game runs.</span></li>
+    <li><span class="k">Try 3</span><div><b>A power in the air.</b> Dash or leap while gliding: the push should carry. Hold a power's key or the use key in flight: the flight keeps its line while you look around.</div><span class="ev">Checked by tests, not yet by anyone's hands.</span></li>
+    <li><span class="k">Try 4</span><div><b>The new moves.</b> Land slowly and level on your wings (the flare). On the ground, look up, hold sneak a moment and jump (the takeoff, once you can fly). On the rope, attack a creature that is out of reach (the rope strike, at rope mastery 5).</div><span class="ev">The Tasks page shows the next move and how far its mastery has come.</span></li>
+    <li><span class="k">Hear</span><div><b>The sounds.</b> Every movement sound is now layers of Minecraft's own recordings. Nobody has heard them in the game yet.</div><span class="ev">Old sounds: set <code>movementScores = false</code> in <code>awaken-feel-client.toml</code>. The same file turns the new wings and the guided rope off.</span></li>
+  </ul>
+  <p><b>Two things for you to decide.</b></p>
+  <p><b>1. The rope on the tallest tree.</b> The sling needs a treetop ahead of you and above your hand, as the plan says. On the tallest tree around there is nothing above, so you cross its crown, walk off the edge, fall and sling again from the ground. In the forest tour that left three or four seconds between throws, twice in fifteen seconds. I can let the held rope also take the next crown ahead when it is level with you or a little lower, so you skip from crown to crown and stay in the canopy. It isn't in the plan, so it isn't built. Say yes and I'll build it.</p>
+  <p><b>2. The wings in sunlight.</b> By day the light layer's shadows fall on the wings. One pair reads as feathers in the sun, and I like it (the "By day" picture). The Sovereign's three gold pairs shadow one another and go patchy grey. If wings should stay pure light, never shaded, that is a small rule in the light layer itself, which is another session's code. Say which you want.</p>
+  <p class="small">Also found while reading the game's drawing code, and fixed: with the video setting Improved Transparency turned on, the game would have stopped the moment any wings were drawn. It is off on your Mac, so you would not have met it. And seen but left alone: by day, high over bright cloud, the Sovereign form's own colour look (from the day the form was made) blooms the whole screen pale gold.</p>
+  <p class="small">What differs from the plan below: the sling aims higher and throws harder than first written (the first numbers failed at a single tree); a pull up a wall is limited by a check of its path, not by 16 blocks; the two rope-paying-out loops keep their old sound. One old fault went with it: a double jump, a dash or opening your wings from a run used to drop your speed across the ground to nothing, and now keeps it.</p>
+</section>
+
+<section>
+  <span class="eyebrow">The short version</span>
+  <div class="four">
+    <div class="tile"><b>The rope</b><span class="num">120 → 253</span><span class="now">Blocks crossed in 15 seconds among giant trees by a player who holds the key. In an ordinary wood the rope never fires at all.</span><span class="then">It lets go sooner, keeps going through a landing, and gets a second answer for low places: the sling. Oak wood 103 → 203.</span></div>
+    <div class="tile"><b>The wings</b><span class="num">14 → 230</span><span class="now">Pieces in one wing. Today it is 14 flat strips with a painting stretched over them.</span><span class="then">Feathers of light, each one a box, with real poses. Turn the model below.</span></div>
+    <div class="tile"><b>Powers in the air</b><span class="num">0 → all</span><span class="now">A Dash in a glide spends its energy and moves you nowhere. A blink closes your wings.</span><span class="then">One rule: a push carries, a blink keeps your wings, a cast shows.</span></div>
+    <div class="tile gold"><b>New moves</b><span class="num">6</span><span class="now">The sling, the spring, the rope strike, the flare, the skim, the takeoff.</span><span class="then">And six gold wings for the Sovereign.</span></div>
+  </div>
+</section>
+
+<section id="found">
+  <span class="eyebrow">What I found</span>
+  <h2>The rope does nothing in most of the world</h2>
+  <p>I read all of the movement code, ran the game on GitHub's machines to photograph it, and ran the rope's own bench on trees of real size, played the way you play: holding the key. I can't feel a swing, so I measured it.</p>
+  <div class="shots">@@ROPE_SHOTS@@</div>
+  <ul class="find">
+    <li><span class="k">Rope 1</span><div><b>An ordinary wood gives the rope nothing.</b> A swing needs something 10 blocks over the ground. An oak's trunk is 4 to 6 blocks, a birch's 5 to 7, a spruce's 5 to 8, with a block or two of leaves on top.</div><span class="ev">Measured: in an oak wood and a spruce wood of real size the rope fired 0 times in 40 runs. The body covered 103 blocks in 15 seconds, the same as on open plains.</span></li>
+    <li><span class="k">Rope 2</span><div><b>The rope's own test never saw a real wood.</b> The forest it was tested in on 28 Oct has trees 13 to 21 blocks tall.</div><span class="ev">Read in <code>SwingBench</code>.</span></li>
+    <li><span class="k">Rope 3</span><div><b>Held, the rope hangs on too long.</b> It lets go 95 degrees past the bottom, when you are moving up and no longer forward. Then you hang in the air until the next rope.</div><span class="ev">@@ROPE3_EV@@</span></li>
+    <li><span class="k">Rope 4</span><div>@@ROPE4_HEAD@@</div><span class="ev">@@ROPE4_EV@@</span></li>
+    <li><span class="k">Rope 5</span><div><b>It can still pull you into the thing.</b> When a swing meets a wall the rope pulls you up it. In the lane that was a 41-block pull into a tree's crown and a hard bump.</div><span class="ev">Seen in one of two lane runs in the tour: the bump took 1.16 blocks a tick of speed. It is what you said on 28 Oct.</span></li>
+    <li><span class="k">Rope 6</span><div><b>Your rope key and your jump share one thumb.</b> The rope is on Left Option and jump is on Space, so “Space jumps off the rope” can't be pressed while you hold the rope. You can only hold.</div><span class="ev">Read from your key settings. The plan makes holding enough.</span></li>
+    <li><span class="k">Rope 7</span><div><b>In first person the fist is in the middle of the view,</b> over the place you are swinging toward.</div><span class="ev">Seen in the pictures.</span></li>
+    <li><span class="k">Rope 8</span><div><b>The rope's four main sounds ring.</b> The throw, the bite, the let-go and the snap each start with a held high tone, the kind you called synthetic on 9 Nov.</div><span class="ev">Measured with the ding checker: 8 of the 24 movement sounds ring, and all 24 are synthesised.</span></li>
+  </ul>
+  <div class="scroll"><table>
+    <tr><th>The game's own bench: a player who only holds the key, 15 s, 40 runs</th><th class="n">Oak wood</th><th class="n">Spruce wood</th><th class="n">Giant trees</th><th class="n">City</th><th class="n">Hard hits on a rope</th></tr>
+    <tr><td>Today</td><td class="n lo">103 blocks, no rope</td><td class="n lo">101, no rope</td><td class="n lo">120</td><td class="n lo">166</td><td class="n">0</td></tr>
+    <tr><td>The simple repair: let low anchors swing</td><td class="n lo">76</td><td class="n lo">91</td><td class="n lo">94</td><td class="n lo">142</td><td class="n">0</td></tr>
+    <tr><td>The proposal: let go at 55 degrees, and the sling</td><td class="n hi">203</td><td class="n hi">198</td><td class="n hi">253</td><td class="n hi">265</td><td class="n">0</td></tr>
+  </table></div>
+  <p class="small muted">The simple repair makes it worse: short swings add no speed and the planner starts taking low anchors in tall places. The proposal's two changes are a rough first version, under a hundred lines, run inside the game's own collision bench. It still leaves a hard bump in free flight in a few runs (1 in 40 in the oak wood, 5 in the spruce wood, 3 among giant trees). The build removes those; the gate is zero. Run it yourself: <code>docs/movement/proof/run.sh</code>.</p>
+
+  <h2>The wings are one flat sheet</h2>
+  <div class="shots">@@WING_SHOTS@@</div>
+  <ul class="find">
+    <li><span class="k">Wings 1</span><div><b>One sheet, no feathers.</b> Each wing is 14 flat strips, one piece thick, with a soft painting of feathers stretched along it. It is see-through and it is not made of boxes.</div><span class="ev">Read in <code>WingLayer</code>; seen in the pictures.</span></li>
+    <li><span class="k">Wings 2</span><div>@@WING2_HEAD@@</div><span class="ev">@@WING2_EV@@</span></li>
+    <li><span class="k">Wings 3</span><div><b>Every rung wears the same wing.</b> Wings, Skyborn and Sovereign share one sheet. The Sovereign's is tinted gold.</div><span class="ev">Read in code; seen in the pictures.</span></li>
+    <li><span class="k">Wings 4</span><div><b>Closed, they vanish.</b> There is no folded wing. Opening is a single ease from nothing.</div><span class="ev">Read in code.</span></li>
+  </ul>
+
+  <h2>Powers and the air don't meet</h2>
+  <ul class="find">
+    <li><span class="k">Air 1</span><div><b>A power's push is lost.</b> While you swing, glide or fly, the game sets your motion from the move's own speed every tick. A Dash, the new air versions of Haymaker and Spirit Palm, Nova's lift and the new Updraft power all ask your body to move, and it doesn't.</div><span class="ev">Read on both sides of the code. Not yet shown by a test; that test is the first thing built.</span></li>
+    <li><span class="k">Air 2</span><div><b>A blink closes your wings.</b> Any jump of more than 3 blocks that the move didn't ask for ends it.</div><span class="ev">Read in code.</span></li>
+    <li><span class="k">Air 3</span><div><b>A cast's gesture is hidden in flight.</b> The flying pose plays over it.</div><span class="ev">Read in code (the two animation layers' order).</span></li>
+    <li><span class="k">Air 4</span><div><b>You fly where you look.</b> You can't look at something beside or below you without turning toward it.</div><span class="ev">Read in code.</span></li>
+    <li><span class="k">Air 5</span><div><b>On the rope your weapon is put away</b> and nothing you do reaches an enemy.</div><span class="ev">SPEC §24.</span></li>
+  </ul>
+</section>
+
+<section id="rope">
+  <span class="eyebrow">The proposal · the rope</span>
+  <h2>The line finds the way</h2>
+  <p>Hold the rope and it takes the best line there is: a swing where something stands tall, a sling where it doesn't, a pull up and over a wall in the way. In open sky it still does nothing, as you decided on 28 Oct.</p>
+  <div class="demo">
+    <canvas id="ropeview" aria-label="Two runners in the same place: today's rope above, the proposed rope below"></canvas>
+    <div class="bar">
+      <div class="seg"><span class="lab">Place</span><button type="button" data-rope-scene="wood" aria-pressed="true">An ordinary wood</button><button type="button" data-rope-scene="tall" aria-pressed="false">Giant trees</button><button type="button" data-rope-scene="open" aria-pressed="false">Open plain</button></div>
+      <button type="button" id="ropeplay">Pause</button>
+    </div>
+    <div class="cap"><b id="ropestat">15 s</b><br>A side-on sketch of the two rules, on the same ground and the same clock. Blue is a swing, orange is a sling. Its distances are set to sit near the bench's; the bench's own numbers are in the table above.</div>
+  </div>
+  <div class="two">
+    <div class="box"><h3>The sling</h3><ul>
+      <li>It needs something ahead of you and above your hand: a tree's crown, a roof's edge, a hill's crest, 6 to 30 blocks on.</li>
+      <li>The rope bites it, pulls you toward a point just over it, and lets go before you reach it, so you fly on over the top.</li>
+      <li>Before it throws, it plays the whole flight forward with your body's box and takes the first one that hits nothing. The swing already does this.</li>
+      <li>Never the ground you stand on. Never open sky.</li>
+    </ul></div>
+    <div class="box"><h3>The swing, where it already works</h3><ul>
+      <li>Held, the rope lets go at about 55 degrees, while you are still moving forward. Today it hangs on to 95. It waits longer only when letting go would throw you at something.</li>
+      <li>Your own let-go in the window keeps its extra snap, so timing it yourself is still faster than holding.</li>
+      <li>Land with the key held and you hop straight into the next rope. Today a landing ends it.</li>
+      <li>A pull up a wall is taken only when the way to it is clear and short. Otherwise the swing lets go early and looks again.</li>
+    </ul></div>
+    <div class="box"><h3>Where it attaches</h3><ul>
+      <li>The marker says what a press would do: a ring for a swing, a chevron for a sling, a bracket for a pull up a wall.</li>
+      <li>Arriving on a top with forward held, you spring straight off it and the next rope goes. Without forward you stand on it, as now.</li>
+      <li>In first person the fist moves down to the frame's lower corner, out of the way of where you are going.</li>
+      <li>Your keys stay as they are. Holding is enough: nothing on the rope needs Space.</li>
+    </ul></div>
+    <div class="box"><h3>What stays exactly as it is</h3><ul>
+      <li>The giant trees, the city, the ring ladders, the Tether Spires, the vault's first line, the rappel.</li>
+      <li>The server checks every anchor. A refused rope still becomes free flight, never a pull back.</li>
+      <li>A switch turns the new rule off and gives back today's rope exactly.</li>
+    </ul></div>
+  </div>
+  <pre class="mermaid">
+flowchart LR
+  K["Rope held, in the air"] --> S{"Something tall enough to swing from?"}
+  S -- yes --> SW["Swing: lets go in the window"]
+  S -- no --> L{"A top ahead and above?"}
+  L -- yes --> SL["Sling: pulls, lets go before it"]
+  L -- no --> W{"A wall in the way?"}
+  W -- yes --> Z["Pull up and over it"]
+  W -- no --> N["Nothing: keep falling"]
+  SW --> K
+  SL --> K
+  Z --> K
+  </pre>
+</section>
+
+<section id="wings">
+  <span class="eyebrow">The proposal · the wings</span>
+  <h2>Feathers of light, in boxes</h2>
+  <p>Twenty-two flight feathers hang from three bones under two rows of smaller ones. Every feather is a slab one texel thick with a stepped point. No slants, no curves, nothing Minecraft doesn't have. They are light, so they glow under the Look you play on.</p>
+  <div class="demo">
+    <div id="wingview" role="img" aria-label="A blocky figure with wings you can turn: today's wing and the proposed wing"></div>
+    <div class="bar">
+      <div class="seg"><span class="lab">Show</span><button type="button" data-wing-which="both" aria-pressed="true">Side by side</button><button type="button" data-wing-which="old" aria-pressed="false">Today</button><button type="button" data-wing-which="new" aria-pressed="false">Proposed</button></div>
+      <div class="seg"><span class="lab">Rung</span><button type="button" data-wing-tier="wings" aria-pressed="true">Wings</button><button type="button" data-wing-tier="skyborn" aria-pressed="false">Skyborn</button><button type="button" data-wing-tier="sovereign" aria-pressed="false">Sovereign</button></div>
+    </div>
+    <div class="bar">
+      <div class="seg"><span class="lab">Doing</span><button type="button" data-wing-state="folded" aria-pressed="false">Folded</button><button type="button" data-wing-state="unfold" aria-pressed="false">Opening</button><button type="button" data-wing-state="glide" aria-pressed="false">Gliding</button><button type="button" data-wing-state="beat" aria-pressed="false">Flying</button><button type="button" data-wing-state="dive" aria-pressed="false">Diving</button><button type="button" data-wing-state="hover" aria-pressed="true">Hovering</button><button type="button" data-wing-state="land" aria-pressed="false">Landing</button></div>
+    </div>
+    <div class="cap"><b id="wingcap">Hovering</b><br>Drag to turn it. Today's wing is rebuilt from the game's own numbers and its own painting. The proposed wing is a model of the boxes and the motion for this page; in the game it is drawn by the same layer that draws wings now.</div>
+  </div>
+  <div class="two">
+    <div class="box"><h3>How they move</h3><ul>
+      <li><b>Opening:</b> the folded wings lift and draw back, then spread out from the body feather by feather, then settle.</li>
+      <li><b>A beat</b> is one smooth cycle. The wing bends along its length and the tip trails. It goes down spread, and comes back up with the wrist folded. The inner wing stays over your back, so nothing cuts through the body.</li>
+      <li><b>A dive</b> tucks them into a W. <b>A landing</b> cups them forward and sheds a few square motes of light.</li>
+    </ul></div>
+    <div class="box"><h3>A look for each rung</h3><ul>
+      <li><b>Wings:</b> one pair, about six blocks across. Today's is a little over four.</li>
+      <li><b>Skyborn:</b> a larger pair, and a second smaller pair beneath it.</li>
+      <li><b>The Sovereign's form:</b> six gold wings and a turning halo of boxes, for its thirty seconds.</li>
+    </ul></div>
+    <div class="box"><h3>When they are closed</h3><ul>
+      <li>After you land they fold onto your back, stay four seconds, and fade into a small lit mark between your shoulders.</li>
+      <li>The mark is worn from the day the wings are given.</li>
+    </ul></div>
+    <div class="box"><h3>Through your own eyes</h3><ul>
+      <li>The leading edge and the long feathers sit at the sides of the frame.</li>
+      <li>On a beat the tips sweep through the top corners. In a dive the folded wrists close in. Nothing is drawn across the middle of your view.</li>
+    </ul></div>
+  </div>
+</section>
+
+<section id="air">
+  <span class="eyebrow">The proposal · the air</span>
+  <h2>One rule for powers in the air</h2>
+  <div class="scroll"><table>
+    <tr><th>You do this</th><th>Today</th><th>With the plan</th></tr>
+    <tr><td>Dash while gliding</td><td>The energy is spent. You don't move.</td><td>The dash adds its speed to your glide.</td></tr>
+    <tr><td>Blink while gliding</td><td>Your wings close and you fall.</td><td>You arrive still gliding, at the same speed.</td></tr>
+    <tr><td>Haymaker from the air (the powers session's new air version)</td><td>It is meant to drive you into the ground. On a rope or on wings it can't.</td><td>It does, from any state.</td></tr>
+    <tr><td>Cast Updraft under open wings</td><td>Its lift is Minecraft's Levitation, which open wings ignore.</td><td>The column is real air: your wings ride it up.</td></tr>
+    <tr><td>Look at a creature beside you while flying</td><td>You turn and fly at it.</td><td>Hold your guard (or a power you hold to charge): you keep your line and look anywhere. Let go and you fly where you look again.</td></tr>
+    <tr><td>Cast in flight, seen by others</td><td>The flying pose hides the cast.</td><td>The arms cast over the flying pose.</td></tr>
+    <tr><td>Swing a weapon in flight</td><td>Your arms stay out at your sides.</td><td>They come in for the swing and go back out.</td></tr>
+  </table></div>
+  <p>One side still decides. Your hands cast in the air exactly as on the ground, the server accepts or refuses the cast as it does today, and its answer never changes what is on your screen.</p>
+</section>
+
+<section id="moves">
+  <span class="eyebrow">The proposal · moves worth earning</span>
+  <h2>Six moves and a crown</h2>
+  <div class="scroll"><table>
+    <tr><th>Move</th><th>When it is yours</th><th>What you do</th><th>What it gives you</th></tr>
+    <tr><td><b>The sling</b></td><td>With the rope</td><td>Hold the rope where nothing stands tall</td><td>The rope works anywhere there is something above you</td></tr>
+    <tr><td><b>The spring</b></td><td>Tether mastery 3</td><td>Hold forward as a pull arrives on a top</td><td>Rooftops and treetops without stopping</td></tr>
+    <tr><td><b>The rope strike</b></td><td>Tether mastery 5</td><td>Attack with a creature in the rope's reach</td><td>The rope pulls you in feet first and you bounce off upward with your air moves back</td></tr>
+    <tr><td><b>The flare</b></td><td>With the wings</td><td>Come down slow and level</td><td>A landing that is a moment: the wings cup, your feet touch, light falls</td></tr>
+    <tr><td><b>The skim</b></td><td>Wings mastery 3</td><td>Fly within 2.5 blocks of ground, water or a wall at speed</td><td>Your speed lasts about twice as long, a wake follows you, Flow rises</td></tr>
+    <tr><td><b>The takeoff</b></td><td>With Skyborn</td><td>Look up, crouch for a moment, then jump</td><td>Straight up 14 blocks into flight, for a tenth of your Aether. Today it takes four presses of jump.</td></tr>
+    <tr><td><b>Six wings</b></td><td>Sovereign</td><td>Take the form</td><td>Six gold wings and a halo for the form's thirty seconds</td></tr>
+  </table></div>
+  <p>None of these asks for timing. The rope's own let-go is the one timed thing, and it always was. Each move shows on the Tasks page as a step, with a short tip in plain words the first time it is yours.</p>
+  <h3>Sound</h3>
+  <p>All 24 movement sounds are remade from Minecraft's own recordings, named in the game's sound list so none of Mojang's audio is in the repo. First picks: the throw from a fishing rod's cast and a crossbow, the bite from a trident in the ground, the strain from a crossbow being drawn, the wings from an elytra and a dragon's wingbeat, the wind from the elytra's own loop, the boom from the Warden's. You get a local listening page with two alternates for each before any go in.</p>
+</section>
+
+<section id="proof">
+  <span class="eyebrow">Proof, cost, risk</span>
+  <h2>How you will know it is better</h2>
+  <div class="two">
+    <div class="box"><h3>Before it reaches you</h3><ul>
+      <li>The bench gains real woods, hills and a street of stair roofs. Gates: no hard hit on a rope anywhere, no stopped run, nowhere slower than today, the oak wood at 190 blocks or more.</li>
+      <li>One test per mechanism: the sling's choice, a refused rope not thrown again, a push in every state, a blink that keeps your wings, the aim hold, the rope strike decided by the server.</li>
+      <li>The whole suite on GitHub once, and one tour of pictures.</li>
+    </ul></div>
+    <div class="box"><h3>Then your hands</h3><ul>
+      <li>Ten minutes: the rope through a wood and through Carillon, the wings at each rung, one fight from the air.</li>
+      <li>The rope's numbers already change live with <code>/awaken rope tune on</code>. The wings get the same.</li>
+      <li>Each part has its own switch back to today.</li>
+    </ul></div>
+  </div>
+  <div class="scroll"><table>
+    <tr><th>Stage</th><th>What</th><th class="n">Hours of building</th></tr>
+    <tr><td>0</td><td>The truth: why ropes are refused, real woods in the bench, the test that shows a push is lost</td><td class="n">1 to 2</td></tr>
+    <tr><td>1</td><td>The rope: sling, let-go, spring, refusals, marker</td><td class="n">4 to 6</td></tr>
+    <tr><td>2</td><td>The wings: feathers, poses, three rungs, first person, far-off forms</td><td class="n">5 to 7</td></tr>
+    <tr><td>3</td><td>The air: pushes, blinks, casts shown, the aim hold, Updraft, weapons</td><td class="n">4 to 5</td></tr>
+    <tr><td>4</td><td>Moves: flare, skim, takeoff, rope strike</td><td class="n">4 to 5</td></tr>
+    <tr><td>5</td><td>Sound: 24 scores, the new moves', your listening page</td><td class="n">2 to 3</td></tr>
+    <tr><td>6</td><td>Tips, Tasks steps, SPEC, the one test pass</td><td class="n">2 to 3</td></tr>
+    <tr><td></td><td><b>All of it, coded whole and tested once at the end</b></td><td class="n"><b>22 to 31</b></td></tr>
+  </table></div>
+  <p class="small muted">Scaled from this repo: the assisted swing was one working day on 28 Oct, and the powers session built 13,000 lines in about five hours today. What could move it: the wings' poses after your first look, and the rope's numbers after your first ten minutes.</p>
+  <details class="more"><summary>What happens when it can't</summary>
+  <div class="scroll"><table>
+    <tr><th>When</th><th>What you get</th></tr>
+    <tr><td>Nothing above and ahead of you</td><td>A press is the miss it is today. Held, the rope stays quiet.</td></tr>
+    <tr><td>Every sling ahead would hit something</td><td>It isn't thrown. You keep running or falling, and it looks again two ticks later.</td></tr>
+    <tr><td>The block the rope bit is gone when it arrives</td><td>You fly on free, as today. The rope leaves that block alone for a second.</td></tr>
+    <tr><td>The creature you rope-strike dies or moves out of reach</td><td>The rope lets go and you fly on. No blow is counted.</td></tr>
+    <tr><td>A blink would put you inside a wall</td><td>The move ends and you fall from there, as today.</td></tr>
+    <tr><td>Thirty players with wings in view</td><td>Past 48 blocks every other feather is drawn, past 96 a few broad slabs.</td></tr>
+    <tr><td>Reduced motion is on</td><td>No motes, no tremble, half the beat's swing.</td></tr>
+  </table></div>
+  </details>
+  <div class="note"><b>What I could not check.</b> How the rope feels in your hands. I measured where it fires, how fast it goes and when it lets go, and I am inferring the feel from that. The box at the bottom asks what you felt, so the build aims at the right thing.</div>
+  <p class="small muted">Elsewhere: Spider-Man 2 ships with its swing assist at the top of ten settings, which its makers say was the standard in the earlier games (<a href="https://www.gamesradar.com/marvels-spider-man-2-has-adjustable-swing-assist-as-well-as-fall-damage-so-you-can-really-put-peter-and-miles-through-their-paces">GamesRadar</a>, <a href="https://mp1st.com/news/marvels-spider-man-2-will-let-players-scale-swing-assist-dev-reveals-max-assist-was-standard-in-past-games">MP1st</a>). Its makers decided early that webs had to attach to real buildings (<a href="https://www.theringer.com/2018/9/24/17895602/marvels-spider-man-swing-success">The Ringer</a>). That is the same rule as yours: full help, and never a rope in open sky.</p>
+</section>
+
+<section id="decide">
+  <span class="eyebrow">For you</span>
+  <h2>Twelve decisions</h2>
+  <p>You said yes to all of it in chat on 10 Nov, with one change: the flying beat, remade above. The cards stay as the record. Tap any of them if you change your mind and I will see it.</p>
+  <div class="card" id="card-feel">
+    <h3><small>First</small><span>What did the swing do that you didn't like?</span></h3>
+    <p class="rec">Tick any that fit. This is the one thing I can't measure.</p>
+    <div class="checks" id="feel">
+      <label><input type="checkbox" id="feel-nothing" data-f="nothing">Often nothing to grab</label>
+      <label><input type="checkbox" id="feel-slow" data-f="slow">Too slow or floaty</label>
+      <label><input type="checkbox" id="feel-hits" data-f="hits">I hit things</label>
+      <label><input type="checkbox" id="feel-aim" data-f="aim">It doesn't go where I want</label>
+      <label><input type="checkbox" id="feel-flicker" data-f="flicker">The rope flickers or stutters</label>
+      <label><input type="checkbox" id="feel-stiff" data-f="stiff">The body looks stiff</label>
+      <label><input type="checkbox" id="feel-camera" data-f="camera">The camera</label>
+      <label><input type="checkbox" id="feel-sound" data-f="sound">The sounds</label>
+    </div>
+    <textarea id="feel-note" rows="1" placeholder="Anything else? (optional)" aria-label="What else the swing did"></textarea>
+    <span class="st small muted" id="feel-st"></span>
+  </div>
+  <div class="tally"><span id="tally">Loading your answers…</span><button type="button" id="allyes" hidden>Yes to everything left</button></div>
+  <div class="cards" id="cards"></div>
+</section>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>@@WING_TODAY_JS@@</script>
+<script>@@WINGS_JS@@</script>
+<script>@@SWING_JS@@</script>
+<script>
+const DECISIONS=[
+ ["The rope's rule: swing where something stands tall, sling where it doesn't, and never in open sky.","Yes. The sling took the oak wood from 103 blocks to 203 in the bench, and your 28 Oct rule about open sky is kept."],
+ ["Held, the rope lets go while you are still moving forward (about 55 degrees), and a landing no longer ends the chain. Your own let-go in the window keeps its extra snap.","Yes. For a player who holds the key this doubled the giant trees in the bench, 120 blocks to 253."],
+ ["Your keys stay as they are, with the rope on Left Option. Holding is enough: nothing on the rope will need Space.","Yes, keep them. If you would rather have the rope on a mouse button, say so in the note."],
+ ["The wings are rebuilt as feathers of light in boxes, as in the model above.","Yes. It is the biggest change you asked for, and it stays inside Minecraft's shapes."],
+ ["Each rung gets its own wings: one pair, then two for Skyborn, then six gold wings and a halo while the Sovereign's form lasts.","Yes. Each rung should look like a step up from across a field."],
+ ["Closed wings fold onto your back for four seconds after you land, then fade into a small lit mark between your shoulders.","Yes. Tell me in the note if you would rather they stay on your back always, or vanish at once."],
+ ["Powers work in the air: a push carries, a blink keeps your wings, a cast shows in flight, and Updraft lifts open wings.","Yes."],
+ ["The aim hold: while you hold your guard in flight (or a power you hold to charge), you keep your line and can look anywhere.","Yes. It is what makes a fight from the air possible."],
+ ["The six moves: the sling, the spring, the rope strike, the flare, the skim, the takeoff.","Yes to all six. Name any you would drop in the note."],
+ ["All 24 movement sounds are remade from Minecraft's own recordings, with a local listening page for your ear first.","Yes. Eight of them ring today."],
+ ["Left for later: slowed time and broken ground for the Sovereign, and wings you can dress or recolour.","Yes, leave them. Neither is needed for what you asked."],
+ ["Build all of it in one session, about 22 to 31 hours, then one test pass, then your ten minutes.","Yes, in that order."]
+];
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cardsEl=document.getElementById("cards"),tally=document.getElementById("tally"),allYes=document.getElementById("allyes");
+let db=null,dbReady=false,canWrite=true,answers={};
+cardsEl.innerHTML=DECISIONS.map((d,i)=>{const id="d"+(i+1);return `<div class="card" id="card-${id}"><h3><small>${i+1}</small><span>${esc(d[0])}</span></h3><p class="rec"><b>My recommendation:</b> ${esc(d[1])}</p><div class="ans"><button type="button" id="${id}-yes" data-id="${id}" data-v="yes" aria-pressed="false">Yes</button><button type="button" id="${id}-no" data-id="${id}" data-v="no" aria-pressed="false">No</button><span class="st" id="${id}-st"></span></div><textarea id="${id}-note" data-id="${id}" rows="1" placeholder="Anything to change? (optional)" aria-label="Note on decision ${i+1}"></textarea></div>`}).join("");
+function renderAns(){
+  let yes=0,no=0;
+  DECISIONS.forEach((d,i)=>{const id="d"+(i+1),a=answers[id]||{};
+    if(a.answer==="yes")yes++;if(a.answer==="no")no++;
+    const y=document.getElementById(id+"-yes"),n=document.getElementById(id+"-no"),t=document.getElementById(id+"-note");
+    y.setAttribute("aria-pressed",a.answer==="yes");n.setAttribute("aria-pressed",a.answer==="no");
+    y.disabled=n.disabled=t.disabled=!canWrite||!db;
+    if(document.activeElement!==t&&(a.note||"")!==t.value)t.value=a.note||"";
+  });
+  const f=answers.feel||{},ticks=f.ticks||[];
+  document.querySelectorAll("#feel input").forEach(c=>{c.checked=ticks.includes(c.dataset.f);c.disabled=!canWrite||!db;});
+  const fn=document.getElementById("feel-note");fn.disabled=!canWrite||!db;if(document.activeElement!==fn&&(f.note||"")!==fn.value)fn.value=f.note||"";
+  const left=DECISIONS.length-yes-no;
+  tally.textContent=!dbReady?"Loading your answers…":!db?"Answers can't be saved in this view. Open the page while signed in.":`${yes} yes · ${no} no · ${left} to answer`;
+  allYes.hidden=!(db&&canWrite&&left>0);
+}
+async function save(id,patch,stEl){
+  if(!db)return;
+  const st=stEl||document.getElementById(id+"-st");
+  const base=id==="feel"?{ticks:[],note:""}:{answer:null,note:""};
+  const next=Object.assign(base,answers[id],patch,{at:new Date().toISOString()});
+  answers[id]=next;renderAns();st.textContent="saving…";
+  try{await db.doc("answers/"+id).set(next);st.textContent="saved";}
+  catch(e){if(e&&(e.code==="permission_denied"||e.code==="not_granted"||e.code==="invalid_argument")){canWrite=false;st.textContent="only Euan can answer";renderAns();}else st.textContent="not saved, try again";}
+}
+cardsEl.addEventListener("click",e=>{const b=e.target.closest("button[data-v]");if(b){const id=b.dataset.id,cur=answers[id]&&answers[id].answer;save(id,{answer:cur===b.dataset.v?null:b.dataset.v});}});
+cardsEl.addEventListener("change",e=>{if(e.target.matches("textarea"))save(e.target.dataset.id,{note:e.target.value.trim()});});
+document.getElementById("feel").addEventListener("change",()=>{const ticks=[...document.querySelectorAll("#feel input:checked")].map(c=>c.dataset.f);save("feel",{ticks},document.getElementById("feel-st"));});
+document.getElementById("feel-note").addEventListener("change",e=>save("feel",{note:e.target.value.trim()},document.getElementById("feel-st")));
+allYes.addEventListener("click",async()=>{for(let i=1;i<=DECISIONS.length;i++){const id="d"+i;if(!(answers[id]&&answers[id].answer))await save(id,{answer:"yes"});}});
+renderAns();
+(async()=>{
+  try{db=window.claude&&window.claude.use?await window.claude.use("db"):null;}catch(e){db=null;}
+  dbReady=true;
+  if(!db){renderAns();return;}
+  try{const user=await window.claude.use("user");if(user&&(await user.can("data.write"))===false)canWrite=false;}catch(e){}
+  const timer=setTimeout(renderAns,10000);
+  db.collection("answers").onSnapshot(snap=>{clearTimeout(timer);for(const d of snap.docs)if(d.exists)answers[d.id]=Object.assign({},d.data());renderAns();},()=>{clearTimeout(timer);renderAns();});
+  renderAns();
+})();
+</script>

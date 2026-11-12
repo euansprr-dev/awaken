@@ -99,7 +99,8 @@ final class RoadTimer {
             line = String.format(Locale.ROOT, "timer 30 s: %d chunks planned (%s ms), %d waited for (%s ms), worst %s ms (%s); server thread %d waits (%s ms); "
                             + "planner queue %d, %d lattice chunks unknown ahead; %d roads, %d plans, %d noise columns%s",
                     cold, ms(coldNs), waited, ms(waitNs), ms(worstNs), worst, onServer, ms(serverNs), queued, unknown, roads - roads0, plans - plans0,
-                    columns - columns0, samples == 0 ? "" : "; server thread planning in " + planning + " of " + samples + " tick samples");
+                    columns - columns0, samples == 0 ? "" : "; server thread planning in " + planning + " of " + samples + " tick samples")
+                    + landFirst();
             cold = waited = onServer = samples = planning = 0;
             coldNs = waitNs = serverNs = worstNs = 0;
             worst = "";
@@ -108,6 +109,14 @@ final class RoadTimer {
             columns0 = columns;
         }
         Awaken.LOG.info("[road] " + line);
+    }
+
+    /** Land first (SPEC §28.9, Cost): how often a planner put its job back while land came in, and the chunks missing now. */
+    private static String landFirst() {
+        long put = RoadPlanners.DEFERRED.getAndSet(0);
+        int missing = dev.awaken.core.api.LandFirst.missing();
+        return put == 0 && missing == 0 ? "" : "; land first: jobs put back " + put + " times, " + missing + " chunks in view not made yet"
+                + (dev.awaken.core.api.LandFirst.streaming() ? " (land coming in)" : "");
     }
 
     static void reset() {
@@ -286,21 +295,42 @@ final class RoadTimer {
         return false;
     }
 
-    /** The stack's first {@code most} frames, our own and the game's, down to the tick. */
-    private static String top(StackTraceElement[] stack, int most) {
-        StringBuilder b = new StringBuilder();
-        int n = 0;
-        for (StackTraceElement f : stack) {
-            if (f.getMethodName().equals("tickServer")) break;
-            if (n++ == most) {
-                b.append(" < ...");
+    /** How many frames are shown from a caller of ours on, past the stack's first ones. */
+    static final int CALLER_FRAMES = 16;
+
+    /**
+     * The stack's first {@code most} frames, our own and the game's, down to the tick; when they don't reach it, the rest
+     * from our own first frame on (else the last few above the tick), so whose call it is shows. A density function's
+     * frames alone filled the 24 of Euan's 32 s stall at a join (12 Nov), and the caller was cut off.
+     */
+    static String top(StackTraceElement[] stack, int most) {
+        int end = stack.length;
+        for (int i = 0; i < stack.length; i++)
+            if (stack[i].getMethodName().equals("tickServer")) {
+                end = i;
                 break;
             }
+        StringBuilder b = new StringBuilder();
+        frames(b, stack, 0, Math.min(end, most));
+        if (end <= most) return b.toString();
+        int ours = -1;
+        for (int i = most; i < end && ours < 0; i++) if (stack[i].getClassName().startsWith("dev.awaken.")) ours = i;
+        int from = ours >= 0 ? ours : Math.max(most, end - 10), to = Math.min(end, from + CALLER_FRAMES);
+        b.append(" < ...");
+        if (from > most) b.append(' ').append(from - most).append(" frames ... <");
+        b.append(' ');
+        frames(b, stack, from, to);
+        if (to < end) b.append(" < ...");
+        return b.toString();
+    }
+
+    private static void frames(StringBuilder b, StackTraceElement[] stack, int from, int to) {
+        for (int i = from; i < to; i++) {
+            StackTraceElement f = stack[i];
             String c = f.getClassName();
-            if (n > 1) b.append(" < ");
+            if (i > from) b.append(" < ");
             b.append(c.substring(c.lastIndexOf('.') + 1)).append('.').append(f.getMethodName()).append(':').append(f.getLineNumber());
         }
-        return b.toString();
     }
 
     static String ms(long ns) {

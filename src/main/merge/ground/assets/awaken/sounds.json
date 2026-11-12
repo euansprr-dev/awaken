@@ -3,20 +3,10 @@
     "subtitle": "subtitles.awaken.wild_plants.swish",
     "sounds": [
       {
-        "name": "awaken:wild_plants/swish1",
-        "attenuation_distance": 10
-      },
-      {
-        "name": "awaken:wild_plants/swish2",
-        "attenuation_distance": 10
-      },
-      {
-        "name": "awaken:wild_plants/swish3",
-        "attenuation_distance": 10
-      },
-      {
-        "name": "awaken:wild_plants/swish4",
-        "attenuation_distance": 10
+        "name": "minecraft:block.azalea_leaves.step",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 1.1
       }
     ]
   },
@@ -24,8 +14,10 @@
     "subtitle": "subtitles.awaken.wild_plants.hiss",
     "sounds": [
       {
-        "name": "awaken:wild_plants/hiss",
-        "stream": true
+        "name": "minecraft:block.poplar_leaves.ambient",
+        "type": "event",
+        "volume": 1.0,
+        "pitch": 1.1
       }
     ]
   }

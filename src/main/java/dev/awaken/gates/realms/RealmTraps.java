@@ -67,7 +67,7 @@ final class RealmTraps {
             Land.Trap t = traps.get(i);
             if (Math.abs((t.x0() + t.x1()) / 2 - lx) > NEAR || Math.abs((t.z0() + t.z1()) / 2 - lz) > NEAR || Math.abs((t.y0() + t.y1()) / 2 - ly) > NEAR) continue;
             BlockPos first = Realms.world(ref.cell(), t.x0(), t.y0(), t.z0());
-            if (!level.isLoaded(first)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, first)) continue;
             switch (t.kind()) {
                 case PRESS -> press(level, ref, t, first, now);
                 case SPIT -> spit(level, g, ref, t, i, first, now);
@@ -150,7 +150,7 @@ final class RealmTraps {
             var e = it.next();
             BlockPos at = e.getKey();
             Crumble c = e.getValue();
-            if (!level.isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
             if (now >= c.backAt()) {
                 // it grows back, but never into someone
                 if (!level.getEntitiesOfClass(LivingEntity.class, new AABB(at)).isEmpty()) continue;

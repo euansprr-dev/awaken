@@ -8,8 +8,11 @@ import com.mojang.renderpearl.api.textures.GpuTexture;
 import dev.awaken.lens.LensHeights;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.lwjgl.system.MemoryUtil;
 
@@ -19,10 +22,13 @@ import java.util.Arrays;
 /**
  * Lens 2's sun shadows without a second render of the world (SPEC §22): the loaded terrain's height around the camera,
  * from the client chunks' own heightmaps and every solid block they skip ({@link LensHeights}: a mod block outside
- * {@code #minecraft:blocks_motion}), which the light pass marches toward the sun. A 1024×1024 RG16F texture,
+ * {@code #minecraft:blocks_motion}), which the light pass marches toward the sun. A 1024×1024 RGBA16F texture,
  * addressed by world block coordinate modulo 1024 (a ring buffer, so moving never shifts it): r the top of everything
- * that blocks motion (leaves included), g the same without leaves (a roof). Mips 1-4 hold the maximum of their 2×2, so
- * far steps of the march test a whole cell at once. Where the top is water, g sits at the block's base + 0.75 instead of
+ * that blocks motion (leaves included), g the same without leaves (a roof). Where open air lies under that solid top
+ * (a bridge, an arch, a roof on posts), b is its underside and a the top of whatever stands under the air; elsewhere b
+ * is {@link #SOLID_DOWN} and a is g, so "under a, or from b up to g" is the column's solid either way ("Shadows beyond
+ * the block map"). Mips 1-4 hold the maximum of their 2×2 (the minimum for b), so far steps of the march test a whole
+ * cell at once and never let light through where one column would stop it. Where the top is water, g sits at the block's base + 0.75 instead of
  * its top (exactly representable in half floats to y 512): the shaders read that fraction as "water here" (Lens 2's
  * reflections, L3) and lose nothing as an occluder. Built from a 64×64-chunk window centred on the camera's chunk,
  * nearest chunks first and a few each tick; block changes show within a few seconds (a rolling rescan). Only changed
@@ -35,6 +41,15 @@ final class LensHeightfield {
     static final int SIZE = 1024, CHUNKS = SIZE / 16, LEVELS = 5;
     /** No data yet (or never loaded): below anything, so it never shadows. */
     static final float NONE = -2048f;
+    /** A column's underside where it has none: solid from its top down, as far as it is read. Above anything. */
+    static final float SOLID_DOWN = 4096f;
+    /** Bytes a texel: four half floats. */
+    private static final int TEXEL = 8;
+    /**
+     * How thick a roof is read through to find open air under it, and how far down that air is followed to its floor
+     * (a thicker roof is solid to the ground, as every column was; a deeper drop is solid from there down).
+     */
+    private static final int ROOF = 6, GAP = 64;
     /** Blocks from the camera the shader may trust: the window's half-width less the camera's own chunk. */
     static final float TRUSTED = (CHUNKS / 2 - 1) * 16f;
     // the rolling rescan and the near re-read are the steady CPU cost (block changes still show within ten seconds)
@@ -43,9 +58,9 @@ final class LensHeightfield {
     private static final int BOX_CHUNKS = CHUNKS;
 
     final Texture texture;
-    // per level, the whole window as the texture holds it (row-major RG16F); uploads are packed into stage first
+    // per level, the whole window as the texture holds it (row-major RGBA16F); uploads are packed into stage first
     private final ByteBuffer[] mirror = new ByteBuffer[LEVELS];
-    private final ByteBuffer stage = MemoryUtil.memAlloc(BOX_CHUNKS * 16 * 16 * 4);
+    private final ByteBuffer stage = MemoryUtil.memAlloc(BOX_CHUNKS * 16 * 16 * TEXEL);
     // per slot (chunk x & 63, z & 63): which chunk it holds, whether it waits for a read, its content's hash and top
     private final long[] owner = new long[CHUNKS * CHUNKS];
     private final boolean[] pending = new boolean[CHUNKS * CHUNKS];
@@ -57,12 +72,12 @@ final class LensHeightfield {
     private int dirtyCount;
     // slot offsets from the centre, nearest first (Chebyshev rings)
     private static final int[] ORDER = ringOrder();
-    private final float[] all = new float[256], solid = new float[256];
+    private final float[] all = new float[256], solid = new float[256], under = new float[256], floor = new float[256];
+    // a read's solid tops as whole blocks (the first free y)
+    private final int[] tops = new int[256];
     // a read's sections that may hold a block the heightmaps skip, and one column's tops (LensHeights)
     private boolean[] has = new boolean[0];
     private final int[] col = new int[2];
-    /** What a tick may spend reading chunks before it leaves the rest for the next one. */
-    private static final long BUDGET_NANOS = 500_000L;
     private int centreX = Integer.MIN_VALUE, centreZ, rescan, near, clock, maxTop = -64, nextRow;
     private boolean maxDirty;
     private ClientLevel level;
@@ -70,7 +85,7 @@ final class LensHeightfield {
     LensHeightfield() {
         for (int k = 0; k < LEVELS; k++) {
             int w = SIZE >> k;
-            mirror[k] = MemoryUtil.memAlloc(w * w * 4);
+            mirror[k] = MemoryUtil.memAlloc(w * w * TEXEL);
         }
         texture = new Texture();
         clearAll();
@@ -91,6 +106,16 @@ final class LensHeightfield {
         return maxTop;
     }
 
+    /** The top of everything in a column, leaves included, by the CPU mirror (ring coordinates); NONE where unknown. */
+    float topAt(int x, int z) {
+        return Float.float16ToFloat(mirror[0].getShort((z * SIZE + x) * TEXEL));
+    }
+
+    /** The same without leaves (a roof, the ground under a canopy). */
+    float solidAt(int x, int z) {
+        return Float.float16ToFloat(mirror[0].getShort((z * SIZE + x) * TEXEL + 2));
+    }
+
     /**
      * Whether a point near the camera is in sunlight by the CPU mirror (Lens 2's dust only shows in sunlit air): a short
      * march toward the light over level 0, leaves counting as shade.
@@ -103,7 +128,7 @@ final class LensHeightfield {
             double qy = y + l.y() * t;
             if (qy > top) return true;
             int ix = net.minecraft.util.Mth.floor(x + l.x() * t) & (SIZE - 1), iz = net.minecraft.util.Mth.floor(z + l.z() * t) & (SIZE - 1);
-            if (qy < Float.float16ToFloat(mirror[0].getShort((iz * SIZE + ix) * 4))) return false;
+            if (qy < Float.float16ToFloat(mirror[0].getShort((iz * SIZE + ix) * TEXEL))) return false;
             t += 0.5 + t * 0.25;
         }
         return true;
@@ -122,7 +147,7 @@ final class LensHeightfield {
         if (camChunkX != centreX || camChunkZ != centreZ) recentre(camChunkX, camChunkZ);
         // a tick's reading has a time limit as well as a count (Steady Light, SPEC §22: a tick that took 2 to 5 ms here
         // was a late frame in flight); what waits is read on the next tick, nearest first as ever
-        long until = System.nanoTime() + BUDGET_NANOS;
+        long until = System.nanoTime() + LensClient.tickBudget();
         int reads = 0;
         // waiting slots, nearest first
         for (int i = 0; i < ORDER.length && reads < READS_PER_TICK; i++) {
@@ -201,16 +226,22 @@ final class LensHeightfield {
                 LensHeights.column(chunk, has, x, z, col);
                 int a = col[0], s = col[1];
                 all[x + z * 16] = a;
-                // open water on top: its column's solid top drops to base + 0.75, the shaders' water mark
-                boolean water = a == s && chunk.getFluidState(x, s - 1, z).getType().is(net.minecraft.tags.FluidTags.WATER);
+                // water on top: its column's solid top drops to base + 0.75, the shaders' water mark. Under leaves
+                // too (it was open water only: the Air's waterline took every column under a tree's crown for a
+                // bank, and drew a lattice of foam round an island's tree, run 42986127640)
+                boolean water = chunk.getFluidState(x, s - 1, z).getType().is(net.minecraft.tags.FluidTags.WATER);
                 solid[x + z * 16] = water ? s - 0.25f : s;
+                tops[x + z * 16] = s;
                 high = Math.max(high, a);
                 h = (h ^ (a * 4099L + s * 2L + (water ? 1L : 0L))) * 1099511628211L;
             }
         }
         if (h == hash[slot]) return true;
         hash[slot] = h;
-        write(slot, all, solid);
+        // (only for a chunk whose tops changed, so the steady rescan costs what it did: a hollow dug under a roof
+        // that leaves every top as it was shows when a top next changes)
+        roofs(chunk, level.getMinY());
+        write(slot, all, solid, under, floor);
         if (top[slot] != high) {
             top[slot] = (short) high;
             maxDirty = true;
@@ -218,10 +249,39 @@ final class LensHeightfield {
         return true;
     }
 
+    /**
+     * Each column's roof, after {@link #read} filled the tops: where the solid at its top has open air under it within
+     * {@link #ROOF} blocks, that underside and the top of what stands under the air (within {@link #GAP}); elsewhere
+     * solid from the top down. What counts as solid is what the solid top counts (water, leaves and air are open).
+     */
+    private void roofs(LevelChunk chunk, int minY) {
+        LevelChunkSection[] sections = chunk.getSections();
+        for (int i = 0; i < 256; i++) {
+            float top = solid[i];
+            int s = tops[i];
+            under[i] = SOLID_DOWN;
+            floor[i] = top;
+            if (top != s) continue; // water on top
+            int x = i & 15, z = i >> 4, y = s - 2, stop = Math.max(minY, s - 1 - ROOF);
+            while (y >= stop && roofBlock(sections[chunk.getSectionIndex(y)].getBlockState(x, y & 15, z))) y--;
+            if (y < stop) continue;
+            int u = y + 1, low = Math.max(minY, y - GAP);
+            while (y >= low && !roofBlock(sections[chunk.getSectionIndex(y)].getBlockState(x, y & 15, z))) y--;
+            under[i] = u;
+            floor[i] = y + 1;
+        }
+    }
+
+    private static boolean roofBlock(BlockState st) {
+        return st.is(BlockTags.BLOCKS_MOTION_IN_HEIGHTMAP_NO_LEAVES) || LensHeights.skipped(st);
+    }
+
     private void clearSlot(int slot) {
         Arrays.fill(all, NONE);
         Arrays.fill(solid, NONE);
-        write(slot, all, solid);
+        Arrays.fill(under, SOLID_DOWN);
+        Arrays.fill(floor, NONE);
+        write(slot, all, solid, under, floor);
         hash[slot] = 0;
         top[slot] = (short) -64;
         maxDirty = true;
@@ -232,34 +292,42 @@ final class LensHeightfield {
         Arrays.fill(pending, false);
         Arrays.fill(hash, 0);
         Arrays.fill(top, (short) -64);
-        short none = Float.floatToFloat16(NONE);
-        int v = (none & 0xFFFF) | (none & 0xFFFF) << 16;
+        short none = Float.floatToFloat16(NONE), down = Float.floatToFloat16(SOLID_DOWN);
         for (int k = 0; k < LEVELS; k++) {
             ByteBuffer m = mirror[k];
-            for (int i = 0; i < m.capacity(); i += 4) m.putInt(i, v);
+            for (int i = 0; i < m.capacity(); i += TEXEL) {
+                m.putShort(i, none);
+                m.putShort(i + 2, none);
+                m.putShort(i + 4, down);
+                m.putShort(i + 6, none);
+            }
         }
         maxDirty = true;
     }
 
-    /** One chunk's 16×16 heights into level 0 at its slot, then its share of each max level. */
-    private void write(int slot, float[] a, float[] s) {
+    /** One chunk's 16×16 heights into level 0 at its slot, then its share of each coarser level (the undersides' least, the rest's most). */
+    private void write(int slot, float[] a, float[] s, float[] u, float[] f) {
         int sx = slot & (CHUNKS - 1), sz = slot / CHUNKS;
         for (int k = 0; k < LEVELS; k++) {
             int n = 16 >> k, w = SIZE >> k, step = 1 << k;
             ByteBuffer m = mirror[k];
             for (int z = 0; z < n; z++) {
                 for (int x = 0; x < n; x++) {
-                    float ma = NONE, ms = NONE;
+                    float ma = NONE, ms = NONE, mu = SOLID_DOWN, mf = NONE;
                     for (int dz = 0; dz < step; dz++) {
                         for (int dx = 0; dx < step; dx++) {
                             int i = (x * step + dx) + (z * step + dz) * 16;
                             ma = Math.max(ma, a[i]);
                             ms = Math.max(ms, s[i]);
+                            mu = Math.min(mu, u[i]);
+                            mf = Math.max(mf, f[i]);
                         }
                     }
-                    int at = ((sz * n + z) * w + sx * n + x) * 4;
+                    int at = ((sz * n + z) * w + sx * n + x) * TEXEL;
                     m.putShort(at, Float.floatToFloat16(ma));
                     m.putShort(at + 2, Float.floatToFloat16(ms));
+                    m.putShort(at + 4, Float.floatToFloat16(mu));
+                    m.putShort(at + 6, Float.floatToFloat16(mf));
                 }
             }
         }
@@ -308,13 +376,14 @@ final class LensHeightfield {
 
     /** Uploads slots x0..x1 by z0..z1 at every level (at most BOX_CHUNKS of them) and marks them clean. */
     private void send(CommandEncoder encoder, int x0, int z0, int x1, int z1) {
+        dev.awaken.turbo.pixels.Pixels.mark(16); // measurement only (the GPU timing's trace)
         long to = MemoryUtil.memAddress(stage);
         for (int k = 0; k < LEVELS; k++) {
             int n = 16 >> k, w = SIZE >> k;
             int tx = x0 * n, ty = z0 * n, tw = (x1 - x0 + 1) * n, th = (z1 - z0 + 1) * n;
             long from = MemoryUtil.memAddress(mirror[k]);
-            for (int y = 0; y < th; y++) MemoryUtil.memCopy(from + ((long) (ty + y) * w + tx) * 4, to + (long) y * tw * 4, tw * 4L);
-            stage.clear().limit(tw * th * 4);
+            for (int y = 0; y < th; y++) MemoryUtil.memCopy(from + ((long) (ty + y) * w + tx) * TEXEL, to + (long) y * tw * TEXEL, (long) tw * TEXEL);
+            stage.clear().limit(tw * th * TEXEL);
             encoder.writeToTexture(texture.getTexture(), stage, k, 0, tx, ty, tw, th);
         }
         for (int z = z0; z <= z1; z++) {
@@ -348,7 +417,7 @@ final class LensHeightfield {
         Texture() {
             var device = RenderSystem.getDevice();
             texture = device.createTexture(() -> "awaken lens heightfield", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
-                    GpuFormat.RG16_FLOAT, SIZE, SIZE, 1, LEVELS);
+                    GpuFormat.RGBA16_FLOAT, SIZE, SIZE, 1, LEVELS);
             textureView = device.createTextureView(texture);
             sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
         }

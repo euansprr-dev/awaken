@@ -6,25 +6,30 @@
   "theme": "bell_crypt",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:catacombs",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:realm/knell_crypt"
+      "awaken:realm/catacombs"
     ],
     "lens": "catacombs",
     "air": [
-      "mist",
       "shaft_dust",
-      "smoke",
+      "mist",
       "dust",
       "drips",
       "bats",
-      "rats"
+      "rats",
+      "far_toll"
     ]
   },
   "life": {

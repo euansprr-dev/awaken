@@ -94,6 +94,12 @@ final class FightRunner {
     private @Nullable String answerMove;
     /** The forks of the string being played, and which blow's fork was last taken (a fork is taken once). */
     private List<FightScripts.Fork> forks = List.of();
+    /** Ticks left of turning to someone else at an opening (SPEC §70.3): it shows the turn before it starts on them. */
+    private int turning;
+    /** The blow being told reaches everyone in its way, not one target. */
+    private boolean tellEveryone;
+    /** This pick is for a player on Gentle and the phase has plain blows to throw: the red ones are left out (SPEC §70.4). */
+    private boolean plainOnly;
     private int forkDone;
     /** This blow is held waiting for you: it keeps turning to you through its hold, and locks as late as it always would. */
     private boolean followsHold;
@@ -125,6 +131,15 @@ final class FightRunner {
         return move >= 0;
     }
 
+    /**
+     * It is fighting (SPEC §47.3 "Held while it fights"): a move playing, a limb coming back from a deflect, an answer
+     * noticed, reeling, kneeling, staggered, shielded for a new phase or standing in its opening. A duel body's stance
+     * doesn't drain while this holds, so stepping away from a red blow never throws away the work done.
+     */
+    boolean fighting() {
+        return move >= 0 || recoil > 0 || notice > 0 || boss.inOpening() || boss.broken() || boss.staggered() || boss.shielded();
+    }
+
     boolean duel() {
         return fight.duel();
     }
@@ -146,6 +161,7 @@ final class FightRunner {
         introduced = false;
         pendingPhase = -1;
         gap = 20;
+        turning = 0;
         boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_INTRO);
     }
 
@@ -298,6 +314,14 @@ final class FightRunner {
     private static final String POWER_USES = "awaken:power_uses/";
 
     void tick(ServerLevel level) {
+        if (boss.beaten()) {
+            // beaten to its last point (SPEC §68.4): it starts nothing, no move, no phase, no answer; it kneels and waits
+            if (move >= 0) stop();
+            string.clear();
+            pendingPhase = -1;
+            boss.syncKit(-1, 0, AwakenBoss.KIT_POSE_BROKEN);
+            return;
+        }
         if (mind != null) mind.watch(boss.getTarget(), level.getGameTime());
         if (move >= 0) {
             step(level);
@@ -339,7 +363,7 @@ final class FightRunner {
         // a phrase's last blow turned aside, its limb recoils from a deflect)
         boolean broken = boss.broken() || Stances.broken(boss);
         int pose = broken ? AwakenBoss.KIT_POSE_BROKEN : boss.reeling() ? AwakenBoss.KIT_POSE_REEL : recoil > 0 ? AwakenBoss.KIT_POSE_RECOIL
-                : notice > 0 ? AwakenBoss.KIT_POSE_NOTICE : 0;
+                : notice > 0 || turning > 0 ? AwakenBoss.KIT_POSE_NOTICE : 0;
         boss.syncKit(-1, 0, pose);
         if (broken || boss.staggered() || boss.flag(AwakenMob.F_FALLEN) || boss.flag(AwakenMob.F_DORMANT)) {
             string.clear();
@@ -366,6 +390,12 @@ final class FightRunner {
             noticing(level, target);
             return;
         }
+        if (turning > 0) { // it has turned to someone else: the head comes round first, then the phrase (SPEC §70.3)
+            turning--;
+            boss.getNavigation().stop();
+            boss.getLookControl().setLookAt(target, 180, 180);
+            return;
+        }
         if (!string.isEmpty()) {
             if (answer(target, level, false)) return;
             fork(target);
@@ -390,6 +420,14 @@ final class FightRunner {
             else approach(target);
             return;
         }
+        // a phrase is about to start: with more than one of a party in the fight, this is where it may turn (SPEC §70.3)
+        LivingEntity chosen = dev.awaken.core.api.FightsHooks.nextTarget(boss, target);
+        if (chosen != null && chosen != target && chosen.isAlive()) {
+            boss.turnTo(chosen);
+            turning = NOTICE_TICKS;
+            if (!dev.awaken.mobs.boss.KitSounds.play(boss, moves, "notice", 1F)) dev.awaken.mobs.boss.KitSounds.play(boss, moves, "step", 1F);
+            return;
+        }
         if (answer(target, level, false)) return;
         FightScripts.Entry e = pick(target);
         if (e == null || !reaches(moves.index(e.move()), target) || !begin(level, e.move(), target)) {
@@ -398,11 +436,25 @@ final class FightRunner {
             return;
         }
         phraseBlows = 1;
-        forks = e.forks();
+        boolean gentle = dev.awaken.core.api.FightsHooks.gentle(target);
+        forks = gentle ? List.of() : e.forks();
         forkDone = 0;
         if (!e.then().isEmpty()) {
             List<String> s = e.then().get(boss.getRandom().nextInt(e.then().size()));
-            string.addAll(s);
+            if (!gentle) {
+                string.addAll(s);
+            } else {
+                // on Gentle a phrase is two blows at most, and what follows is never red or a grab (SPEC §70.4)
+                for (String next : s) {
+                    int j = moves.index(next);
+                    if (j < 0) continue;
+                    KitMoves.Move mv = moves.get(j);
+                    Strikes.Kind k = told(mv, mv.ability().map(boss::ability).orElse(null));
+                    if (k == Strikes.Kind.PERILOUS || k == Strikes.Kind.GRAB) continue;
+                    string.add(next);
+                    break;
+                }
+            }
         }
     }
 
@@ -411,7 +463,7 @@ final class FightRunner {
      * Only ever between blows: at a string's link or with nothing playing, so a swing that has begun plays out.
      */
     private boolean answer(LivingEntity target, ServerLevel level, boolean pressOnly) {
-        if (mind == null || byHand || !studio.isEmpty()) return false;
+        if (mind == null || byHand || !studio.isEmpty() || dev.awaken.core.api.FightsHooks.gentle(target)) return false; // it doesn't punish a Gentle player's drink or cast (SPEC §70.4)
         FightScripts.Answer a = mind.due(canAnswer, level.getGameTime(), pressOnly);
         if (a == null) return false;
         carriedOn = pressOnly || !string.isEmpty();
@@ -462,9 +514,14 @@ final class FightRunner {
 
     /** Whether a move could begin now, as an answer or at a fork. */
     private boolean ready(int i, LivingEntity target) {
+        return ready(i, target, true);
+    }
+
+    /** {@code remember} false: a test's look, which leaves the blow's retry as it was. */
+    private boolean ready(int i, LivingEntity target, boolean remember) {
         KitMoves.Move m = moves.get(i);
         if (mind != null && (!mind.follows(i) || !inPhase(m.id()))) return false;
-        if (boss.level().getGameTime() < outOfReach[i] || !inRange(m, target) || !reaches(i, target)) return false;
+        if (boss.level().getGameTime() < outOfReach[i] || !inRange(m, target) || !(remember ? reaches(i, target) : couldLand(m, target))) return false;
         if (m.ability().isEmpty()) return true;
         Ability a = boss.ability(m.ability().get());
         return a == null || !(boss.level() instanceof ServerLevel sl) || boss.abilityRunner().room(sl, a);
@@ -544,6 +601,11 @@ final class FightRunner {
     private FightScripts.@Nullable Entry pick(LivingEntity target) {
         List<FightScripts.Entry> pool = fight.phase(boss.phase()).pool();
         if (mind != null) mind.repeatAfter(closeBlows(pool) <= 1 ? ONE_CLOSE_BLOW_AFTER : FightMind.REPEAT_AFTER);
+        plainOnly = false;
+        if (dev.awaken.core.api.FightsHooks.gentle(target)) {
+            // a phase with nothing plain keeps what it has (with the longer warning): it is never left with nothing to do
+            for (FightScripts.Entry e : pool) if (!red(e)) plainOnly = true;
+        }
         int sum = 0;
         for (FightScripts.Entry e : pool) if (usable(e, target)) sum += weight(e, target);
         if (sum <= 0) return null;
@@ -612,8 +674,14 @@ final class FightRunner {
 
     /** It stands open for {@code ticks}: it starts nothing, and blows on it break its stance faster. */
     private void openUp(ServerLevel level, int ticks) {
+        if (dev.awaken.core.api.FightsHooks.gentle(boss.getTarget())) ticks = (int) Math.round(ticks * dev.awaken.core.api.FightsHooks.gentleOpening()); // SPEC §70.4
         gap = ticks;
         boss.openFor(ticks);
+    }
+
+    /** In the middle of a phrase: a blow playing, more of the string to come, a notice or a recoil (SPEC §70.3: it holds its target). */
+    boolean midPhrase() {
+        return move >= 0 || !string.isEmpty() || notice > 0 || recoil > 0;
     }
 
     /**
@@ -645,6 +713,7 @@ final class FightRunner {
         int i = moves.index(e.move());
         if (i < 0) return false;
         KitMoves.Move m = moves.get(i);
+        if (plainOnly && red(e)) return false;
         if (boss.level().getGameTime() < outOfReach[i] || !inRange(m, target)) return false;
         if (mind != null && !mind.allowed(i, boss.level().getGameTime())) return false;
         if (!e.band().isEmpty() && (edgeDistance(target) < e.band().get(0) || (e.band().size() > 1 && edgeDistance(target) > e.band().get(1)))) return false;
@@ -681,8 +750,9 @@ final class FightRunner {
         return target.getBoundingBox().minY - boss.getY() <= high + reach && target.getBoundingBox().maxY - boss.getY() >= low - reach;
     }
 
-    /** Closer than this its swings pass over you; it backs off this far a tick. */
-    private static final double TOO_CLOSE = 0.35, STEP_BACK = 0.16;
+    /** Closer than this its swings pass over you (tests stand you no closer); it backs off this far a tick. */
+    static final double TOO_CLOSE = 0.35;
+    private static final double STEP_BACK = 0.16;
 
     /** How far past its sweep a lean carries a blow, in height. */
     private static final double BAND_SLACK = 1.2;
@@ -705,6 +775,48 @@ final class FightRunner {
     /** Whether the move could begin on the target where it stands now, remembering nothing (tests: a fair place to stand). */
     boolean couldLand(KitMoves.Move m, LivingEntity target) {
         return inRange(m, target) && (!aimed(m) || solve(m, target, boss.yBodyRot, trial));
+    }
+
+    /**
+     * How far an aimed blow would step to land on the target where it stands now (negative: back), or NaN when it can't
+     * land from here; remembering nothing (tests: a stand the next blow of a string still reaches).
+     */
+    float landingStep(KitMoves.Move m, LivingEntity target) {
+        if (!inRange(m, target)) return Float.NaN;
+        if (!aimed(m)) return 0;
+        return solve(m, target, boss.yBodyRot, trial) ? trial.step : Float.NaN;
+    }
+
+    /** Whether one of the answer's moves, one its phase has, could land on the target now (tests: a drink in reach, §48.5). */
+    boolean inReach(FightScripts.Answer a, LivingEntity target) {
+        for (String id : a.moves()) {
+            int i = moves.index(id);
+            if (i >= 0 && inPhase(id) && couldLand(moves.get(i), target)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Whether the mind may answer with one of the answer's moves now, by the rule it answers by (§48.2: in its phase, not
+     * the move it just made, able to land, room for its ability), remembering nothing (tests).
+     */
+    boolean couldAnswer(FightScripts.Answer a, LivingEntity target) {
+        for (String id : a.moves()) {
+            int i = moves.index(id);
+            if (i >= 0 && ready(i, target, false)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Between blows, where its tick weighs an answer next (tests): nothing playing, no opening, recoil, notice or phase
+     * change under way, not broken, staggered, fallen or dormant. Not reeling either: a notice given then is drawn as the
+     * reel, so a test watching for the notice wouldn't see it.
+     */
+    boolean betweenBlows() {
+        return introduced && studio.isEmpty() && !byHand && move < 0 && gap <= 0 && recoil <= 0 && notice <= 0 && pendingPhase < 0
+                && !boss.broken() && !Stances.broken(boss) && !boss.staggered() && !boss.reeling()
+                && !boss.flag(AwakenMob.F_FALLEN) && !boss.flag(AwakenMob.F_DORMANT);
     }
 
     /** The correction that lands {@code m} on the target, with the body facing it (or {@code facing}, for a blow that doesn't turn). */
@@ -785,6 +897,7 @@ final class FightRunner {
                 followsHold = held > 0;
             }
         }
+        if (cls != Strikes.Kind.NONE && dev.awaken.core.api.FightsHooks.gentle(target)) held += dev.awaken.core.api.FightsHooks.gentleHold(); // a Gentle player gets longer to read it (SPEC §70.4)
         KitMoves.Played p = KitMoves.played(m, boss.kitSpeed(), held);
         played = p;
         windup = p.windup();
@@ -803,8 +916,12 @@ final class FightRunner {
         if (ability != null) boss.abilityRunner().prepare(level, ability, target, windup + hold, cls, m.signature());
         boss.getNavigation().stop();
         boss.syncKit(i, hold, 0);
+        boss.syncKitAim(false, 0, 0, 1, 0); // not committed yet: known from its lock (SPEC §68.2)
         if (cls != Strikes.Kind.NONE) {
             boss.setTell(windup + hold, cls, cls == Strikes.Kind.HEAVY);
+            // a blow that isn't aimed at one body is everyone's to answer (SPEC §70.3)
+            tellEveryone = !aimed(m) || target == null;
+            if (tellEveryone) boss.tellAll();
             // the body's own voice for the class when it has one (the glow still tells the class), else Arms' one
             if (!sound(m, "tell", "tell_" + cls.name().toLowerCase(java.util.Locale.ROOT)))
                 boss.playTell(cls, cls == Strikes.Kind.HEAVY, 1.0F);
@@ -826,6 +943,8 @@ final class FightRunner {
                 aim.clear();
                 aim.turn = yaw;
             }
+            // the blow is committed: those watching can work out where it will be, and when it reaches them (SPEC §68.2)
+            boss.syncKitAim(true, aim.turn, aim.step, aim.run, aim.dip);
         }
         yaw = Mth.approachDegrees(yaw, aim.turn, Math.max(TURN_RATE, m.time().track()));
         int left = Math.max(1, wind - lockAt);
@@ -872,10 +991,15 @@ final class FightRunner {
                 yaw = Mth.approachDegrees(yaw, want, m.time().track());
             }
             aimBlow(m, target, lockAt, wind);
+            // a blow that takes no correction (its ability does the aiming) is committed as it locks, where it stands
+            if (t == lockAt && !aimed(m) && !m.hits().isEmpty()) boss.syncKitAim(true, yaw, 0, 1, 0);
             face();
             boss.getNavigation().stop();
             if (ability != null) boss.abilityRunner().windup(level, ability, wind - t + 1, tracking);
-            if (cls != Strikes.Kind.NONE && (t & 3) == 0) boss.setTell(wind - t, cls, cls == Strikes.Kind.HEAVY);
+            if (cls != Strikes.Kind.NONE && (t & 3) == 0) {
+                boss.setTell(wind - t, cls, cls == Strikes.Kind.HEAVY);
+                if (tellEveryone) boss.tellAll();
+            }
             return;
         }
         int k = t - wind - 1;
@@ -923,8 +1047,11 @@ final class FightRunner {
         // out of: a dash, a step, a roll
         // a blow that met nobody though you stood in its reach: one line each, for the next playtest (SPEC §47.3)
         if (k == active && mind != null && inReach && hits == 0 && !m.hits().isEmpty() && target != null) {
-            dev.awaken.Awaken.LOG.info("[fights] missed {} {} {}: {} blocks off, {}", fight.id(), m.id(), cls,
-                    String.format("%.1f", edgeDistance(target)), boss.getSensing().hasLineOfSight(target) ? "in sight" : "out of sight");
+            // with the guard's state: a guard raised for a blow that passed you by is no parry to judge (SPEC §68.6)
+            boolean guard = target.isUsingItem() && dev.awaken.arms.Arms.guards(target.getUseItem());
+            dev.awaken.Awaken.LOG.info("[fights] missed {} {} {}: {} blocks off, {}{}", fight.id(), m.id(), cls,
+                    String.format("%.1f", edgeDistance(target)), boss.getSensing().hasLineOfSight(target) ? "in sight" : "out of sight",
+                    guard ? ", guard up " + target.getTicksUsingItem() + " ticks" : "");
         }
         if (k == active && inReach && !struck && fight.mirrors() && read == Strikes.Habit.NONE) slips++;
         if (t < wind + active + recover) {
@@ -1028,15 +1155,8 @@ final class FightRunner {
     }
 
     private Vec3 world(float x, float y, float z) {
-        if (aim.lean != 0) { // the body leans into the blow about its hips
-            float hip = hip(), cl = Mth.cos(aim.lean * Mth.DEG_TO_RAD), sl = Mth.sin(aim.lean * Mth.DEG_TO_RAD), up = y - hip;
-            float zw = up * sl + z * cl;
-            y = hip + up * cl - z * sl;
-            z = zw;
-        }
-        float r = yaw * Mth.DEG_TO_RAD, c = Mth.cos(r), s = Mth.sin(r);
-        // facing yaw: forward is (-sin, cos); the body's left is (cos, sin)
-        return new Vec3(boss.getX() + x * c - z * s, boss.getY() + y, boss.getZ() + x * s + z * c);
+        // one rule with the ring a client draws for this blow (KitReach, SPEC §68.2)
+        return dev.awaken.mobs.boss.KitReach.point(boss.getX(), boss.getY(), boss.getZ(), yaw, aim.lean, hip(), x, y, z);
     }
 
     /** This tick's capsules against every enemy the boss can see; each is hit once a move. */
@@ -1076,16 +1196,6 @@ final class FightRunner {
 
     /** Whether the capsule from a to b of radius r touches the box (the segment sampled every half block). */
     static boolean touches(Vec3 a, Vec3 b, float r, AABB box) {
-        double len = a.distanceTo(b);
-        int n = Math.max(1, (int) Math.ceil(len / 0.5));
-        for (int i = 0; i <= n; i++) {
-            double f = i / (double) n;
-            double x = a.x + (b.x - a.x) * f, y = a.y + (b.y - a.y) * f, z = a.z + (b.z - a.z) * f;
-            double dx = Math.max(Math.max(box.minX - x, 0), x - box.maxX);
-            double dy = Math.max(Math.max(box.minY - y, 0), y - box.maxY);
-            double dz = Math.max(Math.max(box.minZ - z, 0), z - box.maxZ);
-            if (dx * dx + dy * dy + dz * dz <= r * r) return true;
-        }
-        return false;
+        return dev.awaken.mobs.boss.KitReach.touches(a, b, r, box);
     }
 }

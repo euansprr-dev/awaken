@@ -96,7 +96,7 @@ final class RigFx {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (level == null || (RigClient.beams.isEmpty() && MOVES.isEmpty() && GLOWS.isEmpty() && !RigClient.hasRings()
-                && RigGhost.current() == null)) return;
+                && RigClient.hangRooms().isEmpty() && RigGhost.current() == null)) return;
         var state = e.getLevelRenderState();
         Vec3 cam = state.cameraRenderState.pos;
         cx = cam.x;
@@ -113,6 +113,7 @@ final class RigFx {
             try {
                 for (RigClient.Beam b : RigClient.beams) beam(vc, b);
                 for (Glow g : GLOWS) glow(vc, g);
+                pressMarks(vc, level);
                 rings(vc);
                 ghostTrail(vc);
             } catch (RuntimeException ex) {
@@ -120,6 +121,76 @@ final class RigFx {
             }
         });
         for (Move m : MOVES) move(ps, out, level, m);
+        parked(ps, out, level);
+    }
+
+    // ---- a Gauntlet's presses while they are up ---------------------------------------------------------------------
+
+    /** A parked press and the marks under it are drawn this far from the camera: the length of the longest course and more. */
+    private static final double PARK_FAR = 112;
+
+    private static boolean inSight(RigClient.HangRoom h) {
+        double dx = h.x - cx, dy = h.y - cy, dz = h.z - cz;
+        return dx * dx + dy * dy + dz * dz < PARK_FAR * PARK_FAR;
+    }
+
+    /** Whether the press over this column is up: its blocks aren't on the floor and it isn't on its way down or back. */
+    private static boolean up(ClientLevel level, RigClient.HangRoom h, BlockPos p) {
+        if (level.getBlockState(p) == h.ram) return false;
+        for (int i = 0; i < MOVES.size(); i++) {
+            Move m = MOVES.get(i);
+            if ((m.kind == RigPayloads.Cue.PRESS || m.kind == RigPayloads.Cue.LIFT) && m.pos.equals(p)) return false;
+        }
+        return true;
+    }
+
+    /**
+     * A press that is up is parked in the ceiling over its rows (SPEC §17.5), drawn with the block's own model where it
+     * falls from and lifts back to, so every press of a course can be seen from its first landing. Nothing is there to
+     * walk into: the blocks themselves exist only while it is down. Until 11 Nov a press that was up was not drawn at
+     * all, and the first anyone knew of it was the floor's glow twelve ticks before it landed (Euan: "the wall spawns in
+     * front of you").
+     */
+    private static void parked(PoseStack ps, SubmitNodeCollector out, ClientLevel level) {
+        for (RigClient.HangRoom h : RigClient.hangRooms()) {
+            if (!inSight(h)) continue;
+            if (h.states == null) {
+                h.states = new MovingBlockRenderState[h.cells.size()];
+                for (int i = 0; i < h.states.length; i++) {
+                    MovingBlockRenderState mb = new MovingBlockRenderState();
+                    mb.blockState = h.ram;
+                    mb.blockPos = h.cells.get(i);
+                    mb.randomSeedPos = h.cells.get(i);
+                    mb.lightEngine = level.getLightEngine();
+                    mb.cardinalLighting = level.cardinalLighting();
+                    mb.biome = level.getBiome(h.cells.get(i));
+                    h.states[i] = mb;
+                }
+            }
+            for (int i = 0; i < h.states.length; i++) {
+                BlockPos p = h.cells.get(i);
+                if (!up(level, h, p)) continue;
+                for (int row = 0; row < dev.awaken.gates.world.RigGauntlet.PRESS_H; row++) {
+                    ps.pushPose();
+                    ps.translate(p.getX() - cx, p.getY() - cy + h.travel + row, p.getZ() - cz);
+                    out.submitMovingBlock(ps, h.states[i], 0);
+                    ps.popPose();
+                }
+            }
+        }
+    }
+
+    /** The floor under a parked press keeps its chevrons, steady at half strength; the warning before it lands pulses over them. */
+    private static void pressMarks(VertexConsumer vc, ClientLevel level) {
+        for (RigClient.HangRoom h : RigClient.hangRooms()) {
+            if (!inSight(h)) continue;
+            // (0.2 at first: from the landing the marks could not be told from the floor in the first walk)
+            int mark = argb(light(h.theme), 0.5F);
+            for (int i = 0; i < h.cells.size(); i++) {
+                BlockPos p = h.cells.get(i);
+                if (up(level, h, p)) hazard(vc, p.below(), mark);
+            }
+        }
     }
 
     private static float age(long start) {

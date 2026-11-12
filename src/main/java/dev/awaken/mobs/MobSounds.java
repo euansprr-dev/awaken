@@ -21,12 +21,14 @@ public final class MobSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> BOSS_PHASE = sound("mobs.boss_phase");
     public static final DeferredHolder<SoundEvent, SoundEvent> BOSS_TOLL = sound("mobs.boss_toll");
     public static final DeferredHolder<SoundEvent, SoundEvent> BOSS_DEFEATED = sound("mobs.boss_defeated");
+    /** A boss's finishing blow landing (SPEC §68.4): Minecraft's own heaviest impact, by name. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> FINISH_BLOW = sound("mobs.finish.blow");
     public static final DeferredHolder<SoundEvent, SoundEvent> RISE = sound("mobs.rise");
     public static final DeferredHolder<SoundEvent, SoundEvent> CORD_BITE = sound("mobs.cord_bite");
     public static final DeferredHolder<SoundEvent, SoundEvent> LISTENER_HEAR = sound("mobs.listener_hear");
 
     /**
-     * The carriers (SPEC §47.2): each sounds from where it is as it comes. Synthesised by tools/art/specs/audio_fights.py;
+     * The carriers (SPEC §47.2): each sounds from where it is as it comes. The game's own recordings (tools/art/specs/audit_rest.py, SPEC §66.7);
      * sounds.json in src/main/merge/mobs_fights. The loops play from mobs.client.CarrierView and the shot renderer.
      */
     public static final DeferredHolder<SoundEvent, SoundEvent> SHOT_RELEASE = sound("mobs.fights.shot_release");

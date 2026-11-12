@@ -106,7 +106,8 @@ final class VillageBells {
             if (p.isSpectator() && !dev.awaken.veil.Veil.isSpirit(p)) continue;
             if ((now + p.getId()) % HUM_EVERY == 0) hum(p);
             if ((p.tickCount + p.getId()) % 100 != 50) continue;
-            if (CityHooks.inCity(ow, p.blockPosition())) city(p);
+            if (dev.awaken.core.api.TheLull.farLanding(server)) post(p);
+            else if (CityHooks.inCity(ow, p.blockPosition())) city(p);
             lay(p);
             carried(p);
         }
@@ -139,6 +140,34 @@ final class VillageBells {
         }
     }
 
+    /**
+     * A Far Landing world (SPEC §67): you're out on the land, so the tellers write instead. One village a play-day, as in
+     * the city, and the thanks by letter too. The villages are the ones round the landing, their way told from there.
+     */
+    static void post(ServerPlayer p) {
+        MinecraftServer server = p.level().getServer();
+        for (Quest q : QUESTS) {
+            BellCatalog.Def d = BellCatalog.of(q.bell());
+            int st = stage(server, p.getUUID(), d.no());
+            if (st == 0 || st == THANKED || !Bells.has(p, q.bell())) continue;
+            stage(server, p.getUUID(), d.no(), THANKED);
+            dev.awaken.core.api.FarPost.letter(p, q.name() + " in Carillon", thanks(q.bell()));
+            return;
+        }
+        BellBook b = Bells.book(p);
+        long today = PlayDays.current(server);
+        if (b.rememberedDay == today) return;
+        for (Quest q : QUESTS) {
+            BellCatalog.Def d = BellCatalog.of(q.bell());
+            if (Bells.has(p, q.bell()) || stage(server, p.getUUID(), d.no()) > 0 || Progression.rank(p).ordinal() < d.rank().ordinal()) continue;
+            if (tell(p, q, true)) {
+                b.rememberedDay = today;
+                Bells.save(p, b);
+            }
+            return;
+        }
+    }
+
     private static boolean near(ServerLevel level, ServerPlayer p, String who) {
         Vec3 at = CitizenHooks.where(level, who);
         return at != null && p.distanceToSqr(at) <= TELL_NEAR * TELL_NEAR;
@@ -146,14 +175,20 @@ final class VillageBells {
 
     /** A teller remembers this bell aloud, naming its village and which way it lies. False if no village is ready yet. */
     static boolean tell(ServerPlayer p, Quest q) {
+        return tell(p, q, false);
+    }
+
+    /** {@code byLetter}: a Far Landing world's teller writes, and the way is told from the landing (SPEC §67). */
+    static boolean tell(ServerPlayer p, Quest q, boolean byLetter) {
         BellWorld.Village v = village(p.level(), q);
         if (v == null) return false;
         BellCatalog.Def d = BellCatalog.of(q.bell());
         stage(p.level().getServer(), p.getUUID(), d.no(), HEARD);
-        BlockPos from = CityHooks.square(p.level());
+        BlockPos from = byLetter ? home(p.level().getServer().overworld()) : CityHooks.square(p.level());
         if (from == null) from = p.blockPosition();
         String dir = Bells.toward(v.well.getX() - from.getX(), v.well.getZ() - from.getZ()).replaceFirst("^to ", "");
-        speak(p, q.name(), rumour(q.bell(), v.name, dir));
+        if (byLetter) dev.awaken.core.api.FarPost.letter(p, q.name() + " in Carillon", rumour(q.bell(), v.name, dir + " of the landing"));
+        else speak(p, q.name(), rumour(q.bell(), v.name, dir));
         Bells.say(p, "[" + v.name + " is out " + dir + ". It's on your Tasks.]");
         Awaken.LOG.info("[bells] {} told {} of {} at {} ({})", q.name(), p.getName().getString(), d.id(), v.name, v.well.toShortString());
         return true;
@@ -166,7 +201,8 @@ final class VillageBells {
         BellWorld.Village v = w.villages.get(no);
         if (v != null) return v;
         ServerLevel ow = level.getServer().overworld();
-        BlockPos city = CityHooks.square(ow);
+        // a Far Landing world (SPEC §67): the empty villages round the landing, where the game is played
+        BlockPos city = home(ow);
         if (city == null) return null;
         Set<String> taken = new HashSet<>();
         for (BellWorld.Village o : w.villages.values()) taken.add(o.key);
@@ -176,6 +212,12 @@ final class VillageBells {
             return choose(w, no, e.key(), e.name(), e.well());
         }
         return null;
+    }
+
+    /** Where the villages are counted from and their way told: the far landing in a Far Landing world (SPEC §67), else the square. */
+    static @Nullable BlockPos home(ServerLevel ow) {
+        BlockPos l = dev.awaken.core.api.TheLull.landing(ow.getServer());
+        return l != null ? l : CityHooks.square(ow);
     }
 
     static BellWorld.Village choose(BellWorld w, int no, String key, String name, BlockPos well) {
@@ -194,13 +236,13 @@ final class VillageBells {
         BellWorld w = BellWorld.get(level.getServer());
         for (Map.Entry<Integer, BellWorld.Village> e : w.villages.entrySet()) {
             BellWorld.Village v = e.getValue();
-            if (Math.hypot(v.well.getX() - p.getX(), v.well.getZ() - p.getZ()) > LAY_NEAR || !level.isLoaded(v.well)) continue;
+            if (Math.hypot(v.well.getX() - p.getX(), v.well.getZ() - p.getZ()) > LAY_NEAR || !dev.awaken.core.api.Ready.loaded(level, v.well)) continue;
             Quest q = quest(BellCatalog.of(e.getKey()).id());
             if (q == null) continue;
             if (v.letter == null) {
                 laid(level, v, q);
                 w.setDirty();
-            } else if (v.spot != null && !Bells.has(p, q.bell()) && level.isLoaded(v.spot) && !level.getBlockState(v.spot).is(BellContent.FOUND_BELL.get()))
+            } else if (v.spot != null && !Bells.has(p, q.bell()) && dev.awaken.core.api.Ready.loaded(level, v.spot) && !level.getBlockState(v.spot).is(BellContent.FOUND_BELL.get()))
                 bell(level, v.spot, q);
         }
     }
@@ -288,7 +330,7 @@ final class VillageBells {
                 double dist = Math.hypot(dx, dz);
                 if (dist < 6 || dist > 64) continue;
                 int x = well.getX() + dx, z = well.getZ() + dz;
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) continue;
                 int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) - 1, y = top;
                 while (y > level.getMinY() && level.getFluidState(new BlockPos(x, y, z)).isSource() && level.getBlockState(new BlockPos(x, y, z)).is(Blocks.WATER)) y--;
                 int depth = top - y;
@@ -308,7 +350,7 @@ final class VillageBells {
             for (int dz = -64; dz <= 64; dz += 3) {
                 if (dx * dx + dz * dz > 64 * 64) continue;
                 int x = well.getX() + dx, z = well.getZ() + dz;
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) continue;
                 BlockPos at = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
                 if (best != null && at.getY() <= best.getY()) continue;
                 if (!level.getBlockState(at).isAir() || !level.getFluidState(at.below()).isEmpty()) continue;
@@ -324,7 +366,7 @@ final class VillageBells {
             for (int k = 0; k < 16; k++) {
                 double a = k * Math.PI / 8 + r;
                 int x = well.getX() + (int) Math.round(Math.cos(a) * r), z = well.getZ() + (int) Math.round(Math.sin(a) * r);
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) continue;
                 BlockPos at = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
                 if (Math.abs(at.getY() - well.getY()) > 6 || !level.getBlockState(at).isAir() || !level.getFluidState(at.below()).isEmpty()) continue;
                 BlockState under = level.getBlockState(at.below());
@@ -342,7 +384,7 @@ final class VillageBells {
                 for (int k = 0; k < 16; k++) {
                     double a = start + k * Math.PI / 8;
                     int x = well.getX() + (int) Math.round(Math.cos(a) * r), z = well.getZ() + (int) Math.round(Math.sin(a) * r);
-                    if (!level.isLoaded(new BlockPos(x, 0, z))) continue;
+                    if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(x, 0, z))) continue;
                     BlockPos feet = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
                     if (Math.abs(feet.getY() - well.getY()) > 4) continue;
                     BlockState under = level.getBlockState(feet.below()), here = level.getBlockState(feet);

@@ -1,7 +1,7 @@
 package dev.awaken.mobs;
 
-import dev.awaken.core.CoreModule;
 import dev.awaken.core.DirectorLog;
+import dev.awaken.core.api.Tabs;
 import dev.awaken.mobs.entity.AwakenBoss;
 import dev.awaken.mobs.entity.Hazards;
 import dev.awaken.progression.Progression;
@@ -9,7 +9,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
@@ -22,13 +21,25 @@ final class MobsEvents {
     private MobsEvents() {}
 
     static void init(IEventBus modBus) {
-        modBus.addListener(MobsEvents::creativeTab);
+        // a creature's parts and its egg: the wild's with the wild's beasts, the rest with the gates' (bosses in bestiary order)
+        Tabs.fill(Tabs.Shelf.BOSS_TROPHIES, (p, out) -> bestiary(out, false, true));
+        Tabs.fill(Tabs.Shelf.BEAST_PARTS, (p, out) -> bestiary(out, true, true));
+        Tabs.fill(Tabs.Shelf.GATE_CREATURES, (p, out) -> bestiary(out, false, false));
+        Tabs.fill(Tabs.Shelf.WILD_CREATURES, (p, out) -> bestiary(out, true, false));
+        Tabs.icon(Tabs.Tab.CREATURES, () -> {
+            for (var d : dev.awaken.mobs.def.Bestiary.all())
+                if (d.tier == dev.awaken.mobs.def.Tier.LORD && MobTypes.eggs().containsKey(d.id)) return MobTypes.eggs().get(d.id).get().getDefaultInstance();
+            return net.minecraft.world.item.ItemStack.EMPTY;
+        });
         NeoForge.EVENT_BUS.addListener(MobsEvents::onDeath);
         NeoForge.EVENT_BUS.addListener(MobsEvents::onLevelTick);
         NeoForge.EVENT_BUS.addListener(MobsEvents::onLevelUnload);
         NeoForge.EVENT_BUS.addListener(MobsEvents::onServerStopped);
         NeoForge.EVENT_BUS.addListener(MobsEvents::onLogout);
+        // the finishing blow's truce (SPEC §68.4): a beaten body harms nobody, and its striker is safe while its ending plays
+        NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.HIGHEST, dev.awaken.mobs.entity.Finishers::onIncomingDamage);
         dev.awaken.mobs.entity.FightWatch.init();
+        dev.awaken.mobs.entity.FightSaves.init(); // the autosave waits while a boss fights a player (SPEC §68.5)
         dev.awaken.mobs.entity.FairGuard.init();
         // every kit body (rigs, move tables, fight scripts) read once while the game loads, off the main thread: read
         // when the first boss of a session appeared, it stalled that tick 91 ms (fights_tick_cost, SPEC §47.1)
@@ -41,10 +52,19 @@ final class MobsEvents {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerAboutToStartEvent e) -> dev.awaken.mobs.boss.Kits.all());
     }
 
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (!event.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (DeferredItem<Item> part : MobTypes.parts().values()) event.accept(part.get());
-        for (var egg : MobTypes.eggs().values()) event.accept(egg.get());
+    private static void bestiary(net.minecraft.world.item.CreativeModeTab.Output out, boolean wild, boolean parts) {
+        for (var d : dev.awaken.mobs.def.Bestiary.all()) {
+            if (d.isFauna() != wild) continue;
+            if (!parts) {
+                DeferredItem<?> egg = MobTypes.eggs().get(d.id);
+                if (egg != null) out.accept(egg.get());
+                continue;
+            }
+            for (var part : d.parts) {
+                DeferredItem<Item> item = MobTypes.parts().get(part.id());
+                if (item != null) out.accept(item.get());
+            }
+        }
     }
 
     /** Dying to a boss still pays: its tells go into the Codex as Insight. */
@@ -74,10 +94,12 @@ final class MobsEvents {
         Hazards.clear(null);
         dev.awaken.mobs.entity.Carriers.clear(null);
         dev.awaken.mobs.entity.ToldBite.reset(false);
+        dev.awaken.mobs.entity.Finishers.clear();
     }
 
     private static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Mobs.forget(event.getEntity());
         dev.awaken.mobs.entity.FairGuard.forget(event.getEntity().getUUID());
+        dev.awaken.mobs.entity.Finishers.forget(event.getEntity().getUUID());
     }
 }

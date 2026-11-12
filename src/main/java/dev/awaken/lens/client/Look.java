@@ -34,6 +34,14 @@ final class Look {
         return v;
     }
 
+    /**
+     * Whether a look's number at {@code i} is a scale of the picture (exposure, contrast, saturation): a look laid over
+     * another ({@link Looks#shift}) multiplies these and adds the rest.
+     */
+    static boolean scales(int i) {
+        return i == EXPOSURE || i == CONTRAST || i == SATURATION;
+    }
+
     /** Reads a look; missing fields keep the values from {@code base}. */
     static float[] parse(JsonObject o, float[] base) {
         float[] v = base.clone();
@@ -72,6 +80,43 @@ final class Look {
         num(o, "glow", v, GLOW);
         num(o, "clouds", v, CLOUDS);
         return v;
+    }
+
+    /**
+     * Where a single number of a look sits by its name in the looks files, or -1 (a colour, or no such name): what a
+     * grade's {@code look.scale} and {@code look.add} address (LensGrades).
+     */
+    static int index(String key) {
+        return switch (key) {
+            case "exposure" -> EXPOSURE;
+            case "contrast" -> CONTRAST;
+            case "saturation" -> SATURATION;
+            case "warmth" -> WARMTH;
+            case "splitTone" -> SPLIT_TONE;
+            case "vignette" -> VIGNETTE;
+            case "bloom" -> BLOOM;
+            case "bloomThreshold" -> BLOOM_THRESHOLD;
+            case "skyBloom" -> SKY_BLOOM;
+            case "shafts" -> SHAFTS;
+            case "haze" -> HAZE;
+            case "hazeStart" -> HAZE_START;
+            case "hazeTintMix" -> HAZE_TINT_MIX;
+            case "hazeDesaturate" -> HAZE_DESATURATE;
+            case "sunsetWarmth" -> SUNSET_WARMTH;
+            case "sunGlow" -> SUN_GLOW;
+            case "light" -> LIGHT;
+            case "shade" -> SHADE;
+            case "keyWarmth" -> KEY_WARMTH;
+            case "ao" -> AO;
+            case "filmic" -> FILMIC;
+            case "mist" -> MIST;
+            case "mistHeight" -> MIST_HEIGHT;
+            case "fogGlow" -> FOG_GLOW;
+            case "skyGlow" -> SKY_GLOW;
+            case "water" -> WATER;
+            case "glow" -> GLOW;
+            default -> -1;
+        };
     }
 
     private static void num(JsonObject o, String key, float[] v, int i) {

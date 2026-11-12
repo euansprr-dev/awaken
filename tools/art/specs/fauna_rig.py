@@ -247,6 +247,7 @@ class Rig:
         for c in self.clips.values():
             out.append(f"clip {c.name} {f(c.length)} {1 if c.loop else 0}")
             for (bone, target), keys in c.tracks.items():
+                keys = sealed(c, keys)      # every hero rig's loops go out with no seam (SPEC §60.9)
                 ks = " ".join(f"{f(t)} {f(v[0])} {f(v[1])} {f(v[2])} {1 if it == 'cat' else 0}" for t, v, it in keys)
                 out.append(f"track {bone} {target} {len(keys)} {ks}")
         return out
@@ -258,7 +259,7 @@ class Rig:
                 if bone not in self.by_name:
                     problems.append(f"{self.id}/{c.name}: no bone {bone}")
                 # (a looping clip may carry one key before its start and one after its end: the loop carried on a step
-                # either way, so the curve has a slope to take at the seam; see gm/kit.py seal_loops)
+                # either way, so the curve has a slope to take at the seam; see sealed() below)
                 lo, hi = (-c.length, 2 * c.length) if c.loop else (0.0, c.length)
                 for t, _, _ in keys:
                     if t < lo - 1e-6 or t > hi + 1e-6:
@@ -278,6 +279,43 @@ class Rig:
             elif mv + "_windup" not in self.clips or mv + "_strike" not in self.clips:
                 problems.append(f"{self.id}: move {ability} lacks {mv}_windup/_strike")
         return problems
+
+
+def sealed(clip, keys):
+    """One track of a looping clip with the loop carried on a step either way: one key before its start (its last step,
+    a loop earlier) and one after its end (its first step, a loop later); a part that turns steadily keeps turning.
+    The game's curve through the keys takes each key's slope from its two neighbours, and at a clip's two ends it has
+    only one, so a loop played without these loses half its speed for an instant every time it comes round: a small
+    hitch in every stride, wingbeat and breath. With them the seam has the same slope from both sides and nobody can
+    tell where the loop begins. The keys come back as they are when there is nothing to seal: a clip that does not
+    loop, a track sealed already, one that does not span the loop, one held still or run as a straight line. So do
+    the keys of a track with two keys at one instant (two calls keyed the same bone in one clip, and their keys lie
+    interleaved): that track has no one curve to carry on, and it is left exactly as it was."""
+    if not clip.loop or len(keys) < 2 or keys[0][0] < -1e-6:
+        return keys
+    if abs(keys[0][0]) > 1e-6 or abs(keys[-1][0] - clip.length) > 1e-6:
+        return keys
+    if any(keys[i + 1][0] - keys[i][0] < 1e-6 for i in range(len(keys) - 1)):
+        return keys
+    v0, vn = keys[0][1], keys[-1][1]
+    if len(keys) == 2 and (v0 == vn or keys[-1][2] != "cat"):
+        return keys
+    turn = tuple(vn[i] - v0[i] for i in range(3))      # what a whole loop adds: nothing, but for a spinning part
+    (tb, vb, _), (ta, va, ia) = keys[-2], keys[1]
+    return ([(tb - clip.length, tuple(vb[i] - turn[i] for i in range(3)), keys[0][2])] + list(keys)
+            + [(ta + clip.length, tuple(va[i] + turn[i] for i in range(3)), ia)])
+
+
+def seal_loops(rig):
+    """Seals every looping track of a rig in place (sealed() above). Rig.java_lines seals as it writes, so the game
+    always gets sealed loops; Rig.sample plays the keys as they stand, so that no pass of a pipeline that poses a body
+    from its own samples moves a key. A rig sealed here, once its clips are final, is also previewed and checked on
+    the curve the game plays (the gate monsters are)."""
+    for clip in rig.clips.values():
+        for ks in clip.tracks.values():
+            got = sealed(clip, ks)
+            if got is not ks:
+                ks[:] = got
 
 
 def _num(v):

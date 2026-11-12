@@ -99,7 +99,11 @@ final class AudioTests {
             // names in sounds.json only, never registered. A layer has no subtitle of its own (a score is many at once, and none
             // of theirs would be true); the score's one line rides voice.say.<power>, which must have it like any other event.
             boolean voice = e.getKey().startsWith("voice."), layer = voice && !e.getKey().startsWith("voice.say.");
-            if (!voice && !BuiltInRegistries.SOUND_EVENT.containsKey(Identifier.fromNamespaceAndPath("awaken", e.getKey()))) {
+            // A recipe's later recordings that name files (SPEC §66.2) are helper events <event>.part<n>: names only, layered by
+            // the client under their event, which carries the subtitle. Like a score's layers, they name Minecraft's own files.
+            boolean part = e.getKey().matches(".+\\.part\\d+");
+            layer |= part;
+            if (!voice && !part && !BuiltInRegistries.SOUND_EVENT.containsKey(Identifier.fromNamespaceAndPath("awaken", e.getKey()))) {
                 problems.add("in sounds.json but never registered: " + e.getKey());
             }
             String subtitle = ev.has("subtitle") ? ev.get("subtitle").getAsString() : null;

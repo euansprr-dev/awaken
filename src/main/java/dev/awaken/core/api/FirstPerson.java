@@ -51,12 +51,36 @@ public final class FirstPerson {
         public double handDistance;
         /** How lit the hands are from within (0..1). */
         public float glow;
+        /**
+         * The arms lie along their own lines in the world, root to fist (a station's arm reaching over a table, SPEC
+         * §65.2), at {@link #handDistance}'s scale, instead of rising to the fist from under the frame's corner.
+         */
+        public boolean worldArms;
+        /** With {@link #worldArms}: how much longer than its model each arm is drawn (right, left; 1 for as it is). */
+        public final float[] armStretch = {1F, 1F};
+        /**
+         * With {@link #worldArms}: each arm's own distance in the hand pass (right, left; 0 for {@link #handDistance}),
+         * so two arms at different depths are each drawn at their own size.
+         */
+        public final float[] armDistance = {0F, 0F};
+        /** Warm light on the arms from a fire they reach toward (0..1), added to the block light they are drawn in. */
+        public float fireLight;
+        /**
+         * The source has the hands though it draws none this frame (a furnace scene between reaches, SPEC §65.6): the
+         * game's own hand and what it holds stay out of the view.
+         */
+        public boolean noHands;
 
         public void clear() {
             java.util.Arrays.fill(weight, 0F);
             held[0] = held[1] = net.minecraft.world.item.ItemStack.EMPTY;
             handDistance = 0;
             glow = 0;
+            worldArms = false;
+            armStretch[0] = armStretch[1] = 1F;
+            armDistance[0] = armDistance[1] = 0F;
+            fireLight = 0;
+            noHands = false;
         }
 
         public void limb(Limb l, double rx, double ry, double rz, double tx, double ty, double tz, double frx, double fry, double frz, float w) {
@@ -138,6 +162,26 @@ public final class FirstPerson {
     public static boolean cameraOwned() {
         for (int i = 0; i < CAMERAS.size(); i++) if (CAMERAS.get(i).getAsBoolean()) return true;
         return false;
+    }
+
+    private static final List<java.util.function.BooleanSupplier> HELD = new CopyOnWriteArrayList<>();
+
+    /**
+     * A scene that holds the view still while you work in it (a station's scene, framed from its own place or from
+     * your eyes): while {@code holds} says so, nothing may move the view by itself. Register once at init.
+     */
+    public static void holdView(java.util.function.BooleanSupplier holds) {
+        HELD.add(holds);
+    }
+
+    /**
+     * Whether the view must hold still now: a scene holds it, or a scene's own camera is the view. Whatever sways or
+     * breathes the view on its own (Camera Overhaul's idle sway, through {@code body.client.feel}) stands down for it:
+     * a hand pinned to the pointer over a view that sways is a hand that trembles.
+     */
+    public static boolean viewHeld() {
+        for (int i = 0; i < HELD.size(); i++) if (HELD.get(i).getAsBoolean()) return true;
+        return cameraOwned();
     }
 
     // ---- the view layer ---------------------------------------------------------------------------------------------
@@ -351,6 +395,8 @@ public final class FirstPerson {
         return p != null && p.armsInWorld();
     }
 
+    /** Station scenes go to the station's own view (the feel settings' stationBenchView, SPEC §65.1); off, they frame from your eyes. */
+    public static volatile java.util.function.BooleanSupplier stationBench = () -> true;
     /** The station scenes' switch (the feel settings' stationScenes): the crafting table worked by hand. */
     public static volatile java.util.function.BooleanSupplier stationsOn = () -> true;
 

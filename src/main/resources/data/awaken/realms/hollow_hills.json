@@ -6,25 +6,29 @@
   "theme": "bell_crypt",
   "ranks": [
     "E",
-    "D"
+    "D",
+    "C",
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:hollow_hills",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:realm/barrow_ship"
+      "awaken:realm/hollow_hills"
     ],
     "lens": "hollow_hills",
     "air": [
-      "mist",
       "shaft_dust",
-      "smoke",
+      "mist",
       "dust",
       "drips",
       "bats",
-      "rats"
+      "wind"
     ]
   },
   "life": {

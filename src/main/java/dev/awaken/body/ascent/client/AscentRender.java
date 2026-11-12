@@ -48,7 +48,15 @@ final class AscentRender {
     private static final org.joml.Matrix3f MA = new org.joml.Matrix3f(), MB = new org.joml.Matrix3f();
     private static final Quaternionf QW = new Quaternionf();
     private static final Quaternionf Q = new Quaternionf();
+    /** The view's field of view against a 70 degree 16:9 one, across and up (1 for a view that isn't a perspective). */
+    private static float fovX = 1, fovY = 1;
+    private static final float TAN_V0 = (float) Math.tan(Math.toRadians(35)), TAN_H0 = TAN_V0 * 16 / 9F;
     private static boolean broken;
+
+    /** The camera's turn this frame (its right, up and back are this applied to x, y and z). */
+    static org.joml.Quaternionfc eye() {
+        return Q;
+    }
     /** Set while drawing ropes: ribbons thin and fade near the camera. */
     private static boolean nearFade;
 
@@ -64,10 +72,14 @@ final class AscentRender {
     /** A taut swing's hum (0..1: the line trembling under the weight) and a let-go line's whip (0..1, fading). */
     private static final float[] RHUM = new float[MAX_ROPES], RWHIP = new float[MAX_ROPES];
     private static float nextHum, nextWhip;
+    /** How well a let-go now is timed (0..1): the rope brightens and thickens through its window (SPEC §62). */
+    private static final float[] RWIN = new float[MAX_ROPES];
+    private static float nextWin;
     /** The marker as drawn (eased toward where a press would throw, SPEC §17.31) and how much of it shows. */
     private static double markX, markY, markZ;
     private static float markA;
-    private static boolean markZip;
+    /** What a press would do there: 0 a swing, 1 a pull up a face, 2 a sling (SPEC §62: a shape each). */
+    private static int markKind;
     private static int ropes;
     /** The rope's line for the next rope() call, its flow and its reel. */
     private static int nextLine;
@@ -122,6 +134,11 @@ final class AscentRender {
         bx = V.x;
         by = V.y;
         bz = V.z;
+        // a perspective's m00 is 1 / (aspect tan(fov/2)), its m11 1 / tan(fov/2), its m23 -1
+        org.joml.Matrix4f proj = state.cameraRenderState.projectionMatrix;
+        boolean persp = proj.m23() < -0.5F && proj.m00() > 1e-4F && proj.m11() > 1e-4F;
+        fovX = persp ? 1F / proj.m00() / TAN_H0 : 1F;
+        fovY = persp ? 1F / proj.m11() / TAN_V0 : 1F;
         if (ropeType == null) {
             ropeType = RenderTypes.entityTranslucentEmissive(ROPE);
             ropeIronType = RenderTypes.entityTranslucentEmissive(ROPE_IRON);
@@ -158,9 +175,12 @@ final class AscentRender {
         out.order(3).submitCustomGeometry(ps, glowType, GLOWS);
         out.order(3).submitCustomGeometry(ps, ringType, RINGS);
         out.order(3).submitCustomGeometry(ps, starType, STARS);
-        // your own wings in first person: off until they have a look of their own (drawn whole they fill the frame's
-        // lower corners; Phase 1 gives them light at the edges instead)
-        if (FIRST_PERSON_WINGS && mc.options.getCameraType().isFirstPerson() && AscentMoves.state().wings) firstPersonWings(ps, out, mc);
+        // your own wings in first person (SPEC §62): only their outer feathers, at the frame's outer edges, as a beat
+        // lifts them; feathered wings also show their flare and their fold after the state has ended
+        if (FIRST_PERSON_WINGS && mc.options.getCameraType().isFirstPerson() && (dev.awaken.body.client.feel.FeelConfig.wingsFeathers()
+                ? WingLayer.inView(mc.player.getId()) : AscentMoves.state().wings)) {
+            firstPersonWings(ps, out, mc);
+        }
     }
 
     // ---- gathering ------------------------------------------------------------------------------------------------------
@@ -185,6 +205,7 @@ final class AscentRender {
             nextFlow = (float) (AscentMoves.paid * 0.9);
             nextReel = AscentMoves.reeling && AscentMoves.kitReel == dev.awaken.body.ascent.RopeKit.REEL_GOLD;
             nextHum = AscentMoves.swinging() && AscentMoves.ropeTaut ? (float) Mth.clamp((AscentMoves.tension - 0.2) / 0.6, 0, 1) : 0;
+            nextWin = AscentMoves.swinging() && AscentMoves.ropeTaut ? AscentMoves.windowNow : 0;
             rope(hx, hy, hz, AscentMoves.ax, AscentMoves.ay, AscentMoves.az, sag, reach, 1F);
             if (st == AscentState.RAPPEL) {
                 if (first) cameraPoint(AscentFp.brakeNow[0], AscentFp.brakeNow[1], AscentFp.brakeNow[2], TMP);
@@ -193,7 +214,8 @@ final class AscentRender {
             }
         }
         for (AscentRemote.Slot r : AscentRemote.SLOTS) {
-            if (r.entity < 0 || !r.state.rope || ropes >= MAX_ROPES) continue;
+            // the local player's rope is its own prediction's alone: one owner, never a second line from a reply
+            if (r.entity < 0 || !r.state.rope || ropes >= MAX_ROPES || me != null && r.entity == me.getId()) continue;
             Entity e = mc.level.getEntity(r.entity);
             if (e == null) continue;
             bodyHand(e, RH, ropes * 3);
@@ -208,6 +230,8 @@ final class AscentRender {
         }
         for (AscentFx.Shot s : AscentFx.SHOTS) {
             if (ropes >= MAX_ROPES) break;
+            // one rope per body (SPEC §62): a body with a live rope shows no rope it let go or missed
+            if ((s.kind == AscentFx.LOOSE || s.kind == AscentFx.MISS) && ropeLive(mc, s.entity)) continue;
             if (s.kind == AscentFx.LOOSE) {
                 float u = Mth.clamp((s.age + pt) / s.life, 0, 1);
                 // the free end falls and swings in toward the anchor
@@ -230,6 +254,13 @@ final class AscentRender {
     }
 
     private static final double[] TMP = new double[3];
+
+    /** Whether this entity has a live rope now: the local player's by its prediction, anyone else's by what was seen. */
+    private static boolean ropeLive(Minecraft mc, int entity) {
+        if (mc.player != null && entity == mc.player.getId()) return AscentMoves.state().rope;
+        AscentRemote.Slot r = AscentRemote.of(entity);
+        return r != null && r.state.rope;
+    }
 
     /**
      * A rappel's rope below the guiding hand at (hx, hy, hz): down to the brake hand (in TMP), then its tail hanging
@@ -255,7 +286,8 @@ final class AscentRender {
 
     /** Eases the drawn marker toward the anchor a press would take; fades it in and out (a far jump is a cut). */
     private static void marker() {
-        boolean on = AscentMoves.markerOn && !AscentMoves.state().rope;
+        // shown always (AscentMoves.marker decides: never rappelling, never on the place the rope holds now)
+        boolean on = AscentMoves.markerOn;
         var m = AscentMoves.MARKER;
         if (on) {
             double d2 = sq(m.x - markX) + sq(m.y - markY) + sq(m.z - markZ);
@@ -268,9 +300,10 @@ final class AscentRender {
                 markY += (m.y - markY) * 0.35;
                 markZ += (m.z - markZ) * 0.35;
             }
-            markZip = m.zip;
+            markKind = m.zip ? 1 : m.sling ? 2 : 0;
         }
-        markA += ((on ? 1F : 0F) - markA) * 0.25F;
+        // in at a quarter a frame, out at half: a target gone is gone at once (a press no longer takes it)
+        markA += ((on ? 1F : 0F) - markA) * (on ? 0.25F : 0.5F);
     }
 
     private static void rope(double hx, double hy, double hz, double ax, double ay, double az, float sag, float reach, float alpha) {
@@ -278,7 +311,7 @@ final class AscentRender {
             nextLine = 0;
             nextFlow = 0;
             nextReel = false;
-            nextHum = nextWhip = 0;
+            nextHum = nextWhip = nextWin = 0;
             return;
         }
         int i = ropes++;
@@ -287,10 +320,11 @@ final class AscentRender {
         RREEL[i] = nextReel;
         RHUM[i] = nextHum;
         RWHIP[i] = nextWhip;
+        RWIN[i] = nextWin;
         nextLine = 0;
         nextFlow = 0;
         nextReel = false;
-        nextHum = nextWhip = 0;
+        nextHum = nextWhip = nextWin = 0;
         RH[i * 3] = hx;
         RH[i * 3 + 1] = hy;
         RH[i * 3 + 2] = hz;
@@ -397,8 +431,11 @@ final class AscentRender {
             nearFade = true;
             int line = RLINE[i];
             if (glow) {
-                ribbon(vc, pose, PTS, n + 1, line == 1 ? 0.11F : 0.16F, line == 1 ? 0.11F : 0.16F, (int) (a * (line == 1 ? 34 : line == 2 ? 92 : 100)),
-                        line == 1 ? 0xA9BCCC : line == 2 ? 0xA77CFF : 0xA8DCFF, 0F, 1F);
+                // through the let-go window the halo swells and whitens: the moment to let go can be seen
+                float win = RWIN[i], gw = (line == 1 ? 0.11F : 0.16F) * (1 + 0.9F * win);
+                ribbon(vc, pose, PTS, n + 1, gw, gw, (int) (a * (line == 1 ? 34 : line == 2 ? 92 : 100) * (1 + 1.2F * win)),
+                        win > 0.01F ? mix(line == 1 ? 0xA9BCCC : line == 2 ? 0xA77CFF : 0xA8DCFF, 0xFFFFFF, win * 0.7F)
+                                : line == 1 ? 0xA9BCCC : line == 2 ? 0xA77CFF : 0xA8DCFF, 0F, 1F);
             } else {
                 // the light rope's strands run on their own; steel only moves as the rope runs through the hand; the
                 // Deepglass line's light drifts slowly along it
@@ -469,6 +506,10 @@ final class AscentRender {
 
     private static void drawRings(VertexConsumer vc, PoseStack.Pose pose) {
         for (AscentFx.Shot s : AscentFx.SHOTS) {
+            if (s.kind == AscentFx.MARK) {
+                drawMark(vc, pose, s);
+                continue;
+            }
             if (s.kind != AscentFx.RING) continue;
             float u = Mth.clamp((s.age + pt) / s.life, 0, 1);
             float radius = (float) (0.8 + 11 * Math.pow(u, 0.5)) * s.size;
@@ -502,8 +543,39 @@ final class AscentRender {
     }
 
     /**
-     * The marker (SPEC §17.31): where a press would throw, a small bright point with four short ticks turning slowly
-     * round it, sized to stay readable far off; cool white for a swing, warm gold for a zip up to a lip.
+     * The aimed dive's mark (SPEC §17.33): flat on the ground a hair over it, a thin ring closing from a block and a
+     * quarter across to a third of a block as the dive flies in, round a still point, warm white. It fades in over two
+     * ticks; it closes on the dive's whole ticks, eased by the partial one.
+     */
+    private static void drawMark(VertexConsumer vc, PoseStack.Pose pose, AscentFx.Shot s) {
+        float u = Mth.clamp((s.age + pt) / s.life, 0, 1);
+        float in = Mth.clamp((s.age + pt) / 2F, 0, 1);
+        int a = (int) (220 * in * (1 - u * u * u));
+        if (a < 4) return;
+        double y = s.y + 0.04;
+        ringFlat(vc, pose, s.x, y, s.z, Mth.lerp(u * u, 1.25F, 0.34F), 0.07F, a, 0xFFF2D6);
+        ringFlat(vc, pose, s.x, y, s.z, 0.12F, 0.12F, (int) (a * 0.9F), 0xFFFFFF);
+    }
+
+    /** A flat ring on the ground about (x, y, z): its radius and width (blocks), its alpha and colour. */
+    private static void ringFlat(VertexConsumer vc, PoseStack.Pose pose, double x, double y, double z, float radius, float width, int a, int rgb) {
+        int seg = 32;
+        float r0 = Math.max(0, radius - width * 0.5F), r1 = radius + width * 0.5F;
+        for (int k = 0; k < seg; k++) {
+            double a0 = k * Mth.TWO_PI / seg, a1 = (k + 1) * Mth.TWO_PI / seg;
+            double c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
+            quad2(vc, pose, a, rgb,
+                    x + c0 * r0, y, z + s0 * r0, 0, 0,
+                    x + c1 * r0, y, z + s1 * r0, 1, 0,
+                    x + c1 * r1, y, z + s1 * r1, 1, 1,
+                    x + c0 * r1, y, z + s0 * r1, 0, 1);
+        }
+    }
+
+    /**
+     * The marker (SPEC §17.31, §62): where a press would throw, a small bright point sized to stay readable far off, and
+     * round it the shape of what the press would do: four ticks turning slowly for a swing (cool white), a chevron over
+     * it for a sling (cool white: up and over), a bracket either side for a pull up a face (warm gold).
      */
     private static void drawMarker(VertexConsumer vc, PoseStack.Pose pose) {
         if (markA < 0.03F) return;
@@ -515,7 +587,7 @@ final class AscentRender {
         double pull = Math.min(0.6, scale * 1.8) / d;
         double markX = AscentRender.markX + (cx - AscentRender.markX) * pull, markY = AscentRender.markY + (cy - AscentRender.markY) * pull,
                 markZ = AscentRender.markZ + (cz - AscentRender.markZ) * pull;
-        int rgb = markZip ? 0xFFD58A : 0xD6F0FF;
+        int rgb = markKind == 1 ? 0xFFD58A : 0xD6F0FF;
         float pulse = 1F + 0.12F * Mth.sin(time * 0.35F);
         float c = scale * 0.55F * pulse;
         int a = (int) (230 * markA);
@@ -524,11 +596,13 @@ final class AscentRender {
                 markX + rx * c - ux * c, markY + ry * c - uy * c, markZ + rz * c - uz * c, 1, 1,
                 markX + rx * c + ux * c, markY + ry * c + uy * c, markZ + rz * c + uz * c, 1, 0,
                 markX - rx * c + ux * c, markY - ry * c + uy * c, markZ - rz * c + uz * c, 0, 0);
-        // the four ticks: small points on a turning square round it
+        // a swing: four ticks on a turning square; a sling: five in a chevron over it; a pull: three either side
         float spin = time * 0.05F;
-        for (int k = 0; k < 4; k++) {
+        float[] shape = markKind == 2 ? CHEVRON : markKind == 1 ? BRACKET : null;
+        int count = shape == null ? 4 : shape.length / 2;
+        for (int k = 0; k < count; k++) {
             float ang = spin + k * Mth.HALF_PI;
-            double ox = Mth.cos(ang) * scale * 1.6, oy = Mth.sin(ang) * scale * 1.6;
+            double ox = shape == null ? Mth.cos(ang) * scale * 1.6 : shape[k * 2] * scale, oy = shape == null ? Mth.sin(ang) * scale * 1.6 : shape[k * 2 + 1] * scale;
             double px = markX + rx * ox + ux * oy, py = markY + ry * ox + uy * oy, pz = markZ + rz * ox + uz * oy;
             float t = scale * 0.28F;
             quad2(vc, pose, (int) (a * 0.8F), rgb,
@@ -537,6 +611,15 @@ final class AscentRender {
                     px + rx * t + ux * t, py + ry * t + uy * t, pz + rz * t + uz * t, 1, 0,
                     px - rx * t + ux * t, py - ry * t + uy * t, pz - rz * t + uz * t, 0, 0);
         }
+    }
+
+    /** The marker's shapes, in marker sizes (x right, y up): a chevron over the point, a bracket either side of it. */
+    private static final float[] CHEVRON = {-1.7F, 0.5F, -0.85F, 1.15F, 0F, 1.8F, 0.85F, 1.15F, 1.7F, 0.5F},
+            BRACKET = {-1.7F, -1.1F, -1.7F, 0F, -1.7F, 1.1F, 1.7F, -1.1F, 1.7F, 0F, 1.7F, 1.1F};
+
+    private static int mix(int a, int b, float t) {
+        int r = (int) Mth.lerp(t, (a >> 16) & 255, (b >> 16) & 255), g = (int) Mth.lerp(t, (a >> 8) & 255, (b >> 8) & 255), bl = (int) Mth.lerp(t, a & 255, b & 255);
+        return r << 16 | g << 8 | bl;
     }
 
     private static void drawStars(VertexConsumer vc, PoseStack.Pose pose) {
@@ -670,11 +753,23 @@ final class AscentRender {
 
     private static void firstPersonWings(PoseStack ps, SubmitNodeCollector out, Minecraft mc) {
         var p = mc.player;
+        if (dev.awaken.body.client.feel.FeelConfig.wingsFeathers()) {
+            // feathered: in the camera's own frame, not the body's (WingLayer.fpBack), scaled out by the field of view so
+            // the feathers land on the same place of the frame at any (Euan 12 Nov 2026: set from the body they stood
+            // across the middle of the view, cut by the near plane)
+            ps.pushPose();
+            ps.rotate(Q);
+            ps.scale(fovX, fovY, 1F);
+            WingLayer.drawFirstPerson(ps, out, p, pt);
+            ps.popPose();
+            return;
+        }
         AscentAnims.frame(p, pt, F);
         float bodyRot = Mth.rotLerp(pt, p.yBodyRotO, p.yBodyRot);
         float yaw = bodyRot * Mth.DEG_TO_RAD;
         double x = Mth.lerp(pt, p.xo, p.getX()), y = Mth.lerp(pt, p.yo, p.getY()), z = Mth.lerp(pt, p.zo, p.getZ());
         ps.pushPose();
+        // classic: from the body, where they are
         ps.translate((float) (x - cx), (float) (y - cy), (float) (z - cz));
         // the same turn the figure gets (AscentAnims.onPre), about the body's centre
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);

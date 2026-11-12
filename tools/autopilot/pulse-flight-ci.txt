@@ -1,0 +1,299 @@
+# The Pulse in fast flight (SPEC §21.6 "Happenings come last", §12 Ready; Euan 12 Nov: "the world is loading VERY VERY
+# slowly"). A creative player 50 blocks up flies east over new land at 32 blocks a second for a minute (a teleport of 16
+# blocks every half second), with a happening called by command every ten seconds (the same site search the Pulse runs
+# every ten seconds), and asks the server for its tick times every five seconds (/tick query: the last hundred ticks'
+# P50/P95/P99, in the log as chat). Read the log for "Can't keep up", the stall watch ("has run") and the tick lines.
+# Run: tools/tour-ci.sh tools/autopilot/pulse-flight-ci.txt 2400
+world pulse_flight creative 20261112
+waitworld
+gui 0
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 400
+screen close
+cmd awaken powers starter 1
+wait 40
+screen close
+cmd gamerule advance_time false
+cmd time set 1500
+camera first
+hud off
+cmd tp @s ~ ~50 ~ -90 10
+wait 400
+cmd tick query
+shot pf_start
+cmd awaken living happen great_migration
+wait 40
+cmd tick query
+# ---- a minute east at 32 blocks a second ----
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd awaken living happen rolling_storm
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd awaken living happen carrion_circle
+shotnow pf_fly_040
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd awaken living happen great_migration
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd awaken living happen caravan
+shotnow pf_fly_080
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd awaken living happen rolling_storm
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tp @s ~16 ~ ~ -90 10
+wait 10
+cmd tick query
+cmd awaken living happen great_migration
+shotnow pf_fly_120
+# ---- hover ten seconds over the last of it ----
+wait 100
+cmd tick query
+wait 100
+cmd tick query
+cmd awaken living happenings
+shot pf_end
+cmd awaken living calm
+quit

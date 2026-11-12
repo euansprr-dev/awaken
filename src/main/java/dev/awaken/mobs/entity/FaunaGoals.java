@@ -284,13 +284,21 @@ final class FaunaGoals {
         @Override
         public void tick() {
             t++;
-            cx += Mth.cos(t * 0.0044F) * 0.025;
-            cz += Mth.sin(t * 0.0031F) * 0.025;
-            if (mob.hasHome()) {
-                BlockPos h = mob.getHomePosition();
-                if (h.distToCenterSqr(cx, h.getY(), cz) > 400) {
-                    cx = h.getX();
-                    cz = h.getZ();
+            boolean led = mob.led();
+            if (led) {
+                // sent somewhere by its herd or a happening (SPEC §41.4): the loop centres there, so it glides over and
+                // circles the place, never down a path into the ground
+                cx = mob.leadX();
+                cz = mob.leadZ();
+            } else {
+                cx += Mth.cos(t * 0.0044F) * 0.025;
+                cz += Mth.sin(t * 0.0031F) * 0.025;
+                if (mob.hasHome()) {
+                    BlockPos h = mob.getHomePosition();
+                    if (h.distToCenterSqr(cx, h.getY(), cz) > 400) {
+                        cx = h.getX();
+                        cz = h.getZ();
+                    }
                 }
             }
             float r = 6.0F + Mth.sin(t * 0.008F) * 2.0F;
@@ -313,8 +321,11 @@ final class FaunaGoals {
             }
             // over a drop it glides on rather than aiming into the pit (and stalling at the edge)
             double y = Math.max(FaunaMob.groundAt(mob.level(), x, z), mob.getY() - 2.0) + 1.3 + Mth.sin(t * 0.024F) * 0.4;
-            // an unhurried, even cruise (about 5 blocks a second; it used to surge to 8 and stop)
-            mob.getMoveControl().setWantedPosition(x, y, z, 0.35);
+            // an unhurried, even cruise (about 5 blocks a second; it used to surge to 8 and stop); sent somewhere far (a
+            // herd running), it hurries there at its herd's pace and settles to the cruise once it circles the place
+            double pace = 0.35;
+            if (led && Math.hypot(mob.getX() - cx, mob.getZ() - cz) > r + 3) pace = 0.35 * Mth.clamp(mob.leadSpeed(), 1.0, 2.2);
+            mob.getMoveControl().setWantedPosition(x, y, z, pace);
         }
     }
 

@@ -39,6 +39,8 @@ public final class GateMemory {
     public double lordXp;
     /** Realms entered (SPEC §50.2), newest first: none comes round again until every one open to you has been seen. */
     public final List<String> seenRealms = new ArrayList<>();
+    /** The best time over the Leaper's Gauntlet's Long Run, in ticks (0: never run). */
+    public int trialBest;
 
     public void sawRealm(String id) {
         seenRealms.remove(id);
@@ -119,13 +121,14 @@ public final class GateMemory {
         ).apply(i, B::new));
     }
 
-    private record C(List<String> seen, List<String> firstClears, double lordXp, List<String> realms) {
-        static final C EMPTY = new C(List.of(), List.of(), 0, List.of());
+    private record C(List<String> seen, List<String> firstClears, double lordXp, List<String> realms, int trialBest) {
+        static final C EMPTY = new C(List.of(), List.of(), 0, List.of(), 0);
         static final Codec<C> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.STRING.listOf().fieldOf("seen").forGetter(C::seen),
                 Codec.STRING.listOf().fieldOf("first_clears").forGetter(C::firstClears),
                 Codec.DOUBLE.optionalFieldOf("lord_xp", 0.0).forGetter(C::lordXp),
-                Codec.STRING.listOf().optionalFieldOf("realms", List.of()).forGetter(C::realms)
+                Codec.STRING.listOf().optionalFieldOf("realms", List.of()).forGetter(C::realms),
+                Codec.INT.optionalFieldOf("trial_best", 0).forGetter(C::trialBest)
         ).apply(i, C::new));
     }
 
@@ -134,7 +137,7 @@ public final class GateMemory {
                     m.twistStreak, List.copyOf(m.scouted), List.copyOf(m.extractFloors))),
             B.CODEC.fieldOf("b").forGetter(m -> new B(List.copyOf(m.themesCleared), m.bossesSinceCore, m.echoFloorTicks,
                     m.echoFloorRooms, List.copyOf(m.twistsCounted), m.gatesRolled)),
-            C.CODEC.optionalFieldOf("c", C.EMPTY).forGetter(m -> new C(List.copyOf(m.seenThemes), List.copyOf(m.firstClears), m.lordXp, List.copyOf(m.seenRealms)))
+            C.CODEC.optionalFieldOf("c", C.EMPTY).forGetter(m -> new C(List.copyOf(m.seenThemes), List.copyOf(m.firstClears), m.lordXp, List.copyOf(m.seenRealms), m.trialBest))
     ).apply(i, (a, b, c) -> {
         GateMemory m = new GateMemory();
         m.lastThemes.addAll(a.themes);
@@ -153,6 +156,7 @@ public final class GateMemory {
         m.firstClears.addAll(c.firstClears);
         m.lordXp = c.lordXp;
         m.seenRealms.addAll(c.realms);
+        m.trialBest = c.trialBest;
         return m;
     }));
 }

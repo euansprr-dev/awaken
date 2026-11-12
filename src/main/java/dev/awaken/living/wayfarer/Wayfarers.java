@@ -146,7 +146,7 @@ public final class Wayfarers {
         // a chain this person gives that can be taken now
         for (var e : QuestBook.all().entrySet()) {
             QuestDef d = e.getValue();
-            if (!d.giver().equals(who) || s.has(e.getKey()) || s.done().contains(e.getKey()) || !Requirements.met(p, d.requires())) continue;
+            if (!d.giver().equals(who) || s.holds(e.getKey()) || s.finished(e.getKey()) || !Requirements.met(p, d.requires())) continue;
             offer(p, e.getKey(), d, scene);
             return true;
         }

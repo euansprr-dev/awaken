@@ -45,7 +45,7 @@ public final class WorkRooms {
             for (int x = r.min().getX() - 1; x <= r.max().getX() + 1; x++)
                 for (int z = r.min().getZ() - 1; z <= r.max().getZ() + 1; z++) {
                     m.set(x, y, z);
-                    if (level.isLoaded(m) && t.test(level.getBlockState(m))) return m.immutable();
+                    if (dev.awaken.core.api.Ready.loaded(level, m) && t.test(level.getBlockState(m))) return m.immutable();
                 }
         return null;
     }
@@ -62,7 +62,7 @@ public final class WorkRooms {
             for (int x = r.min().getX() - 1; x <= r.max().getX() + 1; x++)
                 for (int z = r.min().getZ() - 1; z <= r.max().getZ() + 1; z++) {
                     m.set(x, y, z);
-                    if (!level.isLoaded(m)) continue;
+                    if (!dev.awaken.core.api.Ready.loaded(level, m)) continue;
                     BlockState s = level.getBlockState(m);
                     if (!isBay(s) || !(level.getBlockEntity(m) instanceof Container) || !belongs(r, m)) continue;
                     if (s.getBlock() instanceof ChestBlock && s.getValue(ChestBlock.TYPE) == ChestType.RIGHT && belongs(r, otherHalf(m, s))) continue;

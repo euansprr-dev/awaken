@@ -6,21 +6,26 @@
   "theme": "nightmare",
   "ranks": [
     "C",
-    "B"
+    "B",
+    "A",
+    "S"
   ],
+  "ready": true,
   "land": {
     "program": "awaken:sleepless_ward",
     "water": 0
   },
   "sky": {
     "biomes": [
-      "awaken:gate_nightmare"
+      "awaken:realm/sleepless_ward"
     ],
     "lens": "sleepless_ward",
     "air": [
+      "shaft_dust",
       "mist",
       "dust",
-      "moths"
+      "moths",
+      "procession"
     ]
   },
   "life": {

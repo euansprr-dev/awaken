@@ -27,11 +27,41 @@ public interface SwingSpace {
     /** The top of the solid column whose side {@code h} hit, when it is at most {@code maxUp} above the hit; else NaN. */
     double topOver(Hit h, double maxUp);
 
+    /**
+     * The top of whatever stands over the cell {@code h} hit, leaves and logs alike (a crown's own top, a bamboo stalk's,
+     * a wall's), when it is at most {@code maxUp} above the hit; else NaN. {@link #topOver} answers NaN for a leaf.
+     */
+    default double topThrough(Hit h, double maxUp) {
+        return topOver(h, maxUp);
+    }
+
     /** Whether anything solid is inside the box. */
     boolean boxHits(double x0, double y0, double z0, double x1, double y1, double z1);
 
     /** The floor under (x, z) at or below {@code from}. */
     double floorUnder(double x, double from, double z);
+
+    /**
+     * The underside over open air in the column of the cell the look hit ({@code h}): the y of the bottom face of the
+     * solid run that cell is part of, when at least {@code room} empty cells lie under it. NaN when the column stays solid
+     * for {@code maxDown} (a trunk, a wall down to the ground) or there is no room under it.
+     */
+    default double bottomUnder(Hit h, double maxDown, int room) {
+        for (int k = 1; k <= maxDown; k++) {
+            int y = h.by - k;
+            if (cellSolid(h.bx, y, h.bz)) continue;
+            for (int r = 1; r < room; r++) {
+                if (cellSolid(h.bx, y - r, h.bz)) return Double.NaN;
+            }
+            return y + 1;
+        }
+        return Double.NaN;
+    }
+
+    /** Whether the cell at (x, y, z) has collision in its middle (a block, not a carpet or a torch). */
+    private boolean cellSolid(int x, int y, int z) {
+        return boxHits(x + 0.2, y + 0.2, z + 0.2, x + 0.8, y + 0.8, z + 0.8);
+    }
 
     /** Whether a player's box with its feet at (x, y, z) meets anything. */
     default boolean bodyHits(double x, double y, double z) {
@@ -52,6 +82,13 @@ public interface SwingSpace {
 
         public int size() {
             return boxes.size();
+        }
+
+        /** Empties the space (a bench that moves its boxes with the body keeps one space). */
+        public Boxes clear() {
+            boxes.clear();
+            leaves.clear();
+            return this;
         }
 
         public double[] box(int i) {
@@ -133,6 +170,13 @@ public interface SwingSpace {
         @Override
         public double topOver(Hit h, double maxUp) {
             if (h.bx < 0 || h.leaf) return Double.NaN;
+            double top = boxes.get(h.bx)[4];
+            return top - h.y <= maxUp ? top : Double.NaN;
+        }
+
+        @Override
+        public double topThrough(Hit h, double maxUp) {
+            if (h.bx < 0) return Double.NaN;
             double top = boxes.get(h.bx)[4];
             return top - h.y <= maxUp ? top : Double.NaN;
         }

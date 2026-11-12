@@ -84,7 +84,7 @@ public final class Power {
 
     private static @Nullable MachineBlockEntity reactorAt(ServerLevel level, long packed) {
         BlockPos p = BlockPos.of(packed);
-        if (!level.isLoaded(p)) return null;
+        if (!dev.awaken.core.api.Ready.loaded(level, p)) return null;
         return level.getBlockEntity(p) instanceof MachineBlockEntity be && be.isReactor() ? be : null;
     }
 

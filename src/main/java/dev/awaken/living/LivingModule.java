@@ -65,6 +65,7 @@ public final class LivingModule {
         FirstThread.init(); // the first thread out of Carillon, and chains on the Now line (SPEC §27.6)
         FirstScenes.init(); // its High Gate shot and Ilse's scene by the fire
         IssueScene.init(); // Hale's issue: the first weapon, free (docs/arms-progression/PLAN.md §3.3)
+        FarErrands.install(); // the Far Landing: the city's errands through the skiff's hold, and when it'll take you (SPEC §67)
         dev.awaken.living.wild.WildRecord.init(modBus); // the Wild Lands (SPEC §41): each chunk's wildness, kept
         modBus.addListener(LivingNet::register);
         // the Boss Plate's data (SPEC §35.1): binds and lines to the players who see a boss's bar
@@ -182,9 +183,11 @@ public final class LivingModule {
         bus.addListener(PlayerEvent.ItemCraftedEvent.class, dev.awaken.living.craft.CraftEvents::onCrafted);
         bus.addListener(PlayerEvent.ItemSmeltedEvent.class, dev.awaken.living.craft.CraftEvents::onSmelted);
         bus.addListener(net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent.Finish.class, dev.awaken.living.craft.CraftEvents::onEat);
-        bus.addListener(EntityJoinLevelEvent.class, e -> {
-            if (!e.getLevel().isClientSide() && e.getLevel() instanceof net.minecraft.server.level.ServerLevel sl && sl.dimension() == net.minecraft.world.level.Level.OVERWORLD)
-                dev.awaken.living.population.Ledger.onJoin(e.getEntity(), sl.getServer());
+        // a stale ledger body never joins: cancelled first, before anyone else takes note of it (a discard here would leave
+        // a frozen copy on every client)
+        bus.addListener(EventPriority.HIGHEST, EntityJoinLevelEvent.class, e -> {
+            if (!e.getLevel().isClientSide() && e.getLevel() instanceof net.minecraft.server.level.ServerLevel sl && sl.dimension() == net.minecraft.world.level.Level.OVERWORLD
+                    && dev.awaken.living.population.Ledger.stray(e.getEntity(), sl.getServer())) e.setCanceled(true);
         });
         bus.addListener(LivingDeathEvent.class, dev.awaken.living.bounty.Bounties::onDeath);
         bus.addListener(EventPriority.HIGH, LivingDropsEvent.class, dev.awaken.living.quest.Relics::onDrops);

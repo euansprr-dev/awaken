@@ -1,0 +1,94 @@
+# The tree in Euan's own world whose shadow changes with where he stands (playing, 11 Nov, after the first fix: "Same
+# exact glitch with the tree shadow changing based on where I stand ... on one side of the tree the shadow is perfect,
+# then if I go to the other side, the shadow is gone"). His world's seed, his pack and terrain preset; the place is the
+# bell stand in his screenshots, which his save holds at -1533 69 -715 (twelve blocks from where he logged out; a new
+# world from the seed has the same land and trees there, without what he placed). The hour is his save's, a morning sun
+# 30 degrees up in the east, and an hour earlier in the morning. A 90 degree view as he plays.
+# The ground round the stand from six sides, eleven blocks off, at eye height: the shadows on that ground should be the
+# same from every one. Each view twice: as played, and with the block map's walk off (`lens sunpass off`), the
+# heightfield's answer alone. (The first version of this tour shot while the opening still held the camera.)
+# SPEC §22 "Shadows beyond the block map".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-playtree-ci.txt 2400
+# ci knobs: LENS=cinematic PACK=perf,feel,comfort,world TECTONIC=awakened RD=16
+world steady_playtree creative 3761469094609221698
+waitworld
+window 1440 900
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 400
+screen close
+cmd awaken powers starter 1
+wait 40
+screen close
+cmd gamerule advance_time false
+cmd time set 1977
+cmd gamemode spectator
+cmd tp @s -1533.5 69 -704.5 180 15
+opt fov 90
+camera first
+hud off
+# (the land out here is not made yet in a new world: the teleport is one of Awaken's passages and waits for it, a
+# minute and more on the runner with the pack's terrain, and until then the camera stands on the Roost. Runs
+# 43076232585 and 43078975963 shot the city for it. Wait the passage out, then let the place draw.)
+wait 100
+waitpassage
+wait 1600
+waitpassage
+cmd tp @s -1533.5 69 -704.5 180 15
+wait 400
+info
+cmd tp @s -1533.5 69 -726.5 0 18
+wait 260
+shot q1_from_north
+lens sunpass off
+wait 80
+shot q1_from_north_walk_off
+lens sunpass setting
+cmd tp @s -1522.5 69 -715.5 90 18
+wait 260
+shot q2_from_east
+lens sunpass off
+wait 80
+shot q2_from_east_walk_off
+lens sunpass setting
+cmd tp @s -1533.5 69 -704.5 180 18
+wait 260
+shot q3_from_south
+lens sunpass off
+wait 80
+shot q3_from_south_walk_off
+lens sunpass setting
+cmd tp @s -1544.5 69 -715.5 -90 18
+wait 260
+shot q4_from_west
+lens sunpass off
+wait 80
+shot q4_from_west_walk_off
+lens sunpass setting
+cmd tp @s -1524.5 69 -724.5 45 18
+wait 260
+shot q5_from_northeast
+lens sunpass off
+wait 80
+shot q5_from_northeast_walk_off
+lens sunpass setting
+cmd tp @s -1542.5 69 -706.5 -135 18
+wait 260
+shot q6_from_southwest
+lens sunpass off
+wait 80
+shot q6_from_southwest_walk_off
+lens sunpass setting
+# --- an hour earlier, the sun 15 degrees up: from the north and the south again
+cmd time set 1000
+cmd tp @s -1533.5 69 -726.5 0 18
+wait 260
+shot q7_low_sun_from_north
+cmd tp @s -1533.5 69 -704.5 180 18
+wait 260
+shot q8_low_sun_from_south
+quit

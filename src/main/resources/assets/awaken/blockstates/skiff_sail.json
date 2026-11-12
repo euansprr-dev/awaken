@@ -1,0 +1,304 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "band": "false",
+        "plane": "flat"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "athwart"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "fore_aft"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail",
+        "x": 90,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "flat"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "athwart"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "fore_aft"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band",
+        "x": 90,
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "flat",
+        "north": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_flat_north"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "flat",
+        "south": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_flat_south"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "flat",
+        "west": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_flat_west"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "flat",
+        "east": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_flat_east"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "athwart",
+        "up": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_athwart_up"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "athwart",
+        "down": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_athwart_down"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "athwart",
+        "west": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_athwart_west"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "athwart",
+        "east": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_athwart_east"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "fore_aft",
+        "up": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_fore_aft_up"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "fore_aft",
+        "down": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_fore_aft_down"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "fore_aft",
+        "north": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_fore_aft_north"
+      }
+    },
+    {
+      "when": {
+        "band": "false",
+        "plane": "fore_aft",
+        "south": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_lash_fore_aft_south"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "flat",
+        "north": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_flat_north"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "flat",
+        "south": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_flat_south"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "flat",
+        "west": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_flat_west"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "flat",
+        "east": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_flat_east"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "athwart",
+        "up": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_athwart_up"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "athwart",
+        "down": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_athwart_down"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "athwart",
+        "west": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_athwart_west"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "athwart",
+        "east": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_athwart_east"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "fore_aft",
+        "up": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_fore_aft_up"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "fore_aft",
+        "down": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_fore_aft_down"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "fore_aft",
+        "north": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_fore_aft_north"
+      }
+    },
+    {
+      "when": {
+        "band": "true",
+        "plane": "fore_aft",
+        "south": "true"
+      },
+      "apply": {
+        "model": "awaken:block/skiff_sail_band_lash_fore_aft_south"
+      }
+    }
+  ]
+}

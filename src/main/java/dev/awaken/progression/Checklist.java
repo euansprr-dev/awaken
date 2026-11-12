@@ -32,7 +32,8 @@ import java.util.UUID;
  * count where a step has one ("0/10"), a weapon you're making.</li>
  * <li>Last, what waits when nothing else is on ({@link #registerLast}): your home's first steps from afar.</li>
  * </ul>
- * Sent only when it changes. Nothing while the opening runs.
+ * Sent only when it changes. Nothing while the opening runs. A row once ticked under a task stays ticked ({@link Ticked};
+ * SPEC §27.14), unless the task is {@linkplain Task#live live}: its rows say what you hold now.
  */
 public final class Checklist {
     private Checklist() {}
@@ -59,7 +60,20 @@ public final class Checklist {
         }
     }
 
-    public record Task(String id, String title, List<Row> rows) {}
+    /**
+     * A card: its id, title and rows. {@code live}: its rows are what holds now, not steps done (what you carry for a
+     * weapon, a pinned step's needs), so the card's memory never keeps them ticked (SPEC §27.14).
+     */
+    public record Task(String id, String title, List<Row> rows, boolean live) {
+        public Task(String id, String title, List<Row> rows) {
+            this(id, title, rows, false);
+        }
+
+        /** A card whose rows are what holds now (materials in the pack, a step's needs): never remembered ticked. */
+        public static Task live(String id, String title, List<Row> rows) {
+            return new Task(id, title, rows, true);
+        }
+    }
 
     /** A module's task for this player now, or null. */
     public interface Source {
@@ -118,8 +132,12 @@ public final class Checklist {
         });
     }
 
-    /** What the panel shows for this player now, or null. */
+    /** What the panel shows for this player now, or null: a row once ticked under its task stays ticked (SPEC §27.14). */
     public static @Nullable Task now(ServerPlayer p) {
+        return remembered(p, chosen(p));
+    }
+
+    private static @Nullable Task chosen(ServerPlayer p) {
         Profile prof = Progression.profile(p);
         if (!prof.awakened() || OpeningHooks.inOpening(p)) return null;
         // what the player chose to follow comes first (docs/trails/PLAN.md §3.4), then the first moves, then where you
@@ -131,6 +149,32 @@ public final class Checklist {
         t = first(HERE, p);
         if (t == null) t = first(SOURCES, p);
         return t != null ? t : first(LAST, p);
+    }
+
+    /**
+     * (SPEC §27.14; Euan 2026-11-11, back from a gate in the room he'd built: "a task can never not be completed if it
+     * actually is completed") Every row sent ticked is remembered under its task's id; one remembered and now unticked goes
+     * out ticked, its count full and its place dropped (nothing points at a done step). A live card is left as it is.
+     * Public for the tests.
+     */
+    public static @Nullable Task remembered(ServerPlayer p, @Nullable Task t) {
+        if (t == null || t.live()) return t;
+        Ticked mem = p.getData(ProgressionModule.TICKED);
+        List<Row> rows = null;
+        boolean grew = false;
+        for (int i = 0; i < t.rows().size(); i++) {
+            Row r = t.rows().get(i);
+            String key = Ticked.key(t.id(), r.text());
+            if (r.done()) {
+                grew |= mem.add(key);
+                continue;
+            }
+            if (!mem.has(key)) continue;
+            if (rows == null) rows = new ArrayList<>(t.rows());
+            rows.set(i, new Row(r.text(), r.key(), true, r.need() > 0 ? r.need() : r.have(), r.need(), null, null));
+        }
+        if (grew) p.setData(ProgressionModule.TICKED, mem);
+        return rows == null ? t : new Task(t.id(), t.title(), List.copyOf(rows), false);
     }
 
     private static @Nullable Task first(List<Source> sources, ServerPlayer p) {

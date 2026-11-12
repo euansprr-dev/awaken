@@ -1,0 +1,1126 @@
+# Powers, the next level: the light on what you wear, on all 29 sets (SPEC 32.N). Barrier is cast in each set in turn
+# (it raises the forearm in front of your eyes and its light stays), a still as it settles; then Frost Nova and a held
+# Haymaker in six sets, one a family of material. Stills s<rank>_<set>, and f_<set>, h_<set>.
+# Watch: each set takes the type its own way, on its own lines; nothing floats, nothing shows through, the piece still reads.
+# A long tour: the world goes on (a rift opened in run 42882243878 and turned the camera for two stills). Rerun if a still misses its arm.
+# Look tour: tools/tour-ci.sh tools/autopilot/powers-next-armour-all.txt 2400 PACK=feel
+world powersnext survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:slow_falling 60 1 true
+cmd tp @s 0.5 201 0.5 0 12
+wait 400
+cmd fill -14 199 -6 14 199 30 minecraft:grass_block
+cmd fill -14 200 -6 14 214 30 minecraft:air
+cmd fill -14 200 24 14 208 24 minecraft:stone_bricks
+wait 40
+cmd fill -14 199 -6 14 199 30 minecraft:grass_block
+cmd fill -14 200 24 14 208 24 minecraft:stone_bricks
+cmd tp @s 0.5 200 0.5 0 0
+wait 60
+camera first
+look 0 4
+wait 20
+# the opening leaves Ilse's Letters in the main hand: put them down, or they sit in the corner of every still
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd item replace entity @s armor.chest with awaken:wildhide_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow se_wildhide
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:bellguard_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow se_bellguard
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:rootwarden_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow se_rootwarden
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:amberwing_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow se_amberwing
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:beastbound_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sd_beastbound
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:cleftrunner_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sd_cleftrunner
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:lanternlight_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sd_lanternlight
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:bladeward_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sd_bladeward
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:hornlord_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sd_hornlord
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:gatewrought_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sc_gatewrought
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:vaultbreaker_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sc_vaultbreaker
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:frostwalker_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sc_frostwalker
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:sunward_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sc_sunward
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:shardcrown_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sc_shardcrown
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:veilwoven_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sb_veilwoven
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:deepcarapace_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sb_deepcarapace
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:cloudrunner_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sb_cloudrunner
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:tidebreaker_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sb_tidebreaker
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:hollowheart_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sb_hollowheart
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:lordscale_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sa_lordscale
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:leviathan_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sa_leviathan
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:galewing_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sa_galewing
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:halo_choir_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sa_halo_choir
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:dreamsteel_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow sa_dreamsteel
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:sovereign_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow ss_sovereign
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:starfall_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow ss_starfall
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:riftwalker_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow ss_riftwalker
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:nightcourt_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow ss_nightcourt
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:signals_echo_chestplate
+wait 6
+# barrier
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase barrier 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 1
+shotnow ss_signals_echo
+wait 2
+wait 4
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:rootwarden_chestplate
+wait 6
+# frost_nova
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase frost_nova 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 2
+wait 1
+shotnow f_rootwarden
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+# haymaker
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase haymaker 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 23
+wait 3
+wait 7
+shotnow h_rootwarden
+wait 8
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:lanternlight_chestplate
+wait 6
+# frost_nova
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase frost_nova 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 2
+wait 1
+shotnow f_lanternlight
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+# haymaker
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase haymaker 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 23
+wait 3
+wait 7
+shotnow h_lanternlight
+wait 8
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:vaultbreaker_chestplate
+wait 6
+# frost_nova
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase frost_nova 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 2
+wait 1
+shotnow f_vaultbreaker
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+# haymaker
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase haymaker 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 23
+wait 3
+wait 7
+shotnow h_vaultbreaker
+wait 8
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:cloudrunner_chestplate
+wait 6
+# frost_nova
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase frost_nova 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 2
+wait 1
+shotnow f_cloudrunner
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+# haymaker
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase haymaker 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 23
+wait 3
+wait 7
+shotnow h_cloudrunner
+wait 8
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:hollowheart_chestplate
+wait 6
+# frost_nova
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase frost_nova 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 2
+wait 1
+shotnow f_hollowheart
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+# haymaker
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase haymaker 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 23
+wait 3
+wait 7
+shotnow h_hollowheart
+wait 8
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+cmd tick sprint 420
+wait 12
+cmd item replace entity @s armor.chest with awaken:lordscale_chestplate
+wait 6
+# frost_nova
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase frost_nova 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 2
+wait 1
+wait 2
+wait 1
+shotnow f_lordscale
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+# haymaker
+cmd kill @e[type=minecraft:husk]
+cmd kill @e[type=minecraft:item]
+cmd tp @s 0.5 200 0.5 0 0
+cmd summon minecraft:husk 0.5 200 3.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 3.5 200 7.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk -2.5 200 9.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd summon minecraft:husk 0.5 200 14.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f],Health:200f,attributes:[{id:"minecraft:max_health",base:200d}]}
+cmd awaken admin power showcase haymaker 1
+camera first
+look 0 4
+wait 16
+cmd tick rate 4
+wait 3
+hold power1 23
+wait 3
+wait 7
+shotnow h_lordscale
+wait 8
+wait 3
+wait 14
+cmd tick rate 20
+wait 30
+quit

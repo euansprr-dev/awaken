@@ -1,0 +1,243 @@
+{
+  "display": {
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        45,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "fixed": {
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "ground": {
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ]
+    },
+    "gui": {
+      "rotation": [
+        30,
+        225,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ]
+    }
+  },
+  "elements": [
+    {
+      "faces": {
+        "down": {
+          "texture": "#wood"
+        },
+        "east": {
+          "texture": "#wood"
+        },
+        "north": {
+          "texture": "#wood"
+        },
+        "south": {
+          "texture": "#wood"
+        },
+        "up": {
+          "texture": "#wood"
+        },
+        "west": {
+          "texture": "#wood"
+        }
+      },
+      "from": [
+        4,
+        14,
+        7.5
+      ],
+      "to": [
+        12,
+        15,
+        8.5
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#bone"
+        },
+        "east": {
+          "texture": "#bone"
+        },
+        "north": {
+          "texture": "#bone"
+        },
+        "south": {
+          "texture": "#bone"
+        },
+        "up": {
+          "texture": "#bone"
+        },
+        "west": {
+          "texture": "#bone"
+        }
+      },
+      "from": [
+        4.5,
+        5,
+        7.6
+      ],
+      "to": [
+        5.5,
+        14,
+        8.4
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#shell"
+        },
+        "east": {
+          "texture": "#shell"
+        },
+        "north": {
+          "texture": "#shell"
+        },
+        "south": {
+          "texture": "#shell"
+        },
+        "up": {
+          "texture": "#shell"
+        },
+        "west": {
+          "texture": "#shell"
+        }
+      },
+      "from": [
+        7.5,
+        3,
+        7.6
+      ],
+      "to": [
+        8.5,
+        14,
+        8.4
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#bone"
+        },
+        "east": {
+          "texture": "#bone"
+        },
+        "north": {
+          "texture": "#bone"
+        },
+        "south": {
+          "texture": "#bone"
+        },
+        "up": {
+          "texture": "#bone"
+        },
+        "west": {
+          "texture": "#bone"
+        }
+      },
+      "from": [
+        10.5,
+        6,
+        7.6
+      ],
+      "to": [
+        11.5,
+        14,
+        8.4
+      ]
+    },
+    {
+      "faces": {
+        "down": {
+          "texture": "#rope"
+        },
+        "east": {
+          "texture": "#rope"
+        },
+        "north": {
+          "texture": "#rope"
+        },
+        "south": {
+          "texture": "#rope"
+        },
+        "up": {
+          "texture": "#rope"
+        },
+        "west": {
+          "texture": "#rope"
+        }
+      },
+      "from": [
+        7.8,
+        15,
+        7.8
+      ],
+      "to": [
+        8.2,
+        16,
+        8.2
+      ]
+    }
+  ],
+  "textures": {
+    "bone": "minecraft:block/bone_block_side",
+    "particle": "minecraft:block/bone_block_side",
+    "rope": "minecraft:block/stripped_oak_log",
+    "shell": "minecraft:block/smooth_quartz",
+    "wood": "minecraft:block/spruce_log"
+  }
+}

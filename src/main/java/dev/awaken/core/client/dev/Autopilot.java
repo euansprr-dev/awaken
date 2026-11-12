@@ -63,9 +63,10 @@ import java.util.Map;
  * opt renderDistance|simulationDistance|volume &lt;n&gt;  changes an option for the following scenes (volume: master %)
  * lens off|swift|cinematic|ultra                switches Awaken's light layer, for same-moment A/B shots
  * lens chain <probe>|off                       measurement: awaken:lens_probe_<probe> (tools/lens/probes.py) in place of the Look's chain
+ * lens twin off|setting                        measurement: Cinematic and Ultra as written, or (setting) their Tiles twins while the block is live
  * lens temporal on|off|setting                  Lens 2's clouds and light spread over frames, or every pixel every frame
  * lookpreset performance|close_up|balanced|vista  the Look page's presets (Look, Far Sight, render distance, 4K scale, steady)
- * lookswitch swift|cinematic|ultra              picks a Look tier as a click on its card would (the open Look screen's,
+ * lookswitch swift|lite|cinematic|ultra         picks a Look tier as a click on its card would (the open Look screen's,
  *                                                else straight through the switch)
  * pixels &lt;scale&gt; [fsr|sharp|bilinear]|config|state  Pixels' render scale and upscaler for the following scenes (not saved)
  * pixels gpu on|off|reset|&lt;label&gt;              GPU time of the world pass and the upscale (timestamps), logged per label
@@ -300,8 +301,9 @@ public final class Autopilot {
             mc.options.inactivityFpsLimit().set(net.minecraft.client.InactivityFpsLimit.MINIMIZED);
             onBuiltInDisplay(mc);
         }
-        // the window lost focus (the owner is using the Mac): never photograph the pause menu
-        if (mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
+        // the window lost focus (the owner is using the Mac): never photograph the pause menu, but for a pause the script asked for
+        if (pauseTicks > 0 && --pauseTicks == 0) Awaken.LOG.info("[autopilot] unpaused");
+        if (pauseTicks <= 0 && mc.gui.screen() instanceof net.minecraft.client.gui.screens.PauseScreen && mc.level != null) mc.gui.setScreen(null);
         // walk: forward held down for a while (proves the player can move, e.g. after a scene let go)
         if (heldTicks > 0 && heldKey != null) {
             heldKey.setDown(--heldTicks > 0);
@@ -424,6 +426,12 @@ public final class Autopilot {
             }
             case "waitworld" -> waitWorldTicks = 20 * 600;
             case "wait" -> waitTicks = Integer.parseInt(arg.trim());
+            case "pause" -> { // pause <ticks>: the pause menu, as Esc opens it (singleplayer: the world stands still), then back to play
+                pauseTicks = Integer.parseInt(arg.trim());
+                mc.pauseGame(false);
+                Awaken.LOG.info("[autopilot] paused for {} ticks", pauseTicks);
+                waitTicks = pauseTicks + 2;
+            }
             case "waitpassage" -> { // until a passage (Awaken's teleport waiting for its land) has moved you
                 if (inPassage()) return false;
             }
@@ -478,6 +486,11 @@ public final class Autopilot {
                 String said = dev.awaken.arms.client.ArmsAutopilot.run(arg);
                 if (said == null) return false;
                 Awaken.LOG.info("[autopilot] arms {}: {}", arg.trim(), said);
+            }
+            case "frontier" -> { // null: not ready (a line that waits on the skiff's flight or on a move), the same line next tick
+                String said = dev.awaken.frontier.client.FrontierClient.autopilot(arg);
+                if (said == null) return false;
+                Awaken.LOG.info("[autopilot] frontier {}: {}", arg.trim(), said);
             }
             case "compat" -> {
                 Awaken.LOG.info("[autopilot] compat {}: {}", arg.trim(), dev.awaken.compat.client.CompatClient.autopilot(arg));
@@ -700,13 +713,52 @@ public final class Autopilot {
                     waitTicks = 20;
                     return true;
                 }
+                if (arg.trim().startsWith("twin")) { // lens twin off|setting: Cinematic and Ultra as written, or their Tiles twins
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.twin(arg.trim().substring(4)));
+                    waitTicks = 20;
+                    return true;
+                }
+                if (arg.trim().startsWith("calm")) { // lens calm off|setting: the twins' own composite every frame, or the calm one on calm frames
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.calm(arg.trim().substring(4)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().startsWith("chain")) {
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.chain(arg.trim().substring(5)));
                     waitTicks = 20;
                     return true;
                 }
+                if (arg.trim().startsWith("straight")) {
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.turbo.tiles.Tiles.straight(arg.trim().substring(8)));
+                    waitTicks = 10;
+                    return true;
+                }
+                if (arg.trim().startsWith("grade")) { // lens grade <id>|setting: the colour grade for the following scenes
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.grade(arg.trim().substring(5)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().equals("cost")) {
                     Awaken.LOG.info("[autopilot] lens cost: {}", dev.awaken.lens.client.LensClient.cost());
+                    return true;
+                }
+                if (arg.trim().startsWith("accent")) { // lens accent off|on: a power's look over the place's own (built in), or in place of it as it was
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.accentSwitch(arg.trim().substring(6)));
+                    waitTicks = 10;
+                    return true;
+                }
+                if (arg.trim().equals("look")) { // lens look: the look as drawn now, in numbers
+                    Awaken.LOG.info("[autopilot] lens look: {}", dev.awaken.lens.client.LensClient.lookNow());
+                    return true;
+                }
+                if (arg.trim().startsWith("edgehold")) { // lens edgehold off|on|setting: contact shadows kept where the screen can't see their caster
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.edgeHold(arg.trim().substring(8)));
+                    waitTicks = 20;
+                    return true;
+                }
+                if (arg.trim().startsWith("small")) { // lens small <contact from> <to> <ambient from> <to> | setting: the small shade's reach
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.small(arg.trim().substring(5)));
+                    waitTicks = 20;
                     return true;
                 }
                 if (arg.trim().startsWith("rays")) {
@@ -787,7 +839,7 @@ public final class Autopilot {
                 }
                 waitTicks = 20;
             }
-            case "display" -> { // display <name prefix> [fullscreen]: measurement only (look-steady-60), with the owner's OK:
+            case "display" -> { // display <name prefix> [fullscreen|borderless]: measurement only (look-steady-60), with the owner's OK:
                 // the tour on the screen he plays on (e.g. "display DELL fullscreen"), where tours otherwise never go
                 String[] d = arg.trim().split("\\s+");
                 long window = mc.getWindow().handle();
@@ -807,8 +859,22 @@ public final class Autopilot {
                     org.lwjgl.sdl.SDLVideo.SDL_SetWindowPosition(window, centred, centred);
                     mc.getWindow().syncWindow();
                     boolean full = d.length > 1 && d[1].equals("fullscreen");
+                    boolean bare = d.length > 1 && d[1].equals("borderless");
                     mc.options.fullscreen().set(full);
-                    Awaken.LOG.info("[autopilot] display {}: on {}{}", d[0], org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(target), full ? ", fullscreen" : "");
+                    if (bare) {
+                        // the display's whole size without a border, as vanilla's borderless window on Windows: the same
+                        // pixels as fullscreen where macOS refuses a fullscreen Space (a locked screen, 12 Nov)
+                        try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+                            org.lwjgl.sdl.SDL_Rect b = org.lwjgl.sdl.SDL_Rect.malloc(stack);
+                            if (org.lwjgl.sdl.SDLVideo.SDL_GetDisplayBounds(target, b)) {
+                                org.lwjgl.sdl.SDLVideo.SDL_SetWindowBordered(window, false);
+                                org.lwjgl.sdl.SDLVideo.SDL_SetWindowSize(window, b.w(), b.h());
+                                org.lwjgl.sdl.SDLVideo.SDL_SetWindowPosition(window, b.x(), b.y());
+                                mc.getWindow().syncWindow();
+                            }
+                        }
+                    }
+                    Awaken.LOG.info("[autopilot] display {}: on {}{}", d[0], org.lwjgl.sdl.SDLVideo.SDL_GetDisplayName(target), full ? ", fullscreen" : bare ? ", borderless" : "");
                 }
                 waitTicks = 80;
             }
@@ -842,6 +908,9 @@ public final class Autopilot {
     }
 
     /** A key by its script name; "attack" is the game's own attack key (a blow with what the hand holds, at what the crosshair is on). */
+    /** Client ticks left of a pause the script asked for ({@code pause <ticks>}). */
+    private static int pauseTicks;
+
     private static KeyMapping keyOf(String name) {
         return name.equals("attack") ? Minecraft.getInstance().options.keyAttack : KEYS.get(name);
     }

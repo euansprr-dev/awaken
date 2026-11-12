@@ -280,7 +280,7 @@ final class Burning implements Plot {
             double r = l.plan().radius() + out;
             int x = (int) Math.floor(w.x + Math.cos(aa) * r), z = (int) Math.floor(w.z + Math.sin(aa) * r);
             BlockPos q = new BlockPos(x, 0, z);
-            if (!c.level().isLoaded(q)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(c.level(), q)) continue;
             int y = c.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             BlockPos at = new BlockPos(x, y, z);
             if (!c.level().getFluidState(at.below()).isEmpty()) continue;
@@ -433,7 +433,7 @@ final class Burning implements Plot {
         for (int tries = 0; tries < 40 && out.size() < n; tries++) {
             int x = p.ox + q.x0() + 1 + r.nextInt(Math.max(1, q.x1() - q.x0() - 1)), z = p.oz + q.z0() + 1 + r.nextInt(Math.max(1, q.z1() - q.z0() - 1));
             BlockPos top = new BlockPos(x, p.baseY + q.lift() + q.top() + 4, z);
-            if (!level.isLoaded(top)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, top)) continue;
             while (top.getY() > p.baseY + q.lift() + 2 && level.getBlockState(top).isAir()) top = top.below();
             BlockPos at = top.above();
             if (!level.getBlockState(at).isAir() || out.contains(at)) continue;
@@ -449,7 +449,7 @@ final class Burning implements Plot {
         int flame = Math.clamp(intensity / 260, 0, 3);
         for (int k = 0; k < n; k++) {
             BlockPos at = BlockPos.of(t.get("fc" + plot + "_" + k, 0));
-            if (!c.level().isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(c.level(), at)) continue;
             BlockState s = c.level().getBlockState(at);
             boolean on = k < want;
             if (on && (s.isAir() || s.is(CitizensContent.CITY_FIRE.get()))) {

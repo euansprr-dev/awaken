@@ -1,7 +1,7 @@
 package dev.awaken.arms;
 
 import dev.awaken.Awaken;
-import dev.awaken.core.CoreModule;
+import dev.awaken.core.api.Tabs;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -12,12 +12,12 @@ import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MaceItem;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.component.Weapon;
 import net.minecraft.world.item.ToolMaterial;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jspecify.annotations.Nullable;
@@ -58,10 +58,13 @@ public final class ArmsItems {
      */
     private static DeferredItem<Item> register(ArmsData.Weapon w) {
         TagKey<Item> repair = TagKey.create(Registries.ITEM, Awaken.id(w.repair()));
+        int former = formerUses(w.tier());
         return switch (w.style()) {
-            case Arms.AXE -> ITEMS.registerItem(w.id(), Item::new, p -> p.rarity(w.rarity())
-                    .axe(new ToolMaterial(incorrectFor(w.tier()), w.durability(), mining(w.tier()), 0.0F, w.enchantability(), repair), w.damage(), w.speed()));
-            case Arms.MAUL -> ITEMS.registerItem(w.id(), MaceItem::new, p -> p.rarity(w.rarity())
+            // vanilla's axe costs two uses a blow; ours costs one, as every weapon does (SPEC §68.1). Its five seconds off a shield stay
+            case Arms.AXE -> ITEMS.registerItem(w.id(), p -> new ArmsWeaponItem(p, former), p -> p.rarity(w.rarity())
+                    .axe(new ToolMaterial(incorrectFor(w.tier()), w.durability(), mining(w.tier()), 0.0F, w.enchantability(), repair), w.damage(), w.speed())
+                    .component(DataComponents.WEAPON, new Weapon(1, AXE_DISABLES_SHIELD)));
+            case Arms.MAUL -> ITEMS.registerItem(w.id(), p -> new ArmsMaulItem(p, former), p -> p.rarity(w.rarity())
                     .durability(w.durability())
                     .component(DataComponents.TOOL, MaceItem.createToolProperties())
                     .repairable(repair)
@@ -73,9 +76,24 @@ public final class ArmsItems {
                             .build())
                     .enchantable(w.enchantability())
                     .component(DataComponents.WEAPON, new Weapon(1)));
-            default -> ITEMS.registerItem(w.id(), Item::new, p -> p.rarity(w.rarity())
+            default -> ITEMS.registerItem(w.id(), p -> new ArmsWeaponItem(p, former), p -> p.rarity(w.rarity())
                     .sword(new ToolMaterial(BlockTags.INCORRECT_FOR_WOODEN_TOOL, w.durability(), 1.0F, 0.0F, w.enchantability(), repair),
                             w.damage(), w.speed()));
+        };
+    }
+
+    /** How long a struck shield stays down after an axe's blow (vanilla's own five seconds). */
+    private static final float AXE_DISABLES_SHIELD = 5.0F;
+
+    /**
+     * The uses an E or a D weapon had until 2026-11-11 (SPEC §68.1: 220 and 500, now 900 and 1,300), so a weapon made in an
+     * Armoury under those keeps its quarter over today's ({@link dev.awaken.core.api.Lasting#formerUses}). 0: never changed.
+     */
+    static int formerUses(String tier) {
+        return switch (tier) {
+            case "E" -> 220;
+            case "D" -> 500;
+            default -> 0;
         };
     }
 
@@ -154,12 +172,14 @@ public final class ArmsItems {
 
     static void register(IEventBus modBus) {
         ITEMS.register(modBus);
-        modBus.addListener(ArmsItems::creativeTab);
-    }
-
-    private static void creativeTab(BuildCreativeModeTabContentsEvent event) {
-        if (!event.getTabKey().equals(CoreModule.TAB_KEY)) return;
-        for (DeferredItem<Item> item : ALL) event.accept(item.get());
-        BLUEPRINTS.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> event.accept(e.getValue().get()));
+        // the creative menu (SPEC §1, "Creative tabs"): a style at a time, tiers E to S, the Lords' own after (ArmsData's order)
+        Tabs.fill(Tabs.Shelf.FORGED_WEAPONS, ALL);
+        Tabs.fill(Tabs.Shelf.WEAPON_BLUEPRINTS, (p, out) -> BLUEPRINTS.entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .forEach(e -> out.accept(e.getValue().get())));
+        Tabs.fill(Tabs.Shelf.HOME_STATIONS, STAND_ITEM);
+        Tabs.icon(Tabs.Tab.WEAPONS, () -> {
+            Item sword = item("sovereign_longsword");
+            return sword == null ? ItemStack.EMPTY : new ItemStack(sword);
+        });
     }
 }

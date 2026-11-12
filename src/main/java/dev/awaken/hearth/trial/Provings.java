@@ -115,7 +115,9 @@ public final class Provings {
         bus.addListener(EventPriority.LOW, Provings::onBossDeath);
         bus.addListener(Provings::onBreak);
         bus.addListener(Provings::onPlace);
+        Signal.onAction(COME, Provings::onCome);
         bus.addListener((ServerStoppedEvent e) -> {
+            ASKING.clear();
             RUNS.clear();
             RESTORING.clear();
             RESTORING_CELL.clear();
@@ -148,27 +150,106 @@ public final class Provings {
             sp.sendOverlayMessage(Component.literal("Finish your gate first."));
             return false;
         }
+        // the party near the bell is asked, each by a card of their own (SPEC §70.5); the bell rings when they've answered
+        List<ServerPlayer> near = company(sp, null);
+        if (!near.isEmpty() && dev.awaken.core.api.FightsHooks.pair()) {
+            for (Asking a : ASKING) {
+                if (a.starter.equals(sp.getUUID())) {
+                    sp.sendOverlayMessage(Component.literal("Still waiting for your party to answer."));
+                    return true;
+                }
+            }
+            Asking a = new Asking(sp.getUUID(), target, practice, new HashSet<>(), new HashSet<>(), server.getTickCount() + ASK_TICKS);
+            List<String> names = new ArrayList<>();
+            for (ServerPlayer m : near) {
+                boolean counts = Progression.profile(m).level() >= target.levelRequired;
+                a.waiting.add(m.getUUID());
+                names.add(m.getGameProfile().name());
+                Signal.send(m, SignalWindow.builder(SignalWindow.Kind.REASSESSMENT, Component.literal(sp.getGameProfile().name() + " is starting the " + target.label + "-rank Reassessment"))
+                        .body(Component.literal((counts ? "Come along and fight it together. You each fight on your own setting, and it counts for you too if you're ready for this rank."
+                                : "You can come along and fight, but it won't count for you yet. Yours opens at level " + target.levelRequired + ".")
+                                + " Nobody loses anything by falling: you wake where you came in and can go again."))
+                        .choice(COME + ":" + sp.getUUID(), "Come along", "Stay here").priority(6).ttl(ASK_TICKS).build());
+            }
+            ASKING.add(a);
+            Signal.toast(sp, Component.literal("Asked " + String.join(" and ", names) + " to come along. The bell rings as soon as they answer."));
+            return true;
+        }
         int cell = TrialData.get(server).allocate(false);
-        begin(sp, w, trials, cell, w.hall.centre(cell), target, practice);
+        begin(sp, w, trials, cell, w.hall.centre(cell), target, practice, null);
         return true;
+    }
+
+    // ---- asking the party ---------------------------------------------------------------------------------------------
+
+    static final int ASK_TICKS = 20 * 30;
+    static final String COME = "provingcome";
+
+    /** A Reassessment waiting on the party's answers: who was asked and hasn't said, who is coming, and when it stops waiting. */
+    private record Asking(UUID starter, Rank target, boolean practice, Set<UUID> waiting, Set<UUID> coming, long until) {}
+
+    private static final List<Asking> ASKING = new ArrayList<>();
+
+    /** Party members who could come to {@code sp}'s Reassessment now; with {@code only}, just those of them. */
+    private static List<ServerPlayer> company(ServerPlayer sp, @Nullable Set<UUID> only) {
+        MinecraftServer server = sp.level().getServer();
+        List<ServerPlayer> out = new ArrayList<>();
+        for (UUID u : PartyHooks.members(sp)) {
+            ServerPlayer m = server.getPlayerList().getPlayer(u);
+            if (m == null || m == sp || m.level() != sp.level() || m.distanceToSqr(sp) > PARTY_RADIUS * PARTY_RADIUS) continue;
+            if (Trials.inTrial(m) || GateHooks.inGate(m) || !Progression.profile(m).awakened()) continue;
+            if (only != null && !only.contains(u)) continue;
+            out.add(m);
+        }
+        return out;
+    }
+
+    /** A party member's answer to the card at the bell. */
+    private static void onCome(ServerPlayer p, String action, boolean accepted) {
+        MinecraftServer server = p.level().getServer();
+        for (Asking a : ASKING) {
+            if (!action.equals(COME + ":" + a.starter) || !a.waiting.remove(p.getUUID())) continue;
+            if (accepted) a.coming.add(p.getUUID());
+            ServerPlayer starter = server.getPlayerList().getPlayer(a.starter);
+            if (starter != null) Signal.toast(starter, Component.literal(p.getGameProfile().name() + (accepted ? " is coming along." : " is staying here.")));
+            return;
+        }
+    }
+
+    /** Once everyone has answered, or the cards have run out: the bell rings for the one who started and whoever said yes. */
+    private static void askTick(MinecraftServer server) {
+        if (ASKING.isEmpty()) return;
+        for (Iterator<Asking> it = ASKING.iterator(); it.hasNext(); ) {
+            Asking a = it.next();
+            if (!a.waiting.isEmpty() && server.getTickCount() < a.until) continue;
+            it.remove();
+            ServerPlayer sp = server.getPlayerList().getPlayer(a.starter);
+            Warden w = Warden.of(a.target);
+            ServerLevel trials = server.getLevel(Trials.DIMENSION);
+            if (sp == null || w == null || trials == null || !sp.isAlive() || Trials.inTrial(sp) || GateHooks.inGate(sp)) continue;
+            int cell = TrialData.get(server).allocate(false);
+            begin(sp, w, trials, cell, w.hall.centre(cell), a.target, a.practice, a.coming);
+        }
     }
 
     /** A Proving in a hall built at {@code centre} in {@code level} (GameTests: their server has no trials dimension). */
     static Run openAt(ServerPlayer sp, ServerLevel level, BlockPos centre, Rank target, boolean practice) {
-        return begin(sp, java.util.Objects.requireNonNull(Warden.of(target)), level, -1, centre, target, practice);
+        return begin(sp, java.util.Objects.requireNonNull(Warden.of(target)), level, -1, centre, target, practice, null);
     }
 
-    private static Run begin(ServerPlayer sp, Warden w, ServerLevel level, int cell, BlockPos centre, Rank target, boolean practice) {
+    /** {@code only}: the party members who said yes at the bell; null takes everyone near (a hall opened without the cards). */
+    private static Run begin(ServerPlayer sp, Warden w, ServerLevel level, int cell, BlockPos centre, Rank target, boolean practice, @Nullable Set<UUID> only) {
         MinecraftServer server = sp.level().getServer();
         TrialData data = TrialData.get(server);
         Run run = new Run(w, cell, centre, level, target, practice, sp.getUUID());
         List<ServerPlayer> who = new ArrayList<>();
         who.add(sp);
-        for (UUID u : PartyHooks.members(sp)) {
-            ServerPlayer m = server.getPlayerList().getPlayer(u);
-            if (m == null || m == sp || m.level() != sp.level() || m.distanceToSqr(sp) > PARTY_RADIUS * PARTY_RADIUS) continue;
-            if (Trials.inTrial(m) || GateHooks.inGate(m) || Progression.profile(m).level() < target.levelRequired) continue;
-            if (dev.awaken.core.api.RidingHooks.bonded(m)) continue; // Reassessments can't be ridden (SPEC §55)
+        for (ServerPlayer m : company(sp, only)) {
+            // nobody is skipped in silence (SPEC §70.5): short of the level they come, and are told it doesn't count yet
+            // (the card at the bell has already said so to those who were asked)
+            if (only == null && Progression.profile(m).level() < target.levelRequired) {
+                Signal.toast(m, Component.literal("You're coming along, but this Reassessment doesn't count for you yet. Yours opens at level " + target.levelRequired + "."));
+            }
             who.add(m);
         }
         w.before(run, sp);
@@ -201,6 +282,7 @@ public final class Provings {
                 if (cell != null && cell >= 0) TrialData.get(server).free(cell);
             }
         }
+        askTick(server);
         if (RUNS.isEmpty()) return;
         for (Run run : List.copyOf(RUNS)) tick(server, run);
     }
@@ -282,12 +364,14 @@ public final class Provings {
         LivingEntity b = Trials.bossOrStandIn(run.level, w.mob, BlockPos.containing(at), run.target.levelRequired, "trial:" + run.leader);
         if (b == null) return;
         b.snapTo(at.x, at.y, at.z, w.arriveYaw(run), 0F);
-        int party = Math.max(1, here.size());
+        // a player on Gentle is half a fighter (SPEC §70.4); stance grows as health does (§70.3)
+        double party = dev.awaken.core.api.FightsHooks.fighters(here);
         if (party > 1) {
             var hp = b.getAttribute(Attributes.MAX_HEALTH);
             if (hp != null) hp.addOrReplacePermanentModifier(new AttributeModifier(Awaken.id("proving_party"), PARTY_HEALTH * (party - 1),
                     AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
             b.setHealth(b.getMaxHealth());
+            dev.awaken.core.api.FightsHooks.sizeStance(b, party);
         }
         if (b instanceof Mob mob) {
             mob.setPersistenceRequired();
@@ -489,6 +573,16 @@ public final class Provings {
         LivingEntity r = run != null ? warden(run) : null;
         if (r == null) return false;
         r.setHealth(r.getMaxHealth() * fraction);
+        return true;
+    }
+
+    /** Tours: your Proving's Warden's stance broken through Arms, as your own blow would break it (SPEC §47.3): it goes
+     * down on a knee and a heavy on it now is an Execution. False when no Warden is down. */
+    public static boolean breakStance(ServerPlayer sp) {
+        Run run = runOf(sp);
+        LivingEntity r = run != null ? warden(run) : null;
+        if (r == null) return false;
+        dev.awaken.core.api.Strikes.posture(r, 10_000, sp); // more than any stance
         return true;
     }
 

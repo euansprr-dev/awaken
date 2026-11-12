@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "name": "The Black Landing",
+  "line": "A landing on the stair with the dark on every side. They come up out of it in waves.",
+  "form": "dungeon",
+  "theme": "abyssal_shrine",
+  "ranks": [
+    "A",
+    "S"
+  ],
+  "ready": true,
+  "land": {
+    "program": "awaken:unlit_stair",
+    "water": 0,
+    "params": {
+      "stand": 1.0
+    }
+  },
+  "sky": {
+    "biomes": [
+      "awaken:realm/unlit_stair"
+    ],
+    "lens": "unlit_stair",
+    "air": [
+      "shaft_dust",
+      "mist",
+      "stars",
+      "dust"
+    ]
+  },
+  "life": {
+    "herds": [],
+    "predators": [],
+    "ambient": []
+  },
+  "folk": {
+    "kit": "none",
+    "villages": 0
+  },
+  "law": {
+    "kind": "none",
+    "params": {}
+  },
+  "sites": {
+    "wardens": 1,
+    "delves": 0,
+    "finds": 4
+  },
+  "heart": {
+    "lord": "hollow_herald",
+    "seat": "under_the_roads"
+  },
+  "moods": [
+    "small_hours"
+  ]
+}

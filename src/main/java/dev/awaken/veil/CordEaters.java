@@ -83,7 +83,7 @@ public final class CordEaters {
         double d = 14 + sp.getRandom().nextDouble() * 6;
         Vec3 p = sp.position().add(Math.cos(a) * d, sp.getRandom().nextInt(7) - 3, Math.sin(a) * d);
         BlockPos pos = BlockPos.containing(p);
-        if (!level.isLoaded(pos)) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, pos)) return;
         int lv = Progression.contentLevel(Progression.rank(sp));
         LivingEntity e;
         try {

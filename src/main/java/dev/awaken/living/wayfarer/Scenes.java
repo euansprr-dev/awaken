@@ -196,7 +196,7 @@ public final class Scenes extends SavedData {
         for (int tries = 0; tries < 48; tries++) {
             double a = r.nextDouble() * Math.PI * 2, d = min + r.nextDouble() * (max - min);
             int x = from.getX() + (int) (Math.cos(a) * d), z = from.getZ() + (int) (Math.sin(a) * d);
-            if (!level.hasChunkAt(new BlockPos(x, 0, z))) continue;
+            if (!dev.awaken.core.api.Ready.at(level, new BlockPos(x, 0, z))) continue;
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             BlockPos at = new BlockPos(x, y, z);
             if (!level.getFluidState(at.below()).isEmpty() || !level.getBlockState(at.below()).isSolid()) continue;
@@ -218,7 +218,7 @@ public final class Scenes extends SavedData {
         if (found != null) return found;
         double a = r.nextDouble() * Math.PI * 2;
         int x = from.getX() + (int) (Math.cos(a) * 56), z = from.getZ() + (int) (Math.sin(a) * 56);
-        int y = level.hasChunkAt(new BlockPos(x, 0, z)) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) : from.getY();
+        int y = dev.awaken.core.api.Ready.at(level, new BlockPos(x, 0, z)) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) : from.getY();
         return new BlockPos(x, y, z);
     }
 
@@ -228,7 +228,7 @@ public final class Scenes extends SavedData {
         for (int dx = -3; dx <= 3; dx++) {
             for (int dz = -3; dz <= 3; dz++) {
                 int x = top.getX() + dx, z = top.getZ() + dz;
-                if (!level.hasChunkAt(new BlockPos(x, 0, z))) continue;
+                if (!dev.awaken.core.api.Ready.at(level, new BlockPos(x, 0, z))) continue;
                 int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
                 if (y < best.getY()) best = new BlockPos(x, y, z);
             }
@@ -243,7 +243,7 @@ public final class Scenes extends SavedData {
         if (sc == null || to == null) return;
         ServerLevel level = server.overworld();
         BlockPos at = BlockPos.of(sc.pos);
-        if (!level.hasChunkAt(at)) return;
+        if (!dev.awaken.core.api.Ready.at(level, at)) return;
         for (Wayfarer w : level.getEntitiesOfClass(Wayfarer.class, new net.minecraft.world.phys.AABB(at).inflate(32), w -> w.scene() == id)) {
             w.snapTo(to.getX() + 0.5, to.getY(), to.getZ() + 0.5, w.getYRot(), 0);
             w.become(w.who(), to, 3, id);
@@ -292,7 +292,7 @@ public final class Scenes extends SavedData {
     public static @Nullable Wayfarer resident(MinecraftServer server, String who) {
         ServerLevel level = server.overworld();
         BlockPos at = who.equals("hettie") ? dev.awaken.core.api.CityHooks.spot(level, "hettie") : marker(server, 0, "camp");
-        if (at == null || !level.hasChunkAt(at)) return null;
+        if (at == null || !dev.awaken.core.api.Ready.at(level, at)) return null;
         var near = level.getEntitiesOfClass(Wayfarer.class, new net.minecraft.world.phys.AABB(at).inflate(48, 24, 48), w -> w.who().equals(who) && w.isAlive());
         return near.isEmpty() ? null : near.getFirst();
     }
@@ -520,7 +520,7 @@ public final class Scenes extends SavedData {
 
     /** A resident exactly here (a spot another module keeps clear), once a player is within 96. */
     private void placeAt(ServerLevel level, String who, BlockPos at) {
-        if (residents.contains(who) || !level.hasChunkAt(at) || !near(level, at, 96)) return;
+        if (residents.contains(who) || !dev.awaken.core.api.Ready.at(level, at) || !near(level, at, 96)) return;
         if (spawn(level, who, at, 2, 0) != null) {
             residents.add(who);
             setDirty();
@@ -562,7 +562,7 @@ public final class Scenes extends SavedData {
 
     /** A resident at the nearest dry ground within {@code search} of {@code column}, once a player is within 96. */
     private void place(ServerLevel level, String who, BlockPos column, int search, boolean cityOk) {
-        if (residents.contains(who) || !level.hasChunkAt(column) || !near(level, column, 96)) return;
+        if (residents.contains(who) || !dev.awaken.core.api.Ready.at(level, column) || !near(level, column, 96)) return;
         BlockPos at = dryLand(level, column, search, cityOk);
         if (at == null) return;
         if (spawn(level, who, at, 3, 0) != null) {
@@ -624,6 +624,11 @@ public final class Scenes extends SavedData {
             var map = RegionService.map(s);
             return new BlockPos(map.centreX(), 0, map.centreZ());
         }, s -> CityBasin.site(s).isPresent());
+        // the Far Landing (SPEC §67): the region map's landing, in a world made under rules 4 with Carillon standing
+        dev.awaken.core.api.TheLull.installLanding(s -> {
+            var map = RegionService.map(s);
+            return map.farLanding() ? new BlockPos(map.landingX(), 0, map.landingZ()) : null;
+        });
     }
 
     /** A chain was dropped: the scene made for its places goes. */
@@ -636,7 +641,7 @@ public final class Scenes extends SavedData {
     public static void bring(ServerPlayer p, long scene, QuestDef.Spawn spawn) {
         ServerLevel level = p.level().getServer().overworld();
         BlockPos at = marker(level.getServer(), scene, spawn.at());
-        if (at == null || p.level() != level || !level.hasChunkAt(at)) return;
+        if (at == null || p.level() != level || !dev.awaken.core.api.Ready.at(level, at)) return;
         var type = BuiltInRegistries.ENTITY_TYPE.getOptional(Identifier.parse(spawn.entity())).orElse(null);
         if (type == null) {
             Awaken.LOG.warn("[living] scene spawn {} doesn't exist", spawn.entity());

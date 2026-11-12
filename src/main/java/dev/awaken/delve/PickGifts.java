@@ -76,7 +76,7 @@ public final class PickGifts {
         for (int i = 0; i <= mine.size() - EMBERS_EACH; i++) data.removeEmber(mine.get(i));
         data.addEmber(new DelveData.Ember(at.asLong(), rock.ordinal(), level.getGameTime() + EMBER_LIFE, p.getUUID()));
         level.playSound(null, at, SoundEvents.FIRECHARGE_USE, SoundSource.PLAYERS, 0.35F, 1.6F);
-        level.playSound(null, at, DelveContent.TRUE_STRIKE.get(), SoundSource.PLAYERS, 0.4F, 1.5F);
+        level.playSound(null, at, SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.PLAYERS, 0.4F, 1.4F);
         Progression.count(p, "awaken:delve/embers");
         syncEmbers(level);
         return true;
@@ -279,7 +279,7 @@ public final class PickGifts {
                 m.set(a.cells()[i]);
                 a.cells()[i] = Long.MIN_VALUE;
                 BlockState s = level.getBlockState(m);
-                if (!a.ore().matches(s) || !level.isLoaded(m)) continue;
+                if (!a.ore().matches(s) || !dev.awaken.core.api.Ready.loaded(level, m)) continue;
                 List<ItemStack> drops = Block.getDrops(s, level, m, null, p, p.getMainHandItem());
                 level.destroyBlock(m, false, p);
                 for (ItemStack d : drops) if (!p.getInventory().add(d)) p.drop(d, false, net.minecraft.util.Prediction.SERVER_ONLY);

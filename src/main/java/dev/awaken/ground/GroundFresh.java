@@ -128,7 +128,7 @@ public final class GroundFresh {
         if (goneToo.contains(under) || !level.getBlockState(under).isFaceSturdy(level, under, Direction.UP)) return;
         for (int i = 0; i < 4; i++) {
             BlockPos g = p.relative(SeamlessRules.SIDES[i]);
-            if (goneToo.contains(g) || !level.isLoaded(g) || !SeamlessRules.wrapperBlock(level.getBlockState(g).getBlock())) continue;
+            if (goneToo.contains(g) || !dev.awaken.core.api.Ready.loaded(level, g) || !SeamlessRules.wrapperBlock(level.getBlockState(g).getBlock())) continue;
             cut(level, g, opposite(i));
         }
     }

@@ -162,7 +162,7 @@ public final class Growth {
         int[] bx = box(p, q);
         int w = bx[2] - bx[0] + 1, d = bx[3] - bx[1] + 1, h = bx[5] - bx[4] + 1;
         BlockPos lo = new BlockPos(p.ox + bx[0], p.baseY + bx[4], p.oz + bx[1]);
-        if (!level.isLoaded(lo) || !level.isLoaded(lo.offset(w, 0, d))) return false;
+        if (!dev.awaken.core.api.Ready.loaded(level, lo) || !dev.awaken.core.api.Ready.loaded(level, lo.offset(w, 0, d))) return false;
         // the template's front: the way out of its door
         Direction front = Direction.getApproximateNearest(tb.outX() - tb.doorX(), 0, tb.outZ() - tb.doorZ());
         // a lane's end with room past it
@@ -249,7 +249,7 @@ public final class Growth {
         for (int x = -1; x <= w; x++)
             for (int z = -1; z <= d; z++) {
                 int wx = ox + x, wz = oz + z;
-                if (!level.isLoaded(new BlockPos(wx, 0, wz))) return false;
+                if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(wx, 0, wz))) return false;
                 if (p.owns(wx, wz) || p.plotAt(wx - p.ox, wz - p.oz) >= 0) return false;
                 int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, wx, wz);
                 if (Math.abs(top - 1 - ground) > 2) return false;
@@ -346,7 +346,7 @@ public final class Growth {
             BlockState s = Block.stateById((int) (c >>> 24)).rotate(r);
             int[] rc = rotated(x, z, w, d, g.rot);
             BlockPos at = new BlockPos(o.getX() + rc[0], o.getY() + y, o.getZ() + rc[1]);
-            if (!level.isLoaded(at)) {
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) {
                 g.placed--;
                 return;
             }
@@ -453,7 +453,7 @@ public final class Growth {
         }
         if (since < 20 * 40) return;
         if (carter >= 0) l.settlement().stage(carter, null, Float.NaN, "", "");
-        for (long p : g.laid) if (level.isLoaded(BlockPos.of(p))) level.setBlock(BlockPos.of(p), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+        for (long p : g.laid) if (dev.awaken.core.api.Ready.loaded(level, BlockPos.of(p))) level.setBlock(BlockPos.of(p), Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         g.laid.clear();
         // theirs: from the village's next waking they live there
         CityPlan.Plot q = l.plan().plots.get(g.template);

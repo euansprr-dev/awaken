@@ -89,7 +89,7 @@ final class GateTests {
                     h.assertTrue(!mem.seenThemes.contains(id), id + " came back from the bag at roll " + i);
                     h.assertTrue(!id.equals(last) && !id.equals(before), id + " came back within two gates");
                     if (mem.seenThemes.size() < seenBefore.size()) for (dev.awaken.gates.content.Theme t : dev.awaken.gates.content.Theme.values())
-                        h.assertTrue(!t.fits(rank) || t.friendly || seenBefore.contains(t.id), "the bag refilled with " + t.id + " still in it");
+                        h.assertTrue(!Director.inBag(t, rank) || t.friendly || seenBefore.contains(t.id), "the bag refilled with " + t.id + " still in it");
                     mem.sawTheme(id);
                     before = last;
                     last = id;

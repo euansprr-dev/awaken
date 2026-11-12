@@ -7,7 +7,6 @@ import dev.awaken.delve.HeavyStrikes;
 import dev.awaken.delve.Ore;
 import dev.awaken.delve.StrikeBlocks;
 import dev.awaken.delve.TrueStrikes;
-import dev.awaken.delve.TuningForkItem;
 import dev.awaken.delve.forged.DelveForged;
 import dev.awaken.delve.forged.ForgedPickItem;
 import dev.awaken.delve.forged.ForgedPicks;
@@ -157,8 +156,9 @@ final class StrikeFeel {
         TrueStrikes.predicted(p, pos);
         ClientPacketDistributor.sendToServer(new DelveNet.TrueStrike(pos.asLong(), face.get3DDataValue(), n));
         trueRun = Math.min(trueRun + 1, 4);
-        float step = (float) Math.pow(2, (trueRun - 1) * 2 / 12.0);
-        level.playLocalSound(at.x, at.y, at.z, DelveContent.TRUE_STRIKE.get(), SoundSource.BLOCKS, 0.5F, TuningForkItem.pitch(ore) * step, false);
+        // a crack, not a note (SPEC §66.4): a little brighter for a harder ore and for each one in a row, never a scale
+        float pitch = (0.92F + 0.02F * ore.ordinal()) * (1F + 0.05F * (trueRun - 1));
+        level.playLocalSound(at.x, at.y, at.z, DelveContent.TRUE_STRIKE.get(), SoundSource.BLOCKS, 0.5F, pitch, false);
         return true;
     }
 

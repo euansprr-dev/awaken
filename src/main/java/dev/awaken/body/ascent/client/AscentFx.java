@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
 final class AscentFx {
     private AscentFx() {}
 
-    static final int BITE = 0, RING = 1, LOOSE = 2, MISS = 3;
+    static final int BITE = 0, RING = 1, LOOSE = 2, MISS = 3, MARK = 4;
 
     static final class Shot {
         int kind = -1;
@@ -72,6 +72,17 @@ final class AscentFx {
         best.age = 0;
         best.life = life;
         return best;
+    }
+
+    /**
+     * One rope per body (SPEC §62): a rope let go or missed ends any earlier one of the same body still falling away or
+     * flying out, so a body never shows two (the renderer also hides them while the body has a live rope).
+     */
+    private static Shot ropeShot(int kind, int life, int entity) {
+        for (Shot s : SHOTS) if ((s.kind == LOOSE || s.kind == MISS) && s.entity == entity) s.kind = -1;
+        Shot s = shot(kind, life);
+        s.entity = entity;
+        return s;
     }
 
     // ---- moments --------------------------------------------------------------------------------------------------
@@ -133,8 +144,7 @@ final class AscentFx {
         Minecraft mc = Minecraft.getInstance();
         Entity e = mc.level == null ? null : mc.level.getEntity(entityId);
         if (e == null) return;
-        Shot s = shot(LOOSE, 9);
-        s.entity = entityId;
+        Shot s = ropeShot(LOOSE, 9, entityId);
         AscentRemote.Slot slot = e == mc.player ? null : AscentRemote.of(entityId);
         s.line = e == mc.player ? AscentMoves.kitLine : slot == null ? 0 : slot.kit & 3;
         s.x = ax;
@@ -147,8 +157,7 @@ final class AscentFx {
 
     /** A rope that found nothing: out to where it flew, then falling back. */
     static void miss(Entity who, double x, double y, double z) {
-        Shot s = shot(MISS, 10);
-        s.entity = who.getId();
+        Shot s = ropeShot(MISS, 10, who.getId());
         s.x = x;
         s.y = y;
         s.z = z;
@@ -179,6 +188,40 @@ final class AscentFx {
             level.addParticle(dev.awaken.body.ascent.AscentContent.MOTE.get(), p.getX() + ox * 0.6, p.getY() + 0.9 + oy * 0.6, p.getZ() + oz * 0.6,
                     ox * 0.35 - dx * 0.4, oy * 0.35 - dy * 0.4, oz * 0.35 - dz * 0.4);
         }
+    }
+
+    /**
+     * A skim's wake (SPEC §62): two motes a tick on the surface under the body, thrown out to either side of the way it
+     * flies, so a line of light opens behind like a boat's.
+     */
+    static void wake(LocalPlayer p, AscentRules.Kin k, double surfaceY) {
+        Minecraft mc = Minecraft.getInstance();
+        double h = k.hspeed();
+        if (mc.level == null || h < 0.2) return;
+        double rx = -k.vz / h, rz = k.vx / h;
+        var r = mc.level.getRandom();
+        for (int s = -1; s <= 1; s += 2) {
+            double out = 0.5 + r.nextDouble() * 0.5;
+            mc.level.addParticle(dev.awaken.body.ascent.AscentContent.MOTE.get(), p.getX() + rx * s * out, surfaceY + 0.12, p.getZ() + rz * s * out,
+                    rx * s * 0.09 + k.vx * 0.15, 0.03 + r.nextDouble() * 0.03, rz * s * 0.09 + k.vz * 0.15);
+        }
+    }
+
+    /**
+     * The aimed dive's mark (SPEC §17.33): where the dive will land, a ring on the ground closing in on the point over the
+     * dive's flight ({@code life} ticks). One at a time; {@link #unmark} takes it away when the dive ends.
+     */
+    static void mark(double x, double y, double z, int life) {
+        unmark();
+        Shot s = shot(MARK, Math.max(4, life));
+        s.x = x;
+        s.y = y;
+        s.z = z;
+        s.size = 1F;
+    }
+
+    static void unmark() {
+        for (Shot s : SHOTS) if (s.kind == MARK) s.kind = -1;
     }
 
     static void ring(double x, double y, double z, Vec3 dir, float size) {

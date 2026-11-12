@@ -1,0 +1,469 @@
+# Facing, f: the shots to film again
+# Written by tools/art/facing_tour.py (SPEC §25 "One-faced heads"): the first-person shots of tours a to d that came back blank
+# ci knobs: PACK=perf,feel,comfort,world
+world armsfacingf creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+arms waitserver 40
+arms studio awaken:wildhide_longsword
+arms waitserver 100
+camera first
+look 0 6
+wait 200
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_longsword
+wait 30
+arms pose strike_1 0.1000
+wait 4
+arms film fa_wildhide_longsword_strike_1_a 8 1 3
+wait 9
+arms pose strike_1 0.2000
+wait 4
+arms film fa_wildhide_longsword_strike_1_b 8 1 3
+wait 9
+arms pose strike_2 0.1000
+wait 4
+arms film fa_wildhide_longsword_strike_2_a 8 1 3
+wait 9
+arms pose strike_2 0.2000
+wait 4
+arms film fa_wildhide_longsword_strike_2_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_greatblade
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_wildhide_greatblade_strike_1_a 8 1 3
+wait 9
+arms pose strike_1 0.2667
+wait 4
+arms film fa_wildhide_greatblade_strike_1_b 8 1 3
+wait 9
+arms pose strike_2 0.1875
+wait 4
+arms film fa_wildhide_greatblade_strike_2_a 8 1 3
+wait 9
+arms pose strike_2 0.2500
+wait 4
+arms film fa_wildhide_greatblade_strike_2_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_twinblades
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_wildhide_twinblades_strike_1_a 8 1 3
+wait 9
+arms pose strike_1 0.3000
+wait 4
+arms film fa_wildhide_twinblades_strike_1_b 8 1 3
+wait 9
+arms pose strike_2 0.2000
+wait 4
+arms film fa_wildhide_twinblades_strike_2_a 8 1 3
+wait 9
+arms pose strike_2 0.3000
+wait 4
+arms film fa_wildhide_twinblades_strike_2_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_chainblade
+wait 30
+arms pose strike_1 0.0909
+wait 4
+arms film fa_wildhide_chainblade_strike_1_a 8 1 3
+wait 9
+arms pose strike_1 0.1818
+wait 4
+arms film fa_wildhide_chainblade_strike_1_b 8 1 3
+wait 9
+arms pose strike_2 0.0909
+wait 4
+arms film fa_wildhide_chainblade_strike_2_a 8 1 3
+wait 9
+arms pose strike_2 0.1818
+wait 4
+arms film fa_wildhide_chainblade_strike_2_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:beastbound_chainblade
+wait 30
+arms pose strike_1 0.0909
+wait 4
+arms film fa_beastbound_chainblade_strike_1_a 8 1 3
+wait 9
+arms pose strike_1 0.1818
+wait 4
+arms film fa_beastbound_chainblade_strike_1_b 8 1 3
+wait 9
+arms pose strike_3 0.1250
+wait 4
+arms film fa_beastbound_chainblade_strike_3_a 8 1 3
+wait 9
+arms pose strike_3 0.1875
+wait 4
+arms film fa_beastbound_chainblade_strike_3_b 8 1 3
+wait 9
+arms pose strike_4 0.1333
+wait 4
+arms film fa_beastbound_chainblade_strike_4_a 8 1 3
+wait 9
+arms pose strike_4 0.2000
+wait 4
+arms film fa_beastbound_chainblade_strike_4_b 8 1 3
+wait 9
+arms pose heavy 0.0357
+wait 4
+arms film fa_beastbound_chainblade_heavy_a 8 1 3
+wait 9
+arms pose heavy 0.1071
+wait 4
+arms film fa_beastbound_chainblade_heavy_b 8 1 3
+wait 9
+arms pose riposte 0.0000
+wait 4
+arms film fa_beastbound_chainblade_riposte_a 8 1 3
+wait 9
+arms pose riposte 0.0909
+wait 4
+arms film fa_beastbound_chainblade_riposte_b 8 1 3
+wait 9
+arms pose slipcut 0.0000
+wait 4
+arms film fa_beastbound_chainblade_slipcut_a 8 1 3
+wait 9
+arms pose slipcut 0.1000
+wait 4
+arms film fa_beastbound_chainblade_slipcut_b 8 1 3
+wait 9
+arms pose undercut 0.0000
+wait 4
+arms film fa_beastbound_chainblade_undercut_a 8 1 3
+wait 9
+arms pose undercut 0.0909
+wait 4
+arms film fa_beastbound_chainblade_undercut_b 8 1 3
+wait 9
+arms pose art 0.0952
+wait 4
+arms film fa_beastbound_chainblade_art_a 8 1 3
+wait 9
+arms pose art 0.1429
+wait 4
+arms film fa_beastbound_chainblade_art_b 8 1 3
+wait 9
+arms pose plunge 0.0179
+wait 4
+arms film fa_beastbound_chainblade_plunge_t 8 1 3
+wait 9
+arms pose plunge 0.0000
+wait 4
+arms film fa_beastbound_chainblade_plunge_a 8 1 3
+wait 9
+arms pose plunge 0.0714
+wait 4
+arms film fa_beastbound_chainblade_plunge_b 8 1 3
+wait 9
+arms pose execution 0.0526
+wait 4
+arms film fa_beastbound_chainblade_execution_t 8 1 3
+wait 9
+arms pose execution 0.0526
+wait 4
+arms film fa_beastbound_chainblade_execution_a 8 1 3
+wait 9
+arms pose execution 0.1053
+wait 4
+arms film fa_beastbound_chainblade_execution_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_chainblade
+wait 30
+arms pose strike_2 0.1818
+wait 4
+arms film fa_gatewrought_chainblade_strike_2_b 8 1 3
+wait 9
+arms pose slipcut 0.1000
+wait 4
+arms film fa_gatewrought_chainblade_slipcut_b 8 1 3
+wait 9
+arms pose plunge 0.0714
+wait 4
+arms film fa_gatewrought_chainblade_plunge_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_chainblade
+wait 30
+arms pose strike_3 0.1250
+wait 4
+arms film fa_veilwoven_chainblade_strike_3_a 8 1 3
+wait 9
+arms pose strike_3 0.1875
+wait 4
+arms film fa_veilwoven_chainblade_strike_3_b 8 1 3
+wait 9
+arms pose strike_4 0.1333
+wait 4
+arms film fa_veilwoven_chainblade_strike_4_a 8 1 3
+wait 9
+arms pose strike_4 0.2000
+wait 4
+arms film fa_veilwoven_chainblade_strike_4_b 8 1 3
+wait 9
+arms pose heavy 0.0357
+wait 4
+arms film fa_veilwoven_chainblade_heavy_a 8 1 3
+wait 9
+arms pose heavy 0.1071
+wait 4
+arms film fa_veilwoven_chainblade_heavy_b 8 1 3
+wait 9
+arms pose riposte 0.0000
+wait 4
+arms film fa_veilwoven_chainblade_riposte_a 8 1 3
+wait 9
+arms pose riposte 0.0909
+wait 4
+arms film fa_veilwoven_chainblade_riposte_b 8 1 3
+wait 9
+arms pose slipcut 0.0000
+wait 4
+arms film fa_veilwoven_chainblade_slipcut_a 8 1 3
+wait 9
+arms pose slipcut 0.1000
+wait 4
+arms film fa_veilwoven_chainblade_slipcut_b 8 1 3
+wait 9
+arms pose undercut 0.0000
+wait 4
+arms film fa_veilwoven_chainblade_undercut_a 8 1 3
+wait 9
+arms pose undercut 0.0909
+wait 4
+arms film fa_veilwoven_chainblade_undercut_b 8 1 3
+wait 9
+arms pose art 0.0952
+wait 4
+arms film fa_veilwoven_chainblade_art_a 8 1 3
+wait 9
+arms pose art 0.1429
+wait 4
+arms film fa_veilwoven_chainblade_art_b 8 1 3
+wait 9
+arms pose plunge 0.0179
+wait 4
+arms film fa_veilwoven_chainblade_plunge_t 8 1 3
+wait 9
+arms pose plunge 0.0000
+wait 4
+arms film fa_veilwoven_chainblade_plunge_a 8 1 3
+wait 9
+arms pose plunge 0.0714
+wait 4
+arms film fa_veilwoven_chainblade_plunge_b 8 1 3
+wait 9
+arms pose execution 0.0526
+wait 4
+arms film fa_veilwoven_chainblade_execution_t 8 1 3
+wait 9
+arms pose execution 0.0526
+wait 4
+arms film fa_veilwoven_chainblade_execution_a 8 1 3
+wait 9
+arms pose execution 0.1053
+wait 4
+arms film fa_veilwoven_chainblade_execution_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_chainblade
+wait 30
+arms pose strike_1 0.1818
+wait 4
+arms film fa_sovereign_chainblade_strike_1_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lantern_broker_chainblade
+wait 30
+arms pose strike_3 0.1250
+wait 4
+arms film fa_lantern_broker_chainblade_strike_3_a 8 1 3
+wait 9
+arms pose strike_3 0.1875
+wait 4
+arms film fa_lantern_broker_chainblade_strike_3_b 8 1 3
+wait 9
+arms pose strike_4 0.1333
+wait 4
+arms film fa_lantern_broker_chainblade_strike_4_a 8 1 3
+wait 9
+arms pose strike_4 0.2000
+wait 4
+arms film fa_lantern_broker_chainblade_strike_4_b 8 1 3
+wait 9
+arms pose heavy 0.0357
+wait 4
+arms film fa_lantern_broker_chainblade_heavy_a 8 1 3
+wait 9
+arms pose heavy 0.1071
+wait 4
+arms film fa_lantern_broker_chainblade_heavy_b 8 1 3
+wait 9
+arms pose riposte 0.0000
+wait 4
+arms film fa_lantern_broker_chainblade_riposte_a 8 1 3
+wait 9
+arms pose riposte 0.0909
+wait 4
+arms film fa_lantern_broker_chainblade_riposte_b 8 1 3
+wait 9
+arms pose slipcut 0.0000
+wait 4
+arms film fa_lantern_broker_chainblade_slipcut_a 8 1 3
+wait 9
+arms pose slipcut 0.1000
+wait 4
+arms film fa_lantern_broker_chainblade_slipcut_b 8 1 3
+wait 9
+arms pose undercut 0.0000
+wait 4
+arms film fa_lantern_broker_chainblade_undercut_a 8 1 3
+wait 9
+arms pose undercut 0.0909
+wait 4
+arms film fa_lantern_broker_chainblade_undercut_b 8 1 3
+wait 9
+arms pose art 0.0952
+wait 4
+arms film fa_lantern_broker_chainblade_art_a 8 1 3
+wait 9
+arms pose art 0.1429
+wait 4
+arms film fa_lantern_broker_chainblade_art_b 8 1 3
+wait 9
+arms pose plunge 0.0179
+wait 4
+arms film fa_lantern_broker_chainblade_plunge_t 8 1 3
+wait 9
+arms pose plunge 0.0000
+wait 4
+arms film fa_lantern_broker_chainblade_plunge_a 8 1 3
+wait 9
+arms pose plunge 0.0714
+wait 4
+arms film fa_lantern_broker_chainblade_plunge_b 8 1 3
+wait 9
+arms pose execution 0.0526
+wait 4
+arms film fa_lantern_broker_chainblade_execution_t 8 1 3
+wait 9
+arms pose execution 0.0526
+wait 4
+arms film fa_lantern_broker_chainblade_execution_a 8 1 3
+wait 9
+arms pose execution 0.1053
+wait 4
+arms film fa_lantern_broker_chainblade_execution_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_shieldblade
+wait 30
+arms pose strike_2 0.1667
+wait 4
+arms film fa_gatewrought_shieldblade_strike_2_a 8 1 3
+wait 9
+arms pose strike_2 0.2500
+wait 4
+arms film fa_gatewrought_shieldblade_strike_2_b 8 1 3
+wait 9
+arms pose riposte 0.0909
+wait 4
+arms film fa_gatewrought_shieldblade_riposte_b 8 1 3
+wait 9
+arms pose undercut 0.0000
+wait 4
+arms film fa_gatewrought_shieldblade_undercut_a 8 1 3
+wait 9
+arms pose undercut 0.0909
+wait 4
+arms film fa_gatewrought_shieldblade_undercut_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_shieldblade
+wait 30
+arms pose strike_2 0.1667
+wait 4
+arms film fa_lordscale_shieldblade_strike_2_a 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:mirror_knight_shieldblade
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_mirror_knight_shieldblade_strike_1_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_warstaff
+wait 30
+arms pose strike_1 0.0909
+wait 4
+arms film fa_wildhide_warstaff_strike_1_a 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_warstaff
+wait 30
+arms pose heavy 0.0357
+wait 4
+arms film fa_gatewrought_warstaff_heavy_a 8 1 3
+wait 9
+arms pose heavy 0.1071
+wait 4
+arms film fa_gatewrought_warstaff_heavy_b 8 1 3
+wait 9
+arms pose riposte 0.0909
+wait 4
+arms film fa_gatewrought_warstaff_riposte_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_precursor
+wait 30
+arms pose riposte 0.0909
+wait 4
+arms film fa_gatewrought_precursor_riposte_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:veilwoven_precursor
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_veilwoven_precursor_strike_1_b 8 1 3
+wait 9
+arms pose off
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_precursor
+wait 30
+arms pose strike_1 0.2000
+wait 4
+arms film fa_lordscale_precursor_strike_1_b 8 1 3
+wait 9
+arms pose strike_2 0.2000
+wait 4
+arms film fa_lordscale_precursor_strike_2_b 8 1 3
+wait 9
+arms pose off
+quit

@@ -3,7 +3,7 @@
  "id": "guardian_orchard",
  "moves": "guardian_orchard",
  "duel": true,
- "stance": 300,
+ "stance": 160,
  "intro": {
   "pose": "kneel",
   "move": "wake"

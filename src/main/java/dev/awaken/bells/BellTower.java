@@ -100,7 +100,7 @@ final class BellTower {
     }
 
     private static @Nullable BlockPos frame(ServerLevel level, BellWorld.Home home) {
-        return home.frame != null && level.isLoaded(home.frame) && level.getBlockState(home.frame).is(BellContent.BELL_FRAME.get()) ? home.frame : null;
+        return home.frame != null && dev.awaken.core.api.Ready.loaded(level, home.frame) && level.getBlockState(home.frame).is(BellContent.BELL_FRAME.get()) ? home.frame : null;
     }
 
     // ---- old towers ----------------------------------------------------------------------------------------------
@@ -113,7 +113,7 @@ final class BellTower {
     static void convert(ServerLevel level, BellWorld.Home home) {
         if (home.stage < 1 || home.beams) return;
         BlockPos f = frame(level, home);
-        if (f == null || !level.hasChunksAt(f.offset(-3, 0, -3), f.offset(3, 0, 3))) return;
+        if (f == null || !dev.awaken.core.api.Ready.area(level, f.offset(-3, 0, -3), f.offset(3, 0, 3))) return;
         Direction face = level.getBlockState(f).getValue(HorizontalDirectionalBlock.FACING);
         Map<BlockPos, BlockState> plan = home.stage >= 3 ? great(f, face) : home.stage == 2 ? tower(f, face) : belfry(f, 0);
         int n = 0;
@@ -138,7 +138,7 @@ final class BellTower {
     static boolean high(ServerLevel level, BellWorld.Home home, BlockPos anchor) {
         if (home.stage >= 1) return true;
         for (BlockPos at : home.placed.values())
-            if (at.getY() - anchor.getY() >= Hanging.BEAM_ABOVE || level.isLoaded(at) && level.getBlockEntity(at) instanceof HooksEntity be && be.old) return true;
+            if (at.getY() - anchor.getY() >= Hanging.BEAM_ABOVE || dev.awaken.core.api.Ready.loaded(level, at) && level.getBlockEntity(at) instanceof HooksEntity be && be.old) return true;
         return false;
     }
 
@@ -154,7 +154,7 @@ final class BellTower {
         BlockPos best = null;
         int no = -1;
         for (Map.Entry<Integer, BlockPos> e : home.placed.entrySet())
-            if ((best == null || e.getValue().getY() > best.getY()) && level.isLoaded(e.getValue())) {
+            if ((best == null || e.getValue().getY() > best.getY()) && dev.awaken.core.api.Ready.loaded(level, e.getValue())) {
                 best = e.getValue();
                 no = e.getKey();
             }
@@ -334,7 +334,7 @@ final class BellTower {
         java.util.List<BellNet.Placed> out = new java.util.ArrayList<>();
         home.placed.forEach((no, at) -> {
             BlockPos q = at;
-            if (level.isLoaded(at) && level.getBlockEntity(at) instanceof HooksEntity be) {
+            if (dev.awaken.core.api.Ready.loaded(level, at) && level.getBlockEntity(at) instanceof HooksEntity be) {
                 int hook = be.hookOf(no);
                 if (hook >= 0) q = BlockPos.containing(Hanging.hookPoint(be.getBlockState(), hook).add(at.getX(), at.getY(), at.getZ()));
             }

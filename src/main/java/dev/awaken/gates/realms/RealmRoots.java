@@ -90,7 +90,7 @@ final class RealmRoots {
         boolean first = true;
         for (Land.Edit e : land.change(moment)) {
             BlockPos at = Realms.world(ref.cell(), e.x(), e.y(), e.z());
-            if (!level.isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
             if (!open && !level.getEntitiesOfClass(LivingEntity.class, new AABB(at)).isEmpty()) continue;
             level.setBlock(at, e.state(), Block.UPDATE_CLIENTS);
             if (first) level.playSound(null, at, open ? SoundEvents.MANGROVE_ROOTS_BREAK : SoundEvents.MANGROVE_ROOTS_PLACE, SoundSource.BLOCKS, 1.0F, 0.7F);

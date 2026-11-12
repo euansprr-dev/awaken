@@ -38,7 +38,11 @@ layout(std140) uniform LensConfig {
 
 layout(location = 0) out vec4 fragColor;
 
+#ifdef LENS_UNIFORMS
+vec4 P(int i) { return LensP[i]; }
+#else
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
+#endif
 
 float hg(float mu, float g) { return (1.0 - g * g) / (12.566 * pow(1.0 + g * g - 2.0 * g * mu, 1.5)); }
 
@@ -278,7 +282,11 @@ vec2 storm(int k, float scene) {
     int nr = clamp(int((rain.y - rain.x) / (ultra ? 16.0 : 18.0)) + 1, 3, rs);
     int nb = clamp(int((body.y - body.x) / (ultra ? 10.5 : 12.0)) + 1, 4, bs);
     int na = clamp(int((anvil.y - anvil.x) / (ultra ? 7.0 : 8.0)) + 1, 3, ans);
-    if (v.y >= 0.0) {
+    if (cloudBlocks()) {
+        // the Air: the cell itself is built of blocks and walked in the composite (lens_storm_blocks.glsl); only its
+        // rain, a soft veil under the base, is still this pass's
+        stormPiece(rain, nr, k);
+    } else if (v.y >= 0.0) {
         stormPiece(rain, nr, k);
         stormPiece(body, nb, k);
         stormPiece(anvil, na, k);

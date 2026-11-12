@@ -217,7 +217,7 @@ public final class Shaping {
         int back = 0;
         for (int i = undo.changes().size() - 1; i >= 0; i--) {
             Change c = undo.changes().get(i);
-            if (!level.isLoaded(c.pos()) || !c.after().matches(level, c.pos()) || !ShapingRules.mayChange(sp, level, c.pos())) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, c.pos()) || !c.after().matches(level, c.pos()) || !ShapingRules.mayChange(sp, level, c.pos())) continue;
             c.before().restore(level, c.pos());
             back++;
             RealShapes.Parts p = RealShapes.read(level, c.pos(), level.getBlockState(c.pos()));

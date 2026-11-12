@@ -46,7 +46,7 @@ public final class Director {
     /** The outcome of one roll: the plan, its trace, and how many play-days until it breaks. */
     public record Roll(GatePlan plan, List<String> trace, int breaksInDays) {}
 
-    // ---- the roll (pure: same seed, rank and memory → same result) ------------------------------------------------
+    // ---- the roll (pure: same seed, rank, memory, loaded data and switches → same result) -----------------------------
 
     /** Rolls a gate for a player and updates their novelty memory exactly as the plan's generator does. */
     public static Roll roll(long seed, Rank playerRank, GateMemory mem, Rank forceRank, Theme forceTheme) {
@@ -84,6 +84,7 @@ public final class Director {
                 + (mem.seenThemes.size() < before ? " (bag refilled)" : "")
                 + (mem.seenThemes.isEmpty() ? "" : ", been in " + String.join(", ", names(mem.seenThemes)))
                 + (standing.isEmpty() ? "" : ", standing " + String.join(", ", names(List.copyOf(standing))))
+                + leftOut(g)
                 + " → " + theme.displayName + (forceTheme != null ? " (forced)" : ""));
 
         // 3 layout: not one of the last 2
@@ -133,7 +134,7 @@ public final class Director {
 
         // the second gate / inner gate: another theme of the same rank, never the main one
         List<Theme> others = new ArrayList<>();
-        for (Theme t : Theme.values()) if (t.fits(g) && t != theme && !t.friendly) others.add(t);
+        for (Theme t : Theme.values()) if (inBag(t, g) && t != theme && !t.friendly) others.add(t);
         Theme annex = others.isEmpty() ? theme : others.get((int) (rng.nextDouble() * others.size()));
         int annexRule = (int) (rng.nextDouble() * 3);
         long planSeed = Hash.mix(seed ^ 0x51ED270B27C3A5L);
@@ -157,14 +158,43 @@ public final class Director {
         }
         // every theme left already stands somewhere for you: a twin beats no gate
         if (pool.stream().allMatch(t -> t.friendly)) pool = unseen(g, mem, Set.of());
-        if (pool.isEmpty()) for (Theme t : Theme.values()) if (t.fits(g)) pool.add(t);
+        if (pool.isEmpty()) for (Theme t : Theme.values()) if (inBag(t, g)) pool.add(t);
         return pool;
     }
 
     private static List<Theme> unseen(Rank g, GateMemory mem, Set<String> standing) {
         List<Theme> out = new ArrayList<>();
-        for (Theme t : Theme.values()) if (t.fits(g) && !mem.seenThemes.contains(t.id) && !standing.contains(t.id)) out.add(t);
+        for (Theme t : Theme.values()) if (inBag(t, g) && !mem.seenThemes.contains(t.id) && !standing.contains(t.id)) out.add(t);
         return out;
+    }
+
+    /**
+     * Whether a theme goes in the bag at this rank. It must fit; and while open lands are off (SPEC §50.7, Euan 12 Nov: "we
+     * only have the ... dungeon ones") it must have something under a roof there, a Realm or a floor world, or its gates
+     * would be the oldest plain rooms (today the Lantern Night Market and the Sky Archipelago). A rank where that would
+     * leave no theme at all keeps every theme that fits, and says so once in the log.
+     */
+    public static boolean inBag(Theme t, Rank g) {
+        if (!t.fits(g)) return false;
+        if (dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.get() || roofed(t, g)) return true;
+        for (Theme o : Theme.values()) if (o.fits(g) && roofed(o, g)) return false;
+        if (BARE.add(g)) dev.awaken.Awaken.LOG.warn("[director] open lands are off and no theme has anything under a roof at rank {}: every theme that fits stays in the bag", g.label);
+        return true;
+    }
+
+    private static final Set<Rank> BARE = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /** For the trace: the themes that fit this rank but stay out of the bag while open lands are off. */
+    private static String leftOut(Rank g) {
+        List<String> out = new ArrayList<>();
+        for (Theme t : Theme.values()) if (t.fits(g) && !inBag(t, g)) out.add(t.id);
+        return out.isEmpty() ? "" : ", open lands off so not " + String.join(", ", names(out));
+    }
+
+    /** A Realm or a floor world under a roof for this theme at this rank, by the loaded data and today's switches. */
+    static boolean roofed(Theme t, Rank g) {
+        return dev.awaken.core.AwakenConfig.GATE_REALMS.get() && !dev.awaken.gates.realms.Blueprints.open(t, g, false).isEmpty()
+                || dev.awaken.gates.worlds.GateWorlds.roofedWorld(t, g);
     }
 
     /** The themes of this player's gates still standing (derived, so a closed gate goes back in by itself). */

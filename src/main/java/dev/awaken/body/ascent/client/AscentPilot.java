@@ -23,22 +23,31 @@ import net.minecraft.util.Mth;
  * rec &lt;name&gt; &lt;ticks&gt; [n]     film a clip (every n-th frame)
  * route rec|play|stop [name] record a run's keys and view, or play one back from its start ({@link AscentRoutes})
  * aether &lt;0..1&gt;              set this client's Aether (to film the meter and its empty)
- * double &lt;key&gt;               a double tap, as a player's: 2 ticks down, 3 up, 2 down (a barrel roll: double right)
+ * double &lt;key&gt; [gap]         a double tap, as a player's: 2 ticks down, up, 2 down again gap ticks after the first
+ *                            (default 5; a barrel roll: double right; a double jump timed: double jump 7)
  * use | attack               one click of the use or attack key (a door, a lever, a plant: the touches, Hands P4)
+ * hold attack &lt;ticks&gt;        the attack key held down (the aimed dive reads it held, SPEC §17.33)
+ * aimat &lt;x&gt; &lt;y&gt; &lt;z&gt; &lt;ticks&gt;  look from the eye at that point every tick for so long (the aimed dive's tour)
  * usehold &lt;ticks&gt;            hold the use key (eating)
  * station &lt;slot&gt; [button]     a click on a slot of the open crafting-table scene (Hands P5)
+ * where &lt;label&gt;              log where the feet are (a tour's landing points)
  * stop                       let go of everything
  * </pre>
  */
 public final class AscentPilot {
     private AscentPilot() {}
 
-    private static final int FORWARD = 0, BACK = 1, LEFT = 2, RIGHT = 3, JUMP = 4, SNEAK = 5, SPRINT = 6, TETHER = 7;
-    private static final int[] HOLD = new int[8];
+    private static final int FORWARD = 0, BACK = 1, LEFT = 2, RIGHT = 3, JUMP = 4, SNEAK = 5, SPRINT = 6, TETHER = 7, ATTACK = 8;
+    private static final int[] HOLD = new int[9];
+    /** The attack key was set down by a hold (only then is it let go: a real click is never touched). */
+    private static boolean attackSet;
+    /** "aimat": the point looked at, and for how many more ticks. */
+    private static double aimAtX, aimAtY, aimAtZ;
+    private static int aimAtTicks;
     private static float aimYaw, aimPitch, aimStepYaw, aimStepPitch;
     private static int aimTicks;
     /** A double tap in progress: the key and how far along (-1: none). */
-    private static int doubleKey = -1, doubleAge = -1;
+    private static int doubleKey = -1, doubleAge = -1, doubleGap = 5;
     /** Ticks left holding the use key ("usehold"). */
     private static int useHold;
     /** Keys were pressed last tick (released once when the holds run out). */
@@ -61,6 +70,12 @@ public final class AscentPilot {
                     if (i >= 0) HOLD[i] = t;
                 }
             }
+            case "aimat" -> {
+                aimAtX = Double.parseDouble(a[1]);
+                aimAtY = Double.parseDouble(a[2]);
+                aimAtZ = Double.parseDouble(a[3]);
+                aimAtTicks = Math.max(1, Integer.parseInt(a[4]));
+            }
             case "aim" -> {
                 float yaw = Float.parseFloat(a[1]), pitch = Float.parseFloat(a[2]);
                 aimTicks = Math.max(1, Integer.parseInt(a[3]));
@@ -76,6 +91,9 @@ public final class AscentPilot {
                 age = count = phase = mark = misses = 0;
                 laneYaw = p.getYRot();
                 core = null;
+                // "run climb 25": up the rings, then 25 s looking round the deck before walking in to the core
+                linger = a[1].equals("climb") && a.length > 2 ? Integer.parseInt(a[2]) * 20 : 0;
+                deckAt = -1;
             }
             // on a line from an anchor at once (the rappel stage), the line held for half a minute (a script takes over)
             case "rappel" -> {
@@ -100,15 +118,35 @@ public final class AscentPilot {
             case "double" -> {
                 doubleKey = key(a[1]);
                 doubleAge = 0;
+                doubleGap = a.length > 2 ? Math.max(3, Integer.parseInt(a[2])) : 5;
             }
             case "use" -> net.minecraft.client.KeyMapping.click(mc.options.keyUse.getKey());
             case "station" -> dev.awaken.anims.client.station.StationClient.devClick(Integer.parseInt(a[1]), a.length > 2 ? Integer.parseInt(a[2]) : 0);
+            case "hover" -> dev.awaken.anims.client.station.StationClient.devHover(Integer.parseInt(a[1]));
+            // sweep <from> <to> <ticks>: the pointer from one slot of the open station scene to another, a step a tick;
+            // handslog on|off: a line a frame of where the world arms are drawn; sides on|off: scenes laid out as beside
+            // JEI's panels (SPEC §65.2: the proof that a hand held still is still)
+            case "sweep" -> dev.awaken.anims.client.station.StationClient.devSweep(Integer.parseInt(a[1]), Integer.parseInt(a[2]), Integer.parseInt(a[3]));
+            case "handslog" -> dev.awaken.anims.client.HandsLog.on = a[1].equals("on");
+            case "sides" -> dev.awaken.anims.client.station.StationClient.devSides = a[1].equals("on");
+            // clip <name>|stop: a body clip on your own body, so a tour can film a pose in third person (SPEC §65.5)
+            case "clip" -> {
+                if (a[1].equals("stop")) dev.awaken.core.api.PlayerClips.stop(p.getId());
+                else Awaken.LOG.info("[ascent] pilot clip {} {}", a[1], dev.awaken.core.api.PlayerClips.play(p.getId(), a[1], a.length > 2 ? Integer.parseInt(a[2]) : 2));
+            }
             case "attack" -> net.minecraft.client.KeyMapping.click(mc.options.keyAttack.getKey());
             case "usehold" -> {
                 useHold = Integer.parseInt(a[1]);
                 mc.options.keyUse.setDown(true);
             }
             case "aether" -> AscentMoves.aether = Math.max(0, Math.min(1, Double.parseDouble(a[1])));
+            // the wings' studio (SPEC §62): "wings <state|off> [rung]" holds your wings in a state; "wingset <key> <value>" a number
+            case "wings" -> {
+                if (mc.player != null) WingLayer.studio(mc.player.getId(), a[1], a.length > 2 ? a[2] : "");
+            }
+            case "wingset" -> WingLayer.tune(a[1], Float.parseFloat(a[2]));
+            case "where" -> Awaken.LOG.info("[ascent] where {} {} {} {} {}", a.length > 1 ? a[1] : "-", String.format("%.2f", p.getX()),
+                    String.format("%.2f", p.getY()), String.format("%.2f", p.getZ()), p.onGround() ? "on the ground" : "in the air");
             case "stop" -> stop();
             default -> Awaken.LOG.warn("[ascent] pilot: unknown line {}", line);
         }
@@ -124,6 +162,7 @@ public final class AscentPilot {
             case "sneak" -> SNEAK;
             case "sprint" -> SPRINT;
             case "tether" -> TETHER;
+            case "attack" -> ATTACK;
             default -> -1;
         };
     }
@@ -132,6 +171,7 @@ public final class AscentPilot {
         script = "";
         java.util.Arrays.fill(HOLD, 0);
         aimTicks = 0;
+        aimAtTicks = 0;
         apply();
     }
 
@@ -148,6 +188,7 @@ public final class AscentPilot {
                 case "boom" -> glide(p, true);
                 case "soar" -> soar(p);
                 case "climb" -> climb(p);
+                case "stair" -> stair(p);
                 case "leap" -> leap(p);
                 case "spire" -> spire(p);
                 case "rappel" -> rappel(p);
@@ -160,11 +201,18 @@ public final class AscentPilot {
             p.setYHeadRot(p.getYRot());
             p.setXRot(Mth.clamp(p.getXRot() + aimStepPitch, -90, 90));
         }
+        if (aimAtTicks > 0) {
+            aimAtTicks--;
+            double dx = aimAtX - p.getX(), dy = aimAtY - p.getEyeY(), dz = aimAtZ - p.getZ();
+            p.setYRot((float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG));
+            p.setYHeadRot(p.getYRot());
+            p.setXRot((float) Mth.clamp(-Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG, -90, 90));
+        }
         // in Shoulder Surfing's decoupled view the camera is the look: it follows the pilot's
-        if (!script.isEmpty() || aimTicks > 0) dev.awaken.body.client.feel.ShoulderView.look(p.getYRot(), p.getXRot());
+        if (!script.isEmpty() || aimTicks > 0 || aimAtTicks > 0) dev.awaken.body.client.feel.ShoulderView.look(p.getYRot(), p.getXRot());
         if (doubleAge >= 0 && doubleKey >= 0) {
-            if (doubleAge == 0 || doubleAge == 5) HOLD[doubleKey] = Math.max(HOLD[doubleKey], 2);
-            if (++doubleAge > 6) doubleAge = -1;
+            if (doubleAge == 0 || doubleAge == doubleGap) HOLD[doubleKey] = Math.max(HOLD[doubleKey], 2);
+            if (++doubleAge > doubleGap + 1) doubleAge = -1;
         }
         boolean any = false;
         for (int i = 0; i < HOLD.length; i++) if (HOLD[i] > 0) any = true;
@@ -189,6 +237,9 @@ public final class AscentPilot {
         set(o.keyShift, HOLD[SNEAK] > 0);
         set(o.keySprint, HOLD[SPRINT] > 0);
         set(AwakenKeys.ROPE, HOLD[TETHER] > 0);
+        boolean attack = HOLD[ATTACK] > 0;
+        if (attack || attackSet) set(o.keyAttack, attack);
+        attackSet = attack;
     }
 
     private static void set(KeyMapping k, boolean down) {
@@ -240,7 +291,9 @@ public final class AscentPilot {
                 p.setXRot(Mth.approach(p.getXRot(), -8F, 3F));
                 press(TETHER, 2);
                 press(FORWARD, 2);
-                double q = AscentRules.releaseQuality(AscentMoves.K, AscentMoves.ax, AscentMoves.ay, AscentMoves.az);
+                // the assisted swing's own window (the rope's glow); the old pendulum's release quality otherwise
+                double q = AscentMoves.swinging() ? AscentMoves.windowNow
+                        : AscentRules.releaseQuality(AscentMoves.K, AscentMoves.ax, AscentMoves.ay, AscentMoves.az);
                 if (AscentMoves.stateAge > 12 && q > 0.75) {
                     count++;
                     mark = age;
@@ -315,10 +368,14 @@ public final class AscentPilot {
     }
 
     /** Off the tower into flight: wings, take flight, cruise, boost, bank through a turn, slow to a hover. */
+    /** The climb's look round the deck before walking in (ticks), and when it stood on the deck (-1: not yet). */
+    private static int linger, deckAt = -1;
+
     /**
      * Up a sky platform's ladder (SPEC §17.9): look at the underside of the next anchor ring above (or, with none
      * left, the side of the pier over the chain) and throw the rope; from each hang under a ring, let go and throw at
-     * the next. On the deck, walk round the cabin to its door and in to the core. Ends with the wings or after 2 min.
+     * the next. On the deck (after a look round: {@code run climb 25} looks 25 s), walk round the cabin to its door and in to the
+     * core. Ends with the wings or after 2 min.
      */
     private static void climb(LocalPlayer p) {
         AscentState st = AscentMoves.state();
@@ -329,7 +386,19 @@ public final class AscentPilot {
                 Awaken.LOG.info("[ascent] pilot: the core gave wings");
                 script = "";
             } else if (st == AscentState.NONE && p.onGround()) {
-                walkToCore(p, core);
+                if (deckAt < 0) {
+                    deckAt = age;
+                    Awaken.LOG.info("[ascent] pilot: up on the deck after {} s{}", String.format("%.1f", age / 20.0),
+                            linger > 0 ? ", looking round for " + linger / 20 + " s" : "");
+                }
+                if (age - deckAt < linger) {
+                    // a player taking in the view: still on the deck, turning slowly
+                    p.setYRot(p.getYRot() + 1.2F);
+                    p.setYHeadRot(p.getYRot());
+                    p.setXRot(5);
+                } else {
+                    walkToCore(p, core);
+                }
             }
             return;
         }
@@ -417,6 +486,135 @@ public final class AscentPilot {
             }
         }
         if (age > 2400) script = "";
+    }
+
+    /** The stair's platform (its core) once found from the ground, and the stone last stood on (-1: none yet). */
+    private static net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos stairCore;
+    private static int stairOn = -1, stairGround;
+
+    /**
+     * Up a sky platform's stair (SPEC §17.9) as a player plays it: find the platform overhead, then look at the next
+     * stone up (the lowest one above the feet), run and hop off each stone, hold the rope through the air and let go of
+     * a swing as its glow lights; a sling or a pull up a face is held through. With no stone left above, the deck's rim
+     * nearest. On the deck, walk in to the core. Logs each stone stood on. Ends with the wings or after 3 min.
+     */
+    private static void stair(LocalPlayer p) {
+        AscentState st = AscentMoves.state();
+        if (age == 1) {
+            stairCore = platformOver(p);
+            stairOn = -1;
+            stairGround = 0;
+            Awaken.LOG.info("[ascent] pilot stair: the core {}", stairCore == null ? "not found" : stairCore.toShortString());
+        }
+        net.minecraft.core.BlockPos c = stairCore;
+        if (c == null || age > 3600) {
+            if (age > 3600) Awaken.LOG.info("[ascent] pilot stair: out of time on stone {}", stairOn);
+            script = "";
+            return;
+        }
+        int deckY = c.getY() - 1;
+        if (p.getY() > deckY + 0.5 && Math.hypot(p.getX() - c.getX() - 0.5, p.getZ() - c.getZ() - 0.5) < 12) {
+            if (AscentMoves.has(dev.awaken.body.ascent.AscentPayloads.Tier.WINGS)) {
+                Awaken.LOG.info("[ascent] pilot stair: on the deck after {} s; the core gave wings", age / 20);
+                script = "";
+            } else if (st == AscentState.NONE && p.onGround()) {
+                if (stairOn != 99) Awaken.LOG.info("[ascent] pilot stair: on the deck after {} s", age / 20);
+                stairOn = 99;
+                walkToCore(p, c);
+            }
+            return;
+        }
+        var helix = dev.awaken.above.ruin.SkyRig.helix(c.getX(), deckY, c.getZ(), dev.awaken.above.ruin.SkyRig.Stair.DEFAULT, p.level().getMinY());
+        // the lowest stone above the feet that stands (its grass is there), counted from the bottom
+        double tx = Double.NaN, ty = 0, tz = 0;
+        int n = helix.size(), next = -1;
+        for (int i = n - 1; i >= 0; i--) {
+            var s = helix.get(i);
+            if (s.top() + 0.5 < p.getY() || p.level().getBlockState(new net.minecraft.core.BlockPos(s.x(), s.top(), s.z())).isAir()) continue;
+            tx = s.x() + 0.5;
+            ty = s.top() + 1;
+            tz = s.z() + 0.5;
+            next = n - 1 - i;
+            break;
+        }
+        if (Double.isNaN(tx)) {
+            // over the top stone: the deck's rim nearest
+            double ox = p.getX() - c.getX() - 0.5, oz = p.getZ() - c.getZ() - 0.5, od = Math.max(1e-3, Math.hypot(ox, oz));
+            tx = c.getX() + 0.5 + ox / od * 9;
+            ty = deckY + 1;
+            tz = c.getZ() + 0.5 + oz / od * 9;
+        }
+        if (p.onGround() && st == AscentState.NONE) {
+            // stood on a stone: which one
+            for (int i = 0; i < n; i++) {
+                var s = helix.get(i);
+                if (Math.abs(p.getY() - s.top() - 1) < 0.6 && Math.hypot(p.getX() - s.x() - 0.5, p.getZ() - s.z() - 0.5) <= s.rad() + 0.6) {
+                    int k = n - 1 - i;
+                    if (k != stairOn) Awaken.LOG.info("[ascent] pilot stair: on stone {} (top {}) at {} s", k, s.top(), age / 20);
+                    stairOn = k;
+                }
+            }
+        }
+        net.minecraft.world.phys.Vec3 eye = p.getEyePosition();
+        double dx = tx - eye.x, dy = ty - eye.y, dz = tz - eye.z;
+        p.setYRot((float) (Mth.atan2(-dx, dz) * Mth.RAD_TO_DEG));
+        p.setYHeadRot(p.getYRot());
+        p.setXRot((float) -(Mth.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * Mth.RAD_TO_DEG));
+        press(FORWARD, 2);
+        switch (st) {
+            case NONE, CARRY -> {
+                if (p.onGround()) {
+                    press(SPRINT, 2);
+                    // a few steps, then the hop; the rope is thrown in the air
+                    if (++stairGround > 3) {
+                        press(JUMP, 2);
+                        stairGround = 0;
+                    }
+                } else if (age - mark > 3) {
+                    press(TETHER, 2);
+                }
+            }
+            case TETHER -> {
+                // a swing: let go as the glow lights (the key up a few ticks), else held
+                if (AscentMoves.windowNow > dev.awaken.body.ascent.AscentSwing.T.winFrom + 0.01 || AscentMoves.stateAge > 60) {
+                    HOLD[TETHER] = 0;
+                    mark = age;
+                    Awaken.LOG.info("[ascent] pilot stair: let go toward stone {} at y {}", next, (int) p.getY());
+                } else {
+                    press(TETHER, 2);
+                }
+            }
+            default -> press(TETHER, 2);
+        }
+    }
+
+    /**
+     * The core of the sky platform over the body: the columns round it whose top stands far overhead are the deck; the
+     * core is searched for over their middle.
+     */
+    private static net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos platformOver(LocalPlayer p) {
+        var level = p.level();
+        double sx = 0, sz = 0;
+        int k = 0, top = 0;
+        for (int dx = -64; dx <= 64; dx += 3) for (int dz = -64; dz <= 64; dz += 3) {
+            int x = p.getBlockX() + dx, z = p.getBlockZ() + dz;
+            int h = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z);
+            if (h < p.getY() + 150) continue;
+            sx += x;
+            sz += z;
+            top = Math.max(top, h);
+            k++;
+        }
+        if (k == 0) return null;
+        int cx = (int) Math.round(sx / k), cz = (int) Math.round(sz / k);
+        net.minecraft.core.BlockPos.MutableBlockPos m = new net.minecraft.core.BlockPos.MutableBlockPos();
+        // down from the highest thing up there, which may be a tree on one of the torn islands well over the deck (30
+        // down could miss the core under a tall one)
+        for (int y = top; y >= top - 80; y--) for (int dx = -18; dx <= 18; dx++) for (int dz = -18; dz <= 18; dz++) {
+            m.set(cx + dx, y, cz + dz);
+            if (level.getBlockState(m).is(dev.awaken.body.ascent.AscentContent.WING_CORE.get())) return m.immutable();
+        }
+        return null;
     }
 
     /**

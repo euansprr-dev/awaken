@@ -71,6 +71,13 @@ public final class ClientMoves {
     private static boolean vaultWasSprinting, vaultPlanted;
     /** Up onto a top: forward is held back until it's let go, so the body stops there (over a drop too). */
     static boolean perchHold;
+    /**
+     * A climb from the air the Ascent handed over this tick (SPEC §17.32): its leap met an edge and stood aside, so this
+     * side starts the crossing or the mantle (neither: a lip in the hang's band, which the Runner takes this tick).
+     */
+    private static int catchAt = -100;
+    private static VaultRules.@Nullable Vault catchVault;
+    private static BodyRules.@Nullable Ledge catchLedge;
     private static final double[] RAIL = new double[2];
     // roll
     static int rollAt = -100;
@@ -164,14 +171,32 @@ public final class ClientMoves {
                     // a fence, gate or wall (SPEC §17.27): over it, or up onto it
                     VaultRules.Vault v = vaultAhead(p, jumpPressed);
                     if (v != null) {
-                        startVault(p, in, v);
+                        startVault(p, in, v, false);
                         return;
                     }
                     // (a jump pressed has already lifted the free-run's stop on the ledge just climbed)
                     BodyRules.Ledge l = FreeRun.SETTLE.stopped() ? null
                             : BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), p.getYRot(), BodyRules.MANTLE_REACH);
                     if (l != null) {
-                        startMantle(p, in, l);
+                        startMantle(p, in, l, false);
+                        return;
+                    }
+                }
+                // from the air (SPEC §17.32): a jump pressed there, or a leap the Ascent handed over this tick, climbs what's
+                // in front the way a jump from the ground would
+                if (!p.onGround() && !k.backward() && (catchAt == ticks || jumpPressed)) {
+                    if (catchAt != ticks) airProbe(p);
+                    catchAt = -100;
+                    VaultRules.Vault v = catchVault;
+                    BodyRules.Ledge l = catchLedge;
+                    catchVault = null;
+                    catchLedge = null;
+                    if (v != null) {
+                        startVault(p, in, v, true);
+                        return;
+                    }
+                    if (l != null) {
+                        startMantle(p, in, l, true);
                         return;
                     }
                 }
@@ -226,7 +251,11 @@ public final class ClientMoves {
     }
 
     private static void send(Move move, float yaw, double x, double y, double z, double speed, boolean flag) {
-        ClientPacketDistributor.sendToServer(new BodyPayloads.Start(move.ordinal(), yaw, x, y, z, (float) speed, flag));
+        send(move, yaw, x, y, z, speed, flag, false);
+    }
+
+    private static void send(Move move, float yaw, double x, double y, double z, double speed, boolean flag, boolean air) {
+        ClientPacketDistributor.sendToServer(new BodyPayloads.Start(move.ordinal(), yaw, x, y, z, (float) speed, flag, air));
     }
 
     private static void sendEnd(Move move) {
@@ -483,7 +512,55 @@ public final class ClientMoves {
                 && !vaulting;
     }
 
-    private static void startMantle(LocalPlayer p, ClientInput in, BodyRules.Ledge l) {
+    /** The air's version (SPEC §17.32): the same, in the air, with nothing else holding the body (the Ascent asks before its own end). */
+    private static boolean canAirMantle(LocalPlayer p) {
+        return Body.unlocked(p, Move.MANTLE) && !p.onGround() && !p.isInLiquid() && !p.isUsingItem() && !p.isBlocking() && !mantling
+                && !sliding && !vaulting && !perchHold && !RunnerMoves.active() && !p.isPassenger() && !p.isSpectator() && p.isAlive()
+                && !p.getAbilities().flying && !p.isFallFlying() && !Veil.isSpirit(p) && !dev.awaken.core.api.MovementHooks.burdened(p)
+                && (dev.awaken.body.BodyConfig.runnersKit() || Progression.profile(p).awakened());
+    }
+
+    /**
+     * What a jump from the ground would climb, from where the body is in the air (SPEC §17.32): a fence's, gate's or
+     * wall's crossing first, as on the ground, else a ledge or a stair top from {@link BodyRules#AIR_MANTLE_MIN} up to
+     * the mantle's own height over the feet. Into {@link #catchVault} / {@link #catchLedge}; true when there's one.
+     */
+    private static boolean airProbe(LocalPlayer p) {
+        catchVault = null;
+        catchLedge = null;
+        if (!canAirMantle(p)) return false;
+        float yaw = p.getYRot();
+        if (!perchHold && Body.unlocked(p, Move.VAULT)) {
+            boolean run = FreeRun.held || p.isSprinting();
+            catchVault = VaultRules.find(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), yaw,
+                    run ? VaultRules.REACH_RUN : VaultRules.REACH_WALK, run, airPace(p), true);
+            if (catchVault != null) return true;
+        }
+        catchLedge = BodyRules.findLedge(p.level(), CollisionContext.of(p), p.getX(), p.getY(), p.getZ(), yaw, BodyRules.MANTLE_REACH,
+                BodyRules.AIR_MANTLE_MIN);
+        return catchLedge != null;
+    }
+
+    /** The pace in the air (the air's drag is off the stored motion), as the ground's crossing reads its run's. */
+    private static double airPace(LocalPlayer p) {
+        return p.getDeltaMovement().horizontalDistance() / 0.91;
+    }
+
+    /**
+     * For the Ascent (SPEC §17.32): from the air, an edge in front this body climbs now, the way a jump from the ground
+     * would (a crossing, a ledge or a stair top), or with {@code forward} a lip in the hang's band (the Runner's catch).
+     * True holds it for this tick: the Ascent stands aside (ends its carry, or doesn't spend the double jump) and this
+     * side starts it in the same tick.
+     */
+    public static boolean airCatch(LocalPlayer p, boolean forward) {
+        catchAt = -100;
+        if (!airProbe(p) && !(forward && canAirMantle(p) && RunnerMoves.edgeAhead(p))) return false;
+        catchAt = ticks;
+        trace(catchVault != null ? "air catch: a crossing" : catchLedge != null ? "air catch: a ledge" : "air catch: a hang");
+        return true;
+    }
+
+    private static void startMantle(LocalPlayer p, ClientInput in, BodyRules.Ledge l, boolean air) {
         mantling = true;
         mantleAge = 0;
         mantleStart = ticks;
@@ -494,8 +571,8 @@ public final class ClientMoves {
         in.keyPresses = with(in.keyPresses, false, in.keyPresses.shift());
         jumpSuppressed = true; // holding jump through the climb doesn't hop on top
         float yaw = p.getYRot();
-        send(Move.MANTLE, yaw, l.x(), l.y(), l.z(), 0, false);
-        trace("mantle onto " + String.format("%.2f", l.height()));
+        send(Move.MANTLE, yaw, l.x(), l.y(), l.z(), 0, false, air);
+        trace((air ? "air mantle onto " : "mantle onto ") + String.format("%.2f", l.height()));
         BodyAnims.play(p.getId(), Move.MANTLE, yaw);
         BodyFx.sound(p, BodyContent.MANTLE.get(), 0.8F, 1F);
         double dx = -Mth.sin(yaw * Mth.DEG_TO_RAD), dz = Mth.cos(yaw * Mth.DEG_TO_RAD);
@@ -565,11 +642,12 @@ public final class ClientMoves {
                 run ? VaultRules.REACH_RUN : VaultRules.REACH_WALK, run, speed);
     }
 
-    private static void startVault(LocalPlayer p, ClientInput in, VaultRules.Vault v) {
+    private static void startVault(LocalPlayer p, ClientInput in, VaultRules.Vault v, boolean air) {
         boolean run = FreeRun.held || p.isSprinting(); // as vaultAhead asked: the server asks the same
         in.keyPresses = with(in.keyPresses, false, false);
         float yaw = p.getYRot();
-        send(Move.VAULT, yaw, v.endX(), v.floor(), v.endZ(), p.getDeltaMovement().horizontalDistance() / 0.546, run);
+        send(Move.VAULT, yaw, v.endX(), v.floor(), v.endZ(), air ? airPace(p) : p.getDeltaMovement().horizontalDistance() / 0.546, run, air);
+        if (air) trace("from the air");
         beginVault(p, in, v, yaw);
     }
 

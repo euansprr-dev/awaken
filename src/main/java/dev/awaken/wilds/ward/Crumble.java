@@ -85,7 +85,7 @@ public final class Crumble {
 
     /** Takes the block back and returns its item. False when it was already gone or changed (nothing to give back). */
     private static boolean crumble(MinecraftServer server, ServerLevel level, Pending p) {
-        if (!level.hasChunkAt(p.pos())) return false; // unloaded: it stays; wards hold where someone is looking
+        if (!dev.awaken.core.api.Ready.at(level, p.pos())) return false; // unloaded: it stays; wards hold where someone is looking
         BlockState now = level.getBlockState(p.pos());
         if (!now.is(p.placed().getBlock())) return false;
         ItemStack back = p.item().copy();

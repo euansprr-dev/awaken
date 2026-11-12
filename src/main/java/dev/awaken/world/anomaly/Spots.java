@@ -88,7 +88,7 @@ public final class Spots {
         // never inside Carillon (its core plus the reserve margin; SPEC §16.2)
         if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD
                 && dev.awaken.terrain.api.CityBasin.reserved(ground.getX(), ground.getZ())) return "city";
-        if (!level.hasChunksAt(ground.getX() - BOX, ground.getZ() - BOX, ground.getX() + BOX, ground.getZ() + BOX)
+        if (!dev.awaken.core.api.Ready.area(level, ground.getX() - BOX, ground.getZ() - BOX, ground.getX() + BOX, ground.getZ() + BOX)
                 || !level.isPositionEntityTicking(ground)) return "unloaded";
         if (rules.hearth().near(level, ground, HEARTH_CLEARANCE)) return "hearth";
         if (data != null) {
@@ -140,7 +140,7 @@ public final class Spots {
             int dist = rules.minDist() + r.nextInt(Math.max(1, rules.maxDist() - rules.minDist() + 1));
             int x = from.getX() + (int) Math.round(Math.cos(angle) * dist);
             int z = from.getZ() + (int) Math.round(Math.sin(angle) * dist);
-            if (!level.hasChunkAt(x, z)) {
+            if (!dev.awaken.core.api.Ready.at(level, x, z)) {
                 rejects.merge("unloaded", 1, Integer::sum);
                 continue;
             }

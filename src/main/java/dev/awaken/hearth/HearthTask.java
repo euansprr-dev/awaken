@@ -22,6 +22,10 @@ import java.util.List;
  * room and what it needs.
  * <p>At home the first steps lead the card (after the first moves); from afar they wait until nothing else is on it,
  * and send you home (the Now line names it). What comes after shows only at home.
+ * <p>A step done stays done (SPEC §27.14; Euan 2026-11-11, after a gate: "a task can never not be completed if it
+ * actually is completed"): the room's step reads whether this home has ever had a room ({@link HearthRecord#hadRoom}),
+ * not the last scan. The card's id names the home, so the card's own memory of ticked rows ({@code Checklist}) is this
+ * home's, and a new fire starts its steps afresh.
  */
 public final class HearthTask {
     private HearthTask() {}
@@ -63,7 +67,7 @@ public final class HearthTask {
         if (firstSteps(p, h)) {
             // only the step being done points: home on the Now line from afar, the fire on the card's own compass at home
             String place = here ? "" : HOME;
-            boolean fire = h.hearthfire(), room = !h.rooms.isEmpty(), seen = seen(p);
+            boolean fire = h.hearthfire(), room = h.hadRoom(), seen = seen(p);
             List<Checklist.Row> rows = new ArrayList<>(3);
             if (fire) {
                 // the guide waits for a room: before that, an empty hand on the fire lifts the coal again
@@ -73,17 +77,20 @@ public final class HearthTask {
             } else {
                 rows.add(new Checklist.Row(GUIDE_ANCHOR, "", false, 0, 0, h.pos, place));
             }
-            return new Checklist.Task("hearth:first", TITLE, rows);
+            return new Checklist.Task(FIRST + h.pos.asLong(), TITLE, rows);
         }
         if (!here) return null;
         Checklist.Row next = next(p, h);
         return next == null ? null : new Checklist.Task("hearth:home", TITLE, List.of(next));
     }
 
+    /** The first steps' card id, then the home's place: each home's steps are its own. */
+    static final String FIRST = "hearth:first@";
+
     /** A room by the fire, the guide seen, the Heart in hand put on the fire: until then the card is the home's. */
     static boolean firstSteps(ServerPlayer p, HearthRecord h) {
         if (!seen(p)) return true;
-        return h.hearthfire() && (h.rooms.isEmpty() || HearthNow.holds(p, CoreApi.LORD_HEART.get()));
+        return h.hearthfire() && (!h.hadRoom() || HearthNow.holds(p, CoreApi.LORD_HEART.get()));
     }
 
     private static boolean seen(ServerPlayer p) {

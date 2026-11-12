@@ -793,7 +793,7 @@ public final class ThemeBlocks {
         @Override
         protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource r) {
             BlockPos at = pos.offset(r.nextInt(9) - 4, r.nextInt(3) - 1, r.nextInt(9) - 4);
-            if (!level.isLoaded(at)) return;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) return;
             BlockState s = level.getBlockState(at);
             if (s.getBlock() instanceof BonemealableBlock b && b.isValidBonemealTarget(level, at, s, BonemealSource.INTERACTION)
                     && !(s.getBlock() instanceof net.minecraft.world.level.block.GrassBlock)) {

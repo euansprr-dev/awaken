@@ -169,7 +169,7 @@ public final class ArmsPredict {
     static void press(LocalPlayer p, Minecraft mc) {
         Archetypes.Loaded st = Arms.styleOf(p.getMainHandItem());
         if (st == null) return;
-        int target = pressTarget(mc);
+        int target = pressTarget(mc, p, st);
         int s = nextSeq();
         ArmsFilm.event("press seq " + s + " target " + target);
         aimedId = dev.awaken.core.api.Aim.meantId(p, target, p.getYRot(), p.getXRot(), ArmsRules.pressReach(st));
@@ -244,11 +244,15 @@ public final class ArmsPredict {
         playedAt = ticks;
     }
 
-    /** The creature a press means (SPEC §40.1): the lock, else what the crosshair is on, else the mark; the server checks it. */
-    private static int pressTarget(Minecraft mc) {
+    /**
+     * The creature a press means (SPEC §40.1, §40.3): the lock, else what the crosshair is on, else the mark, else the calm
+     * creature of the wild nearest the look within the weapon's reach (no mark shows it); the server checks it.
+     */
+    private static int pressTarget(Minecraft mc, LocalPlayer p, Archetypes.Loaded st) {
         int aim = dev.awaken.core.api.Aim.target();
         if (dev.awaken.core.api.Aim.locked()) return pressed = aim;
-        return pressed = mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : aim;
+        if (mc.hitResult instanceof EntityHitResult ehr) return pressed = ehr.getEntity().getId();
+        return pressed = aim >= 0 ? aim : dev.awaken.core.api.Aim.calm(p, p.getYRot(), p.getXRot(), ArmsRules.markReach(st));
     }
 
     /** Whether a press at {@code target} means a fight ({@link ArmsRules#meansFight}): locked, under the crosshair, or the mark in reach. */
@@ -486,10 +490,26 @@ public final class ArmsPredict {
         return underAt + (ArmsFeel.nanos() - ArmsFeel.paused() - underFrom) / ArmsFeel.TICK_NANOS;
     }
 
-    /** This weapon's draw, in ticks, from its charge's glint. */
+    /**
+     * This weapon's draw, in ticks, from the tick its charge is full on: the glint, or its min against a body that kneels
+     * (SPEC §68.6). Fixed as the draw begins, so a kneel that starts mid-draw never jumps the hands.
+     */
     static float drawTicks() {
+        if (drawSeen) return drawLen;
         Archetype.MoveDef heavy = style == null ? null : style.move(Archetype.Move.HEAVY);
-        return ChargeDraw.ticks(heavy == null || heavy.charge().isEmpty() ? 14 : heavy.charge().get().glint());
+        return ChargeDraw.ticks(heavy == null || heavy.charge().isEmpty() ? 14 : ArmsRules.fullAt(heavy.charge().get(), meantKneels(Minecraft.getInstance())));
+    }
+
+    private static float drawLen = ChargeDraw.ticks(14);
+    /** The charge's ting has rung for this charge (once, on the tick it is full). */
+    private static boolean glintRung;
+
+    /** Whether the creature a release now would mean (as {@link #pressTarget} picks it, but for the calm) kneels, its stance broken. */
+    private static boolean meantKneels(Minecraft mc) {
+        if (BROKEN.isEmpty()) return false;
+        int id = dev.awaken.core.api.Aim.locked() ? dev.awaken.core.api.Aim.target()
+                : mc.hitResult instanceof EntityHitResult ehr ? ehr.getEntity().getId() : dev.awaken.core.api.Aim.target();
+        return id >= 0 && BROKEN.containsKey(id);
     }
 
     /** How far the hands have come along this press's draw (0..1). */
@@ -505,6 +525,7 @@ public final class ArmsPredict {
     /** The draw's first frame: when it began, and the body starting into the same form (third person). */
     private static void drawBegins(LocalPlayer p) {
         if (drawSeen || !drawing()) return;
+        drawLen = drawTicks();
         drawSeen = true;
         drawFrom = ArmsFeel.nanos() - ArmsFeel.paused();
         ArmsBodies.charge(p, (int) drawTicks());
@@ -630,6 +651,7 @@ public final class ArmsPredict {
                 played("charge");
                 ArmsFilm.event("charge");
                 chargeStart = ticks;
+                glintRung = false;
                 move = Archetype.Move.HEAVY;
                 moveStart = ticks;
                 moveNanos = ArmsFeel.nanos();
@@ -639,7 +661,11 @@ public final class ArmsPredict {
                 ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_CHARGE, p.getYRot(), p.getXRot(), -1));
                 ArmsAudio.charge(p);
             }
-            if (charging && c.min() + (ticks - chargeStart) == c.glint()) ArmsAudio.glint(p);
+            // the ting on the tick it is full: the glint, or at once against a body that kneels (SPEC §68.6)
+            if (charging && !glintRung && c.min() + (ticks - chargeStart) >= ArmsRules.fullAt(c, meantKneels(mc))) {
+                glintRung = true;
+                ArmsAudio.glint(p);
+            }
             return; // held at full charge for as long as the key is down: it goes only when let go (Euan 2026-10-26)
         }
         pressHeld = false;
@@ -650,7 +676,7 @@ public final class ArmsPredict {
         charging = false;
         ArmsFilm.event("release");
         float drawn = drawnNow();
-        int target = pressTarget(mc);
+        int target = pressTarget(mc, p, st);
         ClientPacketDistributor.sendToServer(new ArmsPayloads.Press(seq, ArmsPayloads.PRESS_RELEASE, p.getYRot(), p.getXRot(), target));
         if (target >= 0) aimedId = dev.awaken.core.api.Aim.meantId(p, target, p.getYRot(), p.getXRot(), ArmsRules.pressReach(st));
         int held = c.min() + (ticks - chargeStart);
@@ -687,7 +713,8 @@ public final class ArmsPredict {
         if (heavy == null || heavy.charge().isEmpty()) return -1;
         Archetype.Charge c = heavy.charge().get();
         int held = charging ? c.min() + (ticks - chargeStart) : heldTicks;
-        return Mth.clamp((held - ChargeDraw.GRACE) / (c.glint() - ChargeDraw.GRACE), 0, 1); // full at the glint
+        int full = ArmsRules.fullAt(c, meantKneels(Minecraft.getInstance()));
+        return Mth.clamp((held - ChargeDraw.GRACE) / Math.max(1F, full - ChargeDraw.GRACE), 0, 1); // full at the glint, or at its min on a kneel
     }
 
     /** Whether a held heavy is on its glint right now (a release would be perfect). */
@@ -1056,6 +1083,7 @@ public final class ArmsPredict {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer p = mc.player;
         if (p == null) return;
+        ArmsAnswers.tell(r); // the ring hears how the guard answered (SPEC §68.2)
         switch (r.what()) {
             case ArmsPayloads.MOVE -> {
                 Archetype.Move m = Archetype.Move.byId(r.aux());
@@ -1106,15 +1134,20 @@ public final class ArmsPredict {
             case ArmsPayloads.DEFLECT -> {
                 deflectAt = ticks;
                 fightAt = ticks;
-                CombatFeedback.hitstop(r.entity(), 100);
-                CombatFeedback.hold(100);
-                CombatFeedback.kick(0F, -1.8F, 1.2F, 7);
-                ArmsFeel.deflected();
-                ArmsAudio.deflect(p);
-                int yaw = yawTo(p, Minecraft.getInstance().level.getEntity(r.entity()));
+                // the clash by the size of the blow turned aside (SPEC §25 "The clash"); the switch off is the deflect before it
+                int size = ArmsComfort.clash() ? r.aux() : -1;
+                ArmsRules.Clash c = ArmsRules.clash(size);
+                Entity by = Minecraft.getInstance().level.getEntity(r.entity());
+                ArmsFilm.event("clash " + size);
+                CombatFeedback.hitstop(r.entity(), c.freezeMs());
+                CombatFeedback.hold(c.freezeMs());
+                CombatFeedback.kick(0F, -c.kickPitch(), c.kickRoll(), c.kickTicks());
+                ArmsFeel.clash(c);
+                ArmsAudio.clash(p, by, size);
+                int yaw = yawTo(p, by);
                 ArmsHands.parry(Mth.sin(Mth.wrapDegrees(yaw - p.getYRot()) * Mth.DEG_TO_RAD));
                 ArmsBodies.jolt(p);
-                ArmsFx.guardSpark(p, yaw, true);
+                ArmsFx.clash(p, yaw, c.light());
             }
             case ArmsPayloads.BLOCK -> {
                 fightAt = ticks;
@@ -1289,7 +1322,7 @@ public final class ArmsPredict {
                 Entity e = mc.level.getEntity(s.entity());
                 if (e != null) {
                     ArmsBodies.jolt(e);
-                    ArmsFx.guardSpark(e, yawTo(e, mc.level.getEntity(s.other())), true);
+                    ArmsFx.clash(e, yawTo(e, mc.level.getEntity(s.other())), ArmsComfort.clash() ? ArmsRules.clash(s.aux()).light() : 0F);
                 }
             }
             case ArmsPayloads.SHOT -> {
@@ -1299,7 +1332,8 @@ public final class ArmsPredict {
                     ArmsFx.guardSpark(e, s.aux2(), s.aux() == ArmsPayloads.DEFLECT);
                 }
             }
-            case ArmsPayloads.POSTURE -> ArmsStances.onSnapshot(s.entity(), s.aux() / 10F, s.aux2(), s.other());
+            case ArmsPayloads.POSTURE, ArmsPayloads.POSTURE_HELD -> ArmsStances.onSnapshot(s.entity(), s.aux() / 10F, s.aux2(), s.other(),
+                    s.what() == ArmsPayloads.POSTURE_HELD);
             default -> { }
         }
     }

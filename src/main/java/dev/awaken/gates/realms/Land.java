@@ -52,8 +52,16 @@ public abstract class Land {
     public record Trap(String leg, TrapKind kind, int x0, int y0, int z0, int x1, int y1, int z1, int period, int phase,
                        net.minecraft.world.level.block.state.BlockState on, net.minecraft.world.level.block.state.BlockState off) {}
 
-    /** A stretch you can fall from: inside this box a long fall puts you back on the last of its ledges you stood on. Each ledge is x, y, z of your feet. */
-    public record Course(String leg, int x0, int y0, int z0, int x1, int y1, int z1, List<int[]> ledges) {
+    /**
+     * A stretch you can fall from: inside this box a long fall puts you back on the last of its ledges you stood on. Each
+     * ledge is x, y, z of your feet. {@code free}: the fall costs nothing and nothing is said (a hall that teaches a move,
+     * SPEC §17.10: the Leaper's Gauntlet's halls before its Long Run, and the Long Run's own pit).
+     */
+    public record Course(String leg, int x0, int y0, int z0, int x1, int y1, int z1, List<int[]> ledges, boolean free) {
+        public Course(String leg, int x0, int y0, int z0, int x1, int y1, int z1, List<int[]> ledges) {
+            this(leg, x0, y0, z0, x1, y1, z1, ledges, false);
+        }
+
         public boolean holds(int x, int y, int z) {
             return x >= x0 && x <= x1 && y >= y0 && y <= y1 && z >= z0 && z <= z1;
         }
@@ -103,6 +111,86 @@ public abstract class Land {
 
     protected final void trap(Trap t) {
         traps.add(t);
+    }
+
+    /**
+     * A crossing that needs a move of the leap (SPEC §17.10): from the cell feet stand in on one side to the cell they
+     * land in on the other, and which move ("double", "dash", "slam"). The walk check takes these as crossings a player
+     * with the move can make, and separately proves that none can be made without it.
+     */
+    public record Leap(String move, int x0, int y0, int z0, int x1, int y1, int z1) {}
+
+    /** The crossings of this land that need a move of the leap. None, for every land but a trial of it. */
+    public List<Leap> leaps() {
+        return List.of();
+    }
+
+    /**
+     * A stand of a trial (SPEC §17.10): the cell its plate lies in, the move it holds ("double", "dash", "slam"), and the
+     * press head that hangs over it: its lowest cell at rest. The stand is the Ascent's block, set live by the course.
+     */
+    public record Stand(String move, int x, int y, int z, int head) {}
+
+    /** The stands of this land, in the order they are met. None, for every land but a trial. */
+    public List<Stand> stands() {
+        return List.of();
+    }
+
+    /**
+     * A press over a way that never hurts (SPEC §17.10): a head of {@code block} over the footprint, {@code tall} cells
+     * deep, whose lowest cell is at {@code feet} when it is down and {@code travel} higher when it is up, on a rod. With a
+     * period it runs on the Realm's clock (down, a rise, up, a warning, a fall); with none it is down until
+     * {@code freedBy} (a {@link Slam}'s id) lifts it. Whoever it would come down on is set clear of it, unhurt.
+     */
+    public record Ram(int x0, int z0, int x1, int z1, int feet, int tall, int travel, int period, int phase, String freedBy,
+                      net.minecraft.world.level.block.state.BlockState block, net.minecraft.world.level.block.state.BlockState rod) {}
+
+    public List<Ram> rams() {
+        return List.of();
+    }
+
+    /**
+     * Something only a slam moves (SPEC §17.10): a slam landing inside the box applies the change {@code slam_<id>}
+     * and lifts the ram it frees, for everyone in the gate and for good, as a stand's bars open. {@code again}: it is
+     * part of the timed run, and is put back ({@code rearm_<id>}) each time a runner starts the clock.
+     */
+    public record Slam(String id, int x0, int y0, int z0, int x1, int y1, int z1, boolean again) {
+        public Slam(String id, int x0, int y0, int z0, int x1, int y1, int z1) {
+            this(id, x0, y0, z0, x1, y1, z1, false);
+        }
+    }
+
+    public List<Slam> slams() {
+        return List.of();
+    }
+
+    /**
+     * A place of a trial's course the Ascent shows something at (SPEC §17.10, {@code TrialHooks.at}): the mark's name
+     * ("reach", "use/double/1", "use/dash/2", ...) and the two ends of the thing marked, each the cell feet stand in.
+     * Told once to each runner who comes near its first end; a first use of a move only once they hold it.
+     */
+    public record Spot(String mark, int x0, int y0, int z0, int x1, int y1, int z1) {}
+
+    public List<Spot> spots() {
+        return List.of();
+    }
+
+    /**
+     * The timed run of a trial (SPEC §17.10): the box whose first step starts the clock and the box that stops it (each
+     * x0 y0 z0 x1 y1 z1), its rings in the order they are passed (each x, y, z of the lane under it and the way the
+     * course runs there along z, -1 or 1), par in ticks, and where someone who has run it before is set down (x, y, z,
+     * yaw).
+     */
+    public record Timed(int[] start, int[] finish, List<int[]> rings, int par, int[] door) {}
+
+    /** This land's timed run, or null. */
+    public Timed timed() {
+        return null;
+    }
+
+    /** Whether nothing in this land hurts for falling (a trial's halls: a fall there costs nothing, SPEC §17.10). */
+    public boolean soft() {
+        return false;
     }
 
     protected final void course(Course c) {
@@ -155,7 +243,8 @@ public abstract class Land {
      * legs somewhere else on every seed and cuts every room differently, so a tour can't name a place or a camera; it
      * names "the first crossing". With {@code back} 0 it stands at the leg, turned toward the leg it leads on to (the way
      * you would cross a gulf). With {@code back} over 0 it stands that far toward the leg you came from, turned to the leg
-     * (the way you would walk into a room); under 0, that far beyond it, looking back. Null when the run has no such leg.
+     * (the way you would walk into a room); under 0, that far beyond it, looking back. After the yaw come the leg's own x and z.
+     * Null when the run has no such leg.
      */
     public final double[] legView(LegKind kind, int index, int back) {
         int n = 0;
@@ -167,13 +256,13 @@ public abstract class Land {
             if (back == 0 || before == null) {
                 Leg toward = on != null ? on : before;
                 double yaw = toward == null ? 0 : Math.toDegrees(Math.atan2(-(toward.x() - l.x()), toward.z() - l.z()));
-                return new double[]{l.x(), l.y(), l.z(), on != null || before == null ? yaw : yaw + 180};
+                return new double[]{l.x(), l.y(), l.z(), on != null || before == null ? yaw : yaw + 180, l.x(), l.z()};
             }
             double dx = before.x() - l.x(), dz = before.z() - l.z(), far = Math.max(1, Math.hypot(dx, dz));
             double x = l.x() + dx / far * back, z = l.z() + dz / far * back;
             // facing the leg from wherever that put us
             double yaw = Math.toDegrees(Math.atan2(-(l.x() - x), l.z() - z));
-            return new double[]{x, l.y(), z, yaw};
+            return new double[]{x, l.y(), z, yaw, l.x(), l.z()};
         }
         return null;
     }

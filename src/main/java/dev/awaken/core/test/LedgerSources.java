@@ -44,7 +44,8 @@ final class LedgerSources {
                 "ledger_book", "courier_satchel", "porter_crate", "carcass_pole", "shepherd_crook");
         Sources.neverHeld("the binoculars are a key (SPEC §39): the item is only what the hands are drawn holding", "binoculars");
         Sources.neverHeld("set in the world by its builder and never dropped: the item is creative's only",
-                "anchor_ring", "broken_machine", "halo_return_pad", "precursor_door", "precursor_door_core", "spire_crown", "wing_core", "delver_lamp",
+                "anchor_ring", "broken_machine", "halo_return_pad", "precursor_door", "precursor_door_core", "spire_crown", "wing_core", "leap_stand",
+                "delver_lamp",
                 "veil_cache", "veil_glyph", "veil_stone", "veil_mark", "stillpoint_cloud", "stillpoint_door_in", "stillpoint_door_out", "street_lamp",
                 "carved_token", "torn_cloth", "drag_marks", "twigs");
         Sources.neverHeld("a lode's vein on the rock round its heart (SPEC §42.11): only a look, no item and no loot", "lode_trace");

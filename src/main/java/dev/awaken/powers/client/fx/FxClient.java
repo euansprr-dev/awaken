@@ -45,6 +45,7 @@ public final class FxClient {
         PowerFxConfig.register();
         CastAnims.init();
         modBus.addListener(RegisterParticleProvidersEvent.class, FxSprites::register);
+        modBus.addListener(net.neoforged.neoforge.client.event.RegisterRenderPipelinesEvent.class, FxGlow::register);
         modBus.addListener(RegisterClientPayloadHandlersEvent.class,
                 e -> e.register(FxPayloads.Fx.TYPE, (msg, ctx) -> onEvent(msg.e())));
         modBus.addListener(RegisterGuiLayersEvent.class, FxScreen::register);
@@ -79,6 +80,8 @@ public final class FxClient {
         bus.addListener(net.neoforged.neoforge.client.event.RegisterClientCommandsEvent.class, FxStats::commands);
         bus.addListener(ExtractLevelRenderStateEvent.class, FxRender::onExtract);
         bus.addListener(SubmitCustomGeometryEvent.class, FxRender::onSubmit);
+        // (the same batches over Lens's picture when it has one to lay them over: FxGlow)
+        bus.addListener(net.neoforged.neoforge.client.event.RenderLevelStageEvent.AfterLevel.class, FxGlow::afterLevel);
         bus.addListener(ViewportEvent.ComputeFov.class, FxScreen::onFov);
         bus.addListener(ViewportEvent.ComputeCameraAngles.class, FxScreen::onAngles);
         // lowest: our lean is pushed last and popped first, and a later cancel can't strand it

@@ -64,6 +64,11 @@ public final class RealmTests {
                 AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:wax_galleries", Rank.E, seed, 1));
     }
 
+    private static Land leapers() {
+        return LandPrograms.make(new Land.Ctx(new Blueprint(1, "t", "dungeon", "clockwork_foundry", List.of(), new Blueprint.LandSpec("awaken:leapers_gauntlet", 0, Map.of()),
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:leapers_gauntlet", Rank.D, 1, 1));
+    }
+
     private static Land amber(long seed) {
         return new AmberReach(new Land.Ctx(AMBER, "awaken:amber_reach", Rank.E, seed, 1));
     }
@@ -75,6 +80,7 @@ public final class RealmTests {
             h.succeed();
         });
         dev.awaken.gates.realms.bench.BenchTests.register(); // realm_bench (tools/bench/bench.sh) and the straight-in walk's command
+        dev.awaken.gates.realms.kit.land.LandTests.register(); // the rolled lands (SPEC 50.9): each walks to everything and floats nothing
         AwakenTests.register("realm_blueprints_parse", 40, h -> {
             String why = AMBER.problem();
             if (!why.isEmpty()) h.fail("Amber's blueprint: " + why);
@@ -89,6 +95,93 @@ public final class RealmTests {
             if (RealmCells.cellAt(RealmCells.centerX(0) + RealmCells.HALF + 8, RealmCells.centerZ(0)) != -1) h.fail("the gap between cells belongs to one");
             h.succeed();
         });
+        // Who lives there (SPEC 50.9): a cell's haunt comes from the seed and the ground alone, keeps off the run's own places, and leaves quiet stretches
+        AwakenTests.register("realm_country_haunts", 200, h -> {
+            Land land = amber(1);
+            if (!RealmCountry.has(land)) h.fail("Amber Reach has no country");
+            int half = land.halfSize() / RealmCountry.CELL + 1, cells = 0, quiet = 0, herds = 0, packs = 0;
+            StringBuilder list = new StringBuilder();
+            for (int cz = -half; cz <= half; cz++) {
+                for (int cx = -half; cx <= half; cx++) {
+                    RealmCountry.Haunt a = RealmCountry.find(land, 1, cx, cz);
+                    if (!a.equals(RealmCountry.find(land, 1, cx, cz))) h.fail("cell " + cx + "," + cz + " gave two answers");
+                    if (land.edge(cx * RealmCountry.CELL + RealmCountry.CELL / 2, cz * RealmCountry.CELL + RealmCountry.CELL / 2) > -20) {
+                        if (a.kind() != RealmCountry.Kind.NONE) h.fail("a haunt past the land's edge at cell " + cx + "," + cz);
+                        continue;
+                    }
+                    cells++;
+                    switch (a.kind()) {
+                        case NONE -> quiet++;
+                        case HERD, SMALL -> herds++;
+                        default -> packs++;
+                    }
+                    if (a.kind() == RealmCountry.Kind.NONE) continue;
+                    if (!RealmCountry.free(land, a.x(), a.z(), 24)) h.fail("a " + a.kind() + " at " + a.x() + "," + a.z() + " stands on one of the run's own places");
+                    if (Math.abs(a.y() - 1 - land.ground(a.x(), a.z())) != 0) h.fail("a haunt that isn't on the ground at " + a.x() + "," + a.z());
+                    list.append(' ').append(a.kind()).append('@').append(a.x()).append(',').append(a.y()).append(',').append(a.z());
+                }
+            }
+            dev.awaken.Awaken.LOG.info("[country] amber seed 1: {} cells, {} quiet, {} herds, {} packs:{}", cells, quiet, herds, packs, list);
+            if (herds == 0 || packs == 0) h.fail("Amber Reach's country is empty: " + herds + " herds and " + packs + " packs in " + cells + " cells");
+            if (quiet * 3 < cells) h.fail("no quiet stretches: only " + quiet + " of " + cells + " cells hold nothing");
+            if (!RealmCountry.find(land, 2, 1, 1).equals(RealmCountry.find(land, 2, 1, 1))) h.fail("another seed gave two answers");
+            h.succeed();
+        });
+        // The Leaper's Gauntlet as a Realm (SPEC 17.10): every leg is reached by a walker who has the leap, no crossing that
+        // is said to need a move of it can be made without, and nothing floats
+        AwakenTests.register("realm_leapers_gauntlet_needs_its_moves", 2400, h -> {
+            Land land = leapers();
+            dev.awaken.gates.realms.check.WalkCheck.Walk walk = dev.awaken.gates.realms.check.WalkCheck.walk(land);
+            if (!walk.unreachable().isEmpty()) h.fail("can't reach " + walk.unreachable());
+            for (Land.Leg leg : land.route()) if (!walk.reaches(leg.x(), leg.y(), leg.z(), 4)) h.fail("the walk never stood in " + leg.id() + " (" + leg.name() + ")");
+            List<String> needless = dev.awaken.gates.realms.check.WalkCheck.needless(land);
+            if (!needless.isEmpty()) h.fail("crossed without the move it is said to need: " + needless);
+            long doubles = land.leaps().stream().filter(l -> l.move().equals("double")).count(), dashes = land.leaps().stream().filter(l -> l.move().equals("dash")).count();
+            if (doubles < 4) h.fail("the hall Twice asks for the double jump " + doubles + " times, not four");
+            if (dashes < 3) h.fail("the hall Through asks for the dash " + dashes + " times");
+            if (land.change("trial_open_dash").isEmpty() || land.change("trial_open_slam").isEmpty()) h.fail("a stand's bars are not there to open");
+            for (Land.Course c : land.courses()) if (!c.free()) h.fail("a fall in " + c.leg() + " costs something");
+            if (!land.soft()) h.fail("a fall in the trial's land hurts");
+            // three stands, each with its press over it; what a slam moves is there to move; a place for every use the plan asks for
+            if (land.stands().size() != 3) h.fail(land.stands().size() + " stands, not three");
+            for (Land.Stand s : land.stands()) if (s.head() < s.y() + 4 + RealmTrial.STROKE_DROP) h.fail("the press over the " + s.move() + " stand would come down on whoever takes it");
+            for (Land.Slam s : land.slams()) {
+                if (land.change("slam_" + s.id()).isEmpty() && land.rams().stream().noneMatch(r -> r.freedBy().equals(s.id()))) h.fail("the slam '" + s.id() + "' moves nothing");
+            }
+            if (land.slams().size() < 3) h.fail("the hall Down asks for the slam " + land.slams().size() + " times");
+            for (String mark : new String[]{"reach", "use/double/4", "use/dash/4", "use/slam/3"}) {
+                if (land.spots().stream().noneMatch(s -> s.mark().equals(mark))) h.fail("no place for the mark " + mark);
+            }
+            // the Long Run: a start, five rings stood under in turn, a far line, and a way home at both its ends
+            Land.Timed run = land.timed();
+            if (run == null || run.rings().size() < 5) h.fail("the Long Run has no clock or too few rings");
+            else {
+                for (int[] r : run.rings()) if (!walk.reaches(r[0], r[1], r[2], 1)) h.fail("the walk never stood under the ring at " + r[0] + " " + r[1] + " " + r[2]);
+                if (!walk.reaches((run.start()[0] + run.start()[3]) / 2, run.start()[1], run.start()[2], 2)) h.fail("the walk never stood where the clock starts");
+                if (!walk.reaches((run.finish()[0] + run.finish()[3]) / 2, run.finish()[1], run.finish()[2], 2)) h.fail("the walk never stood on the far line");
+            }
+            for (Land.Site s : land.sites(Land.SiteKind.PORTAL)) if (!walk.reaches(s.x(), s.y(), s.z(), 3)) h.fail("the walk never stood at the way home at " + s.x() + " " + s.y() + " " + s.z());
+            if (land.sites(Land.SiteKind.PORTAL).size() < 3) h.fail("no way home past the mouth");
+            for (Land.Slam s : land.slams()) if (s.again() && land.change("rearm_" + s.id()).isEmpty()) h.fail("the slam '" + s.id() + "' is not put back for the next run");
+            // a press on a beat is down, comes all the way up, and can be passed under for long enough to run through it
+            for (Land.Ram r : land.rams()) {
+                if (r.period() == 0) continue;
+                int open = 0, top = 0;
+                for (int c = 0; c < r.period(); c++) {
+                    if (RealmTrial.passable(r, c)) open++;
+                    top = Math.max(top, RealmTrial.offset(r, c));
+                }
+                if (RealmTrial.offset(r, 0) != 0 || top != r.travel() || open < 20) h.fail("a press's beat: up " + top + " of " + r.travel() + ", open for " + open + " ticks");
+            }
+            h.succeed();
+        });
+        AwakenTests.register("realm_leapers_gauntlet_nothing_floats", 2400, h -> {
+            Land land = leapers();
+            int half = land.halfSize();
+            dev.awaken.gates.realms.check.FloatCheck.Report r = dev.awaken.gates.realms.check.FloatCheck.scan(land, -half, -half, half, half);
+            if (!r.clean()) h.fail(r.summary());
+            h.succeed();
+        });
         AwakenTests.register("realm_truelight_matches_the_shader", 20, h -> { String why = dev.awaken.gates.realms.preview.TrueLight.problem(); if (!why.isEmpty()) h.fail(why); h.succeed(); });
         AwakenTests.register("realm_bag_empty", 20, h -> {
             Blueprints.replace(Map.of("awaken:amber_reach", AMBER));
@@ -96,6 +189,16 @@ public final class RealmTests {
             if (Blueprints.pick(Theme.HIVE, Rank.S, Set.of(), 1).isPresent()) h.fail("a rank with no Realm rolled one");
             if (Blueprints.pick(Theme.HIVE, Rank.E, Set.of(), 1).isEmpty()) h.fail("the open Realm wasn't rolled");
             if (Blueprints.pick(Theme.HIVE, Rank.E, Set.of("awaken:amber_reach"), 1).isEmpty()) h.fail("a full bag didn't refill");
+            // a Realm that doesn't say it is ready is never rolled, alone or beside one that is
+            Blueprint unready = new Blueprint(1, "t", "land", "hive", List.of("E"), AMBER.land(), AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(),
+                    AMBER.heart(), AMBER.moods(), "", false);
+            Blueprints.replace(Map.of("awaken:unready", unready));
+            if (Blueprints.pick(Theme.HIVE, Rank.E, Set.of(), 1).isPresent()) h.fail("a Realm that isn't ready was rolled");
+            Blueprints.replace(Map.of("awaken:amber_reach", AMBER, "awaken:unready", unready));
+            for (long seed = 0; seed < 8; seed++) {
+                if (!Blueprints.pick(Theme.HIVE, Rank.E, Set.of("awaken:amber_reach"), seed).equals(java.util.Optional.of("awaken:amber_reach"))) h.fail("an unready Realm was rolled beside a ready one");
+            }
+            Blueprints.replace(Map.of("awaken:amber_reach", AMBER));
             h.succeed();
         });
         // the fence posts Euan caught: a real floating post has to fail, or the check proves nothing
@@ -619,6 +722,97 @@ public final class RealmTests {
             }
             h.succeed();
         });
+        // Open lands off (Euan 12 Nov, SPEC §50.7 and §38.11): no theme at any rank rolls a Realm under the open sky or dresses
+        // a floor as an open world, and every program said to be under a roof draws a land that is. The same sweep with the
+        // switch on does find open ones, so it is the switch that keeps them out. The real catalogues are read from the data
+        // here, since other tests leave a stand-in behind.
+        AwakenTests.register("realm_open_lands_off", 1200, h -> {
+            var server = h.getLevel().getServer();
+            var rm = server.getResourceManager();
+            Map<String, Blueprint> realBps = new java.util.TreeMap<>();
+            net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener.scanDirectory(rm, net.minecraft.resources.FileToIdConverter.json("realms"),
+                    com.mojang.serialization.JsonOps.INSTANCE, Blueprint.CODEC, new java.util.HashMap<>()).forEach((k, v) -> {
+                if (v.problem().isEmpty()) realBps.put(k.toString(), v);
+            });
+            Map<String, dev.awaken.gates.worlds.GateWorld> realWorlds = new java.util.TreeMap<>();
+            net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener.scanDirectory(rm, net.minecraft.resources.FileToIdConverter.json("gate_worlds"),
+                    com.mojang.serialization.JsonOps.INSTANCE, dev.awaken.gates.worlds.GateWorld.CODEC, new java.util.HashMap<>()).forEach((k, v) -> {
+                if (v.problem().isEmpty()) realWorlds.put(k.toString(), v);
+            });
+            if (realBps.isEmpty() || realWorlds.isEmpty()) h.fail("no Realms or gate worlds in the data");
+            Map<String, Blueprint> wasBps = Blueprints.all();
+            Map<String, dev.awaken.gates.worlds.GateWorld> wasWorlds = dev.awaken.gates.worlds.GateWorlds.all();
+            boolean realms = dev.awaken.core.AwakenConfig.GATE_REALMS.get(), worlds = dev.awaken.core.AwakenConfig.GATE_WORLDS.get(),
+                    lands = dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.get();
+            List<String> bad = new java.util.ArrayList<>();
+            try {
+                Blueprints.replace(realBps);
+                dev.awaken.gates.worlds.GateWorlds.replace(realWorlds);
+                dev.awaken.core.AwakenConfig.GATE_REALMS.set(true);
+                dev.awaken.core.AwakenConfig.GATE_WORLDS.set(true);
+                boolean sky = dev.awaken.gates.GateService.hasSky(server);
+                for (boolean on : new boolean[]{true, false}) {
+                    dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.set(on);
+                    // the theme bag: off, a theme with nothing under a roof at a rank stays out (today the Market and the Sky)
+                    for (Rank r : Rank.values()) {
+                        for (Theme t : Theme.values()) {
+                            boolean out = t == Theme.LANTERN_NIGHT_MARKET || t == Theme.SKY_ARCHIPELAGO;
+                            if (dev.awaken.gates.Director.inBag(t, r) != (t.fits(r) && (on || !out)))
+                                bad.add((on ? "on" : "off") + ": " + t.id + " at " + r.label + (dev.awaken.gates.Director.inBag(t, r) ? " is" : " isn't") + " in the bag");
+                        }
+                        for (int i = 0; i < 120 && !on; i++) {
+                            var p = dev.awaken.gates.Director.roll(0x0FFL + i * 7919L + r.ordinal() * 104729L, r, new dev.awaken.gates.run.GateMemory(), r, null).plan();
+                            for (Theme t : List.of(p.theme(), p.annexTheme()))
+                                if (t == Theme.LANTERN_NIGHT_MARKET || t == Theme.SKY_ARCHIPELAGO) bad.add("open lands are off and the Director rolled " + t.id + " at " + r.label);
+                        }
+                    }
+                    Map<String, Rank> rolled = new java.util.TreeMap<>();
+                    Set<String> dressed = new java.util.TreeSet<>();
+                    for (Theme t : Theme.values()) {
+                        for (Rank r : Rank.values()) {
+                            if (!t.fits(r)) continue;
+                            for (long s = 0; s < 24; s++) {
+                                long seed = s * 7919L + t.ordinal() * 131L + r.ordinal();
+                                var plan = new dev.awaken.gates.content.GatePlan(seed, dev.awaken.gates.content.GatePlan.CONTENT_VERSION, r, t,
+                                        dev.awaken.gates.content.Layout.LABYRINTH, List.of(), dev.awaken.gates.content.Twist.NONE, 3, t.bossId(),
+                                        t == Theme.HIVE ? Theme.BELL_CRYPT : Theme.HIVE, 0);
+                                // what choose rolls once a gate may be a Realm (the test server has no Realms dimension, so choose itself stops sooner)
+                                Realms.roll(plan, Set.of()).ifPresent(id -> rolled.putIfAbsent(id, r));
+                                for (var fw : dev.awaken.gates.worlds.GateWorlds.dress(server, plan, java.util.Optional.empty()).worlds()) dressed.add(fw.world());
+                            }
+                        }
+                    }
+                    List<String> openRolled = rolled.keySet().stream().filter(id -> Blueprints.openLand(realBps.get(id))).toList();
+                    List<String> openDressed = dressed.stream().filter(id -> realWorlds.get(id).open()).toList();
+                    if (on) {
+                        if (openRolled.isEmpty()) bad.add("with the switch on no open Realm was rolled at all");
+                        if (sky && openDressed.isEmpty()) bad.add("with the switch on no floor was dressed as an open world");
+                        continue;
+                    }
+                    if (!openRolled.isEmpty()) bad.add("open lands are off and these Realms were rolled: " + openRolled);
+                    if (!openDressed.isEmpty()) bad.add("open lands are off and floors were dressed as: " + openDressed);
+                    // what was rolled must really be under a roof: draw each once
+                    for (var e : rolled.entrySet()) {
+                        Land land = RealmPlan.of(e.getKey(), realBps.get(e.getKey()), e.getValue(), 1, RealmPlan.CURRENT_VERSION).land();
+                        if (RealmCountry.has(land)) bad.add(e.getKey() + " (" + realBps.get(e.getKey()).land().program() + ") is said to be under a roof but its land is open: list it in LandPrograms");
+                    }
+                    dev.awaken.Awaken.LOG.info("[realms] open lands off: {} Realms can roll ({}), {} floor worlds", rolled.size(), String.join(", ", rolled.keySet()), dressed.size());
+                }
+                // nothing under a roof anywhere (no Realms, no worlds): every theme that fits stays, rather than an empty bag
+                dev.awaken.core.AwakenConfig.GATE_REALMS.set(false);
+                dev.awaken.core.AwakenConfig.GATE_WORLDS.set(false);
+                for (Rank r : Rank.values()) for (Theme t : Theme.values())
+                    if (dev.awaken.gates.Director.inBag(t, r) != t.fits(r)) bad.add("with nothing under a roof " + t.id + " at " + r.label + " left the bag");
+            } finally {
+                Blueprints.replace(wasBps);
+                dev.awaken.gates.worlds.GateWorlds.replace(wasWorlds);
+                dev.awaken.core.AwakenConfig.GATE_REALMS.set(realms);
+                dev.awaken.core.AwakenConfig.GATE_WORLDS.set(worlds);
+                dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.set(lands);
+            }
+            if (!bad.isEmpty()) h.fail(String.join("; ", bad));
+            h.succeed();
+        });
         // The valley's herd, people and flies: each exists, is never rolled by a biome, and is a peaceful creature with its own voice.
         AwakenTests.register("realm_life_creatures", 40, h -> {
             var level = h.getLevel();
@@ -687,6 +881,44 @@ public final class RealmTests {
                 dev.awaken.gates.GateLiveTests.teardown(level, null, g);
                 dev.awaken.gates.GateLiveTests.useLevel(null);
             }
+            h.succeed();
+        });
+        // the Lord's fight holds through a leap past the heart's line, a pause, a save and a reload, and ends only when nobody
+        // is left in it (SPEC §68.6)
+        AwakenTests.register("realm_fight_holds", 400, h -> {
+            h.assertTrue(RealmLive.outOfFight(true, true, true, 0) == null, "a fighter at the hall is in the fight");
+            h.assertTrue(RealmLive.outOfFight(true, true, true, RealmLive.AWAY_TICKS) == null, "a leap or a step out of the door keeps you in the fight");
+            h.assertTrue("went far from the hall".equals(RealmLive.outOfFight(true, true, true, RealmLive.AWAY_TICKS + 1)), "away from the hall for long: out");
+            h.assertTrue("fell".equals(RealmLive.outOfFight(true, false, true, 0)), "falling is out at once");
+            h.assertTrue("left the Realm".equals(RealmLive.outOfFight(true, true, false, 0)), "leaving the Realm is out at once");
+            h.assertTrue(RealmLive.outOfFight(false, false, false, 20) == null, "a moment offline (a reload) is still in the fight");
+            h.assertTrue("left the game".equals(RealmLive.outOfFight(false, false, false, RealmLive.AWAY_TICKS + 1)), "offline for long: out");
+            // who is in the fight is saved with the Realm, and a save from before it still loads
+            RealmState st = new RealmState();
+            st.lordWoken = st.doorShut = st.heartOpen = true;
+            java.util.UUID u = java.util.UUID.randomUUID();
+            st.fighters.add(u);
+            var tag = RealmState.CODEC.encodeStart(net.minecraft.nbt.NbtOps.INSTANCE, st).getOrThrow();
+            RealmState back = RealmState.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, tag).getOrThrow();
+            h.assertTrue(back.fighters.contains(u) && back.doorShut && back.lordWoken, "the fight came back from the save as it was");
+            ((net.minecraft.nbt.CompoundTag) tag).remove("fighters");
+            h.assertTrue(RealmState.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, tag).getOrThrow().fighters.isEmpty(), "an older save loads with nobody listed");
+            // the old rule's trap: a rolled crawl's hall has floor past the heart's line, where one look ended the fight
+            Blueprint bp = new Blueprint(1, "t", "dungeon", "hive", List.of("E"), new Blueprint.LandSpec("awaken:cinder_workings", 0, Map.of()),
+                    AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), "");
+            Land land = LandPrograms.make(new Land.Ctx(bp, "awaken:cinder_workings", Rank.E, 383, 1));
+            Map<Long, V> painted = new java.util.HashMap<>();
+            int[] edge = RealmLive.pastTheLine(land, (x, y, z) -> {
+                int cx = Math.floorDiv(x, 16), cz = Math.floorDiv(z, 16);
+                V v = painted.computeIfAbsent(((long) cx << 32) ^ (cz & 0xffffffffL), k -> {
+                    V nv = new V(cx * 16, cz * 16);
+                    land.paint(nv);
+                    return nv;
+                });
+                return solid(v.get(x, y, z));
+            });
+            h.assertTrue(edge != null, "the Lord's hall has floor past the heart's line");
+            dev.awaken.Awaken.LOG.info("[realms] cinder_workings 383: past the heart's line at {} {} {}, {} blocks from the Lord", edge[0], edge[1], edge[2], edge[3]);
             h.succeed();
         });
         AwakenTests.register("realm_seeds_differ", 200, h -> {

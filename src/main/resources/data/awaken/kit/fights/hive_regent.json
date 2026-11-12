@@ -3,6 +3,7 @@
  "id": "hive_regent",
  "moves": "hive_regent",
  "duel": true,
+ "finish": true,
  "mind": {
   "cooldowns": {
    "rain": 240,
@@ -78,7 +79,7 @@
    }
   ]
  },
- "stance": 240,
+ "stance": 130,
  "intro": {
   "pose": "idle",
   "move": "emerge"
