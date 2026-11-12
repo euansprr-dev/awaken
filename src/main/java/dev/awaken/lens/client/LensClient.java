@@ -315,6 +315,14 @@ public final class LensClient {
                         .then(lensSwitch("sunpass", LensClient::sunPass))
                         .then(lensSwitch("rays", LensClient::rays))
                         .then(lensSwitch("paths", LensClient::paths))
+                        .then(net.minecraft.commands.Commands.literal("small")
+                                .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                        .executes(c -> {
+                                            String line = small(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "what"));
+                                            Awaken.LOG.info("[lens] {}", line);
+                                            Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(line));
+                                            return 1;
+                                        })))
                         .then(net.minecraft.commands.Commands.literal("projection")
                                 .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
                                         .executes(c -> {
@@ -339,6 +347,47 @@ public final class LensClient {
                             Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(line));
                             return 1;
                         }));
+    }
+
+    // The small shade's reach (SPEC §22 "The small shade's reach"): how wide a texel of the light buffer may be on a
+    // surface, in the art's pixels (sixteenths of a block), where the contact shadows fade from and to, then the
+    // ambient shade; an end not past its start leaves that shade whole at every distance.
+    private static final float[] SMALL = {0.6f, 2.2f, 0f, 0f};
+    private static float @org.jspecify.annotations.Nullable [] forcedSmall;
+    /** The light buffer's height in texels (the chains' {@code awaken:lens_light} target). */
+    private static final float LIGHT_ROWS = 540f;
+
+    /**
+     * {@code /awaken lens small <contact from> <contact to> <ambient from> <ambient to>} (autopilot {@code lens small}):
+     * where the depth-made contact shadows and the ambient shade fade out, as the width of a light texel in the art's
+     * pixels, for A/B shots and for tuning in play; {@code setting} puts the built-in reach back. An end not past its
+     * start: no fade. The answer says what the numbers come to in blocks at the view in use.
+     */
+    public static String small(String arg) {
+        String[] w = arg.trim().split("\\s+");
+        if (w.length == 4) {
+            try {
+                forcedSmall = new float[] {Float.parseFloat(w[0]), Float.parseFloat(w[1]), Float.parseFloat(w[2]), Float.parseFloat(w[3])};
+            } catch (NumberFormatException e) {
+                return "lens small: four numbers (contact from, to; ambient from, to) or 'setting'";
+            }
+        } else {
+            forcedSmall = null;
+        }
+        float[] s = forcedSmall != null ? forcedSmall : SMALL;
+        // a texel is one art pixel wide this many blocks off, at the view in use
+        double fov = Minecraft.getInstance().options.fov().get();
+        double one = LIGHT_ROWS / (2.0 * Math.tan(Math.toRadians(fov / 2.0))) / 16.0;
+        return String.format(java.util.Locale.ROOT, "small shade%s: contact shadows fade from %s to %s, ambient shade from %s to %s",
+                forcedSmall != null ? "" : " (built in)", reach(s[0], s[1], one, true), reach(s[0], s[1], one, false),
+                reach(s[2], s[3], one, true), reach(s[2], s[3], one, false));
+    }
+
+    /** One end of a reach in words: the texel width in art pixels and the blocks that is at this view, or "never". */
+    private static String reach(float from, float to, double blocksAtOne, boolean start) {
+        if (to <= from) return start ? "nowhere" : "nowhere (whole at every distance)";
+        float v = start ? from : to;
+        return String.format(java.util.Locale.ROOT, "%.1f px (%.0f blocks)", v, v * blocksAtOne);
     }
 
     private static boolean showPaths;
@@ -742,6 +791,8 @@ public final class LensClient {
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
                 rays && litAir.valid());
         lensFrame.paths(showPaths);
+        float[] small = forcedSmall != null ? forcedSmall : SMALL;
+        lensFrame.small(small[0], small[1], small[2], small[3]);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
         if (WorldProjection.ready()) {
