@@ -47,6 +47,7 @@ final class ArmourTests {
         AwakenTests.register("armour_roster_shape", 20, ArmourTests::roster);
         AwakenTests.register("armour_hunter_looks", 20, ArmourTests::looks);
         AwakenTests.register("armour_art_shipped", 20, ArmourTests::art);
+        AwakenTests.register("armour_no_shared_planes", 20, ArmourTests::planes);
         AwakenTests.register("armour_forge_rules", 20, ArmourTests::forgeRules);
         AwakenTests.register("armour_forge_saves", 20, ArmourTests::forgeSaves);
         AwakenTests.register("armour_step_from_memory", 20, ArmourTests::stepFromMemory);
@@ -135,6 +136,28 @@ final class ArmourTests {
                 h.assertTrue(exists("/assets/awaken/armour/" + s.id + "/" + pb[0] + "_" + pb[1] + ".mesh"), s.id + " dresses " + pb[1]);
             }
             living(h, s);
+        }
+        h.succeed();
+    }
+
+    /**
+     * No two faces of a set share a plane (SPEC §44.15): every shipped mesh of every set, stood in the figure as a player
+     * wears it (over the skin), as an armour stand holds it and as the Fitting Stand and the Hall do. Two faces in one
+     * plane flicker; the art kit's depth steps keep every mesh off every other, and this holds the files to it.
+     */
+    private static void planes(GameTestHelper h) {
+        h.assertTrue(ArmourPlanes.finds(), "the search finds two faces in one plane, and not the same two a step apart");
+        for (ArmourSet s : ArmourSet.values()) {
+            if (!s.made()) continue;
+            ArmourPlanes.Walk walk;
+            try {
+                walk = ArmourPlanes.walk(s.id, 4);
+            } catch (IOException e) {
+                throw h.assertionException(s.id + "'s meshes do not read: " + e);
+            }
+            // the smallest set is over 700 triangles, walked in three poses: fewer means the files were not found
+            h.assertTrue(walk.triangles() > 1500, s.id + ": only " + walk.triangles() + " triangles walked");
+            h.assertTrue(walk.shared().isEmpty(), s.id + ": faces in one plane: " + String.join("; ", walk.shared()));
         }
         h.succeed();
     }

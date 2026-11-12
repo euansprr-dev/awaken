@@ -226,6 +226,30 @@ def plates():
     return L + ["quit"]
 
 
+# faces in one plane (SPEC 44.15): the set in Euan's 12 Nov shot (Rootwarden) and one of each other rank, close on where
+# the pieces meet, on an armour stand and on a Fitting Stand. Every view is shot twice, the camera a hundredth of a block
+# apart: two faces in one plane fight differently from each spot, so a flicker shows as a difference between the pair
+PLANES = ["rootwarden", "hornlord", "sunward", "tidebreaker", "lordscale", "nightcourt"]
+
+
+def planes():
+    L = head("armouraudit9", 5159, "faces in one plane: close on the chest and the legs, an armour stand and a Fitting Stand")
+    x1 = 6 * len(PLANES) + 6
+    L += ["cmd tp @s 0.5 150 0.5 0 0", f"cmd forceload add -16 -16 {x1} 16", "wait 300",
+          f"cmd fill -6 149 0 {x1} 149 12 minecraft:smooth_stone", f"cmd fill -6 150 11 {x1} 158 11 minecraft:light_gray_concrete", "wait 20"]
+    for i, s in enumerate(PLANES):
+        x = 6 * i
+        suit = ",".join(f'{{id:"awaken:{s}_{piece}",count:1}}' for _, piece in PIECES)
+        L += [stand(s, x - 0.7, 7.5, 180), f"cmd setblock {x + 1} 150 7 awaken:fitting_stand[facing=north]{{suit:[{suit}]}}"]
+    L += ["hud off", "camera first", "opt fov 30"] + SETTLE
+    for i, s in enumerate(PLANES):
+        for what, x in (("stand", 6 * i - 0.7), ("fit", 6 * i + 1.5)):
+            for view, pitch in (("chest", 10), ("legs", 33)):
+                for k, dx in (("a", 0.0), ("b", 0.01)):
+                    L += [f"cmd tp @s {round(x + dx, 2)} 150 5.9 0 {pitch}", "wait 10", f"shot z_{s}_{what}_{view}_{k}"]
+    return L + ["quit"]
+
+
 def write(name, lines):
     with open(os.path.join(OUT, name + ".txt"), "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -241,3 +265,4 @@ if __name__ == "__main__":
     write("armour-audit-moments", moments())
     write("armour-audit-extras", extras())
     write("armour-audit-plates", plates())
+    write("armour-audit-planes", planes())

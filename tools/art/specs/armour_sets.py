@@ -60,6 +60,36 @@ FIGURE = 33.0  # the figure's height with a helmet: along runs 0 at the feet to 
 BONES = {"helmet": ("head",), "chestplate": ("body", "right_arm", "left_arm", "cape0", "cape1", "cape2"),
          "leggings": ("body", "right_leg", "left_leg", "front_cloth", "back_cloth"), "boots": ("right_leg", "left_leg")}
 
+# Depth steps (SPEC §44.15). A set is many meshes (one per piece and bone), each drawn where its bone stands, and their
+# boxes are designed on one grid: a sleeve's front lies in the cuirass's front plane, a belt's in the thigh plates', one
+# boot's in the other's, a plate's inner side in the skin's. Two faces in one plane fight for every pixel (they flicker).
+# So every mesh is built a hair bigger than designed, each by its own amount: its boxes are grown on every side by its
+# step and its surface is worked out again from the grown boxes (vanilla does the same with its 0.5 and 1.0 armour
+# layers). Steps are in 128ths of a texel. Meshes that share planes differ by 4 (a 512th of a block: far more than the
+# depth buffer needs to tell two faces apart at any distance armour is seen from, far less than a pixel on screen); the
+# cloths sit between the boots' and the legs' steps, 2 from each, a cape's yoke 2 under the cuirass. Nothing is 0: the
+# skin is.
+# The bigger step wins the plane two meshes shared, so the order is a look: a helm keeps every face it has (over the
+# cuirass and the sleeves), the cuirass keeps its sides (over the sleeves: and a sleeve that stood a hair proud of the
+# cuirass would shade its side all the way down under a high sun), the belt lies over the thigh plates, the thigh
+# plates over the boots, the right leg over the left. A bone's living parts stand 1, 2, 3 over its still mesh, awakened
+# parts 1 under their piece's. The check (planes) holds every set to it.
+STEP = 1 / 128
+DEPTH = {("helmet", "head"): 12,
+         ("chestplate", "body"): 8, ("chestplate", "right_arm"): 4, ("chestplate", "left_arm"): 4,
+         ("chestplate", "cape0"): 6, ("chestplate", "cape1"): 2, ("chestplate", "cape2"): 6,
+         ("leggings", "body"): 18, ("leggings", "right_leg"): 14, ("leggings", "left_leg"): 10,
+         ("leggings", "front_cloth"): 8, ("leggings", "back_cloth"): 8,
+         ("boots", "right_leg"): 6, ("boots", "left_leg"): 2}
+
+
+def depth(piece, bone):
+    """A mesh's depth step in texels: how far its faces stand out from where they were designed."""
+    if os.environ.get("ARMOUR_DEPTH") == "0" or piece == "rune":
+        return 0.0
+    base, _, kind = bone.partition("@")
+    return STEP * (DEPTH[(piece, base)] + (1 + int(kind[4:]) if kind.startswith("live") else -1 if kind == "awake" else 0))
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Ramps: the weapons' own, so a set and its tier's blades share a palette; and the armour's few more
 
@@ -3353,14 +3383,141 @@ def bone_y(bone):
     return PIVOT[bone][1]
 
 
+def _grown(o, d, P):
+    """Per point: inside box o grown by d on every side."""
+    return np.all(np.abs((P - o.c) @ o.R) <= o.h + d + 1e-6, axis=-1)
+
+
+def _cut(poly, a, b):
+    """A convex polygon (rows of (u, v), counter-clockwise) cut by the line a -> b: (the part on its left, the rest)."""
+    n = np.array([-(b[1] - a[1]), b[0] - a[0]])
+    side = (poly - a) @ n
+    if (side >= -1e-9).all():
+        return poly, None
+    if (side <= 1e-9).all():
+        return None, poly
+    left, right = [], []
+    for k in range(len(poly)):
+        p, q, sp, sq = poly[k], poly[(k + 1) % len(poly)], side[k], side[(k + 1) % len(poly)]
+        if sp >= 0:
+            left.append(p)
+        if sp <= 0:
+            right.append(p)
+        if (sp > 0 and sq < 0) or (sp < 0 and sq > 0):
+            x = p + (q - p) * (sp / (sp - sq))
+            left.append(x)
+            right.append(x)
+    return np.array(left), np.array(right)
+
+
+def _area(poly):
+    x, y = poly[:, 0], poly[:, 1]
+    return 0.5 * float(np.sum(x * np.roll(y, -1) - np.roll(x, -1) * y))
+
+
+def _stepped(f, boxes, d):
+    """A face's visible surface with every box of its mesh grown by the depth step d: [(a convex polygon: rows of
+    (u, v), counter-clockwise, in texels from the face's designed corner (so u runs -d .. su + d), None or the one
+    texel (i, j) it is all painted with)].
+
+    The face's texels are VX.faces' own (what the painter painted), stretched over the grown face. What is cut is exact:
+    for the boxes that stand square to this one, each rectangle ends where a grown neighbour's side or its flush face
+    begins (the earlier box keeps a shared plane, as in VX.faces); a box turned against this one hides whole texels, as
+    designed, and where its face lies in this very plane (two feathers of a fan, edge to edge) the earlier one's grown
+    outline is cut out of the later. So the mesh stays closed and no two of its faces lie over each other. A texel a
+    turned box hid whose place on the grown face that box (grown) no longer covers, a sliver at its end, is drawn
+    with the nearest texel that was painted."""
+    su, sv, e = f.su, f.sv, VX.LIFT
+    mask = np.zeros((sv, su), dtype=bool)
+    mask[f.j, f.i] = True
+    square = []  # the boxes square to this one and near its plane: (box, earlier, lo u, hi u, lo v, hi v)
+    turned = []  # earlier boxes turned against this one with a face in this plane: that face's grown outline
+    for k, o in enumerate(boxes):
+        if o is f.box:
+            continue
+        rel = o.c - f.corner
+        r = np.abs(np.array([f.u, f.v, f.n]) @ o.R) @ o.h + d
+        cu, cv, cn = rel @ f.u, rel @ f.v, rel @ f.n
+        if not (cn - r[2] <= d + e and cn + r[2] >= d - e):
+            continue  # nowhere near the plane
+        if cu + r[0] <= -d or cu - r[0] >= su + d or cv + r[1] <= -d or cv - r[1] >= sv + d:
+            continue
+        if np.allclose(np.sort(np.abs(f.box.R.T @ o.R), axis=1)[:, -1], 1, atol=1e-6):
+            square.append((o, k < f.index, cu - r[0], cu + r[0], cv - r[1], cv + r[1]))
+        elif k < f.index:
+            for n, u, v, corner, nu, nv in o.faces():
+                if n @ f.n > 1 - 1e-6 and abs((corner - f.corner) @ f.n) < 1e-6:
+                    ends = [corner + a * u + b * v for a, b in ((-d, -d), (nu + d, -d), (nu + d, nv + d), (-d, nv + d))]
+                    poly = np.array([[(x - f.corner) @ f.u, (x - f.corner) @ f.v] for x in ends])
+                    turned.append(poly if _area(poly) > 0 else poly[::-1])
+
+    def lines(n, cuts):
+        own = -d + np.arange(n + 1) * (n + 2 * d) / n  # the texels' edges, stretched over the grown face
+        xs = sorted(set(np.round(np.concatenate([own, [c for c in cuts if -d < c < n + d]]), 9)))
+        out = [xs[0]]
+        for x in xs[1:]:
+            if x - out[-1] > 1e-7:
+                out.append(x)
+        return np.array(out)
+
+    U = lines(su, [c for q in square for c in q[2:4]])
+    V = lines(sv, [c for q in square for c in q[4:6]])
+    cu, cv = (U[:-1] + U[1:]) / 2, (V[:-1] + V[1:]) / 2
+    ti = np.clip(np.floor((cu + d) * su / (su + 2 * d)).astype(int), 0, su - 1)
+    tj = np.clip(np.floor((cv + d) * sv / (sv + 2 * d)).astype(int), 0, sv - 1)
+    vis = mask[np.ix_(tj, ti)].copy()
+    gu, gv = np.meshgrid(cu, cv)
+    P = f.corner + gu.ravel()[:, None] * f.u + gv.ravel()[:, None] * f.v + d * f.n
+    lift, sunk = P + e * f.n, P - e * f.n
+    hidden = np.zeros(len(P), dtype=bool)
+    for o, earlier, *_ in square:
+        over = _grown(o, d, lift)
+        hidden |= over
+        if earlier:
+            hidden |= _grown(o, d, sunk) & ~over
+    bare = ~vis.ravel() & ~hidden  # not painted, and no square box over it: is a turned one?
+    if bare.any() and d > 0:
+        for k, o in enumerate(boxes):
+            if o is not f.box:
+                under = _grown(o, d, lift[bare])
+                if k < f.index:
+                    under |= _grown(o, d, sunk[bare])
+                bare[bare] = ~under
+    else:
+        bare[:] = False
+    vis &= ~hidden.reshape(vis.shape)
+    quad = lambda i, j, w, h: np.array([(U[i], V[j]), (U[i + w], V[j]), (U[i + w], V[j + h]), (U[i], V[j + h])])  # noqa: E731
+    out = [(quad(i, j, w, h), None) for i, j, w, h in VX.rects(vis)]
+    for c in np.flatnonzero(bare):
+        j, i = divmod(int(c), len(cu))
+        near = int(np.argmin((f.i - ti[i]) ** 2 + (f.j - tj[j]) ** 2))
+        out.append((quad(i, j, 1, 1), (int(f.i[near]), int(f.j[near]))))
+    for poly in turned:
+        kept = []
+        for piece, texel in out:
+            if piece[:, 0].max() <= poly[:, 0].min() or piece[:, 0].min() >= poly[:, 0].max() \
+                    or piece[:, 1].max() <= poly[:, 1].min() or piece[:, 1].min() >= poly[:, 1].max():
+                kept.append((piece, texel))
+                continue
+            for k in range(len(poly)):  # what lies outside each side of the outline in turn stays
+                piece, rest = _cut(piece, poly[k], poly[(k + 1) % len(poly)])
+                if rest is not None and _area(rest) > 1e-9:
+                    kept.append((rest, texel))
+                if piece is None:
+                    break
+        out = kept
+    return out
+
+
 class Built:
     def __init__(self, pos, nrm, uv, along):
         self.pos, self.nrm, self.uv, self.along = pos, nrm, uv, along
         self.anchors, self.streams = [], []
 
 
-def make(design, width=128):
-    """(meshes {(piece, bone): Built (part space)}, albedo, material)."""
+def make(design, width=128, steps=True):
+    """(meshes {(piece, bone): Built (part space)}, albedo, material, warnings). steps: each mesh built out by its depth
+    step (what the game draws); without, exactly as designed (what the icons are drawn from)."""
     groups, faces = [], []
     VX.WARNINGS.clear()
     warns = []
@@ -3390,6 +3547,7 @@ def make(design, width=128):
         warns += [f"{piece}/{bone}: {w}" for w in VX.WARNINGS]
         for f in fs:
             f.group = (piece, bone)
+            f.boxes = boxes
         groups.append((piece, bone))
         faces += fs
     height = VX.pack(faces, width)
@@ -3406,16 +3564,17 @@ def make(design, width=128):
         albedo[ty, tx] = a
         material[ty, tx] = m
         filled[ty, tx] = True
-        mask = np.zeros((f.sv, f.su), dtype=bool)
-        mask[f.j, f.i] = True
         P, N, UV, A = acc[f.group]
-        for i0, j0, w, h in VX.rects(mask):
-            quad = [(i0, j0), (i0 + w, j0), (i0 + w, j0 + h), (i0, j0 + h)]
-            for tri in ((0, 1, 2), (0, 2, 3)):
-                for q in tri:
-                    ci, cj = quad[q]
-                    p = f.corner + ci * f.u + cj * f.v
-                    P.append(p)
+        d = depth(piece, bone) if steps else 0.0  # the mesh's depth step (SPEC §44.15)
+        ku, kv = f.su / (f.su + 2 * d), f.sv / (f.sv + 2 * d)
+        for poly, texel in _stepped(f, f.boxes, d):
+            for k in range(1, len(poly) - 1):
+                for cu, cv in (poly[0], poly[k], poly[k + 1]):
+                    ci, cj = (cu + d) * ku, (cv + d) * kv  # the same spot in the face's texels
+                    p = f.corner + ci * f.u + cj * f.v  # where it was designed: what its height goes by
+                    if texel is not None:
+                        ci, cj = texel[0] + 0.5, texel[1] + 0.5
+                    P.append(f.corner + cu * f.u + cv * f.v + d * f.n)
                     N.append(f.n)
                     UV.append(((f.x + ci - f.i0) / (2 * width), (f.y + cj - f.j0) / height))
                     A.append(min(1.0, max(0.0, (p[1] + oy) / FIGURE)))
@@ -3458,7 +3617,9 @@ def write(design):
     tex_dir = os.path.join(RES, "assets/awaken/textures/entity/armour")
     os.makedirs(tex_dir, exist_ok=True)
     Image.fromarray(np.concatenate([albedo, material], axis=1), "RGBA").save(os.path.join(tex_dir, sid + ".png"))
-    items(design, meshes, albedo, material)
+    # the icons are drawn from the set as designed, without the depth steps: they are the approved pictures, and at an
+    # icon's size a 512th of a block decides only which of two faces in one plane a pixel happens to take
+    items(design, make(design, steps=False)[0], albedo, material)
     return meshes, warns
 
 
@@ -3695,6 +3856,103 @@ def rest(bone, P, N, cape=6.0, curl=4.0):
     return np.array(PIVOT[bone], dtype=float) + P, N
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Faces in one plane (SPEC §44.15): the check that the depth steps did their work
+
+ARM_REST = 0.1  # radians: how far a Fitting Stand, a Hall stand and a piece in the hand hold the arms out (FittingStandRenderer.rest)
+_SKIN = []
+
+
+def _posed(design, meshes, pose):
+    """{name: (corners, normals)} of every mesh of a set in the figure, design space. worn: on a player at rest, the
+    skin under it; stand: on an armour stand (its leg pieces a texel higher); fit: as the Fitting Stand, the Hall and
+    a piece in the hand hold it (the arms turned out)."""
+    split = {(p, b.split("@")[0]) for (p, b) in meshes if "@still" in b or "@live" in b}
+    out = {}
+    for (p, b), m in meshes.items():
+        if p == "rune" or ("@" not in b and (p, b) in split):
+            continue  # a rune circles the wearer; a bone with living parts is its still mesh and its living ones
+        P, N = rest(b, m.pos, m.nrm)
+        base = b.split("@")[0]
+        if pose == "stand" and base.endswith("_leg"):
+            P = P + np.array([0.0, 1.0, 0.0])
+        if pose == "fit" and base.endswith("_arm"):
+            a = -ARM_REST if base == "right_arm" else ARM_REST
+            R = np.array([[math.cos(a), -math.sin(a), 0], [math.sin(a), math.cos(a), 0], [0, 0, 1]])
+            piv = np.array(PIVOT[base], dtype=float)
+            P, N = piv + (P - piv) @ R.T, N @ R.T
+        out[f"{p}/{b}"] = (P, N)
+    if pose == "worn":
+        if not _SKIN:
+            for bone, boxes in SKIN.items():
+                built = VX.build(boxes, painter({"skin": AW.Mat("bone", 3, 0.0, 0.2)}, PIVOT[bone][1]), lambda P, direction=False: P, width=64)
+                _SKIN.append((bone, np.array(PIVOT[bone], dtype=float) + built.pos, built.nrm))
+        for bone, P, N in _SKIN:
+            out[f"skin/{bone}"] = (P, N)
+    return out
+
+
+def _overlap(a, b, n, eps):
+    """How deep two convex polygons in a plane (normal n) lie over each other: over eps, or the first depth under it."""
+    best = 1e9
+    for q in (a, b):
+        for k in range(len(q)):
+            ax = np.cross(n, q[(k + 1) % len(q)] - q[k])
+            L = np.linalg.norm(ax)
+            if L < 1e-9:
+                continue
+            pa, pb = a @ ax / L, b @ ax / L
+            best = min(best, min(pa.max(), pb.max()) - max(pa.min(), pb.min()))
+            if best <= eps:
+                return best
+    return best
+
+
+def shared_planes(groups, near, eps=0.02):
+    """Pairs of triangles that face the same way, lie within `near` of one plane and lie over each other by more than
+    eps (texels): [(name, name, normal, a point where they meet)]. groups: {name: (corners (3k, 3), normals)}."""
+    names, T, Nn = [], [], []
+    for g, (P, N) in groups.items():
+        T.append(P.reshape(-1, 3, 3))
+        Nn.append(N.reshape(-1, 3, 3)[:, 0])
+        names += [g] * (len(P) // 3)
+    T, Nn = np.concatenate(T), np.concatenate(Nn)
+    Nn = Nn / np.linalg.norm(Nn, axis=1, keepdims=True)
+    dist = np.einsum("ij,ij->i", Nn, T[:, 0])
+    lo, hi = T.min(axis=1), T.max(axis=1)
+    buckets = {}
+    for i, key in enumerate(map(tuple, np.round(Nn * 200).astype(int))):
+        buckets.setdefault(key, []).append(i)
+    out = []
+    for idx in buckets.values():
+        idx = np.array(idx)
+        order = idx[np.argsort(dist[idx])]
+        dd = dist[order]
+        for a in range(len(order)):
+            i, b = order[a], a + 1
+            while b < len(order) and dd[b] - dd[a] < near:
+                j = order[b]
+                b += 1
+                if names[i].startswith("skin") and names[j].startswith("skin"):
+                    continue  # the two legs' skin share planes down the middle: vanilla's own
+                if (np.minimum(hi[i], hi[j]) - np.maximum(lo[i], lo[j]) < -1e-6).any() or Nn[i] @ Nn[j] < 0.9999:
+                    continue
+                if _overlap(T[i], T[j], Nn[i], eps) > eps:
+                    out.append((names[i], names[j], Nn[i], (np.maximum(lo[i], lo[j]) + np.minimum(hi[i], hi[j])) / 2))
+    return out
+
+
+def planes(design, meshes):
+    """Faces of a set that share a plane (they would flicker), worn and on every stand. Returns messages."""
+    bad = {}
+    for pose in ("worn", "stand", "fit"):
+        for a, b, n, at in shared_planes(_posed(design, meshes, pose), 0.75 * STEP):
+            a, b = sorted((a, b))
+            bad.setdefault((a, b), [0, pose, n, at])[0] += 1
+    return [f"{a} and {b} share a plane ({k} triangle pairs; {pose}, facing {np.round(n, 2).tolist()}, near {np.round(at, 2).tolist()})"
+            for (a, b), (k, pose, n, at) in sorted(bad.items())]
+
+
 def figure(design, skin=True, awake=False):
     meshes, albedo, material, _ = make(design)
     tex = np.concatenate([albedo, material], axis=1)
@@ -3830,6 +4088,7 @@ def check():
             bad.append(f"{sid}: {n} corners (at most {BUDGET})")
         bad += [f"{sid}: {w}" for w in warns]
         bad += [f"{sid}: {w}" for w in FIN.overlaps(design)]
+        bad += [f"{sid}: {w}" for w in planes(design, meshes)]
         bad += [f"{sid}: {w}" for w in FIN.sweep(design)]
         if albedo.shape[0] > 512:
             bad.append(f"{sid}: atlas {albedo.shape[0]} tall")
