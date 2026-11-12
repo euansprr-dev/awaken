@@ -25,6 +25,7 @@ public final class ShapingModule {
         });
         bus.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> Shaping.forget(e.getEntity().getUUID()));
         Sources.neverHeld("a block the Mallet has cut: it drops what it really is (shaping.ShapedBlock)", "shaped");
+        ShapingCommands.register();
         ShapingTests.register();
     }
 
