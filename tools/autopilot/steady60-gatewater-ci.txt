@@ -1,0 +1,124 @@
+# Water in a gate (Euan, 12 Nov, in an E-rank Hive gate on Cinematic: "seems like there's an issue with the water in
+# this gate here creating squares in the water"). The Air's water (SPEC §22 "Glasswater") under a roof: a pool of one
+# block of water laid on the floor of the Hive's biggest place and its second, each seen three ways: Lens off (the
+# game's own frame), Cinematic, and Cinematic without the Air's water (the probe chain cinematic_comp_water). First an
+# open-air pool, so water outside gates is seen too: across it, down at the bank, and under a plank bridge.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-gatewater-ci.txt 2400
+# ci knobs: LENS=cinematic
+world steadygatewater creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+cmd difficulty peaceful
+screen close
+window 1440 900
+cmd gamemode creative
+opt fov 90
+lens grade vivid
+
+# ---- Open air: a pool with a deep middle, a sand corner, lily pads and a plank bridge ----------------------------------
+cmd tp @s 0.5 121 0.5 0 10
+cmd forceload add -32 -32 32 64
+wait 200
+cmd fill -30 120 -6 30 120 64 minecraft:grass_block
+cmd fill -24 114 10 24 119 58 minecraft:stone
+cmd fill -24 120 10 24 120 58 minecraft:water
+cmd fill -12 115 22 12 119 46 minecraft:water
+cmd fill -24 119 10 -14 119 20 minecraft:sand
+cmd fill -24 123 17 24 123 19 minecraft:oak_planks
+cmd setblock -2 121 12 minecraft:lily_pad
+cmd setblock -1 121 13 minecraft:lily_pad
+cmd setblock -3 121 14 minecraft:lily_pad
+cmd tp @s 0.5 121 7.5 0 6
+camera first
+hud off
+lookswitch cinematic
+wait 400
+look 0 6
+wait 200
+shot lake_across
+cmd tp @s 0.5 121 9.4 0 55
+wait 60
+look 0 55
+wait 60
+shot lake_bank_down
+look 0 14
+wait 60
+shot lake_under_bridge
+lens off
+wait 60
+shot lake_under_bridge_lens_off
+lens cinematic
+wait 120
+
+# ---- A Hive gate: away from Carillon (gates never form in its reserve) -----------------------------------------------
+cmd forceload remove all
+cmd tp @s 6000 200 6000
+wait 600
+cmd awaken gate hop
+wait 400
+cmd awaken gate open E hive world 7 awaken:hive/the_comb
+wait 400
+cmd awaken gate interior enter
+wait 300
+cmd awaken gate interior goto place
+wait 200
+# a pool laid on the floor ahead: wax under it, one block of water, open air over it to the room's own roof
+cmd tp @s ~ ~ ~ 0 0
+wait 20
+cmd fill ~-7 ~-3 ~1 ~7 ~-2 ~15 awaken:hive_wax_dark
+cmd fill ~-7 ~-1 ~1 ~7 ~-1 ~15 minecraft:water
+cmd fill ~-7 ~0 ~1 ~7 ~4 ~15 minecraft:air
+wait 100
+look 0 38
+wait 200
+lens look
+lens off
+wait 60
+shot gate_a_lens_off
+lens cinematic
+wait 160
+shot gate_a_cinematic
+lens chain cinematic_comp_water
+wait 80
+shot gate_a_no_glasswater
+lens chain off
+wait 60
+look -35 24
+wait 80
+shot gate_a_cinematic_wide
+
+cmd awaken gate interior goto place2
+wait 200
+cmd tp @s ~ ~ ~ 0 0
+wait 20
+cmd fill ~-7 ~-3 ~1 ~7 ~-2 ~15 awaken:hive_wax_dark
+cmd fill ~-7 ~-1 ~1 ~7 ~-1 ~15 minecraft:water
+cmd fill ~-7 ~0 ~1 ~7 ~4 ~15 minecraft:air
+wait 100
+look 0 38
+wait 200
+lens off
+wait 60
+shot gate_b_lens_off
+lens cinematic
+wait 160
+shot gate_b_cinematic
+lens chain cinematic_comp_water
+wait 80
+shot gate_b_no_glasswater
+lens chain off
+wait 60
+cmd awaken gate leave
+wait 100
+quit
