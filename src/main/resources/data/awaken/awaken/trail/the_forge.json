@@ -27,7 +27,7 @@
     },
     {
       "id": "armory",
-      "text": "Make your Forge room: an anvil, a Forge and an armour stand in one room.",
+      "text": "Make your Forge room: an anvil, a Forge and a Fitting Stand in one room.",
       "done": [
         "room:forge"
       ],

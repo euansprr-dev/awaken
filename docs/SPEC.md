@@ -10512,8 +10512,9 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   ("step|choice"). Saved: attachment `awaken:tasks` (`TaskState`, schema 1: pinned, seen (the last 256), chosen), kept
   through death. `/awaken tasks` lists the page, `/awaken tasks pin <key>`, `/awaken tasks unpin`.
 - **The Armoury** (`RoomType.FITTING`, label "Armoury", id `armoury`): a Fitting Stand and a crafting table in one closed
-  room, your first workshop, right after a bed (`HearthNow.ORDER`: Shelter, Bedroom, Armoury, then the rest). An anvil,
-  the Forge and an armour stand in the same room make it the Forge too (one room, both kinds). `Furniture.FITTING_STAND`
+  room, your first workshop, right after a bed (`HearthNow.ORDER`: Shelter, Bedroom, Armoury, then the rest). An anvil
+  and the Forge in the same room make it the Forge too (one room, both kinds): the Forge's stand is the Fitting Stand
+  (§28.2, "The Forge's stand"). `Furniture.FITTING_STAND`
   is appended (saved counts go by ordinal). Its gift: armour finished at a Fitting Stand inside an Armoury lasts a quarter
   longer (`MAX_DAMAGE` × 1.25, `ArmourForge.ARMOURY_WEAR`; the stand asks `HearthHooks.armoury(level, pos)`, §12; the
   tooltip says "Made in your Armoury: it lasts a quarter longer"; `ArmourForge.fromArmoury` reads it off the stack).
@@ -10864,6 +10865,17 @@ Comfort, Style, land); a loaded room answers by its box until the next scan, whi
 starts (spread by owner). The first time a player stands in a room after it's recognised or regraded (key = its box,
 grade and name; 96 remembered per player in `HearthPlayer` schema 3), its name as a quiet caption (`HomeNet.RoomCaption`,
 AMBIENT, topic `hearth_room`, `ui.hearth_room`), waiting while they stay in the room up to 600 ticks, else filed.
+
+**The Forge's stand** (Euan 2026-11-12: "it says grow your armory into a forge ... why is it asking for an armor stand
+instead of a fitting stand?"). The Forge (`ARMORY`) is an anvil, the Forge and a Fitting Stand in one closed room, so the
+Armoury grows into it by adding the anvil and the Forge. A vanilla armour stand names no room now (`Furniture.STAND`
+keeps its slot and its count, so saved rooms read the same). Every line that said "armour stand" for the Forge says
+Fitting Stand: "Grow your Armoury into a Forge" and its pieces, the Forge's window, the anvil's limit line, the Forge
+trail, the JEI page. An old world's Forge built with an armour stand keeps its saved kind until its next scan, then reads
+as a Forge again once a Fitting Stand stands in it; every step it finished stays done, since the home remembers it had
+a Forge (§27.14, `had(ARMORY)`), and the Forge's window says what the room lacks ("needs an anvil and a Fitting Stand in
+this room"). The home stage's forge (`HomeStage`) has a Fitting Stand where its armour stand stood. Test
+`hearth_armoury_room`.
 
 **Room kinds** (`RoomType`; effects in `RoomEffects`, `Breaks`, `Town`). Shelter (every closed room; the first: toast
 "First shelter · Rest heals here. From now on the Hearth reads everything you build."), Bedroom (a bed), Sanctuary,
@@ -20759,8 +20771,8 @@ it; coming back restarts the stage, counted in again.
 - **Quality**: 0.2 heat + 0.55 strikes x early + 0.15 quench + 0.1 hilt; Plain below 0.55, Fine, Masterwork from 0.75,
   Flawless from 0.9; burnt or brittle is never Flawless. Starting Temper Plain 0, Fine I, Masterwork II, Flawless III, then
   Oren's Mark (`awaken:temper_start`) adds its levels, all **capped at the Forge's temper limit**
-  (`HearthHooks.temperCap(player, forge)`: the Hearth's own rule, one level anywhere, the Forge's tier x2 in a Forge room, `RoomType.ARMORY`: an anvil, the Forge and an armour stand in one room;
-  the card says so plainly: "Put an anvil and an armour stand in the Forge's room and it'll go further"),
+  (`HearthHooks.temperCap(player, forge)`: the Hearth's own rule, one level anywhere, the Forge's tier x2 in a Forge room, `RoomType.ARMORY`: an anvil, the Forge and a Fitting Stand in one room (§28.2);
+  the card says so plainly: "Put an anvil and a Fitting Stand in the Forge's room and it'll go further"),
   applied with `Upgrades.applyTemper`.
 - **The story**: `awaken:weapon_forged` (`WeaponForged`, schemaVersion 1): quality, flaw (0 none, 1 burnt, 2 brittle),
   the maker's name. The tooltip says it plainly: "Masterwork", "a burnt tip" or "a brittle hairline", "Forged by Euan".
@@ -21109,7 +21121,7 @@ both come back if the anvil is broken mid-work, and the weapon comes back throug
   by the anvil (`HearthHooks.temperCap` at that Forge) whose prices you hold together: each level costs what it does at
   the Forge (`Upgrades.temper(level, false)`, priced for your rank by `Costs.price`), summed. Oren's Mark lets a weapon
   with no Temper start at its level for that level's price alone, as at the Forge. At the limit the line says why, in the
-  Forge's words ("Put an anvil and an armour stand in the Forge's room and it'll go further.", "Upgrade the Forge to go
+  Forge's words ("Put an anvil and a Fitting Stand in the Forge's room and it'll go further.", "Upgrade the Forge to go
   further.", "It can't take any more."). The scene (about 10 s whatever the levels): the whole weapon heats in the
   Forge's mouth, one strike on the style's own beat for each level gained, the quench. Nothing is judged and nothing is
   flawed: the Temper lands as paid, and the strikes ring as at the draw-out. The page says what this heat would do (at a

@@ -14,7 +14,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.BellBlock;
@@ -534,7 +533,7 @@ public final class HomeStage {
         spots.put("hall_door", w(0, 1, z1 + 1));
     }
 
-    /** Oren's forge: stone, a Forge in the back wall, the anvil before it, a stand for armour, a lit blast furnace. */
+    /** Oren's forge: stone, a Forge in the back wall, the anvil before it, a Fitting Stand, a lit blast furnace. */
     private static void forge(Map<String, BlockPos> spots) {
         int x0 = 12, x1 = 18, z0 = -20, z1 = -13, h = 3;
         shell(x0, z0, x1, z1, h, STONE, Direction.SOUTH, true);
@@ -551,13 +550,8 @@ public final class HomeStage {
         lantern(x0 + 1, 2, z0 + 1, false);
         lantern(x1 - 1, 2, z1 - 1, false);
         lantern(x0 + 1, h, z1 - 1, true);
-        ArmorStand stand = net.minecraft.world.entity.EntityTypes.ARMOR_STAND.create(level, EntitySpawnReason.COMMAND);
-        if (stand != null) {
-            BlockPos p = w(x1 - 1, 1, -16);
-            stand.snapTo(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, 270f, 0f);
-            stand.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_CHESTPLATE));
-            level.addFreshEntity(stand);
-        }
+        // the Forge's stand (SPEC §28.2), facing into the room
+        set(x1 - 1, 1, -16, dev.awaken.armour.ArmourContent.STAND.get().defaultBlockState().setValue(dev.awaken.armour.FittingStandBlock.FACING, Direction.WEST));
         path(15, z1 + 2, 4, -3);
         spots.put("anvil", w(15, 1, -17));
     }

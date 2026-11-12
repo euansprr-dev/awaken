@@ -35,6 +35,7 @@ public enum Furniture {
     MAT("a Meditation Mat", "mat", "the Meditation Mat", "meditation_mat"),
     ANVIL("an anvil", "anvil", "the anvil", null),
     FORGE("a Forge", "Forge", "the Forge", "forge"),
+    /** A vanilla armour stand (an entity): no room wants one since 2026-11-12; the slot keeps saved rooms' counts in place. */
     STAND("an armour stand", "stand", "the armour stand", null),
     TROPHY("a Lord's trophy on a Trophy Mount", "trophy", "the trophy", "trophy_mount"),
     MACHINE("a Precursor machine", "machine", "the machine", null),
@@ -59,7 +60,7 @@ public enum Furniture {
     CRUCIBLE("a Crucible", "crucible", "the Crucible", "foundry_crucible"),
     DROP("the Drop", "Drop", "the Drop", "storehouse_drop"),
     LEDGER("a Ledger desk", "ledger", "the Ledger desk", "ledger_desk"),
-    /** (SPEC §27.13) the Armoury's stand, where armour is made (the Forge room's stand is a vanilla armour stand). */
+    /** (SPEC §27.13) the Armoury's stand, where armour is made, and the Forge's (SPEC §28.2). */
     FITTING_STAND("a Fitting Stand", "Fitting Stand", "the Fitting Stand", "fitting_stand");
 
     public static final int COUNT = values().length;

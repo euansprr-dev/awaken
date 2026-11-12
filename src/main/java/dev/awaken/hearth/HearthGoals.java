@@ -206,7 +206,7 @@ final class HearthGoals {
 
     static Step forge(HearthRecord h) {
         return Step.of("hearth/forge", Goal.HEARTH, "Grow your Armoury into a Forge").thread("hearth.build", 30)
-                .why("An anvil, the Forge and an armour stand in the same room: D-rank armour, weapon raises and tempering. The anvil and the Forge take about 38 iron.")
+                .why("Set an anvil and the Forge in the room with your Fitting Stand: D-rank armour, weapon raises and tempering. The anvil and the Forge take about 38 iron.")
                 .needs(pieces(RoomType.ARMORY, h)).at(h.pos).path(Goals.PATH_FORGE).priority(45)
                 .covers("hearth:room/armory", "hearth:why/armory").build();
     }
