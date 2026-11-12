@@ -163,7 +163,7 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         if (ctx.version() >= 2) {
             M m = m();
             designWay((x, z) -> ground(x, z) > water() + 1 && !inBarrow(x, z) && pathDist(x, z) > 5,
-                    new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band));
+                    new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band), java.util.Set.of("standing stone"));
         }
     }
 

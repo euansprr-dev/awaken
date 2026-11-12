@@ -23345,9 +23345,14 @@ stone dressed in the land's own stone with a band of its accent; its course catc
   within 26, or a new camp on level ground clear of the land's sites, roads and what is built), each branch with its own line
   of stones. All of it or none: a branch that can't be laid is rolled back and tried from another stop, and a land where any
   target fails keeps its run read off its sites, with a warning in the log.
-- **The rolled lands** (`GeneratedLand.secondStretch`): beside the longest walk between two legs of the run that are neither
-  movement nor the Lord's, a second stretch of stones in the country's rock, spliced in as a movement leg ("Stones to jump
-  along", `Land.between`); where no line fits on dry ground clear of the ways, the run is as before.
+- **The rolled lands** (`GeneratedLand.secondStretch`): beside a walk of over 44 blocks between two legs of the run that are
+  neither movement nor the Lord's (the longest that takes one), a second stretch of stones in the country's rock, spliced in
+  as a movement leg ("Stones to jump along", `Land.between`); where no line fits on dry ground clear of the ways, the run is
+  as before, with a line in the log.
+- Every line is tried along the way and turned off it up to 100 degrees (`WayPlanner.TURNS`): a slope steeper than a block a
+  stone can't be climbed straight up, so the line crosses it. A camp keeps 20 blocks in from the land's edge (as the
+  country's haunts do), six from anything built and from a site's own radius; a stone 12 in from the edge. When nothing can
+  be planned the log says what stood in the way (`WayPlanner.why`), naming the piece that fills the ground.
 
 **Life leans to the way** (`RealmCountry.leans`: designed, plan 2 or later). A cell whose middle is within 70 blocks of the
 way (every walk from one leg to the next, and the land's roads) is quiet on a roll under 35 (50 elsewhere) and holds hunters

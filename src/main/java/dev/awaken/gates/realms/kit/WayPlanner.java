@@ -23,7 +23,7 @@ public final class WayPlanner {
     /** The longest walk between two stops, and how far ahead the next one is looked for. Under the check's 90 either way. */
     static final int STEP = 64, MOST = 88;
     /** The first camp is looked for this far in from the Mouth (the check wants one within 60). */
-    static final int FIRST_NEAR = 24, FIRST_FAR = 56;
+    static final int FIRST_NEAR = 24, FIRST_FAR = 60;
 
     /** What the land tells the planner: where a camp or a stone may stand, and what its stones are made of. */
     public interface Ground {
@@ -84,6 +84,14 @@ public final class WayPlanner {
 
     /** Plans and, when it is whole, builds the run. False when it couldn't be planned: nothing was built. */
     public static boolean plan(Land land, List<? extends Piece<?>> pieces, Ground ok, Dress dress, long seed, Build build) {
+        return plan(land, pieces, Set.of(), ok, dress, seed, build);
+    }
+
+    /**
+     * As above, with the labels of pieces a camp may stand among ({@code among}: a tree's crown overhead, a pole or a stub
+     * of wall in the camp): a line of stones still keeps clear of everything built, since it clears the air over itself.
+     */
+    public static boolean plan(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, Dress dress, long seed, Build build) {
         Land.Site mouth = land.mouth();
         List<Land.Site> lords = land.sites(Land.SiteKind.LORD), wardens = land.sites(Land.SiteKind.WARDEN);
         WHY.remove();
@@ -111,7 +119,7 @@ public final class WayPlanner {
             }
         }
         if (camp1 == null) {
-            int[] at = spot(land, pieces, ok, taken, mouth.x(), mouth.z(), dir, FIRST_NEAR, FIRST_FAR, 96);
+            int[] at = spot(land, pieces, among, ok, taken, mouth.x(), mouth.z(), dir, FIRST_NEAR, FIRST_FAR, 180);
             if (at == null) return no("no first camp " + FIRST_NEAR + " to " + FIRST_FAR + " from the Mouth: " + why());
             camp1 = new Stop("camp1", Land.LegKind.FIGHT, "A camp near the way in", at[0], land.ground(at[0], at[1]) + 1, at[1], 8, nextDen++);
             camp1.newDen = at;
@@ -125,7 +133,7 @@ public final class WayPlanner {
         if (climb == null) return no("no stones past the first camp at " + camp1.x + "," + camp1.z + ": " + why());
         stops.add(climb);
         double[] past = new double[]{climb.hops.end()[0], climb.hops.end()[2]};
-        Stop hub = stopNear(land, pieces, ok, dens, used, taken, "camp2", "A camp past the stones", past[0] + dir[0] * 28, past[1] + dir[1] * 28, nextDen);
+        Stop hub = stopNear(land, pieces, among, ok, dens, used, taken, "camp2", "A camp past the stones", past[0] + dir[0] * 28, past[1] + dir[1] * 28, nextDen);
         if (hub == null) return no("no camp past the first stones near " + (int) (past[0] + dir[0] * 28) + "," + (int) (past[1] + dir[1] * 28) + ": " + why());
         if (hub.newDen != null) nextDen++;
         stops.add(hub);
@@ -148,7 +156,7 @@ public final class WayPlanner {
                 Set<Integer> usedAt = new HashSet<>(used);
                 List<List<String>> exitsAt = new ArrayList<>();
                 for (Stop s0 : stops) exitsAt.add(new ArrayList<>(s0.exits));
-                if (branch(land, pieces, ok, dress, seed, t, door, stops, laid, taken, dens, used, n, dens2)) {
+                if (branch(land, pieces, among, ok, dress, seed, t, door, stops, laid, taken, dens, used, n, dens2)) {
                     it.remove();
                     continue;
                 }
@@ -182,7 +190,7 @@ public final class WayPlanner {
     }
 
     /** One branch: stops from the nearest one there is to the target, the first of them stones, then the target's own leg. */
-    private static boolean branch(Land land, List<? extends Piece<?>> pieces, Ground ok, Dress dress, long seed, Land.Site t, int[] door, List<Stop> stops,
+    private static boolean branch(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, Dress dress, long seed, Land.Site t, int[] door, List<Stop> stops,
                                   List<Hops> laid, List<int[]> taken, List<Land.Site> dens, Set<Integer> used, int[] n, int[] nextDen) {
         boolean isLord = t.kind() == Land.SiteKind.LORD;
         // the Lord's leg is its door: the hall itself may stand high in the middle of something no camp can be near
@@ -201,7 +209,7 @@ public final class WayPlanner {
                 if (next != null) branchMoves = true;
             }
             if (next == null) {
-                next = stopNear(land, pieces, ok, dens, used, taken, "camp" + n[0], "A camp on the way", px, pz, nextDen[0]);
+                next = stopNear(land, pieces, among, ok, dens, used, taken, "camp" + n[0], "A camp on the way", px, pz, nextDen[0]);
                 if (next == null) return no("no camp near " + (int) px + "," + (int) pz + " (from " + cur.id + "): " + why());
                 if (next.newDen != null) nextDen[0]++;
             }
@@ -240,14 +248,14 @@ public final class WayPlanner {
     }
 
     /** A stop near a point: a den the land has (unused, within 26), or a new camp on good ground near it. */
-    private static Stop stopNear(Land land, List<? extends Piece<?>> pieces, Ground ok, List<Land.Site> dens, Set<Integer> used, List<int[]> taken,
+    private static Stop stopNear(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, List<Land.Site> dens, Set<Integer> used, List<int[]> taken,
                                  String id, String name, double px, double pz, int nextDen) {
         for (Land.Site d : dens) {
             if (used.contains(d.index()) || Math.hypot(d.x() - px, d.z() - pz) > 26) continue;
             used.add(d.index());
             return new Stop(id, Land.LegKind.FIGHT, name, d.x(), d.y(), d.z(), 8, d.index());
         }
-        int[] at = spot(land, pieces, ok, taken, (int) px, (int) pz, null, 0, 34, 180);
+        int[] at = spot(land, pieces, among, ok, taken, (int) px, (int) pz, null, 0, 34, 180);
         if (at == null) return null;
         taken.add(new int[]{at[0], at[1], 12});
         Stop s = new Stop(id, Land.LegKind.FIGHT, name, at[0], land.ground(at[0], at[1]) + 1, at[1], 8, nextDen);
@@ -262,7 +270,7 @@ public final class WayPlanner {
     private static Stop stones(Land land, List<? extends Piece<?>> pieces, Ground ok, Dress dress, List<int[]> taken, long seed,
                                String id, String name, double x, double z, double[] dir, List<Hops> laid) {
         java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
-        for (int turn : TURNS) for (int along : new int[]{12, 20, 6, 28}) for (int side : new int[]{0, 10, -10, 20, -20}) for (int len : new int[]{34, 26}) {
+        for (int turn : TURNS) for (int along : new int[]{12, 20, 6, 28, 36}) for (int side : new int[]{0, 10, -10, 20, -20, 32, -32}) for (int len : new int[]{34, 26}) {
             double sx = x + dir[0] * along - dir[1] * side, sz = z + dir[1] * along + dir[0] * side;
             // a line up a slope steeper than a block a stone can't climb it, so across the slope is tried too
             double c = Math.cos(Math.toRadians(turn)), sn = Math.sin(Math.toRadians(turn)), lx = dir[0] * c - dir[1] * sn, lz = dir[0] * sn + dir[1] * c;
@@ -316,12 +324,12 @@ public final class WayPlanner {
     }
 
     /** A place for a camp: good ground over a ring of it, clear of what is built and of the plan, from {@code near} to {@code far} out (along {@code dir} when given). */
-    private static int[] spot(Land land, List<? extends Piece<?>> pieces, Ground ok, List<int[]> taken, int x, int z, double[] dir, int near, int far, int arc) {
+    private static int[] spot(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, List<int[]> taken, int x, int z, double[] dir, int near, int far, int arc) {
         java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
         for (int r = near; r <= far; r += 4) for (int k = 0; k <= arc; k += 6) for (int sign = -1; sign <= 1; sign += 2) {
             double a = (dir == null ? 0 : Math.atan2(dir[1], dir[0])) + Math.toRadians(k * sign) + (dir == null ? k * 0.21 : 0);
             int cx = x + (int) Math.round(Math.cos(a) * r), cz = z + (int) Math.round(Math.sin(a) * r);
-            String why = unfit(land, pieces, ok, taken, cx, cz);
+            String why = unfit(land, pieces, among, ok, taken, cx, cz);
             if (why == null) return new int[]{cx, cz};
             tally.merge(why, 1, Integer::sum);
             if (k == 0) break;
@@ -331,10 +339,10 @@ public final class WayPlanner {
     }
 
     /** Why a camp can't stand here (null: it can): too near the edge, on something built, on the plan, on a way, by a site, bad or uneven ground. */
-    private static String unfit(Land land, List<? extends Piece<?>> pieces, Ground ok, List<int[]> taken, int x, int z) {
+    private static String unfit(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, List<int[]> taken, int x, int z) {
         // the land's own edge already stands inside its bounds; the country's haunts keep 20 in from it, and so does a camp
         if (land.edge(x, z) > -20) return "edge";
-        Piece<?> by = coveredBy(pieces, x, z, 6);
+        Piece<?> by = coveredBy(pieces, x, z, 6, among);
         if (by != null) return "built " + by.label;
         if (near(taken, x, z, 14)) return "taken";
         if (onWay(land, x, z, 8)) return "way";
@@ -354,8 +362,12 @@ public final class WayPlanner {
 
     /** What built thing stands over here, or null: for the log, so a land that has no room says what fills it. */
     static Piece<?> coveredBy(List<? extends Piece<?>> pieces, int x, int z, int pad) {
+        return coveredBy(pieces, x, z, pad, Set.of());
+    }
+
+    static Piece<?> coveredBy(List<? extends Piece<?>> pieces, int x, int z, int pad, Set<String> among) {
         for (Piece<?> p : pieces) {
-            if (p instanceof Hops || p.airborne || (long) (p.x1 - p.x0) * (p.z1 - p.z0) > 160L * 160L) continue;
+            if (p instanceof Hops || p.airborne || among.contains(p.label) || (long) (p.x1 - p.x0) * (p.z1 - p.z0) > 160L * 160L) continue;
             if (x + pad >= p.x0 && x - pad <= p.x1 && z + pad >= p.z0 && z - pad <= p.z1) return p;
         }
         return null;

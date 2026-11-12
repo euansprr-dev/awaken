@@ -363,7 +363,7 @@ public final class AmberReach extends KitLand<AmberReach.M> {
         if (ctx.version() >= 2) {
             M m = m();
             designWay((x, z) -> ground(x, z) > WATER + 1 && !onRock(x, z, 6) && riverD(x, z) > 6 && villageD(x, z) > 8 && roadD(x, z) > 4
-                    && Math.hypot(x - cu, z - cv) > 70, new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band));
+                    && Math.hypot(x - cu, z - cv) > 70, new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band), java.util.Set.of("Tree"));
         }
     }
 
