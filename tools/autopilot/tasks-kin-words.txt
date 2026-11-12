@@ -4,7 +4,7 @@
 # home, the Forge step asks for an anvil, the Forge and the Fitting Stand; then the Hearth page's Kin card and the
 # Journal's Beasts page say the same words.
 # Run on CI: tools/tour-ci.sh tools/autopilot/tasks-kin-words.txt 1500
-world autopilot_kin_words creative 27152715
+world autopilot_kin_words creative 27132713
 waitworld
 gui 0
 window 1708 960
