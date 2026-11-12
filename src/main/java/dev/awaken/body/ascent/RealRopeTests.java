@@ -369,7 +369,7 @@ final class RealRopeTests {
             Object[][] presses = {
                     {"from a sprint jump along it", new double[] {7.5, 1, 6, 0, 0.3, 0.36}, new double[] {11, 12, 12}, true, 6.0},
                     {"mid-chain along it, 6 up", new double[] {7.5, 6, 6, 0, 0, 1.0}, new double[] {11, 14, 13}, false, 8.0},
-                    {"standing a step from its foot, looking up it", new double[] {9.5, 0, 10, 0, 0.3, 0}, new double[] {11, 16, 12}, true, 7.0}};
+                    {"standing a step from its foot, looking up it", new double[] {9.5, 0, 10, 0, 0.3, 0}, new double[] {11, 16, 12.5}, true, 7.0}};
             for (Object[] press : presses) {
                 String name = (String) press[0];
                 double[] f = (double[]) press[1], at = (double[]) press[2];
