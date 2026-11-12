@@ -487,7 +487,12 @@ public final class LensClient {
             ensureParams();
             if (framed) ensureFrame();
             if (lit) ensureLight();
-            if (framed && !wasFramed) lensFrame.reset();
+            // A chain that starts or comes back starts its histories afresh. Each chain keeps its own (the light
+            // buffer's, the clouds'), and they stay as they were when it last ran: switched from Cinematic to Lite and
+            // back, the frame values never stopped (Lite reads them too), so Cinematic took its light of a quarter
+            // of a minute ago, from wherever the camera then looked, for last frame's (Euan, playing, 12 Nov: "I also
+            // turned off cinematic mode then back on, and the shadows broke"; SPEC §22 "A Look switched back to")
+            if (framed && (!wasFramed || want != ran)) lensFrame.reset();
             int at = effects.indexOf(want);
             if (at != 0) {
                 if (at > 0) effects.remove(at);
@@ -495,6 +500,7 @@ public final class LensClient {
             }
         }
         active = want != null;
+        ran = want;
 
         ResourceKey<Level> dim = mc.level.dimension();
         String biome = biomeFor;
@@ -702,6 +708,9 @@ public final class LensClient {
         lensFrame = new LensFrame();
         Minecraft.getInstance().getTextureManager().register(FRAME, lensFrame.texture);
     }
+
+    /** The chain Lens last asserted (a different one this tick: its histories are not last frame's). */
+    private static @org.jspecify.annotations.Nullable Identifier ran;
 
     private static void ensureLight() {
         if (heightfield != null) return;
