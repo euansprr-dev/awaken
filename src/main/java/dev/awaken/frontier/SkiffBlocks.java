@@ -91,7 +91,11 @@ public final class SkiffBlocks {
         }
     }
 
-    /** Canvas, two texels thick, lying in one of three planes; the tip panels are dyed. Nothing to walk into. */
+    /**
+     * Canvas, two texels thick, lying in one of three planes; the tip panels are dyed. Nothing to walk into. A side lashed
+     * to a spar (north, east, south, west, up, down: set by the plan, tools/art/skiff_plan.py) runs the cloth on into the
+     * pole beside it, since a spar is thin and in the middle of its block (SPEC §67.4).
+     */
     public static final class Sail extends Block {
         /** Flat like a wing; across the skiff (the wind-wheel's blades); along it (a pennant). */
         public enum Plane implements StringRepresentable {
@@ -105,16 +109,32 @@ public final class SkiffBlocks {
 
         public static final EnumProperty<Plane> PLANE = EnumProperty.create("plane", Plane.class);
         public static final BooleanProperty BAND = BooleanProperty.create("band");
+        public static final BooleanProperty NORTH = BooleanProperty.create("north"), EAST = BooleanProperty.create("east"),
+                SOUTH = BooleanProperty.create("south"), WEST = BooleanProperty.create("west"), UP = BooleanProperty.create("up"),
+                DOWN = BooleanProperty.create("down");
         private static final VoxelShape LYING = Block.box(0, 7, 0, 16, 9, 16), ACROSS = Block.box(0, 0, 7, 16, 16, 9), ALONG = Block.box(7, 0, 0, 9, 16, 16);
 
         public Sail(BlockBehaviour.Properties p) {
             super(p);
-            registerDefaultState(stateDefinition.any().setValue(PLANE, Plane.FLAT).setValue(BAND, false));
+            registerDefaultState(stateDefinition.any().setValue(PLANE, Plane.FLAT).setValue(BAND, false).setValue(NORTH, false)
+                    .setValue(EAST, false).setValue(SOUTH, false).setValue(WEST, false).setValue(UP, false).setValue(DOWN, false));
         }
 
         @Override
         protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> b) {
-            b.add(PLANE, BAND);
+            b.add(PLANE, BAND, NORTH, EAST, SOUTH, WEST, UP, DOWN);
+        }
+
+        /** The flag for the side of canvas facing {@code d}: true when it is lashed to the spar there. */
+        public static BooleanProperty side(Direction d) {
+            return switch (d) {
+                case NORTH -> NORTH;
+                case EAST -> EAST;
+                case SOUTH -> SOUTH;
+                case WEST -> WEST;
+                case UP -> UP;
+                case DOWN -> DOWN;
+            };
         }
 
         @Override
@@ -128,11 +148,15 @@ public final class SkiffBlocks {
 
         @Override
         protected BlockState rotate(BlockState s, Rotation rot) {
-            if (rot == Rotation.NONE || rot == Rotation.CLOCKWISE_180) return s;
+            if (rot == Rotation.NONE) return s;
+            // the lashed sides turn with the skiff, so each still names the side its spar is on
+            BlockState out = s;
+            for (Direction d : Direction.Plane.HORIZONTAL) out = out.setValue(side(rot.rotate(d)), s.getValue(side(d)));
+            if (rot == Rotation.CLOCKWISE_180) return out;
             return switch (s.getValue(PLANE)) {
-                case ATHWART -> s.setValue(PLANE, Plane.FORE_AFT);
-                case FORE_AFT -> s.setValue(PLANE, Plane.ATHWART);
-                default -> s;
+                case ATHWART -> out.setValue(PLANE, Plane.FORE_AFT);
+                case FORE_AFT -> out.setValue(PLANE, Plane.ATHWART);
+                default -> out;
             };
         }
 

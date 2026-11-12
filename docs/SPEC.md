@@ -25790,6 +25790,11 @@ improving the design and experience of it"): the first look was a plank box with
     it, six out and five deep at the root, at y 3 (clear over a head on the deck and on the pier).
   - Nothing hangs in the air by a few texels: a thin spar is centred in its block, so a lamp stands on an upright one
     (the sprit's end, the sternpost, the mast's top) or hangs from a whole block (the mast's crossarm, the bay's ridge).
+  - Canvas meets its wood: a spar is a pole four texels thick in the middle of its block and canvas is a plate in its
+    own, so a side of canvas beside a spar of the same rig that runs across that side (in the canvas's own plane) is
+    lashed (`north`..`down` on `skiff_sail`, set by the plan, 12 Nov: Euan saw a gap between the cloth and the wood),
+    and a strip of the same cloth runs on eight texels into the pole: no gap and no filler block. A dyed tip's strip
+    takes only the band's hem, so its gold diamond stays whole.
   - The wind-wheel behind the stern: a brass hub (`HUB` 0,4,−7) with four canvas blades three long, the same from
     every quarter turn, on a sternpost with the stern light.
   - Each block names what it moves with in flight (`Part.rig`): the hull, a wing, the wheel.
@@ -25810,10 +25815,11 @@ improving the design and experience of it"): the first look was a plank box with
   cleared of logs and leaves, and in a fringe of 6 more every leaf no longer joined to a log (through other leaves,
   within six, the way the game itself counts) comes down too, with the snow that lay on it, so a mooring in a forest
   stands in the open with nothing left hanging. Both are guarded: breaking, placing and explosions there are refused except for
-  creative players and operators. Saved in `FrontierData` (`awaken:frontier`, schema 1); a mooring's `look` (2 now, 1
-  when absent) lets one of an older look be taken down and built again where it stood.
+  creative players and operators. Saved in `FrontierData` (`awaken:frontier`, schema 1); a mooring's `look` (3 now, 1
+  when absent) lets one of an older look be taken down and built again where it stood; one of look 2 only has its
+  canvas lashed (`Moorings.relash`: each canvas block of the plan still standing takes its planned state).
 - Rotations: WEST (−z, x), NORTH (−x, −z), EAST (z, −x), with `Rotation` CW 90, 180, CCW 90 for the block states (the
-  canvas swaps its two upright planes on a quarter turn, the gunwale turns its edges).
+  canvas swaps its two upright planes on a quarter turn and turns its lashed sides, the gunwale turns its edges).
 
 **67.5 The flight (`Flights`, `client.FlightFilm`, `client.CloudCrossing`, `client.SkiffFx`, `client.FlightAir`).**
 - The helm takes you once Ilse has given you her coal (`FarPost.ready`: The Last Delivery past its talk-to-Ilse step, or
