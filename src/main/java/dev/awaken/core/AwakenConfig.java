@@ -52,6 +52,10 @@ public final class AwakenConfig {
     public static final ModConfigSpec.BooleanValue GATE_REALMS = B.comment("Realms: new gates can be whole places instead of floors (SPEC §50.7).",
                     "Off: new gates are made as before. Realms already standing keep working.")
             .define("gateRealms", false);
+    public static final ModConfigSpec.BooleanValue GATE_OPEN_LANDS = B.comment("Open lands: new gates can be a land under an open sky (SPEC §50.7 and §38.11).",
+                    "Off (12 Nov, until they are fixed): new gates are the dungeon runs, the places under a roof and the cave worlds,",
+                    "and a gate standing on an open land that nobody has entered is made again as one of those. A gate someone has been in keeps what it is.")
+            .define("gateOpenLands", false);
     public static final ModConfigSpec.BooleanValue GATE_WORLDS_DEPTH = B.comment("Gate Worlds' depth: new gates' places get ground that rises and falls,",
                     "walls and roofs that change with height, and wild growth away from the way (SPEC §38.14).",
                     "Off: new gates are made as before it (content version 6). Gates already made keep what they have.")

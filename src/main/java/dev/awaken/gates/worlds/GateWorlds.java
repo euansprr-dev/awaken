@@ -47,6 +47,15 @@ public final class GateWorlds {
         return defs.get(id);
     }
 
+    /** Whether any floor of this plan is an open land under the sky (SPEC 38.11). */
+    public static boolean openLand(GatePlan plan) {
+        for (FloorWorld fw : plan.worlds()) {
+            GateWorld w = defs.get(fw.world());
+            if (w != null && w.open()) return true;
+        }
+        return false;
+    }
+
     /** A theme's worlds in id order (a rare world belongs to no theme's set, whatever its recipe names: SPEC §38.13). */
     public static List<String> ofTheme(Theme t) {
         List<String> out = new ArrayList<>();
@@ -92,8 +101,9 @@ public final class GateWorlds {
             if (p != null) atlas = p.getData(GatesRegistry.ATLAS.get());
         }
         Set<String> off = new HashSet<>(AwakenConfig.GATE_WORLDS_OFF.get());
-        // open lands need the open-sky gate dimension (SPEC 38.11); a server without it never picks them
-        if (!GateService.hasSky(server)) for (var e : defs.entrySet()) if (e.getValue().open()) off.add(e.getKey());
+        // open lands need the open-sky gate dimension (SPEC 38.11); a server without it never picks them, nor one with them
+        // switched off (Euan, 12 Nov: the open ones left him lost; the dungeon runs stay)
+        if (!GateService.hasSky(server) || !AwakenConfig.GATE_OPEN_LANDS.get()) for (var e : defs.entrySet()) if (e.getValue().open()) off.add(e.getKey());
         return dress(plan, atlas, off, owner.map(u -> standingWorlds(server, u)).orElse(Set.of()));
     }
 

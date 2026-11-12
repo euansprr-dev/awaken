@@ -13362,7 +13362,8 @@ open sky, 4 C themes, 5 B and A themes and the rare worlds, 6 polish. Module `ga
 - **When**: `GateService.create` dresses every new plan (`GateWorlds.dress`) before the gate is recorded, and the start-up
   rebuild of unentered older gates dresses the rebuilt plan; picks are saved in the plan (`worlds`: `area`, `floor`, `world`,
   `mood`, `tall`). Never dressed: plans before version 6, the story's ritual, the Ascension trials, plans already dressed.
-  Server switches: `gateWorlds` (default on; off, new gates build rooms) and `gateWorldsOff` (world ids never picked).
+  Server switches: `gateWorlds` (default on; off, new gates build rooms), `gateWorldsOff` (world ids never picked) and
+  `gateOpenLands` (default off since 12 Nov: no open world is picked, 38.11).
 - **Picking** (pure: same plan, Atlas and catalogue give the same picks; its own random stream, so the Director's rolls are
   unchanged): per floor, the open worlds of the floor's theme (the annex's floors use the annex theme): enabled, not switched
   off, not secret, holding the floor's role, and open to the gate's rank (the theme's rank + 1 for deep, + 2 for wonder) or by
@@ -13847,6 +13848,13 @@ Built 2026-10-28. Four themes, twenty worlds, on the cave engine (38.10) with a 
 - **The director keeps to spare columns**: an open world is always `tall`, and the director picks one only while the gate
   has a whole quadrant column to spare (`talls < min(4, 8 - floors)`), so nothing stands over its sky; a server without
   the open sky's dimension never picks one.
+- **Switched off for now** (Euan, 12 Nov, after an open Realm left him lost: "maybe for now we deactivate all of the
+  massive open world ones, for the time being, just as like we tried to find a fix after as well"): with
+  `AwakenConfig.gateOpenLands` off, the default, the director never picks an open world (`GateWorlds.dress` puts every
+  `open()` world on the off list, as on a server without the open sky). The Lantern Night Market and the Sky Archipelago,
+  whose ordinary worlds are all open, fall back to rooms while it is off; the seven open rare worlds are out too (eight
+  rare ones stay). A gate of floors standing with an open world that nobody has entered is dressed again at the next start
+  (§50.7, "Open lands switched off").
 - **Streets** (param `deep`, the Rooftops): streets five wide every 22 blocks (offset by the seed) are cut `deep` blocks
   down between the places and open to the sky; places with the mouth from each doorway in, links, built rooms and the
   secret place (its whole box) keep their ground (links become bridges), and a rail (the dress's, the Market's mangrove fence) stands along every edge a street passes. A fall into the streets
@@ -23091,6 +23099,26 @@ and the Cinder Crown had been seen under its own red sky, run 43013074163. He ha
 looks really good. Let's keep going in this direction", then "Yes, merge them".) The switch's default stays off in code until a full suite has run with it on
 (the old gates' tests make gates and expect floors); a world turns it on in `config/awaken-synced.toml`. Gates already
 standing keep what they are.
+
+**Open lands switched off** (Euan, 12 Nov, after Saltcomb Flats at E, the hive gate 4 of his world: "I was just very
+confused about what I was supposed to do. Like nothing guided me, nothing showed me... I went to that big building, but the
+big building was closed. So how do I open the doors? ... it just like dumps you in a place with barely any mobs", and "The
+dungeon type gates are actually like much better, I think, with like the movement, the jumping, and everything... So maybe
+for now we deactivate all of the massive open world ones, for the time being ... and we only have the [rolled] dungeon
+ones"). `AwakenConfig.gateOpenLands` (synced, default off; an existing `awaken-synced.toml` gains the key as false): with it
+off a new gate never rolls a Realm whose land is under the open sky (`Blueprints.open(theme, rank, false)` and `pick`).
+`Blueprints.openLand` asks `LandPrograms.open(program)` and draws nothing: every program but those in `LandPrograms.ROOFED`
+(the crawls, the Hour Crypt, the Wax Galleries) is open, so a new program counts as open until it is listed there, and
+`realm_open_lands_off` draws each roofed one that rolls to check its land really is under a roof (`RealmCountry.has`).
+Off with it today: Amber Reach, Saltcomb Flats, Kingsroot Keep, The Vine Seat, The Quiet Barrow and the five rolled lands
+(the Cinder Crown, Fallwater Vale, the High Caps, the Glass Sea, the Hush Tarn), and Gate Worlds' open worlds (§38.11).
+Every theme that had an open Realm keeps two or more under a roof at each of its ranks: Bell Crypt four, Hive four, Frost
+three, Fungal, Ember, Overgrown Temple and Glass Desert two each. At the next start a gate standing on an open land that
+nobody has entered (`GateService.unentered`: READY or BUILDING, no party, no entries, not the story's) is made again
+(`remakeOffOpenLand`, a line in its trace): a Realm's land goes to the eraser and the gate rolls again in a fresh Realm
+cell; a gate of floors with an open world is dressed again in a fresh cell, as a content rebuild is (no free cell: it stays
+as it is). A gate someone has been in keeps what it is. `/awaken gate realm` still forms any Realm, and switching it on
+brings them back for new gates. The fix is planned on its own before anything is built.
 
 Cells sit `RealmCells.PITCH` (8,192) apart from 135,168, past the old gate grid, so `Cells.cellAt` and `Where.at` find nothing in a Realm.
 A Realm gate keeps its normal cell, `GatePlan` and `GateLayout` (only the abstract numbers are used: rewards, the Lord's id) and adds

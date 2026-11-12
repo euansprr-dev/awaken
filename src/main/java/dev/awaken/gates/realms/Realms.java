@@ -49,8 +49,18 @@ public final class Realms {
             forced = null;
             return Blueprints.get(f).isPresent() ? Optional.of(f) : Optional.empty();
         }
+        return roll(plan, seen);
+    }
+
+    /** What a gate found in the world rolls under today's switches, once the checks above have let it be a Realm. */
+    static Optional<String> roll(GatePlan plan, Set<String> seen) {
         if (!AwakenConfig.GATE_REALMS.get()) return Optional.empty();
-        return Blueprints.pick(plan.theme(), plan.rank(), seen, plan.seed());
+        return Blueprints.pick(plan.theme(), plan.rank(), seen, plan.seed(), AwakenConfig.GATE_OPEN_LANDS.get());
+    }
+
+    /** Whether this gate's Realm is a land under the open sky. */
+    public static boolean openLand(GateRecord g) {
+        return g.realm.flatMap(r -> Blueprints.get(r.blueprint())).map(Blueprints::openLand).orElse(false);
     }
 
     /** Puts a new gate's Realm in place: a cell, and the plan where worldgen threads can read it. */

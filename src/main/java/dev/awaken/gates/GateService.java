@@ -458,7 +458,10 @@ public final class GateService {
         }
         for (GateRecord g : reg.all()) {
             if (g.state == GateState.RELEASED) continue;
-            if (g.realm.isEmpty() && g.state == GateState.READY && g.plan.contentVersion() < GatePlan.current() && g.party.isEmpty() && reg.hasFreeCell()) {
+            if (!dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.get() && unentered(g)
+                    && (dev.awaken.gates.realms.Realms.openLand(g) || g.realm.isEmpty() && dev.awaken.gates.worlds.GateWorlds.openLand(g.plan))) {
+                remakeOffOpenLand(server, reg, g);
+            } else if (g.realm.isEmpty() && g.state == GateState.READY && g.plan.contentVersion() < GatePlan.current() && g.party.isEmpty() && reg.hasFreeCell()) {
                 // content changed and nobody entered: rebuild on the new version in a fresh cell
                 reg.releaseCell(g.cell);
                 g.cell = reg.allocateCell();
@@ -476,6 +479,46 @@ public final class GateService {
             else if (g.state == GateState.RELEASED && g.structurePlaced) removeStructureSoon(server, g);
         }
         reg.prune();
+    }
+
+    /** Nobody has set foot in it: it hasn't opened, nobody's party went in, and it isn't the story's. */
+    static boolean unentered(GateRecord g) {
+        return (g.state == GateState.READY || g.state == GateState.BUILDING) && g.party.isEmpty() && g.entries.isEmpty() && g.inside.isEmpty() && !g.scripted;
+    }
+
+    /**
+     * A gate standing on an open land that nobody has entered, with open lands switched off (SPEC §50.7, Euan 12 Nov): made
+     * again as what a new gate rolls now. A Realm's land goes to the eraser and another is drawn in a fresh Realm cell; a
+     * gate of floors is dressed again in a fresh cell, as a content rebuild is (no free cell: it stays as it is). A gate
+     * someone has been in is never here.
+     */
+    static boolean remakeOffOpenLand(MinecraftServer server, GateRegistry reg, GateRecord g) {
+        String was;
+        if (g.realm.isPresent()) {
+            was = g.realm.get().blueprint();
+            dev.awaken.gates.realms.Realms.release(server, g);
+            g.realm = Optional.empty();
+            dev.awaken.gates.realms.Realms.choose(server, g.plan, g.scripted, java.util.Set.of()).ifPresent(b -> dev.awaken.gates.realms.Realms.attach(server, g, b));
+            // a Realm gate's floors were never built (every build of it went to its Realm), so they're dressed again where they are
+            if (g.realm.isEmpty()) g.plan = dev.awaken.gates.worlds.GateWorlds.dress(server, g.plan.withWorlds(List.of()), g.owner);
+        } else {
+            if (!reg.hasFreeCell()) {
+                Awaken.LOG.warn("[gates] gate {} stands on an open land and open lands are off, but no cell is free to make it again: it stays", g.id);
+                return false;
+            }
+            was = "open floors";
+            reg.releaseCell(g.cell);
+            g.cell = reg.allocateCell();
+            g.plan = dev.awaken.gates.worlds.GateWorlds.dress(server, g.plan.withWorlds(List.of()), g.owner);
+        }
+        g.interiorReady = false;
+        g.state = GateState.BUILDING;
+        String now = g.realm.map(dev.awaken.gates.realms.RealmRef::blueprint)
+                .orElse(g.plan.worlds().isEmpty() ? "rooms" : String.join(", ", g.plan.worlds().stream().map(dev.awaken.gates.content.FloorWorld::world).toList()));
+        g.trace.add("made again open lands are off (12 Nov): was " + was + ", now " + now);
+        Awaken.LOG.info("[gates] gate {} made again with open lands off: {} -> {}", g.id, was, now);
+        reg.setDirty();
+        return true;
     }
 
     /** Deletes released cells' region files. The level is closed by now, so nothing can resurrect them. */
