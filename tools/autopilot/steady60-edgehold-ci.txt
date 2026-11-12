@@ -3,9 +3,12 @@
 # screen, the shadows, I can see them basically disappearing and then reappearing"). Fence posts and flowers in rings
 # two to four blocks round the camera on a bare lawn under a morning sun: things the block map holds as open air, whose
 # shadows are the contact shadows alone, a block and a half long this near. The camera turns away from the sun's side
-# at a degree a tick, so posts slide off the right edge while their shadows are still in view. Once with the hold off
-# (`lens edgehold off`: a shadow goes out with what casts it) and once as built, a frame every three ticks; then at
-# rest five seconds after the turn, where the two must agree again (a held shadow is let go, never kept standing).
+# at a degree a tick, so posts slide off the right edge while their shadows are still in view.
+# One shot at the end of each turn and none during it: a screenshot stalls the runner for longer than the light
+# buffer keeps its history (250 ms), and the hold lives in that history (run 43186252840 shot every three ticks and
+# showed nothing held for it). Turns of 8, 14 and 20 degrees, each from the same start, with the hold off
+# (`lens edgehold off`: a shadow goes out with what casts it) and as built; then at rest five seconds after the last
+# turn, where the two must agree again (a held shadow is let go, never kept standing).
 # SPEC §22 "The edge's hold".
 # Run: tools/tour-ci.sh tools/autopilot/steady60-edgehold-ci.txt 1800
 # ci knobs: LENS=cinematic
@@ -64,54 +67,46 @@ wait 200
 # --- off
 lens edgehold off
 look 180 22
-wait 80
-shot e_off_0_before
-turn -1 30
-wait 3
-shotnow e_off_1_turning
-wait 3
-shotnow e_off_2_turning
-wait 3
-shotnow e_off_3_turning
-wait 3
-shotnow e_off_4_turning
-wait 3
-shotnow e_off_5_turning
-wait 3
-shotnow e_off_6_turning
-wait 3
-shotnow e_off_7_turning
-wait 3
-shotnow e_off_8_turning
-wait 10
-shotnow e_off_9_just_stopped
 wait 100
-shot e_off_10_at_rest
+turn -1 8
+wait 8
+shotnow e_off_turned_8
+wait 20
+look 180 22
+wait 100
+turn -1 14
+wait 14
+shotnow e_off_turned_14
+wait 20
+look 180 22
+wait 100
+turn -1 20
+wait 20
+shotnow e_off_turned_20
+wait 20
+wait 100
+shot e_off_at_rest
 # --- held
 lens edgehold setting
 look 180 22
-wait 80
-shot e_held_0_before
-turn -1 30
-wait 3
-shotnow e_held_1_turning
-wait 3
-shotnow e_held_2_turning
-wait 3
-shotnow e_held_3_turning
-wait 3
-shotnow e_held_4_turning
-wait 3
-shotnow e_held_5_turning
-wait 3
-shotnow e_held_6_turning
-wait 3
-shotnow e_held_7_turning
-wait 3
-shotnow e_held_8_turning
-wait 10
-shotnow e_held_9_just_stopped
 wait 100
-shot e_held_10_at_rest
+turn -1 8
+wait 8
+shotnow e_held_turned_8
+wait 20
+look 180 22
+wait 100
+turn -1 14
+wait 14
+shotnow e_held_turned_14
+wait 20
+look 180 22
+wait 100
+turn -1 20
+wait 20
+shotnow e_held_turned_20
+wait 20
+wait 100
+shot e_held_at_rest
 lens edgehold setting
 quit
