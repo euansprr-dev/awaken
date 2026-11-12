@@ -128,13 +128,18 @@ vec3 airWater(vec3 c, vec3 raw, vec3 p, float foot, float sunVis, float rdEnd, f
         vec2 fq = fract(w.xz);
         float lvl = floor(w.y) + 0.75;
         // a neighbour column is shore where something stands in it over this water: a bank, a cliff, a lily pad (and a
-        // bridge overhead, which the heightfield can't tell from a cliff: the water under its edge ripples too)
-        float gx0 = heightAt(col + ivec2(-1, 0), 0).g, gx1 = heightAt(col + ivec2(1, 0), 0).g;
-        float gz0 = heightAt(col + ivec2(0, -1), 0).g, gz1 = heightAt(col + ivec2(0, 1), 0).g;
-        if (gx0 - lvl > 0.1) shore = min(shore, fq.x);
-        if (gx1 - lvl > 0.1) shore = min(shore, 1.0 - fq.x);
-        if (gz0 - lvl > 0.1) shore = min(shore, fq.y);
-        if (gz1 - lvl > 0.1) shore = min(shore, 1.0 - fq.y);
+        // bridge overhead, which the heightfield can't tell from a cliff: the water under its edge ripples too). Only
+        // where this water's own column is open (its top the heightfield's water mark): under a roof or a bridge every
+        // column round it has that roof for its top, and each read as a bank, a pale line along every block's edge
+        // (Euan, in a Hive gate's pool, 12 Nov: "creating squares in the water")
+        if (abs(heightAt(col, 0).g - lvl) < 0.1) {
+            float gx0 = heightAt(col + ivec2(-1, 0), 0).g, gx1 = heightAt(col + ivec2(1, 0), 0).g;
+            float gz0 = heightAt(col + ivec2(0, -1), 0).g, gz1 = heightAt(col + ivec2(0, 1), 0).g;
+            if (gx0 - lvl > 0.1) shore = min(shore, fq.x);
+            if (gx1 - lvl > 0.1) shore = min(shore, 1.0 - fq.x);
+            if (gz0 - lvl > 0.1) shore = min(shore, fq.y);
+            if (gz1 - lvl > 0.1) shore = min(shore, 1.0 - fq.y);
+        }
     }
 #endif
     float shallows = 1.0 - smoothstep(0.0, 1.0, shore);

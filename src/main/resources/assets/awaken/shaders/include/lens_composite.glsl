@@ -302,8 +302,10 @@ vec3 lensWater(vec3 c, vec3 p, vec3 n, float vis, float strength) {
 // fetched twice)
 vec3 lrKept;
 bool lrHave = false;
-// how open to the sky this pixel's surface is (1 open, 0 deep under a roof or in a cave): the Air's fog is the sky's
+// how open to the sky this pixel's surface is (1 open, 0 deep under a roof or in a cave): the Air's fog is the sky's;
+// and whether Lens's light read it (only while it has a sun to give)
 float lensOpen = 1.0;
+bool lensOpenRead = false;
 
 #include <awaken:lens_water.glsl>
 
@@ -337,6 +339,29 @@ float skyBeside(vec3 hp) {
         }
     }
     return best;
+}
+
+// How open to the sky a point is, by the heightfield (1 open, 0 deep under a roof): solid blocks above it in its own
+// column; under a ledge it's shade, deep under a roof it's left alone. hp: the point, in world blocks, a little off its
+// surface.
+float openAt(vec3 hp) {
+    ivec2 col = ivec2(floor(hp.xz));
+    float cover = heightAt(col, 0).g - hp.y, beside = 0.0;
+    // under an eave with open sky beside it (a roof's overhang, a gable's rake) it's the open ground's shade, not
+    // a room's: else a sharp step runs along the roof line (Euan 2026-10-28). A room, a wall's thickness in, keeps its own
+    if (cover > 1.0) {
+        float side = min(min(heightAt(col + ivec2(1, 0), 0).g, heightAt(col - ivec2(1, 0), 0).g),
+                min(heightAt(col + ivec2(0, 1), 0).g, heightAt(col - ivec2(0, 1), 0).g));
+        cover = min(cover, side - hp.y);
+    }
+    // (still under a roof: what of the sky reaches in from beside it)
+    if (cover > 1.0) beside = skyBeside(hp);
+    // Deep under a roof the model stands back and the game's own light stays. It stood back by the roof's thickness
+    // alone, so a block one step into a cave or under a cliff's overhang, where the game still draws full sky
+    // light, kept the game's brightness beside open ground in the Air's deep shade: bright grey blocks against
+    // dark blue ones along every roof line (Euan, playing, 11 Nov: "shading issues in this cave"). The shade now
+    // carries on in from the roof's edge and fades over six blocks, as the game's sky light does.
+    return max(1.0 - smoothstep(1.0, 7.0, cover), beside);
 }
 
 vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float fogFade, vec4 p1, out vec4 dbg) {
@@ -395,33 +420,13 @@ vec3 lensLight(vec3 c, vec3 p, vec3 quickNormal, float depth, float rdEnd, float
     lrKept = lr;
     lrHave = true;
     if (sun > 0.0) {
-        // solid blocks above this point in its own column: under a ledge it's shade, deep under a roof it's left alone
-        float cover = 0.0, beside = 0.0;
-#ifdef PROBE_NO_COVER
-        if (false) {
-#else
-        if (F(15).x > 0.0) {
+        // solid blocks above this point in its own column (openAt)
+        float open = 1.0;
+#ifndef PROBE_NO_COVER
+        if (F(15).x > 0.0) open = openAt(p + f12.xyz + n * 0.1);
 #endif
-            vec3 hp = p + f12.xyz + n * 0.1;
-            ivec2 col = ivec2(floor(hp.xz));
-            cover = heightAt(col, 0).g - hp.y;
-            // under an eave with open sky beside it (a roof's overhang, a gable's rake) it's the open ground's shade, not
-            // a room's: else a sharp step runs along the roof line (Euan 2026-10-28). A room, a wall's thickness in, keeps its own
-            if (cover > 1.0) {
-                float side = min(min(heightAt(col + ivec2(1, 0), 0).g, heightAt(col - ivec2(1, 0), 0).g),
-                        min(heightAt(col + ivec2(0, 1), 0).g, heightAt(col - ivec2(0, 1), 0).g));
-                cover = min(cover, side - hp.y);
-            }
-            // (still under a roof: what of the sky reaches in from beside it)
-            if (cover > 1.0) beside = skyBeside(hp);
-        }
-        // Deep under a roof the model stands back and the game's own light stays. It stood back by the roof's thickness
-        // alone, so a block one step into a cave or under a cliff's overhang, where the game still draws full sky
-        // light, kept the game's brightness beside open ground in the Air's deep shade: bright grey blocks against
-        // dark blue ones along every roof line (Euan, playing, 11 Nov: "shading issues in this cave"). The shade now
-        // carries on in from the roof's edge and fades over six blocks, as the game's sky light does.
-        float open = max(1.0 - smoothstep(1.0, 7.0, cover), beside);
         lensOpen = open;
+        lensOpenRead = true;
         // faces turned from the sun shade only as it lowers: at noon (straight overhead in Minecraft) the walls keep the
         // game's own face shading and only cast shadows show; by golden hour every face is lit or shaded by its turn
         float lowSun = 1.0 - smoothstep(0.5, 0.92, f14.y);
@@ -644,7 +649,20 @@ void main() {
 #else
     if (airOn() > 0.0 && !open && !classic && !plate && waterHere(pRel, quick, game)) {
 #endif
-        float cover = P(21).r * (lensLite() ? 1.0 : 1.0 - lensOpen);
+        // Under cover it stays the game's. Cinematic and Ultra know the water's own cover: Lens's light read it, or,
+        // where the light has no sun to give (a gate's look gives it none: a gate is lit by its own lamps), it is read
+        // here. It wasn't, and a gate's pool was open water under the room's roof: the sky's mirror in a closed room,
+        // and a waterline that took the roof over every column round it for a bank, a pale line along every block's
+        // edge (Euan, in a Hive gate, 12 Nov: "creating squares in the water"). The water's own cover, not the camera's
+        // and the water's together as the Air's fog has it: what the water mirrors is over the water, so a cave's lake
+        // seen from outside has no sky to hold either. Lite, and Cinematic before the heightfield is up, go by the
+        // camera's cover alone.
+        float cover = P(21).r;
+#ifdef PROBE_NO_COVER
+        if (!lensLite()) cover = 0.0;
+#else
+        if (!lensLite() && F(15).x > 0.0) cover = 1.0 - (lensOpenRead ? lensOpen : openAt(pRel + F(12).xyz + vec3(0.0, 0.1, 0.0)));
+#endif
         float wk = clamp(P(20).r / 0.6, 0.0, 1.0) * clamp((envEnd - 8.0) / rdEnd, 0.0, 1.0) * (1.0 - cover);
         if (wk > 0.0) c = airWater(c, game, pRel, max(length(dpx.xz), length(dpy.xz)), lrHave ? lrKept.r : 1.0, rdEnd, wk);
     }
