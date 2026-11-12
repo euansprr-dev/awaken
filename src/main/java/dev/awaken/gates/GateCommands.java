@@ -248,6 +248,41 @@ final class GateCommands {
             // tours: straight into a Realm at its Mouth, with no gate forming in the overworld first (SPEC §50.8); seed 1 unless given
             gate.then(Commands.literal("realm_enter").requires(AwakenCommands.admin())
                     .then(Commands.argument("rank", StringArgumentType.word()).then(Commands.argument("id", StringArgumentType.greedyString()).executes(GateCommands::realmEnter))));
+            // tours: every beat of the kit in a row (SPEC §72.8), in one rolled kind's blocks at a rank, laid east of where you
+            // stand at the hall's height and proved again where it stands; you are put at its first beat
+            gate.then(Commands.literal("beat_hall").requires(AwakenCommands.admin())
+                    .then(Commands.argument("rank", StringArgumentType.word()).then(Commands.argument("id", StringArgumentType.greedyString()).executes(c -> {
+                        ServerPlayer p = c.getSource().getPlayerOrException();
+                        dev.awaken.progression.Rank rank;
+                        try {
+                            rank = dev.awaken.progression.Rank.valueOf(StringArgumentType.getString(c, "rank").toUpperCase(java.util.Locale.ROOT));
+                        } catch (IllegalArgumentException e) {
+                            c.getSource().sendFailure(Component.literal("No rank " + StringArgumentType.getString(c, "rank") + "."));
+                            return 0;
+                        }
+                        String id = StringArgumentType.getString(c, "id").trim();
+                        if (!id.contains(":")) id = "awaken:" + id;
+                        var level = (net.minecraft.server.level.ServerLevel) p.level();
+                        var at = new net.minecraft.core.BlockPos(p.getBlockX() + 4, dev.awaken.gates.realms.kit.crawl.BeatHall.FEET, p.getBlockZ());
+                        var laid = dev.awaken.gates.realms.kit.crawl.BeatHall.lay(level, at, id, rank);
+                        if (laid.isEmpty()) {
+                            c.getSource().sendFailure(Component.literal(id + " isn't a rolled run under a roof."));
+                            return 0;
+                        }
+                        var h = laid.get();
+                        String said = h.beats().size() + " beats of " + id + " at " + rank + " (" + h.blocks() + " blocks)"
+                                + (h.skipped().isEmpty() ? "" : "; left out: " + String.join(", ", h.skipped()))
+                                + (h.failures().isEmpty() ? "; every move holds where it stands." : "; " + h.failures().size() + " don't hold: " + String.join("; ", h.failures()));
+                        dev.awaken.Awaken.LOG.info("[beats] hall: {}", said);
+                        c.getSource().sendSuccess(() -> Component.literal("Beat hall: " + said), false);
+                        beatAt(p, 0, 3, 0);
+                        return h.failures().isEmpty() ? 1 : 0;
+                    }))));
+            // tours: stand <back> cells short of the n-th beat of the last hall laid here, <up> over its floor, looking along it
+            gate.then(Commands.literal("beat_at").requires(AwakenCommands.admin())
+                    .then(Commands.argument("index", IntegerArgumentType.integer(0)).then(Commands.argument("back", IntegerArgumentType.integer())
+                            .then(Commands.argument("up", IntegerArgumentType.integer()).executes(c -> beatAt(c.getSource().getPlayerOrException(),
+                                    IntegerArgumentType.getInteger(c, "index"), IntegerArgumentType.getInteger(c, "back"), IntegerArgumentType.getInteger(c, "up")))))));
             // a look at one instant of the crossing into a theme (SPEC §50.5), for tours: no move, the screen closes itself
             gate.then(Commands.literal("crossing").requires(AwakenCommands.admin())
                     .then(Commands.argument("theme", StringArgumentType.word()).then(Commands.argument("ms", IntegerArgumentType.integer(0)).executes(c -> {
@@ -371,6 +406,22 @@ final class GateCommands {
      * as walking through (Runs.enter), so the walk starts inside from wherever it's asked. Nothing stands in the overworld;
      * leaving puts you at the world's spawn. A failure says why, in words the autopilot's "need realm" reads.
      */
+    /** The camera at the n-th beat of the last beat hall in the player's level (SPEC §72.8): 0 when there is none. */
+    private static int beatAt(ServerPlayer p, int index, int back, int up) {
+        var level = (net.minecraft.server.level.ServerLevel) p.level();
+        int[] st = dev.awaken.gates.realms.kit.crawl.BeatHall.start(level, index);
+        if (st == null) {
+            p.sendSystemMessage(Component.literal("No beat " + index + " in a hall here."));
+            return 0;
+        }
+        p.teleportTo(level, st[0] - back + 0.5, st[1] + up, st[2] + 0.5, Set.of(), st[3], 12F, true);
+        if (p.isCreative()) {
+            p.getAbilities().flying = true;
+            p.onUpdateAbilities();
+        }
+        return 1;
+    }
+
     private static int realmEnter(CommandContext<CommandSourceStack> c) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
         ServerPlayer p = c.getSource().getPlayerOrException();
         MinecraftServer server = c.getSource().getServer();

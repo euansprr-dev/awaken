@@ -1178,6 +1178,11 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         };
     }
 
+    /** A beat's piece in this land's own blocks, for the beat hall (SPEC §72.8): what the proof at generation reads. */
+    public final Sculpt.Paint beatPaint(Part part) {
+        return paint(mats(), part);
+    }
+
     /** A beat's piece in this land's own blocks, for the proof at generation (nothing painted, nothing adorned). */
     final Sculpt.Paint paint(M m, Part part) {
         return new Sculpt.Paint() {

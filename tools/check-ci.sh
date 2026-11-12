@@ -54,7 +54,7 @@ if [[ $MODE == bench ]]; then
   gh run download $RUN -R $REPO -n bench -D $DIR > /dev/null 2>&1 || echo "no bench artifact"
   for f in $DIR/run-bench/out/*/bench.txt(N); do
     echo "== ${f:h:t}"
-    grep -E '^(floats|settled|reach|route|volume)' $f
+    grep -E '^(floats|settled|reach|route|volume|beats)' $f
     grep -q '^floats: 0$' $f && grep -q '^reach: all ' $f || grep -vE '^(BENCH|floats|settled|reach|route|volume|  leg |sheet)' $f | head -30
   done
   echo "pictures: $DIR/run-bench/out/<land>-<seed>/sheet.png"
