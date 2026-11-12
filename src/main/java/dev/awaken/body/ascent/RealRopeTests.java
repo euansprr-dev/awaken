@@ -12,7 +12,9 @@ import net.minecraft.world.level.block.state.BlockState;
  * The real swing (SPEC §62.9) from real blocks, each press played as the client plays it (the pick where you look, the
  * throw's entry and flight, the bite, then the held rope with forward held): the rope stays as long as it bit (no pull),
  * a vanilla oak beside you swings you round it, a tall tree from a sprint jump hoists you up its near side into a swing
- * under its crown, and from over that crown the press swings you under it and out. Nothing is touched on the way.
+ * under its crown, and from over that crown the press swings you under it and out. A cliff's face takes the rope and
+ * swings you along it and up (from a jump, mid-chain, or standing at its foot); mid-chain, a rope never hoists. Nothing is
+ * touched on the way.
  */
 final class RealRopeTests {
     private RealRopeTests() {}
@@ -22,6 +24,8 @@ final class RealRopeTests {
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_round", 40, real(RealRopeTests::round));
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_hoist", 40, real(RealRopeTests::hoist));
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_from_top", 40, real(RealRopeTests::fromTop));
+        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_wall", 40, real(RealRopeTests::wall));
+        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_momentum", 40, real(RealRopeTests::chain));
     }
 
     /** A test on the real rope (the switch on), the jar's tune, the held rope and the guide as the client has them. */
@@ -65,6 +69,11 @@ final class RealRopeTests {
         return Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, true);
     }
 
+    /** A cliff of stone: its face at x 11 (facing -x), 23 high, the whole floor long (z 0..48). */
+    private static void cliff(ServerLevel level, BlockPos o) {
+        for (BlockPos q : BlockPos.betweenClosed(o.offset(11, 1, 0), o.offset(16, 23, 48))) level.setBlock(q, Blocks.STONE.defaultBlockState(), FLAGS);
+    }
+
     /** Euan's tall tree (ascent_rope_aimed's): a trunk at x 8, z 24 to 14 up, a crown x 5..11, z 21..27, 9 to 14 up. */
     private static void tallTree(ServerLevel level, BlockPos o) {
         for (int y = 1; y <= 14; y++) level.setBlock(o.offset(8, y, 24), Blocks.OAK_LOG.defaultBlockState(), FLAGS);
@@ -104,16 +113,16 @@ final class RealRopeTests {
         int touched = -1, hoistEnd = -1;
         /** How far the hoist ended from its start point; the most the heading turned in the first second (degrees). */
         double hoistGap = Double.NaN, turned;
-        /** The feet's lowest over the floor; the furthest along z; whether it crossed under the anchor (5 or more under it). */
-        double lowestFeet = 99, furthestZ = -1e9;
+        /** The feet's lowest and highest over the floor; the furthest along z; whether it crossed under the anchor (5 or more under it). */
+        double lowestFeet = 99, highestFeet = -99, furthestZ = -1e9;
         boolean crossedUnder;
         final StringBuilder trace = new StringBuilder();
 
         @Override
         public String toString() {
             return String.format("bite %.2f, 10 ticks on %.2f, straight in %d of 20, touched at %d, hoist ended %d (%.2f off), turned %.0f°, "
-                    + "feet at least %.2f up, furthest z %.2f, under the anchor %b", biteLen, lenAt10, straightIn, touched, hoistEnd, hoistGap, turned,
-                    lowestFeet, furthestZ, crossedUnder);
+                    + "feet %.2f to %.2f up, furthest z %.2f, under the anchor %b", biteLen, lenAt10, straightIn, touched, hoistEnd, hoistGap, turned,
+                    lowestFeet, highestFeet, furthestZ, crossedUnder);
         }
     }
 
@@ -127,7 +136,7 @@ final class RealRopeTests {
         AscentSwing.Work w = new AscentSwing.Work();
         AscentRules.Kin k = new AscentRules.Kin().set(hand.x, hand.y, hand.z, hand.vx, hand.vy, hand.vz);
         AscentSwing.Rope rope = new AscentSwing.Rope().throwFor(pick);
-        AscentSwing.entry(k, yaw);
+        AscentSwing.entry(k, yaw, pick.wall);
         double[] sc = new double[3];
         for (int t = AscentSwing.travel(pick.len); t > 0; t--) {
             double x0 = k.x, y0 = k.y, z0 = k.z;
@@ -155,6 +164,7 @@ final class RealRopeTests {
                 if (k.hspeed() > 0.05) r.turned = Math.max(r.turned, Math.abs(Math.toDegrees(Math.IEEEremainder(Math.atan2(k.vx, k.vz) - h0, 2 * Math.PI))));
             }
             r.lowestFeet = Math.min(r.lowestFeet, k.y - AscentRules.HAND_HEIGHT - by);
+            r.highestFeet = Math.max(r.highestFeet, k.y - AscentRules.HAND_HEIGHT - by);
             r.furthestZ = Math.max(r.furthestZ, k.z - bz);
             if (!hauling && (z0 - rope.az) * (k.z - rope.az) <= 0 && Math.abs(k.x - rope.ax) < 1.5 && k.y < rope.ay - 5) r.crossedUnder = true;
             if (i % 3 == 0 || i <= 3) r.trace.append(String.format(" | %d: %.1f %.1f %.1f r%.1f%s", i, k.x - bx, k.y - AscentRules.HAND_HEIGHT - by, k.z - bz,
@@ -174,7 +184,13 @@ final class RealRopeTests {
      * whether it bites and is in clear view, the move, or why not, where it met something, how far it turned.
      */
     private static String report(SwingSpace s, AscentRules.Kin hand, double ex, double ey, double ez, float yaw, float pitch, double bx, double by, double bz) {
+        return report(s, hand, ex, ey, ez, yaw, pitch, true, bx, by, bz);
+    }
+
+    private static String report(SwingSpace s, AscentRules.Kin hand, double ex, double ey, double ez, float yaw, float pitch, boolean first, double bx,
+            double by, double bz) {
         AscentSwing.Work w = new AscentSwing.Work();
+        w.first = first;
         SwingSpace.Hit a = w.aim;
         double cp = Math.cos(Math.toRadians(pitch));
         if (!s.ray(ex, ey, ez, AscentSwing.fx(yaw) * cp, -Math.sin(Math.toRadians(pitch)), AscentSwing.fz(yaw) * cp, AscentRules.TETHER_RANGE, a)) {
@@ -184,6 +200,7 @@ final class RealRopeTests {
                 .append(a.ny).append(' ').append(a.nz);
         int n = RealRope.points(s, a, yaw, w);
         double[] p = w.rpts.clone();
+        int[] walls = w.rwall.clone();
         AscentSwing.Pick c = new AscentSwing.Pick();
         for (int i = 0; i < n; i++) {
             c.x = p[i * 3];
@@ -195,9 +212,10 @@ final class RealRopeTests {
                 continue;
             }
             if (!AscentSwing.clear(s, hand.x, hand.y, hand.z, c.x, c.y, c.z, 0.5, w)) b.append(" not in view");
-            int kind = RealRope.play(s, hand, yaw, c.x, c.y, c.z, w);
-            b.append(kind > 0 ? " " + RealRope.MOVE[kind] : " no: " + RealRope.NO[w.playNo]);
-            b.append(String.format(" (rope %.1f, turned %.0f, skim %d", w.playBite, w.playTurn, w.playSkim));
+            if (walls[i] != 0) b.append(" on a wall");
+            int kind = RealRope.play(s, hand, yaw, c.x, c.y, c.z, walls[i], !first, w);
+            b.append(kind > 0 ? " " + RealRope.MOVE[kind] + (w.playSwoop ? " (a swoop)" : "") : " no: " + RealRope.NO[w.playNo]);
+            b.append(String.format(" (rope %.1f, turned %.0f, skim %d, slid %d", w.playBite, w.playTurn, w.playSkim, w.playSlide));
             if (w.playHitAt >= 0 || w.playNo == RealRope.NO_FLIGHT) {
                 b.append(String.format(", met at tick %d at (%.2f %.2f %.2f)", w.playHitAt, w.playHx - bx, w.playHy - AscentRules.HAND_HEIGHT - by, w.playHz - bz));
             }
@@ -327,6 +345,80 @@ final class RealRopeTests {
             h.assertTrue(AscentServer.anchorReal(mock(h, bx + 6.5, by + 13, bz + 10), pick.x, pick.y, pick.z), "the server takes the crown's anchor as real");
             Ride r = ride(space, hand, yaw, pick, 45, bx, by, bz);
             h.assertTrue(r.touched < 0 && r.crossedUnder && r.furthestZ > 28, "under the crown and out past its far side, clear of everything: " + r + r.trace);
+        } finally {
+            clear(level, o);
+        }
+        h.succeed();
+    }
+
+    /**
+     * A cliff takes the rope (Euan 12 Nov 2026: "I should be able to start a swing from the side of a mountain or from a
+     * wall like this. Right now, it just doesn't connect to the wall"). Looking at its face 6 or 7 ahead and 10 or so up,
+     * the press swings you along the face and up it: from a sprint jump along it (the first rope: a swing along the wall
+     * beats a hoist), mid-chain at a run of 1 block a tick, and standing a step from its foot looking up it (the throw's
+     * start turned along the face, never at it; the client's jump off the ground, 0.3 up). Each ride goes 8 or more along the face, rises 6 or more up it, touches nothing.
+     */
+    private static void wall(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = ground(h);
+        try {
+            cliff(level, o);
+            LevelSpace space = new LevelSpace().at(level, null);
+            double bx = o.getX(), by = o.getY() + 1, bz = o.getZ();
+            // name, feet (x, y, z), motion, where the look meets the face, first rope, the least the feet rise to
+            Object[][] presses = {
+                    {"from a sprint jump along it", new double[] {7.5, 1, 6, 0, 0.3, 0.36}, new double[] {11, 12, 12}, true, 6.0},
+                    {"mid-chain along it, 6 up", new double[] {7.5, 6, 6, 0, 0, 1.0}, new double[] {11, 14, 13}, false, 8.0},
+                    {"standing a step from its foot, looking up it", new double[] {9.5, 0, 10, 0, 0.3, 0}, new double[] {11, 16, 12.5}, true, 7.0}};
+            for (Object[] press : presses) {
+                String name = (String) press[0];
+                double[] f = (double[]) press[1], at = (double[]) press[2];
+                boolean first = (Boolean) press[3];
+                AscentSwing.Work w = new AscentSwing.Work();
+                w.first = first;
+                AscentSwing.Pick pick = new AscentSwing.Pick();
+                AscentRules.Kin hand = new AscentRules.Kin().set(bx + f[0], by + f[1] + AscentRules.HAND_HEIGHT, bz + f[2], f[3], f[4], f[5]);
+                double ey = by + f[1] + 1.62;
+                float yaw = yawTo(hand.x, hand.z, bx + at[0], bz + at[2]), pitch = pitchTo(hand.x, ey, hand.z, bx + at[0], by + at[1], bz + at[2]);
+                h.assertTrue(AscentSwing.aimed(space, hand, hand.x, ey, hand.z, yaw, pitch, AscentRules.TETHER_RANGE, true, w, pick) && pick.move == RealRope.WALL
+                        && !pick.zip && !pick.sling && !pick.hoist, name + ", the press swings along the cliff: " + pickOf(pick, w, bx, by, bz)
+                        + report(space, hand, hand.x, ey, hand.z, yaw, pitch, first, bx, by, bz));
+                h.assertTrue(AscentServer.anchorReal(mock(h, hand.x, by + f[1], hand.z), pick.x, pick.y, pick.z), name + ", the server takes the face's anchor as real");
+                Ride r = ride(space, hand, yaw, pick, 45, bx, by, bz);
+                h.assertTrue(r.touched < 0 && r.furthestZ >= f[2] + 8 && r.highestFeet >= (Double) press[4],
+                        name + ", along the face and up it, clear of everything: " + r + r.trace);
+            }
+        } finally {
+            clear(level, o);
+        }
+        h.succeed();
+    }
+
+    /**
+     * Mid-chain, no hoist (Euan 12 Nov 2026: the hoist "is decent for the first one, but all ones after that need to just
+     * use the momentum and the direction"): at a run of 1 block a tick 6 up, the press at the tall tree's crown (from a
+     * jump on the ground, a hoist) swings you from where you are, low under the crown and out past its anchor, nothing
+     * touched, the feet never under 0.9 over the floor.
+     */
+    private static void chain(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos o = ground(h);
+        try {
+            tallTree(level, o);
+            LevelSpace space = new LevelSpace().at(level, null);
+            double bx = o.getX(), by = o.getY() + 1, bz = o.getZ();
+            AscentSwing.Work w = new AscentSwing.Work();
+            w.first = false;
+            AscentSwing.Pick pick = new AscentSwing.Pick();
+            AscentRules.Kin hand = new AscentRules.Kin().set(bx + 6.5, by + 6 + AscentRules.HAND_HEIGHT, bz + 4.5, 0, 0, 1.0);
+            double ey = by + 6 + 1.62;
+            float yaw = 0, pitch = pitchTo(hand.x, ey, hand.z, bx + 6.5, by + 11.5, bz + 21);
+            h.assertTrue(AscentSwing.aimed(space, hand, hand.x, ey, hand.z, yaw, pitch, AscentRules.TETHER_RANGE, true, w, pick) && !pick.hoist
+                    && pick.move != RealRope.HOIST && pick.move > 0 && !pick.zip && !pick.sling, "mid-chain at the tall tree, the press swings from where you are: "
+                    + pickOf(pick, w, bx, by, bz) + report(space, hand, hand.x, ey, hand.z, yaw, pitch, false, bx, by, bz));
+            Ride r = ride(space, hand, yaw, pick, 45, bx, by, bz);
+            h.assertTrue(r.touched < 0 && r.hoistEnd < 0 && r.lowestFeet >= 0.9 && r.furthestZ >= pick.z - bz + 3,
+                    "mid-chain, under the crown and on, clear of everything: " + r + r.trace);
         } finally {
             clear(level, o);
         }

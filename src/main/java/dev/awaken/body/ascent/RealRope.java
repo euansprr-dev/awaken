@@ -21,10 +21,13 @@ public final class RealRope {
 
     private static final double D2R = Math.PI / 180;
 
-    /** What a real pick does: swings you under its anchor, round it, or hoists you up to a swing first. */
-    public static final int UNDER = 1, ROUND = 2, HOIST = 3;
+    /**
+     * What a real pick does: swings you under its anchor, round it, hoists you up to a swing first (the first rope only), or
+     * swings you along the wall or cliff face it bit.
+     */
+    public static final int UNDER = 1, ROUND = 2, HOIST = 3, WALL = 4;
     /** The words for each, for the log and the marker's tip. */
-    public static final String[] MOVE = {"a swing", "a swing under", "a swing round", "a hoist into a swing"};
+    public static final String[] MOVE = {"a swing", "a swing under", "a swing round", "a hoist into a swing", "a swing along the wall"};
 
     // ---- the rope ------------------------------------------------------------------------------------------------------
 
@@ -84,11 +87,31 @@ public final class RealRope {
     /**
      * The throw's entry for a real rope (AscentSwing.entry's): never slower than a jog, {@link AscentSwing.Tune#entryFloor},
      * along the way you already go (along the look only from a standstill). Along the look, a look at something beside you
-     * would shove you sideways at it: a pull before the rope has even bitten.
+     * would shove you sideways at it: a pull before the rope has even bitten. A rope on a wall's face ({@code wall}, its
+     * code) never sends you at the face: what goes at it is turned along it (to the side the look leans to, looking
+     * straight at it).
      */
-    static void entry(AscentRules.Kin k, double yaw) {
+    static void entry(AscentRules.Kin k, double yaw, int wall) {
         double floor = AscentSwing.T.entryFloor, h = k.hspeed();
         if (h >= floor) return;
+        int nx = wallX(wall), nz = wallZ(wall);
+        double dx = h > 0.05 ? k.vx / h : AscentSwing.fx(yaw), dz = h > 0.05 ? k.vz / h : AscentSwing.fz(yaw), into = dx * nx + dz * nz;
+        if (into < 0) {
+            dx -= nx * into;
+            dz -= nz * into;
+            double l = Math.sqrt(dx * dx + dz * dz);
+            if (l < 0.1) {
+                double side = AscentSwing.fx(yaw) * -nz + AscentSwing.fz(yaw) * nx >= 0 ? 1 : -1;
+                dx = -nz * side;
+                dz = nx * side;
+            } else {
+                dx /= l;
+                dz /= l;
+            }
+            k.vx = dx * floor;
+            k.vz = dz * floor;
+            return;
+        }
         if (h > 0.05) {
             k.vx *= floor / h;
             k.vz *= floor / h;
@@ -207,11 +230,62 @@ public final class RealRope {
                 rope.skimming++;
             }
         }
+        // the wall's slide: the body never goes into a wall or a cliff, the move across it dropped and the speed turned
+        // along what's left (along the look's side when it met the face square), as the skim turns it along the floor
+        double side = s == null || !body(s, nx, ny, nz, SLIDE_SIDE) ? Double.NaN : near(s, k.x, k.y, k.z);
+        if (!Double.isNaN(side) && body(s, nx, ny, nz, side)) {
+            double sp = k.speed();
+            for (int c = 0; c < 3; c++) {
+                double cx = c == 1 ? nx : k.x, cz = c == 0 ? nz : k.z;
+                if (body(s, cx, ny, cz, side)) continue;
+                if (c != 1) k.vx = 0;
+                if (c != 0) k.vz = 0;
+                double th = Math.sqrt(Math.max(0, sp * sp - k.vy * k.vy)), h = k.hspeed();
+                if (h > 0.02) {
+                    k.vx *= th / h;
+                    k.vz *= th / h;
+                } else if (c == 0) {
+                    k.vz = (lfz >= 0 ? 1 : -1) * th;
+                } else if (c == 1) {
+                    k.vx = (lfx >= 0 ? 1 : -1) * th;
+                }
+                nx = cx;
+                nz = cz;
+                rope.sliding++;
+                break;
+            }
+        }
         // the first arc has topped out past the anchor (its drive ends; a rope not held asks to let go here)
         if (rope.caught && !rope.swung && k.vy <= 0 && angle(k, rope) > 20 && (k.x - rope.ax) * lfx + (k.z - rope.az) * lfz > 0) rope.swung = true;
         k.x = nx;
         k.y = ny;
         k.z = nz;
+    }
+
+    /** The slide keeps the body this far off a wall (blocks, the picker's sweep's margin). */
+    static final double SLIDE_SIDE = 0.12;
+
+    /**
+     * The margin a body at (x, y, z) keeps off walls: {@link #SLIDE_SIDE}, or none when it is already nearer (the game's
+     * own collision leaves you touching a wall you ran along), or NaN when it is in something.
+     */
+    static double near(SwingSpace s, double x, double y, double z) {
+        return !body(s, x, y, z, SLIDE_SIDE) ? SLIDE_SIDE : !body(s, x, y, z, 0) ? 0 : Double.NaN;
+    }
+
+    /**
+     * Whether the body met something moving from (x0, y0, z0) to (x1, y1, z1): the picker's sweep, or, for a body that
+     * started nearer a wall than its margin (sliding along it at its own size), the sweep at its own size.
+     */
+    private static boolean met(SwingSpace s, double x0, double y0, double z0, double x1, double y1, double z1) {
+        if (!AscentSwing.swept(s, x0, y0, z0, x1, y1, z1)) return false;
+        return near(s, x0, y0, z0) != 0 || AscentSwing.swept(s, x0, y0, z0, x1, y1, z1, 0, 0, 0);
+    }
+
+    /** Whether the body hanging from the hand point (x, y, z) meets anything, its box widened {@code side} either way. */
+    private static boolean body(SwingSpace s, double x, double y, double z, double side) {
+        double half = SwingSpace.HALF + side, fy = y - AscentRules.HAND_HEIGHT;
+        return s.boxHits(x - half, fy + 0.001, z - half, x + half, fy + SwingSpace.TALL, z + half);
     }
 
     /** Back's brake on a held real rope: this share of the speed a tick at full back. */
@@ -348,14 +422,25 @@ public final class RealRope {
      * {@code w.playScore}, {@code w.playCap}.
      */
     static int play(SwingSpace s, AscentRules.Kin hand, double yaw, double x, double y, double z, AscentSwing.Work w) {
+        return play(s, hand, yaw, x, y, z, 0, false, w);
+    }
+
+    /**
+     * As above, for an anchor on a wall's face ({@code wall}, the face's code, 0 for none) and, {@code loose}, with the floor
+     * skimmed as long as it likes (a low swoop, mid-chain, where the first rope would hoist). On a wall's face, a swing
+     * neither under nor round is {@link #WALL}: the body slides along the face past the anchor, 3 or more along it and 1
+     * past it, and rises {@link #WALL_RISE} up the far side, its whole span meeting nothing.
+     */
+    static int play(SwingSpace s, AscentRules.Kin hand, double yaw, double x, double y, double z, int wall, boolean loose, AscentSwing.Work w) {
         AscentSwing.Tune t = AscentSwing.T;
         w.playNo = NO_FLIGHT;
         w.playHitAt = -1;
         w.playTurn = w.playBite = 0;
-        w.playSkim = 0;
+        w.playSkim = w.playSlide = 0;
+        w.playSwoop = false;
         AscentRules.Kin k = w.rk.set(hand.x, hand.y, hand.z, hand.vx, hand.vy, hand.vz);
         double lfx = AscentSwing.fx(yaw), lfz = AscentSwing.fz(yaw), llx = -lfz, llz = lfx;
-        AscentSwing.entry(k, yaw);
+        AscentSwing.entry(k, yaw, wall);
         double dist = Math.sqrt((x - k.x) * (x - k.x) + (y - k.y) * (y - k.y) + (z - k.z) * (z - k.z));
         for (int i = AscentSwing.travel(dist); i > 0; i--) {
             double x0 = k.x, y0 = k.y, z0 = k.z;
@@ -365,7 +450,7 @@ public final class RealRope {
             k.x += k.vx;
             k.y += k.vy;
             k.z += k.vz;
-            if (AscentSwing.swept(s, x0, y0, z0, k.x, k.y, k.z)) {
+            if (met(s, x0, y0, z0, k.x, k.y, k.z)) {
                 w.playHx = k.x;
                 w.playHy = k.y;
                 w.playHz = k.z;
@@ -378,52 +463,127 @@ public final class RealRope {
         bite(s, k, r, yaw);
         double biteLen = r.len, h0 = Math.atan2(k.vx, k.vz), turn = 0, top = k.speed();
         w.playBite = biteLen;
+        // along the wall's face: its axis, and where along it the body is at the bite
+        double tx = -wallZ(wall), tz = wallX(wall), s0 = (k.x - x) * tx + (k.z - z) * tz;
+        boolean alongPast = false, rose = false;
         boolean crossed = false, passed = false, under = false;
-        int hitAt = -1, skimRound = 0;
-        double hitAng = 180;
+        // a swing under or round counts a slide along something as meeting it (its way must be clear); only a swing along
+        // a wall slides: touchAt is the first tick of either, hitAt of a true hit
+        int hitAt = -1, touchAt = -1, skimRound = 0, skimUnder = 0;
+        double hitAng = 180, touchAng = 180;
         for (int i = 1; i <= SPAN_UNDER; i++) {
             double x0 = k.x, y0 = k.y, z0 = k.z;
+            int slid = r.sliding;
             step(s, k, r, yaw, 1);
-            if (AscentSwing.swept(s, x0, y0, z0, k.x, k.y, k.z)) {
+            if (met(s, x0, y0, z0, k.x, k.y, k.z)) {
                 hitAt = i;
                 hitAng = angle(k, r);
+                if (touchAt < 0) {
+                    touchAt = i;
+                    touchAng = hitAng;
+                }
                 w.playHx = k.x;
                 w.playHy = k.y;
                 w.playHz = k.z;
                 break;
             }
             top = Math.max(top, k.speed());
-            if (i <= SPAN_ROUND) {
-                skimRound = r.skimming;
-                if (k.hspeed() > 0.05) turn = Math.max(turn, Math.abs(Math.IEEEremainder(Math.atan2(k.vx, k.vz) - h0, 2 * Math.PI)) / D2R);
+            if (touchAt < 0 && r.sliding > slid) {
+                touchAt = i;
+                touchAng = angle(k, r);
+                w.playHx = k.x;
+                w.playHy = k.y;
+                w.playHz = k.z;
             }
-            double along = (k.x - x) * lfx + (k.z - z) * lfz;
-            if (!crossed && along >= 0) {
-                crossed = true;
-                under = Math.abs((k.x - x) * llx + (k.z - z) * llz) < CROSS_UNDER;
+            if (touchAt < 0) {
+                skimUnder = r.skimming;
+                if (i <= SPAN_ROUND) {
+                    skimRound = r.skimming;
+                    if (k.hspeed() > 0.05) turn = Math.max(turn, Math.abs(Math.IEEEremainder(Math.atan2(k.vx, k.vz) - h0, 2 * Math.PI)) / D2R);
+                }
+                double along = (k.x - x) * lfx + (k.z - z) * lfz;
+                if (!crossed && along >= 0) {
+                    crossed = true;
+                    under = Math.abs((k.x - x) * llx + (k.z - z) * llz) < CROSS_UNDER;
+                }
+                if (along > 0.5) passed = true;
             }
-            if (along > 0.5) passed = true;
+            if (wall != 0) {
+                double sa = (k.x - x) * tx + (k.z - z) * tz, mv = sa - s0;
+                if (!alongPast && Math.abs(mv) >= WALL_ALONG && sa * Math.signum(mv) >= 1) alongPast = true;
+                if (alongPast && angle(k, r) >= WALL_RISE) rose = true;
+            }
         }
-        w.playHitAt = hitAt;
+        w.playHitAt = touchAt;
         w.playTurn = turn;
         w.playSkim = r.skimming;
-        if (!passed) return no(w, NO_PASSED);
-        int kind = crossed && under ? UNDER : ROUND;
-        int span = kind == UNDER ? SPAN_UNDER : SPAN_ROUND;
-        if (hitAt >= 0 && hitAt <= span) return no(w, kind == UNDER ? NO_HIT_UNDER : NO_HIT_ROUND);
-        if ((kind == UNDER ? r.skimming : skimRound) > SKIM_MOST) return no(w, NO_SKIM);
-        if (kind == ROUND && biteLen > t.roundMost) return no(w, NO_LONG);
-        if (kind == ROUND && turn < ROUND_TURN) return no(w, NO_TURN);
+        w.playSlide = r.sliding;
+        int no = NO_PASSED;
+        if (passed) {
+            int kind = crossed && under ? UNDER : ROUND;
+            int span = kind == UNDER ? SPAN_UNDER : SPAN_ROUND, skims = kind == UNDER ? skimUnder : skimRound;
+            if (touchAt >= 0 && touchAt <= span) no = kind == UNDER ? NO_HIT_UNDER : NO_HIT_ROUND;
+            else if (kind == ROUND && biteLen > t.roundMost) no = NO_LONG;
+            else if (kind == ROUND && turn < ROUND_TURN) no = NO_TURN;
+            else if (skims <= SKIM_MOST || loose && skims <= SKIM_SWOOP) return took(w, kind, top, touchAng, skims > SKIM_MOST);
+            else no = NO_SKIM;
+        }
+        if (wall != 0) {
+            if (hitAt >= 0) return no(w, NO_HIT_WALL);
+            if (!alongPast || !rose) return no(w, NO_ALONG);
+            if (r.skimming <= SKIM_WALL || loose && r.skimming <= SKIM_SWOOP) return took(w, WALL, top, hitAng, r.skimming > SKIM_WALL);
+            return no(w, NO_SKIM);
+        }
+        return no(w, no);
+    }
+
+    private static int took(AscentSwing.Work w, int kind, double top, double hitAng, boolean swoop) {
         w.playNo = 0;
+        w.playSwoop = swoop;
         w.playScore = top;
-        w.playCap = Math.max(HELD_LEAST, Math.min(t.holdCap, hitAng - ROOM_MARGIN));
+        w.playCap = Math.max(HELD_LEAST, Math.min(AscentSwing.T.holdCap, hitAng - ROOM_MARGIN));
         return kind;
     }
 
+    /** A swing along a wall slides this far along its face (blocks), and rises this high up the far side (degrees). */
+    static final double WALL_ALONG = 3, WALL_RISE = 30;
+    /** Ticks a swing along a wall may skim the floor at the cliff's foot (a low swoop along it). */
+    static final int SKIM_WALL = 16;
+    /**
+     * Mid-chain (not the first rope since the ground), a swing may skim this many ticks: a low swoop, where the first rope
+     * would hoist (Euan 12 Nov: after the first, "just use the momentum and the direction").
+     */
+    static final int SKIM_SWOOP = 30;
+
+    /**
+     * A wall's face: its code for the normal (x, z) of a side face that goes on down {@link #WALL_DOWN} blocks under the
+     * point (a wall or a cliff, not a tree's crown over air), 0 for anything else.
+     */
+    static int wallOf(SwingSpace s, SwingSpace.Hit a) {
+        if (a.ny != 0) return 0;
+        for (int i = 1; i <= WALL_DOWN; i++) {
+            if (!solid(s, a.x - a.nx * 0.5, a.y - i, a.z - a.nz * 0.5)) return 0;
+        }
+        return a.nx > 0 ? 1 : a.nx < 0 ? 2 : a.nz > 0 ? 3 : a.nz < 0 ? 4 : 0;
+    }
+
+    /** A face is a wall when it goes on this many blocks down under where the look met it (an oak's crown is 3 deep). */
+    static final int WALL_DOWN = 4;
+
+    static int wallX(int wall) {
+        return wall == 1 ? 1 : wall == 2 ? -1 : 0;
+    }
+
+    static int wallZ(int wall) {
+        return wall == 3 ? 1 : wall == 4 ? -1 : 0;
+    }
+
     /** Why a played swing was refused ({@code w.playNo}), and the words for each. */
-    static final int NO_FLIGHT = 1, NO_PASSED = 2, NO_HIT_UNDER = 3, NO_HIT_ROUND = 4, NO_SKIM = 5, NO_LONG = 6, NO_TURN = 7;
+    static final int NO_FLIGHT = 1, NO_PASSED = 2, NO_HIT_UNDER = 3, NO_HIT_ROUND = 4, NO_SKIM = 5, NO_LONG = 6, NO_TURN = 7, NO_HIT_WALL = 8,
+            NO_ALONG = 9;
     static final String[] NO = {"", "the rope's flight met something", "it never got past the anchor", "a swing under met something",
-            "a swing round met something", "it skimmed the floor too long", "a round on too long a rope", "a round that turned too little"};
+            "a swing round met something", "it skimmed the floor too long", "a round on too long a rope", "a round that turned too little",
+            "a swing along the wall met something", "it never swung along the wall and up"};
 
     private static int no(AscentSwing.Work w, int why) {
         w.playNo = why;
@@ -467,9 +627,9 @@ public final class RealRope {
         if (!s.ray(ex, ey, ez, AscentSwing.fx(yaw) * cp, -Math.sin(pitch * D2R), AscentSwing.fz(yaw) * cp, reach, a)) return false;
         w.aimT = a.t;
         int n = points(s, a, yaw, w);
-        double[] p = w.rpts;
-        double bestUnder = -1, bestRound = -1;
-        int under = -1, round = -1;
+        double[] p = w.rpts, b = w.rbest;
+        // the best of each: under, round, along the wall, and (mid-chain) a low swoop of any of them; x y z cap score kind
+        for (int o = 0; o < 4; o++) b[o * 6 + 4] = -1;
         AscentSwing.Pick c = w.rc;
         for (int i = 0; i < n; i++) {
             c.x = p[i * 3];
@@ -478,29 +638,25 @@ public final class RealRope {
             if (!AscentSwing.bites(s, c)) continue;
             double dx = c.x - hand.x, dy = c.y - hand.y, dz = c.z - hand.z;
             if (dx * dx + dy * dy + dz * dz > reach * reach || !AscentSwing.clear(s, hand.x, hand.y, hand.z, c.x, c.y, c.z, 0.5, w)) continue;
-            int kind = play(s, hand, yaw, c.x, c.y, c.z, w);
-            if (kind == UNDER && w.playScore > bestUnder) {
-                bestUnder = w.playScore;
-                under = i;
-                w.rbest[0] = c.x;
-                w.rbest[1] = c.y;
-                w.rbest[2] = c.z;
-                w.rbest[3] = w.playCap;
-            } else if (kind == ROUND && w.playScore > bestRound) {
-                bestRound = w.playScore;
-                round = i;
-                w.rbest[4] = c.x;
-                w.rbest[5] = c.y;
-                w.rbest[6] = c.z;
-                w.rbest[7] = w.playCap;
-            }
+            int kind = play(s, hand, yaw, c.x, c.y, c.z, w.rwall[i], !w.first, w);
+            if (kind == 0) continue;
+            int o = (w.playSwoop ? 3 : kind == UNDER ? 0 : kind == ROUND ? 1 : 2) * 6;
+            if (w.playScore <= b[o + 4]) continue;
+            b[o] = c.x;
+            b[o + 1] = c.y;
+            b[o + 2] = c.z;
+            b[o + 3] = w.playCap;
+            b[o + 4] = w.playScore;
+            b[o + 5] = kind;
+            w.rbestWall[o / 6] = w.rwall[i];
         }
-        if (under >= 0 || round >= 0) {
-            int o = under >= 0 ? 0 : 4;
-            swing(hand, yaw, w.rbest[o], w.rbest[o + 1], w.rbest[o + 2], under >= 0 ? UNDER : ROUND, w.rbest[o + 3], under >= 0 ? bestUnder : bestRound, out);
+        for (int o = 0; o < 24; o += 6) {
+            if (o == 18 && w.first && hoist(s, hand, yaw, n, w, out)) return true;
+            if (b[o + 4] < 0) continue;
+            swing(hand, yaw, b[o], b[o + 1], b[o + 2], (int) b[o + 5], b[o + 3], b[o + 4], out);
+            out.wall = w.rbestWall[o / 6];
             return true;
         }
-        if (hoist(s, hand, yaw, n, w, out)) return true;
         if (!slings) return false;
         // where nothing swings: the aimed rope's own answers, its sling thrown past the side you're on (decision 3)
         double top = a.ny > 0 ? a.y : s.topThrough(a, AscentSwing.AIM_TOP_UP);
@@ -521,11 +677,14 @@ public final class RealRope {
     static int points(SwingSpace s, SwingSpace.Hit a, double yaw, AscentSwing.Work w) {
         double[] p = w.rpts;
         double lfx = AscentSwing.fx(yaw), lfz = AscentSwing.fz(yaw), llx = -lfz, llz = lfx;
-        int n = 0;
+        int n = 0, wall = wallOf(s, a);
+        java.util.Arrays.fill(w.rwall, 0);
+        w.rwall[0] = wall;
         n = put(p, n, a.x, a.y, a.z);
         int first = n;
         double top = s.topThrough(a, TOP_UP);
         if (!Double.isNaN(top)) {
+            w.rwall[n] = wall; // the lip over a wall's face is on the face too
             n = put(p, n, a.x, top - 0.3, a.z);
             // a little in from the edge the look met: over the thing, not its lip, at the top of its own column (an oak's
             // crown is two wide layers and a narrow top 2 higher: the wide layer's top is too low to swing round)
@@ -544,7 +703,10 @@ public final class RealRope {
             double x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2];
             for (double o : ASIDE) {
                 double qx = x + llx * o, qz = z + llz * o;
-                if (n * 3 + 3 <= p.length && (solid(s, qx, y, qz) || solid(s, qx, y - 1, qz) || solid(s, qx, y + 1, qz))) n = put(p, n, qx, y, qz);
+                if (n * 3 + 3 <= p.length && (solid(s, qx, y, qz) || solid(s, qx, y - 1, qz) || solid(s, qx, y + 1, qz))) {
+                    w.rwall[n] = w.rwall[i];
+                    n = put(p, n, qx, y, qz);
+                }
             }
         }
         return n;
@@ -587,6 +749,7 @@ public final class RealRope {
         out.top = Double.NaN;
         out.zip = out.sling = out.reel = out.hoist = false;
         out.move = kind;
+        out.wall = 0;
         out.cap = cap;
     }
 
@@ -669,7 +832,7 @@ public final class RealRope {
                 step(s, k, r, yaw, 1);
                 top = Math.max(top, k.speed());
             }
-            if (AscentSwing.swept(s, x0, y0, z0, k.x, k.y, k.z)) return false;
+            if (AscentSwing.swept(s, x0, y0, z0, k.x, k.y, k.z) || r.sliding > 0) return false;
             if (!r.hoist && (k.x - x) * lfx + (k.z - z) * lfz > 3) passed = true;
         }
         if (!passed || r.skimming > SKIM_MOST) return false;
@@ -684,7 +847,7 @@ public final class RealRope {
      */
     public static boolean still(SwingSpace s, AscentRules.Kin hand, double yaw, AscentSwing.Pick pk, AscentSwing.Work w) {
         if (pk.zip || pk.sling || pk.hoist) return true;
-        int kind = play(s, hand, yaw, pk.x, pk.y, pk.z, w);
+        int kind = play(s, hand, yaw, pk.x, pk.y, pk.z, pk.wall, !w.first, w);
         if (kind == 0) return false;
         pk.move = kind;
         pk.cap = w.playCap;
