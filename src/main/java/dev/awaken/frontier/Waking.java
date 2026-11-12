@@ -50,13 +50,13 @@ final class Waking {
 
     /** Every 40 ticks: where each player in the overworld is. */
     static void tick(MinecraftServer server) {
-        if (!dev.awaken.core.api.TheLull.farLanding(server)) return;
+        if (FrontierData.get(server).landing() == null) return;
         for (ServerPlayer p : server.overworld().players()) LAST_OUT.put(p.getUUID(), p.blockPosition());
     }
 
     /** HIGHEST, while a gate run still knows its door: where the fall was, on the overworld's map. */
     static void onDeath(LivingDeathEvent e) {
-        if (!(e.getEntity() instanceof ServerPlayer p) || !dev.awaken.core.api.TheLull.farLanding(p.level().getServer())) return;
+        if (!(e.getEntity() instanceof ServerPlayer p) || FrontierData.get(p.level().getServer()).landing() == null) return;
         BlockPos at = Gates.doorOf(p).orElse(null);
         if (at == null) at = p.level().dimension() == Level.OVERWORLD ? p.blockPosition() : LAST_OUT.get(p.getUUID());
         if (at == null) FELL.remove(p.getUUID());
@@ -117,11 +117,12 @@ final class Waking {
         WOKE.clear();
     }
 
-    /** The landing's mooring, if this player has landed there, it stands, and they have no Hearth; else null. */
+    /**
+     * The landing's mooring, if this player has landed there, it stands, and they have no Hearth; else null. A world
+     * made before the Far Landing has neither a landing mooring nor anyone's landed mark.
+     */
     private static FrontierData.@Nullable Mooring mooringFor(ServerPlayer p) {
-        MinecraftServer server = p.level().getServer();
-        if (!dev.awaken.core.api.TheLull.farLanding(server)) return null;
-        FrontierData d = FrontierData.get(server);
+        FrontierData d = FrontierData.get(p.level().getServer());
         FrontierData.Mooring m = d.landing();
         if (m == null || !m.built() || !d.marked(p.getUUID(), "landed")) return null;
         return HearthHooks.hearthsOf(p).isEmpty() ? m : null;

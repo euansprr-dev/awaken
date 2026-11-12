@@ -26280,8 +26280,8 @@ you've crossed, a fall never sends you back to the city just because you haven't
   alone. A bed that's gone still shows vanilla's "no home bed" line.
 - **Co-op**: each player by their own landing mark and their own fall. A partner who joins and hasn't crossed wakes at
   world spawn as before; one who has crossed wakes at the landing.
-- **Old worlds**: a world made before the Far Landing has no landing (`TheLull.farLanding` false) and no `landed`
-  marks, so nothing changes there.
+- **Old worlds**: a world made before the Far Landing has no landing mooring saved and no `landed` marks (both only
+  ever exist under `TheLull.farLanding`), so nothing changes there. The rule reads those two, not the region map.
 - **The land is ready**: a lowest-priority `LivingDeathEvent` listener warms the bay's land (`Passage.warm`, as §28.9's
   Hearth respawn) when the player will wake there.
 - **Said once**: the first wake there toasts "You woke up back at the Far Landing. Until you set down your Hearth or
