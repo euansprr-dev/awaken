@@ -23335,7 +23335,8 @@ lines and the seals as one glow on a lit door, so each has its own look (`Pillar
   middle, a halo, and a soft shaft of light down to the ground. Broken (`RealmLight.broken`: its Warden is down; sent until
   the door opens, so the row always shows how many there were), it's a dark ash ring split top and bottom with the halves
   pulled apart and a last red glow in it, nothing lit.
-- Saltcomb's plan-2 road keeps no lamp on the ramp up to the court (one stood in the door's line).
+- Saltcomb's plan-2 road keeps no lamp on the ramp up to the court and none within 16 of the door's line (x = 0, Mouth to
+  door): from the road, two lamp poles stood across the seals.
 - Tours: `/awaken gate realm_warden_down <n>` counts the land's nth Warden as beaten (`RealmLive.wardenBeaten`), so a shot
   shows a broken seal beside whole ones (`tools/autopilot/realm-saltcomb-way.txt`).
 
