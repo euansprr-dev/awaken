@@ -237,19 +237,22 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
         if (what.equals("wing")) {
             wing(Math.floorMod(n, WINGS));
             wingFade = 1F;
+        } else if (what.equals("hand")) {
+            // the pick in your hand on the Picks wall, as if pointed at
+            mouseMovedSinceKey = false;
+            picks.hover = null;
+            picks.handHover = wing == PICKS;
         } else if (what.equals("looks")) {
             openLooks();
         } else if (what.equals("hover")) {
             // tours can't move the pointer: the n-th suit (or the n-th kind's E-rank niche) as if pointed at
             mouseMovedSinceKey = false;
             if (wing == PICKS) {
-                // -1: the pick in your hand, as if pointed at
-                picks.hover = n < 0 ? null : PickLayout.cell(Math.floorMod(n, PickLayout.COLS), Math.min(2, HallNet.ROWS - 1));
-                picks.handHover = n < 0;
-                if (picks.hover != null) {
-                    aimX = picks.hover.x();
-                    aimY = picks.hover.cy();
-                }
+                HallLayout.Cell cell = PickLayout.cell(Math.floorMod(n, PickLayout.COLS), Math.min(2, HallNet.ROWS - 1));
+                picks.hover = cell;
+                picks.handHover = false;
+                aimX = cell.x();
+                aimY = cell.cy();
             } else if (wing == ARMOUR) {
                 TerraceLayout.Fig[] figs = TerraceLayout.figs();
                 TerraceLayout.Fig f = figs[Math.floorMod(n, figs.length)];
