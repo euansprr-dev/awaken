@@ -23401,12 +23401,13 @@ stone dressed in the land's own stone with a band of its accent; its course catc
   it stands (`Piece.stands`: the Vine Seat's roots along their curves, not their boxes). When the coarse rings find no camp,
   every block in reach is tried, nearest first (a 16-wide step leaves a camp a band 2 wide). Each land names the props a camp may stand
   among (Kingsroot's poles, plinths, stubs and broken arches; the Barrow's standing stones). When nothing can be planned the
-  log says what stood in the way (`WayPlanner.why`), naming the piece that fills the ground. On 12 Nov (run 43224504109)
-  Saltcomb (both seeds) and Amber Reach (17 legs, 5 of movement, first fight 51 in) pass the open-land check, and the Cinder
-  Crown, Fallwater Vale and the Hush Tarn have their second stretch; Kingsroot Keep (its stones meet the bridge, arches and
-  trees round the apron), the Quiet Barrow (its Mouth sits at the land's edge), the Vine Seat (water and islets round its
-  causeway), the Glass Sea and the High Caps (standing stones, glowcaps and the ways fill their walks) have none yet.
-  `realm_open_way` logs what each lacks, and each stays off until it has a way and passes the check.
+  log says what stood in the way (`WayPlanner.why`), naming the piece that fills the ground. On 12 Nov (run 43240537796)
+  every open land passes the open-land check at four seeds (Saltcomb at two): Saltcomb and Amber Reach (4 or 5 movement
+  legs), Kingsroot Keep (over the bridge, first fight 24 in), the Quiet Barrow (round the hill's east flank, 3 or 4), the
+  Vine Seat (causeway and great stair), and the five rolled lands with their second stretch (the Glass Sea, the High Caps,
+  the Cinder Crown, Fallwater Vale, the Hush Tarn; first fight 25 to 53 in). A land comes back by its id, so
+  `realm_open_way` checks every one at seeds 1 to 4 and logs what each lacks; each stays off until Euan's word puts it on
+  `gateOpenLandsBack`.
 
 **Life leans to the way** (`RealmCountry.leans`: designed, plan 2 or later). A cell whose middle is within 70 blocks of the
 way (every walk from one leg to the next, and the land's roads) is quiet on a roll under 35 (50 elsewhere) and holds hunters
