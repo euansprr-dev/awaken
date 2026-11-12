@@ -125,7 +125,7 @@ public final class WayPlanner {
             }
         }
         if (camp1 == null) {
-            int[] at = spot(land, pieces, among, ok, taken, mouth.x(), mouth.z(), dir, FIRST_NEAR, FIRST_FAR, 180);
+            int[] at = spot(land, pieces, among, ok, taken, mouth.x(), mouth.z(), dir, FIRST_NEAR, FIRST_FAR, 180, null);
             if (at == null) return no("no first camp " + FIRST_NEAR + " to " + FIRST_FAR + " from the Mouth: " + why());
             camp1 = new Stop("camp1", Land.LegKind.FIGHT, "A camp near the way in", at[0], land.ground(at[0], at[1]) + 1, at[1], 8, nextDen++);
             camp1.newDen = at;
@@ -146,11 +146,19 @@ public final class WayPlanner {
         }
 
         // straight after it, the first stones: every way on starts past them
-        Stop climb = stones(land, pieces, ok, dress, taken, seed, "climb1", "Stones beyond the first camp", from.x, from.z, dir, laid);
+        Stop climb = stones(land, pieces, ok, dress, taken, seed, "climb1", "Stones beyond the first camp", from.x, from.z, dir, laid, new double[][]{{from.x, from.z}});
         if (climb == null) return no("no stones past " + from.id + " at " + from.x + "," + from.z + ": " + why());
         stops.add(climb);
         double[] past = new double[]{climb.hops.end()[0], climb.hops.end()[2]};
-        Stop hub = stopNear(land, pieces, among, ok, dens, used, taken, "camp2", "A camp past the stones", past[0] + dir[0] * 28, past[1] + dir[1] * 28, nextDen);
+        // the hub: on past the stones, or to either side of where they end (a hill may stand straight on), or just past them;
+        // within a walk of both the stones and the stop before them, so the way round on foot is a walk too
+        double[][] keep = {{from.x, from.z}, {climb.x, climb.z}};
+        Stop hub = null;
+        for (double[] t : new double[][]{{past[0] + dir[0] * 28, past[1] + dir[1] * 28}, {past[0] - dir[1] * 28, past[1] + dir[0] * 28},
+                {past[0] + dir[1] * 28, past[1] - dir[0] * 28}, {past[0] + dir[0] * 10, past[1] + dir[1] * 10}}) {
+            hub = stopNear(land, pieces, among, ok, dens, used, taken, "camp2", "A camp past the stones", t[0], t[1], nextDen, keep);
+            if (hub != null) break;
+        }
         if (hub == null) return no("no camp past the first stones near " + (int) (past[0] + dir[0] * 28) + "," + (int) (past[1] + dir[1] * 28) + ": " + why());
         if (hub.newDen != null) nextDen++;
         stops.add(hub);
@@ -196,6 +204,11 @@ public final class WayPlanner {
             return no("no way to " + left + ": " + why());
         }
 
+        // the open-land check wants two stretches of movement: a land whose Wardens stand close (Kingsroot's court) has only
+        // the first, so the longest walk between two stops takes a line of stones of its own, spliced in between them
+        if (stops.stream().filter(s -> s.kind == Land.LegKind.MOVEMENT).count() < 2 && !moreStones(land, pieces, ok, dress, seed, stops, laid, taken, n))
+            return no("only one stretch of stones and no walk takes a second: " + why());
+
         // whole: put it all down
         for (Stop s : stops) if (s.newDen != null && build.den(s.newDen[0], s.newDen[1]) != s.site) return no("a new den came out as another index than planned");
         for (Hops h : laid) build.stones(h);
@@ -222,11 +235,11 @@ public final class WayPlanner {
             Stop next = null;
             // each branch more than one walk long gets its own stones, before its first stop
             if (!branchMoves) {
-                next = stones(land, pieces, ok, dress, taken, seed + n[0], "climb" + n[0], "Stones on the way", cur.x + u[0] * 14, cur.z + u[1] * 14, u, laid);
+                next = stones(land, pieces, ok, dress, taken, seed + n[0], "climb" + n[0], "Stones on the way", cur.x + u[0] * 14, cur.z + u[1] * 14, u, laid, new double[][]{{cur.x, cur.z}});
                 if (next != null) branchMoves = true;
             }
             if (next == null) {
-                next = stopNear(land, pieces, among, ok, dens, used, taken, "camp" + n[0], "A camp on the way", px, pz, nextDen[0]);
+                next = stopNear(land, pieces, among, ok, dens, used, taken, "camp" + n[0], "A camp on the way", px, pz, nextDen[0], new double[][]{{cur.x, cur.z}});
                 if (next == null) return no("no camp near " + (int) px + "," + (int) pz + " (from " + cur.id + "): " + why());
                 if (next.newDen != null) nextDen[0]++;
             }
@@ -266,13 +279,13 @@ public final class WayPlanner {
 
     /** A stop near a point: a den the land has (unused, within 26), or a new camp on good ground near it. */
     private static Stop stopNear(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, List<Land.Site> dens, Set<Integer> used, List<int[]> taken,
-                                 String id, String name, double px, double pz, int nextDen) {
+                                 String id, String name, double px, double pz, int nextDen, double[][] keep) {
         for (Land.Site d : dens) {
-            if (used.contains(d.index()) || Math.hypot(d.x() - px, d.z() - pz) > 26) continue;
+            if (used.contains(d.index()) || Math.hypot(d.x() - px, d.z() - pz) > 26 || beyond(keep, d.x(), d.z())) continue;
             used.add(d.index());
             return new Stop(id, Land.LegKind.FIGHT, name, d.x(), d.y(), d.z(), 8, d.index());
         }
-        int[] at = spot(land, pieces, among, ok, taken, (int) px, (int) pz, null, 0, 34, 180);
+        int[] at = spot(land, pieces, among, ok, taken, (int) px, (int) pz, null, 0, 34, 180, keep);
         if (at == null) return null;
         taken.add(new int[]{at[0], at[1], 12});
         Stop s = new Stop(id, Land.LegKind.FIGHT, name, at[0], land.ground(at[0], at[1]) + 1, at[1], 8, nextDen);
@@ -285,7 +298,7 @@ public final class WayPlanner {
      * the ground, every stone on good ground and clear of what is built. Null when no way of laying it fits.
      */
     private static Stop stones(Land land, List<? extends Piece<?>> pieces, Ground ok, Dress dress, List<int[]> taken, long seed,
-                               String id, String name, double x, double z, double[] dir, List<Hops> laid) {
+                               String id, String name, double x, double z, double[] dir, List<Hops> laid, double[][] keep) {
         java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
         for (int turn : TURNS) for (int along : new int[]{12, 20, 6, 28, 36}) for (int side : new int[]{0, 10, -10, 20, -20, 32, -32}) for (int len : new int[]{34, 26}) {
             double sx = x + dir[0] * along - dir[1] * side, sz = z + dir[1] * along + dir[0] * side;
@@ -293,21 +306,77 @@ public final class WayPlanner {
             double c = Math.cos(Math.toRadians(turn)), sn = Math.sin(Math.toRadians(turn)), lx = dir[0] * c - dir[1] * sn, lz = dir[0] * sn + dir[1] * c;
             int x0 = (int) Math.round(sx), z0 = (int) Math.round(sz), x1 = (int) Math.round(sx + lx * len), z1 = (int) Math.round(sz + lz * len);
             List<Hops.Stone> line = Hops.follow(x0, z0, x1, z1, 3, 1, 2, seed + along * 31L + side, land);
-            String why = misfit(land, pieces, ok, taken, line);
+            String why = midBeyond(keep, line) ? "far" : misfit(land, pieces, ok, taken, line);
             if (why != null) {
                 tally.merge(why, 1, Integer::sum);
                 continue;
             }
-            Hops h = new Hops(line, dress.body(), dress.cap(), dress.band(), "stones to jump along");
-            laid.add(h);
-            for (Hops.Stone s : line) taken.add(new int[]{s.x(), s.z(), 3});
-            int[] a = h.start(), b = h.end();
-            Stop st = new Stop(id, Land.LegKind.MOVEMENT, name, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, 9, -1);
-            st.hops = h;
-            return st;
+            return laidAs(line, dress, id, name, laid, taken);
+        }
+        // none near: further along and further aside (a great stair or a root may fill the first forty blocks), and shorter
+        for (int turn : TURNS) for (int along : new int[]{6, 14, 22, 30, 38, 46}) for (int side : new int[]{40, -40, 48, -48, 0, 16, -16, 26, -26}) for (int len : new int[]{30, 22}) {
+            double sx = x + dir[0] * along - dir[1] * side, sz = z + dir[1] * along + dir[0] * side;
+            double c = Math.cos(Math.toRadians(turn)), sn = Math.sin(Math.toRadians(turn)), lx = dir[0] * c - dir[1] * sn, lz = dir[0] * sn + dir[1] * c;
+            int x0 = (int) Math.round(sx), z0 = (int) Math.round(sz), x1 = (int) Math.round(sx + lx * len), z1 = (int) Math.round(sz + lz * len);
+            List<Hops.Stone> line = Hops.follow(x0, z0, x1, z1, 3, 1, 2, seed + along * 37L + side, land);
+            String why = midBeyond(keep, line) ? "far" : misfit(land, pieces, ok, taken, line);
+            if (why != null) {
+                tally.merge(why, 1, Integer::sum);
+                continue;
+            }
+            return laidAs(line, dress, id, name, laid, taken);
         }
         WHY.set("stone lines " + tally);
         return null;
+    }
+
+    private static Stop laidAs(List<Hops.Stone> line, Dress dress, String id, String name, List<Hops> laid, List<int[]> taken) {
+        Hops h = new Hops(line, dress.body(), dress.cap(), dress.band(), "stones to jump along");
+        laid.add(h);
+        for (Hops.Stone s : line) taken.add(new int[]{s.x(), s.z(), 3});
+        int[] a = h.start(), b = h.end();
+        Stop st = new Stop(id, Land.LegKind.MOVEMENT, name, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, 9, -1);
+        st.hops = h;
+        return st;
+    }
+
+    /** A second stretch of stones on the longest walk between two stops that has none, spliced in between them; false if none takes one. */
+    private static boolean moreStones(Land land, List<? extends Piece<?>> pieces, Ground ok, Dress dress, long seed, List<Stop> stops, List<Hops> laid, List<int[]> taken, int[] n) {
+        java.util.Map<String, Stop> byId = new java.util.HashMap<>();
+        for (Stop s : stops) byId.put(s.id, s);
+        List<Stop[]> walks = new ArrayList<>();
+        for (Stop a : stops) for (String to : a.exits) {
+            Stop b = byId.get(to);
+            if (b == null || a.kind == Land.LegKind.ARRIVE || a.kind == Land.LegKind.MOVEMENT || b.kind == Land.LegKind.MOVEMENT) continue;
+            if (Math.hypot(b.x - a.x, b.z - a.z) > 30) walks.add(new Stop[]{a, b});
+        }
+        walks.sort(java.util.Comparator.comparingDouble((Stop[] w) -> -Math.hypot(w[1].x - w[0].x, w[1].z - w[0].z)));
+        for (Stop[] w : walks) {
+            Stop a = w[0], b = w[1];
+            double[] u = unit(b.x - a.x, b.z - a.z);
+            Stop st = stones(land, pieces, ok, dress, taken, seed + 977 + n[0], "climb" + n[0], "Stones on the way", a.x + u[0] * 10, a.z + u[1] * 10, u, laid,
+                    new double[][]{{a.x, a.z}, {b.x, b.z}});
+            if (st == null) continue;
+            n[0]++;
+            a.exits.set(a.exits.indexOf(b.id), st.id);
+            st.exits.add(b.id);
+            stops.add(st);
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean midBeyond(double[][] keep, List<Hops.Stone> line) {
+        if (keep == null || line.isEmpty()) return false;
+        Hops.Stone a = line.getFirst(), b = line.getLast();
+        return beyond(keep, (a.x() + b.x()) / 2.0, (a.z() + b.z()) / 2.0);
+    }
+
+    /** Whether a place is more than a walk ({@link #MOST}) from any of these, so a stop there would leave nothing on the way. */
+    private static boolean beyond(double[][] keep, double x, double z) {
+        if (keep == null) return false;
+        for (double[] k : keep) if (Math.hypot(k[0] - x, k[1] - z) > MOST - 2) return true;
+        return false;
     }
 
     /** The turns off the way's own line a stretch of stones is tried at, the way itself first. */
@@ -341,12 +410,12 @@ public final class WayPlanner {
     }
 
     /** A place for a camp: good ground over a ring of it, clear of what is built and of the plan, from {@code near} to {@code far} out (along {@code dir} when given). */
-    private static int[] spot(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, List<int[]> taken, int x, int z, double[] dir, int near, int far, int arc) {
+    private static int[] spot(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, List<int[]> taken, int x, int z, double[] dir, int near, int far, int arc, double[][] keep) {
         java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
         for (int r = near; r <= far; r += 4) for (int k = 0; k <= arc; k += 6) for (int sign = -1; sign <= 1; sign += 2) {
             double a = (dir == null ? 0 : Math.atan2(dir[1], dir[0])) + Math.toRadians(k * sign) + (dir == null ? k * 0.21 : 0);
             int cx = x + (int) Math.round(Math.cos(a) * r), cz = z + (int) Math.round(Math.sin(a) * r);
-            String why = unfit(land, pieces, among, ok, taken, cx, cz);
+            String why = beyond(keep, cx, cz) ? "far" : unfit(land, pieces, among, ok, taken, cx, cz);
             if (why == null) return new int[]{cx, cz};
             tally.merge(why, 1, Integer::sum);
             if (k == 0) break;
@@ -358,7 +427,7 @@ public final class WayPlanner {
             double d = Math.hypot(dx, dz);
             if (d < near || d > far || d >= bestD) continue;
             if (dir != null && arc < 180 && Math.abs(gap(Math.atan2(dz, dx), Math.atan2(dir[1], dir[0]))) > Math.toRadians(arc)) continue;
-            if (unfit(land, pieces, among, ok, taken, x + dx, z + dz) == null) {
+            if (!beyond(keep, x + dx, z + dz) && unfit(land, pieces, among, ok, taken, x + dx, z + dz) == null) {
                 best = new int[]{x + dx, z + dz};
                 bestD = d;
             }

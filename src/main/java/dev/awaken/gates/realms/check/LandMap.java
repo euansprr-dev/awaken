@@ -36,6 +36,12 @@ public final class LandMap {
     private static final int S = 2;
 
     public static void write(Land land, Path dir, String name) throws IOException {
+        write(land, dir, name, false);
+        // and the floor under any roof or crown: the top block no more than 4 over the ground (a temple under its tree)
+        write(land, dir, name + "_floor", true);
+    }
+
+    private static void write(Land land, Path dir, String name, boolean floor) throws IOException {
         Files.createDirectories(dir);
         int half = land.halfSize(), n = 2 * half + 1, min = -half;
         int[] top = new int[n * n], colour = new int[n * n];
@@ -46,7 +52,7 @@ public final class LandMap {
             land.paint(v);
             for (int x = cx * 16; x < cx * 16 + 16; x++) for (int z = cz * 16; z < cz * 16 + 16; z++) {
                 if (x < min || x > half || z < min || z > half) continue;
-                int y = V.H - 1;
+                int y = floor ? Math.min(V.H - 1, land.ground(x, z) + 4) : V.H - 1;
                 BlockState s = null;
                 for (; y >= 0; y--) if ((s = v.get(x, y, z)) != null && !s.isAir()) break;
                 int k = (x - min) + (z - min) * n;
@@ -135,7 +141,7 @@ public final class LandMap {
         for (Land.Leg l : land.route()) t.append(String.format(Locale.ROOT, "  %s %s at %d %d %d -> %s%n", l.id(), l.kind(), l.x(), l.y(), l.z(), l.exits()));
         t.append("pieces (label: box):\n");
         for (Piece<?> p : land.pieces()) if (p.x1 - p.x0 < 2 * half) t.append(String.format(Locale.ROOT, "  %s: %d %d .. %d %d%n", p.label, p.x0, p.z0, p.x1, p.z1));
-        Files.writeString(dir.resolve(name + ".txt"), t.toString());
+        if (!floor) Files.writeString(dir.resolve(name + ".txt"), t.toString());
     }
 
     private static int px(int c, int min) {

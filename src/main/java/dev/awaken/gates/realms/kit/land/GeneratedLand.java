@@ -380,6 +380,7 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         if (ctx.version() >= 2) {
             secondStretch();
             earlyCamp();
+            rests();
         }
         clearSites();
     }
@@ -459,6 +460,53 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
 
     /** The first fight is wanted within this of the Mouth: the open-land check's 60, less a little. */
     private static final int EARLY = 56;
+
+    /**
+     * Plan version 2: no walk between two legs longer than the open-land check's 90. Each that is gets a rest (a breather,
+     * "A rest on the way") on the land's own way, as near the middle of the walk as the way goes and within 86 of both
+     * ends, or on dry ground on the walk's own line where no way does.
+     */
+    private void rests() {
+        int made = 0;
+        for (int guard = 0; guard < 12; guard++) {
+            Leg from = null, to = null;
+            for (Leg a : route()) for (String id : a.exits()) {
+                Leg b = leg(id);
+                if (b != null && Math.hypot(b.x() - a.x(), b.z() - a.z()) > 88 && from == null) {
+                    from = a;
+                    to = b;
+                }
+            }
+            if (from == null) return;
+            int[] at = restAt(from, to);
+            if (at == null || !between(from.id(), to.id(), "rest" + ++made, LegKind.BREATHER, "A rest on the way", at[0], at[1], at[2], 6)) {
+                dev.awaken.Awaken.LOG.info("[realms] {}: no rest fits on the {} block walk from {} to {}", ctx.id(), (int) Math.hypot(to.x() - from.x(), to.z() - from.z()), from.id(), to.id());
+                return;
+            }
+        }
+    }
+
+    private int[] restAt(Leg a, Leg b) {
+        double mx = (a.x() + b.x()) / 2.0, mz = (a.z() + b.z()) / 2.0;
+        int[] best = null;
+        double bestD = Double.MAX_VALUE;
+        List<double[]> lines = new ArrayList<>(ways());
+        lines.add(new double[]{a.x(), a.z(), b.x(), b.z(), 0});
+        for (int i = 0; i < lines.size(); i++) {
+            double[] w = lines.get(i);
+            double len = Math.max(1, Math.hypot(w[2] - w[0], w[3] - w[1]));
+            for (double t = 0; t <= 1; t += 1 / len) {
+                int x = (int) Math.round(w[0] + (w[2] - w[0]) * t), z = (int) Math.round(w[1] + (w[3] - w[1]) * t);
+                double d = Math.hypot(x - mx, z - mz) + (i == lines.size() - 1 ? 6 : 0); // the land's own way first
+                if (d >= bestD || Math.hypot(x - a.x(), z - a.z()) > 86 || Math.hypot(x - b.x(), z - b.z()) > 86) continue;
+                int g = ground(x, z);
+                if (!(g > water() + 1 || frozen && g >= water()) || edge(x, z) > -8) continue;
+                best = new int[]{x, g + 1, z};
+                bestD = d;
+            }
+        }
+        return best;
+    }
 
     /** A line of stones beside the walk from one leg to the next, spliced in between them; false when none fits there. */
     private boolean stretchBy(Leg from, Leg to, java.util.Map<String, Integer> tally, double[] ats, int[] sides, int[] lens) {

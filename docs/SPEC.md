@@ -23364,15 +23364,28 @@ stone dressed in the land's own stone with a band of its accent; its course catc
   within 26, or a new camp on level ground clear of the land's sites, roads and what is built), each branch with its own line
   of stones. All of it or none: a branch that can't be laid is rolled back and tried from another stop, and a land where any
   target fails keeps its run read off its sites, with a warning in the log.
+  A land can name places the way must pass straight after its first camp (`designWay(..., via)`), each a breather stop
+  ("On the way"), the first stones looked for past the last: Kingsroot crosses the gorge on the old bridge (0, 232), the
+  Vine Seat the lagoon on its causeway (0, 165) and climbs the great stair (0, 78) before its stones. What counts as ground
+  is each land's own: Kingsroot's two wards (4 clear of either curtain, which stands 11 inside its line, and clear of the
+  rubble spilling from each breach), the Vine Seat's steps (a block in from either lip, off the great stair and out of its
+  rooms; its crown's floor is not one), the Barrow's moor (63, a block over the water, counts as dry).
 - **The rolled lands** (`GeneratedLand.secondStretch`): beside a walk of over 44 blocks between two legs of the run that are
   neither movement nor the Lord's (the longest that takes one), a second stretch of stones in the country's rock, spliced in
-  as a movement leg ("Stones to jump along", `Land.between`); where no line fits on dry ground clear of the ways, the run is
-  as before, with a line in the log.
+  as a movement leg ("Stones to jump along", `Land.between`). Tried first beside a walk's middle; only when no walk takes
+  one there, nearer its ends (15, 85, 75, 10, 90 per cent along), on its line or up to 30 aside, as short as 18 (between the
+  High Caps' tables the middle is all water and spans). A frozen sea counts as ground (the Glass Sea's glass is a floor).
+  Where no line fits, the run is as before, with a line in the log. A rolled land whose first fight is more than 56 blocks
+  from the Mouth (`GeneratedLand.earlyCamp`; the High Caps' is on the next table over) gets a camp with a den of its own
+  18 to 52 from the Mouth, toward the leg the way in led to and within 86 of it, spliced in before it ("A camp near the way
+  in", leg `near`); it may stand among glowcaps, lamps and threads of light.
 - Every line is tried along the way and turned off it up to 100 degrees (`WayPlanner.TURNS`): a slope steeper than a block a
   stone can't be climbed straight up, so the line crosses it. A camp keeps 12 blocks in from the land's edge (as the
   country's haunts' places do), six from anything built and from a site's own radius; a stone 12 in
   from the edge. A tree's crown and boughs don't count as built (`WayPlanner.OVERHEAD`: air over the ground), a whole tree,
-  Amber's great flowers and a great mushroom only at their trunk (`TRUNKED`), and each land names the props a camp may stand
+  Amber's great flowers and a great mushroom only at their trunk (`TRUNKED`), a piece that knows its own shape only where
+  it stands (`Piece.stands`: the Vine Seat's roots along their curves, not their boxes). When the coarse rings find no camp,
+  every block in reach is tried, nearest first (a 16-wide step leaves a camp a band 2 wide). Each land names the props a camp may stand
   among (Kingsroot's poles, plinths, stubs and broken arches; the Barrow's standing stones). When nothing can be planned the
   log says what stood in the way (`WayPlanner.why`), naming the piece that fills the ground. On 12 Nov (run 43224504109)
   Saltcomb (both seeds) and Amber Reach (17 legs, 5 of movement, first fight 51 in) pass the open-land check, and the Cinder
