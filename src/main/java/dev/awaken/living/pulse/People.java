@@ -139,7 +139,7 @@ final class People {
                 n++;
                 if (m.getTarget() != null) continue;
                 double ox = ((k * 37) % (spread * 2 + 1)) - spread, oz = ((k * 53) % (spread * 2 + 1)) - spread;
-                m.getNavigation().moveTo(target.x + ox, target.y, target.z + oz, speed);
+                Behaviours.send(level, m, target.x + ox, target.y, target.z + oz, speed, k);
             }
             h.centre = n > 0 ? new net.minecraft.world.phys.Vec3(sx / n, sy / n, sz / n) : along(h, t);
         }

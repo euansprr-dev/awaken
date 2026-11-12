@@ -137,6 +137,12 @@ public class FaunaMob extends AwakenMob implements RigBody {
         return def().talent;
     }
 
+    /** A glider follows its lead in its own loop ({@link FaunaGoals.Glide}); a frightened flier gets clear first. */
+    @Override
+    protected boolean followsLead() {
+        return super.followsLead() && scareTicks <= 0 && talent() != FaunaTalent.GLIDE;
+    }
+
     // ---- goals ---------------------------------------------------------------------------------------------------
 
     @Override

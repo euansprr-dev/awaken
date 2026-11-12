@@ -50,6 +50,12 @@ public final class MobHooks {
 
         /** The player a creature is bonded to (a bonded mount), if any: only they may ride or possess it. */
         default java.util.Optional<java.util.UUID> bondedTo(net.minecraft.world.entity.Entity e) { return java.util.Optional.empty(); }
+
+        /**
+         * Sends a creature that flies toward (x, z) through the air for {@code ticks}, the way it flies (a glider's loop
+         * moves there), at a walker's pace {@code speed}. False for a creature that walks: send it on a path instead.
+         */
+        default boolean lead(Mob m, double x, double z, double speed, int ticks) { return false; }
     }
 
     private static Spawner spawner = new Fallback();
@@ -81,6 +87,14 @@ public final class MobHooks {
     /** The player this creature is bonded to (a bonded mount), if any. */
     public static java.util.Optional<java.util.UUID> bondedTo(net.minecraft.world.entity.Entity e) {
         return spawner.bondedTo(e);
+    }
+
+    /**
+     * A herd's mind or a happening sending a creature somewhere (SPEC §41.4, "Fliers are led through the air"): true when
+     * it flies and was sent through the air; false for a walker, which the caller sends on a path.
+     */
+    public static boolean lead(Mob m, double x, double z, double speed, int ticks) {
+        return spawner.lead(m, x, z, speed, ticks);
     }
 
     /** Applies SPEC section 2 scaling to any living entity and tags its role. */

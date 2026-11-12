@@ -120,6 +120,9 @@ public class AwakenMob extends Monster {
     int fleeTicks;
     @Nullable Player robbed;
     private int fallenTicks, fuseTicks, decoyTicks, hopCooldown, guardTicks, frenzyTicks, auraTicks, auraPulse, staggerTicks, groundedTicks;
+    /** Where a herd's mind or a happening sends a flier through the air (not saved: they send it again), its pace and height. */
+    private double leadX, leadZ, leadSpeed, leadHover;
+    private int leadUntil;
     private float auraRadius, auraDamage;
     private BoltKind auraBolt = BoltKind.PLAIN;
     /** Its shots in another's look (SPEC §47.6: the Examiner throws your own power back), never with that look's effect. */
@@ -394,6 +397,62 @@ public class AwakenMob extends Monster {
     }
 
     /**
+     * Sent toward (x, z) through the air by a herd's mind or a happening (SPEC §41.4, "Fliers are led through the air") for
+     * {@code ticks}, at a walker's pace {@code speed}. A path ends on the ground, so a flier sent down one dives into the
+     * floor and rises again every leg (Euan 12 Nov, the dune rays): it is never sent on one. False for one that walks.
+     */
+    public boolean lead(double x, double z, double speed, int ticks) {
+        if (!def().flies() || level().isClientSide()) return false;
+        // it keeps the height it flies at (a ray's glide keeps its own)
+        if (!led()) leadHover = Mth.clamp(getY() - FaunaMob.groundAt(level(), getX(), getZ()), 2.0, 6.0);
+        leadX = x;
+        leadZ = z;
+        leadSpeed = speed;
+        leadUntil = tickCount + ticks;
+        getNavigation().stop();
+        return true;
+    }
+
+    /** Whether it is being led somewhere (a glider's loop centres on the place: {@link FaunaGoals.Glide}). */
+    public boolean led() {
+        return leadUntil > tickCount;
+    }
+
+    double leadX() {
+        return leadX;
+    }
+
+    double leadZ() {
+        return leadZ;
+    }
+
+    double leadSpeed() {
+        return leadSpeed;
+    }
+
+    /** Whether it follows its lead itself now: not fighting, held, brought down or ridden. A glider follows it in its own loop. */
+    protected boolean followsLead() {
+        return getTarget() == null && !grounded() && !isVehicle() && !isHeld();
+    }
+
+    /** Led: straight for the place, at the height it flies, with a slow sway; there, its own goals take over. */
+    private void followLead() {
+        if (!led() || !followsLead()) return;
+        double dx = leadX - getX(), dz = leadZ - getZ(), d = Math.sqrt(dx * dx + dz * dz);
+        if (d < 3.0) {
+            leadUntil = 0;
+            return;
+        }
+        // a point a few blocks along the way, never the place itself (it would reach it, halt and surge)
+        double ux = dx / d, uz = dz / d, ahead = Math.min(d, 6.0);
+        double sway = Mth.sin((tickCount + getId() * 13) * 0.06F) * Math.min(1.2, d * 0.2);
+        double ax = getX() + ux * ahead - uz * sway, az = getZ() + uz * ahead + ux * sway;
+        // over a drop it flies on rather than down into it
+        double y = Math.max(FaunaMob.groundAt(level(), ax, az), getY() - leadHover - 2.0) + leadHover;
+        getMoveControl().setWantedPosition(ax, Math.min(y, getY() + 1.5), az, Mth.clamp(leadSpeed * 0.5, 0.35, 1.1));
+    }
+
+    /**
      * Out of the air for {@code ticks}, whatever it is: a boss beaten to its last point comes down to be finished
      * (SPEC §68.4), where {@link #ground} leaves a kit flier to its own script.
      */
@@ -516,6 +575,7 @@ public class AwakenMob extends Monster {
         }
         // a flier always flies unless brought down (a save taken while down comes back with gravity on)
         if (groundedTicks == 0 && d.flies() && !isNoGravity()) setNoGravity(true);
+        followLead(); // after its goals and navigation: the lead decides where it flies while it lasts
         if (frenzyTicks > 0 && --frenzyTicks == 0) endFrenzy();
         if (auraTicks > 0) tickAura(level);
         if (fleeTicks > 0) fleeTicks--;

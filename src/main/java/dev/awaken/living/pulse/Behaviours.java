@@ -3,6 +3,7 @@ package dev.awaken.living.pulse;
 import dev.awaken.Awaken;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.HearthHooks;
+import dev.awaken.core.api.MobHooks;
 import dev.awaken.mobs.MobTypes;
 import dev.awaken.terrain.api.CityBasin;
 import net.minecraft.core.BlockPos;
@@ -178,9 +179,22 @@ public final class Behaviours {
             n++;
             if (m.getTarget() != null) continue; // busy fighting
             double ox = ((k * 37) % (spread * 2 + 1)) - spread, oz = ((k * 53) % (spread * 2 + 1)) - spread;
-            m.getNavigation().moveTo(target.x + ox, target.y, target.z + oz, speed);
+            send(level, m, target.x + ox, target.y, target.z + oz, speed, k);
         }
         h.centre = n > 0 ? new Vec3(sx / n, sy / n, sz / n) : h.along(t);
+    }
+
+    /** Ticks between a happening's orders to each of its creatures (each on its own beat), and how long a flier's lasts. */
+    static final int ORDER_EVERY = 20, LEAD_TICKS = 60;
+
+    /**
+     * Sends one of a happening's creatures (the {@code k}-th) toward (x, y, z) once a second on its own beat, never every
+     * tick (a fresh path for every animal every tick was waste): a flier through the air (it glides there and circles; a
+     * path would end on the ground, a dive into the floor), a walker on a path.
+     */
+    static void send(ServerLevel level, PathfinderMob m, double x, double y, double z, double speed, int k) {
+        if ((level.getGameTime() + k * 7L) % ORDER_EVERY != 0) return;
+        if (!MobHooks.lead(m, x, z, speed, LEAD_TICKS)) m.getNavigation().moveTo(x, y, z, speed);
     }
 
     /** Living creatures still with the happening. */
