@@ -44,3 +44,21 @@ To judge it in play: `/awaken lens small 0 0 0 0` is the picture as it was, `/aw
 
 Runs: 43166685979 (stills by part; no Sodium, so nothing swayed), 43168733918 (the real wind and Camera Overhaul:
 too gusty to rank anything), 43170794805 (a first reach of 1 to 3), 43173148812 (the reach as built).
+
+## Small shadows at the screen's edge (the same day)
+
+Euan: "on the very left edge of my screen, I can see the shadows disappearing basically as I turn my camera. And the
+closer the thing is to me, the more obvious that is ... I can see them basically disappearing and then reappearing."
+
+Grass, flowers, fences, chests, doors and mobs are open air to the block map: their shadows are the contact shadows,
+made from what is on the screen. When the thing slid off the screen's edge its shadow, still in view, was dropped.
+Near the eye those shadows are a block and a half long, so the strip without them was wide.
+
+Now a contact shadow whose caster the screen can no longer see is kept from the frame before and let go over about a
+second (SPEC §22 "The edge's hold"). `edge-hold-before-after.jpg` (run 43188196485): the right of the screen after a
+turn of 14 and of 20 degrees away from the sun's side, the poppy's shadow still on the ground with the poppy gone,
+where it was bare; and at rest five seconds later, let go in both.
+
+Not cured by this: a shadow whose caster is still off the screen on the way in, and the strip at rest once the hold
+has let go. `/awaken lens edgehold off` is the picture as it was.
+
