@@ -1,0 +1,36 @@
+# silvered_halls's beat hall at A (SPEC 72.8): its signature beat and five every kind has, each from three cells short of it, eye high, looking along it.
+# The hall is laid in the sky over a fresh world, in the kind's own blocks, and every move in it is proved again where it stands
+# (the log's "[beats] hall:" line says what held). Night vision, so the shape reads whatever the light; creative, flying.
+world autopilot_beats_silvered_halls creative 20261113
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd gamerule send_command_feedback false
+cmd effect give @s minecraft:night_vision infinite 0 true
+hud off
+
+cmd awaken gate beat_hall A awaken:silvered_halls
+wait 200
+cmd awaken gate beat_at GULF 3 0
+wait 100
+shot silvered_halls_gulf
+cmd awaken gate beat_at SLIDE 3 0
+wait 100
+shot silvered_halls_slide
+cmd awaken gate beat_at MANTLE 3 0
+wait 100
+shot silvered_halls_mantle
+cmd awaken gate beat_at SHIMMY 3 0
+wait 100
+shot silvered_halls_shimmy
+cmd awaken gate beat_at PIPE 3 0
+wait 100
+shot silvered_halls_pipe
+quit

@@ -101,6 +101,14 @@ public final class BeatHall {
         return h == null || index < 0 || index >= h.starts().size() ? null : h.starts().get(index);
     }
 
+    /** Where a beat (by its name: GULF, SHIMMY) is in the last hall in a level's row, or -1 when it isn't in it. */
+    public static int index(ServerLevel level, String beat) {
+        Laid h = LAST.get(level.dimension().identifier().toString());
+        if (h == null) return -1;
+        for (Beat b : Beat.values()) if (b.name().equalsIgnoreCase(beat)) return h.beats().indexOf(b.title);
+        return -1;
+    }
+
     /** The n-th beat's name in the last hall in a level, or null. */
     public static String name(ServerLevel level, int index) {
         Laid h = LAST.get(level.dimension().identifier().toString());

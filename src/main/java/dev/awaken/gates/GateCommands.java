@@ -278,11 +278,21 @@ final class GateCommands {
                         beatAt(p, 0, 3, 0);
                         return h.failures().isEmpty() ? 1 : 0;
                     }))));
-            // tours: stand <back> cells short of the n-th beat of the last hall laid here, <up> over its floor, looking along it
+            // tours: stand <back> cells short of a beat of the last hall laid here (its place in the row, or its name: GULF,
+            // SHIMMY...), <up> over its floor, looking along it
             gate.then(Commands.literal("beat_at").requires(AwakenCommands.admin())
-                    .then(Commands.argument("index", IntegerArgumentType.integer(0)).then(Commands.argument("back", IntegerArgumentType.integer())
-                            .then(Commands.argument("up", IntegerArgumentType.integer()).executes(c -> beatAt(c.getSource().getPlayerOrException(),
-                                    IntegerArgumentType.getInteger(c, "index"), IntegerArgumentType.getInteger(c, "back"), IntegerArgumentType.getInteger(c, "up")))))));
+                    .then(Commands.argument("beat", StringArgumentType.word()).then(Commands.argument("back", IntegerArgumentType.integer())
+                            .then(Commands.argument("up", IntegerArgumentType.integer()).executes(c -> {
+                                ServerPlayer p = c.getSource().getPlayerOrException();
+                                String b = StringArgumentType.getString(c, "beat");
+                                int index;
+                                try {
+                                    index = Integer.parseInt(b);
+                                } catch (NumberFormatException e) {
+                                    index = dev.awaken.gates.realms.kit.crawl.BeatHall.index((net.minecraft.server.level.ServerLevel) p.level(), b);
+                                }
+                                return beatAt(p, index, IntegerArgumentType.getInteger(c, "back"), IntegerArgumentType.getInteger(c, "up"));
+                            })))));
             // a look at one instant of the crossing into a theme (SPEC §50.5), for tours: no move, the screen closes itself
             gate.then(Commands.literal("crossing").requires(AwakenCommands.admin())
                     .then(Commands.argument("theme", StringArgumentType.word()).then(Commands.argument("ms", IntegerArgumentType.integer(0)).executes(c -> {
