@@ -537,7 +537,8 @@ public final class Beats {
     }
 
     static void switchOf(BeatLine L, int g, int h, int side, boolean teach) {
-        int a0 = L.a, F = L.feet, s = side, p0 = a0 + 3, p1 = a0 + 2 + g, f0 = p1 + 1, f1 = p1 + 3, far = F + 1, sw = p0 + h;
+        // the shelf is six long: a fast body carries on along wall B before it comes down, whatever the line does after
+        int a0 = L.a, F = L.feet, s = side, p0 = a0 + 3, p1 = a0 + 2 + g, f0 = p1 + 1, f1 = p1 + 6, far = F + 1, sw = p0 + h;
         ground(L, a0, a0 + 2, F, HEAD + 1);
         L.pit(p0, p1, -1, 1, F - 8, 2, F + HEAD + 1);
         // wall A on side s for the take-off and the first h cells; after it, the side is open over the pit
@@ -561,7 +562,7 @@ public final class Beats {
         L.keep(p0, F, -1, p1, F + 4, 1);
         L.keep(a0, F, -1, a0 + 2, F + 2, 1);
         L.keep(f0, far, -1, f1, far + 2, 1);
-        L.move("switchback", "switch+climb", Family.WALL, true, a0 + 1, s, F, f0, -s, far, 1, 0, 0, 2);
+        L.move("switchback", "switch+climb", Family.WALL, true, a0 + 1, s, F, f0, -s, far, 1, 0, 0, 4);
         L.catchAt(a0 + 1, 0, F);
         L.catchAt(f0 + 1, 0, far);
         if (teach) L.lesson(Family.WALL, a0 + 1, s, F, new double[][]{{a0 + 1, s, F}, {p0 + 1, s, F + 1}, {sw - 0.5, s, F + 1.2}, {sw + 1, -s, F + 1.4}, {f0 + 0.5, -s, far}}, SAY_SWITCH);

@@ -97,6 +97,7 @@ public final class BeatTests {
             List<String> bad = new ArrayList<>();
             EnumMap<Land.Family, Integer> fams = new EnumMap<>(Land.Family.class);
             int lines = 0, fell = 0, holds = 0, lessons = 0, runs = 0;
+            Map<String, Integer> shafts = new java.util.TreeMap<>();
             for (int k = 0; k < CRAWLS.length + 6; k++) {
                 String program = CRAWLS[k % CRAWLS.length];
                 Rank rank = k < CRAWLS.length ? RANKS[k % RANKS.length] : Rank.S;
@@ -115,17 +116,21 @@ public final class BeatTests {
                 if (!r.clean()) bad.add(at + r.summary());
                 for (String n : WalkCheck.needlessMoves(land)) bad.add(at + "needless " + n);
                 if (land.lines().isEmpty()) bad.add(at + "no lines at all");
+                // the families each line has a move of: asked for (wall, ledge, grip, low) or the way's flow, which anyone can take
+                Map<String, java.util.Set<Land.Family>> byLine = new java.util.HashMap<>();
+                for (Land.Move mv : land.moves()) byLine.computeIfAbsent(mv.leg(), x -> java.util.EnumSet.noneOf(Land.Family.class)).add(mv.family());
                 for (Land.Line l : land.lines()) {
                     lines++;
                     if (l.fallback()) fell++;
-                    for (Land.Family f : l.families()) fams.merge(f, 1, Integer::sum);
+                    for (Land.Family f : byLine.getOrDefault(l.leg(), java.util.Set.of())) fams.merge(f, 1, Integer::sum);
                 }
+                if (land instanceof GeneratedCrawl<?> g) for (String u : g.used()) if (u.startsWith("well ") || u.startsWith("shaft ")) shafts.merge(u.substring(0, u.indexOf(' ')), 1, Integer::sum);
                 holds += land.holds().size();
                 lessons += land.lessons().size();
                 if (land instanceof GeneratedCrawl<?> g) for (String n : g.beatRun().log()) Awaken.LOG.info("[beats] {}fallback {}", at, n);
             }
             for (String line : bad) Awaken.LOG.error("[beats] crawl: {}", line);
-            Awaken.LOG.info("[beats] crawls: {} runs, {} lines, {} fell back, {} holds, {} lessons, families {}", runs, lines, fell, holds, lessons, fams);
+            Awaken.LOG.info("[beats] crawls: {} runs, {} lines, {} fell back, {} holds, {} lessons, families {}, shafts that are wells {}", runs, lines, fell, holds, lessons, fams, shafts);
             if (!bad.isEmpty()) h.fail(bad.size() + " crawls are wrong, the first: " + bad.getFirst());
             for (Land.Family f : List.of(Land.Family.LOW, Land.Family.WALL, Land.Family.LEDGE, Land.Family.GRIP, Land.Family.FLOW)) {
                 if (!fams.containsKey(f)) h.fail("no line asked for anything of the " + f + " family");

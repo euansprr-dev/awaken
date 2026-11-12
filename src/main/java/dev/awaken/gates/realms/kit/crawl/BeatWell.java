@@ -125,11 +125,13 @@ public final class BeatWell {
         BeatLine L = new BeatLine("well", 0, 160, 0, 0, 1);
         List<int[]> spans = new ArrayList<>();
         if (!lay(p, L, up, rank, spans)) return "a flight didn't lay";
-        // a flight is the cells between two landings: each touches the next, but nothing further on
+        // a flight is the cells between two landings: each touches the next, but nothing further on. Side by side they keep a
+        // cell apart; one over another may share the rock between them (a span's top is its roof and its bottom the stone
+        // under its floor, both solid), so they only meet where they overlap
         for (int i = 0; i < spans.size(); i++) for (int j = i + 2; j < spans.size(); j++) {
             int[] a = spans.get(i), b = spans.get(j);
             if (a[0] > a[3] || b[0] > b[3]) continue;
-            if (a[0] <= b[3] + 1 && a[3] >= b[0] - 1 && a[1] <= b[4] + 1 && a[4] >= b[1] - 1 && a[2] <= b[5] + 1 && a[5] >= b[2] - 1) {
+            if (a[0] <= b[3] + 1 && a[3] >= b[0] - 1 && a[1] <= b[4] && a[4] >= b[1] && a[2] <= b[5] + 1 && a[5] >= b[2] - 1) {
                 return "flights " + i + " and " + j + " meet";
             }
         }

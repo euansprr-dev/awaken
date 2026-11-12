@@ -27585,7 +27585,9 @@ kind's accents, from the run's own `Random` (so the rooms and ways of plan 2 com
   Going up gets the climbing forms. A well that can't be had is the shaft of before. A well's fifth and sixth flights run
   under its first and second: a `Sculpt` column cut clear of the floor it already has (rock between them) is another
   floor in it (`Part.more`), carved, laid, dressed and proved like its own; cut where it already has air or a floor, it is
-  cut anew. A line's, a crossing's and a well's leg stands on its middle catch (`BeatLine.middle`).
+  cut anew. Flights side by side keep a cell apart; one over another may share the rock between them. A line's, a
+  crossing's and a well's leg stands on its middle catch (`BeatLine.middle`). A switchback lands on a shelf six long (a
+  fast body carries on along the second wall before it comes down).
 - **Accents** (each in the kind's own stone, `beatSkin`):
 
 | Kind | Signature | Leans to |
@@ -27692,7 +27694,9 @@ now show the lines. The run logs `[beats] gate ...` for holds standing, a family
 
 **72.9 Checks** (`BeatTests`): `beats_each_holds_alone` (every beat at both sizes, its own rank and S, both sides, four
 facings, on plain stone), `beats_crawls_play` (every kind on plan 3 at a rank that turns with the kind, six more at S:
-walks, routes, floats nothing, no needless move, every family turns up, a tenth or less fall back), `beats_old_plans_unchanged`,
+walks, routes, floats nothing, no needless move, every family has a move on some line (flow is never asked for, so it is
+counted from the moves, not the asked families), a tenth or less fall back; it logs how many runs got a well and how many
+the shaft of before), `beats_old_plans_unchanged`,
 `beats_skins_keep_their_shapes`, `beats_brood_slide`, `beats_fall_is_caught_under_the_ledges`, `beats_shown_is_saved`.
 A beat with no shape logs each size it tried and why (`Beats.whyNoShape`, `[beats] no shape:`); a crawl that doesn't walk
 logs where the walk stops on each line (`WalkCheck.stuck`, `[beats] stuck:`: the move whose end nothing stands on, or the
