@@ -19,10 +19,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The Armour goal on the Tasks page (SPEC §27.13): your rank's armour. Until every piece you wear is your rank's or
- * better, one step offers your rank's sets as choices, each with its pieces (the page shows them on a figure) and what
- * the pieces you don't own yet still take; your first set is on the main path, before your first gate. Once you wear
- * your rank's armour, the step says when the next comes. E sets are made at any Fitting Stand with a crafting table
+ * The Armour goal on the Tasks page (SPEC §27.13): your rank's armour. Until a set of your rank or better is forged
+ * whole, one step offers your rank's sets as choices, each with its pieces (the page shows them on a figure) and what
+ * the pieces you don't own yet still take; your first set is on the main path, before your first gate. Then a step says
+ * to put it on, and once it has been worn the step says when the next comes. Both are decided from {@link ArmouryMemory},
+ * never from what is worn this second (§27.14). E sets are made at any Fitting Stand with a crafting table
  * near it; D and up need an anvil and the Forge (SPEC §44.4).
  */
 final class ArmourGoals {
@@ -67,24 +68,35 @@ final class ArmourGoals {
                 .needs(c.needs()).priority(35).build();
     }
 
+    /**
+     * Your rank's armour (SPEC §27.13, §27.14). Done from memory, never from what you wear this second (Euan 2026-11-12:
+     * he forged his first set in creative and the step stayed): once a set of your rank or better is forged whole, its
+     * step is done and "Put on your ... armour" follows; once you have worn a suit of your rank or better head to foot,
+     * that is done too and the step says when the next comes. Taking the suit off undoes neither.
+     */
     private static List<Goals.Step> rankSteps(ServerPlayer p) {
         Rank rank = Progression.rank(p);
+        ArmouryMemory mem = ArmouryMemory.of(p);
         int worst = Integer.MAX_VALUE;
-        boolean any = false;
+        boolean wearing = false;
         for (EquipmentSlot slot : SLOTS) {
             ArmourLooks.Look look = ArmourLooks.of(p.getItemBySlot(slot));
             worst = Math.min(worst, look == null ? -1 : look.set().rank.ordinal());
-            any |= look != null;
+            wearing |= look != null;
         }
-        if (worst >= rank.ordinal()) {
+        if (worst > mem.suited) mem.suited = worst; // a suit of that rank or better worn head to foot, remembered
+        Stage stage = stage(mem, rank);
+        if (stage.worn()) {
             if (rank.ordinal() + 1 >= Rank.values().length) return List.of();
             Rank next = Rank.values()[rank.ordinal() + 1];
             return List.of(Goals.Step.of("armour/next", Goal.ARMOUR, "Your next armour comes with " + next.label + "-rank").thread("armour.set", 20)
                     .why(next.label + "-rank opens at level " + next.levelRequired + ". Its sets are forged at a Fitting Stand with an anvil and the Forge near it.")
                     .priority(10).build());
         }
-        ArmouryMemory mem = ArmouryMemory.of(p);
-        boolean first = !any && rank == Rank.E; // nothing worn at C-rank isn't a first armour
+        boolean never = rank == Rank.E && mem.suited < 0 && mem.worn.isEmpty(); // no suit worn yet: this is your first armour
+        if (stage.forged() != null) return List.of(putOn(p, stage.forged(), rank, never));
+        boolean first = never && !wearing; // a piece already on at E-rank isn't a first choice
+
         Goals.Builder b = Goals.Step.of("armour/" + rank.name().toLowerCase(java.util.Locale.ROOT), Goal.ARMOUR,
                 first ? "Choose your first armour" : "Make your " + rank.label + "-rank armour").thread("armour.set", 10);
         int sets = 0;
@@ -99,7 +111,38 @@ final class ArmourGoals {
         String where = rank == Rank.E ? "Made at a Fitting Stand with a crafting table within 6 blocks."
                 : "Forged at a Fitting Stand with an anvil and the Forge near it.";
         return List.of(b.why(first ? where + " Wear it before your first gate." : where)
-                .path(any ? Goals.NO_PATH : Goals.PATH_FIRST_ARMOUR).priority(any ? 30 : 58).covers("armour:forge/").build());
+                .path(first ? Goals.PATH_FIRST_ARMOUR : Goals.NO_PATH).priority(first ? 58 : 30).covers("armour:forge/").build());
+    }
+
+    /** Where your rank's armour stands, from memory alone: worn head to foot, or forged whole (the set), or neither. */
+    record Stage(boolean worn, @org.jspecify.annotations.Nullable ArmourSet forged) {}
+
+    static Stage stage(ArmouryMemory mem, Rank rank) {
+        boolean worn = mem.suited >= rank.ordinal();
+        ArmourSet forged = null;
+        for (ArmourSet set : ArmourSet.values()) {
+            if (set.rank.ordinal() < rank.ordinal()) continue;
+            worn |= mem.worn.contains(set.id);
+            if (forged == null && mem.forged.contains(set.id)) forged = set;
+        }
+        return new Stage(worn, worn ? null : forged);
+    }
+
+    /** The set is forged whole: now wear it. Where the pieces are is said plainly; the step is done once it's worn whole. */
+    private static Goals.Step putOn(ServerPlayer p, ArmourSet set, Rank rank, boolean first) {
+        int have = 0;
+        String[] covers = new String[ForgeSong.PIECES.length]; // the Now line's "You can forge" for this set's pieces: it's made
+        for (int i = 0; i < covers.length; i++) {
+            ArmorType piece = ForgeSong.PIECES[i];
+            if (owns(p, ArmourForge.make(set, piece).getItem())) have++;
+            covers[i] = "armour:forge/" + set.id + "_" + ForgeSong.slot(piece);
+        }
+        String take = have >= ForgeSong.PIECES.length ? "All four pieces are with you. Wear them: helmet, chestplate, leggings and boots."
+                : "It's standing on your Fitting Stand. Open the stand and take the suit (or sneak and use the stand), then wear all four pieces.";
+        return Goals.Step.of("armour/wear/" + rank.name().toLowerCase(java.util.Locale.ROOT), Goal.ARMOUR, "Put on your " + set.setName + " armour")
+                .thread("armour.set", 15)
+                .why(take + (first ? " Wear it before your first gate." : ""))
+                .path(first ? Goals.PATH_FIRST_ARMOUR : Goals.NO_PATH).priority(first ? 58 : 30).covers(covers).build();
     }
 
     /** One set: its name, role and armour, its pieces, and what the pieces you don't own yet take, summed. */

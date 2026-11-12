@@ -10521,9 +10521,11 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   as the guide ticks them); Clear your first gate (at the Hearthfire: the nearest enterable gate within 600 blocks, for
   its Lord's Heart) or, with a Heart in the pack, Set the Lord's Heart on your fire; Grow your Armoury into a Forge;
   Make your Bedroom a Sanctuary (optional); Grow your home to the next tier (its rules, the rank, the price).
-- **The Armour's steps** (`armour.ArmourGoals`): until every piece you wear is your rank's, "Choose your first armour"
-  (on the path) or "Make your X-rank armour", its choices your rank's known sets with what the pieces you don't own
-  still take, summed; once you wear your rank's, when the next comes.
+- **The Armour's steps** (`armour.ArmourGoals`): until a set of your rank or better is forged whole, "Choose your first
+  armour" (on the path) or "Make your X-rank armour", its choices your rank's known sets with what the pieces you don't
+  own still take, summed; then "Put on your <set> armour" (`armour/wear/<rank>`, the first on the path too: where the
+  pieces are, on the Fitting Stand or with you, and how to take them off it); once you've worn a suit of your rank or
+  better head to foot, when the next comes. All three read `ArmouryMemory`, never what is worn this second (§27.14).
 - **The Hearth page** (phase 2, `hearth.client.HomePage`, replacing the old Hearth section): your home at a glance (name,
   tier, the Forge, Comfort as pips, style, town, trophies, "Rooms and upgrades ›" to the guide); NEXT FOR YOUR HOME, the
   Hearth's first step in full with "Everything for your home (N more) ›" to the Tasks page's Hearth tab
@@ -10649,6 +10651,16 @@ unloaded (§28.2, "Read whole"); the rule holds whatever the cause:
 - **The fire never lifts once a room was read**: an empty hand on your fire lifts the coal only while the home has never
   had a room (`Embers`), since after it the card says to right-click the fire for the guide. Breaking it still returns
   the coal.
+- **Creative ticks as survival does** (Euan 2026-11-12: "I chose my first armor and then I built it, but the task didn't
+  tick off. It should still tick off even if you're in creative mode"). The armour step waited on what was worn this
+  second, so a set built and left on its Fitting Stand never ticked, and taking a suit off unticked it. It now reads
+  `ArmouryMemory` (§27.13, "The Armour's steps"): `forged` ends the choice, `worn` (sets worn whole) or `suited` (schema
+  4: the best rank of a suit worn head to foot, mixed sets too, -1 none) ends "Put on". Every other Goals source was
+  read for creative: counters, rooms, quests (collect counts the pack), the Way Up, the bells, the trails, enchanting and
+  the weapons' smith memory all count in creative as in survival. The one other place that reads what vanilla only
+  counts in survival (`Stats.BLOCK_MINED`, awarded only where a block drops, `Block.playerDestroy`) is the retired Anchor
+  requests' `mined:` and `got:` tokens, which nothing asks now. Lode hearts, finds' scenes and Doors still pay nothing
+  to a creative break, on purpose: creative builds without spending them. Test `armour_step_from_memory`.
 - Test `tasks_done_stays_done` (a row ticked once stays ticked on the card when its source unticks it, a live card's row
   doesn't; a home that lost its rooms to a scan keeps its first room's step and its Armoury done, and a partial scan
   keeps a room it couldn't see), for the final suite.
@@ -22831,7 +22843,7 @@ The Tasks page (§27.13) keeps its model: steps stay derived from the world, no 
 
 **Lessons.** A lesson (a `lesson:` Now id) is never urgent and never the step on top, however fresh it is: `NowMap` holds it under `TaskBook.URGENT` and `TaskBook.top` skips it. A hunter who skipped the Veil no longer has "Meditate 10 s" as Do this next from C-rank on.
 
-**Your Village** (trail) is told through beasts and works, since people no longer move in: `beasts:N` (Kin, how many live at your home) replaces `settlers:N` on it. The tier steps say what `TierRules` asks. "Choose your first armour" is for an E-rank hunter with nothing worn; at any other rank the step is "Make your X-rank armour". The Training Grounds' last step counts a strike on a dummy (`awaken:training_dummy_hits`).
+**Your Village** (trail) is told through beasts and works, since people no longer move in: `beasts:N` (Kin, how many live at your home) replaces `settlers:N` on it. The tier steps say what `TierRules` asks. "Choose your first armour" is for an E-rank hunter who has never worn a suit and wears nothing now; at any other rank, or once a piece is on, the step is "Make your X-rank armour". A set forged whole turns it into "Put on your <set> armour" (§27.13). The Training Grounds' last step counts a strike on a dummy (`awaken:training_dummy_hits`).
 
 **The cap.** `TaskBook` shelves every book by goal: at most one row per thread and three rows a tab (`TAB_CAP`), one Out there row (`OUT_CAP`); the rest wait in Later, read-only with Pin. So Now is at most seven rows: the step on top, one per tab, one Out there. A source can't exceed it, because the cap is in the book. `tasks.cap=false` in the world config brings back the old list.
 
