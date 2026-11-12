@@ -6225,6 +6225,47 @@ magic.
     mobs, grass, slabs and block edges the heightfield can't hold. Within 96 blocks. A hit within 4% of the screen's
     edge counts less, down to nothing at the edge, so they fade out there rather than end in a line where the march
     runs off the screen. Whatever is off the screen is the heightfield's, which never depends on the screen.
+  - **The small shade's reach** (12 Nov; `lens_light.fsh` `texelArt`, `smallKeep`; frame texels 30 to 33 w). Euan,
+    playing at 4K over a meadow of tall grass: "there's so much going on in such a small area of view ... can we
+    change the logic of how shadow is on swaying grass so that it just makes it look less shimmery? Because like
+    right now I'm on native 4K and it still just looks very shimmery". The contact shadows are made from the light
+    buffer's own depth, one sample a texel, and in a meadow what casts them is a blade or a stem one or two of the
+    art's pixels wide. Far off a texel spans several blades and the gaps between them, so its one sample lands on a
+    blade in one frame and on the ground behind in the next as the camera breathes and the plants sway, and the
+    shade flips: dark flecks to the horizon. So the contact shadows are kept while the buffer can see what casts
+    them and let go as it can't: whole where a light texel is up to **0.6** of an art pixel wide on the surface,
+    gone by **2.2** (a smoothstep between; at a 90 degree view 10 and 37 blocks, where the crisp light near the eye
+    also starts to go over to the smooth read). The measure follows the view: a wider view lets go sooner, a
+    spyglass keeps the shade of the far grass it brings near. Past the fade the march is not run at all (one
+    unprojection a pixel is the whole cost of the rule). **The ambient shade keeps its own reach** (the composite
+    fades it from 48 to 96 blocks): measured, it darkens grass evenly and adds no flecks, and far buildings keep
+    their corners. Trees', hills' and the block map's shadows are untouched.
+    Measured on a built meadow (tools/autopilot/steady60-meadow-ci.txt, tools/lens/meadow.py; runs 43166685979 for
+    the stills by part and 43173148812 for the rest; 2880x1800, the bands by where a row's ground lies, within a
+    tenth: a spectator's view is a little wider than its setting). Stills: the contact shadows add about 40% to the
+    grass's local contrast at every distance (8.8 to 10.7 against 6.1 to 7.4 without them) and darken it by 17 to
+    20%; the ambient shade darkens it by about 14% and adds none. With the camera drifting half a pixel a frame and
+    the plants held still, mean change between frames in 8-bit steps and the share of pixels changing by more than
+    12 (two bursts each, within 5% of each other):
+
+    | about | as it was | with the reach | no contact shadows | Swift (the game's own grass) |
+    |---|---|---|---|---|
+    | 5 to 11 blocks | 4.48, 8.7% | 4.43, 8.5% | 3.07, 4.8% | 2.69, 5.3% |
+    | 11 to 23 | 5.96, 12.9% | 5.24, 10.2% | 4.24, 7.1% | 4.28, 9.2% |
+    | 23 to 53 | 6.32, 12.2% | 4.96, 7.3% | 4.86, 6.8% | 5.77, 11.6% |
+    | beyond | 2.62, 3.5% | 2.11, 2.4% | 2.05, 2.3% | 3.15, 3.8% |
+
+    With the plants swaying in a held breeze as well: 11 to 23 blocks 7.67, 19.2% to 6.14, 13.4% (none 5.58, 12.3%);
+    23 to 53 blocks 5.80, 10.0% to 4.41, 5.4% (none 4.67, 6.2%). In the stills the grass 23 to 53 blocks off is 28%
+    less busy (local contrast 10.9 to 7.8, none 7.7) and 12% lighter; 11 to 23 blocks 13% less busy and 5% lighter;
+    nearer, unchanged. What is left is the game's own: Swift's grass, with none of Lens's light, flips 9 to 12% of
+    its pixels 11 to 53 blocks off under the same drift (cutout blades thinner than a pixel), which no shade of
+    Lens's can go under. A first reach of 1 to 3 art pixels (17 to 51 blocks, run 43170794805) calmed 23 blocks and
+    beyond the same and left 11 to 23 as it was (12.1% against 13.3%). The real wind with Camera Overhaul's sway
+    (run 43168733918) could not rank anything: the same setting measured twice differed by 60% with the gusts.
+    In play: `/awaken lens small <contact from> <to> <ambient from> <to>` (art pixels a light texel; the answer
+    gives the blocks at the view in use; an end not past its start: no fade; `setting`: the built-in reach), so
+    `/awaken lens small 0 0 0 0` is the picture as it was.
   - **Ambient occlusion**: 6 / 10 cosine-weighted samples in a 0.9-block hemisphere against the depth buffer. Within
     96 blocks. A sample off the screen counts as open, so the screen's edge is a little lighter. Averaging only the
     samples on screen was tried (2026-10-29) and made the edge darker than the middle instead (the samples left on

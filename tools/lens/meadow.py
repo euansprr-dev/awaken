@@ -4,7 +4,8 @@ steady60-meadow-ci.txt (shots <view>_<variant>_<n>.png, six frames two ticks apa
 each variant and each band of distance along the lawn, how much the picture changes from one frame to the next:
 the mean change in 8-bit steps of luma, and the share of pixels that change by more than 12 steps (a fleck that
 flips). A row's distance comes from the camera's height over the lawn and its pitch (view 1: 7.62 blocks up, 14
-degrees down; view 2: 2.62 up, 5 down), with the game's 90 degree view.
+degrees down; view 2: 2.62 up, 5 down), with the game's 90 degree view (a spectator's flight widens the view a
+little, so a band's ends are good to about a tenth).
 
   tools/lens/meadow.py <shots folder> [--gif <out folder>]
 
