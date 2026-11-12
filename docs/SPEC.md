@@ -845,6 +845,15 @@ of `AwakenConfig.Client`.
   `hold(mostNs)` waits off the server thread while it's true; `later()` is two threads of our own at the lowest
   priority whose jobs each wait first (at most a minute), in place of `Util.backgroundExecutor()` for optional
   searches: that pool is the game's own, where world generation runs. `/awaken core land` says the count.
+  Nothing waits on it forever (12 Nov, the full suite's delve_horizon_flyover): a count older than 10 s (`STALE_NS`:
+  the server thread stopped ticking, as in a GameTest's body or a paused world) says nothing is coming in, and work
+  for a queue goes through `held(mostNs, work)`, whose span counts from its ask, not from when a worker takes it up, so
+  however long the land keeps coming (a flight over new ground) each search starts within a minute of being asked for,
+  plus the work ahead of it (the Horizon's sinkholes, eight on one worker, waited a minute each one after another).
+  The Horizon's sinkholes, lode regions and village plans, and every `later()` job, wait that way; the ruin finder
+  keeps its 2 s a spot at the start (a trickle on purpose, 64 waiting at most). Road jobs held while land comes in
+  have no span: a job for land a player nears is queued again as that land's own and runs at once.
+  `core_land_first_never_starves` holds both rules.
   `noiseSampled()`, called by the overworld's `CityBasinFunction` (every column and chunk of its terrain passes through
   it), counts terrain noise sampled on the server thread and logs it with its caller at most every 10 s ("terrain
   noise on the server thread"): with Tectonic a column costs tens of milliseconds there. What it found on the tour

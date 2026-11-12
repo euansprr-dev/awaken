@@ -155,10 +155,10 @@ final class CaveHorizon {
         if (budget[0] <= 0 || ASKED.size() >= QUEUED_MAX || !ASKED.add(key)) return null;
         budget[0]--;
         int gen = GEN.get();
-        WORKER.execute(() -> {
+        // land comes first (SPEC §12): the Horizon's sinkholes wait while new land comes in round a player, at most a
+        // minute from the ask (a search queued behind seven others doesn't wait a minute after each)
+        WORKER.execute(dev.awaken.core.api.LandFirst.held(dev.awaken.core.api.LandFirst.MOST_NS, () -> {
             Optional<Spec> got;
-            // land comes first (SPEC §12): the Horizon's sinkholes wait while new land comes in round a player
-            dev.awaken.core.api.LandFirst.hold(dev.awaken.core.api.LandFirst.MOST_NS);
             try {
                 got = Optional.ofNullable(search(level, set, c, first));
             } catch (RuntimeException e) {
@@ -168,7 +168,7 @@ final class CaveHorizon {
             if (GEN.get() != gen) return;
             FOUND.put(key, got);
             ASKED.remove(key);
-        });
+        }));
         return null;
     }
 

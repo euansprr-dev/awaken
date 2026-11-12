@@ -352,6 +352,7 @@ public final class AwakenTests {
         WorldgenTests.register();
         InputHoldTests.register();
         EdgeHoldTests.register();
+        LandFirstTests.register();
         PassageTests.register();
         JourneyLedgerTests.register();
         BlocksMotionTests.register();
