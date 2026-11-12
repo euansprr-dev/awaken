@@ -355,7 +355,7 @@ public final class AscentMoves {
         // flight still rises over the top it was thrown past (SPEC §62, "The held chain, a link at a time")
         boolean chain = assist && tether && !tetherPressed && fireCool == 0 && !CHAIN.stopped() && !slingRising()
                 && has(AscentPayloads.Tier.TETHER);
-        marker(p, assist, tether);
+        marker(p, assist);
         // the aim hold (SPEC §62): on wings and in flight, with the guard or a power's key held, the flight keeps the line
         // it had and the look is free; let go, and it follows the look again over a few ticks. A hit ends the hold.
         float steerYaw = yaw, steerPitch = pitch;
@@ -1073,7 +1073,7 @@ public final class AscentMoves {
     private static final AscentSwing.Pick LESSON_PICK = new AscentSwing.Pick();
 
     /**
-     * The Way Up's sling lesson on foot (SPEC §63.8; the marker below never looks from the ground with the key up):
+     * The Way Up's sling lesson on foot (SPEC §63.8; written when the marker below didn't look from the ground):
      * where a rope held now would bite to sling you, or null (something swings, nothing is ahead, or the guide is off).
      * The same two looks as the marker's, into a pick of its own; called twice a second at most, only while the lesson
      * can still teach.
@@ -1090,15 +1090,21 @@ public final class AscentMoves {
         return new Vec3(LESSON_PICK.x, LESSON_PICK.y, LESSON_PICK.z);
     }
 
-    /** The marker: where a press now would throw, every other tick while airborne off the rope (or the key held). */
-    private static void marker(LocalPlayer p, boolean assist, boolean tether) {
-        boolean free = state == AscentState.NONE || state == AscentState.CARRY || state == AscentState.GLIDE || state == AscentState.SOAR;
-        if (!assist || !free || !has(AscentPayloads.Tier.TETHER) || p.onGround() && !tether) {
+    /**
+     * The marker: where a press now would throw (on the rope, where the next rope goes), every other tick, always: on the
+     * ground, in the air, swinging, slinging (SPEC §62, "The marker"; 12 Nov 2026, Euan: "sometimes you can't see the place
+     * the rope is going to land at all ... I'd like it to be basically constant, so you always know where you're about to
+     * lock onto"; it looked only in the air off the rope, or on the ground with the key already held). Never while
+     * rappelling, and not on the place the rope holds now (the rope shows that).
+     */
+    private static void marker(LocalPlayer p, boolean assist) {
+        if (!assist || state == AscentState.RAPPEL || !has(AscentPayloads.Tier.TETHER)) {
             markerOn = false;
             return;
         }
-        // every other tick (every fourth while a look costs more than its budget: a dense wood, a slow machine)
-        if (ticks % (markerCost > MARKER_BUDGET ? 4 : 2) != 0 && markerOn) return;
+        // every other tick, found or not (every fourth while a look costs more than its budget: a dense wood, a slow
+        // machine): it looks on the ground too now, where most looks find nothing and nothing was cheap
+        if (ticks % (markerCost > MARKER_BUDGET ? 4 : 2) != 0) return;
         long t0 = System.nanoTime();
         boolean view = dev.awaken.body.client.feel.ShoulderView.aim(VIEW);
         float yaw = view ? VIEW[0] : p.getYRot(), pitch = view ? VIEW[1] : p.getXRot();
@@ -1110,6 +1116,9 @@ public final class AscentMoves {
                 || AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER) && zipOk(MARKER, HAND.x, HAND.y, HAND.z);
+        if (markerOn && state.rope && (MARKER.x - ax) * (MARKER.x - ax) + (MARKER.y - ay) * (MARKER.y - ay) + (MARKER.z - az) * (MARKER.z - az) < 2.25) {
+            markerOn = false;
+        }
         markerCost += (System.nanoTime() - t0 - markerCost) * 0.2;
         // where only a sling answers, its tip (SPEC §62): the rope works here too
         // (The Way Up's lesson first, SPEC §63.8: your key on the top the rope would bite; else the written tip)

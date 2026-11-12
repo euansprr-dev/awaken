@@ -286,7 +286,8 @@ final class AscentRender {
 
     /** Eases the drawn marker toward the anchor a press would take; fades it in and out (a far jump is a cut). */
     private static void marker() {
-        boolean on = AscentMoves.markerOn && !AscentMoves.state().rope;
+        // shown always (AscentMoves.marker decides: never rappelling, never on the place the rope holds now)
+        boolean on = AscentMoves.markerOn;
         var m = AscentMoves.MARKER;
         if (on) {
             double d2 = sq(m.x - markX) + sq(m.y - markY) + sq(m.z - markZ);
