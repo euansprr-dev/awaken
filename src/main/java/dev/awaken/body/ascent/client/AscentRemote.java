@@ -90,6 +90,7 @@ public final class AscentRemote {
                 WingLayer.flap(e.getId());
             }
             case AscentPayloads.EV_CATCH -> AscentSounds.local(e, AscentContent.ROPE_STRAIN.get(), 0.6F, 0.9F);
+            case AscentPayloads.EV_HOIST -> AscentSounds.local(e, AscentContent.ROPE_HOIST.get(), 0.55F, 0.95F);
             case AscentPayloads.EV_LAND -> AscentSounds.local(e, AscentContent.LAND.get(), Math.min(1F, 0.3F + msg.speed() * 0.5F), 1F);
             case AscentPayloads.EV_DOUBLE, AscentPayloads.EV_DASH -> {
                 AscentSounds.local(e, AscentContent.LAUNCH.get(), 0.6F, msg.what() == AscentPayloads.EV_DOUBLE ? 1.3F : 1.15F);

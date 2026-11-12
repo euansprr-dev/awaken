@@ -300,7 +300,7 @@ final class AscentRender {
                 markY += (m.y - markY) * 0.35;
                 markZ += (m.z - markZ) * 0.35;
             }
-            markKind = m.zip ? 1 : m.sling ? 2 : 0;
+            markKind = m.zip ? 1 : m.sling ? 2 : m.move == dev.awaken.body.ascent.RealRope.ROUND ? 3 : m.move == dev.awaken.body.ascent.RealRope.HOIST ? 4 : 0;
         }
         // in at a quarter a frame, out at half: a target gone is gone at once (a press no longer takes it)
         markA += ((on ? 1F : 0F) - markA) * (on ? 0.25F : 0.5F);
@@ -575,7 +575,9 @@ final class AscentRender {
     /**
      * The marker (SPEC §17.31, §62): where a press would throw, a small bright point sized to stay readable far off, and
      * round it the shape of what the press would do: four ticks turning slowly for a swing (cool white), a chevron over
-     * it for a sling (cool white: up and over), a bracket either side for a pull up a face (warm gold).
+     * it for a sling (cool white: up and over), a bracket either side for a pull up a face (warm gold). The real swing
+     * (SPEC §62.9) adds two: a swing round is four ticks circling level round the point, as you will go round it (pale
+     * green); a hoist is the swing's ticks with three more climbing under the point, the haul up to it (warm white).
      */
     private static void drawMarker(VertexConsumer vc, PoseStack.Pose pose) {
         if (markA < 0.03F) return;
@@ -587,7 +589,7 @@ final class AscentRender {
         double pull = Math.min(0.6, scale * 1.8) / d;
         double markX = AscentRender.markX + (cx - AscentRender.markX) * pull, markY = AscentRender.markY + (cy - AscentRender.markY) * pull,
                 markZ = AscentRender.markZ + (cz - AscentRender.markZ) * pull;
-        int rgb = markKind == 1 ? 0xFFD58A : 0xD6F0FF;
+        int rgb = markKind == 1 ? 0xFFD58A : markKind == 3 ? 0xC9F7DC : markKind == 4 ? 0xFFEFD2 : 0xD6F0FF;
         float pulse = 1F + 0.12F * Mth.sin(time * 0.35F);
         float c = scale * 0.55F * pulse;
         int a = (int) (230 * markA);
@@ -599,11 +601,24 @@ final class AscentRender {
         // a swing: four ticks on a turning square; a sling: five in a chevron over it; a pull: three either side
         float spin = time * 0.05F;
         float[] shape = markKind == 2 ? CHEVRON : markKind == 1 ? BRACKET : null;
-        int count = shape == null ? 4 : shape.length / 2;
+        int count = shape == null ? (markKind == 4 ? 7 : 4) : shape.length / 2;
         for (int k = 0; k < count; k++) {
             float ang = spin + k * Mth.HALF_PI;
             double ox = shape == null ? Mth.cos(ang) * scale * 1.6 : shape[k * 2] * scale, oy = shape == null ? Mth.sin(ang) * scale * 1.6 : shape[k * 2 + 1] * scale;
             double px = markX + rx * ox + ux * oy, py = markY + ry * ox + uy * oy, pz = markZ + rz * ox + uz * oy;
+            if (markKind == 3) {
+                // a swing round: the ticks circle level round the point (the world's own level, not the view's)
+                float a2 = time * 0.09F + k * Mth.HALF_PI;
+                px = markX + Mth.cos(a2) * scale * 2.2;
+                py = markY;
+                pz = markZ + Mth.sin(a2) * scale * 2.2;
+            } else if (markKind == 4 && k >= 4) {
+                // a hoist: three more ticks climbing up under the point, over and over
+                float up = ((time * 0.06F + (k - 4) / 3F) % 1F);
+                px = markX;
+                py = markY - scale * (4.2 - 3.0 * up);
+                pz = markZ;
+            }
             float t = scale * 0.28F;
             quad2(vc, pose, (int) (a * 0.8F), rgb,
                     px - rx * t - ux * t, py - ry * t - uy * t, pz - rz * t - uz * t, 0, 1,

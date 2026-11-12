@@ -43,6 +43,14 @@ public final class AscentSwing {
      */
     public static volatile boolean hold = true;
 
+    /**
+     * The real swing (SPEC §62.9; the client's {@code ropeReal} setting, on by default): a real rope about the block it
+     * bit, its length what it bit at, chosen by playing the swing forward first ({@link RealRope}): under what you look
+     * at, round it, or a hoist up to a swing. Off: every swing is the assisted swing exactly as before (fitted to the
+     * floor, wound in, in the heading's plane).
+     */
+    public static volatile boolean real = true;
+
     /** The numbers (SPEC §17.31's table). Built from a map so a tuning file can name any of them. */
     public static final class Tune {
         /** The search: rays from the hand, these many degrees up and either side of your heading. */
@@ -100,6 +108,15 @@ public final class AscentSwing {
          * hanging to one side closes a tick.
          */
         public final double holdPump, holdTop, holdCap, holdSettle;
+        /**
+         * The real swing ({@link RealRope}, SPEC §62.9): the share of what goes in toward the anchor the bite keeps as speed
+         * round it; the ease (blocks a tick while falling) and the least share of the bite it eases to; the feet's skim
+         * over the floor; forward's steer (degrees a tick) and how far off the way you go it still steers; forward's pump
+         * (blocks a tick, and the most); the best let-go (degrees up the far side); the hoist's pull a tick, its top speed,
+         * its start (degrees up the near side) and its longest swing; a swing round's longest rope.
+         */
+        public final double biteKeep, ease, easeLeast, skim, steer, steerWithin, pumpIn, pumpMax, realWin, hoistPull, hoistTop, hoistStart,
+                hoistLong, roundMost;
 
         public Tune(Map<String, Double> o) {
             ups = new double[] {22, 32, 42, 52, 62, 72};
@@ -156,6 +173,20 @@ public final class AscentSwing {
             holdTop = v(o, "holdTop", 80);
             holdCap = v(o, "holdCap", 88);
             holdSettle = v(o, "holdSettle", 0.015);
+            biteKeep = v(o, "biteKeep", 0.8);
+            ease = v(o, "ease", 0.3);
+            easeLeast = v(o, "easeLeast", 0.85);
+            skim = v(o, "skim", 1.0);
+            steer = v(o, "steer", 2.5);
+            steerWithin = v(o, "steerWithin", 75);
+            pumpIn = v(o, "pumpIn", 0.06);
+            pumpMax = v(o, "pumpMax", 1.2);
+            realWin = v(o, "realWin", 45);
+            hoistPull = v(o, "hoistPull", 0.16);
+            hoistTop = v(o, "hoistTop", 1.3);
+            hoistStart = v(o, "hoistStart", 75);
+            hoistLong = v(o, "hoistLong", 14);
+            roundMost = v(o, "roundMost", 9);
         }
 
         private static double v(Map<String, Double> o, String k, double d) {
@@ -179,6 +210,14 @@ public final class AscentSwing {
         public double bend;
         /** Thrown longer than it can swing over the floor: it reels in fast to its fit as it bites ({@link Pick#reel}). */
         public boolean reel;
+        /**
+         * A real rope ({@link RealRope}, SPEC §62.9): its length about which forward pumps ({@code base}), the least it eases
+         * to ({@code fit}), the highest its arc goes (degrees from the bottom, {@code cap}), ticks it skimmed the floor;
+         * hauling you up to a swing ({@code hoist}) toward (hx, hy, hz), whose rope is then {@code hoistLen}.
+         */
+        public boolean real, hoist;
+        public double base, fit, cap = 88, hoistLen, hx, hy, hz;
+        public int skimming, hoistAge;
 
         public Rope set(double ax, double ay, double az, double len, double fitLen) {
             this.ax = ax;
@@ -186,8 +225,31 @@ public final class AscentSwing {
             this.az = az;
             this.len = len;
             this.fitLen = fitLen;
-            caught = swung = reel = false;
+            caught = swung = reel = real = hoist = false;
             bend = 0;
+            base = fit = len;
+            cap = T.holdCap;
+            skimming = hoistAge = 0;
+            return this;
+        }
+
+        /**
+         * The rope a throw at the pick makes: its anchor and lengths; with {@link #real} on, a swing's rope is real (its
+         * room and hoist from the pick; it never reels). The bite then sets its length ({@link AscentSwing#bite}).
+         */
+        public Rope throwFor(Pick p) {
+            set(p.x, p.y, p.z, p.len, p.fitLen);
+            reel = p.reel;
+            if (AscentSwing.real && !p.zip && !p.sling) {
+                real = true;
+                reel = false;
+                cap = p.cap;
+                hoist = p.hoist;
+                hoistLen = p.hoistLen;
+                hx = p.hx;
+                hy = p.hy;
+                hz = p.hz;
+            }
             return this;
         }
 
@@ -201,6 +263,17 @@ public final class AscentSwing {
             swung = o.swung;
             bend = o.bend;
             reel = o.reel;
+            real = o.real;
+            hoist = o.hoist;
+            base = o.base;
+            fit = o.fit;
+            cap = o.cap;
+            hoistLen = o.hoistLen;
+            hx = o.hx;
+            hy = o.hy;
+            hz = o.hz;
+            skimming = o.skimming;
+            hoistAge = o.hoistAge;
         }
     }
 
@@ -214,6 +287,14 @@ public final class AscentSwing {
         public double px, py, pz;
         /** A swing whose rope reels you up into its arc as it bites (the aimed rope's swing under something, SPEC §62). */
         public boolean reel;
+        /**
+         * The real swing's (SPEC §62.9): what it does ({@link RealRope#UNDER}, {@link RealRope#ROUND}, {@link RealRope#HOIST};
+         * 0 for any other pick), its arc's room ({@code cap}, degrees from the bottom), and a hoist's start (hx, hy, hz) and
+         * the swing's rope from there ({@code hoistLen}).
+         */
+        public int move;
+        public boolean hoist;
+        public double cap = 88, hoistLen, hx, hy, hz;
 
         public Pick copy(Pick o) {
             x = o.x;
@@ -233,6 +314,13 @@ public final class AscentSwing {
             py = o.py;
             pz = o.pz;
             reel = o.reel;
+            move = o.move;
+            hoist = o.hoist;
+            cap = o.cap;
+            hoistLen = o.hoistLen;
+            hx = o.hx;
+            hy = o.hy;
+            hz = o.hz;
             return this;
         }
     }
@@ -257,6 +345,12 @@ public final class AscentSwing {
         /** {@link #aimed}'s own run of {@link #find}: 1 found ({@link #found}), 0 none, -1 not run ({@link #findAfter}). */
         int findState = -1;
         final Pick found = new Pick();
+        /** The real swing's scratch ({@link RealRope}): its played body, rope and point, the points tried, the best two, a play's score and room. */
+        final AscentRules.Kin rk = new AscentRules.Kin();
+        final Rope rr = new Rope();
+        final Pick rc = new Pick();
+        final double[] rpts = new double[72], rbest = new double[8];
+        double playScore, playCap;
 
         public Work() {
             for (int i = 0; i < cands.length; i++) cands[i] = new Pick();
@@ -347,6 +441,9 @@ public final class AscentSwing {
         out.zip = false;
         out.sling = false;
         out.reel = fitLen < len * FIT_MIN;
+        out.move = 0;
+        out.hoist = false;
+        out.cap = t.holdCap;
         return true;
     }
 
@@ -364,7 +461,7 @@ public final class AscentSwing {
      * the far side (12 Nov 2026, Euan: "there's a clear way to swing very well under that place ... it makes you swing on
      * top", a swing under a crown refused for a trunk past its bottom).
      */
-    static boolean arcClear(SwingSpace s, AscentRules.Kin from, Pick c, double heading, Work w) {
+    static boolean arcClear(SwingSpace s, AscentRules.Kin from, Pick c, double heading, Work w, boolean held) {
         AscentRules.Kin k = w.k;
         k.set(from.x, from.y, from.z, from.vx, from.vy, from.vz);
         w.r.set(c.x, c.y, c.z, c.len, c.fitLen);
@@ -373,7 +470,7 @@ public final class AscentSwing {
             double x = k.x, y = k.y, z = k.z;
             step(k, w.r, heading, 0, w);
             if (swept(s, x, y, z, k.x, k.y, k.z)) return false;
-            if (hold) {
+            if (held) {
                 double[] pv = w.pv;
                 pivot(k.x, k.z, w.r.ax, w.r.ay, w.r.az, heading, pv);
                 boolean past = (k.x - pv[0]) * fx(heading) + (k.z - pv[2]) * fz(heading) > 0;
@@ -445,7 +542,7 @@ public final class AscentSwing {
             Pick q = w.cands[i];
             w.cands[i] = w.cands[b];
             w.cands[b] = q;
-            if (arcClear(s, hand, w.cands[i], heading, w)) {
+            if (real ? RealRope.fits(s, hand, heading, w.cands[i], w) : arcClear(s, hand, w.cands[i], heading, w, false)) {
                 out.copy(w.cands[i]);
                 return true;
             }
@@ -603,7 +700,7 @@ public final class AscentSwing {
     public static final String[] SLING_NO = {"", "too near", "too steep", "too far under the hand", "its way is closed", "no top in reach"};
     public static final String[] ONTO_NO = {"", "no top in reach", "its top is under the hand", "no room on its top",
             "the rope's line is blocked", "the way up is closed", "too far"};
-    private static final int SLING_CLOSED = 4, ONTO_CLOSED = 5;
+    static final int SLING_CLOSED = 4, ONTO_CLOSED = 5;
 
     /**
      * The rope thrown where you look first (SPEC §62, "The rope goes where you look"; 12 Nov 2026, Euan, twice: "I'm
@@ -639,6 +736,7 @@ public final class AscentSwing {
      */
     public static boolean aimed(SwingSpace s, AscentRules.Kin hand, double ex, double ey, double ez, double yaw, double pitch,
             double reach, boolean slings, Work w, Pick out) {
+        if (real) return RealRope.aimed(s, hand, ex, ey, ez, yaw, pitch, reach, slings, w, out);
         Tune t = T;
         SwingSpace.Hit a = w.aim;
         double cp = Math.cos(pitch * D2R);
@@ -695,7 +793,7 @@ public final class AscentSwing {
     /** A swing from (x, y, z) by the aimed rope's bounds: planned, the rope's line clear, the arc clear. */
     private static boolean aimSwing(SwingSpace s, AscentRules.Kin hand, double yaw, double reach, double x, double y, double z, Work w, Pick out) {
         return plan(s, hand.x, hand.y, hand.z, yaw, reach, x, y, z, out, AIM_ELEV_MIN, AIM_RAD_MIN, AIM_FIT_MIN, AIM_CLEAR)
-                && clear(s, hand.x, hand.y, hand.z, x, y, z, 0.5, w) && arcClear(s, hand, out, yaw, w);
+                && clear(s, hand.x, hand.y, hand.z, x, y, z, 0.5, w) && arcClear(s, hand, out, yaw, w, hold);
     }
 
     private static boolean near(Pick p, SwingSpace.Hit a, double d) {
@@ -720,7 +818,16 @@ public final class AscentSwing {
      * {@code out}, else why not ({@link #SLING_NO}). {@code open}: only this many ticks of the pull need be clear (0: all
      * of the flight up to the point over the top).
      */
-    private static int slingPast(SwingSpace s, AscentRules.Kin hand, SwingSpace.Hit a, double top, double yaw, Work w, Pick out, int open) {
+    static int slingPast(SwingSpace s, AscentRules.Kin hand, SwingSpace.Hit a, double top, double yaw, Work w, Pick out, int open) {
+        return slingPast(s, hand, a, top, yaw, w, out, open, 0);
+    }
+
+    /**
+     * As above; {@code aside}: the point it pulls toward moved this far across the look (+ to the left), tried first, so
+     * the flight passes the thing's side (the real rope's sling where nothing swings, SPEC §62.9: the next press swings
+     * round it); that way closed, as above.
+     */
+    static int slingPast(SwingSpace s, AscentRules.Kin hand, SwingSpace.Hit a, double top, double yaw, Work w, Pick out, int open, double aside) {
         Tune t = T;
         if (Double.isNaN(top)) return 5;
         double hx = a.x, hy = a.y, hz = a.z;
@@ -733,7 +840,10 @@ public final class AscentSwing {
         if (rise > ahead * 1.2) return 2;
         double lx = hand.x + fx * ahead - hx, lz = hand.z + fz * ahead - hz, ld = Math.sqrt(lx * lx + lz * lz);
         double lean = !hold ? 0 : ld > t.slingLean ? t.slingLean / ld : 1, px = hx + lx * lean, pz = hz + lz * lean;
-        if (!slingClear(s, hand, px, py, pz, w, true, open)) {
+        if (aside != 0 && slingClear(s, hand, px - fz * aside, py, pz + fx * aside, w, true, open)) {
+            px -= fz * aside;
+            pz += fx * aside;
+        } else if (!slingClear(s, hand, px, py, pz, w, true, open)) {
             if (lean * ld < 0.05 || !slingClear(s, hand, hx, py, hz, w, true, open)) return SLING_CLOSED;
             px = hx;
             pz = hz;
@@ -760,7 +870,7 @@ public final class AscentSwing {
      * {@code out}, else why not ({@link #ONTO_NO}). {@code open}: only the pull's first {@link #AIM_OPEN_PULL} blocks need
      * be clear.
      */
-    private static int ontoTop(SwingSpace s, AscentRules.Kin hand, SwingSpace.Hit a, double top, double reach, Work w, Pick out, boolean open) {
+    static int ontoTop(SwingSpace s, AscentRules.Kin hand, SwingSpace.Hit a, double top, double reach, Work w, Pick out, boolean open) {
         if (a.ny < 0 || Double.isNaN(top)) return 1;
         if (top < hand.y + 0.3) return 2;
         // room for the body on the top just past its edge
@@ -774,7 +884,7 @@ public final class AscentSwing {
     }
 
     /** Up under what the look met (a branch, a canopy, a ceiling 2 or more over the hand): pulled up to it, then hanging there. */
-    private static boolean underIt(SwingSpace s, AscentRules.Kin hand, SwingSpace.Hit a, double reach, Work w, Pick out, boolean open) {
+    static boolean underIt(SwingSpace s, AscentRules.Kin hand, SwingSpace.Hit a, double reach, Work w, Pick out, boolean open) {
         if (a.ny >= 0) return false;
         // a hair inside the underside it bit: the zip that arrives there hangs under it (or goes up over a ledge's lip)
         double y = a.y + 0.05, dx = a.x - hand.x, dy = y - hand.y, dz = a.z - hand.z, len = Math.sqrt(dx * dx + dy * dy + dz * dz);
@@ -944,6 +1054,21 @@ public final class AscentSwing {
     /** Ticks a rope this long flies before it bites. */
     public static int travel(double len) {
         return (int) Math.max(1, Math.min(2, Math.ceil(len / T.travelPer)));
+    }
+
+    /**
+     * The rope bites (it has flown out): a swing's rope as long as the way to its anchor, if that is shorter, its fit no
+     * longer than that; a real rope's by {@link RealRope#bite} (its length what it bit at, taut at once, or a hoist's
+     * haul begun).
+     */
+    public static void bite(SwingSpace s, AscentRules.Kin k, Rope rope, double yaw) {
+        if (rope.real) {
+            RealRope.bite(s, k, rope, yaw);
+            return;
+        }
+        double dx = k.x - rope.ax, dy = k.y - rope.ay, dz = k.z - rope.az;
+        rope.len = Math.max(AscentRules.TETHER_MIN, Math.min(rope.len, Math.sqrt(dx * dx + dy * dy + dz * dz)));
+        rope.fitLen = Math.min(rope.fitLen, rope.len);
     }
 
     /** A swing never starts slower than a jog along the heading (no dead hang from a slow entry). */
@@ -1122,6 +1247,7 @@ public final class AscentSwing {
 
     /** How well a let-go now is timed, 0..1: rising and moving on, best {@link Tune#winBest} past the bottom. */
     public static double windowQuality(AscentRules.Kin k, Rope rope, double heading, Work w) {
+        if (rope.real) return RealRope.window(k, rope);
         double[] pv = w.pv;
         pivot(k.x, k.z, rope.ax, rope.ay, rope.az, heading, pv);
         double rx = k.x - pv[0], rz = k.z - pv[2];
@@ -1229,6 +1355,7 @@ public final class AscentSwing {
      * Otherwise the rope asks to let go at that top, or before such a wall.
      */
     public static int tick(SwingSpace s, AscentRules.Kin k, Rope rope, double yaw, double fwd, Work w) {
+        if (rope.real) return RealRope.tick(s, k, rope, yaw, fwd, w);
         Tune t = T;
         double hd = yaw + rope.bend;
         step(k, rope, hd, fwd, w);

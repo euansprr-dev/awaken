@@ -363,6 +363,7 @@ public final class AscentMoves {
         boolean assist = FeelConfig.ropeAssist();
         AscentSwing.guide = assist && FeelConfig.ropeGuide();
         AscentSwing.hold = FeelConfig.ropeHold();
+        AscentSwing.real = assist && FeelConfig.ropeReal();
         if (fireCool > 0) fireCool--;
         windowNow *= 0.8F;
         // the rope held between swings throws again by itself (the chain), in the air, once the last let-go is behind;
@@ -903,11 +904,28 @@ public final class AscentMoves {
         String why = Double.isNaN(w.aimT) ? "" : String.format(" (no swing; sling: %s; onto its top: %s; %s)",
                 w.aimSling == 0 ? "not asked" : AscentSwing.SLING_NO[w.aimSling], w.aimOnto == 0 ? "not asked" : AscentSwing.ONTO_NO[w.aimOnto],
                 w.aim.ny < 0 ? "an underside, not clear to hang from" : "no underside to hang from");
-        String what = took == null ? "nothing (a miss)" : String.format("%s %.1f off", took.zip ? "a lip" : took.sling ? "a sling" : "a swing", took.len);
+        String what = took == null ? "nothing (a miss)" : String.format("%s %.1f off", took.zip ? "a lip" : took.sling ? "a sling"
+                : dev.awaken.body.ascent.RealRope.MOVE[took.move], took.len);
         // a miss: what the marker showed then (it should have shown nothing)
         String shownThen = took != null ? "" : !markerOn ? "; the marker showed nothing"
                 : String.format("; the marker showed %s %d ticks before, which no longer held", MARKER.zip ? "a pull" : MARKER.sling ? "a sling" : "a swing", ticks - markerAt);
         dev.awaken.Awaken.LOG.info("[rope] the look met {}, which the rope can't take from here{}; the press took {}{}", met, why, what, shownThen);
+    }
+
+    /**
+     * The real swing's hoist begins (SPEC §62.9): the rope bit high on something tall and hauls you up its near side to
+     * where the swing starts. Heard here and by others; felt as the line takes the weight.
+     */
+    private static void hoistStart(LocalPlayer p) {
+        AscentSounds.local(p, AscentContent.ROPE_HOIST.get(), 0.6F, 0.95F + p.getRandom().nextFloat() * 0.1F);
+        event(AscentPayloads.EV_HOIST, 0);
+        FeelDirector.ropeCatch(0.35F);
+        trace(String.format("the hoist: up %.1f to a swing on %.1f", Math.max(0, ROPE.hy - K.y), ROPE.hoistLen));
+    }
+
+    /** Whether the rope is hauling you up to a swing now (the hands go hand over hand). */
+    static boolean hoisting() {
+        return swinging && dev.awaken.body.ascent.RealRope.hoisting(ROPE);
     }
 
     /** Nearly straight overhead (a ring, a branch, a keel): zipped up to and hung under, never swung from. */
@@ -961,8 +979,14 @@ public final class AscentMoves {
         }
         PICK.len = d;
         PICK.fitLen = Math.min(PICK.fitLen, d);
-        // a swing whose way has grown long for its fit since it looked reels in to it
-        if (!PICK.zip && !PICK.sling && PICK.fitLen < d * AscentSwing.FIT_MIN) PICK.reel = true;
+        if (AscentSwing.real) {
+            // the real swing (SPEC §62.9): played again from where you are now; one that no longer swings is looked for anew
+            boolean view = dev.awaken.body.client.feel.ShoulderView.aim(VIEW);
+            if (!dev.awaken.body.ascent.RealRope.still(SPACE, HAND, view ? VIEW[0] : p.getYRot(), PICK, WORK)) return null;
+        } else if (!PICK.zip && !PICK.sling && PICK.fitLen < d * AscentSwing.FIT_MIN) {
+            // a swing whose way has grown long for its fit since it looked reels in to it
+            PICK.reel = true;
+        }
         pickAimed = true;
         return PICK;
     }
@@ -1024,15 +1048,16 @@ public final class AscentMoves {
         anchorBlock = AscentAnchors.blockOf(p.level(), ax, ay, az);
         len = pk.len;
         lenTarget = pk.fitLen;
-        ROPE.set(ax, ay, az, len, lenTarget);
-        // a swing thrown longer than it can swing over the floor reels you up into its arc (the aimed swing under something)
-        ROPE.reel = pk.reel;
+        // the pick's rope: with ropeReal a real one (its room, its hoist); else a swing thrown longer than it can swing
+        // over the floor reels you up into its arc (the aimed swing under something)
+        ROPE.throwFor(pk);
         swinging = true;
         ropeTravel = AscentSwing.travel(len);
         ropeTaut = false;
         AscentSwing.entry(K, heading);
         setState(p, AscentState.TETHER);
-        trace(String.format("swing %.1f (fits %.1f, %.0f° up, %.1f aside)", pk.len, pk.fitLen, pk.elev, pk.side));
+        if (ROPE.real) trace(String.format("%s %.1f off (%.0f° up, %.1f aside, room %.0f°)", dev.awaken.body.ascent.RealRope.MOVE[pk.move], pk.len, pk.elev, pk.side, pk.cap));
+        else trace(String.format("swing %.1f (fits %.1f, %.0f° up, %.1f aside)", pk.len, pk.fitLen, pk.elev, pk.side));
         tetherTick(p, heading, 0, 0, false);
     }
 
@@ -1367,8 +1392,16 @@ public final class AscentMoves {
             double hx = K.x, hy = K.y, hz = K.z;
             carry(yaw, fwd * 0.5, right * 0.5);
             if (ropeTravel == 0) {
-                double d = Math.sqrt((K.x - ax) * (K.x - ax) + (K.y - ay) * (K.y - ay) + (K.z - az) * (K.z - az));
-                len = Math.max(AscentRules.TETHER_MIN, Math.min(len, d));
+                if (swinging && ROPE.real) {
+                    // the real swing (SPEC §62.9): the rope as long as it bit at, taut at once, or the hoist's haul begun
+                    AscentSwing.bite(SPACE.at(p.level(), p), K, ROPE, yaw);
+                    len = ROPE.len;
+                    lenTarget = ROPE.fitLen = ROPE.len;
+                    if (ROPE.hoist) hoistStart(p);
+                } else {
+                    double d = Math.sqrt((K.x - ax) * (K.x - ax) + (K.y - ay) * (K.y - ay) + (K.z - az) * (K.z - az));
+                    len = Math.max(AscentRules.TETHER_MIN, Math.min(len, d));
+                }
                 bite(p, 1F);
             }
             return;
@@ -1414,10 +1447,14 @@ public final class AscentMoves {
      */
     private static void swingTick(LocalPlayer p, float yaw, double fwd, boolean sneak) {
         boolean gold = kitReel == dev.awaken.body.ascent.RopeKit.REEL_GOLD;
-        if (sneak && len > AscentRules.TETHER_MIN + 1e-3) {
+        if (sneak && len > AscentRules.TETHER_MIN + 1e-3 && !dev.awaken.body.ascent.RealRope.hoisting(ROPE)) {
             len = AscentRules.reel(K, ax, ay, az, len, Math.min(AscentRules.reelRate(gold), len - AscentRules.TETHER_MIN));
             lenTarget = len;
             reeling = true;
+            if (ROPE.real) {
+                ROPE.base = len;
+                ROPE.fit = Math.min(ROPE.fit, len);
+            }
             if (gold && stateAge % 5 == 0) AscentSounds.local(p, AscentContent.RAPPEL_REEL.get(), 0.4F, 0.95F + p.getRandom().nextFloat() * 0.1F);
         }
         ROPE.ax = ax;
@@ -1425,12 +1462,17 @@ public final class AscentMoves {
         ROPE.az = az;
         ROPE.len = len;
         ROPE.fitLen = Math.min(lenTarget, len);
-        boolean caught = ROPE.caught;
+        boolean caught = ROPE.caught, hoisting = dev.awaken.body.ascent.RealRope.hoisting(ROPE);
         double vy0 = K.vy;
         double pump = AscentFlow.pump() * (1 + AscentRules.MASTERY_PUMP * lv(dev.awaken.body.ascent.AscentMemory.Track.TETHER));
         int why = AscentSwing.tick(SPACE.at(p.level(), p), K, ROPE, yaw, fwd * pump, WORK);
         len = ROPE.len;
         lenTarget = ROPE.fitLen;
+        if (hoisting) {
+            // the haul up the near side (SPEC §62.9): a pull of the line every few ticks; at the top, the swing begins
+            if (ROPE.hoist && stateAge % 6 == 0) AscentSounds.local(p, AscentContent.ROPE_HOIST.get(), 0.45F, 0.9F + p.getRandom().nextFloat() * 0.15F);
+            if (!ROPE.hoist) trace(String.format("the hoist arrives: a swing on %.1f", ROPE.len));
+        }
         if (WORK.bent) trace(String.format("swing bends %.0f° round what's ahead", ROPE.bend));
         if (ROPE.caught) windowNow = Math.max(windowNow, (float) AscentSwing.windowQuality(K, ROPE, yaw + ROPE.bend, WORK));
         double r = Math.sqrt((K.x - ax) * (K.x - ax) + (K.y - ay) * (K.y - ay) + (K.z - az) * (K.z - az));
@@ -1724,6 +1766,10 @@ public final class AscentMoves {
         anchorBlock = AscentAnchors.blockOf(p.level(), ax, ay, az);
         len = length;
         lenTarget = Math.min(lenTarget, length);
+        if (swinging && ROPE.real) {
+            ROPE.base = length;
+            ROPE.fit = Math.min(ROPE.fit, length);
+        }
         trace(String.format("rope wraps (%.1f)", length));
         AscentSounds.at(p, ax, ay, az, AscentContent.ROPE_STRAIN.get(), 0.5F, 1.15F);
         AscentFx.bite(p, ax, ay, az);

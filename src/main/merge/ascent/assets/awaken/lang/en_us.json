@@ -76,5 +76,6 @@
   "subtitles.awaken.ascent.dive": "Someone dives",
   "subtitles.awaken.ascent.dive_land": "A dive hits the ground",
   "block.awaken.leap_stand": "Leaper's Stand",
-  "entity.awaken.lesson_figure": "Figure of Light"
+  "entity.awaken.lesson_figure": "Figure of Light",
+  "subtitles.awaken.ascent.rope_hoist": "A rope hauls someone up"
 }

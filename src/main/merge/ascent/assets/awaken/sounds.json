@@ -176,5 +176,22 @@
         "attenuation_distance": 32
       }
     ]
+  },
+  "ascent.rope_hoist": {
+    "subtitle": "subtitles.awaken.ascent.rope_hoist",
+    "sounds": [
+      {
+        "name": "minecraft:item.crossbow.loading_middle",
+        "type": "event",
+        "volume": 0.8,
+        "pitch": 0.75
+      },
+      {
+        "name": "minecraft:item.lead.tied",
+        "type": "event",
+        "volume": 0.7,
+        "pitch": 0.85
+      }
+    ]
   }
 }

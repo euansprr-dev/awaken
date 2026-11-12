@@ -70,6 +70,12 @@ public final class FeelConfig {
                     "you let go of the key; forward pumps the swing, back slows it to a hang. Off: the rope lets go at the top of its arc",
                     "and before a wall by itself, as it did before. Needs ropeAssist.")
             .define("ropeHold", true);
+    public static final ModConfigSpec.BooleanValue ROPE_REAL = B
+            .comment("The real swing (SPEC §62.9): the rope keeps the length it bit at and swings you with your own momentum, under what",
+                    "you look at, round it when it stands beside you, or after a short hoist up something tall. The game plays the swing",
+                    "forward before you press, and the marker shows which it will be. Off: the assisted swing as it was before (fitted to",
+                    "the floor and wound in). Needs ropeAssist.")
+            .define("ropeReal", true);
     public static final ModConfigSpec.BooleanValue WINGS_FEATHERS = B
             .comment("Wings of feathers (SPEC §62): each wing is feathers of light in boxes, with a look for each rung of the ladder.",
                     "Off: the single sheet the wings were before.")
@@ -142,6 +148,15 @@ public final class FeelConfig {
     public static boolean ropeAssist() {
         try {
             return !SPEC.isLoaded() || ROPE_ASSIST.get();
+        } catch (RuntimeException e) {
+            return true;
+        }
+    }
+
+    /** The real swing (SPEC §62.9): a real rope about what it bit, chosen by playing the swing forward. */
+    public static boolean ropeReal() {
+        try {
+            return !SPEC.isLoaded() || ROPE_REAL.get();
         } catch (RuntimeException e) {
             return true;
         }

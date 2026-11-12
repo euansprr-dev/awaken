@@ -24999,6 +24999,73 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
   tree whose crown is 9 up, looked at beside its trunk from a sprint jump 16.5 off, is swung under from its underside,
   wound in to its fit, under the crown and 25 degrees up the far side with nothing met and the feet over the floor.
 
+*§62.9 The real swing (12 Nov 2026; `RealRope`, `AscentSwing`, `AscentMoves`; switch `ropeReal` in
+`awaken-feel-client.toml`, on by default, off = the assisted swing above exactly; plan page
+https://claude.ai/artifact/4SdxJ9SJYPiuCW98kjGwDb, Euan approved all seven decisions: "Go ahead with the full plan. Code
+it all before any tests, then I will test myself once coded").* Euan: "90% of the time, it's just something that brings
+you to the point that you aimed at instead of actually swinging you from it." Cause (the Python model of the game's own
+swing): the aimed bite is far and low, the rope's length was fitted to the floor and wound in a block a tick
+(`REEL_IN`), so the press pulled you at what you looked at; the swing ran in one upright plane, so it could never go
+round anything; and every anchor under the hand was a sling. Then his drawing: low things can swing you too, round them,
+held up by your speed. "When it can swing you under, it does it, but when it can't, then it does something more like
+this."
+- **The rope is real** (`RealRope.step`, `AscentSwing.Rope.real`): three dimensions about the point it bit; its length is
+  the way to the anchor when it bites; it only ever pulls (what goes out along it is taken, nothing else). Nothing winds
+  you in. The help moves to before the bite, where it can't be felt.
+- **The bite** (`RealRope.bite`): what goes in toward the anchor is turned along the way you already go round it, 0.8
+  of it kept (`biteKeep`), so the rope is taut from the first tick; under 0.15 b/t across, the fall itself is turned down
+  the arc. The rope's least length keeps the feet a block over the floor under the anchor (`skim` 1.0, the floor looked
+  for 1.5 behind and up to 3 ahead along the look), never under 85% of the bite (`easeLeast`).
+- **The rope's four gentle hands.** It eases in toward that length only while you fall, 0.3 a tick at most (`ease`).
+  The feet skim a block over the floor, the speed down turned along the way you go. Forward steers the speed across
+  toward the look, 2.5 degrees a tick (`steer`), only within 75 degrees of the way you go (`steerWithin`; swinging back,
+  the look doesn't turn you), and pumps the rope: drawn in 0.06 a tick under 30 degrees from the bottom, paid back out
+  past 45, 1.2 at most (`pumpIn`, `pumpMax`). Back slows the swing 2.5% a tick toward a hang. The first arc keeps the old
+  swing's drive along its lower half (decision 6). An arc whose far side has no room loses speed before it gets there:
+  no arc tops the rope's room (`Rope.cap`).
+- **Where it bites: the swing played forward** (`RealRope.aimed`, `RealRope.play`). The look's ray meets a block; the
+  points tried are the hit, the top over it (12 up at most) and 1.5 and 3 in along the look where the top goes on, the
+  underside over open air in its column, and each of those 2 and 3 blocks either side across the look where there is
+  something to bite. Each is thrown and played forward from your own speed: the flight out, the bite, 45 ticks with
+  forward held. **Under** (decision 1): it crosses the anchor's line within 1.5 across the look and its first arc and
+  back meets nothing. **Round**: it passes beside, turns you 45 degrees or more within 20 ticks on a rope 9 or shorter
+  (`roundMost`: a longer, flatter rope off something low can't hold you up), and that much meets nothing. Neither may
+  skim the floor more than 4 ticks. The fastest under wins, else the fastest round. The room is where the played swing
+  first met something, less 12 degrees, 30 to 88. `find` (the heading's own search) keeps its anchors only when they
+  swing as a real rope (`RealRope.fits`).
+- **The hoist** (decision 2; `RealRope.hoist`, `hoistStep`). From the ground at something tall, nothing swings from
+  where you are: the swing's length would drag you through the floor. The rope hauls you up the thing's near side to
+  where a swing under it starts, 75 degrees up along the look (`hoistStart`), its rope the anchor's height less the floor
+  under you, the skim and the hand, 5 to 14 (`hoistLong`). The haul pulls 0.16 b/t a tick, 1.3 at most, slowing to
+  arrive (a jump's top, never a crash), gravity carried; within 0.5 of its point (or after 40 ticks, or with something in
+  the way) the rope is the swing's, taut. The start must hold the body and be in clear view of the hand, and the haul
+  and the swing after it, played 55 ticks, must meet nothing and carry you 3 past the anchor. Sneak doesn't reel while it
+  hauls. Its sound is `ascent.rope_hoist` (the crossbow's loading and the lead's tie, every 6 ticks of the haul), relayed
+  as `EV_HOIST`; first person hauls hand over hand.
+- **Where nothing swings** (decision 3): the aimed rope's own answers as before, the sling thrown 3 past the side of the
+  thing you're on (`SLING_ASIDE`, `slingPast`'s `aside`) so the next press swings round it; then onto its top, up under it.
+  A sling or zip rope is never real.
+- **The let-go** (decision 5): the best window moves from 62 to 45 degrees up the far side (`realWin`); still the key's
+  release only on a held rope.
+- **The marker** shows the move: a swing under as before, a swing round as its four ticks circling level in pale green
+  (0xC9F7DC), a hoist as the swing's ticks with three more climbing up under the point (0xFFEFD2). What it shows a few
+  ticks before the press is played again from where you are (`RealRope.still`); one that no longer swings is dropped.
+  The trace names the move (`RealRope.MOVE`).
+- **The server** checks only that the anchor is real (`AscentServer.anchorReal`); the length is the client's.
+- **Tests.** GameTests (real blocks, each press played as the client plays it): `ascent_rope_real` (over the tall tree
+  and beside an oak, 10 ticks after the bite the rope is 85% of its bite length or more, and under 2 of the first 20 ticks
+  go straight at the anchor); `ascent_rope_round` (at 1 b/t past a vanilla oak 3.5 to the side, the press swings round it,
+  60 degrees or more in a second, feet 0.9 or more over the floor, nothing touched); `ascent_rope_hoist` (a sprint jump
+  16.5 before the tall tree: hoisted to the swing's start in under a second, then under the crown and 3 past its anchor,
+  nothing touched); `ascent_rope_from_top` (13 up and 13 before the crown: swung under it and out past its far side,
+  nothing touched). The older rope tests run with the switch off (`AscentSwingTests.today`). The sky stair and the swing
+  bench log a real-rope row beside the old (not gated).
+- **Two test fixes in the same pass** (build 2f9a81888, run 43223608913). `ascent_rope_aimed`'s floor sling expected the
+  bite on the floor's top; the bite is the look's hit, 0.04 out of the face as every hit (`LevelSpace.ray`, since
+  f6edb498c): the test was wrong. `ascent_sky_stair`'s 2 hard hits came from cef8fba45 letting `find`'s own search use
+  the held rope's 25-degree arc rule; now only the aimed swing does (`arcClear`'s `held`), and `find` keeps the window
+  rule.
+
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8
   secondaries, 9 primaries, coverts 13 and 11; **231 boxes a wing** up close. The five poses, the opening (a gather,
