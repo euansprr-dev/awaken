@@ -51,6 +51,8 @@ public final class Composer {
         final EnumMap<Family, Integer> count = new EnumMap<>(Family.class);
         int total;
         boolean signed;
+        /** Whether the run has had its chase (from B) and its first perch (from C) yet (SPEC §72.5). */
+        boolean chased, perched;
         @Nullable Beat last;
         int fallbacks;
         final List<String> log = new ArrayList<>();
@@ -74,10 +76,39 @@ public final class Composer {
      * A line as composed: its steps, the stairs after each, and where it goes in its own frame (it starts at (0, 0) going
      * +z, feet 0): the box it takes, where it ends (the cell past its last) and which way it is going there.
      */
+    /**
+     * The fights a line has (SPEC §72.5): a landing with a hold after step {@code courts} lists (from A: partway along; at S
+     * after every second beat), a marksman on the far side of step {@code perch} (a gulf crossed on a wall, a rope or
+     * ledges; from C), and a chase from its start (from B, once a run, on a line with no bay off it). -1 or false: none.
+     */
+    public record Fights(List<Integer> courts, int perch, boolean chase) {
+        public static final Fights NONE = new Fights(List.of(), -1, false);
+    }
+
+    /** The beats a marksman can be perched across: the gulfs. */
+    private static final Set<Beat> ACROSS = EnumSet.of(Beat.GULF, Beat.CORNER, Beat.RUNHANG, Beat.SWING, Beat.LEDGES, Beat.BROKEN);
+
+    /** The fights for a line of these steps at this rank, where this run has room for them. */
+    static Fights fights(List<Step> steps, Rank rank, Run run, Random r) {
+        int ord = rank.ordinal();
+        List<Integer> courts = new ArrayList<>();
+        if (ord >= Rank.S.ordinal()) for (int i = 1; i < steps.size() - 1; i += 2) courts.add(i);
+        else if (ord >= Rank.A.ordinal() && steps.size() >= 3) courts.add(steps.size() / 2 - 1);
+        int perch = -1;
+        if (ord >= Rank.C.ordinal() && (!run.perched || ord >= Rank.B.ordinal() && r.nextBoolean())) {
+            for (int i = 0; i < steps.size() && perch < 0; i++) if (ACROSS.contains(steps.get(i).beat())) perch = i;
+        }
+        boolean bays = false;
+        for (Step st : steps) bays |= !st.beat().onTheWay();
+        boolean chase = ord >= Rank.B.ordinal() && !run.chased && !bays && r.nextInt(3) == 0;
+        return new Fights(List.copyOf(courts), perch, chase);
+    }
+
     public static final class Recipe {
         public final List<Step> steps;
         final int[] stairs;
         public final Rank rank;
+        public Fights fights = Fights.NONE;
         /** The box (x0, y0, z0, x1, y1, z1) in the line's own frame, feet 0 at the start; walls and pits included. */
         public int[] box;
         public int endX, endZ, endDx, endDz, dy, length;
@@ -88,14 +119,21 @@ public final class Composer {
             this.rank = rank;
         }
 
-        /** Lays the line into {@code L} from its cursor: a pad, each beat with its stairs and a pad after it. */
+        /** Lays the line into {@code L} from its cursor: a pad, each beat with its stairs and a pad after it, and its fights. */
         public boolean lay(BeatLine L) {
             Beats.pad(L, 2);
+            int ord = rank.ordinal();
+            if (fights.chase()) L.hold(dev.awaken.gates.realms.Land.HoldKind.CHASE, 1, 0, L.feet, 1, 3 + (ord >= Rank.S.ordinal() ? 1 : 0));
             for (int i = 0; i < steps.size(); i++) {
                 Step st = steps.get(i);
                 if (!Beats.build(st.beat(), L, st.t(), st.side(), rank, new Random(st.seed()))) return false;
+                if (i == fights.perch()) L.hold(dev.awaken.gates.realms.Land.HoldKind.PERCH, L.a - 2, 0, L.feet, 1, ord >= Rank.A.ordinal() ? 2 : 1);
                 Beats.stairs(L, stairs[i]);
                 Beats.pad(L, 2);
+                if (fights.courts().contains(i)) {
+                    Beats.court(L, ord >= Rank.S.ordinal() ? 4 : 3);
+                    Beats.pad(L, 1);
+                }
             }
             return true;
         }
@@ -213,8 +251,9 @@ public final class Composer {
         }
 
         // the height the beats don't make, in stairs after them; then the length, and the whole line proved once more
+        long fightSeed = r.nextLong();
         while (!kept.isEmpty()) {
-            Recipe rc = measure(kept, wantDy, rank);
+            Recipe rc = measure(kept, wantDy, rank, fights(kept, rank, run, new Random(fightSeed)));
             if (rc == null) {
                 run.note("a line didn't lay: " + kept);
                 kept.removeLast();
@@ -238,6 +277,8 @@ public final class Composer {
                 kept.removeLast();
                 continue;
             }
+            if (rc.fights.chase()) run.chased = true;
+            if (rc.fights.perch() >= 0) run.perched = true;
             for (Step st : kept) {
                 if (st.beat().onTheWay()) run.count.merge(st.beat().family, 1, Integer::sum);
                 if (st.beat().onTheWay()) run.total++;
@@ -345,8 +386,13 @@ public final class Composer {
 
     /** Lays the steps in their own frame with the stairs that make up the height, and measures it. Null if it doesn't lay. */
     static @Nullable Recipe measure(List<Step> steps, int wantDy, Rank rank) {
+        return measure(steps, wantDy, rank, Fights.NONE);
+    }
+
+    static @Nullable Recipe measure(List<Step> steps, int wantDy, Rank rank, Fights fights) {
         // what the beats really do to the floor is only known once laid: lay without stairs first
         Recipe dry = new Recipe(List.copyOf(steps), new int[steps.size()], rank);
+        dry.fights = fights;
         BeatLine D = new BeatLine("measure", 0, 0, 0, 0, 1);
         if (!dry.lay(D)) return null;
         int beatDy = D.feet;
@@ -360,6 +406,7 @@ public final class Composer {
             rest -= part;
         }
         Recipe rc = new Recipe(List.copyOf(steps), stairs, rank);
+        rc.fights = fights;
         BeatLine L = new BeatLine("measure", 0, 0, 0, 0, 1);
         if (!rc.lay(L)) return null;
         L.s.done();

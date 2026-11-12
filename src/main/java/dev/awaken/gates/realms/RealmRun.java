@@ -132,6 +132,7 @@ final class RealmRun {
             }
         }
         if (plays) course(level, p, g, land, ref, lx, ly, lz);
+        if (!land.holds().isEmpty()) holds(level, p, g, plan, ref, st, data, plays, lx, ly, lz);
         RealmTrial.tick(level, p, g, land, ref, st, data, lx, ly, lz);
         if (!land.traps().isEmpty()) RealmTraps.tick(level, g, land, ref, p, lx, ly, lz);
         RealmCountry.tick(level, p, g, plan, ref, st, data, lx, lz);
@@ -242,6 +243,90 @@ final class RealmRun {
         }
     }
 
+    /** How near a hold has to be to stand its monsters there (they wake as a den's do, about twelve off), and a chase's reach. */
+    private static final int HOLD_FILL = 28, CHASE_FROM = 7, CHASE_TO = 20, TETHER = 6;
+
+    /**
+     * The fights on a line (SPEC §72.5). A hold or a perch stands its monsters when someone comes within {@link #HOLD_FILL}
+     * and they wake as a den's pack does; one that has gone more than {@link #TETHER} past its place gives up and walks
+     * back, so nobody is followed down a line. A chase comes up behind whoever has passed its start and is still in the line.
+     * Never in peace, never in creative, never shut in, never required.
+     */
+    private static void holds(ServerLevel level, ServerPlayer p, GateRecord g, RealmPlan plan, RealmRef ref, RealmState st, RealmData data, boolean plays, int lx, int ly, int lz) {
+        Land land = plan.land();
+        for (Land.Hold h : land.holds()) {
+            int dx = h.x() - lx, dz = h.z() - lz, dy = h.y() - ly, d2 = dx * dx + dz * dz;
+            if (d2 > 64 * 64) continue;
+            String key = "hold" + h.index();
+            BlockPos at = Realms.world(ref.cell(), h.x(), h.y(), h.z());
+            if (st.woken.contains(key)) {
+                // tied to its place: every two seconds, one that has wandered off it goes back
+                if (h.kind() != Land.HoldKind.CHASE && (p.tickCount / 10) % 4 == 0 && d2 <= HOLD_FILL * HOLD_FILL * 2) {
+                    for (net.minecraft.world.entity.Mob m : RealmPacks.members(level, at, "h" + h.index())) {
+                        double ox = m.getX() - (at.getX() + 0.5), oz = m.getZ() - (at.getZ() + 0.5);
+                        if (ox * ox + oz * oz > (h.radius() + TETHER) * (h.radius() + TETHER) || m.getY() < at.getY() - 3) {
+                            m.setTarget(null);
+                            dev.awaken.core.api.MobHooks.lead(m, at.getX() + 0.5, at.getZ() + 0.5, 1.1, 80);
+                        }
+                    }
+                }
+                continue;
+            }
+            if (!plays || level.getDifficulty() == Difficulty.PEACEFUL || !dev.awaken.core.api.Ready.loaded(level, at)) continue;
+            FloorLayout f = GateLayout.of(g.plan).floor(0, 1);
+            int made;
+            if (h.kind() == Land.HoldKind.CHASE) {
+                // a chase wakes once someone is past its start, along its own line, and comes from behind them
+                if (d2 < CHASE_FROM * CHASE_FROM || d2 > CHASE_TO * CHASE_TO || Math.abs(dy) > 12 || !inLine(land, h.leg(), lx, ly, lz)) continue;
+                made = RealmPacks.hold(level, g, f, at, h.index(), h.count(), h.radius(), "", p);
+                level.playSound(null, at, SoundEvents.TURTLE_EGG_CRACK, SoundSource.HOSTILE, 1.6F, 0.6F);
+            } else {
+                if (d2 > HOLD_FILL * HOLD_FILL || Math.abs(dy) > 16) continue;
+                String marksman = h.kind() == Land.HoldKind.PERCH ? RealmCountry.marksman(plan.bp().theme()) : "";
+                made = RealmPacks.hold(level, g, f, at, h.index(), h.count(), h.radius(), marksman, null);
+            }
+            dev.awaken.Awaken.LOG.info("[beats] gate {}: {} {} at {} {} {} on {}: {} stood", g.id, h.kind(), h.index(), h.x(), h.y(), h.z(), h.leg(), made);
+            st.woken.add(key);
+            data.setDirty();
+        }
+    }
+
+    /** Whether a place is inside the box of a line's own stretch (its Course). */
+    private static boolean inLine(Land land, String leg, int lx, int ly, int lz) {
+        for (Land.Course c : land.courses()) if (c.leg().equals(leg) && c.holds(lx, ly, lz)) return true;
+        return false;
+    }
+
+    /**
+     * Being hit on a line (SPEC §72.5, Decision 6): it costs health, but never throws you off a wall, a lip or a ledge.
+     * Inside a line's stretch nobody in a Realm is knocked back.
+     */
+    static void knockBack(net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent e) {
+        if (!(e.getEntity() instanceof ServerPlayer p) || p.level().isClientSide()) return;
+        GateRecord g = Runs.gateOf(p);
+        RealmPlan plan = g == null ? null : Realms.plan(g);
+        if (plan == null || plan.land().lines().isEmpty()) return;
+        RealmRef ref = g.realm.orElseThrow();
+        int lx = p.getBlockX() - RealmCells.centerX(ref.cell()), lz = p.getBlockZ() - RealmCells.centerZ(ref.cell());
+        for (Land.Course c : plan.land().courses()) {
+            if (c.catchY() != Integer.MIN_VALUE && c.holds(lx, p.getBlockY(), lz)) {
+                e.setCanceled(true);
+                return;
+            }
+        }
+    }
+
+    /**
+     * A line's fall (SPEC §72.5): more than three under the lowest ledge within five across, or under the line's lowest
+     * where none is that near. A drop the line asks for lands on a ledge, so it is never caught on the way down, however
+     * long; a fall into a gulf's water is caught however short, so nobody has the long walk back from its bed.
+     */
+    static boolean fell(Land.Course c, double y, int lx, int lz) {
+        int low = Integer.MAX_VALUE;
+        for (int[] l : c.ledges()) if (Math.abs(l[0] - lx) <= 5 && Math.abs(l[2] - lz) <= 5) low = Math.min(low, l[1]);
+        return low == Integer.MAX_VALUE ? c.below(y) : y < low - 3;
+    }
+
     /** On a stretch you can fall from: remember the last ledge stood on, and catch a long fall back to it. */
     private static void course(ServerLevel level, ServerPlayer p, GateRecord g, Land land, RealmRef ref, int lx, int ly, int lz) {
         List<Land.Course> courses = land.courses();
@@ -255,7 +340,7 @@ final class RealmRun {
                     int[] l = c.ledges().get(k);
                     if (Math.abs(l[0] - lx) <= 3 && Math.abs(l[2] - lz) <= 3 && Math.abs(l[1] - ly) <= 2) last[2] = k;
                 }
-            } else if (p.fallDistance > FALL) {
+            } else if (c.catchY() != Integer.MIN_VALUE ? fell(c, p.getY(), lx, lz) : p.fallDistance > FALL) {
                 int[] l = c.ledges().get(Math.min(last[2], c.ledges().size() - 1));
                 BlockPos at = Realms.world(ref.cell(), l[0], l[1], l[2]);
                 p.teleportTo(level, at.getX() + 0.5, at.getY(), at.getZ() + 0.5, Set.of(), p.getYRot(), p.getXRot(), true);

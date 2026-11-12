@@ -114,6 +114,22 @@ public final class Beats {
         L.frame(a0, a1, lo, hi, -2, 2);
     }
 
+    /**
+     * A landing partway along a line (SPEC §72.5, from A): five across and five along, its walls a cell further out than
+     * the lane's, lit, with a hold of {@code count} on it. Never a door: a hold can be run past.
+     */
+    public static void court(BeatLine L, int count) {
+        int a0 = L.a, F = L.feet, a1 = a0 + 4;
+        L.floor(a0, a1, -2, 2, F, F + HEAD + 1);
+        L.underfoot(a0, a1, -2, 2, F);
+        L.frame(a0, a1, F - 2, F + HEAD + 1, -3, 3);
+        L.keep(a0, F, -2, a1, F + 1, 2);
+        L.light(a0 + 2, 0, F + 3);
+        L.hold(Land.HoldKind.HOLD, a0 + 2, 0, F, 2, count);
+        L.catchAt(a0 + 2, 0, F);
+        L.a = a1 + 1;
+    }
+
     /** A plain stretch of floor, {@code n} long. */
     public static void pad(BeatLine L, int n) {
         int a0 = L.a, f = L.feet;

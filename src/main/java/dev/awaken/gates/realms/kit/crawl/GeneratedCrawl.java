@@ -431,6 +431,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         Random br = new Random(seed * 0x5DEECE66DL ^ 0xBEA75L);
         Composer.Accents acc = accents();
         Composer.Paints paints = beats ? new Composer.Paints(getClass().getName(), paint(m, new Sculpt("probe"))) : null;
+        // the dens and quiet rooms, for their rises once every way into them is known (plan 3)
+        List<Cave> risers = new ArrayList<>();
 
         int feet = up ? 92 : 196; // a climb starts low and ends high; everything else starts high
         mouthFeet = feet;
@@ -754,6 +756,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                             }
                         }
                         dens++;
+                        if (beats) risers.add(room);
                     }
                     cx = ix;
                     cz = iz;
@@ -938,6 +941,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 break branch;
             }
         }
+        if (beats) rises(risers, new Random(seed * 0x2545F491L ^ 0x7153L));
         wells(new Random(seed * 31 + 0x77E11L));
         done();
         for (int[] f : finds) site(SiteKind.FIND, f[0], f[1], f[2], 2, "");
@@ -949,6 +953,68 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             leg((String) l[0], (LegKind) l[1], (String) l[2], (Integer) l[3], (Integer) l[4], (Integer) l[5], (Integer) l[6], (Integer) l[7], pack,
                     stand && l[1] == LegKind.AMBUSH ? "waves:" + waves : "", exits.toArray(new String[0]));
         }
+    }
+
+    /**
+     * Rooms that go up (SPEC §72.5, plan 3): a den's room gets two or three rises along its rim and a stand's room four, so
+     * a fight can climb. A rise is two wide: a step a block and a half high to mantle, and behind it, toward the wall, a
+     * block three high to mantle again from the step. Each stands square on level floor, five from every door and two and
+     * a half off the worn way from each door to the middle, four from the middle, with room to stand on its top.
+     */
+    private void rises(List<Cave> rooms, Random r) {
+        for (Cave room : rooms) {
+            boolean waves = stand && room.name.startsWith("ambush");
+            int want = waves ? 4 : 2 + r.nextInt(2), made = 0;
+            List<Double> angles = new ArrayList<>();
+            double turn = r.nextDouble() * Math.PI * 2;
+            Sculpt sc = new Sculpt(room.name + "_rises");
+            for (int k = 0; k < 16 && made < want; k++) {
+                double a = turn + k * (Math.PI * 2 / 16);
+                boolean near = false;
+                for (double t : angles) near |= Math.abs(Math.IEEEremainder(a - t, Math.PI * 2)) < Math.PI / 3;
+                if (near) continue;
+                int ux = (int) Math.round(sx(snap(a))), uz = (int) Math.round(sz(snap(a))), vx = -uz, vz = ux;
+                double reach = room.reach(a);
+                if (reach < 7) continue;
+                int px = (int) Math.round(room.cx + sx(a) * reach * 0.62), pz = (int) Math.round(room.cz + sz(a) * reach * 0.62);
+                int[][] cells = {{px, pz}, {px + vx, pz + vz}, {px + ux, pz + uz}, {px + ux + vx, pz + uz + vz}};
+                int f = room.feet2(px, pz) == NONE ? Integer.MIN_VALUE : room.floorAt(px, pz);
+                boolean fits = f != Integer.MIN_VALUE;
+                for (int i = 0; i < cells.length && fits; i++) {
+                    int x = cells[i][0], z = cells[i][1];
+                    fits = room.feet2(x, z) != NONE && room.floorAt(x, z) == f && room.roof(x, z) >= f + (i < 2 ? 5 : 6)
+                            && (x - room.cx) * (x - room.cx) + (z - room.cz) * (z - room.cz) >= 16 && clearOfDoors(room, x, z);
+                }
+                // and the cell in front of the step is floor at the same height, to stand on and mantle from
+                fits = fits && room.feet2(px - ux, pz - uz) != NONE && room.floorAt(px - ux, pz - uz) == f;
+                if (!fits) continue;
+                for (int i = 0; i < 2; i++) {
+                    int x = cells[i][0], z = cells[i][1];
+                    sc.solid(x, f, z, x, f, z, Sculpt.Role.PLINTH, 0);
+                    sc.solid(x, f + 1, z, x, f + 1, z, Sculpt.Role.PLINTH_TOP, 0);
+                }
+                for (int i = 2; i < 4; i++) sc.solid(cells[i][0], f, cells[i][1], cells[i][0], f + 2, cells[i][1], Sculpt.Role.PLINTH, 0);
+                angles.add(a);
+                made++;
+            }
+            if (made == 0) continue;
+            sc.done();
+            part(sc);
+            used.add(waves ? "stand rises" : "den rises");
+        }
+    }
+
+    /** Whether a column is five from every door of a room and two and a half off the worn way from each to the middle. */
+    private static boolean clearOfDoors(Cave room, int x, int z) {
+        for (int[] d : room.doors) {
+            double dx = x - d[0], dz = z - d[1];
+            if (dx * dx + dz * dz < 25) return false;
+            double wx = room.cx - d[0], wz = room.cz - d[1], l2 = wx * wx + wz * wz;
+            double t = l2 == 0 ? 0 : Math.clamp((dx * wx + dz * wz) / l2, 0, 1);
+            double ox = dx - wx * t, oz = dz - wz * t;
+            if (ox * ox + oz * oz < 6.25) return false;
+        }
+        return true;
     }
 
     /** The stretch of a shaft's ledge on one side of it (0 north, 1 east, 2 south, 3 west), seven cells long, at about a height. */

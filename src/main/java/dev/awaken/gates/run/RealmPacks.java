@@ -156,6 +156,43 @@ public final class RealmPacks {
         return made;
     }
 
+    /**
+     * A fight in motion (SPEC §72.5): {@code count} of the theme's own about a landing, a perch or the start of a chase,
+     * as pack "h" + index. A hold waits and wakes as a den's pack does, and is tied to within {@code radius} of its place;
+     * a perch's are the theme's marksman where it has one ({@code marksman}, else one of the theme's). With {@code chasing}
+     * they come up awake behind whoever passed, after them. Returns how many came.
+     */
+    public static int hold(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, int index, int count, int radius, String marksman, @Nullable ServerPlayer chasing) {
+        String pack = "h" + index;
+        var rnd = level.getRandom();
+        int made = 0;
+        for (int i = 0; i < count; i++) {
+            double a = rnd.nextDouble() * Math.PI * 2, r = i == 0 ? 0 : 1 + rnd.nextDouble() * Math.max(0, radius - 1);
+            BlockPos at = settle(level, center.offset((int) Math.round(Math.cos(a) * r), 0, (int) Math.round(Math.sin(a) * r)));
+            if (at == null) at = settle(level, center);
+            if (at == null) continue;
+            LivingEntity e = marksman.isEmpty() ? null : named(level, g, f, marksman, at, pack, chasing, null);
+            if (e == null && chasing == null) e = stand(level, g, f, MobRole.Role.NORMAL, at, pack, null);
+            else if (e == null) {
+                e = Rooms.spawn(level, g, f, -1, MobRole.Role.NORMAL, at);
+                if (e != null) {
+                    e.getPersistentData().putString(PACK, pack);
+                    if (e instanceof Mob m) m.setTarget(chasing);
+                }
+            }
+            if (e == null) continue;
+            // tied to its place: it fights there and goes back to it, never following anyone along the line
+            if (chasing == null && e instanceof Mob m) m.setHomeTo(center, radius + 2);
+            made++;
+        }
+        return made;
+    }
+
+    /** The living members of a pack near its place (only asked while someone is near, so they are in the world). */
+    public static List<Mob> members(ServerLevel level, BlockPos center, String pack) {
+        return level.getEntitiesOfClass(Mob.class, new AABB(center).inflate(48, 28, 48), m -> m.isAlive() && pack.equals(packOf(m)));
+    }
+
     /** A Warden and the company that stands with it: the sheet's, or three of the theme's and more with rank. The Warden comes even where its company finds no footing. */
     public static LivingEntity warden(ServerLevel level, GateRecord g, FloorLayout f, BlockPos center, int site, List<String> company) {
         BlockPos at = settle(level, center);

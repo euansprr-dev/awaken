@@ -69,7 +69,8 @@ public final class BeatWell {
             List<Beat> kit = beats(f, up, rank);
             List<Composer.Step> flights = new ArrayList<>();
             List<Boolean> holds = new ArrayList<>();
-            int holding = f == Form.SPIRAL ? 1 + r.nextInt(3) : 1;
+            // at S every landing but the last has its hold (SPEC §72.5)
+            int holding = rank.ordinal() >= Rank.S.ordinal() ? FLIGHTS - 1 : f == Form.SPIRAL ? 1 + r.nextInt(3) : 1;
             Beat last = null;
             for (int k = 0; k < FLIGHTS; k++) {
                 // a flight in two has a beat (a spiral's never), never the same twice running
@@ -84,7 +85,7 @@ public final class BeatWell {
                 holds.add(false);
             }
             // the landings with a hold: on a spiral one to three, else one; never the last (the way out)
-            for (int i = 0; i < holding; i++) holds.set(r.nextInt(FLIGHTS - 1), true);
+            for (int i = 0; i < holding; i++) holds.set(holding == FLIGHTS - 1 ? i : r.nextInt(FLIGHTS - 1), true);
             Plan p = new Plan(f, r.nextBoolean() ? 1 : -1, flights, holds);
             String why = check(p, up, rank, paint);
             if (why == null) return p;
