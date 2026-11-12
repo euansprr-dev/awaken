@@ -57,9 +57,22 @@ public abstract class Land {
      * ledge is x, y, z of your feet. {@code free}: the fall costs nothing and nothing is said (a hall that teaches a move,
      * SPEC §17.10: the Leaper's Gauntlet's halls before its Long Run, and the Long Run's own pit).
      */
-    public record Course(String leg, int x0, int y0, int z0, int x1, int y1, int z1, List<int[]> ledges, boolean free) {
+    public record Course(String leg, int x0, int y0, int z0, int x1, int y1, int z1, List<int[]> ledges, boolean free, int catchY) {
         public Course(String leg, int x0, int y0, int z0, int x1, int y1, int z1, List<int[]> ledges) {
             this(leg, x0, y0, z0, x1, y1, z1, ledges, false);
+        }
+
+        public Course(String leg, int x0, int y0, int z0, int x1, int y1, int z1, List<int[]> ledges, boolean free) {
+            this(leg, x0, y0, z0, x1, y1, z1, ledges, free, Integer.MIN_VALUE);
+        }
+
+        /**
+         * Whether feet at this height have gone into the pit under a line (SPEC §72.5): a gulf's water is soft, so a fall
+         * into it never runs up the six a fall needs, and the walk back would be the long way. Below {@code catchY} inside
+         * the box counts as a fall however short.
+         */
+        public boolean below(double y) {
+            return catchY != Integer.MIN_VALUE && y < catchY;
         }
 
         public boolean holds(int x, int y, int z) {
@@ -146,6 +159,85 @@ public abstract class Land {
     /** The crossings of this land that need a move of the leap. None, for every land but a trial of it. */
     public List<Leap> leaps() {
         return List.of();
+    }
+
+    // ---- Gates in Motion (SPEC §72) -------------------------------------------------------------------------------------
+
+    /** The five families of movement a gate's beats ask for, and the side routes that are never asked for. */
+    public enum Family { LOW, WALL, LEDGE, GRIP, FLOW, SIDE }
+
+    /**
+     * A move a beat asks for (SPEC §72.4): from the cell the feet stand in before it to the cell they stand in after,
+     * facing {@code yaw}, with what the move needs to know ({@code arg}: the wall's side for a run, the lip's height for a
+     * hang, how many cells for a shimmy). {@code needed}: no walk or sprint jump gets from one to the other, and the walk
+     * check proves it ({@code WalkCheck.needlessMoves}); a flow move (a drop and roll, a crumble run) is a way on that
+     * anyone can take. The walk check takes every move as a way on; {@code MoveProof} proves each one with the body's own
+     * probes. {@code over}: how far past (x1, z1), along the way it faces, the move may end (a wall run carries a fast
+     * body on along its wall before it drops).
+     */
+    public record Move(String leg, String beat, String move, Family family, boolean needed, int x0, int y0, int z0, int x1, int y1, int z1, float yaw, int arg, int over) {}
+
+    private final List<Move> moves = new ArrayList<>();
+
+    protected final void move(Move m) {
+        moves.add(m);
+    }
+
+    /** Every move this land's beats ask for, in the order they are met along each line. */
+    public final List<Move> moves() {
+        return moves;
+    }
+
+    /** What waits on a stretch of movement (SPEC §72.5): a hold on a landing, a marksman on a perch, a chase from behind. */
+    public enum HoldKind { HOLD, PERCH, CHASE }
+
+    /**
+     * A fight in motion: {@code count} of the theme's light monsters about (x, y, z), tied to within {@code radius} of it,
+     * woken when someone comes within twelve along the line (a chase: when someone passes it, and they come from behind).
+     * Never shut in behind a door; never required.
+     */
+    public record Hold(String leg, HoldKind kind, int index, int x, int y, int z, int radius, int count) {}
+
+    private final List<Hold> holds = new ArrayList<>();
+
+    protected final void hold(String leg, HoldKind kind, int x, int y, int z, int radius, int count) {
+        holds.add(new Hold(leg, kind, holds.size(), x, y, z, radius, count));
+    }
+
+    public final List<Hold> holds() {
+        return holds;
+    }
+
+    /**
+     * Where a family is first shown (SPEC §72.7): the gold figure walks {@code path} (feet points, x y z each) and the Now
+     * line says {@code words}, once for each player, the first time they come within six of (x, y, z).
+     */
+    public record Lesson(Family family, int x, int y, int z, List<double[]> path, String words) {}
+
+    private final List<Lesson> lessons = new ArrayList<>();
+
+    protected final void lesson(Lesson l) {
+        lessons.add(l);
+    }
+
+    public final List<Lesson> lessons() {
+        return lessons;
+    }
+
+    /**
+     * One line of beats as the composer laid it (SPEC §72.3): the leg, the beats in order, the families they ask for, and
+     * whether it fell back to today's crossing. Read by the sweep (families, variety, fallbacks) and the bench.
+     */
+    public record Line(String leg, List<String> beats, java.util.Set<Family> families, boolean fallback, int x0, int y0, int z0, int x1, int y1, int z1) {}
+
+    private final List<Line> lines = new ArrayList<>();
+
+    protected final void line(Line l) {
+        lines.add(l);
+    }
+
+    public final List<Line> lines() {
+        return lines;
     }
 
     /**

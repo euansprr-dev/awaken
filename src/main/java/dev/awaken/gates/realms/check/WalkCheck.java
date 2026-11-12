@@ -16,6 +16,10 @@ import java.util.Set;
 /**
  * Walks a land on foot from where you arrive, with the Lord's door open: a step up, a drop of up to three (any drop in a land where no fall hurts), room for your head, and swimming across water. Any place the land says
  * is there that the walk can't reach is a mistake in the land (SPEC 50.8). For lands under a roof, where a column's ground can't tell you this.
+ * <p>
+ * A land's beats (SPEC §72.4) are crossings too: each {@link Land.Move} is taken from where its feet stand to where they
+ * land, as a leap is, and MoveProof proves the move itself. {@link #needlessMoves} walks from each needed move's start with
+ * no moves at all, inside the stretch it belongs to, and says where that walk still gets to the move's end.
  */
 public final class WalkCheck {
     private WalkCheck() {}
@@ -23,7 +27,23 @@ public final class WalkCheck {
     private static final int Y0 = 0, Y1 = 260;
 
     private static final class Cells {
-        final Map<Long, BitSet> body = new HashMap<>(), wet = new HashMap<>(), rungs = new HashMap<>();
+        final Map<Long, BitSet> body = new HashMap<>(), wet = new HashMap<>(), rungs = new HashMap<>(), halves = new HashMap<>();
+
+        /** A solid cell whose top is half way up it (a bottom slab): feet on it stand half a block below the cell over it. */
+        boolean half(int x, int y, int z) {
+            if (y < Y0 || y >= Y1) return false;
+            BitSet b = halves.get(key(x >> 4, z >> 4));
+            return b != null && b.get(i(x, y, z));
+        }
+
+        void halve(int x, int y, int z) {
+            halves.computeIfAbsent(key(x >> 4, z >> 4), k -> new BitSet()).set(i(x, y, z));
+        }
+
+        /** The height the feet are at, standing in this cell. */
+        double floor(int x, int y, int z) {
+            return half(x, y - 1, z) ? y - 0.5 : y;
+        }
 
         boolean water(int x, int y, int z) {
             if (y < Y0 || y >= Y1) return false;
@@ -117,14 +137,31 @@ public final class WalkCheck {
     }
 
     private static Walk walk(Land land, boolean leaps) {
+        Cells cells = paint(land);
+        Land.Site m = land.mouth();
+        Set<Long> seen = bfs(land, cells, new int[]{m.x(), m.y(), m.z()}, null, leaps, true, false);
+        List<String> bad = new ArrayList<>();
+        for (Land.Site s : land.sites()) {
+            if (s.kind() == Land.SiteKind.PORTAL) continue;
+            boolean found = false;
+            for (int dx = -4; dx <= 4 && !found; dx++) for (int dz = -4; dz <= 4 && !found; dz++) for (int dy = -4; dy <= 4 && !found; dy++) found = seen.contains(pack(s.x() + dx, s.y() + dy, s.z() + dz));
+            if (!found) bad.add(s.kind() + " " + s.index() + " at " + s.x() + " " + s.y() + " " + s.z());
+        }
+        return new Walk(seen, bad);
+    }
+
+    /** Every cell of the land, painted once: what is solid, what is water, what is a rung, what is a half block. */
+    private static Cells paint(Land land) {
         Cells cells = new Cells();
         int half = land.halfSize() + 16 >> 4;
         for (int cx = -half; cx < half; cx++) for (int cz = -half; cz < half; cz++) {
             V v = new V(cx * 16, cz * 16);
             land.paint(v);
             v.emit((x, y, z, s) -> {
-                if (y >= Y0 && y < Y1 && V.holds(s)) cells.put(x, y, z, true);
-                else if (y >= Y0 && y < Y1 && s.is(net.minecraft.world.level.block.Blocks.WATER)) cells.flood(x, y, z);
+                if (y >= Y0 && y < Y1 && V.holds(s)) {
+                    cells.put(x, y, z, true);
+                    if (s.hasProperty(net.minecraft.world.level.block.SlabBlock.TYPE) && s.getValue(net.minecraft.world.level.block.SlabBlock.TYPE) == net.minecraft.world.level.block.state.properties.SlabType.BOTTOM) cells.halve(x, y, z);
+                } else if (y >= Y0 && y < Y1 && s.is(net.minecraft.world.level.block.Blocks.WATER)) cells.flood(x, y, z);
                 else if (y >= Y0 && y < Y1 && s.is(net.minecraft.tags.BlockTags.CLIMBABLE)) cells.rung(x, y, z);
             });
         }
@@ -133,17 +170,45 @@ public final class WalkCheck {
             cells.put(e.x(), e.y(), e.z(), V.holds(s));
             if (s.is(net.minecraft.tags.BlockTags.CLIMBABLE)) cells.rung(e.x(), e.y(), e.z());
         }
-        Land.Site m = land.mouth();
+        return cells;
+    }
+
+    /** Where feet stand in a column at about a height (a move's end): the cell with floor under it and room over it. */
+    private static int[] stand(Cells cells, int x, int y, int z) {
+        for (int yy : new int[]{y, y + 1, y - 1, y + 2}) {
+            if (!cells.at(x, yy, z) && !cells.at(x, yy + 1, z) && (cells.at(x, yy - 1, z) || cells.water(x, yy - 1, z))) return new int[]{x, yy, z};
+        }
+        return null;
+    }
+
+    /**
+     * The walk from a start. {@code box} (x0, y0, z0, x1, y1, z1) keeps it inside a stretch, or null; {@code moves} and
+     * {@code leaps}: whether the land's moves and leaps are crossings it takes; {@code strict}: a step up is never more
+     * than a block from where the feet really are (a block and a half from a half step is a mantle, not a step).
+     */
+    private static Set<Long> bfs(Land land, Cells cells, int[] start, int[] box, boolean leaps, boolean moves, boolean strict) {
+        Map<Long, List<Land.Move>> from = new HashMap<>();
+        if (moves) for (Land.Move mv : land.moves()) from.computeIfAbsent(Cells.key(mv.x0(), mv.z0()), k -> new ArrayList<>()).add(mv);
         ArrayDeque<int[]> q = new ArrayDeque<>();
         Set<Long> seen = new HashSet<>();
-        q.add(new int[]{m.x(), m.y(), m.z()});
-        seen.add(pack(m.x(), m.y(), m.z()));
+        q.add(start);
+        seen.add(pack(start[0], start[1], start[2]));
         int[][] dirs = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         while (!q.isEmpty()) {
             int[] p = q.poll();
+            if (box != null && (p[0] < box[0] || p[0] > box[3] || p[1] < box[1] || p[1] > box[4] || p[2] < box[2] || p[2] > box[5])) continue;
             // a crossing that needs a move of the leap, taken by a walker who has it, from where its near lip is stood on
             if (leaps) for (Land.Leap l : land.leaps()) {
                 if (p[1] == l.y0() && Math.abs(p[0] - l.x0()) <= 1 && Math.abs(p[2] - l.z0()) <= 1 && seen.add(pack(l.x1(), l.y1(), l.z1()))) q.add(new int[]{l.x1(), l.y1(), l.z1()});
+            }
+            // a beat's move, from within a cell of where its feet start (a half step's feet are in the cell under)
+            if (moves) for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+                List<Land.Move> here = from.get(Cells.key(p[0] + dx, p[2] + dz));
+                if (here != null) for (Land.Move mv : here) {
+                    if (mv.x0() != p[0] + dx || mv.z0() != p[2] + dz || Math.abs(p[1] - mv.y0()) > 1) continue;
+                    int[] e = stand(cells, mv.x1(), mv.y1(), mv.z1());
+                    if (e != null && seen.add(pack(e[0], e[1], e[2]))) q.add(e);
+                }
             }
             if (cells.climb(p[0], p[1], p[2]) && !cells.at(p[0], p[1] + 1, p[2]) && !cells.at(p[0], p[1] + 2, p[2]) && seen.add(pack(p[0], p[1] + 1, p[2])))
                 q.add(new int[]{p[0], p[1] + 1, p[2]});
@@ -154,6 +219,7 @@ public final class WalkCheck {
                 for (int y = p[1] + 1, low = land.soft() ? Math.max(Y0 + 1, p[1] - 64) : p[1] - 4; y >= low; y--) {
                     boolean stand = (cells.at(x, y - 1, z) || cells.water(x, y - 1, z) || cells.climb(x, y, z)) && !cells.at(x, y, z) && !cells.at(x, y + 1, z);
                     if (stand) {
+                        if (strict && !cells.climb(x, y, z) && cells.floor(x, y, z) - cells.floor(p[0], p[1], p[2]) > 1.01) break;
                         if (seen.add(pack(x, y, z))) q.add(new int[]{x, y, z});
                         // a long drop is a way down, not the way on: the jump over it is still tried
                         stepped = y >= p[1] - 4;
@@ -180,13 +246,33 @@ public final class WalkCheck {
                 }
             }
         }
-        List<String> bad = new ArrayList<>();
-        for (Land.Site s : land.sites()) {
-            if (s.kind() == Land.SiteKind.PORTAL) continue;
-            boolean found = false;
-            for (int dx = -4; dx <= 4 && !found; dx++) for (int dz = -4; dz <= 4 && !found; dz++) for (int dy = -4; dy <= 4 && !found; dy++) found = seen.contains(pack(s.x() + dx, s.y() + dy, s.z() + dz));
-            if (!found) bad.add(s.kind() + " " + s.index() + " at " + s.x() + " " + s.y() + " " + s.z());
+        return seen;
+    }
+
+    /**
+     * The needed moves of a land's beats that aren't (SPEC §72.4): from each one's start, a walk with no moves and no leaps,
+     * kept inside the stretch it belongs to (its Course), and stepping no more than a block up from where the feet really
+     * are, still gets to within a cell of its end. Empty when every move a beat asks for is asked for.
+     */
+    public static List<String> needlessMoves(Land land) {
+        List<Land.Move> asked = new ArrayList<>();
+        for (Land.Move mv : land.moves()) if (mv.needed()) asked.add(mv);
+        if (asked.isEmpty()) return List.of();
+        Cells cells = paint(land);
+        List<String> out = new ArrayList<>();
+        for (Land.Move mv : asked) {
+            int[] st = stand(cells, mv.x0(), mv.y0(), mv.z0());
+            if (st == null) {
+                out.add(MoveProof.describe(mv) + ": nowhere to stand at its start");
+                continue;
+            }
+            int[] box = null;
+            for (Land.Course c : land.courses()) if (c.leg().equals(mv.leg())) box = new int[]{c.x0(), c.y0(), c.z0(), c.x1(), c.y1(), c.z1()};
+            Set<Long> seen = bfs(land, cells, st, box, false, false, true);
+            boolean got = false;
+            for (int dx = -1; dx <= 1 && !got; dx++) for (int dz = -1; dz <= 1 && !got; dz++) for (int dy = 0; dy <= 1 && !got; dy++) got = seen.contains(pack(mv.x1() + dx, mv.y1() + dy, mv.z1() + dz));
+            if (got) out.add(MoveProof.describe(mv) + ": a walk gets there without it");
         }
-        return new Walk(seen, bad);
+        return out;
     }
 }
