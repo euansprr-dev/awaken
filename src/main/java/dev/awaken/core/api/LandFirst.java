@@ -23,9 +23,10 @@ import java.util.concurrent.locks.LockSupport;
  * The server thread counts the missing chunks twice a second (a hash lookup each: about a thousand for a view of 16);
  * any thread may ask. With no chunk made for {@link #STILL_NS} the land isn't coming in, whatever is missing (a chunk
  * waiting on something, a paused world), so nothing waits on it forever, unless the generator is waiting on work of
- * ours ({@link #atWork}: the roads of a lattice chunk it set aside). That is the land coming in too: Euan's new world of
- * 12 Nov stood 30 s at a time with no chunk made and 333 missing while it waited for its roads, and counted as still,
- * it let the road planners take up work kilometres away beside what it waited for.
+ * ours ({@link #atWork}: the roads of a lattice chunk it set aside) or has chunks queued that aren't whole yet. That is
+ * the land coming in too: Euan's new world of 12 Nov stood 30 s at a time with no chunk made and 333 missing while it
+ * waited for its roads, and counted as still, it let the road planners take up work kilometres away beside what it
+ * waited for.
  */
 public final class LandFirst {
     private LandFirst() {}
@@ -132,7 +133,19 @@ public final class LandFirst {
                 for (int z = cz - r; z <= cz + r; z++) if (v.isInViewDistance(x, z) && cache.getChunkNow(x, z) == null) n++;
         }
         missing = n;
-        streaming = n > 0 && (System.nanoTime() - lastMade < STILL_NS || generatorWaits());
+        streaming = n > 0 && (System.nanoTime() - lastMade < STILL_NS || generatorWaits() || generating(server));
+    }
+
+    /**
+     * Whether a level with players has chunk generation queued: chunks only count as made once they're whole, and a view
+     * that grows (a new world's join widens it from 10 to 16) first makes a ring of part-made chunks past its edge, with
+     * none finished for a minute at a time (CI's fresh joins at Euan's seed, 12 Nov: 60 missing for 45 s, read as still).
+     * Read on the server thread, as the game's own shutdown reads it.
+     */
+    private static boolean generating(MinecraftServer server) {
+        for (ServerPlayer p : server.getPlayerList().getPlayers())
+            if (p.level().getChunkSource().chunkMap.worldgenTaskDispatcher.hasWork()) return true;
+        return false;
     }
 
     /** (ChunkEvent.Load, CoreModule) a chunk was made or read: the generator is at work. */

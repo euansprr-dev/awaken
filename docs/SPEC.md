@@ -841,7 +841,11 @@ of `AwakenConfig.Client`.
   last 5 s (with none made for 5 s the land isn't coming in, whatever is missing, so nothing waits on it forever), or
   while world generation waits on work of ours (`atWork(BooleanSupplier)`; Road starts registers its lattice chunks set
   aside for their roads: Euan's new world of 12 Nov stood 30 s at a time with no chunk made and 333 missing while
-  generation waited for its roads, and counted as still, it let the planners take up work kilometres away).
+  generation waited for its roads, and counted as still, it let the planners take up work kilometres away), or while a
+  level with players has chunk generation queued (its worldgen dispatcher's `hasWork()`, read on the server thread as
+  the game's own shutdown reads it): a chunk only counts as made once it's whole, and a view that grows (a new world's
+  join widens it from 10 to 16) first makes a ring of part-made chunks past its edge with none whole for a minute at a
+  time (CI's fresh joins at Euan's seed: 60 missing for 45 s, read as still).
   `hold(mostNs)` waits off the server thread while it's true; `later()` is two threads of our own at the lowest
   priority whose jobs each wait first (at most a minute), in place of `Util.backgroundExecutor()` for optional
   searches: that pool is the game's own, where world generation runs. `/awaken core land` says the count.
