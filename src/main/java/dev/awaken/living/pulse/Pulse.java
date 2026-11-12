@@ -7,6 +7,7 @@ import dev.awaken.core.AwakenNet;
 import dev.awaken.core.DirectorLog;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.HearthHooks;
+import dev.awaken.core.api.Ready;
 import dev.awaken.living.LivingNet;
 import dev.awaken.living.api.Regions;
 import dev.awaken.progression.Progression;
@@ -18,11 +19,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +39,11 @@ import java.util.UUID;
  * the weather and time of day, stays quiet inside a Hearth's radius, the city and gates. Happenings are world state
  * (saved data {@code awaken:living_pulse}, schema 1), shared, and end on their own. Witnessing a kind the first time is a
  * discovery (the Almanac).
+ * <p>
+ * Happenings come last (SPEC §21.6, Euan 12 Nov: "those should never be the thing that takes away from anything else"):
+ * the Pulse runs only on time nothing else needs (this tick well short of its 50 ms, the server not behind), never waits
+ * for land or makes any load, looks for a place a few columns a tick, rests while a player flies fast or new land is still
+ * coming in round them, and brings a herd two creatures a tick.
  */
 public final class Pulse extends SavedData {
     static final int SCHEMA = 1;
@@ -44,6 +52,16 @@ public final class Pulse extends SavedData {
     /** A player's first happening after this long outdoors; then at least this long between two they're given. */
     static final long FIRST_AFTER = 20L * 120, GAP_EMPTY = 20L * 90, GAP_BUSY = 20L * 60 * 10;
     static final int MAX_NEAR = 3;
+    /** Time this tick must still have before the Pulse does anything, and the average tick past which it rests. */
+    static final long SPARE_NS = 20_000_000L, BEHIND_NS = 35_000_000L;
+    /** A plan looks at this many columns a tick per kind, for at most this many ticks, one player's plan a tick. */
+    static final int SITE_TRIES = 5, PLAN_TICKS = 12;
+    /** Blocks a second (over the last second) past which a player is moving too fast for a happening to be planned. */
+    static final double FAST = 10.0;
+    /** Chunks round a player that must all be made before one is planned for them. */
+    static final int SETTLED = 4;
+    /** Creatures brought a tick, and how many ticks one waits for its land before it's let go. */
+    static final int BRING_PER_TICK = 2, BRING_WAIT = 200;
 
     public static final Codec<Pulse> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.optionalFieldOf("schemaVersion", SCHEMA).forGetter(p -> SCHEMA),
@@ -59,6 +77,16 @@ public final class Pulse extends SavedData {
     private final transient Map<UUID, Long> lastGiven = new HashMap<>();
     private final transient Map<UUID, String> lastKind = new HashMap<>();
     private final transient Map<UUID, Boolean> sentTells = new HashMap<>();
+    /** Per player (not saved): ticks of planning left, where they stood a second ago, and how fast they've gone since. */
+    private final transient Map<UUID, Integer> planning = new HashMap<>();
+    private final transient Map<UUID, Vec3> lastPos = new HashMap<>();
+    private final transient Map<UUID, Double> speed = new HashMap<>();
+    /** Creatures still to bring (not saved: after a restart a happening goes on with those it has). */
+    private final transient ArrayDeque<Pending> bringing = new ArrayDeque<>();
+    private transient int nextRun;
+
+    /** One creature to bring for a happening: its kind, where, tags to give it, ticks it has waited for its land. */
+    private record Pending(long happening, EntityType<?> type, BlockPos at, String[] tags, int waited) {}
 
     public Pulse() {
         this(List.of(), 1L);
@@ -108,13 +136,101 @@ public final class Pulse extends SavedData {
         ServerLevel level = server.overworld();
         int t = server.getTickCount();
         Pulse p = get(server);
-        if (t % 20 == 0) p.run(level);
+        if (t % 20 == 0) p.watch(level);
         if (t % 40 == 0) p.sendTells(level);
-        // GameTests start happenings themselves: none comes to a test's player on its own, across other tests' plots
-        if (server instanceof net.minecraft.gametest.framework.GameTestServer) return;
-        for (ServerPlayer pl : server.getPlayerList().getPlayers()) {
-            if ((t + (pl.getUUID().hashCode() & 0xFF)) % 200 == 0) p.consider(level, pl);
+        // GameTests start happenings themselves: none comes to a test's player on its own, across other tests' plots; and
+        // a test server never waits between ticks, so it never has time to spare: its happenings run on the clock
+        boolean test = server instanceof net.minecraft.gametest.framework.GameTestServer;
+        if (!test && !spare(server)) return;
+        if (t >= p.nextRun) {
+            p.nextRun = t + 20;
+            p.run(level);
         }
+        p.bringSome(level, BRING_PER_TICK);
+        if (test) return;
+        boolean planned = false;
+        for (ServerPlayer pl : server.getPlayerList().getPlayers()) {
+            if (p.planning.containsKey(pl.getUUID())) {
+                if (!planned && p.calm(pl)) {
+                    p.planStep(level, pl);
+                    planned = true;
+                }
+            } else if ((t + (pl.getUUID().hashCode() & 0xFF)) % 200 == 0 && p.calm(pl)) p.consider(level, pl);
+        }
+    }
+
+    /**
+     * Whether the server has time nothing else needs (SPEC §21.6): this tick well short of its share (20 ms or more of
+     * its 50 left), and not behind on the average of the last hundred ticks.
+     */
+    static boolean spare(MinecraftServer server) {
+        return Ready.spareNanos(server) > SPARE_NS && server.getAverageTickTimeNanos() < BEHIND_NS;
+    }
+
+    /** Every second: how far each player has gone (a fast flight rests the Pulse for them). */
+    private void watch(ServerLevel level) {
+        var list = level.getServer().getPlayerList();
+        if (planning.size() + lastPos.size() > 2 * list.getPlayerCount()) {
+            planning.keySet().removeIf(id -> list.getPlayer(id) == null);
+            lastPos.keySet().removeIf(id -> list.getPlayer(id) == null);
+            speed.keySet().removeIf(id -> list.getPlayer(id) == null);
+        }
+        for (ServerPlayer pl : list.getPlayers()) {
+            Vec3 now = pl.position(), was = lastPos.put(pl.getUUID(), now);
+            speed.put(pl.getUUID(), was == null || pl.level() != level ? 0.0 : Math.hypot(now.x - was.x, now.z - was.z));
+        }
+    }
+
+    /** Not moving fast, and the land round them made: a happening may be planned for this player now. */
+    private boolean calm(ServerPlayer pl) {
+        return speed.getOrDefault(pl.getUUID(), 0.0) < FAST && Ready.settled(pl, SETTLED);
+    }
+
+    /** One tick of a player's plan: a kind, a few columns. Done when a place is found or its ticks run out. */
+    private void planStep(ServerLevel level, ServerPlayer p) {
+        UUID id = p.getUUID();
+        int left = planning.getOrDefault(id, 1) - 1;
+        int was = Behaviours.siteTries;
+        Behaviours.siteTries = SITE_TRIES;
+        Happening h;
+        try {
+            h = startFor(level, p, null, 1);
+        } finally {
+            Behaviours.siteTries = was;
+        }
+        if (h == null && left > 0) {
+            planning.put(id, left);
+            return;
+        }
+        planning.remove(id);
+        lastGiven.put(id, level.getGameTime() - (h == null ? GAP_EMPTY - 20L * 30 : 0)); // nothing fit: look again in 30 s
+    }
+
+    /** A creature to bring for this happening, a little later (Behaviours.bringLater). */
+    void later(Happening h, EntityType<?> type, BlockPos at, String[] tags) {
+        bringing.add(new Pending(h.id, type, at.immutable(), tags, 0));
+    }
+
+    /** Brings up to {@code most} waiting creatures, each where its land is made; one whose happening is over is let go. */
+    void bringSome(ServerLevel level, int most) {
+        for (int n = bringing.size(); n > 0 && most > 0; n--) {
+            Pending w = bringing.poll();
+            Happening h = null;
+            for (Happening o : happenings) if (o.id == w.happening()) h = o;
+            if (h == null) continue;
+            if (!Ready.at(level, w.at())) {
+                if (w.waited() < BRING_WAIT) bringing.add(new Pending(w.happening(), w.type(), w.at(), w.tags(), w.waited() + 1));
+                continue;
+            }
+            Entity e = Behaviours.bring(level, h, w.type(), w.at());
+            if (e != null) for (String tag : w.tags()) e.addTag(tag);
+            most--;
+        }
+    }
+
+    /** Tests: every waiting creature now. */
+    void bringAll(ServerLevel level) {
+        bringSome(level, Integer.MAX_VALUE);
     }
 
     /** Every second: each happening moves on, ends, or is witnessed. */
@@ -184,8 +300,7 @@ public final class Pulse extends SavedData {
         int near = nearCount(level, p);
         if (near >= MAX_NEAR) return;
         if (now - last < (near == 0 ? GAP_EMPTY : GAP_BUSY)) return;
-        Happening h = startFor(level, p, null);
-        lastGiven.put(p.getUUID(), now - (h == null ? GAP_EMPTY - 20L * 30 : 0)); // nothing fit: look again in 30 s
+        planning.put(p.getUUID(), PLAN_TICKS); // the looking is spread over the next ticks (planStep)
     }
 
     /** Happenings (and the anomalies, which share the land) near a player. */
@@ -207,6 +322,11 @@ public final class Pulse extends SavedData {
      * kind they haven't witnessed, never the same as their last). Null when nothing fits here and now.
      */
     @Nullable Happening startFor(ServerLevel level, ServerPlayer p, @Nullable String only) {
+        return startFor(level, p, only, 3);
+    }
+
+    /** As {@link #startFor(ServerLevel, ServerPlayer, String)}, trying at most {@code kinds} kinds. */
+    @Nullable Happening startFor(ServerLevel level, ServerPlayer p, @Nullable String only, int kinds) {
         RandomSource r = level.getRandom();
         List<Map.Entry<String, HappeningDef>> pool = new ArrayList<>();
         List<Double> weights = new ArrayList<>();
@@ -226,7 +346,7 @@ public final class Pulse extends SavedData {
             pool.add(e);
             weights.add(w);
         }
-        for (int tries = 0; tries < 3 && !pool.isEmpty(); tries++) {
+        for (int tries = 0; tries < kinds && !pool.isEmpty(); tries++) {
             double total = 0;
             for (double w : weights) total += w;
             double roll = r.nextDouble() * total;

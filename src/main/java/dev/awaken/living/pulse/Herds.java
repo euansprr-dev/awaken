@@ -49,7 +49,7 @@ final class Herds {
             if (herd == null) herd = "mossback";
             RandomSource r = level.getRandom();
             int n = 10 + r.nextInt(5);
-            for (int i = 0; i < n; i++) Behaviours.bring(level, h, Behaviours.fauna(herd), Behaviours.near(level, h.from, 6, r));
+            for (int i = 0; i < n; i++) Behaviours.bringLater(level, h, Behaviours.fauna(herd), Behaviours.near(level, h.from, 6, r));
         }
 
         @Override
@@ -112,7 +112,7 @@ final class Herds {
             String herd = herdOf(level, h.from);
             if (herd == null) herd = "mossback";
             RandomSource r = level.getRandom();
-            for (int i = 0; i < 8 + r.nextInt(3); i++) Behaviours.bring(level, h, Behaviours.fauna(herd), Behaviours.near(level, h.from, 4, r));
+            for (int i = 0; i < 8 + r.nextInt(3); i++) Behaviours.bringLater(level, h, Behaviours.fauna(herd), Behaviours.near(level, h.from, 4, r));
             level.playSound(null, h.from, SoundEvents.HORSE_GALLOP, SoundSource.AMBIENT, 6.0F, 0.5F);
         }
 

@@ -4,6 +4,7 @@ import dev.awaken.Awaken;
 import dev.awaken.core.api.GateHooks;
 import dev.awaken.core.api.HearthHooks;
 import dev.awaken.core.api.MobHooks;
+import dev.awaken.core.api.Ready;
 import dev.awaken.mobs.MobTypes;
 import dev.awaken.terrain.api.CityBasin;
 import net.minecraft.core.BlockPos;
@@ -73,14 +74,17 @@ public final class Behaviours {
         return def.groups().isEmpty() || def.groups().contains(group);
     }
 
-    /** The ground column top here (motion-blocking, no leaves). */
+    /**
+     * The ground column top here (motion-blocking, no leaves); the world's floor where the land isn't made yet (never a
+     * wait for it: SPEC §21.6, happenings only use time nothing else needs).
+     */
     static BlockPos surface(ServerLevel level, int x, int z) {
-        return new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+        return new BlockPos(x, Ready.height(level, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
     }
 
     /** Never a Hearth's land, the city, near a gate or in an unloaded chunk. */
     static boolean allowed(ServerLevel level, BlockPos at) {
-        if (!level.hasChunkAt(at) || CityBasin.reserved(at.getX(), at.getZ())) return false;
+        if (!Ready.at(level, at) || CityBasin.reserved(at.getX(), at.getZ())) return false;
         if (HearthHooks.inside(level, at)) return false;
         return GateHooks.near(level, at, 32).isEmpty();
     }
@@ -95,21 +99,25 @@ public final class Behaviours {
         int most = 0;
         for (int[] d : new int[][]{{4, 0}, {-4, 0}, {0, 4}, {0, -4}}) {
             BlockPos n = new BlockPos(at.getX() + d[0], 0, at.getZ() + d[1]);
-            if (!level.hasChunkAt(n)) continue;
+            if (!Ready.at(level, n)) continue;
             most = Math.max(most, Math.abs(surface(level, n.getX(), n.getZ()).getY() - at.getY()));
         }
         return most;
     }
 
+    /** Columns {@link #spot} looks at in one call: 40 for a command; the Pulse's own plans look at a few a tick (SPEC §21.6). */
+    static int siteTries = 40;
+
     /**
      * A place {@code min}..{@code max} blocks from the player in the land {@code def} wants (its groups), allowed and
-     * passing {@code ok}; null when 40 tries find none.
+     * passing {@code ok}; null when {@link #siteTries} tries find none. A column whose land isn't made yet is passed over,
+     * never waited for.
      */
     static @Nullable BlockPos spot(ServerLevel level, ServerPlayer p, HappeningDef def, int min, int max, RandomSource r, Predicate<BlockPos> ok) {
-        for (int i = 0; i < 40; i++) {
+        for (int i = 0; i < siteTries; i++) {
             double a = r.nextDouble() * Math.PI * 2, d = min + r.nextDouble() * (max - min);
             int x = p.getBlockX() + (int) (Math.cos(a) * d), z = p.getBlockZ() + (int) (Math.sin(a) * d);
-            if (!level.hasChunkAt(new BlockPos(x, 0, z))) continue;
+            if (!Ready.at(level, x, z)) continue;
             BlockPos at = surface(level, x, z);
             if (!allowed(level, at) || !groupFits(def, group(level, at)) || !ok.test(at)) continue;
             return at;
@@ -135,14 +143,14 @@ public final class Behaviours {
 
     private static BlockPos end(ServerLevel level, BlockPos centre, double ox, double oz) {
         int x = centre.getX() + (int) ox, z = centre.getZ() + (int) oz;
-        return level.hasChunkAt(new BlockPos(x, 0, z)) ? surface(level, x, z) : new BlockPos(x, centre.getY(), z);
+        return Ready.at(level, new BlockPos(x, 0, z)) ? surface(level, x, z) : new BlockPos(x, centre.getY(), z);
     }
 
     // ---- creatures --------------------------------------------------------------------------------------------------
 
     /** One of the happening's creatures here (persistent, tagged, listed); null if it couldn't be made. */
     static @Nullable Entity bring(ServerLevel level, Happening h, EntityType<?> type, BlockPos at) {
-        if (type == null || !level.hasChunkAt(at)) return null;
+        if (type == null || !Ready.at(level, at)) return null;
         Entity e = type.spawn(level, at, EntitySpawnReason.EVENT);
         if (e == null) return null;
         if (e instanceof Mob m) m.setPersistenceRequired();
@@ -155,10 +163,18 @@ public final class Behaviours {
         return MobTypes.type(id);
     }
 
+    /**
+     * One of a group, brought a little later (SPEC §21.6: a herd is never made in one tick): the Pulse brings two a tick
+     * while the server has time to spare, each where its land is made; {@code tags} go on it as it comes.
+     */
+    static void bringLater(ServerLevel level, Happening h, @Nullable EntityType<?> type, BlockPos at, String... tags) {
+        if (type != null) Pulse.get(level.getServer()).later(h, type, at, tags);
+    }
+
     /** Somewhere near {@code at} for one of a group: a ring of {@code spread}, on the surface. */
     static BlockPos near(ServerLevel level, BlockPos at, int spread, RandomSource r) {
         int x = at.getX() + r.nextInt(spread * 2 + 1) - spread, z = at.getZ() + r.nextInt(spread * 2 + 1) - spread;
-        return level.hasChunkAt(new BlockPos(x, 0, z)) ? surface(level, x, z) : at;
+        return Ready.at(level, new BlockPos(x, 0, z)) ? surface(level, x, z) : at;
     }
 
     /**
@@ -184,16 +200,15 @@ public final class Behaviours {
         h.centre = n > 0 ? new Vec3(sx / n, sy / n, sz / n) : h.along(t);
     }
 
-    /** Ticks between a happening's orders to each of its creatures (each on its own beat), and how long a flier's lasts. */
-    static final int ORDER_EVERY = 20, LEAD_TICKS = 60;
+    /** How long a flier's order lasts (the Pulse renews it every second while the happening runs). */
+    static final int LEAD_TICKS = 60;
 
     /**
-     * Sends one of a happening's creatures (the {@code k}-th) toward (x, y, z) once a second on its own beat, never every
-     * tick (a fresh path for every animal every tick was waste): a flier through the air (it glides there and circles; a
-     * path would end on the ground, a dive into the floor), a walker on a path.
+     * Sends one of a happening's creatures toward (x, y, z). Called from a behaviour's tick, so once a second (the Pulse's
+     * run), never every tick: a flier through the air (it glides there and circles; a path would end on the ground, a dive
+     * into the floor), a walker on a path.
      */
     static void send(ServerLevel level, PathfinderMob m, double x, double y, double z, double speed, int k) {
-        if ((level.getGameTime() + k * 7L) % ORDER_EVERY != 0) return;
         if (!MobHooks.lead(m, x, z, speed, LEAD_TICKS)) m.getNavigation().moveTo(x, y, z, speed);
     }
 

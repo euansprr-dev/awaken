@@ -38,7 +38,12 @@ public final class PulseTests {
                 Progression.awaken(p);
                 // a migration: its herd arrives, walks, and leaves with it
                 mig = pulse.openAt(level, "great_migration", a, b);
-                h.assertTrue(mig != null && mig.participants.size() >= 10, "a herd of ten or more arrives: " + (mig == null ? 0 : mig.participants.size()));
+                // the herd comes two a tick on the Pulse's spare time (SPEC §21.6): none of it in the tick it opens
+                h.assertTrue(mig != null && mig.participants.isEmpty(), "no herd made in the tick it opens");
+                pulse.bringSome(level, Pulse.BRING_PER_TICK);
+                h.assertTrue(mig.participants.size() <= Pulse.BRING_PER_TICK, "two a tick: " + mig.participants.size());
+                pulse.bringAll(level);
+                h.assertTrue(mig.participants.size() >= 10, "a herd of ten or more arrives: " + (mig == null ? 0 : mig.participants.size()));
                 h.assertTrue(Behaviours.alive(level, mig) >= 10, "and stands in the world");
                 // the Almanac: standing near it is witnessing it, once
                 pulse.run(level); // the herd stands where the ground really is (a plot may sit under terrain): find it
