@@ -3,7 +3,8 @@
 # chunk edges meanwhile). His world's seed, at his render distance (16), standing where the game puts him, no moves.
 # Every five seconds the chunks in view not made yet (/awaken core land); shots without waiting for the terrain at about
 # 15 s, 45 s, 90 s and 150 s after the opening. Read the log for "[core] land", "[road] timer", "has run" (the stall
-# watch) and "Can't keep up"; the time from "joined the game" to the first "0 chunks in view not made yet".
+# watch) and "Can't keep up"; the time from "joined the game" to the first "0 chunks in view not made yet". Last, the
+# planners' noise columns against the generator's own over Tectonic's noise, block for block and timed ("[road] columns").
 # Run: tools/tour-ci.sh tools/autopilot/land-join-ci.txt 2400 PACK=perf,world TECTONIC=awakened
 world land_join creative -2048970511949968766
 waitworld
@@ -106,4 +107,6 @@ cmd awaken core land
 wait 100
 cmd awaken core land
 shotnow lj_180s
+cmd awaken village road columns 1600
+wait 2400
 quit
