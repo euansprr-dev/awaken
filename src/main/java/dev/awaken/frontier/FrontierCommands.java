@@ -17,7 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Set;
 
 /**
- * /awaken frontier status · goto ridge|landing · look ridge|landing [0-5] · fly [quick] · ready · letter · invite &lt;bell&gt; · homecoming (SPEC §67).
+ * /awaken frontier status · goto ridge|landing · look ridge|landing [0-11] · fly [quick] · ready · letter · invite &lt;bell&gt; · homecoming (SPEC §67).
  * Dev and tours: where everything is, standing at either helm, a flight from where you stand, the skiff's go-ahead
  * without Ilse's scene, a letter, an invitation and the homecoming now.
  */
@@ -32,9 +32,9 @@ final class FrontierCommands {
                         .then(Commands.literal("landing").executes(c -> go(c.getSource(), Moorings.Which.LANDING))))
                 .then(Commands.literal("look")
                         .then(Commands.literal("ridge").executes(c -> look(c.getSource(), Moorings.Which.RIDGE, 0))
-                                .then(Commands.argument("view", IntegerArgumentType.integer(0, 5)).executes(c -> look(c.getSource(), Moorings.Which.RIDGE, IntegerArgumentType.getInteger(c, "view")))))
+                                .then(Commands.argument("view", IntegerArgumentType.integer(0, VIEWS - 1)).executes(c -> look(c.getSource(), Moorings.Which.RIDGE, IntegerArgumentType.getInteger(c, "view")))))
                         .then(Commands.literal("landing").executes(c -> look(c.getSource(), Moorings.Which.LANDING, 0))
-                                .then(Commands.argument("view", IntegerArgumentType.integer(0, 5)).executes(c -> look(c.getSource(), Moorings.Which.LANDING, IntegerArgumentType.getInteger(c, "view"))))))
+                                .then(Commands.argument("view", IntegerArgumentType.integer(0, VIEWS - 1)).executes(c -> look(c.getSource(), Moorings.Which.LANDING, IntegerArgumentType.getInteger(c, "view"))))))
                 .then(Commands.literal("fly").executes(c -> fly(c.getSource(), false))
                         .then(Commands.literal("quick").executes(c -> fly(c.getSource(), true))))
                 .then(Commands.literal("ready").executes(c -> {
@@ -104,9 +104,18 @@ final class FrontierCommands {
         return 0;
     }
 
+    /** Where look stands (the plan's blocks, south-facing) and what it looks at: the berth's middle, or a block of the plan. */
+    private static final int[][] EYES = {{13, 3, 16}, {-15, 6, -17}, {6, 30, -7}, {15, -3, 3}, {-4, 0, -11}, {3, -3, 19},
+            {9, 0, 6}, {7, 7, -2}, {-4, 7, -1}, {2, 4, -12}, {-3, 2, -10}, {-4, 9, 0}};
+    private static final double[][] AIMS = {null, null, null, null, null, null,
+            {5, 3, 2.5}, {5, 3, 2.5}, {-5, 3, 2.5}, {0, 4, -7}, {-1, 3, -7}, {-8, 9, -2.5}};
+    static final int VIEWS = EYES.length;
+
     /**
      * The camera on a built mooring for a picture: 0 off the open bow quarter, 1 the stern quarter with the pier and the
-     * wind-wheel, 2 high over it, 3 low from the open side under the wing, 4 from the pier's steps, 5 from the ground ahead.
+     * wind-wheel, 2 high over it, 3 low from the open side under the wing, 4 from the pier's steps, 5 from the ground ahead;
+     * close on the canvas where it meets its wood (SPEC §67.4): 6 under the open wing's root at its boom, 7 over it, 8 over
+     * the pier-side wing's, 9 the wind-wheel from astern, 10 its lower blades from the quarter, 11 the pennant on the mast.
      */
     private static int look(CommandSourceStack src, Moorings.Which which, int view) throws CommandSyntaxException {
         ServerPlayer p = src.getPlayerOrException();
@@ -116,14 +125,14 @@ final class FrontierCommands {
             src.sendFailure(Component.literal("Not built yet (/awaken frontier goto " + which.name().toLowerCase(java.util.Locale.ROOT) + ")."));
             return 0;
         }
-        int[][] eyes = {{13, 3, 16}, {-15, 6, -17}, {6, 30, -7}, {15, -3, 3}, {-4, 0, -11}, {3, -3, 19}};
-        int[] e = eyes[view];
+        int[] e = EYES[view];
         BlockPos eye = Skiff.at(m.origin(), m.facing(), e[0], e[1], e[2]);
         // a picture is taken from the open air: lifted clear of any land in the way
         ServerLevel level = server.overworld();
         for (int up = 0; up < 12 && (!level.getBlockState(eye).getCollisionShape(level, eye).isEmpty()
                 || !level.getBlockState(eye.above()).getCollisionShape(level, eye.above()).isEmpty()); up++) eye = eye.above();
-        double tx = m.origin().getX() + 0.5, ty = m.origin().getY() + 2.5, tz = m.origin().getZ() + 0.5;
+        double[] aim = AIMS[view] == null ? new double[] {0, 2, 0} : AIMS[view], w = Skiff.turn(m.facing(), aim[0], aim[2]);
+        double tx = m.origin().getX() + 0.5 + w[0], ty = m.origin().getY() + aim[1] + 0.5, tz = m.origin().getZ() + 0.5 + w[1];
         double dx = tx - (eye.getX() + 0.5), dy = ty - (eye.getY() + 1.62), dz = tz - (eye.getZ() + 0.5);
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz)), pitch = (float) -Math.toDegrees(Math.atan2(dy, Math.hypot(dx, dz)));
         p.teleportTo(server.overworld(), eye.getX() + 0.5, eye.getY(), eye.getZ() + 0.5, Set.of(), yaw, pitch, true);

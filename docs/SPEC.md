@@ -25929,12 +25929,14 @@ country"; her goodbye tells you the skiff brings you back whenever you want.
 until you've landed); "Go and hear the … rung for you" (optional); "Go home to Carillon" (after the peal).
 
 **67.11 Commands and checks.**
-- `/awaken frontier status | goto ridge|landing | look ridge|landing [0-5] | fly [quick] | ready | letter | invite <bell> | homecoming`.
+- `/awaken frontier status | goto ridge|landing | look ridge|landing [0-11] | fly [quick] | ready | letter | invite <bell> | homecoming`.
 - GameTests (`FrontierTests`, pure): `frontier_landing_fair` (20 seeds, 5–7 km, fair ground, the same every time),
   `frontier_levels_rules_four` (E to 1,300 round the landing, the city's ring, rules 3 unchanged, harder past it),
   `frontier_skiff_shape` (every facing: no two parts in one block, all in the footprint, the stand on the deck, the bow
-  the way it faces).
-- Tours: `far-landing-flight`, `far-landing-world`, `far-landing-homecoming` (seed 4245).
+  the way it faces, every lashed side of canvas against a spar).
+- `look` 0-5 frame the berth; 6-11 are close on the canvas where it meets its wood (each wing's root at its boom from
+  under and over, the wind-wheel from astern and its quarter, the pennant at the mast).
+- Tours: `far-landing-flight`, `far-landing-world`, `far-landing-homecoming`, `skiff-sails` (seed 4245).
 - Nothing here has been played by a person. The skiff and mooring picture goes to Euan before merge.
 
 ## 68. The Whole Boss Fight (plan docs/boss-experience/PLAN.md, page https://claude.ai/artifact/VDXqPTJJxktRgDLiJJRdH7; Euan approved all fourteen decisions 2026-11-11: "Go with all")
