@@ -58,10 +58,6 @@ final class StrikeFeel {
         Direction face = e.getFace() == null ? Direction.UP : e.getFace();
         switch (e.getAction()) {
             case START -> {
-                if (clock - lastHold > 2) {
-                    bites = -1;
-                    dugFrom = clock;
-                }
                 lastHold = clock;
                 target = pos.asLong();
                 progress = 0;
@@ -93,7 +89,6 @@ final class StrikeFeel {
     static void bite(ClientLevel level, LocalPlayer p, BlockPos pos, Direction face, BlockState s, boolean last) {
         Minecraft mc = Minecraft.getInstance();
         lastBite = clock;
-        bites++;
         RandomSource r = level.getRandom();
         boolean aimed = mc.hitResult instanceof BlockHitResult bh && bh.getType() == HitResult.Type.BLOCK && bh.getBlockPos().equals(pos);
         Vec3 at = aimed ? mc.hitResult.getLocation() : Vec3.atCenterOf(pos).add(face.getStepX() * 0.5, face.getStepY() * 0.5, face.getStepZ() * 0.5);
@@ -192,8 +187,6 @@ final class StrikeFeel {
 
     // the dig motion's clock (DigMotion): client ticks, the last bite and the last tick the attack was held on a block
     static int clock, lastBite = -100, lastHold = -100;
-    /** Bites of this dig, and the tick it began (a forged pick's two-handed dig: big and small in turn, eased in from rest). */
-    static int bites, dugFrom = -100;
 
     static void tick() {
         clock++;

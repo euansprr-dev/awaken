@@ -14887,7 +14887,8 @@ first, then P2 (pick, lamps), P3 (air, dark), P4 (styles, more mouths).
 - **Dig motion** (`delve.client.DigMotion`, first person): keyed to the client's bites (contact at phase 0): pick recoil
   to 0.16, wind-up to 0.68 (+17° pitch, back 0.07), strike eased in to the next bite (−15°); a shovel thrusts and lifts,
   drawn back low. Eases out within 3 ticks of letting go; 0.4 with reduced motion. A view nudge of 0.22° a bite (0.45°
-  true) through `CombatFeedback.kick`. Third person keeps vanilla's swing.
+  true) through `CombatFeedback.kick`. Third person keeps vanilla's swing. A forged pick takes no keys: its dig is
+  vanilla's swing alone (§49.8).
 - **Settings** (`awaken-delve-client.toml`): `strike_particles`, `true_strikes` (both on).
 
 ### 34.4 The Delver's Pick (built: asleep P1d, the verses and their gifts P2)
@@ -23009,7 +23010,7 @@ An update never changes a pick by itself. Holding the old `waking_pick` at any a
 ### 49.8 In the hand
 The picks draw as meshes (`arms.client.PickRenderer`, `awaken:pick` special model, `AWMS` with a group byte per triangle): the handle takes the rank's rings only for ranks the pick has passed; the head shows its Temper colour at its working end (the oxide it was stopped at), its wear, and a notch per ten lode hearts, up to six. Any pick is one haft and one head, so it reads from across a cave by its shape.
 
-**The dig** (`delve.client.DigMotion`, `PickHands`): a two-handed overhead blow timed to the bite clock. The off hand grips the haft while it's empty and stays where it is when not. It pulls back further for a big bite and less for a quick one, and it stops at the wall rather than passing through it. Third person uses an arm-pose transformer (`AWAKEN_PICK_DIG`), so other players see it too.
+**Held and swung as vanilla's pickaxe** (Euan 2026-11-12: "the custom picks are being held the wrong way, the animation isn't even hitting, it's just wobbling, and overall it needs to match vanilla animations and angle"). The hold is vanilla's `item/handheld` stance in both views: in first person the haft stands 70° up, leaned back 20° toward the eye, its flat to the side, the head running fore and aft with the leading end ahead, the fist where vanilla's sprite has it, at the picks' own size (0.43); third person is vanilla's turn with the fist 4.5 px further down the haft. Written by `tools/art/specs/arms_picks.py holds` into every `<id>_in_hand.json`. It had stood 64° up with the head's curve turned toward the eye (roll 38), which laid the head sideways across the view. The dig is vanilla's own mining swing, restarted every 4 ticks, which strikes down onto the block a tick after each bite, in one hand in both views. Nothing is added on top: no `DigMotion` keys and no off hand on the haft. The two-handed blow that replaced vanilla's swing (`PickHands`, the `AWAKEN_PICK_DIG` arm pose) is gone. The bite's sparks, sounds and view nudge (§34.3) are unchanged.
 
 **The Mattock turns in the hand** (`arms.client.PickTurn`), Euan 2026-11-09: look from rock to earth or wood and the holder tosses it a little way up the haft, spins it a half turn about the haft and catches it with the adze leading; look back at rock and it goes round again. 7 ticks a turn (3 with reduced motion), after a steady look of 2 ticks, at most one turn every 2 ticks. Purely what's seen and heard: the server isn't told, the dig is never slowed, and the block breaks at the same pace whichever end leads. It's worked out for anyone holding one within 32 blocks, from where they're looking, one ray a tick. A freshly drawn Mattock takes its side at once with no flourish. Which end leads is the item's own (`plus_leads` in the JSON per display context), since the two hands and third person mirror differently.
 
