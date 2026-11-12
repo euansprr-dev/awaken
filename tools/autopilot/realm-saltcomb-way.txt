@@ -1,0 +1,81 @@
+# Saltcomb Flats on plan 2 (SPEC 50.9 "Open lands, fixed"): the lights over the Wardens, the seals on the Lord's door, the
+# teaching window, and every line of stones to jump along, from just short of it. Entered with gate realm_enter, which rolls
+# today's plan. A creative camera, peaceful: the lights belong to the run's state, not to monsters standing.
+world autopilot_realm_saltcomb_way creative 20261112
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+
+cmd awaken gate realm_enter E awaken:saltcomb_flats
+need realm
+# the System says what the lights are six seconds in, the first two open lands only
+wait 200
+shot saltway_teach
+screen close
+hud off
+wait 20
+
+# from the way in: each Warden's pillar over the land, at noon and at dusk
+cmd awaken gate realm_at MOUTH 0 0 3 0
+look 215 -18
+wait 80
+shot saltway_mouth_noon
+cmd time set 13200
+wait 40
+shot saltway_mouth_dusk
+look 250 -18
+wait 40
+shot saltway_mouth_dusk_east
+look 160 -18
+wait 40
+shot saltway_mouth_dusk_west
+
+# the seals on the Lord's door, from the road
+cmd awaken gate realm_at MOUTH 0 0 6 -196
+look 180 -6
+wait 80
+shot saltway_door_seals
+cmd time set 6000
+wait 40
+shot saltway_door_seals_noon
+
+# every line of stones, from a little short of it, a few blocks up
+cmd awaken gate realm_leg MOVEMENT 0 14 6
+wait 80
+shot saltway_stones_0
+cmd awaken gate realm_leg MOVEMENT 1 14 6
+wait 80
+shot saltway_stones_1
+cmd awaken gate realm_leg MOVEMENT 2 14 6
+wait 80
+shot saltway_stones_2
+cmd awaken gate realm_leg MOVEMENT 3 14 6
+wait 80
+shot saltway_stones_3
+cmd awaken gate realm_leg MOVEMENT 4 14 6
+wait 80
+shot saltway_stones_4
+
+# the comb table's Warden under its light, and the drum's
+cmd awaken gate realm_leg WARDEN 0 16 5
+wait 80
+shot saltway_warden_0
+cmd awaken gate realm_leg WARDEN 2 16 5
+wait 80
+shot saltway_warden_2
+
+# the run on the HUD at a camp
+hud on
+cmd awaken gate realm_leg FIGHT 0 8 2
+wait 60
+shot saltway_hud
+quit
