@@ -23049,9 +23049,20 @@ still the lock's. Sneak and left click: undo. Right click on a block that has it
 The Mallet carries `MalletData` (mode, look id).
 
 **52.2 Knock.** One block `awaken:shaped` (no item) with state SHAPE, FACING, WATERLOGGED, GLOW (the base's light, so light never
-reads a block entity off the main thread) and a block entity holding `base` and `look` as block states (schema 1). Nine shapes, one
-outline each, pushed across the block and turned by the facing: FULL, HALF_BOTTOM, HALF_TOP, SLAB, NOTCH, BEVEL, ROUND, UNDER, COVE.
-Mesh, collision (slopes in steps of an eighth), occlusion and preview come from the same outline. Where you hit picks the cut. On a
+reads a block entity off the main thread), CORNER, and a block entity holding `base` and `look` as block states (schema 1). Nine
+shapes, one outline each, pushed across the block and turned by the facing: FULL, HALF_BOTTOM, HALF_TOP, SLAB, NOTCH, BEVEL, ROUND,
+UNDER, COVE. Mesh, collision (slopes in steps of an eighth), occlusion, the outline and both previews come from the same outline.
+**Corners** (Euan, 12 Nov 2026: "make these connect when you use the mallet so it auto makes corners"). The six cuts with a front
+(SLAB, NOTCH, BEVEL, ROUND, UNDER, COVE: the edge cuts) join at corners by vanilla's own stair rule (`StairBlock.getStairsShape`,
+`Corners`): the same cut behind this one, turned a quarter, makes an outer corner; in front of it, an inner corner; left or right by
+which way it turns; never when the same cut facing the same way sits alongside, so a straight run stays straight. Same cut only
+(a bevel never joins a round), and a cut's under or top side is part of the cut. CORNER is vanilla's `StairsShape` with a stair's
+meaning (left joins the side anticlockwise of the front), worked out from the neighbours' states alone on the knock and again on
+every change alongside (`updateShape`), so finishing the second run turns the first run's end. It lives in the block state, so every
+client sees the same corner. Each edge cut's outline keeps everything behind it at every height, so an outer corner is the cut
+pushed both ways and kept where both keep, an inner where either keeps: two halves mitred on the diagonal (a hip on a bevel, a
+groin on a round), collision the two straight cuts' boxes and-ed or or-ed, which for a notch or an under is exactly a stair's.
+Blocks saved before corners have no CORNER and load straight (a property's default); they turn on their first neighbour change. Where you hit picks the cut. On a
 side: above 0.62 the top (NOTCH, BEVEL, ROUND, whole), below 0.38 under (UNDER, COVE, whole), else the middle (SLAB, whole). On the
 top or underside: within 0.25 of an edge is the top or under of that side; the centre is HALF_BOTTOM or HALF_TOP, then whole. A hit
 on a surface a cut made carries on with that cut, so knocking the same place steps through the shapes. It has its base's hardness,
@@ -23059,7 +23070,13 @@ tool and blast resistance, drops its base, and sounds like its look. Whole block
 
 **52.3 Real blocks wherever they exist.** A real slab or stair reads as its cut, and a cut writes back as the real block if one exists:
 NOTCH or UNDER facing f is a stair facing the opposite way (bottom or top), a half is a slab. A whole block wearing its own look
-is the real block again. No gain: a slab knocked whole stays a cut block of base slab and drops a slab. Refused, with one plain
+is the real block again. A real stair counts as its notch or under for the cuts' corners, so cuts join stairs; but a stair can't
+see a cut, so a notch or under is a real stair only where the stair would turn the same corner by itself. Where its corner needs a
+cut (or a cut alongside stops one), it stands as a cut of itself (base the stair: same drop, same look), and it's the real stair
+again as soon as it can be. The Mallet settles this around every block it writes, knock, look or undo (`Corners.settle`, up to 8
+changes, only where that player may use the Mallet); a notch or under cut also settles a tick after any change alongside, outside
+the places kept whole, so a hand-placed stair joins a cut run and a stair left alone goes back to being a stair. Undo compares
+blocks in the Mallet's terms (base, look, cut, facing), so a corner turning or a stair standing as a cut is never "changed since". No gain: a slab knocked whole stays a cut block of base slab and drops a slab. Refused, with one plain
 line: block entities, unbreakable blocks, ores, anything not a whole solid block, a family slab or a family stair.
 
 **52.4 Looks.** Ordinary building stone, brick, terracotta, concrete and wood (`Looks.families`) are always on offer, free and instant.
@@ -23074,17 +23091,25 @@ spreading out a ring a tick, each block rechecked as it's reached. Letting go of
 block, no `awaken:` dimension and no enforced ward. Refused there, but a right click still learns the look.
 Undo: 32 per player, in memory; an undo leaves alone anything changed since, and stops a run in progress.
 
-**52.6 Drawing.** `ShapedModel` wraps the shaped block's model and returns one part per look, shape and facing, built once from
-`LookMaterials` (the look's own baked quads: sprite and how the texture lies on each side, so a log's grain survives). Runs on Sodium's
-meshing threads. The look is read from the block entity first (never stale), then model data. Before a knock a chalk band shows the part
-that will go; the ring's preview is the real mesh a hair proud of the block. `awaken-shaping.toml`: `mallet`, `draw_shapes`.
+**52.6 Drawing.** `ShapedModel` wraps the shaped block's model and returns one part per look, shape, facing and corner (twelve
+variants a cut: straight, outer, inner, four ways round), built once from `LookMaterials` (the look's own baked quads: sprite and how
+the texture lies on each side, so a log's grain survives; on a corner each half wears its own front's side, as a stair corner does).
+Runs on Sodium's meshing threads; the corner comes from the state, never the world. The look is read from the block entity first
+(never stale), then model data. Before a knock a chalk band shows the part that will go, by quarters of the block: two along the front
+straight, three at an outer corner, one at an inner, for the corner the knock will turn with the neighbours as they are. The ring's
+preview is the real mesh, corner and all, a hair proud of the block. `awaken-shaping.toml`: `mallet`, `draw_shapes`.
 
 **52.7 Feel.** No particle sheet: real chips cut from the block's own texture that tumble and land, a little dust in its map colour, a 0.35°
 kick of the view for whoever swung. Sound is the block's own hit under `awaken:shaping.knock` (Minecraft's own `mob/zombie/wood` recordings, named).
 
-**52.8 Tests.** `ShapingTests`, prefix `shaping_`: every mesh is a closed solid facing outward, a knock steps through the cuts, a custom block
-takes a cut, no gain and no ore, real or worn, a run's kind and cap, kept blocks, undo, every look on offer can be worn. Rendering under
-Sodium and how a knock feels can't be tested: Stage 0 stops for Euan to play it.
+**52.8 Tests.** `ShapingTests`, prefix `shaping_`: every mesh, corners included, is a closed solid facing outward (each face has the solid
+just behind it, its volume is the outline's, collision within 0.06 of it, a notch or under at every corner is exactly a stair's shape),
+a knock steps through the cuts, a custom block takes a cut, no gain and no ore, real or worn, a run's kind and cap, kept blocks, undo,
+every look on offer can be worn, an L of knocked edges turns its outer and inner corners and straightens when a neighbour goes
+(`shaping_corners_join`), cuts and real stairs join both ways and a stair standing as a cut is a stair again after an undo or a tick
+(`shaping_corners_stairs`). `/awaken admin shaping knock <pos> <side> <top|mid|under> [times]` is the Mallet's knock for tours;
+`tools/autopilot/mallet-corners.txt` photographs every edge cut round an L of oak. Rendering under Sodium and how a knock feels can't
+be tested: Stage 0 stops for Euan to play it.
 ## 55. Riding Along (Stage A of Made by Hand; page https://claude.ai/artifact/HYetCkcLzxjB21CnH3XT88; approved 2026-11-09)
 
 A partner who isn't good at fighting comes along and is useful, without being able to go down, without making anything

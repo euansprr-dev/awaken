@@ -15,6 +15,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.TriState;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.StairsShape;
 import net.neoforged.neoforge.client.model.DelegateBlockStateModel;
 import net.neoforged.neoforge.client.model.quad.BakedColors;
 import net.neoforged.neoforge.client.model.quad.BakedNormals;
@@ -27,11 +28,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A cut block's mesh (SPEC §52.6): the cut's quads in the look's own textures. Runs on the meshing threads, Sodium's
- * included, with a snapshot of the world; each look, cut and facing is built once and shared by every block that has it.
+ * included, with a snapshot of the world; each look, cut, facing and corner is built once and shared by every block that
+ * has it. The corner is in the block state, so it's never read from the world here.
  */
 final class ShapedModel extends DelegateBlockStateModel {
     private static final Direction[] DIRECTIONS = Direction.values();
-    private static final int SLOTS = Shape.values().length * 4;
+    private static final int SLOTS = Shape.values().length * Shape.VARIANTS;
     private static final ConcurrentHashMap<BlockState, BlockStateModelPart[]> PARTS = new ConcurrentHashMap<>();
 
     ShapedModel(BlockStateModel delegate) {
@@ -53,7 +55,7 @@ final class ShapedModel extends DelegateBlockStateModel {
     public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockStateModelPart> parts) {
         BlockState look = lookAt(level, pos);
         Shape shape = ShapingConfig.drawShapes() ? state.getValue(ShapedBlock.SHAPE) : Shape.FULL;
-        BlockStateModelPart part = look == null ? null : part(look, shape, state.getValue(ShapedBlock.FACING));
+        BlockStateModelPart part = look == null ? null : part(look, shape, state.getValue(ShapedBlock.FACING), state.getValue(ShapedBlock.CORNER));
         if (part == null) this.delegate.collectParts(level, pos, state, random, parts);
         else parts.add(part);
     }
@@ -65,14 +67,14 @@ final class ShapedModel extends DelegateBlockStateModel {
         return m == null ? super.particleMaterial(level, pos, state) : m.particle();
     }
 
-    private static @Nullable BlockStateModelPart part(BlockState look, Shape shape, Direction facing) {
+    private static @Nullable BlockStateModelPart part(BlockState look, Shape shape, Direction facing, StairsShape corner) {
         LookMaterials.Look m = LookMaterials.of(look);
         if (m == null) return null;
         BlockStateModelPart[] slots = PARTS.computeIfAbsent(look, k -> new BlockStateModelPart[SLOTS]);
-        int at = shape.ordinal() * 4 + facing.get2DDataValue();
+        int at = shape.ordinal() * Shape.VARIANTS + shape.variant(facing, corner);
         BlockStateModelPart p = slots[at];
         if (p == null) {
-            p = new Part(m, shape, facing);       // the same every time: a race only builds it twice
+            p = new Part(m, shape.faces(facing, corner));       // the same every time: a race only builds it twice
             slots[at] = p;
         }
         return p;
@@ -83,11 +85,11 @@ final class ShapedModel extends DelegateBlockStateModel {
         private final LookMaterials.Look look;
 
         @SuppressWarnings("unchecked")
-        Part(LookMaterials.Look look, Shape shape, Direction facing) {
+        Part(LookMaterials.Look look, List<Shape.Face> faces) {
             this.look = look;
             List<BakedQuad>[] lists = new List[DIRECTIONS.length + 1];
             for (int i = 0; i < lists.length; i++) lists[i] = new ArrayList<>();
-            for (Shape.Face f : shape.faces(facing)) lists[f.cull() == null ? DIRECTIONS.length : f.cull().ordinal()].add(quad(f, look.side(f.dominant())));
+            for (Shape.Face f : faces) lists[f.cull() == null ? DIRECTIONS.length : f.cull().ordinal()].add(quad(f, look.side(f.dominant())));
             this.quads = new List[lists.length];
             for (int i = 0; i < lists.length; i++) this.quads[i] = List.copyOf(lists[i]);
         }

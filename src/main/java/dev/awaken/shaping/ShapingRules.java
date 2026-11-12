@@ -37,9 +37,9 @@ public final class ShapingRules {
 
     public record Cut(Shape shape, Direction facing) {}
 
-    /** Whether this cut has a front at all. */
+    /** Whether this cut has a front at all: the edge cuts, which also turn corners. */
     public static boolean faces(Shape s) {
-        return s != Shape.FULL && s != Shape.HALF_BOTTOM && s != Shape.HALF_TOP;
+        return s.edge();
     }
 
     private static Zone zoneOf(Shape s) {
@@ -96,5 +96,11 @@ public final class ShapingRules {
         if (GateService.inGate(level, pos) || CityHooks.isCivic(level, pos)) return false;
         if ("awaken".equals(level.dimension().identifier().getNamespace())) return false;
         return !Wards.binds(player) || Wards.enforced(level, pos).isEmpty();
+    }
+
+    /** Where nothing changes a block unless a player may: the places kept whole, and any enforced ward. */
+    static boolean kept(ServerLevel level, BlockPos pos) {
+        return GateService.inGate(level, pos) || CityHooks.isCivic(level, pos) || "awaken".equals(level.dimension().identifier().getNamespace())
+                || Wards.enforced(level, pos).isPresent();
     }
 }

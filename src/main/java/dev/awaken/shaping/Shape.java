@@ -2,6 +2,8 @@ package dev.awaken.shaping;
 
 import net.minecraft.core.Direction;
 import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.level.block.state.properties.StairsShape;
+import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
@@ -13,18 +15,26 @@ import java.util.TreeSet;
 /**
  * The cuts a block can take (SPEC §52.2). Each is one closed outline seen from the side, pushed straight across the block,
  * and turned by the block's facing; the mesh, the collision and the Looks preview all come from the same outline.
+ * <p>
+ * A cut that runs along an edge (an edge cut) turns corners the way stairs do (§52.2, {@link Corners}). Its outline keeps
+ * everything behind it at every height (at height y the block is solid from the back to some depth), so a corner is the
+ * cut pushed both ways at once: an outer corner keeps what both keep, an inner corner what either keeps. Each is built as
+ * two halves mitred on the diagonal, the outline pushed one way on one side of it and the other way on the other.
  */
 public enum Shape implements StringRepresentable {
-    FULL("full", new float[] {1, 0, 1, 1, 0, 1, 0, 0}),
-    HALF_BOTTOM("half_bottom", new float[] {1, 0, 1, .5F, 0, .5F, 0, 0}),
-    HALF_TOP("half_top", new float[] {1, .5F, 1, 1, 0, 1, 0, .5F}),
-    SLAB("slab", new float[] {.5F, 0, .5F, 1, 0, 1, 0, 0}),
-    NOTCH("notch", new float[] {1, 0, 1, .5F, .5F, .5F, .5F, 1, 0, 1, 0, 0}),
-    BEVEL("bevel", new float[] {1, 0, 1, .5F, .5F, 1, 0, 1, 0, 0}),
-    ROUND("round", round()),
-    UNDER("under", new float[] {.5F, 0, .5F, .5F, 1, .5F, 1, 1, 0, 1, 0, 0}),
-    COVE("cove", cove());
+    FULL("full", false, new float[] {1, 0, 1, 1, 0, 1, 0, 0}),
+    HALF_BOTTOM("half_bottom", false, new float[] {1, 0, 1, .5F, 0, .5F, 0, 0}),
+    HALF_TOP("half_top", false, new float[] {1, .5F, 1, 1, 0, 1, 0, .5F}),
+    SLAB("slab", true, new float[] {.5F, 0, .5F, 1, 0, 1, 0, 0}),
+    NOTCH("notch", true, new float[] {1, 0, 1, .5F, .5F, .5F, .5F, 1, 0, 1, 0, 0}),
+    BEVEL("bevel", true, new float[] {1, 0, 1, .5F, .5F, 1, 0, 1, 0, 0}),
+    ROUND("round", true, round()),
+    UNDER("under", true, new float[] {.5F, 0, .5F, .5F, 1, .5F, 1, 1, 0, 1, 0, 0}),
+    COVE("cove", true, cove());
 
+    /** Each cut's variants: straight, then the outer corner, then the inner, each four ways round (by 2D data value). */
+    public static final int VARIANTS = 12;
+    private static final int STRAIGHT = 0, OUTER = 1, INNER = 2;
     private static final float E = 1.0E-4F;
 
     /**
@@ -46,19 +56,36 @@ public enum Shape implements StringRepresentable {
     }
 
     private final String id;
+    private final boolean edge;
     private final float[] outline;
     private final List<Face>[] faces;
     private final VoxelShape[] voxels;
 
     @SuppressWarnings("unchecked")
-    Shape(String id, float[] outline) {
+    Shape(String id, boolean edge, float[] outline) {
         this.id = id;
+        this.edge = edge;
         this.outline = outline;
-        this.faces = new List[4];
-        this.voxels = new VoxelShape[4];
+        this.faces = new List[VARIANTS];
+        this.voxels = new VoxelShape[VARIANTS];
         for (Direction f : Direction.Plane.HORIZONTAL) {
-            this.faces[f.get2DDataValue()] = List.copyOf(build(outline, f));
-            this.voxels[f.get2DDataValue()] = voxel(outline, f);
+            int at = f.get2DDataValue();
+            this.faces[at] = List.copyOf(build(outline, f, STRAIGHT));
+            this.voxels[at] = voxel(outline, f);
+        }
+        for (Direction f : Direction.Plane.HORIZONTAL) {
+            int at = f.get2DDataValue();
+            if (!edge) {
+                this.faces[4 + at] = this.faces[8 + at] = this.faces[at];
+                this.voxels[4 + at] = this.voxels[8 + at] = this.voxels[at];
+                continue;
+            }
+            this.faces[4 + at] = List.copyOf(build(outline, f, OUTER));
+            this.faces[8 + at] = List.copyOf(build(outline, f, INNER));
+            // the corner whose fronts are f and the side to its left: the two straight cuts' collision, both or either
+            VoxelShape a = this.voxels[at], b = this.voxels[f.getCounterClockWise().get2DDataValue()];
+            this.voxels[4 + at] = Shapes.join(a, b, BooleanOp.AND);
+            this.voxels[8 + at] = Shapes.or(a, b);
         }
     }
 
@@ -67,12 +94,34 @@ public enum Shape implements StringRepresentable {
         return this.id;
     }
 
-    public List<Face> faces(Direction facing) {
-        return this.faces[facing.get2DDataValue()];
+    /** Whether this cut runs along an edge, so it has a front and turns corners. */
+    public boolean edge() {
+        return this.edge;
     }
 
-    public VoxelShape voxel(Direction facing) {
-        return this.voxels[facing.get2DDataValue()];
+    /**
+     * Which of the {@link #VARIANTS} this cut is, facing this way and turning this corner. A corner's left and right are a
+     * stair's: left joins the side counterclockwise of the front, right the side clockwise, so OUTER_RIGHT facing f is
+     * the same corner as OUTER_LEFT facing f's clockwise side.
+     */
+    public int variant(Direction facing, StairsShape corner) {
+        if (!this.edge || corner == StairsShape.STRAIGHT) return facing.get2DDataValue();
+        boolean outer = corner == StairsShape.OUTER_LEFT || corner == StairsShape.OUTER_RIGHT;
+        boolean right = corner == StairsShape.OUTER_RIGHT || corner == StairsShape.INNER_RIGHT;
+        return (outer ? 4 : 8) + (right ? facing.getClockWise() : facing).get2DDataValue();
+    }
+
+    public List<Face> faces(Direction facing, StairsShape corner) {
+        return this.faces[variant(facing, corner)];
+    }
+
+    public VoxelShape voxel(Direction facing, StairsShape corner) {
+        return this.voxels[variant(facing, corner)];
+    }
+
+    /** The outline itself, (depth, height) pairs: for the tests. */
+    float[] outline() {
+        return this.outline.clone();
     }
 
     // ---- outlines: (z, y) pairs, z = 1 is the front, anticlockwise so the outward normal is (dy, -dz) ---------------------
@@ -117,8 +166,37 @@ public enum Shape implements StringRepresentable {
 
     private static final int FRONT = 0, BACK = 1, UP = 2, DOWN = 3, PLUS_X = 4, MINUS_X = 5, NONE = -1;
 
-    private static List<Face> build(float[] p, Direction f) {
-        List<Face> out = new ArrayList<>();
+    /** A quad before it's turned: x across the block, z the depth with the front at 1, the second front of a corner at x = 1. */
+    private record Quad(float[] c, float nx, float ny, float nz, int cull) {
+        /** The same quad across the diagonal x = z: a corner's other half. A mirror turns it inside out, so it's wound back. */
+        Quad mirrored() {
+            float[] m = new float[12];
+            for (int i = 0; i < 4; i++) {
+                int from = (4 - i) % 4 * 3;    // 0, 3, 2, 1
+                m[i * 3] = this.c[from + 2];
+                m[i * 3 + 1] = this.c[from + 1];
+                m[i * 3 + 2] = this.c[from];
+            }
+            int side = switch (this.cull) {
+                case FRONT -> PLUS_X;
+                case PLUS_X -> FRONT;
+                case BACK -> MINUS_X;
+                case MINUS_X -> BACK;
+                default -> this.cull;
+            };
+            return new Quad(m, this.nz, this.ny, this.nx, side);
+        }
+    }
+
+    /**
+     * The quads of one variant. Straight, the outline runs the whole width. A corner is two halves split on the diagonal
+     * x = z: an outer corner's first half runs from the side at x = 0 to the diagonal, an inner corner's from the diagonal
+     * to the side at x = 1, and the other half is its mirror. The mitre between the halves is inside the block and has
+     * no quad; where an edge has no width on a half it's left out, and where it narrows to nothing at one end it's a
+     * triangle (two corners the same).
+     */
+    private static List<Face> build(float[] p, Direction f, int kind) {
+        List<Quad> half = new ArrayList<>();
         int n = p.length / 2;
         for (int i = 0; i < n; i++) {
             float pz = p[i * 2], py = p[i * 2 + 1], qz = p[(i + 1) % n * 2], qy = p[(i + 1) % n * 2 + 1];
@@ -130,13 +208,19 @@ public enum Shape implements StringRepresentable {
             else if (Math.abs(dz) < E && Math.abs(pz) < E && nz < 0) cull = BACK;
             else if (Math.abs(dy) < E && Math.abs(py - 1) < E && ny > 0) cull = UP;
             else if (Math.abs(dy) < E && Math.abs(py) < E && ny < 0) cull = DOWN;
-            out.add(turned(f, new float[] {0, qy, qz, 0, py, pz, 1, py, pz, 1, qy, qz}, 0, ny, nz, cull));
+            float p0 = kind == INNER ? pz : 0, q0 = kind == INNER ? qz : 0;
+            float p1 = kind == OUTER ? pz : 1, q1 = kind == OUTER ? qz : 1;
+            if (p1 - p0 < E && q1 - q0 < E) continue;
+            half.add(new Quad(new float[] {q0, qy, qz, p0, py, pz, p1, py, pz, q1, qy, qz}, 0, ny, nz, cull));
         }
         for (float[] s : strips(p)) {
             float a = s[0], b = s[1], loA = s[2], loB = s[3], hiA = s[4], hiB = s[5];
-            out.add(turned(f, new float[] {1, hiB, b, 1, loB, b, 1, loA, a, 1, hiA, a}, 1, 0, 0, PLUS_X));
-            out.add(turned(f, new float[] {0, hiA, a, 0, loA, a, 0, loB, b, 0, hiB, b}, -1, 0, 0, MINUS_X));
+            if (kind != OUTER) half.add(new Quad(new float[] {1, hiB, b, 1, loB, b, 1, loA, a, 1, hiA, a}, 1, 0, 0, PLUS_X));
+            if (kind != INNER) half.add(new Quad(new float[] {0, hiA, a, 0, loA, a, 0, loB, b, 0, hiB, b}, -1, 0, 0, MINUS_X));
         }
+        List<Face> out = new ArrayList<>(kind == STRAIGHT ? half.size() : half.size() * 2);
+        for (Quad q : half) out.add(turned(f, q));
+        if (kind != STRAIGHT) for (Quad q : half) out.add(turned(f, q.mirrored()));
         return out;
     }
 
@@ -168,7 +252,10 @@ public enum Shape implements StringRepresentable {
         return out;
     }
 
-    private static Face turned(Direction f, float[] c, float nx, float ny, float nz, int cull) {
+    private static Face turned(Direction f, Quad q) {
+        float[] c = q.c();
+        float nx = q.nx(), ny = q.ny(), nz = q.nz();
+        int cull = q.cull();
         float[] r = new float[12];
         for (int i = 0; i < 4; i++) {
             float x = c[i * 3], z = c[i * 3 + 2];

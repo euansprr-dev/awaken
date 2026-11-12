@@ -1,0 +1,214 @@
+# The Mallet's corners (SPEC 52.2): an oak deck shaped like an L, its edges knocked into each edge cut, so every deck has
+# two outer corners and one inner corner. Decks from west to east: notch (real oak stairs), bevel, round, under (real top
+# stairs), cove, slab, then stone bricks and ashlar mixed (a real stair against cut notches, both ways round). The south
+# edges are knocked first and the east edges after, so the second run has to fix the first run's end. Three shots a deck:
+# the whole L, the outer corner close, the inner corner close; the under cuts from below. Run on the branch before the
+# corners and on the corners branch for the before and after sheet.
+# ci knobs: LENS=off
+world mallet_corners creative 5252
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+screen close
+cmd gamemode creative
+cmd tp @s 30.5 201 4.5 0 0
+cmd forceload add -16 -16 96 24
+wait 300
+# a lawn well below the decks, so the under cuts can be seen from beneath
+cmd fill -8 190 -8 90 190 16 minecraft:grass_block
+# ---- notch ----
+cmd fill 0 197 0 4 197 1 minecraft:oak_planks
+cmd fill 0 197 2 1 197 4 minecraft:oak_planks
+# ---- bevel ----
+cmd fill 11 197 0 15 197 1 minecraft:oak_planks
+cmd fill 11 197 2 12 197 4 minecraft:oak_planks
+# ---- round ----
+cmd fill 22 197 0 26 197 1 minecraft:oak_planks
+cmd fill 22 197 2 23 197 4 minecraft:oak_planks
+# ---- under ----
+cmd fill 33 197 0 37 197 1 minecraft:oak_planks
+cmd fill 33 197 2 34 197 4 minecraft:oak_planks
+# ---- cove ----
+cmd fill 44 197 0 48 197 1 minecraft:oak_planks
+cmd fill 44 197 2 45 197 4 minecraft:oak_planks
+# ---- slab ----
+cmd fill 55 197 0 59 197 1 minecraft:oak_planks
+cmd fill 55 197 2 56 197 4 minecraft:oak_planks
+# ---- mixed-real-corners ----
+cmd fill 66 197 0 70 197 1 minecraft:stone_bricks
+cmd fill 66 197 2 67 197 4 minecraft:stone_bricks
+cmd setblock 68 197 1 awaken:ashlar
+cmd setblock 69 197 1 awaken:ashlar
+cmd setblock 70 197 0 awaken:ashlar
+cmd setblock 67 197 2 awaken:ashlar
+cmd setblock 67 197 3 awaken:ashlar
+cmd setblock 66 197 4 awaken:ashlar
+# ---- mixed-cut-corners ----
+cmd fill 77 197 0 81 197 1 minecraft:stone_bricks
+cmd fill 77 197 2 78 197 4 minecraft:stone_bricks
+cmd setblock 81 197 1 awaken:ashlar
+cmd setblock 78 197 1 awaken:ashlar
+cmd setblock 78 197 4 awaken:ashlar
+# notch: the south edges, then the east edges
+cmd awaken admin shaping knock 2 197 1 south top 1
+cmd awaken admin shaping knock 3 197 1 south top 1
+cmd awaken admin shaping knock 4 197 1 south top 1
+cmd awaken admin shaping knock 1 197 1 south top 1
+cmd awaken admin shaping knock 0 197 4 south top 1
+cmd awaken admin shaping knock 4 197 0 east top 1
+cmd awaken admin shaping knock 1 197 2 east top 1
+cmd awaken admin shaping knock 1 197 3 east top 1
+cmd awaken admin shaping knock 1 197 4 east top 1
+# bevel: the south edges, then the east edges
+cmd awaken admin shaping knock 13 197 1 south top 2
+cmd awaken admin shaping knock 14 197 1 south top 2
+cmd awaken admin shaping knock 15 197 1 south top 2
+cmd awaken admin shaping knock 12 197 1 south top 2
+cmd awaken admin shaping knock 11 197 4 south top 2
+cmd awaken admin shaping knock 15 197 0 east top 2
+cmd awaken admin shaping knock 12 197 2 east top 2
+cmd awaken admin shaping knock 12 197 3 east top 2
+cmd awaken admin shaping knock 12 197 4 east top 2
+# round: the south edges, then the east edges
+cmd awaken admin shaping knock 24 197 1 south top 3
+cmd awaken admin shaping knock 25 197 1 south top 3
+cmd awaken admin shaping knock 26 197 1 south top 3
+cmd awaken admin shaping knock 23 197 1 south top 3
+cmd awaken admin shaping knock 22 197 4 south top 3
+cmd awaken admin shaping knock 26 197 0 east top 3
+cmd awaken admin shaping knock 23 197 2 east top 3
+cmd awaken admin shaping knock 23 197 3 east top 3
+cmd awaken admin shaping knock 23 197 4 east top 3
+# under: the south edges, then the east edges
+cmd awaken admin shaping knock 35 197 1 south under 1
+cmd awaken admin shaping knock 36 197 1 south under 1
+cmd awaken admin shaping knock 37 197 1 south under 1
+cmd awaken admin shaping knock 34 197 1 south under 1
+cmd awaken admin shaping knock 33 197 4 south under 1
+cmd awaken admin shaping knock 37 197 0 east under 1
+cmd awaken admin shaping knock 34 197 2 east under 1
+cmd awaken admin shaping knock 34 197 3 east under 1
+cmd awaken admin shaping knock 34 197 4 east under 1
+# cove: the south edges, then the east edges
+cmd awaken admin shaping knock 46 197 1 south under 2
+cmd awaken admin shaping knock 47 197 1 south under 2
+cmd awaken admin shaping knock 48 197 1 south under 2
+cmd awaken admin shaping knock 45 197 1 south under 2
+cmd awaken admin shaping knock 44 197 4 south under 2
+cmd awaken admin shaping knock 48 197 0 east under 2
+cmd awaken admin shaping knock 45 197 2 east under 2
+cmd awaken admin shaping knock 45 197 3 east under 2
+cmd awaken admin shaping knock 45 197 4 east under 2
+# slab: the south edges, then the east edges
+cmd awaken admin shaping knock 57 197 1 south mid 1
+cmd awaken admin shaping knock 58 197 1 south mid 1
+cmd awaken admin shaping knock 59 197 1 south mid 1
+cmd awaken admin shaping knock 56 197 1 south mid 1
+cmd awaken admin shaping knock 55 197 4 south mid 1
+cmd awaken admin shaping knock 59 197 0 east mid 1
+cmd awaken admin shaping knock 56 197 2 east mid 1
+cmd awaken admin shaping knock 56 197 3 east mid 1
+cmd awaken admin shaping knock 56 197 4 east mid 1
+# mixed-real-corners: the south edges, then the east edges
+cmd awaken admin shaping knock 68 197 1 south top 1
+cmd awaken admin shaping knock 69 197 1 south top 1
+cmd awaken admin shaping knock 70 197 1 south top 1
+cmd awaken admin shaping knock 67 197 1 south top 1
+cmd awaken admin shaping knock 66 197 4 south top 1
+cmd awaken admin shaping knock 70 197 0 east top 1
+cmd awaken admin shaping knock 67 197 2 east top 1
+cmd awaken admin shaping knock 67 197 3 east top 1
+cmd awaken admin shaping knock 67 197 4 east top 1
+# mixed-cut-corners: the south edges, then the east edges
+cmd awaken admin shaping knock 79 197 1 south top 1
+cmd awaken admin shaping knock 80 197 1 south top 1
+cmd awaken admin shaping knock 81 197 1 south top 1
+cmd awaken admin shaping knock 78 197 1 south top 1
+cmd awaken admin shaping knock 77 197 4 south top 1
+cmd awaken admin shaping knock 81 197 0 east top 1
+cmd awaken admin shaping knock 78 197 2 east top 1
+cmd awaken admin shaping knock 78 197 3 east top 1
+cmd awaken admin shaping knock 78 197 4 east top 1
+wait 60
+cmd gamemode spectator
+hud off
+cmd tp @s 6.5 200.0 6.5 135 30
+wait 20
+shot 01-notch-whole
+cmd tp @s 6.5 197.4 3.5 135 25
+wait 20
+shot 01-notch-outer
+cmd tp @s 4.0 198.4 4.0 135 35
+wait 20
+shot 01-notch-inner
+cmd tp @s 17.5 200.0 6.5 135 30
+wait 20
+shot 02-bevel-whole
+cmd tp @s 17.5 197.4 3.5 135 25
+wait 20
+shot 02-bevel-outer
+cmd tp @s 15.0 198.4 4.0 135 35
+wait 20
+shot 02-bevel-inner
+cmd tp @s 28.5 200.0 6.5 135 30
+wait 20
+shot 03-round-whole
+cmd tp @s 28.5 197.4 3.5 135 25
+wait 20
+shot 03-round-outer
+cmd tp @s 26.0 198.4 4.0 135 35
+wait 20
+shot 03-round-inner
+cmd tp @s 40.0 193.4 7.0 135 -14
+wait 20
+shot 04-under-whole
+cmd tp @s 39.5 194.6 3.5 135 -21
+wait 20
+shot 04-under-outer
+cmd tp @s 37.0 194.4 4.0 135 -19
+wait 20
+shot 04-under-inner
+cmd tp @s 51.0 193.4 7.0 135 -14
+wait 20
+shot 05-cove-whole
+cmd tp @s 50.5 194.6 3.5 135 -21
+wait 20
+shot 05-cove-outer
+cmd tp @s 48.0 194.4 4.0 135 -19
+wait 20
+shot 05-cove-inner
+cmd tp @s 61.5 200.0 6.5 135 30
+wait 20
+shot 06-slab-whole
+cmd tp @s 61.5 197.4 3.5 135 25
+wait 20
+shot 06-slab-outer
+cmd tp @s 59.0 198.4 4.0 135 35
+wait 20
+shot 06-slab-inner
+cmd tp @s 72.5 200.0 6.5 135 30
+wait 20
+shot 07-mixed-real-corners-whole
+cmd tp @s 72.5 197.4 3.5 135 25
+wait 20
+shot 07-mixed-real-corners-outer
+cmd tp @s 70.0 198.4 4.0 135 35
+wait 20
+shot 07-mixed-real-corners-inner
+cmd tp @s 83.5 200.0 6.5 135 30
+wait 20
+shot 08-mixed-cut-corners-whole
+cmd tp @s 83.5 197.4 3.5 135 25
+wait 20
+shot 08-mixed-cut-corners-outer
+cmd tp @s 81.0 198.4 4.0 135 35
+wait 20
+shot 08-mixed-cut-corners-inner
