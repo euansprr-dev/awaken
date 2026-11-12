@@ -501,6 +501,9 @@ public final class LensClient {
         }
         active = want != null;
         ran = want;
+        // (the game's own answer: a chain that failed to load or compile draws nothing, and nothing may be handed to
+        // its last pass to lay. The lookup is the game's cache; it loads the chain the first time, as the frame would)
+        chainRuns = want != null && mc.getShaderManager().getPostChain(want, net.minecraft.client.renderer.LevelTargetBundle.MAIN_TARGETS) != null;
 
         ResourceKey<Level> dim = mc.level.dimension();
         String biome = biomeFor;
@@ -690,11 +693,16 @@ public final class LensClient {
 
     /**
      * Whether this frame's chain lays LensGlow's layer over its picture: the chains that read the frame (Lite, Cinematic,
-     * Ultra, whose last pass is lens_lay), never during a story's tear from black, which nothing may show through.
+     * Ultra, whose last pass is lens_lay), never during a story's tear from black, which nothing may show through,
+     * and never while the chain itself failed to load (light drawn for a pass that never runs would be lost: the
+     * power effects vanished whole in run 43203754646, whose chains a bad input had kept from loading).
      */
     static boolean laysLight() {
-        return active && framed && glow != null && tear <= 0f && tearStep <= 0f;
+        return active && framed && chainRuns && glow != null && tear <= 0f && tearStep <= 0f;
     }
+
+    /** Whether the chain Lens asserted this tick is one the game can run (it loaded and compiled). */
+    private static boolean chainRuns;
 
     private static float rate(int fadeTicks) {
         // about 95% of the way after fadeTicks

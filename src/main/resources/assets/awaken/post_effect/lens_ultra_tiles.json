@@ -2784,7 +2784,9 @@
         },
         {
           "sampler_name": "Glow",
-          "location": "awaken:lens_glow"
+          "location": "awaken:lens_glow",
+          "width": 1,
+          "height": 1
         }
       ],
       "output": "awaken:lens_half",
