@@ -352,7 +352,7 @@ public final class LensClient {
     // The small shade's reach (SPEC §22 "The small shade's reach"): how wide a texel of the light buffer may be on a
     // surface, in the art's pixels (sixteenths of a block), where the contact shadows fade from and to, then the
     // ambient shade; an end not past its start leaves that shade whole at every distance.
-    private static final float[] SMALL = {0f, 0f, 0f, 0f};
+    private static final float[] SMALL = {1f, 3f, 0f, 0f};
     private static float @org.jspecify.annotations.Nullable [] forcedSmall;
     /** The light buffer's height in texels (the chains' {@code awaken:lens_light} target). */
     private static final float LIGHT_ROWS = 540f;

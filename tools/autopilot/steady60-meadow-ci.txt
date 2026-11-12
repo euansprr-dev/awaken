@@ -1,18 +1,21 @@
-# Far tall grass, measured (Euan, playing at 4K, 12 Nov: "all the grass and the shadows and everything just becomes one
-# big shimmering block of weirdness ... because you have that breathing movement, especially with your camera ... can
-# we change the logic of how shadow is on swaying grass so that it just makes it look less shimmery? Because like right
+# Far tall grass (Euan, playing at 4K, 12 Nov: "all the grass and the shadows and everything just becomes one big
+# shimmering block of weirdness ... because you have that breathing movement, especially with your camera ... can we
+# change the logic of how shadow is on swaying grass so that it just makes it look less shimmery? Because like right
 # now I'm on native 4K and it still just looks very shimmery"). A lawn over the cloud layer, dense with short grass,
 # clumps of tall grass and flowers, under a high sun, seen down its length from eight blocks up (the far grass a broad
-# band of the picture, as on a hillside) and from three. The pack's renderer and feel are on, as he plays: the plants
-# sway (the sway needs Sodium; run 43166685979 had none, nothing moved, and only the ambient shade's own noise showed)
-# and the camera breathes (Camera Overhaul's idle sway). Bursts of six frames two ticks apart.
-# Each burst a different thing left out, so the numbers say which part it is: as it was (no fade); the plants stilled
-# (the camera's breathing alone); the contact shadows off, the ambient shade off, both off; Swift (none of Lens's
-# light: the game's own grass, the floor no fix can go under); and reaches for the fade (`lens small`, in the art's
-# pixels a light texel spans: at this view one is 17 blocks off). tools/lens/meadow.py reads the shots.
+# band of the picture, as on a hillside) and from three. The pack's renderer is on (the plants' sway needs Sodium).
+# 1. Stills, nothing moving: as it was (`lens small 0 0 0 0`: the small shade whole at every distance), as built, and
+#    with no contact shadows at all, from both heights.
+# 2. The camera breathing, the plants held still: a steady turn of a hundredth of a degree a tick (half a pixel between
+#    frames), five frames two ticks apart; as it was, as built, no contact shadows, and Swift (none of Lens's light:
+#    the game's own grass, the floor no fix can go under), each twice in turn.
+# 3. The same with the plants swaying in a held breeze.
+# tools/lens/meadow.py reads the bursts: how much the picture changes between frames, by distance.
+# Earlier runs, for the record: 43166685979 (no Sodium, nothing swayed: the stills' busyness by part) and 43168733918
+# (the real wind and Camera Overhaul: the gusts changed more from burst to burst than any part did).
 # SPEC §22 "The small shade's reach".
-# Run: tools/tour-ci.sh tools/autopilot/steady60-meadow-ci.txt 2400
-# ci knobs: LENS=cinematic PACK=perf,feel
+# Run: tools/tour-ci.sh tools/autopilot/steady60-meadow-ci.txt 2700
+# ci knobs: LENS=cinematic PACK=perf
 world steadystill creative 4545
 waitworld
 wait 60
@@ -261,241 +264,295 @@ lookswitch cinematic
 opt fov 90
 wait 400
 cmd time set 5000
-# --- from eight blocks up, looking west down the lawn
+# --- 1. stills: nothing moves
+cmd awaken terrain waving debug 3
 cmd tp @s 44.5 237 50.5 90 14
 wait 300
-shot v1_whole
 lens small 0 0 0 0
-wait 80
-shotnow v1_a_was_1
-wait 2
-shotnow v1_a_was_2
-wait 2
-shotnow v1_a_was_3
-wait 2
-shotnow v1_a_was_4
-wait 2
-shotnow v1_a_was_5
-wait 2
-shotnow v1_a_was_6
-wait 2
-cmd awaken terrain waving debug 3
-wait 80
-shotnow v1_b_still_1
-wait 2
-shotnow v1_b_still_2
-wait 2
-shotnow v1_b_still_3
-wait 2
-shotnow v1_b_still_4
-wait 2
-shotnow v1_b_still_5
-wait 2
-shotnow v1_b_still_6
-wait 2
-cmd awaken terrain waving debug 0
-lens small 0 0.001 0 0
-wait 80
-shotnow v1_c_nocontact_1
-wait 2
-shotnow v1_c_nocontact_2
-wait 2
-shotnow v1_c_nocontact_3
-wait 2
-shotnow v1_c_nocontact_4
-wait 2
-shotnow v1_c_nocontact_5
-wait 2
-shotnow v1_c_nocontact_6
-wait 2
-lens small 0 0 0 0.001
-wait 80
-shotnow v1_d_noambient_1
-wait 2
-shotnow v1_d_noambient_2
-wait 2
-shotnow v1_d_noambient_3
-wait 2
-shotnow v1_d_noambient_4
-wait 2
-shotnow v1_d_noambient_5
-wait 2
-shotnow v1_d_noambient_6
-wait 2
-lens small 0 0.001 0 0.001
-wait 80
-shotnow v1_e_neither_1
-wait 2
-shotnow v1_e_neither_2
-wait 2
-shotnow v1_e_neither_3
-wait 2
-shotnow v1_e_neither_4
-wait 2
-shotnow v1_e_neither_5
-wait 2
-shotnow v1_e_neither_6
-wait 2
-lens small 0.75 2 0.75 2
-wait 80
-shotnow v1_g_both_0.75_2_1
-wait 2
-shotnow v1_g_both_0.75_2_2
-wait 2
-shotnow v1_g_both_0.75_2_3
-wait 2
-shotnow v1_g_both_0.75_2_4
-wait 2
-shotnow v1_g_both_0.75_2_5
-wait 2
-shotnow v1_g_both_0.75_2_6
-wait 2
-lens small 1 2.5 1 2.5
-wait 80
-shotnow v1_h_both_1_2.5_1
-wait 2
-shotnow v1_h_both_1_2.5_2
-wait 2
-shotnow v1_h_both_1_2.5_3
-wait 2
-shotnow v1_h_both_1_2.5_4
-wait 2
-shotnow v1_h_both_1_2.5_5
-wait 2
-shotnow v1_h_both_1_2.5_6
-wait 2
-lens small 1.5 3.5 1.5 3.5
-wait 80
-shotnow v1_i_both_1.5_3.5_1
-wait 2
-shotnow v1_i_both_1.5_3.5_2
-wait 2
-shotnow v1_i_both_1.5_3.5_3
-wait 2
-shotnow v1_i_both_1.5_3.5_4
-wait 2
-shotnow v1_i_both_1.5_3.5_5
-wait 2
-shotnow v1_i_both_1.5_3.5_6
-wait 2
-lens small 1 2.5 0 0
-wait 80
-shotnow v1_j_contact_1_2.5_1
-wait 2
-shotnow v1_j_contact_1_2.5_2
-wait 2
-shotnow v1_j_contact_1_2.5_3
-wait 2
-shotnow v1_j_contact_1_2.5_4
-wait 2
-shotnow v1_j_contact_1_2.5_5
-wait 2
-shotnow v1_j_contact_1_2.5_6
-wait 2
+wait 100
+shot v1_still_was
 lens small setting
-wait 80
-shotnow v1_k_built_1
-wait 2
-shotnow v1_k_built_2
-wait 2
-shotnow v1_k_built_3
-wait 2
-shotnow v1_k_built_4
-wait 2
-shotnow v1_k_built_5
-wait 2
-shotnow v1_k_built_6
-wait 2
-lookswitch swift
-wait 160
-wait 80
-shotnow v1_f_swift_1
-wait 2
-shotnow v1_f_swift_2
-wait 2
-shotnow v1_f_swift_3
-wait 2
-shotnow v1_f_swift_4
-wait 2
-shotnow v1_f_swift_5
-wait 2
-shotnow v1_f_swift_6
-wait 2
-lookswitch cinematic
-wait 240
-# --- from three blocks up, the same way
+wait 100
+shot v1_still_built
+lens small 0 0.001 0 0
+wait 100
+shot v1_still_nocontact
 cmd tp @s 44.5 232 50.5 90 5
 wait 300
-shot v2_whole
 lens small 0 0 0 0
-wait 80
-shotnow v2_a_was_1
-wait 2
-shotnow v2_a_was_2
-wait 2
-shotnow v2_a_was_3
-wait 2
-shotnow v2_a_was_4
-wait 2
-shotnow v2_a_was_5
-wait 2
-shotnow v2_a_was_6
-wait 2
-lens small 0 0.001 0 0.001
-wait 80
-shotnow v2_e_neither_1
-wait 2
-shotnow v2_e_neither_2
-wait 2
-shotnow v2_e_neither_3
-wait 2
-shotnow v2_e_neither_4
-wait 2
-shotnow v2_e_neither_5
-wait 2
-shotnow v2_e_neither_6
-wait 2
-lens small 1 2.5 1 2.5
-wait 80
-shotnow v2_h_both_1_2.5_1
-wait 2
-shotnow v2_h_both_1_2.5_2
-wait 2
-shotnow v2_h_both_1_2.5_3
-wait 2
-shotnow v2_h_both_1_2.5_4
-wait 2
-shotnow v2_h_both_1_2.5_5
-wait 2
-shotnow v2_h_both_1_2.5_6
-wait 2
+wait 100
+shot v2_still_was
 lens small setting
-wait 80
-shotnow v2_k_built_1
+wait 100
+shot v2_still_built
+lens small 0 0.001 0 0
+wait 100
+shot v2_still_nocontact
+lens small setting
+# --- 2. the camera breathing, the plants held still
+cmd tp @s 44.5 237 50.5 90 14
+wait 200
+lens small 0 0 0 0
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_breath_was_r1_1
 wait 2
-shotnow v2_k_built_2
+shotnow v1_breath_was_r1_2
 wait 2
-shotnow v2_k_built_3
+shotnow v1_breath_was_r1_3
 wait 2
-shotnow v2_k_built_4
+shotnow v1_breath_was_r1_4
 wait 2
-shotnow v2_k_built_5
+shotnow v1_breath_was_r1_5
 wait 2
-shotnow v2_k_built_6
+wait 30
+lens small setting
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_breath_built_r1_1
 wait 2
+shotnow v1_breath_built_r1_2
+wait 2
+shotnow v1_breath_built_r1_3
+wait 2
+shotnow v1_breath_built_r1_4
+wait 2
+shotnow v1_breath_built_r1_5
+wait 2
+wait 30
+lens small 0 0.001 0 0
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_breath_nocontact_r1_1
+wait 2
+shotnow v1_breath_nocontact_r1_2
+wait 2
+shotnow v1_breath_nocontact_r1_3
+wait 2
+shotnow v1_breath_nocontact_r1_4
+wait 2
+shotnow v1_breath_nocontact_r1_5
+wait 2
+wait 30
+lens small setting
 lookswitch swift
 wait 160
-wait 80
-shotnow v2_f_swift_1
+look 90 14
+wait 40
+turn 0.01 40
+shotnow v1_breath_swift_r1_1
 wait 2
-shotnow v2_f_swift_2
+shotnow v1_breath_swift_r1_2
 wait 2
-shotnow v2_f_swift_3
+shotnow v1_breath_swift_r1_3
 wait 2
-shotnow v2_f_swift_4
+shotnow v1_breath_swift_r1_4
 wait 2
-shotnow v2_f_swift_5
+shotnow v1_breath_swift_r1_5
 wait 2
-shotnow v2_f_swift_6
+wait 30
+lookswitch cinematic
+wait 240
+lens small 0 0 0 0
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_breath_was_r2_1
 wait 2
+shotnow v1_breath_was_r2_2
+wait 2
+shotnow v1_breath_was_r2_3
+wait 2
+shotnow v1_breath_was_r2_4
+wait 2
+shotnow v1_breath_was_r2_5
+wait 2
+wait 30
+lens small setting
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_breath_built_r2_1
+wait 2
+shotnow v1_breath_built_r2_2
+wait 2
+shotnow v1_breath_built_r2_3
+wait 2
+shotnow v1_breath_built_r2_4
+wait 2
+shotnow v1_breath_built_r2_5
+wait 2
+wait 30
+lens small 0 0.001 0 0
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_breath_nocontact_r2_1
+wait 2
+shotnow v1_breath_nocontact_r2_2
+wait 2
+shotnow v1_breath_nocontact_r2_3
+wait 2
+shotnow v1_breath_nocontact_r2_4
+wait 2
+shotnow v1_breath_nocontact_r2_5
+wait 2
+wait 30
+lens small setting
+lookswitch swift
+wait 160
+look 90 14
+wait 40
+turn 0.01 40
+shotnow v1_breath_swift_r2_1
+wait 2
+shotnow v1_breath_swift_r2_2
+wait 2
+shotnow v1_breath_swift_r2_3
+wait 2
+shotnow v1_breath_swift_r2_4
+wait 2
+shotnow v1_breath_swift_r2_5
+wait 2
+wait 30
+lookswitch cinematic
+wait 240
+# --- 3. the same, the plants swaying in a held breeze
+cmd awaken terrain waving debug 0
+cmd awaken terrain wind force 0.5 0
+wait 100
+cmd tp @s 44.5 237 50.5 90 14
+wait 200
+lens small 0 0 0 0
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_sway_was_r1_1
+wait 2
+shotnow v1_sway_was_r1_2
+wait 2
+shotnow v1_sway_was_r1_3
+wait 2
+shotnow v1_sway_was_r1_4
+wait 2
+shotnow v1_sway_was_r1_5
+wait 2
+wait 30
+lens small setting
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_sway_built_r1_1
+wait 2
+shotnow v1_sway_built_r1_2
+wait 2
+shotnow v1_sway_built_r1_3
+wait 2
+shotnow v1_sway_built_r1_4
+wait 2
+shotnow v1_sway_built_r1_5
+wait 2
+wait 30
+lens small 0 0.001 0 0
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_sway_nocontact_r1_1
+wait 2
+shotnow v1_sway_nocontact_r1_2
+wait 2
+shotnow v1_sway_nocontact_r1_3
+wait 2
+shotnow v1_sway_nocontact_r1_4
+wait 2
+shotnow v1_sway_nocontact_r1_5
+wait 2
+wait 30
+lens small setting
+lookswitch swift
+wait 160
+look 90 14
+wait 40
+turn 0.01 40
+shotnow v1_sway_swift_r1_1
+wait 2
+shotnow v1_sway_swift_r1_2
+wait 2
+shotnow v1_sway_swift_r1_3
+wait 2
+shotnow v1_sway_swift_r1_4
+wait 2
+shotnow v1_sway_swift_r1_5
+wait 2
+wait 30
+lookswitch cinematic
+wait 240
+lens small 0 0 0 0
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_sway_was_r2_1
+wait 2
+shotnow v1_sway_was_r2_2
+wait 2
+shotnow v1_sway_was_r2_3
+wait 2
+shotnow v1_sway_was_r2_4
+wait 2
+shotnow v1_sway_was_r2_5
+wait 2
+wait 30
+lens small setting
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_sway_built_r2_1
+wait 2
+shotnow v1_sway_built_r2_2
+wait 2
+shotnow v1_sway_built_r2_3
+wait 2
+shotnow v1_sway_built_r2_4
+wait 2
+shotnow v1_sway_built_r2_5
+wait 2
+wait 30
+lens small 0 0.001 0 0
+look 90 14
+wait 60
+turn 0.01 40
+shotnow v1_sway_nocontact_r2_1
+wait 2
+shotnow v1_sway_nocontact_r2_2
+wait 2
+shotnow v1_sway_nocontact_r2_3
+wait 2
+shotnow v1_sway_nocontact_r2_4
+wait 2
+shotnow v1_sway_nocontact_r2_5
+wait 2
+wait 30
+lens small setting
+lookswitch swift
+wait 160
+look 90 14
+wait 40
+turn 0.01 40
+shotnow v1_sway_swift_r2_1
+wait 2
+shotnow v1_sway_swift_r2_2
+wait 2
+shotnow v1_sway_swift_r2_3
+wait 2
+shotnow v1_sway_swift_r2_4
+wait 2
+shotnow v1_sway_swift_r2_5
+wait 2
+wait 30
+lookswitch cinematic
+wait 240
+cmd awaken terrain wind real
 quit
