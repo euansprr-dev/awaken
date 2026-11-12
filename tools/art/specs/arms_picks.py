@@ -8,7 +8,7 @@ heat, the temper colours and wear all run along the head the way they do on real
 Every triangle has a group (mesh flag GROUPS): 0 always drawn; 1-5 the ring a rank E..A leaves on the haft, drawn only for
 ranks this pick was really raised through.
 
-    python3 tools/art/specs/arms_picks.py build [ids...] | check | sheet <out.png> | fp <out.png>
+    python3 tools/art/specs/arms_picks.py build [ids...] | holds | check | sheet <out.png> | fp <out.png>
 """
 import json
 import math
@@ -273,9 +273,12 @@ def make(form, rank, clean=False):
     return finish(built), look
 
 
-# First person, at rest: low on the haft, the head up and away to the right, its curve toward you so the shape reads while
-# the middle of the view stays clear for what you're digging.
-HOLD = dict(yaw=2, pitch=64, roll=38, grip=(-0.02, -0.10, 0.04), size=0.86)
+# First person, at rest: as vanilla's own pickaxe stands in item/handheld (Euan 2026-11-12, "the custom picks are being
+# held the wrong way ... it needs to match vanilla animations and angle"): the haft up 70 degrees and leaned back toward
+# the eye, its flat to the side, the head running fore and aft, the fist where vanilla's sprite has it. The end ahead is
+# the right hand's leading end (plus_leads), so vanilla's whack brings it down onto the block. It had stood 64 up with
+# the head's curve turned toward you (roll 38), which laid the head sideways across the view. The size is the picks' own.
+HOLD = dict(yaw=180, pitch=70, roll=90, grip=(0.07, -0.08, -0.03), size=0.86, cut=AH.FORWARD)
 
 
 def hold_of(pos):
@@ -333,6 +336,16 @@ def old_head():
     Image.fromarray(img.astype(np.uint8), "RGBA").save(tex)
     AW._write(os.path.join(RES, "assets/awaken/models/item/delver_old_head.json"), {"parent": "minecraft:item/generated", "textures": {"layer0": "awaken:item/arms/delver_old_head"}})
     AW._write(os.path.join(RES, "assets/awaken/items/delver_old_head.json"), {"model": {"type": "minecraft:model", "model": "awaken:item/delver_old_head"}})
+
+
+def write_holds():
+    """Only the holds: every pick's <id>_in_hand.json display written again from HOLD, leaving meshes and textures be."""
+    for f in FORMS:
+        for r in RANKS:
+            path = os.path.join(RES, "assets/awaken/models/item", ID[f, r] + "_in_hand.json")
+            model = json.load(open(path))
+            model["display"] = hold_of(make(f, r)[0].pos / 16.0)
+            AW._write(path, model)
 
 
 def write_shared(lang):
@@ -424,6 +437,10 @@ def main(argv):
         if cmd == "build":
             write_all(argv[1:] or None)
             print("written")
+        return 0
+    if cmd == "holds":
+        write_holds()
+        print("holds written")
         return 0
     if cmd == "old_head":
         old_head()

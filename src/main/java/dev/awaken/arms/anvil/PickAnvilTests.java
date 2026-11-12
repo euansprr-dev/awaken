@@ -411,6 +411,23 @@ final class PickAnvilTests {
             h.assertTrue(s.isCorrectToolForDrops(Blocks.STONE.defaultBlockState()), i + " takes stone");
             h.assertTrue(ForgedPicks.data(s).colour() == 0.5F, i + " reads peacock with no story");
         }
+        // held as vanilla's pickaxe (SPEC §49.8; Euan 2026-11-12, "held the wrong way ... match vanilla animations and
+        // angle"): in either first-person hand the haft lies along vanilla item/handheld's, and the end ahead is the one
+        // the item JSON says leads there (plus_leads: the right hand's +x end, the left hand's -x), as the engine applies a
+        // hold (ItemTransform.apply: rotationXYZ, a left hand's y and z turned back)
+        org.joml.Vector3f vanilla = hand(0F, -90F, 25F, 1F, new org.joml.Vector3f(1F, 1F, 0F));
+        for (Item i : ForgedPicks.all()) {
+            String id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(i).getPath();
+            var display = model("/assets/awaken/models/item/" + id + "_in_hand.json").getAsJsonObject("display");
+            for (String side : new String[]{"firstperson_righthand", "firstperson_lefthand"}) {
+                var r = display.getAsJsonObject(side).getAsJsonArray("rotation");
+                float k = side.endsWith("lefthand") ? -1F : 1F;
+                org.joml.Vector3f haft = hand(r.get(0).getAsFloat(), r.get(1).getAsFloat(), r.get(2).getAsFloat(), k, new org.joml.Vector3f(1F, 1F, 0F));
+                org.joml.Vector3f plusEnd = hand(r.get(0).getAsFloat(), r.get(1).getAsFloat(), r.get(2).getAsFloat(), k, new org.joml.Vector3f(1F, -1F, 0F));
+                h.assertTrue(haft.dot(vanilla) > 0.995F, id + "'s haft stands as vanilla's pickaxe in " + side + " (" + haft + ")");
+                h.assertTrue(plusEnd.z * k < -0.9F, id + "'s leading end is ahead in " + side + " (+x end " + plusEnd + ")");
+            }
+        }
         ForgedPickItem s = ForgedPicks.item(new ItemStack(ForgedPicks.get(PickForm.DELVER, 5)));
         h.assertTrue(new ItemStack(s).has(DataComponents.DAMAGE_RESISTANT), "S shrugs off fire");
         h.assertFalse(new ItemStack(ForgedPicks.get(PickForm.DELVER, 3)).has(DataComponents.DAMAGE_RESISTANT), "B doesn't");
@@ -425,6 +442,20 @@ final class PickAnvilTests {
         h.assertTrue(Math.abs(mattock.getDestroySpeed(Blocks.DIRT.defaultBlockState()) - stone * 1.2F) < 0.01F, "and 120% in earth");
         h.assertTrue(delver.getDestroySpeed(Blocks.DIRT.defaultBlockState()) == 1F, "a Delver digs earth as a hand does");
         h.succeed();
+    }
+
+    /** A direction in item space as a first-person hold turns it (degrees; k -1 for a left hand), unit length. */
+    private static org.joml.Vector3f hand(float rx, float ry, float rz, float k, org.joml.Vector3f v) {
+        return new org.joml.Quaternionf().rotationXYZ((float) Math.toRadians(rx), k * (float) Math.toRadians(ry), k * (float) Math.toRadians(rz))
+                .transform(v.normalize());
+    }
+
+    private static com.google.gson.JsonObject model(String path) {
+        try (var in = PickAnvilTests.class.getResourceAsStream(path)) {
+            return com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException(ex);
+        }
     }
 
     private static void schema(GameTestHelper h) {
