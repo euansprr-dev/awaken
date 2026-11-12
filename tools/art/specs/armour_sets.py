@@ -65,17 +65,22 @@ BONES = {"helmet": ("head",), "chestplate": ("body", "right_arm", "left_arm", "c
 # boot's in the other's, a plate's inner side in the skin's. Two faces in one plane fight for every pixel (they flicker).
 # So every mesh is built a hair bigger than designed, each by its own amount: its boxes are grown on every side by its
 # step and its surface is worked out again from the grown boxes (vanilla does the same with its 0.5 and 1.0 armour
-# layers). Steps are in 128ths of a texel. Meshes that can meet differ by 4 (a 512th of a block: far more than the
+# layers). Steps are in 128ths of a texel. Meshes that share planes differ by 4 (a 512th of a block: far more than the
 # depth buffer needs to tell two faces apart at any distance armour is seen from, far less than a pixel on screen); the
-# cloths sit between the two legs' steps, 2 from each. Nothing is 0: the skin is. A bone's living parts stand 1, 2, 3
-# over its still mesh, awakened parts 1 under their piece's. The check (planes) holds every set to it.
+# cloths sit between the boots' and the legs' steps, 2 from each, a cape's yoke 2 under the cuirass. Nothing is 0: the
+# skin is.
+# The bigger step wins the plane two meshes shared, so the order is a look: a helm keeps every face it has (over the
+# cuirass and the sleeves), the cuirass keeps its sides (over the sleeves: and a sleeve that stood a hair proud of the
+# cuirass would shade its side all the way down under a high sun), the belt lies over the thigh plates, the thigh
+# plates over the boots, the right leg over the left. A bone's living parts stand 1, 2, 3 over its still mesh, awakened
+# parts 1 under their piece's. The check (planes) holds every set to it.
 STEP = 1 / 128
-DEPTH = {("helmet", "head"): 4,
-         ("chestplate", "body"): 16, ("chestplate", "right_arm"): 20, ("chestplate", "left_arm"): 20,
-         ("chestplate", "cape0"): 8, ("chestplate", "cape1"): 4, ("chestplate", "cape2"): 8,
-         ("leggings", "body"): 12, ("leggings", "right_leg"): 4, ("leggings", "left_leg"): 8,
-         ("leggings", "front_cloth"): 6, ("leggings", "back_cloth"): 6,
-         ("boots", "right_leg"): 12, ("boots", "left_leg"): 16}
+DEPTH = {("helmet", "head"): 12,
+         ("chestplate", "body"): 8, ("chestplate", "right_arm"): 4, ("chestplate", "left_arm"): 4,
+         ("chestplate", "cape0"): 6, ("chestplate", "cape1"): 2, ("chestplate", "cape2"): 6,
+         ("leggings", "body"): 18, ("leggings", "right_leg"): 14, ("leggings", "left_leg"): 10,
+         ("leggings", "front_cloth"): 8, ("leggings", "back_cloth"): 8,
+         ("boots", "right_leg"): 6, ("boots", "left_leg"): 2}
 
 
 def depth(piece, bone):

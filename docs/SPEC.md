@@ -20232,11 +20232,17 @@ Lens off as well: it is the meshes, not the light.
   on every side by the step and its surface is worked out again from the grown boxes, so it stays closed and none of its
   own faces double up (`armour_sets.py` `_stepped`: exact for boxes square to each other; a turned box that shares a plane
   with an earlier one has that one's grown outline cut out of it). Vanilla does the same with its 0.5 and 1.0 armour layers.
-- **The steps** (`DEPTH`, in 128ths of a texel): helmet 4; cuirass 16, arms 20, cape links 8, 4, 8; belt 12, right leg 4,
-  left leg 8, cloths 6; right boot 12, left boot 16. Meshes that can meet differ by 4 (a 512th of a block), the cloths by
-  2 from either leg. A bone's living parts (§44.10) stand 1, 2, 3 over its still mesh, awakened parts 1 under their piece's.
-  Nothing is 0, so no plate lies in the skin. The largest, the arms', is 0.16 of a texel (a hundredth of a block): no
-  silhouette changes, and the texture is the same file.
+- **The steps** (`DEPTH`, in 128ths of a texel): helmet 12; cuirass 8, arms 4, cape links 6, 2, 6; belt 18, right leg 14,
+  left leg 10, cloths 8; right boot 6, left boot 2. Meshes that share planes differ by 4 (a 512th of a block); the cloths
+  sit 2 from the boots and the legs, a cape's yoke 2 under the cuirass. A bone's living parts (§44.10) stand 1, 2, 3
+  over its still mesh, awakened parts 1 under their piece's. Nothing is 0, so no plate lies in the skin. The largest, the
+  belt's, is 0.14 of a texel (under a hundredth of a block): no silhouette changes, and the texture is the same file.
+- **Who wins the plane two meshes shared** is the bigger step, so the order is a look: a helm keeps every face it has
+  (over the cuirass and the sleeves); the cuirass keeps its sides and their trim (over the sleeves' inner two columns);
+  the belt lies over the thigh plates, the thigh plates over the boots' cuffs, the right leg over the left. With Lens
+  there is a second reason for cuirass over sleeve: on a stand the arms are held out, and a sleeve a hair proud of the
+  cuirass shades the cuirass's side all the way down under a high sun (seen in a tour as bright slots of light on
+  Rootwarden's chest; gone with this order).
 - **Why that is enough:** the game's depth buffer is 32-bit float with near and far swapped; on Vulkan (what the pack runs)
   it tells faces a 512th of a block apart at any distance armour is drawn at. By the arithmetic (not measured), on OpenGL
   without clip control (a Mac's own OpenGL) the same step holds to about 50 blocks, the cloths' and the living parts'
