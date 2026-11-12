@@ -27,9 +27,9 @@ while i < len(args):
            'cmd effect give @s minecraft:night_vision infinite 0 true', 'hud off', '',
            # two and a half million blocks: half a minute before the client has them all, or the first shots are the sky
            'cmd awaken gate beat_hall A awaken:%s' % kind, 'wait 600']
-    for b in beats:
-        # five seconds: the chunks round a new place come in, then the shot
-        out += ['cmd awaken gate beat_at %s 3 0' % b, 'wait 100', 'shot %s_%s' % (kind, b.lower())]
+    for k, b in enumerate(beats):
+        # five seconds: the chunks round a new place come in, then the shot (the first is far from where the hall was laid: ten)
+        out += ['cmd awaken gate beat_at %s 3 0' % b, 'wait %d' % (200 if k == 0 else 100), 'shot %s_%s' % (kind, b.lower())]
     out += ['quit', '']
     open('tools/autopilot/%s.txt' % name, 'w').write('\n'.join(out))
     print('wrote', name, len(beats), 'shots')

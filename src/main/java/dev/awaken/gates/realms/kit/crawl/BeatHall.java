@@ -50,6 +50,8 @@ public final class BeatHall {
         if (!(land instanceof CrawlLand<?> crawl)) return Optional.empty();
 
         BeatLine L = new BeatLine("hall", at.getX(), at.getY(), at.getZ(), 1, 0);
+        // shut at both ends: it hangs in the sky, and a camera in it should see only the hall
+        L.wall(-1, at.getY() - 2, -2, -1, at.getY() + BeatLine.HEAD, 2);
         Beats.pad(L, 4);
         Random r = new Random(72L * 31 + rank.ordinal());
         double t = Math.min(5, rank.ordinal()) / 5.0;
@@ -79,6 +81,7 @@ public final class BeatHall {
             }
         }
         Beats.pad(L, 4);
+        L.wall(L.a, L.feet - 2, -2, L.a, L.feet + BeatLine.HEAD, 2);
         L.s.done();
         BlockGetter view = L.s.view(crawl.beatPaint(L.s));
 

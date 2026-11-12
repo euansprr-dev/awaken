@@ -19,7 +19,7 @@ hud off
 cmd awaken gate beat_hall A awaken:root_cellars
 wait 600
 cmd awaken gate beat_at SHIMMY 3 0
-wait 100
+wait 200
 shot root_cellars_shimmy
 cmd awaken gate beat_at SLIDE 3 0
 wait 100

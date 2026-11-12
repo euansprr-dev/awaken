@@ -19,7 +19,7 @@ hud off
 cmd awaken gate beat_hall A awaken:green_dark
 wait 600
 cmd awaken gate beat_at PIPE 3 0
-wait 100
+wait 200
 shot green_dark_pipe
 cmd awaken gate beat_at SLIDE 3 0
 wait 100

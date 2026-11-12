@@ -19,7 +19,7 @@ hud off
 cmd awaken gate beat_hall A awaken:catacombs
 wait 600
 cmd awaken gate beat_at SLIDE 3 0
-wait 100
+wait 200
 shot catacombs_slide
 cmd awaken gate beat_at SLIDEJUMP 3 0
 wait 100

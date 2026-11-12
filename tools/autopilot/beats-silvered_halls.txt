@@ -19,7 +19,7 @@ hud off
 cmd awaken gate beat_hall A awaken:silvered_halls
 wait 600
 cmd awaken gate beat_at GULF 3 0
-wait 100
+wait 200
 shot silvered_halls_gulf
 cmd awaken gate beat_at SLIDE 3 0
 wait 100
