@@ -3,7 +3,7 @@
 # shader pack basically. The water color changes, the colors change around"). The effects' render types wrote depth,
 # so Lens took each glow's whole quad for a surface: the water behind lost its look in the quad's shape, and fog,
 # shade and sky behind were worked out for the effect's distance. They are now drawn into Lens's light layer (powers'
-# FxGlow, SPEC §36.12 and §22 "Light over the Air").
+# FxGlow, SPEC §36.11 and §22 "Light over the Air").
 # (The deck stands at y 232, over the cloud layer: at 200 it was inside Lens's clouds, a whiteout, run 43205352337.)
 # A stone deck over a pool with open sky beyond, a husk four and a half blocks ahead, in first person: three aimed
 # powers, each cast looking across the water, then up against the sky, then down at the deck in a wall's shade; two

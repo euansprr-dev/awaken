@@ -34,7 +34,7 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
 
 /**
- * Power effects over Lens (SPEC §36.12 "Effects over Lens"; §22 "Light over the Air").
+ * Power effects over Lens (SPEC §36.11 "Effects over Lens"; §22 "Light over the Air").
  *
  * <p>The effects' render types are the game's own (lightning, energy swirl, translucent entity), and three of those
  * write depth. Lens works from the world's depth: a glow's whole quad, clear corners and all, was a surface to it. The
