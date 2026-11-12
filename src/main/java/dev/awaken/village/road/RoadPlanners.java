@@ -16,7 +16,8 @@ import java.util.concurrent.locks.LockSupport;
  * left for the game) that make the network's pieces before anyone waits for them, the most urgent job first: what world
  * generation is waiting for, then the towns' and wayhouses' sites the server thread's searches asked for, then what lies
  * ahead of the players, nearest first (held back while the server is late with a tick). While new land is coming in
- * round a player ({@code LandFirst}) only world generation's own jobs run, two at a time: the rest wait in the queue.
+ * round a player ({@code LandFirst}) only the jobs for that land run, two at a time (world generation's own and the
+ * lattice chunks it's about to reach): the rest are held until it's in.
  * A job only asks for a piece (a plan, a hub, a road, a lattice chunk's legs): each piece is still made once by
  * whichever thread asks first while the others wait for it, so the network is exactly what one thread would lay, and no
  * thread ever waits for a job still queued.
@@ -70,8 +71,11 @@ final class RoadPlanners {
         return pool;
     }
 
-    /** Queues a job unless the same one is queued already at least as urgently ({@code order} ranks it within its tier, lowest first). */
-    static void job(String key, int tier, long order, Runnable work) {
+    /**
+     * Queues a job unless the same one is queued already at least as urgently ({@code order} ranks it within its tier,
+     * lowest first; ahead of the players it's the lattice chunk's squared distance in chunks, times four); whether it was.
+     */
+    static boolean job(String key, int tier, long order, Runnable work) {
         long rank = ((long) tier << 56) | Math.clamp(order, 0, (1L << 56) - 1);
         boolean[] mine = new boolean[1];
         PENDING.compute(key, (k, had) -> {
@@ -79,24 +83,38 @@ final class RoadPlanners {
             mine[0] = true;
             return rank;
         });
-        if (!mine[0]) return;
+        if (!mine[0]) return false;
+        // what world generation waits for, or a piece of a lattice chunk the land coming in will reach in a moment
+        boolean forLand = tier == URGENT || tier == AHEAD && order / 4 <= front;
         long seq = SEQ.incrementAndGet();
         Job[] self = new Job[1];
         self[0] = new Job(rank, seq, () -> {
-            // land comes first (SPEC §28.9, Cost): while new land is coming in round a player, a job ahead or one a search
-            // asked for goes back in the queue, in its place, and world generation's own jobs run LEAN at a time, so the
-            // planners never take the generator's cores (Euan's Mac, 12 Nov: five planners at 4.6 cores while he flew)
-            if (dev.awaken.core.api.LandFirst.streaming() && (tier != URGENT || WORKING.get() >= LEAN)) {
-                DEFERRED.incrementAndGet();
-                ThreadPoolExecutor p = pool;
-                if (p == null || p.isShutdown()) return; // the server stopped: the job goes with it
-                try {
-                    p.execute(self[0]);
-                } catch (java.util.concurrent.RejectedExecutionException e) {
+            // a more urgent copy of this job was queued since (a player came nearer) or has run: that one does the work
+            Long now = PENDING.get(key);
+            if (now == null || now != rank) return;
+            // land comes first (SPEC §28.9, Cost): while new land is coming in round a player, a job that isn't for that
+            // land waits until it's in, and the ones that are run LEAN at a time, so the planners never take the
+            // generator's cores (Euan's Mac, 12 Nov: five planners at 4.6 cores while he flew) and the generator never
+            // waits for roads they could have laid first (run 43209363904: holding those too left 15 s in 30 of road
+            // starts laying lattice chunks' legs themselves)
+            if (dev.awaken.core.api.LandFirst.streaming()) {
+                if (!forLand) {
+                    DEFERRED.incrementAndGet();
+                    HELD.add(self[0]);
                     return;
                 }
-                LockSupport.parkNanos(DEFER_NS);
-                return;
+                if (WORKING.get() >= LEAN) {
+                    DEFERRED.incrementAndGet();
+                    ThreadPoolExecutor p = pool;
+                    if (p == null || p.isShutdown()) return; // the server stopped: the job goes with it
+                    try {
+                        p.execute(self[0]); // back in its place: it's next once a planner is free
+                    } catch (java.util.concurrent.RejectedExecutionException e) {
+                        return;
+                    }
+                    LockSupport.parkNanos(DEFER_NS);
+                    return;
+                }
             }
             PENDING.remove(key, rank);
             // ahead of the players, a job starts between the server's ticks or within a late one's first 40 ms
@@ -111,16 +129,46 @@ final class RoadPlanners {
             }
         });
         pool().execute(self[0]);
+        return true;
     }
 
-    /** While land comes in, world generation's own jobs run this many at a time (the rest wait their turn in the queue). */
+    /** While land comes in, the jobs for it run this many at a time (the rest wait their turn in the queue). */
     static final int LEAN = 2;
     /** A planner whose job went back in the queue rests this long before it takes the next (no spinning). */
     static final long DEFER_NS = 50_000_000L;
     /** Planners at work on a job now. */
     private static final AtomicInteger WORKING = new AtomicInteger();
-    /** Jobs put back while land came in (the timer's line). */
+    /** Jobs put back or held while land came in (the timer's line). */
     static final AtomicLong DEFERRED = new AtomicLong();
+    /** Jobs held while land comes in, queued again in their order once it's in ({@link #release}). */
+    private static final java.util.concurrent.ConcurrentLinkedQueue<Job> HELD = new java.util.concurrent.ConcurrentLinkedQueue<>();
+    /**
+     * How near a player (squared, in chunks) a lattice chunk is for the land coming in: the ring world generation makes
+     * structure starts in round the view distance, and one lattice spacing past it (set each pass, {@link #front}).
+     */
+    private static volatile long front = (12L + net.minecraft.server.level.ChunkLevel.RADIUS_AROUND_FULL_CHUNK + Road.LATTICE)
+            * (12L + net.minecraft.server.level.ChunkLevel.RADIUS_AROUND_FULL_CHUNK + Road.LATTICE);
+
+    /** The server's view distance, for the land coming in round a player. */
+    static void front(int viewDistance) {
+        long r = viewDistance + net.minecraft.server.level.ChunkLevel.RADIUS_AROUND_FULL_CHUNK + Road.LATTICE;
+        front = r * r;
+    }
+
+    /** Once the land is in, the jobs held while it came are queued again (each server tick; nothing to do most). */
+    static void release() {
+        if (HELD.isEmpty() || dev.awaken.core.api.LandFirst.streaming()) return;
+        ThreadPoolExecutor p = pool;
+        for (Job j; (j = HELD.poll()) != null; ) {
+            if (p == null || p.isShutdown()) continue; // the server stopped: they go with it
+            try {
+                p.execute(j);
+            } catch (java.util.concurrent.RejectedExecutionException e) {
+                HELD.clear();
+                return;
+            }
+        }
+    }
 
     /**
      * World generation's own waits, set aside (the Turbo backstop {@code RoadStarts}): one thread, as the level's worldgen
@@ -156,6 +204,7 @@ final class RoadPlanners {
     static void settle() {
         ThreadPoolExecutor p = pool;
         PENDING.clear();
+        HELD.clear();
         if (p == null) return;
         p.getQueue().clear();
         for (int quiet = 0; quiet < 3; ) {
@@ -171,5 +220,6 @@ final class RoadPlanners {
         if (starts != null) starts.shutdownNow();
         starts = null;
         PENDING.clear();
+        HELD.clear();
     }
 }

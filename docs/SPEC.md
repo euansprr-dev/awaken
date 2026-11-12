@@ -11978,12 +11978,19 @@ same roads and plans for a seed, the bench's fingerprint unchanged):
   players starts between the server's ticks or within a tick's first 40 ms (`RoadTimer.serverLate`, from the server
   tick's start and end; held a second at most, so the queue keeps moving). Land comes first (`core.api.LandFirst`, §12;
 Euan's Mac, 12 Nov: five planners used 4.6 cores while he flew over new land, and Tectonic's land came in half empty):
-while new land is coming in round a player a job ahead or one a search asked for goes back in the queue in its place
-(the planner rests 50 ms before it takes the next), and world generation's own jobs run two at a time; the lode plans'
+while new land is coming in round a player only the jobs for that land run, two at a time (a third goes back in the
+queue in its place and the planner rests 50 ms before it takes the next): world generation's own, and the pieces of a
+lattice chunk within the ring world generation makes structure starts in (the view distance, the generation pyramid's ten chunks
+round a full one, `ChunkLevel.RADIUS_AROUND_FULL_CHUNK`, and one lattice spacing past it). The rest (a job further ahead, one a search asked for) is held
+aside and queued again in its order once the land is in. Holding the near lattice chunks too had left world
+generation laying their legs itself (run 43209363904: 15 s in 30 on the road starts thread, one chunk 5 s), where the
+planners had laid them first (run 43205566659, the same flight before Land first: 11 ms). The pass ahead queues a
+lattice chunk again nearer the front of the queue as a player comes closer (a job is queued again only when it's more
+urgent), and the copy further back finds a newer one queued or run and does nothing; the lode plans'
 and the Horizon's sinkhole workers, the village planner and the optional searches (the pick's trail to an adit, the
 Hearth's mouth for a metal, a region's wonder, the Well's site, now on `LandFirst.later()` instead of the game's own
 worldgen pool) wait before each job, at most a minute. No road, village or place is left out: each only comes later.
-The road timer's line counts the jobs put back and the chunks in view not made yet. The pass ahead (`RoadNet.ahead`, on the
+The road timer's line counts the jobs put back or held and the chunks in view not made yet. The pass ahead (`RoadNet.ahead`, on the
   server thread twice a second) only queues: a lattice chunk's fan-out (the region map and the grid, a few ms) runs
   on a planner. The laid roads' index by chunk is read without a lock (copy-on-write lists, a batch's points filed in
   one copy): a creature's road distance on the server thread had waited 31 ms for a planner filing a batch.
