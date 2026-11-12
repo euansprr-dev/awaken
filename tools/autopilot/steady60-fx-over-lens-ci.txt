@@ -4,6 +4,7 @@
 # so Lens took each glow's whole quad for a surface: the water behind lost its look in the quad's shape, and fog,
 # shade and sky behind were worked out for the effect's distance. They are now drawn into Lens's light layer (powers'
 # FxGlow, SPEC §36.12 and §22 "Light over the Air").
+# (The deck stands at y 232, over the cloud layer: at 200 it was inside Lens's clouds, a whiteout, run 43205352337.)
 # A stone deck over a pool with open sky beyond, a husk four and a half blocks ahead, in first person: three aimed
 # powers, each cast looking across the water, then up against the sky, then down at the deck in a wall's shade; two
 # frames of each cast; the whole round first the game's own way (`awaken fx glow off`: as it was), then over Lens.
@@ -28,15 +29,15 @@ cmd awaken powers starter 1
 wait 20
 screen close
 window 1440 900
-cmd tp @s 0.5 200 0.5 0 8
+cmd tp @s 0.5 232 0.5 0 8
 cmd forceload add -32 -32 48 64
 wait 100
 # a deck, a pool beyond it, a wall to the east for shade
-cmd fill -14 196 -8 14 199 40 minecraft:smooth_stone
-cmd fill -12 199 3 12 199 36 minecraft:water
-cmd fill -14 200 -8 14 220 40 minecraft:air
-cmd fill -3 199 2 3 199 6 minecraft:smooth_stone
-cmd fill 5 200 -6 5 206 1 minecraft:stone_bricks
+cmd fill -14 228 -8 14 231 40 minecraft:smooth_stone
+cmd fill -12 231 3 12 231 36 minecraft:water
+cmd fill -14 232 -8 14 252 40 minecraft:air
+cmd fill -3 231 2 3 231 6 minecraft:smooth_stone
+cmd fill 5 232 -6 5 238 1 minecraft:stone_bricks
 wait 60
 camera first
 lookswitch cinematic
@@ -46,8 +47,8 @@ cmd awaken fx glow off
 wait 20
 # beam, water
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 6
@@ -61,8 +62,8 @@ shotnow was_beam_water_4
 wait 60
 # beam, sky
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 -38
@@ -76,8 +77,8 @@ shotnow was_beam_sky_4
 wait 60
 # beam, shade
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look -70 30
@@ -91,8 +92,8 @@ shotnow was_beam_shade_4
 wait 60
 # prism_lance, water
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 6
@@ -106,8 +107,8 @@ shotnow was_prism_lance_water_4
 wait 60
 # prism_lance, sky
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 -38
@@ -121,8 +122,8 @@ shotnow was_prism_lance_sky_4
 wait 60
 # prism_lance, shade
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look -70 30
@@ -136,8 +137,8 @@ shotnow was_prism_lance_shade_4
 wait 60
 # charged_shot, water
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 6
@@ -151,8 +152,8 @@ shotnow was_charged_shot_water_4
 wait 60
 # charged_shot, sky
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 -38
@@ -166,8 +167,8 @@ shotnow was_charged_shot_sky_4
 wait 60
 # charged_shot, shade
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look -70 30
@@ -183,8 +184,8 @@ cmd awaken fx glow on
 wait 20
 # beam, water
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 6
@@ -198,8 +199,8 @@ shotnow now_beam_water_4
 wait 60
 # beam, sky
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 -38
@@ -213,8 +214,8 @@ shotnow now_beam_sky_4
 wait 60
 # beam, shade
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look -70 30
@@ -228,8 +229,8 @@ shotnow now_beam_shade_4
 wait 60
 # prism_lance, water
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 6
@@ -243,8 +244,8 @@ shotnow now_prism_lance_water_4
 wait 60
 # prism_lance, sky
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 -38
@@ -258,8 +259,8 @@ shotnow now_prism_lance_sky_4
 wait 60
 # prism_lance, shade
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look -70 30
@@ -273,8 +274,8 @@ shotnow now_prism_lance_shade_4
 wait 60
 # charged_shot, water
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 6
@@ -288,8 +289,8 @@ shotnow now_charged_shot_water_4
 wait 60
 # charged_shot, sky
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look 0 -38
@@ -303,8 +304,8 @@ shotnow now_charged_shot_sky_4
 wait 60
 # charged_shot, shade
 cmd kill @e[type=!minecraft:player,distance=..80]
-cmd tp @s 0.5 200 0.5 0 8
-cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd tp @s 0.5 232 0.5 0 8
+cmd summon minecraft:husk 0.5 232 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
 cmd awaken admin power reset
 wait 8
 look -70 30
