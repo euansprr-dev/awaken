@@ -650,10 +650,11 @@ void main() {
     if (airOn() > 0.0 && !open && !classic && !plate && waterHere(pRel, quick, game)) {
 #endif
         // Under cover it stays the game's. Cinematic and Ultra know the water's own cover: Lens's light read it, or,
-        // where the light has no sun to give (a gate's look gives it none: a gate is lit by its own lamps), it is read
-        // here. It wasn't, and a gate's pool was open water under the room's roof: the sky's mirror in a closed room,
-        // and a waterline that took the roof over every column round it for a bank, a pale line along every block's
-        // edge (Euan, in a Hive gate, 12 Nov: "creating squares in the water"). The water's own cover, not the camera's
+        // where the light has no sun to give (every Realm's look gives it none: a Realm is lit by its own lamps, under
+        // the overworld's sky, so the Air is on there), it is read here. It wasn't, and a Realm's pool was open water
+        // under the hall's roof: the sky's mirror in a closed room, and a waterline that took the roof over every column
+        // round it for a bank, a pale line along every block's edge (Euan, in a Hive gate's Realm, 12 Nov: "creating
+        // squares in the water"). The water's own cover, not the camera's
         // and the water's together as the Air's fog has it: what the water mirrors is over the water, so a cave's lake
         // seen from outside has no sky to hold either. Lite, and Cinematic before the heightfield is up, go by the
         // camera's cover alone.

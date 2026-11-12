@@ -7350,10 +7350,11 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     a cave's lake has no sky to hold. On Cinematic and Ultra that is the water's own cover, by the heightfield over
     it (as Lens's light reads a surface's: shade from a roof's edge, gone six blocks in), read for the water itself
     where the light has no sun to give; on Lite, and before the heightfield is up, the camera's (parameter texel
-    21 r). (It was the camera's and the light's together, and the light reads nothing in a gate, whose look gives it
-    no sun: a gate's pool under the room's roof was open water, mirroring the sky in a closed room, with a pale
-    line along every block's edge. Euan, in an E-rank Hive gate, 12 Nov: "seems like there's an issue with the water
-    in this gate here creating squares in the water".) It gives way with the game's own fog, and by the look's
+    21 r). (It was the camera's and the light's together, and the light reads nothing in a Realm, whose look gives
+    it no sun (all of them: a Realm is lit by its own lamps, under the overworld's sky, so the Air is on there): a
+    Realm's pool under a hall's roof was open water, mirroring the sky in a closed room, with a pale line along every
+    block's edge. Euan, in an E-rank Hive gate's Realm, 12 Nov: "seems like there's an issue with the water in this
+    gate here creating squares in the water". The gates' own world has no sky, and no Air.) It gives way with the game's own fog, and by the look's
     `water` (0.6 is whole).
   - **The body**: jewel tones from the place's own water colour (the hue of the game's pixel: a marsh stays dark, a
     steppe pale), drawn toward aqua where you look down into it and toward indigo where it runs deep and far, lit
