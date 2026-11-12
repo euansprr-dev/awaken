@@ -1138,6 +1138,78 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
     /** Anything too big for {@link #adorn}: drawn after the floors are laid and before the walls are dressed. */
     protected void special(V v, M m) {}
 
+    // ---- beats (SPEC §72.2) ------------------------------------------------------------------------------------------
+
+    private volatile @org.jspecify.annotations.Nullable BeatSkin beats;
+
+    /** This land's blocks for the parts of its beats; what it leaves out is its rock, floor and half step. */
+    protected BeatSkin beatSkin(M m) {
+        return new BeatSkin();
+    }
+
+    final BeatSkin beats(M m) {
+        BeatSkin k = beats;
+        if (k == null) beats = k = beatSkin(m);
+        return k;
+    }
+
+    /** The block of one cell of a beat's solid box ({@code top}: the box's top cell). */
+    final BlockState beatBlock(M m, Part part, Sculpt.Role role, int arg, int x, int y, int z, boolean top) {
+        BeatSkin k = beats(m);
+        return switch (role) {
+            case ROCK -> rock(m, x, y, z);
+            case FLOOR -> top ? floor(m, part, x, y, z) : rock(m, x, y, z);
+            case DUST -> top ? BeatSkin.or(k.dust, floor(m, part, x, y, z)) : rock(m, x, y, z);
+            case CRUMBLE -> top ? BeatSkin.or(k.crumble, floor(m, part, x, y, z)) : rock(m, x, y, z);
+            case DECK -> top ? BeatSkin.or(k.deck, floor(m, part, x, y, z)) : rock(m, x, y, z);
+            case STEP -> BeatSkin.or(k.step, step(m));
+            case PLINTH_TOP -> BeatSkin.or(k.plinthTop, BeatSkin.or(k.step, step(m)));
+            case CAP -> BeatSkin.or(k.cap, BeatSkin.high(BeatSkin.or(k.step, step(m))));
+            case BEAM -> BeatSkin.axis(BeatSkin.or(k.beam, rock(m, x, y, z)), arg);
+            case LIP -> BeatSkin.or(k.lip, rock(m, x, y, z));
+            case SCUFF -> BeatSkin.or(k.scuff, rock(m, x, y, z));
+            case RAIL -> BeatSkin.or(k.rail, rock(m, x, y, z));
+            case PLINTH -> BeatSkin.or(k.plinth, rock(m, x, y, z));
+            case LINE -> arg < 0 ? BeatSkin.or(k.rope, Sculpt.rope()) : BeatSkin.facing(BeatSkin.or(k.line, BeatSkin.LADDER), arg);
+            case DOOR -> BeatSkin.or(k.door, doorBlock(m));
+            case GLOW -> BeatSkin.or(k.glow, Blocks.SHROOMLIGHT.defaultBlockState());
+            case TOOTH -> BeatSkin.or(k.tooth, rock(m, x, y, z));
+            case ANCHOR -> Sculpt.anchorRing();
+        };
+    }
+
+    /** A beat's piece in this land's own blocks, for the proof at generation (nothing painted, nothing adorned). */
+    final Sculpt.Paint paint(M m, Part part) {
+        return new Sculpt.Paint() {
+            @Override
+            public BlockState solid(Sculpt.Role role, int arg, int x, int y, int z, boolean top) {
+                return beatBlock(m, part, role, arg, x, y, z, top);
+            }
+
+            @Override
+            public BlockState floor(int x, int y, int z) {
+                return CrawlLand.this.floor(m, part, x, y, z);
+            }
+
+            @Override
+            public BlockState rock(int x, int y, int z) {
+                return CrawlLand.this.rock(m, x, y, z);
+            }
+
+            @Override
+            public BlockState step() {
+                return CrawlLand.this.step(m);
+            }
+        };
+    }
+
+    /** Where this land's blocks for the roles a move depends on differ in shape from plain stone's (BeatSkin.check). */
+    public final List<String> beatShapes() {
+        M m = mats();
+        Sculpt probe = new Sculpt("probe");
+        return BeatSkin.check((role, top) -> beatBlock(m, probe, role, 0, 0, 64, 0, top));
+    }
+
     /** The top of the rock. */
     protected final int rockTop() {
         return top;
@@ -1212,6 +1284,8 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         for (Part p : near) dress(v, m, p, near);
         finish(v, m);
         drawPieces(v, m);
+        // last of all: what the beats' moves need is so, whatever a skin, a trim or a piece did (SPEC §72.2)
+        for (Part p : near) if (p instanceof Sculpt s) s.enforce(v, this, m);
     }
 
     /**
