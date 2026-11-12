@@ -11938,7 +11938,11 @@ same roads and plans for a seed, the bench's fingerprint unchanged):
   `village_tick_holds` holds it: a wave of ~360 lattice chunks queued 2,400 out and world generation waiting on a cold
   lattice chunk beside it, then 15 s of the server thread's road calls for a player flying 40 blocks a second over new
   land. On the Mac (five planners, another build sharing the cores): no wait, the most work in a call 0.45 ms of CPU
-  (19 ms by the clock: the cores were shared), the longest tick 196 ms, the planners busy every tick;
+  (19 ms by the clock: the cores were shared), the longest tick 196 ms, the planners busy every tick. It and
+  `village_road_starts_wait` hold their 250 ms limit on a tick less the garbage collections inside it (the pause time
+  the JVM's collector beans count, ZGC's and Shenandoah's concurrent "Cycles" left out), and say in the line how much of
+  the longest tick was a collection: in the full suite on CI the longest tick swung 35-642 ms with the road work in it
+  under 1 ms of CPU, so a collection must not fail the test, only a wait;
 - a lattice chunk lays a lane only if it can reach it, judged from the roads the lane may join that are laid already:
   a lane runs from a street end to the point of those roads nearest the settlement's middle and keeps inside its
   search's ellipse (every point within 1.225 (δ + E + 24) + 44 of that street end, δ the nearest laid point or 650, E
