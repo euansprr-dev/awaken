@@ -96,6 +96,11 @@ final class KinGoals {
     static final String LESSON = "It comes to warm light. At night, set a torch or a lantern on the ground near the trees, within "
             + KinHelp.NEAR + " blocks of it. Do that three times, a few seconds apart, and it trusts you and settles by your fire.";
 
+    /** Where a kind you've met lives, so you can find another (the Tasks step and the Hearth page say it the same way). */
+    static String metLine(KinKind k) {
+        return "You've met one. Where they live: " + k.where + ".";
+    }
+
     /**
      * One beast's step (SPEC §43.5, §53). Once you've met a kind or heard where one lives, the step says plainly what to do
      * for it ({@link KinHelp#howTo}), and how it comes home; watching one only adds its own lines on the page. Else what
@@ -112,7 +117,7 @@ final class KinGoals {
             why = (met ? "The Lampwing" : "Something") + " has been watching your fire from the trees. " + LESSON;
         } else if (s != null && (s.met || s.heard)) {
             String where = "";
-            if (s.met) where = "You've met one: " + k.where + ".";
+            if (s.met) where = metLine(k);
             else if (s.rumour) {
                 at = new BlockPos(s.rumourX, 64, s.rumourZ);
                 where = KinSpawner.rumourLine(p, k, at, home, true);

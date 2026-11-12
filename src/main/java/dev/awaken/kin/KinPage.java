@@ -146,7 +146,7 @@ public final class KinPage {
     static String rumour(ServerPlayer p, KinKind k, BlockPos from, boolean home) {
         Kinship.Kind s = Kinship.of(p).kind(k);
         if (k == KinKind.LAMPWING && Kinship.of(p).lesson == 1) return "The one that's been watching your fire, from the trees nearby. " + KinGoals.LESSON;
-        if (s.met) return "You've met one: " + k.where + ". " + KinHelp.howTo(k);
+        if (s.met) return KinGoals.metLine(k) + " " + KinHelp.howTo(k);
         BlockPos at = KinSpawner.rumourFor(p, k, from);
         if (at == null) return "None lives within a long walk of here.";
         String line = KinSpawner.rumourLine(p, k, at, from, home);

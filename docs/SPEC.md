@@ -10539,7 +10539,7 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   `looks` (optional fields, so an old client's view still reads).
 - **The beasts' steps** (`kin.KinGoals`, Hearth goal): the home's first two needs (`KinPage.NEEDS` order) with no beast of
   that kind living there yet, while a nook is free. A kind you've met or heard of is named ("Bring a Burrowbun home", the
-  need and where: "You've met one: ..." or the rumour you already have, with its place); one you haven't stays the need
+  need and where: "You've met one. Where they live: ..." or the rumour you already have, with its place); one you haven't stays the need
   itself ("Nothing lights your yard at night."). Looking never learns a rumour: it reads `Kinship`, never asks
   `KinSpawner`.
 - **The Bells' steps** (`bells.BellGoals`): a step per lead in the Bell Book you don't hold yet, newest first, up to 4
