@@ -1081,6 +1081,17 @@ Mobs:
   damage; Sovereigns ×1.5 and the Signal's Shadow ×2 on top of boss scaling. All scaling uses permanent modifiers.
 - Boss phase changes knock one boss part loose (once per boss). Essence per kill scales with content tier.
 - `bosses_killed` and `bosses_killed_unarmed` are counted by mobs (not gates).
+- Nothing of ours moves a body's attributes or effects inside vanilla's walk over its dirty attributes
+  (`LivingEntity.refreshDirtyAttributes`, each tick and on an effect's change). That walk answers max health with the
+  health setter and scale with `refreshDimensions`, so `EntityEvent.Size` and every other listener on that path runs
+  inside it. Lithium swaps the set for one sized to what is in it, so anything that adds to it there wrecks the walk
+  and the server dies ticking the body. That covers a `getAttribute` for an attribute the body never asked for (it makes
+  the instance and marks it dirty), an attribute changed there, or an effect added or removed there (a refresh inside
+  the refresh empties the set). Code on that path reads through the map (`getAttributes().getValue` / `hasModifier`,
+  which never make one); a change that must follow waits for the next tick (`core.Later`). The Thousandfoot's carcass in
+  the Hive died this way on 12 Nov: the copy's first tick refreshed its size (it is given the dead's scale), and the
+  Gravity Wells' size listener made its gravity attribute in the walk (§17.5). `mobs_attribute_walk_every_kind` holds
+  every kind to this in a gate; `hunt_beaten_beast_carcass_attributes` replays that fight to the carcass's first tick.
 
 Story:
 - The Hollow Court spawns the next undefeated Sovereign (fixed order: Hunger, Silence, Sleep, Machines, Mirrors,
@@ -4054,7 +4065,8 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
   ceiling for 60 ticks, every 280 ticks, monsters too. Someone falling up has their eyes at the other end of their
   body (the camera hangs 1.62 below the ceiling) and is drawn upside down for everyone; the client predicts your own
   flip (it sets the same modifier the moment you step in), and the camera tips 5 degrees and back over 0.7 s
-  (none with camera shake off; the FOV-effects slider scales it and a 7% FOV breath). Solvability: a breadth-first walk
+  (none with camera shake off; the FOV-effects slider scales it and a 7% FOV breath). Who is upside down is read off the attribute
+  map (`hasModifier`), never `getAttribute`: the eyes' size listener runs inside vanilla's attribute walk (§13 "Mobs"). Solvability: a breadth-first walk
   over the floor and the ceiling reaches the exit's ledge, and without the wells it can't.
 - **Gauntlet** (`RigGauntlet`, `RigGauntletLive`; plan §7 "Gauntlet"): the room is a pit (slag glow in the Foundry,
   cloud in the Monastery, lit from below by light set in it every few columns) crossed by a course along the two door
