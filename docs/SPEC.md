@@ -23370,7 +23370,8 @@ stone dressed in the land's own stone with a band of its accent; its course catc
   is each land's own: Kingsroot's two wards (4 clear of either curtain, which stands 11 inside its line, and clear of the
   rubble spilling from each breach), the Vine Seat's steps (a block in from either lip, off the great stair and out of its
   rooms; its crown's floor is not one), the Barrow's moor (63, a block over the water, counts as dry; the way keeps 8 off the
-  Lord's ship, whose hull is masses the planner can't see).
+  Lord's ship and the long barrow, masses the planner can't see: the long barrow's top reads as ground with sides no one
+  walks up).
   Every stop is within a walk (88) of the one it leads from (`keep`): stones, the hub and each camp on a branch are only
   looked for where that holds. The hub is tried 28 past the first stones, 28 to either side and 10 past; failing those, a
   new camp anywhere level within 84 of them, or the land's own unused den nearest them. The camp and the vias near the Mouth are early stops: no branch starts from

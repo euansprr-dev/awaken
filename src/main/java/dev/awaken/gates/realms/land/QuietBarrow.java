@@ -163,8 +163,9 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         if (ctx.version() >= 2) {
             M m = m();
             // the moor lies a block over the water (63 on 62): that counts as dry
-            // and the Lord's ship on its hill is masses, not pieces, so the planner keeps 8 off its hull and posts by hand
-            designWay((x, z) -> ground(x, z) > water() && !inBarrow(x, z) && pathDist(x, z) > 5 && clearOfShip(x, z, 8),
+            // and the Lord's ship on its hill and the long barrow are masses, not pieces (the long barrow's top reads as ground 8
+            // over the moor, with sides no one walks up), so the planner keeps 8 off them by hand
+            designWay((x, z) -> ground(x, z) > water() && !inBarrow(x, z) && pathDist(x, z) > 5 && clearOfMasses(x, z, 8),
                     new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band), java.util.Set.of("standing stone"));
         }
     }
@@ -688,8 +689,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
 
     // ---- what grows -------------------------------------------------------------------------------------------------------------
 
-    private boolean clearOfShip(int x, int z, int pad) {
-        for (Blockout.Mass[] set : new Blockout.Mass[][]{hullParts, posts})
+    private boolean clearOfMasses(int x, int z, int pad) {
+        for (Blockout.Mass[] set : new Blockout.Mass[][]{hullParts, posts, {longBarrow}})
             for (Blockout.Mass m : set) if (x >= m.x0 - pad && x <= m.x1 + pad && z >= m.z0 - pad && z <= m.z1 + pad) return false;
         return true;
     }
