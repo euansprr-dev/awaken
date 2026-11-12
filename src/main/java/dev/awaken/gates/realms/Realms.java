@@ -49,6 +49,11 @@ public final class Realms {
             forced = null;
             return Blueprints.get(f).isPresent() ? Optional.of(f) : Optional.empty();
         }
+        return roll(plan, seen);
+    }
+
+    /** What a gate found in the world rolls under today's switches, once the checks above have let it be a Realm. */
+    static Optional<String> roll(GatePlan plan, Set<String> seen) {
         if (!AwakenConfig.GATE_REALMS.get()) return Optional.empty();
         return Blueprints.pick(plan.theme(), plan.rank(), seen, plan.seed(), AwakenConfig.GATE_OPEN_LANDS.get());
     }

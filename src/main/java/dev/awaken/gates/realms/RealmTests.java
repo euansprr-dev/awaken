@@ -763,7 +763,8 @@ public final class RealmTests {
                                 var plan = new dev.awaken.gates.content.GatePlan(seed, dev.awaken.gates.content.GatePlan.CONTENT_VERSION, r, t,
                                         dev.awaken.gates.content.Layout.LABYRINTH, List.of(), dev.awaken.gates.content.Twist.NONE, 3, t.bossId(),
                                         t == Theme.HIVE ? Theme.BELL_CRYPT : Theme.HIVE, 0);
-                                Realms.choose(server, plan, false, Set.of()).ifPresent(id -> rolled.putIfAbsent(id, r));
+                                // what choose rolls once a gate may be a Realm (the test server has no Realms dimension, so choose itself stops sooner)
+                                Realms.roll(plan, Set.of()).ifPresent(id -> rolled.putIfAbsent(id, r));
                                 for (var fw : dev.awaken.gates.worlds.GateWorlds.dress(server, plan, java.util.Optional.empty()).worlds()) dressed.add(fw.world());
                             }
                         }
@@ -771,7 +772,7 @@ public final class RealmTests {
                     List<String> openRolled = rolled.keySet().stream().filter(id -> Blueprints.openLand(realBps.get(id))).toList();
                     List<String> openDressed = dressed.stream().filter(id -> realWorlds.get(id).open()).toList();
                     if (on) {
-                        if (openRolled.isEmpty()) bad.add("with the switch on no open Realm was rolled at all (is the Realms dimension there?)");
+                        if (openRolled.isEmpty()) bad.add("with the switch on no open Realm was rolled at all");
                         if (sky && openDressed.isEmpty()) bad.add("with the switch on no floor was dressed as an open world");
                         continue;
                     }
