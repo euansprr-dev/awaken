@@ -67,6 +67,7 @@ public final class GatesClient {
 
     private static void payloads(RegisterClientPayloadHandlersEvent e) {
         e.register(GatePayloads.Beacons.TYPE, (msg, ctx) -> ClientGates.beacons = List.copyOf(msg.beacons()));
+        e.register(GatePayloads.RealmLights.TYPE, (msg, ctx) -> ClientGates.realmLights(msg));
         e.register(GatePayloads.RunHud.TYPE, (msg, ctx) -> {
             ClientGates.hud = msg;
             ClientGates.hudAt = System.currentTimeMillis();

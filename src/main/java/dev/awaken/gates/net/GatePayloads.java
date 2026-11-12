@@ -73,6 +73,28 @@ public final class GatePayloads {
         }
     }
 
+    /**
+     * One light an open land shows while its way to the Lord is shut (SPEC §50.9 "Lights and seals"): a tall pillar over a
+     * Warden still standing, or a short seal at the Lord's door, one per Warden. {@code pos} is its foot, in the world.
+     */
+    public record RealmLight(BlockPos pos, int colour, int height, boolean seal) {
+        public static final StreamCodec<ByteBuf, RealmLight> CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, RealmLight::pos, ByteBufCodecs.INT, RealmLight::colour, ByteBufCodecs.VAR_INT, RealmLight::height,
+                ByteBufCodecs.BOOL, RealmLight::seal, RealmLight::new);
+    }
+
+    /** Every light of one gate's land that is lit now; one gone since the last list fades out on the client. */
+    public record RealmLights(int gateId, List<RealmLight> lights) implements CustomPacketPayload {
+        public static final Type<RealmLights> TYPE = new Type<>(Awaken.id("gate_realm_lights"));
+        public static final StreamCodec<ByteBuf, RealmLights> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, RealmLights::gateId, RealmLight.CODEC.apply(ByteBufCodecs.list()), RealmLights::lights, RealmLights::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
     public record Beacons(List<Beacon> beacons) implements CustomPacketPayload {
         public static final Type<Beacons> TYPE = new Type<>(Awaken.id("gate_beacons"));
         public static final StreamCodec<ByteBuf, Beacons> STREAM_CODEC = Beacon.CODEC.apply(ByteBufCodecs.list()).map(Beacons::new, Beacons::beacons);

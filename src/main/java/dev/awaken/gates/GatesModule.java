@@ -49,6 +49,7 @@ public final class GatesModule {
     private static void registerPayloads(RegisterPayloadHandlersEvent e) {
         var r = e.registrar("1");
         r.playToClient(GatePayloads.Beacons.TYPE, GatePayloads.Beacons.STREAM_CODEC);
+        r.playToClient(GatePayloads.RealmLights.TYPE, GatePayloads.RealmLights.STREAM_CODEC);
         r.playToClient(GatePayloads.RunHud.TYPE, GatePayloads.RunHud.STREAM_CODEC);
         r.playToClient(GatePayloads.LordLevel.TYPE, GatePayloads.LordLevel.STREAM_CODEC);
         r.playToClient(GatePayloads.Crossing.TYPE, GatePayloads.Crossing.STREAM_CODEC);

@@ -38,13 +38,21 @@ import org.lwjgl.system.MemoryUtil;
 public final class Pillars {
     private Pillars() {}
 
-    private record Draw(double dx, double dy, double dz, float scale, int height, int core, int glow, float solid, float halo) {}
+    private record Draw(double dx, double dy, double dz, float scale, int height, int core, int glow, float solid, float halo, float alpha) {
+        Draw(double dx, double dy, double dz, float scale, int height, int core, int glow, float solid, float halo) {
+            this(dx, dy, dz, scale, height, core, glow, solid, halo, 1F);
+        }
+    }
 
     private static final ContextKey<List<Draw>> KEY = new ContextKey<>(Awaken.id("gate_pillars"));
     public static final int HEIGHT = 900;
 
     static void onExtract(ExtractLevelRenderStateEvent e) {
         Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null && mc.level.dimension() == dev.awaken.gates.realms.RealmsModule.REALMS) {
+            realm(e, mc);
+            return;
+        }
         if (mc.level == null || mc.level.dimension() != Level.OVERWORLD) return;
         List<GatePayloads.Beacon> beacons = ClientGates.beacons();
         if (beacons.isEmpty()) return;
@@ -78,6 +86,40 @@ public final class Pillars {
             out.add(new Draw(rx * k - 0.5, ry * k, rz * k - 0.5, k, HEIGHT, core, glow, 0.22F * widen, 0.32F * widen));
         }
         e.getRenderState().setRenderData(KEY, out);
+    }
+
+    /**
+     * An open land's lights (SPEC §50.9 "Lights and seals"): a pillar over each Warden still standing, in the land's own
+     * colour, and at the Lord's door a short seal for each. A light that went out fades away rather than vanish. Only the
+     * gate the run HUD says you are in: another gate's land shares this dimension.
+     */
+    private static void realm(ExtractLevelRenderStateEvent e, Minecraft mc) {
+        int gate = ClientGates.lightsGate;
+        List<GatePayloads.RealmLight> lit = ClientGates.realmLights;
+        List<ClientGates.Fading> fading = ClientGates.fading;
+        if (gate < 0 || gate != ClientGates.hud().gateId() || lit.isEmpty() && fading.isEmpty()) return;
+        Vec3 cam = e.getCamera().position();
+        double clamp = Math.max(48, mc.options.getEffectiveRenderDistance() * 16 * 0.7);
+        long now = System.currentTimeMillis();
+        List<Draw> out = new ArrayList<>();
+        for (GatePayloads.RealmLight l : lit) realmDraw(e, cam, clamp, l, 1F, out);
+        for (ClientGates.Fading f : fading) {
+            float a = 1F - (now - f.at()) / (float) ClientGates.FADE;
+            if (a > 0.01F) realmDraw(e, cam, clamp, f.light(), a * a, out);
+        }
+        e.getRenderState().setRenderData(KEY, out);
+    }
+
+    private static void realmDraw(ExtractLevelRenderStateEvent e, Vec3 cam, double clamp, GatePayloads.RealmLight l, float alpha, List<Draw> out) {
+        double rx = l.pos().getX() + 0.5 - cam.x, ry = l.pos().getY() - cam.y, rz = l.pos().getZ() + 0.5 - cam.z;
+        double dist = Math.sqrt(rx * rx + rz * rz + ry * ry);
+        float k = dist > clamp ? (float) (clamp / dist) : 1F;
+        // a Warden's pillar widens with distance as a gate's does, so it still reads from across the land; a seal stays slim
+        float widen = l.seal() ? 1F : (float) Math.max(1.0, Math.sqrt(rx * rx + rz * rz) / 96.0);
+        float solid = (l.seal() ? 0.12F : 0.22F) * widen, halo = (l.seal() ? 0.16F : 0.32F) * widen;
+        double r = halo * 16 * k + 2, px = cam.x + rx * k, py = cam.y + ry * k, pz = cam.z + rz * k;
+        if (!e.getFrustum().isVisible(new net.minecraft.world.phys.AABB(px - r, py - 2, pz - r, px + r, py + l.height() * k, pz + r))) return;
+        out.add(new Draw(rx * k - 0.5, ry * k, rz * k - 0.5, k, l.height(), l.colour(), l.colour(), solid, halo, alpha));
     }
 
     /**
@@ -227,9 +269,9 @@ public final class Pillars {
         float rx = -tz / tl, rz = tx / tl;
         // its top stays inside the far plane (vanilla's beam, and our first pillar, were cut off flat there)
         float h = Math.min(d.height() * k, (float) Math.sqrt(Math.max(0F, far * far - tl * tl)) - by);
-        if (h < 8F) return;
+        if (h < 6F) return;
         float[] bell = k < 0.999F ? FAR : NEAR;
-        float breath = 0.9F + 0.1F * Mth.sin(time * 0.045F + bx * 0.01F);
+        float breath = (0.9F + 0.1F * Mth.sin(time * 0.045F + bx * 0.01F)) * d.alpha();
         if (light) {
             // the core: thin and hot, light added (Lens's bloom takes it); stronger at night; it reaches highest
             ribbon(bell, bx, by, bz, rx, rz, h, d.solid() * 1.4F * k, brighten(d.core()), (0.55F + 0.45F * day) * breath, time, 0.6F, 1F);
@@ -240,7 +282,7 @@ public final class Pillars {
             float tint = 1.15F - day;
             int air = airy(d.glow(), day);
             ribbon(bell, bx, by, bz, rx, rz, h, d.halo() * 6F * k, air, 0.5F * tint * breath, time, 1.0F, 0.65F);
-            ribbon(bell, bx, by, bz, rx, rz, h, d.halo() * 16F * k, air, 0.18F * tint, time, 0.4F, 0.5F);
+            ribbon(bell, bx, by, bz, rx, rz, h, d.halo() * 16F * k, air, 0.18F * tint * d.alpha(), time, 0.4F, 0.5F);
         }
     }
 
@@ -263,7 +305,8 @@ public final class Pillars {
             if (i > 0 && ROWS[i - 1] >= reach) break;
             float y = by + f * h;
             // fade in over the foot (the first few blocks), thin out with height; rising bands of light
-            float foot = Mth.clamp(f * h / 6F, 0F, 1F), up = Mth.clamp(1F - f / reach, 0F, 1F);
+            // (a short seal at a door fades in over its first quarter, not its first six blocks)
+            float foot = Mth.clamp(f * h / Math.min(6F, h * 0.25F), 0F, 1F), up = Mth.clamp(1F - f / reach, 0F, 1F);
             float bands = 1F - shimmer * 0.22F * (0.5F + 0.5F * Mth.sin(f * h * 0.08F - time * 0.09F));
             float a = strength * foot * up * up * (3F - 2F * up) * bands;
             if (i > 0) {
