@@ -11327,7 +11327,11 @@ rough land drops it. On real overworld noise (seed 26102610, the 41 anchors with
 one per region, hamlets two times in three. **The first hamlet** (`FirstHamlet`) is found at the server's start, after
 terrain picks the city's site and before any chunk generates: up the road north 760-1,060 (the camp is at 450), then
 96 and 192 to either side, then the roads east, west and south, then 240 further out, the first spot whose land takes a
-hamlet of four homes or more. Clear of the city reserve (+8) by the planner; gates never open on a settlement's ground
+hamlet of four homes or more. Found once per world: the answer (the spot, or none, when the nominal one stands) is kept
+in `<world>/awaken/first_hamlet` with the seed and the centre it was found for, and every later start reads it instead
+of searching (the search reads up to 480 plans' land on the server thread before anyone can join: 16 s at every start
+of Euan's world, 12 Nov, six minutes on a seed whose roads take none); the spot's plan is then made off the server
+thread, last (`LandFirst.later`). Clear of the city reserve (+8) by the planner; gates never open on a settlement's ground
 or within 64 of it, planned ones included (`Villages.reserved`, read by `gates/Director`); a Hearth can't be founded
 within 8 (`hearth/Embers`, `HearthService`).
 

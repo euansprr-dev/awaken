@@ -1,7 +1,8 @@
 # Land first (SPEC §12 LandFirst, §28.9 Cost; Euan 12 Nov: "the world is still not loading fast enough": a 32 s stall
 # at a join, five road planners using 4.6 cores while he flew). With Tectonic: a new world, a half-minute flight to make
 # land and queue roads, then the world left and opened again (Euan's case: a world already made, the server just
-# started), a minute standing (the join), then a minute east at 32 blocks a second. Every five seconds the chunks in
+# started), a minute standing (the join), then a minute east at 32 blocks a second, at y 200 (slow falling between the steps:
+# a creative player in land not made yet falls through it, to y -527 on the first run). Every five seconds the chunks in
 # view not made yet (/awaken core land) and every ten the server's tick times (/tick query). Read the log for "has
 # run" (the stall watch), "Can't keep up", "[core] land", the tick lines and "[road] timer".
 # Run: tools/tour-ci.sh tools/autopilot/land-first-ci.txt 3000 PACK=perf,world TECTONIC=awakened
@@ -20,134 +21,135 @@ cmd gamerule advance_time false
 cmd time set 1500
 camera first
 hud off
-cmd tp @s ~ ~50 ~ -90 10
+cmd effect give @s slow_falling infinite 0 true
+cmd tp @s ~ 200 ~ -90 10
 wait 200
 cmd awaken core land
 # ---- half a minute east, to make land and give the planners work ----
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd awaken core land
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd awaken core land
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
 cmd tick query
@@ -160,293 +162,306 @@ waitworld
 gui 0
 screen close
 hud off
+cmd effect give @s slow_falling infinite 0 true
 wait 100
+cmd tp @s ~ 200 ~ -90 10
 cmd awaken core land
 wait 100
-cmd awaken core land
-cmd tick query
-wait 100
-cmd awaken core land
-wait 100
+cmd tp @s ~ 200 ~ -90 10
 cmd awaken core land
 cmd tick query
 wait 100
+cmd tp @s ~ 200 ~ -90 10
 cmd awaken core land
 wait 100
-cmd awaken core land
-cmd tick query
-wait 100
-cmd awaken core land
-wait 100
+cmd tp @s ~ 200 ~ -90 10
 cmd awaken core land
 cmd tick query
 wait 100
+cmd tp @s ~ 200 ~ -90 10
 cmd awaken core land
 wait 100
+cmd tp @s ~ 200 ~ -90 10
 cmd awaken core land
 cmd tick query
 wait 100
+cmd tp @s ~ 200 ~ -90 10
 cmd awaken core land
 wait 100
+cmd tp @s ~ 200 ~ -90 10
+cmd awaken core land
+cmd tick query
+wait 100
+cmd tp @s ~ 200 ~ -90 10
+cmd awaken core land
+wait 100
+cmd tp @s ~ 200 ~ -90 10
+cmd awaken core land
+cmd tick query
+wait 100
+cmd tp @s ~ 200 ~ -90 10
+cmd awaken core land
+wait 100
+cmd tp @s ~ 200 ~ -90 10
 cmd awaken core land
 cmd tick query
 shot lf_joined
 # ---- a minute east at 32 blocks a second ----
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
-cmd tick query
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
 cmd tick query
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
-cmd tick query
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
-wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
 cmd tick query
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
 cmd tick query
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
-cmd tp @s ~16 ~ ~ -90 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd awaken core land
+cmd tick query
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd awaken core land
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd awaken core land
+cmd tick query
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd awaken core land
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
+wait 10
+cmd tp @s ~16 200 ~ -90 10
 wait 10
 cmd awaken core land
 cmd tick query
