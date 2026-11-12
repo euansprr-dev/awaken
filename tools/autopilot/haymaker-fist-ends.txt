@@ -60,3 +60,4 @@ shotnow hf_after_40
 wait 80
 shotnow hf_after_120
 wait 20
+quit
