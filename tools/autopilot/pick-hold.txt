@@ -1,0 +1,169 @@
+# Pick hold: vanilla's iron pickaxe beside the forged picks
+# Written by tools/art/pick_hold_tour.py (SPEC §49.8): each held at rest and digging, first person and from behind the right shoulder
+# ci knobs: PACK=perf,feel,comfort,world
+world pickhold creative 778
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+wait 10
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1280 720
+hud on
+cmd gamemode creative
+wait 60
+screen close
+cmd tp @s 0.5 201 0.5 0 0
+cmd forceload add -16 -16 16 16
+wait 300
+cmd fill -8 200 -6 8 200 9 minecraft:polished_deepslate
+cmd fill -8 201 -6 8 206 8 minecraft:air
+cmd fill -8 201 9 8 205 9 minecraft:stone
+cmd fill 2 201 8 7 204 8 minecraft:dirt
+cmd fill -7 201 8 -2 204 8 minecraft:stone
+wait 200
+camera first
+cmd awaken fx sidecam 0
+opt fov 70
+wait 4
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+wait 60
+arms film ph_vanilla_1p_rest 8 2 3
+wait 9
+arms film ph_vanilla_1p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_delver
+wait 60
+arms film ph_delver_1p_rest 8 2 3
+wait 9
+arms film ph_delver_1p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_breaker
+wait 60
+arms film ph_breaker_1p_rest 8 2 3
+wait 9
+arms film ph_breaker_1p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 60
+arms film ph_mattock_1p_rest 8 2 3
+wait 9
+arms film ph_mattock_1p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s 4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 60
+arms film ph_mattock_dirt_1p_rest 8 2 3
+wait 9
+arms film ph_mattock_dirt_1p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_sounder
+wait 60
+arms film ph_sounder_1p_rest 8 2 3
+wait 9
+arms film ph_sounder_1p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_pick_delver
+wait 60
+arms film ph_lord_delver_1p_rest 8 2 3
+wait 9
+arms film ph_lord_delver_1p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+camera back
+cmd awaken fx sidecam 35
+opt fov 50
+wait 4
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+wait 60
+arms film ph_vanilla_3p_rest 8 2 3
+wait 9
+arms film ph_vanilla_3p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_delver
+wait 60
+arms film ph_delver_3p_rest 8 2 3
+wait 9
+arms film ph_delver_3p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_breaker
+wait 60
+arms film ph_breaker_3p_rest 8 2 3
+wait 9
+arms film ph_breaker_3p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 60
+arms film ph_mattock_3p_rest 8 2 3
+wait 9
+arms film ph_mattock_3p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s 4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_mattock
+wait 60
+arms film ph_mattock_dirt_3p_rest 8 2 3
+wait 9
+arms film ph_mattock_dirt_3p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:gatewrought_pick_sounder
+wait 60
+arms film ph_sounder_3p_rest 8 2 3
+wait 9
+arms film ph_sounder_3p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd tp @s -4.5 201 6.5 0 12
+cmd item replace entity @s weapon.mainhand with awaken:lordscale_pick_delver
+wait 60
+arms film ph_lord_delver_3p_rest 8 2 3
+wait 9
+arms film ph_lord_delver_3p 12 0.5 3
+wait 1
+cmd awaken delve demo strike
+wait 24
+cmd awaken fx sidecam 0
+opt fov 70
+quit
