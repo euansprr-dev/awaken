@@ -340,8 +340,8 @@ public final class WayPlanner {
 
     /** Why a camp can't stand here (null: it can): too near the edge, on something built, on the plan, on a way, by a site, bad or uneven ground. */
     private static String unfit(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, List<int[]> taken, int x, int z) {
-        // the land's own edge already stands inside its bounds; the country's haunts keep 20 in from it, and so does a camp
-        if (land.edge(x, z) > -20) return "edge";
+        // the land's own edge already stands inside its bounds; a haunt's places keep 12 in from it, and so does a camp
+        if (land.edge(x, z) > -12) return "edge";
         Piece<?> by = coveredBy(pieces, x, z, 6, among);
         if (by != null) return "built " + by.label;
         if (near(taken, x, z, 14)) return "taken";
@@ -367,11 +367,25 @@ public final class WayPlanner {
 
     static Piece<?> coveredBy(List<? extends Piece<?>> pieces, int x, int z, int pad, Set<String> among) {
         for (Piece<?> p : pieces) {
-            if (p instanceof Hops || p.airborne || among.contains(p.label) || (long) (p.x1 - p.x0) * (p.z1 - p.z0) > 160L * 160L) continue;
+            if (p instanceof Hops || p.airborne || among.contains(p.label) || OVERHEAD.contains(p.label) || (long) (p.x1 - p.x0) * (p.z1 - p.z0) > 160L * 160L) continue;
+            if (TRUNKED.contains(p.label)) {
+                // a tree's box is mostly its crown in the air: only its trunk stands on the ground, in the middle
+                if (Math.hypot(x - (p.x0 + p.x1) / 2.0, z - (p.z0 + p.z1) / 2.0) < TRUNK + pad) return p;
+                continue;
+            }
             if (x + pad >= p.x0 && x - pad <= p.x1 && z + pad >= p.z0 && z - pad <= p.z1) return p;
         }
         return null;
     }
+
+    /**
+     * Pieces whose box is air over the ground: a tree's crown and its boughs, high up (its trunk is a piece of its own). A
+     * camp or a stone may stand under them; a stone clears only the three blocks over itself.
+     */
+    static final Set<String> OVERHEAD = Set.of("crown", "bough");
+    /** Pieces that stand on the ground only at their middle: a whole tree, Amber's great flowers, a great mushroom on its stem. */
+    static final Set<String> TRUNKED = Set.of("Tree", "Flower", "a great tree", "a glowcap");
+    static final int TRUNK = 5;
 
     /** Whether a road or a stair of the land runs within {@code pad} of here: nothing of the plan stands on a way. */
     static boolean onWay(Land land, int x, int z, int pad) {

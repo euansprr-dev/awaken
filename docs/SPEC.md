@@ -23350,9 +23350,15 @@ stone dressed in the land's own stone with a band of its accent; its course catc
   as a movement leg ("Stones to jump along", `Land.between`); where no line fits on dry ground clear of the ways, the run is
   as before, with a line in the log.
 - Every line is tried along the way and turned off it up to 100 degrees (`WayPlanner.TURNS`): a slope steeper than a block a
-  stone can't be climbed straight up, so the line crosses it. A camp keeps 20 blocks in from the land's edge (as the
-  country's haunts do), six from anything built and from a site's own radius; a stone 12 in from the edge. When nothing can
-  be planned the log says what stood in the way (`WayPlanner.why`), naming the piece that fills the ground.
+  stone can't be climbed straight up, so the line crosses it. A camp keeps 12 blocks in from the land's edge (as the
+  country's haunts' places do), six from anything built and from a site's own radius; a stone 12 in
+  from the edge. A tree's crown and boughs don't count as built (`WayPlanner.OVERHEAD`: air over the ground), a whole tree,
+  Amber's great flowers and a great mushroom only at their trunk (`TRUNKED`), and each land names the props a camp may stand
+  among (Kingsroot's poles, plinths, stubs and broken arches; the Barrow's standing stones). When nothing can be planned the
+  log says what stood in the way (`WayPlanner.why`), naming the piece that fills the ground. On 12 Nov the planner found
+  Saltcomb's and the rolled lands' ways but not yet all of Amber's, Kingsroot's, the Vine Seat's or the Barrow's (their
+  approaches are built close round the Mouth, and the Vine Seat stands in water): `realm_open_way` logs what each lacks, and
+  each stays off until it has a way and passes the check.
 
 **Life leans to the way** (`RealmCountry.leans`: designed, plan 2 or later). A cell whose middle is within 70 blocks of the
 way (every walk from one leg to the next, and the land's roads) is quiet on a roll under 35 (50 elsewhere) and holds hunters

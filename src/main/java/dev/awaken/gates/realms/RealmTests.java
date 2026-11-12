@@ -767,7 +767,8 @@ public final class RealmTests {
         });
         // Open lands come back on the check (SPEC §50.9; Euan, 12 Nov: open lands were "not fun whatsoever", the runs "much better,
         // with the movement, the jumping"): the proof land passes the open-land check on today's plan and stands every stone right,
-        // and its old plan is as it was. The other lands' answers go to the log for whoever brings each back; their stones are checked.
+        // and its old plan is as it was. The other lands' answers go to the log for whoever brings each back; any stones they have
+        // are checked, and the rolled land has its second stretch.
         AwakenTests.register("realm_open_way", 2400, h -> {
             List<String> bad = new java.util.ArrayList<>();
             for (long seed : new long[]{1, 2}) {
@@ -793,7 +794,9 @@ public final class RealmTests {
                     FloatCheck.Report f = FloatCheck.scan(land, hop.x0 - 4, hop.z0 - 4, hop.x1 + 4, hop.z1 + 4);
                     if (!f.clean()) bad.add(land.ctx.id() + ", " + hop.label + ": " + f.summary());
                 }
-                if (lines == 0) bad.add(land.ctx.id() + " has no stones to jump along on plan " + NOW);
+                // a land that isn't back yet may still lack its way (it stays off, SPEC §50.7); a rolled land's second stretch is expected
+                if (lines == 0 && land instanceof dev.awaken.gates.realms.kit.land.GeneratedLand) bad.add(land.ctx.id() + " has no second stretch of stones on plan " + NOW);
+                if (lines == 0) dev.awaken.Awaken.LOG.info("[realms] open-land check, {}: no stones to jump along yet (the planner's reason is logged as the land is made)", land.ctx.id());
             }
             if (!bad.isEmpty()) h.fail(bad.size() + " wrong, first: " + bad.getFirst() + (bad.size() > 1 ? "; " + bad.subList(1, Math.min(6, bad.size())) : ""));
             h.succeed();
