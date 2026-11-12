@@ -242,6 +242,100 @@ POSTS = [(-5, -8), (-3, -8), (-5, -2), (-5, 4), (-3, 4), (-8, -8), (-8, -4), (-6
 STEPS_X, STEPS_Z = (-5, -4, -3), -9
 
 
+# a sail's sides in its own plane, and the way each one points (south-facing: north is -z, west is -x)
+SAIL_SIDES = {"flat": ("north", "south", "west", "east"), "athwart": ("up", "down", "west", "east"), "fore_aft": ("up", "down", "north", "south")}
+STEP = {"north": (0, 0, -1), "south": (0, 0, 1), "west": (-1, 0, 0), "east": (1, 0, 0), "up": (0, 1, 0), "down": (0, -1, 0)}
+AXIS_OF = {"north": "z", "south": "z", "west": "x", "east": "x", "up": "y", "down": "y"}
+THICK = {"flat": "y", "athwart": "z", "fore_aft": "x"}
+ASSETS = os.path.join(ROOT, "src/main/resources/assets/awaken")
+
+
+def lash(lists):
+    """Every sail meets the wood. The canvas fills its own block, but a spar is a pole four texels thick in the middle of
+    the block beside it, so a side of a sail with a spar there stood six texels off it. That side is lashed to the spar
+    (the state's side=true): the block model runs the cloth on into the pole. Only a spar of the same list and rig, so
+    it moves with the sail in flight, and never one that points at the sail (it would run along inside it)."""
+    for name, parts in lists.items():
+        spars = {(x, y, z): (s.split("axis=")[1][0], rig) for x, y, z, s, rig in parts if s.startswith("awaken:skiff_spar[")}
+        out = []
+        for x, y, z, s, rig in parts:
+            if s.startswith("awaken:skiff_sail["):
+                plane = s.split("plane=")[1].split(",")[0].rstrip("]")
+                tied = []
+                for d in SAIL_SIDES[plane]:
+                    dx, dy, dz = STEP[d]
+                    spar_here = spars.get((x + dx, y + dy, z + dz))
+                    if spar_here and spar_here[1] == rig and spar_here[0] != AXIS_OF[d]:
+                        tied.append(d)
+                if tied:
+                    s = s[:-1] + "".join(",%s=true" % d for d in tied) + "]"
+            out.append((x, y, z, s, rig))
+        lists[name] = out
+
+
+def strip(plane, side, band):
+    """The lashing strip's model: the canvas from the sail's edge eight texels on into the spar beside it (past the
+    pole's middle, so its end is hidden in the wood and no face lies on the pole's). Its texture runs on from the
+    sail's hem the way the cloth would; a band's strip keeps to the dyed panel's plain edge, off its gold."""
+    lo, hi = {"x": 0, "y": 0, "z": 0}, {"x": 16, "y": 16, "z": 16}
+    lo[THICK[plane]], hi[THICK[plane]] = 7, 9
+    a = AXIS_OF[side]
+    out_low = side in ("north", "west", "down")
+    lo[a], hi[a] = (-8, 0) if out_low else (16, 24)
+    near, far = (1, 4) if band else (1, 9)
+
+    def depth(c):  # a texture coordinate along the strip, from its block-space coordinate
+        inside = 0 if out_low else 16  # the sail's edge
+        t = near + (far - near) * abs(c - inside) / 8.0
+        return t if inside == 0 else 16 - t
+
+    axes = {"down": ("x", "z"), "up": ("x", "z"), "north": ("x", "y"), "south": ("x", "y"), "west": ("z", "y"), "east": ("z", "y")}
+    normal = {"down": "y", "up": "y", "north": "z", "south": "z", "west": "x", "east": "x"}
+    f, t = (lo["x"], lo["y"], lo["z"]), (hi["x"], hi["y"], hi["z"])
+    faces = {}
+    for face in ("down", "up", "north", "south", "west", "east"):
+        if normal[face] == a:
+            continue  # its ends: one against the sail's own, one inside the pole
+        u0, v0, u1, v1 = {
+            "down": (f[0], 16 - t[2], t[0], 16 - f[2]), "up": (f[0], f[2], t[0], t[2]),
+            "north": (16 - t[0], 16 - t[1], 16 - f[0], 16 - f[1]), "south": (f[0], 16 - t[1], t[0], 16 - f[1]),
+            "west": (f[2], 16 - t[1], t[2], 16 - f[1]), "east": (16 - t[2], 16 - t[1], 16 - f[2], 16 - f[1])}[face]
+        ua, va = axes[face]
+        # each uv value came from a block coordinate on its axis: map the strip's depth back to the sail's edge texels
+        if ua == a:
+            src = {"down": (f[0], t[0]), "up": (f[0], t[0]), "north": (t[0], f[0]), "south": (f[0], t[0]), "west": (f[2], t[2]), "east": (t[2], f[2])}[face]
+            u0, u1 = depth(src[0]), depth(src[1])
+        if va == a:
+            src = {"down": (t[2], f[2]), "up": (f[2], t[2]), "north": (t[1], f[1]), "south": (t[1], f[1]), "west": (t[1], f[1]), "east": (t[1], f[1])}[face]
+            v0, v1 = depth(src[0]), depth(src[1])
+        faces[face] = {"texture": "#t", "uv": [round(u0, 3), round(v0, 3), round(u1, 3), round(v1, 3)]}
+    tex = "awaken:block/skiff_sail_band" if band else "awaken:block/skiff_sail"
+    return {"parent": "minecraft:block/block", "textures": {"particle": tex, "t": tex},
+            "elements": [{"from": list(f), "to": list(t), "faces": faces}]}
+
+
+def write_sail_models():
+    """The sail's blockstate, as parts: the canvas in its plane, and a lashing strip on each side tied to a spar."""
+    import json
+    turn = {"flat": {}, "athwart": {"x": 90}, "fore_aft": {"x": 90, "y": 90}}
+    parts = []
+    for band in (False, True):
+        for plane in ("flat", "athwart", "fore_aft"):
+            model = "awaken:block/skiff_sail_band" if band else "awaken:block/skiff_sail"
+            parts.append({"when": {"band": "true" if band else "false", "plane": plane}, "apply": dict({"model": model}, **turn[plane])})
+    for band in (False, True):
+        for plane in ("flat", "athwart", "fore_aft"):
+            for side in SAIL_SIDES[plane]:
+                name = "skiff_sail_%slash_%s_%s" % ("band_" if band else "", plane, side)
+                with open(os.path.join(ASSETS, "models/block", name + ".json"), "w") as fh:
+                    json.dump(strip(plane, side, band), fh, indent=2)
+                    fh.write("\n")
+                parts.append({"when": {"band": "true" if band else "false", "plane": plane, side: "true"}, "apply": {"model": "awaken:block/" + name}})
+    with open(os.path.join(ASSETS, "blockstates/skiff_sail.json"), "w") as fh:
+        json.dump({"multipart": parts}, fh, indent=2)
+        fh.write("\n")
+
+
 def check(lists):
     seen = {}
     for name, parts in lists.items():
@@ -470,7 +564,9 @@ def previews(out_dir, lists):
 def main():
     lists = {"skiff": skiff(), "jetty": jetty(), "landing_extras": landing_extras(), "ridge_extras": ridge_extras()}
     check(lists)
+    lash(lists)
     write_java(lists)
+    write_sail_models()
     print("skiff %d blocks, mooring %d; SkiffPlan.java written" % (len(lists["skiff"]), len(lists["jetty"])))
     if len(sys.argv) > 1:
         previews(sys.argv[1], lists)

@@ -58,7 +58,7 @@ final class SkiffFx {
             roll = new float[n];
             FlightFilm.liftPath(facing.toYRot(), m.bearing(), px, py, pz, yaw, nose, roll);
             // its return: the descent onto its own berth
-            this.back = new FlightFilm.Flight(new FrontierNet.Fly(FrontierNet.Fly.START, berth, m.facing(), berth, m.facing(), false, "", "", List.of(), false), 1.62F);
+            this.back = new FlightFilm.Flight(new FrontierNet.Fly(FrontierNet.Fly.START, berth, m.facing(), berth, m.facing(), false, "", "", List.of(), false, 0), 1.62F);
         }
 
         long age(long now) {

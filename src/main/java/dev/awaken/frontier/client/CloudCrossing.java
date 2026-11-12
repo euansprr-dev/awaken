@@ -156,7 +156,11 @@ final class CloudCrossing {
         if (line != null && !line.isEmpty() && lineIn > 0) g.centeredText(font, line, cx, ruleY + 8, argb(lineIn * 0.9F, PALE));
         // the land arriving: a hair of light in the bottom bar
         int barY = h - (int) (h * 0.039F), reach = (int) (w * 0.16F);
-        float shown = FlightFilm.cur != null && FlightFilm.cur.descendAt >= 0 ? 1 : Mth.clamp(t / 6000F, 0, 0.92F);
+        // it creeps while the far land is made (that can take a while in new land), then fills as the land reaches you
+        float shown;
+        if (FlightFilm.cur != null && FlightFilm.cur.descendAt >= 0) shown = 1;
+        else if (FlightFilm.cur != null && FlightFilm.cur.arrivedAt >= 0) shown = 0.85F + 0.15F * FlightFilm.landArrived(Minecraft.getInstance());
+        else shown = 0.85F * (1 - (float) Math.exp(-t / 9000.0));
         int lit = (int) (reach * shown);
         float barIn = Mth.clamp((t - 500) / 400F, 0, 1) * words;
         g.fill(cx - reach, barY, cx + reach, barY + 1, argb(0.16F * barIn, PALE));

@@ -5,9 +5,13 @@ import dev.awaken.core.test.AwakenTests;
 import dev.awaken.living.region.RegionMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -93,6 +97,23 @@ final class FrontierTests {
                         h.assertTrue(Skiff.inFootprint(origin, facing, at), facing + ": a part outside the footprint at " + part.x() + ", " + part.z());
                     }
                 }
+                // every lashed side of canvas, turned with the skiff, runs into a spar (SPEC §67.4)
+                Map<BlockPos, BlockState> placed = new HashMap<>();
+                Rotation rot = Skiff.rotation(facing);
+                for (List<Skiff.Part> parts : List.of(Skiff.skiff(), Skiff.jetty(), Skiff.landingExtras()))
+                    for (Skiff.Part part : parts) placed.put(Skiff.at(origin, facing, part.x(), part.y(), part.z()), part.state().rotate(rot));
+                int lashed = 0;
+                for (Map.Entry<BlockPos, BlockState> e : placed.entrySet()) {
+                    if (!e.getValue().is(SkiffBlocks.SAIL.get())) continue;
+                    for (Direction d : Direction.values()) {
+                        if (!e.getValue().getValue(SkiffBlocks.Sail.side(d))) continue;
+                        lashed++;
+                        BlockState there = placed.get(e.getKey().relative(d));
+                        h.assertTrue(there != null && there.is(SkiffBlocks.SPAR.get()), facing + ": canvas at " + e.getKey().toShortString()
+                                + " lashed " + d + " to " + there);
+                    }
+                }
+                h.assertTrue(lashed >= 16, facing + ": the canvas is lashed to its spars (" + lashed + " sides)");
                 BlockPos stand = Skiff.at(origin, facing, Skiff.STAND);
                 h.assertTrue(Skiff.onDeck(origin, facing, stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5), facing + ": the helm's stand is on the deck");
                 // the bow points the way it faces: the bow light six ahead of the berth's middle

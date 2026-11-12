@@ -48,8 +48,12 @@ final class Moorings {
     static final int BUILD_NEAR = 160;
     /** The deck stands this far over the highest ground under it: the pad's top is that ground. */
     static final int LIFT = -Skiff.PAD;
-    /** The mooring's look: a saved mooring of an older look is taken down and built again (1: the plank jetty; 2: the wind-skiff). */
-    static final int LOOK = 2;
+    /**
+     * The mooring's look: a saved mooring of an older look is taken down and built again (1: the plank jetty; 2: the
+     * wind-skiff), except that from 2 to 3 (the canvas lashed to its spars) only the canvas blocks change.
+     */
+    static final int LOOK = 3;
+    private static final int LASHED = 3;
 
     /** Where the ridge's mooring should be (its berth's middle, before the ground is found). */
     static BlockPos ridgeSpot(MinecraftServer server) {
@@ -105,6 +109,14 @@ final class Moorings {
         BlockPos spot = which == Which.RIDGE ? ridgeSpot(server) : landingSpot(server);
         if (spot == null || !loaded(level, spot, NEEDS)) return false;
         Direction facing = facing(server, which);
+        if (m != null && m.built() && m.look() == LASHED - 1) {
+            if (Flights.anyFlying()) return true;
+            relash(level, m, which == Which.LANDING);
+            FrontierData.Mooring lashed = new FrontierData.Mooring(m.origin(), m.facing(), true, LOOK);
+            if (which == Which.RIDGE) d.ridge(lashed);
+            else d.landing(lashed);
+            return true;
+        }
         if (m != null && m.built()) {
             // an older look: nobody may be mid-flight to or from it while it's swapped
             if (Flights.anyFlying()) return true;
@@ -121,11 +133,15 @@ final class Moorings {
         return true;
     }
 
-    /** Every chunk within {@code r} of a spot is loaded. */
+    /**
+     * Every chunk within {@code r} of a spot is made and loaded now. Not {@code hasChunk}: that is true as soon as a ticket
+     * wants the chunk, while it is still being made, and reading its ground then waits for it on the server thread (a
+     * new world's far land froze the server for half a minute mid-flight, 12 Nov).
+     */
     static boolean loaded(ServerLevel level, BlockPos spot, int r) {
         for (int x = (spot.getX() - r) >> 4; x <= (spot.getX() + r) >> 4; x++)
             for (int z = (spot.getZ() - r) >> 4; z <= (spot.getZ() + r) >> 4; z++)
-                if (!level.hasChunk(x, z)) return false;
+                if (level.getChunkSource().getChunkNow(x, z) == null) return false;
         return true;
     }
 
@@ -317,6 +333,28 @@ final class Moorings {
         int k = (int) Math.floorMod(h >> 8, 20);
         return (k < 8 ? Blocks.POLISHED_ANDESITE : k < 13 ? Blocks.ANDESITE : k < 17 ? Blocks.COBBLESTONE : k < 19 ? Blocks.MOSSY_COBBLESTONE
                 : Blocks.STONE_BRICKS).defaultBlockState();
+    }
+
+    /**
+     * Ties a wind-skiff mooring's canvas to its spars (SPEC §67.4, 12 Nov): each canvas block of the plan still standing
+     * takes the plan's state, lashed sides and all. Nothing else is touched, so a world's mooring keeps its place.
+     */
+    static void relash(ServerLevel level, FrontierData.Mooring m, boolean landing) {
+        var rot = Skiff.rotation(m.facing());
+        int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE, n = 0;
+        List<Skiff.Part> parts = new ArrayList<>(Skiff.jetty());
+        parts.addAll(Skiff.skiff());
+        parts.addAll(landing ? Skiff.landingExtras() : Skiff.ridgeExtras());
+        for (Skiff.Part part : parts) {
+            if (!part.state().is(SkiffBlocks.SAIL.get())) continue;
+            BlockPos p = Skiff.at(m.origin(), m.facing(), part.x(), part.y(), part.z());
+            BlockState want = part.state().rotate(rot);
+            if (level.getBlockState(p).is(SkiffBlocks.SAIL.get()) && level.getBlockState(p) != want) {
+                level.setBlock(p, want, flags);
+                n++;
+            }
+        }
+        Awaken.LOG.info("[frontier] the {} mooring's canvas lashed to its spars ({} blocks)", landing ? "landing's" : "ridge's", n);
     }
 
     /**

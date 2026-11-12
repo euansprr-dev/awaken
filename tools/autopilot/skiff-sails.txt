@@ -1,0 +1,133 @@
+# The skiff's canvas where it meets its wood (SPEC §67.4, 12 Nov: "the white part doesn't actually touch the wood"):
+# close on each wing's root at its boom, the wind-wheel's blades at their arms and the pennant at the mooring mast, at the
+# ridge, in flight (the wake watched from off the bow, the wings from the helm) and at the landing. The two moorings face
+# different ways (a quarter turn each in this seed), so the lashed sides are seen turned both ways.
+# Seed 4245, a new world (as far-landing-flight). Run on CI: tools/tour-ci.sh tools/autopilot/skiff-sails.txt 1500
+world autopilot_skiff_sails survival 4245
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1500
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken frontier status
+cmd awaken frontier ready
+# the ridge: its land loads, the mooring is built ("frontier mark" / "frontier moved" wait for each move to land)
+frontier mark
+cmd awaken frontier goto ridge
+frontier moved
+wait 200
+frontier mark
+cmd awaken frontier goto ridge
+frontier moved
+wait 60
+cmd awaken frontier goto ridge
+wait 40
+wait 300
+cmd awaken frontier goto ridge
+wait 40
+cmd awaken frontier status
+cmd gamemode spectator
+hud off
+frontier mark
+cmd awaken frontier look ridge 6
+frontier moved
+wait 60
+shot ss_01_ridge_open_wing_under
+frontier mark
+cmd awaken frontier look ridge 7
+frontier moved
+wait 24
+shot ss_02_ridge_open_wing_over
+frontier mark
+cmd awaken frontier look ridge 8
+frontier moved
+wait 24
+shot ss_03_ridge_pier_wing_over
+frontier mark
+cmd awaken frontier look ridge 9
+frontier moved
+wait 24
+shot ss_04_ridge_wheel_astern
+frontier mark
+cmd awaken frontier look ridge 10
+frontier moved
+wait 24
+shot ss_05_ridge_wheel_quarter
+frontier mark
+cmd awaken frontier look ridge 11
+frontier moved
+wait 24
+shot ss_06_ridge_pennant
+frontier mark
+cmd awaken frontier look ridge 3
+frontier moved
+wait 24
+shot ss_07_ridge_under_the_wing
+# in flight: the wake from off the bow, then the wings from the helm as it lifts and climbs
+cmd gamemode survival
+frontier mark
+cmd awaken frontier goto ridge
+frontier moved
+wait 30
+cmd awaken frontier fly
+wait 14
+shotnow ss_08_wake
+wait 18
+shotnow ss_09_awake
+wait 20
+shotnow ss_10_lift_off
+wait 22
+shotnow ss_11_climbing
+frontier descent
+wait 48
+shotnow ss_12_descent
+frontier down
+wait 40
+shot ss_13_set_down
+# the landing's mooring, turned the other way
+cmd gamemode spectator
+frontier mark
+cmd awaken frontier look landing 6
+frontier moved
+wait 60
+shot ss_14_landing_open_wing_under
+frontier mark
+cmd awaken frontier look landing 7
+frontier moved
+wait 24
+shot ss_15_landing_open_wing_over
+frontier mark
+cmd awaken frontier look landing 8
+frontier moved
+wait 24
+shot ss_16_landing_pier_wing_over
+frontier mark
+cmd awaken frontier look landing 9
+frontier moved
+wait 24
+shot ss_17_landing_wheel_astern
+frontier mark
+cmd awaken frontier look landing 10
+frontier moved
+wait 24
+shot ss_18_landing_wheel_quarter
+frontier mark
+cmd awaken frontier look landing 11
+frontier moved
+wait 24
+shot ss_19_landing_pennant
+cmd awaken frontier status
+quit

@@ -25794,6 +25794,11 @@ improving the design and experience of it"): the first look was a plank box with
     it, six out and five deep at the root, at y 3 (clear over a head on the deck and on the pier).
   - Nothing hangs in the air by a few texels: a thin spar is centred in its block, so a lamp stands on an upright one
     (the sprit's end, the sternpost, the mast's top) or hangs from a whole block (the mast's crossarm, the bay's ridge).
+  - Canvas meets its wood: a spar is a pole four texels thick in the middle of its block and canvas is a plate in its
+    own, so a side of canvas beside a spar of the same rig that runs across that side (in the canvas's own plane) is
+    lashed (`north`..`down` on `skiff_sail`, set by the plan, 12 Nov: Euan saw a gap between the cloth and the wood),
+    and a strip of the same cloth runs on eight texels into the pole: no gap and no filler block. A dyed tip's strip
+    takes only the band's hem, so its gold diamond stays whole.
   - The wind-wheel behind the stern: a brass hub (`HUB` 0,4,−7) with four canvas blades three long, the same from
     every quarter turn, on a sternpost with the stern light.
   - Each block names what it moves with in flight (`Part.rig`): the hull, a wing, the wheel.
@@ -25814,18 +25819,24 @@ improving the design and experience of it"): the first look was a plank box with
   cleared of logs and leaves, and in a fringe of 6 more every leaf no longer joined to a log (through other leaves,
   within six, the way the game itself counts) comes down too, with the snow that lay on it, so a mooring in a forest
   stands in the open with nothing left hanging. Both are guarded: breaking, placing and explosions there are refused except for
-  creative players and operators. Saved in `FrontierData` (`awaken:frontier`, schema 1); a mooring's `look` (2 now, 1
-  when absent) lets one of an older look be taken down and built again where it stood.
+  creative players and operators. Saved in `FrontierData` (`awaken:frontier`, schema 1); a mooring's `look` (3 now, 1
+  when absent) lets one of an older look be taken down and built again where it stood; one of look 2 only has its
+  canvas lashed (`Moorings.relash`: each canvas block of the plan still standing takes its planned state).
 - Rotations: WEST (−z, x), NORTH (−x, −z), EAST (z, −x), with `Rotation` CW 90, 180, CCW 90 for the block states (the
-  canvas swaps its two upright planes on a quarter turn, the gunwale turns its edges).
+  canvas swaps its two upright planes on a quarter turn and turns its lashed sides, the gunwale turns its edges).
 
 **67.5 The flight (`Flights`, `client.FlightFilm`, `client.CloudCrossing`, `client.SkiffFx`, `client.FlightAir`).**
 - The helm takes you once Ilse has given you her coal (`FarPost.ready`: The Last Delivery past its talk-to-Ilse step, or
   the story off; `/awaken frontier ready` for tours). Everyone on the deck flies together. Overworld only.
-- The server: a lift of 120 ticks (a sneak-use after your first flight: 14, straight into the cloud); the far land loads
-  under a `frontier_flight` ticket (radius 3, 90 s); the move happens once the lift is over and the land is loaded, or
-  after 40 s more. `teleportTo` keeps the client's camera. No damage from the helm until the client says it has set down
-  (`Landed`) or 30 s after the move. A logout or a server stop mid-air puts you on the far deck before you are saved; a
+- The server: a lift of 120 ticks (a sneak-use after your first flight: 14, straight into the cloud); the far land is
+  made and loaded under a `frontier_flight` ticket (240 s) as far round its mooring as the traveller will see it: their
+  view distance, the server's if less, at least 4 and at most 12 chunks (`Flights.landRadius`), since the descent comes
+  in from 190 back. The move happens once the lift is over and all of that land is made, or 2 minutes after the lift
+  (a warning in the log; the film still holds). Nothing on the server thread ever waits for land still being made:
+  a mooring is chosen and built only when every chunk it reads is made and loaded now (`Moorings.loaded` asks
+  `getChunkNow`, not `hasChunk`, which is true as soon as a ticket wants a chunk; on 12 Nov a new world's far land froze
+  the server for half a minute mid-flight and set Euan down on a deck, a tree and sky). `teleportTo` keeps the client's
+  camera. No damage from the helm until the client says it has set down (`Landed`) or 90 s after the move. A logout or a server stop mid-air puts you on the far deck before you are saved; a
   crash does on your next login (`pending`).
 - The client films it as one `OpeningCamera` shot through `Cinema`. The resting skiff is swapped on that client for
   barriers (unseen, still solid) and drawn block by block with its own models (`submitMovingBlock`), each block turned
@@ -25843,10 +25854,17 @@ improving the design and experience of it"): the first look was a plank box with
   - **The crossing** is an overlay drawn like the gates' crossing: the painting of where you're going
     (`textures/gui/frontier/crossing_out.png` / `crossing_home.png`, a sky gradient without it), "OUT ON THE WIND" or
     "HOME ON THE WIND", the name surfacing from its middle, a gold rule, how far and which way, a hair of light that
-    fills as the land arrives. It is the film's own layer, so it is kept through the shot's hidden HUD
-    (`Cinema.keepLayer`). It holds at least 3 s and until the far land is drawn (or 20 s): drawn means nothing is
-    left to draw anywhere, or the land round the mooring is (its own nine chunks and 38 of the 49 round it), since
-    the far land can go on arriving for a long while and the skiff can come down as it does.
+    creeps while the far land is made and fills as it reaches you. It is the film's own layer, so it is kept through the shot's hidden HUD
+    (`Cinema.keepLayer`). It holds at least 3 s, until the server has moved you (so while the far land is made), and then
+    until that land is on this client and drawn (or 60 s): every chunk in a disc round where you stand, one less than
+    the land made or your render distance (`FlightFilm.landArrived`; the packet carries the radius), and drawn means
+    the ground the descent's first view takes in is built (`FlightFilm.groundDrawn`: each chunk's surface section out
+    to 6 round the berth, inside that disc, that the first view (190 back and 120 up, 60 and 30 on a quick flight, 20 degrees
+    down) sees at your field of view; every one under the deck, nine in ten of the rest), five ticks running. Only what that view sees, since
+    the game builds only what's in view, and the camera already stands there while the cloud holds. Never
+    `hasRenderedAllSections`: it is true while land that has just come waits for its light, before any of it is
+    queued, and on 12 Nov (CI run 43165102476) the cloud parted a second after the move and the skiff came down over
+    sky. The log says when the cloud parts and whether the land in view was drawn.
   - **It comes down** over 110 ticks, in from 190 back and 120 up, out of thinning cloud: the wings flare to 24 degrees
     as it brakes and fold flat as it settles, the wheel runs down to rest exactly as it stood (three turns, eased), two
     bells, dust off the pad, the hull onto its cradle with a dip. The real far skiff returns six ticks before the end.
@@ -25915,12 +25933,14 @@ country"; her goodbye tells you the skiff brings you back whenever you want.
 until you've landed); "Go and hear the … rung for you" (optional); "Go home to Carillon" (after the peal).
 
 **67.11 Commands and checks.**
-- `/awaken frontier status | goto ridge|landing | look ridge|landing [0-5] | fly [quick] | ready | letter | invite <bell> | homecoming`.
+- `/awaken frontier status | goto ridge|landing | look ridge|landing [0-11] | fly [quick] | ready | letter | invite <bell> | homecoming`.
 - GameTests (`FrontierTests`, pure): `frontier_landing_fair` (20 seeds, 5–7 km, fair ground, the same every time),
   `frontier_levels_rules_four` (E to 1,300 round the landing, the city's ring, rules 3 unchanged, harder past it),
   `frontier_skiff_shape` (every facing: no two parts in one block, all in the footprint, the stand on the deck, the bow
-  the way it faces).
-- Tours: `far-landing-flight`, `far-landing-world`, `far-landing-homecoming` (seed 4245).
+  the way it faces, every lashed side of canvas against a spar).
+- `look` 0-5 frame the berth; 6-11 are close on the canvas where it meets its wood (each wing's root at its boom from
+  under and over, the wind-wheel from astern and its quarter, the pennant at the mast).
+- Tours: `far-landing-flight`, `far-landing-world`, `far-landing-homecoming`, `skiff-sails` (seed 4245).
 - Nothing here has been played by a person. The skiff and mooring picture goes to Euan before merge.
 
 ## 68. The Whole Boss Fight (plan docs/boss-experience/PLAN.md, page https://claude.ai/artifact/VDXqPTJJxktRgDLiJJRdH7; Euan approved all fourteen decisions 2026-11-11: "Go with all")
