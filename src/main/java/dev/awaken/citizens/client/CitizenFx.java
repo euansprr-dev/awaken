@@ -38,6 +38,7 @@ public final class CitizenFx {
         if (msg.replace()) {
             pos = msg.pos().clone();
             kind = msg.kind().clone();
+            cursor = 0;
         } else {
             // a settlement sent again (it slept and woke, it stopped and started: SPEC §28.6) adds only what's new
             it.unimi.dsi.fastutil.longs.LongOpenHashSet have = new it.unimi.dsi.fastutil.longs.LongOpenHashSet(pos);
@@ -117,6 +118,8 @@ public final class CitizenFx {
         long now = level.getGameTime();
         // a slice of emitters a tick, each puffing at its own pace
         int n = Math.min(pos.length, 64);
+        // the list can shrink under the cursor (a new world, a settlement sent again): start over rather than read past it
+        if (cursor >= pos.length) cursor = 0;
         for (int k = 0; k < n; k++) {
             int i = cursor;
             cursor = (cursor + 1) % pos.length;
@@ -173,6 +176,7 @@ public final class CitizenFx {
     static void clear() {
         pos = new long[0];
         kind = new byte[0];
+        cursor = 0;
     }
 
     @SuppressWarnings("unused")
