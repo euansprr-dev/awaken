@@ -145,15 +145,18 @@ final class ArmourTests {
      * plane flicker; the art kit's depth steps keep every mesh off every other, and this holds the files to it.
      */
     private static void planes(GameTestHelper h) {
+        h.assertTrue(ArmourPlanes.finds(), "the search finds two faces in one plane, and not the same two a step apart");
         for (ArmourSet s : ArmourSet.values()) {
             if (!s.made()) continue;
-            List<String> shared;
+            ArmourPlanes.Walk walk;
             try {
-                shared = ArmourPlanes.shared(s.id, 4);
+                walk = ArmourPlanes.walk(s.id, 4);
             } catch (IOException e) {
                 throw h.assertionException(s.id + "'s meshes do not read: " + e);
             }
-            h.assertTrue(shared.isEmpty(), s.id + ": faces in one plane: " + String.join("; ", shared));
+            // the smallest set is over 700 triangles, walked in three poses: fewer means the files were not found
+            h.assertTrue(walk.triangles() > 1500, s.id + ": only " + walk.triangles() + " triangles walked");
+            h.assertTrue(walk.shared().isEmpty(), s.id + ": faces in one plane: " + String.join("; ", walk.shared()));
         }
         h.succeed();
     }

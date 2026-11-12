@@ -40,9 +40,13 @@ final class ArmourPlanes {
     /** A triangle in the figure (texels: feet at y 0, x to the wearer's left, z forward), its unit normal and its plane. */
     private record Tri(String mesh, double[] p, double[] n, double d) {}
 
-    /** Every pair of triangles of a set that shares a plane, in every pose: one line each, at most `most`. */
-    static List<String> shared(String set, int most) throws IOException {
+    /** What a walk saw: how many triangles it stood in the figure over all poses, and the pairs that share a plane (one line each). */
+    record Walk(int triangles, List<String> shared) {}
+
+    /** Every pair of triangles of a set that shares a plane, in every pose; at most `most` are listed. */
+    static Walk walk(String set, int most) throws IOException {
         List<String> out = new ArrayList<>();
+        int seen = 0;
         for (Pose pose : Pose.values()) {
             List<Tri> tris = new ArrayList<>();
             for (String[] piece : BONES) {
@@ -59,9 +63,27 @@ final class ArmourPlanes {
                 }
             }
             if (pose == Pose.WORN) skin(tris);
+            seen += tris.size();
             find(tris, pose, out, most);
         }
-        return out;
+        return new Walk(seen, out);
+    }
+
+    /**
+     * The search does find: two triangles of two meshes in one plane, one over the other, are a pair; the same two a
+     * step apart are not. (A walk that finds nothing only means something if the search can.)
+     */
+    static boolean finds() {
+        for (int k = 0; k < 2; k++) {
+            double z = k * STEP;
+            List<Tri> tris = new ArrayList<>();
+            add("one", new double[]{0, 0, 0}, new double[]{2, 0, 0}, new double[]{0, 2, 0}, tris);
+            add("other", new double[]{0.5, 0.5, z}, new double[]{2.5, 0.5, z}, new double[]{0.5, 2.5, z}, tris);
+            List<String> out = new ArrayList<>();
+            find(tris, Pose.WORN, out, 4);
+            if (out.size() != (k == 0 ? 1 : 0)) return false;
+        }
+        return true;
     }
 
     private static boolean exists(String path) throws IOException {
