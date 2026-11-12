@@ -25854,7 +25854,13 @@ improving the design and experience of it"): the first look was a plank box with
     (`Cinema.keepLayer`). It holds at least 3 s, until the server has moved you (so while the far land is made), and then
     until that land is on this client and drawn (or 60 s): every chunk in a disc round where you stand, one less than
     the land made or your render distance (`FlightFilm.landArrived`; the packet carries the radius), and drawn means
-    nothing is left to draw anywhere, or the land round the mooring is (its own nine chunks and 38 of the 49 round it).
+    the ground the descent's first view takes in is built (`FlightFilm.groundDrawn`: each chunk's surface section out
+    to 6 round the berth, inside that disc, that the first view (190 back and 120 up, 60 and 30 on a quick flight, 20 degrees
+    down) sees at your field of view; every one under the deck, nine in ten of the rest), five ticks running. Only what that view sees, since
+    the game builds only what's in view, and the camera already stands there while the cloud holds. Never
+    `hasRenderedAllSections`: it is true while land that has just come waits for its light, before any of it is
+    queued, and on 12 Nov (CI run 43165102476) the cloud parted a second after the move and the skiff came down over
+    sky. The log says when the cloud parts and whether the land in view was drawn.
   - **It comes down** over 110 ticks, in from 190 back and 120 up, out of thinning cloud: the wings flare to 24 degrees
     as it brakes and fold flat as it settles, the wheel runs down to rest exactly as it stood (three turns, eased), two
     bells, dust off the pad, the hull onto its cradle with a dip. The real far skiff returns six ticks before the end.

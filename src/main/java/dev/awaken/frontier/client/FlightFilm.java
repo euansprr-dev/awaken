@@ -18,6 +18,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.joml.Quaternionf;
@@ -52,6 +53,8 @@ public final class FlightFilm {
     static final int WAIT_LAND = 20 * 60;
     /** The land round the far berth must be here this far out (chunks) before the cloud parts, never more than the view. */
     static final int NEAR_DRAWN = 3;
+    /** The ground the descent first looks at must be built this far round the berth (chunks), this many ticks running. */
+    static final int DRAWN_R = 6, DRAWN_FOR = 5;
     /** The skiff wakes for this long before it lifts, watched from outside (a quick flight has none). */
     static final int WAKE = 40;
     /** A skiff that came for you: the view goes from your own eyes up to its helm over this long. */
@@ -85,6 +88,8 @@ public final class FlightFilm {
         Phase phase = Phase.LIFT;
         int arrivedAt = -1, coveredAt = -1, descendAt = -1;
         boolean toHidden;
+        /** Ticks running that the ground the descent looks at has been built. */
+        int drawnFor;
         /** The lift's path, a sample a tick: offset from the berth's middle, yaw, nose-up and roll (degrees). */
         final float[] px, py, pz, yaw, nose, roll;
         final float eye;
@@ -242,6 +247,8 @@ public final class FlightFilm {
                     boolean held = age - f.coveredAt >= HOLD_MIN && age - f.arrivedAt >= 20;
                     if (!held) return;
                     if (!landHere(mc) && age - f.arrivedAt < WAIT_LAND) return;
+                    Awaken.LOG.info("[frontier] the cloud parts {} s after the move{}", String.format("%.1f", (age - f.arrivedAt) / 20F),
+                            f.drawnFor >= DRAWN_FOR ? ", the land in view drawn" : ", the land not all drawn yet");
                     // the far skiff as it stands (or as it's built, if this client hasn't got it), swapped out for the descent
                     f.toSnap = new ArrayList<>();
                     snap(level, f.to, f.toFacing, f.toSnap);
@@ -616,7 +623,7 @@ public final class FlightFilm {
         Flight f = cur;
         LocalPlayer p = mc.player;
         if (f == null || f.arrivedAt < 0 || mc.level == null || p == null) return 0;
-        int r = Math.max(NEAR_DRAWN, Math.min(f.land, mc.options.getEffectiveRenderDistance()) - 1);
+        int r = arrivedRadius(mc, f);
         int cx = p.getBlockX() >> 4, cz = p.getBlockZ() >> 4, here = 0, all = 0;
         for (int dx = -r; dx <= r; dx++)
             for (int dz = -r; dz <= r; dz++) {
@@ -627,28 +634,62 @@ public final class FlightFilm {
         return here / (float) all;
     }
 
+    private static int arrivedRadius(Minecraft mc, Flight f) {
+        return Math.max(NEAR_DRAWN, Math.min(f.land, mc.options.getEffectiveRenderDistance()) - 1);
+    }
+
     /**
-     * The far end's land is here and drawn: either nothing is left to draw anywhere, or the land round the mooring is
-     * (the far land can go on arriving while the skiff comes down; waiting for all of it can hold the cloud for long).
+     * The far end's land is here and drawn where the descent will look: all the land the server made for you has reached
+     * this client, and the ground round the berth that the descent's first view takes in is built, for a few ticks running
+     * (Sodium draws a section a frame or two after it says it's built). Never {@code hasRenderedAllSections}: that is true
+     * while land that has just come waits for its light, before any of it is queued to build (12 Nov, CI: the cloud parted
+     * a second after the move and the skiff came down over sky, the land drawn as it set down).
      */
     static boolean landHere(Minecraft mc) {
         Flight f = cur;
         LocalPlayer p = mc.player;
         if (f == null || p == null || mc.level == null) return false;
-        if (p.distanceToSqr(f.to.getX() + 0.5, f.to.getY(), f.to.getZ() + 0.5) > 48 * 48) return false;
-        int cx = f.to.getX() >> 4, cz = f.to.getZ() >> 4;
-        // the whole country the server made for you has reached this client, not just the patch under the deck: the
-        // descent comes in from 190 back and looks out over it (12 Nov: a deck, a tree and sky, the rest 10-20 s later)
-        if (landArrived(mc) < 1) return false;
-        if (mc.levelRenderer.hasRenderedAllSections()) return true;
-        int drawn = 0;
-        for (int dx = -3; dx <= 3; dx++)
-            for (int dz = -3; dz <= 3; dz++) {
-                boolean here = mc.levelRenderer.isSectionCompiledAndVisible(f.to.offset(dx * 16, 0, dz * 16), 0L);
-                if (here) drawn++;
-                else if (Math.abs(dx) <= 1 && Math.abs(dz) <= 1) return false;
+        if (p.distanceToSqr(f.to.getX() + 0.5, f.to.getY(), f.to.getZ() + 0.5) > 48 * 48 || landArrived(mc) < 1) {
+            f.drawnFor = 0;
+            return false;
+        }
+        f.drawnFor = groundDrawn(mc, f) ? f.drawnFor + 1 : 0;
+        return f.drawnFor >= DRAWN_FOR;
+    }
+
+    /**
+     * The ground round the berth (out to {@link #DRAWN_R}, inside the land that has come) that the descent's first view
+     * takes in is built: every chunk of it under the deck, nine in ten of the rest. Only what that view sees, since the game
+     * builds only what's in view (the camera already stands there while the cloud holds); a chunk's surface section.
+     */
+    static boolean groundDrawn(Minecraft mc, Flight f) {
+        ClientLevel level = mc.level;
+        float[] s = descent(f, 0);
+        double ex = f.to.getX() + 0.5 + s[0], ey = f.to.getY() + s[1] + Skiff.STAND.getY() + f.eye, ez = f.to.getZ() + 0.5 + s[2];
+        double yaw = Math.toRadians(s[3]), pitch = Math.toRadians(18 - s[4] * 0.6);
+        // the view's axes (Minecraft's: pitch down is positive), and its half-widths with a margin
+        double fx = -Math.sin(yaw) * Math.cos(pitch), fy = -Math.sin(pitch), fz = Math.cos(yaw) * Math.cos(pitch);
+        double ux = -Math.sin(yaw) * Math.sin(pitch), uy = Math.cos(pitch), uz = Math.cos(yaw) * Math.sin(pitch);
+        double rx = -Math.cos(yaw), rz = -Math.sin(yaw);
+        double tanV = Math.tan(Math.toRadians(mc.options.fov().get() / 2.0));
+        double tanH = tanV * mc.getWindow().getWidth() / Math.max(1, mc.getWindow().getHeight());
+        tanV *= 0.9;
+        tanH *= 0.9;
+        int r = Math.min(DRAWN_R, arrivedRadius(mc, f) - 1), cx = f.to.getX() >> 4, cz = f.to.getZ() >> 4, seen = 0, drawn = 0;
+        BlockPos.MutableBlockPos probe = new BlockPos.MutableBlockPos();
+        for (int dx = -r; dx <= r; dx++)
+            for (int dz = -r; dz <= r; dz++) {
+                if (dx * dx + dz * dz > r * r) continue;
+                int x = (cx + dx) * 16 + 8, z = (cz + dz) * 16 + 8, top = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1;
+                double vx = x + 0.5 - ex, vy = top + 0.5 - ey, vz = z + 0.5 - ez;
+                double depth = vx * fx + vy * fy + vz * fz;
+                if (depth <= 0 || Math.abs(vx * rx + vz * rz) > depth * tanH || Math.abs(vx * ux + vy * uy + vz * uz) > depth * tanV) continue;
+                boolean built = mc.levelRenderer.isSectionCompiledAndVisible(probe.set(x, top, z), 0L);
+                if (!built && Math.abs(dx) <= 1 && Math.abs(dz) <= 1) return false;
+                seen++;
+                if (built) drawn++;
             }
-        return drawn >= 38;
+        return drawn >= seen * 0.9F;
     }
 
     /**
