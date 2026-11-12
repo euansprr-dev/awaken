@@ -1,0 +1,117 @@
+# The edge's hold (Euan, playing, 12 Nov: "on the very left edge of my screen, I can see the shadows disappearing
+# basically as I turn my camera. And the closer the thing is to me, the more obvious that is ... the very edge of the
+# screen, the shadows, I can see them basically disappearing and then reappearing"). Fence posts and flowers in rings
+# two to four blocks round the camera on a bare lawn under a morning sun: things the block map holds as open air, whose
+# shadows are the contact shadows alone, a block and a half long this near. The camera turns away from the sun's side
+# at a degree a tick, so posts slide off the right edge while their shadows are still in view. Once with the hold off
+# (`lens edgehold off`: a shadow goes out with what casts it) and once as built, a frame every three ticks; then at
+# rest five seconds after the turn, where the two must agree again (a held shadow is let go, never kept standing).
+# SPEC §22 "The edge's hold".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-edgehold-ci.txt 1800
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s -20.5 231 60.5 180 10
+cmd forceload add -80 -16 64 112
+wait 300
+cmd fill -75 230 -10 50 230 50 minecraft:grass_block
+cmd fill -75 230 51 50 230 110 minecraft:grass_block
+cmd setblock -25 231 59 minecraft:poppy
+cmd setblock -25 231 62 minecraft:oak_fence
+cmd setblock -24 231 57 minecraft:oak_fence
+cmd setblock -24 231 60 minecraft:poppy
+cmd setblock -24 231 63 minecraft:oak_fence
+cmd setblock -23 231 58 minecraft:oak_fence
+cmd setblock -23 231 61 minecraft:poppy
+cmd setblock -23 231 64 minecraft:oak_fence
+cmd setblock -22 231 56 minecraft:oak_fence
+cmd setblock -22 231 62 minecraft:poppy
+cmd setblock -21 231 57 minecraft:oak_fence
+cmd setblock -21 231 63 minecraft:oak_fence
+cmd setblock -20 231 58 minecraft:poppy
+cmd setblock -20 231 64 minecraft:oak_fence
+cmd setblock -19 231 56 minecraft:oak_fence
+cmd setblock -19 231 59 minecraft:poppy
+cmd setblock -19 231 62 minecraft:oak_fence
+cmd setblock -18 231 57 minecraft:oak_fence
+cmd setblock -18 231 60 minecraft:poppy
+cmd setblock -18 231 63 minecraft:oak_fence
+cmd setblock -17 231 58 minecraft:oak_fence
+cmd setblock -17 231 61 minecraft:poppy
+cmd gamemode spectator
+camera first
+hud off
+lookswitch cinematic
+opt fov 90
+wait 300
+cmd time set 3000
+cmd tp @s -20.5 231 60.5 180 22
+wait 200
+# --- off
+lens edgehold off
+look 180 22
+wait 80
+shot e_off_0_before
+turn -1 30
+wait 3
+shotnow e_off_1_turning
+wait 3
+shotnow e_off_2_turning
+wait 3
+shotnow e_off_3_turning
+wait 3
+shotnow e_off_4_turning
+wait 3
+shotnow e_off_5_turning
+wait 3
+shotnow e_off_6_turning
+wait 3
+shotnow e_off_7_turning
+wait 3
+shotnow e_off_8_turning
+wait 10
+shotnow e_off_9_just_stopped
+wait 100
+shot e_off_10_at_rest
+# --- held
+lens edgehold setting
+look 180 22
+wait 80
+shot e_held_0_before
+turn -1 30
+wait 3
+shotnow e_held_1_turning
+wait 3
+shotnow e_held_2_turning
+wait 3
+shotnow e_held_3_turning
+wait 3
+shotnow e_held_4_turning
+wait 3
+shotnow e_held_5_turning
+wait 3
+shotnow e_held_6_turning
+wait 3
+shotnow e_held_7_turning
+wait 3
+shotnow e_held_8_turning
+wait 10
+shotnow e_held_9_just_stopped
+wait 100
+shot e_held_10_at_rest
+lens edgehold setting
+quit

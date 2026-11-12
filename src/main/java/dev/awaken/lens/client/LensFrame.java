@@ -115,6 +115,14 @@ final class LensFrame {
         this.ambientTo = ambientTo;
     }
 
+    // the edge's hold (texel 34, w): how much of a contact shadow whose caster the screen can no longer see is let go
+    // each frame (0: none is kept, the shadow goes out with its caster)
+    private float edgeHold;
+
+    void edgeHold(float letGo) {
+        edgeHold = letGo;
+    }
+
     /** This frame's clouds (L4): the layer's base height (0: Lens draws none), cover 0..1, wind drift in blocks, colour. */
     void clouds(float base, float cover, double drift, int colour) {
         cloudBase = base;
@@ -207,10 +215,11 @@ final class LensFrame {
             boolean on = k < plateCount;
             // (the plates' fourth components are spare: texels 24, 25, 26 carry the land's horizon and 27 its share;
             // 28 the camera's z in the lit air's volume; 29 the development view of the Sun Pass's parts; 30 to 33 the
-            // small shade's reach: the contact shadows' fade, then the ambient shade's)
+            // small shade's reach: the contact shadows' fade, then the ambient shade's; 34 the edge's hold)
             put(t, on ? plates[o] : 0f, on ? plates[o + 1] : 0f, on ? plates[o + 2] : 0f,
                     k == 0 ? landR : k == 1 ? landK : k == 2 ? contactFrom : k == 3 ? ambientTo : 0f);
-            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f, k == 0 ? landG : k == 1 ? lcz : k == 2 ? contactTo : 0f);
+            put(t + 1, on ? plates[o + 3] : 0f, on ? plates[o + 4] : 0f, on ? plates[o + 5] : 0f,
+                    k == 0 ? landG : k == 1 ? lcz : k == 2 ? contactTo : k == 3 ? edgeHold : 0f);
             put(t + 2, on ? plates[o + 6] : 0f, on ? plates[o + 7] : 0f, on ? plates[o + 8] : 0f,
                     k == 0 ? landB : k == 1 ? (paths ? 1f : 0f) : k == 2 ? ambientFrom : 0f);
         }

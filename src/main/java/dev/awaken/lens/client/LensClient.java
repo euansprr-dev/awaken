@@ -315,6 +315,7 @@ public final class LensClient {
                         .then(lensSwitch("sunpass", LensClient::sunPass))
                         .then(lensSwitch("rays", LensClient::rays))
                         .then(lensSwitch("paths", LensClient::paths))
+                        .then(lensSwitch("edgehold", LensClient::edgeHold))
                         .then(net.minecraft.commands.Commands.literal("small")
                                 .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
                                         .executes(c -> {
@@ -381,6 +382,22 @@ public final class LensClient {
         return String.format(java.util.Locale.ROOT, "small shade%s: contact shadows fade from %s to %s, ambient shade from %s to %s",
                 forcedSmall != null ? "" : " (built in)", reach(s[0], s[1], one, true), reach(s[0], s[1], one, false),
                 reach(s[2], s[3], one, true), reach(s[2], s[3], one, false));
+    }
+
+    // The edge's hold (SPEC §22 "The edge's hold"): how much of a contact shadow the screen can no longer see is let go
+    // each frame. The light buffer mixes a frame in at about a seventh, so 0.12 lets a held shadow go in about a second
+    // at 60 frames a second; 0 keeps none (the shadow goes out with what cast it).
+    private static final float EDGE_HOLD = 0.12f;
+    private static @org.jspecify.annotations.Nullable Boolean forcedEdgeHold;
+
+    /** {@code /awaken lens edgehold off|on|setting} (autopilot {@code lens edgehold}): the edge's hold, for A/B in play. */
+    public static String edgeHold(String arg) {
+        forcedEdgeHold = switch (arg.trim()) {
+            case "on" -> Boolean.TRUE;
+            case "off" -> Boolean.FALSE;
+            default -> null;
+        };
+        return "edge hold " + (forcedEdgeHold != null ? (forcedEdgeHold ? "on" : "off") : "on (built in)");
     }
 
     /** One end of a reach in words: the texel width in art pixels and the blocks that is at this view, or "never". */
@@ -793,6 +810,7 @@ public final class LensClient {
         lensFrame.paths(showPaths);
         float[] small = forcedSmall != null ? forcedSmall : SMALL;
         lensFrame.small(small[0], small[1], small[2], small[3]);
+        lensFrame.edgeHold(forcedEdgeHold == Boolean.FALSE ? 0f : EDGE_HOLD);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
         if (WorldProjection.ready()) {

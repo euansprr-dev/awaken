@@ -742,6 +742,11 @@ public final class Autopilot {
                     Awaken.LOG.info("[autopilot] lens cost: {}", dev.awaken.lens.client.LensClient.cost());
                     return true;
                 }
+                if (arg.trim().startsWith("edgehold")) { // lens edgehold off|on|setting: contact shadows kept where the screen can't see their caster
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.edgeHold(arg.trim().substring(8)));
+                    waitTicks = 20;
+                    return true;
+                }
                 if (arg.trim().startsWith("small")) { // lens small <contact from> <to> <ambient from> <to> | setting: the small shade's reach
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.small(arg.trim().substring(5)));
                     waitTicks = 20;
