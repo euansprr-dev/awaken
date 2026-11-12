@@ -47,7 +47,16 @@ public final class InteriorTests {
         // (tools/sim/gate_tuning.json), and that run met its targets (tools/sim/pacing_results.json "gate_checks").
         // Changing floors, room counts, elites or modifiers fails this until the export is copied and the sim re-run.
         AwakenTests.register("gates_tuning_matches_sim", 600, h -> {
-            String json = tuningJson(240);
+            // the sim models every theme: while open lands are off the friendly Market leaves the D to B bags (SPEC §50.7), a
+            // switch for now, so the sample is rolled with them on
+            boolean lands = dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.get();
+            String json;
+            try {
+                dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.set(true);
+                json = tuningJson(240);
+            } finally {
+                dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.set(lands);
+            }
             try {
                 Files.writeString(Path.of("gate_tuning.json"), json);
             } catch (IOException ex) {

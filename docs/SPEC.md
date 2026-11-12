@@ -23157,6 +23157,16 @@ nobody has entered (`GateService.unentered`: READY or BUILDING, no party, no ent
 cell; a gate of floors with an open world is dressed again in a fresh cell, as a content rebuild is (no free cell: it stays
 as it is). A gate someone has been in keeps what it is. `/awaken gate realm` still forms any Realm, and switching it on
 brings them back for new gates. The fix is planned on its own before anything is built.
+The theme bag follows the switch (`Director.inBag`): with it off, a theme stays out of the bag at a rank where it has
+nothing under a roof, neither a Realm (`Blueprints.open(theme, rank, false)`, while `gateRealms` is on) nor an ordinary
+floor world (`GateWorlds.roofedWorld`: enabled, not open, everyday, deep or wonder, its rank reached, not in
+`gateWorldsOff`; mastery is left out because it depends on the player), since its gates would otherwise be the oldest plain
+rooms and Euan asked for the dungeon runs only. It follows the data, so today that leaves out the Lantern Night Market (D
+to Sovereign: every world of it is open but its secret vault, which is never picked) and the Sky Archipelago (B to
+Sovereign: all open); every other theme keeps its ranks. The second gate's theme (a twist's annex) is chosen from the same
+bag. A rank where this would leave no theme at all keeps every theme that fits, with one warning in the log. The roll's
+trace says what was left out ("open lands off so not ..."). `realm_open_lands_off` checks the bag on the real data with the
+switch on and off, that 120 rolls a rank never give either theme, and that an empty bag falls back.
 
 Cells sit `RealmCells.PITCH` (8,192) apart from 135,168, past the old gate grid, so `Cells.cellAt` and `Where.at` find nothing in a Realm.
 A Realm gate keeps its normal cell, `GatePlan` and `GateLayout` (only the abstract numbers are used: rewards, the Lord's id) and adds

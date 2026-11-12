@@ -753,6 +753,19 @@ public final class RealmTests {
                 boolean sky = dev.awaken.gates.GateService.hasSky(server);
                 for (boolean on : new boolean[]{true, false}) {
                     dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.set(on);
+                    // the theme bag: off, a theme with nothing under a roof at a rank stays out (today the Market and the Sky)
+                    for (Rank r : Rank.values()) {
+                        for (Theme t : Theme.values()) {
+                            boolean out = t == Theme.LANTERN_NIGHT_MARKET || t == Theme.SKY_ARCHIPELAGO;
+                            if (dev.awaken.gates.Director.inBag(t, r) != (t.fits(r) && (on || !out)))
+                                bad.add((on ? "on" : "off") + ": " + t.id + " at " + r.label + (dev.awaken.gates.Director.inBag(t, r) ? " is" : " isn't") + " in the bag");
+                        }
+                        for (int i = 0; i < 120 && !on; i++) {
+                            var p = dev.awaken.gates.Director.roll(0x0FFL + i * 7919L + r.ordinal() * 104729L, r, new dev.awaken.gates.run.GateMemory(), r, null).plan();
+                            for (Theme t : List.of(p.theme(), p.annexTheme()))
+                                if (t == Theme.LANTERN_NIGHT_MARKET || t == Theme.SKY_ARCHIPELAGO) bad.add("open lands are off and the Director rolled " + t.id + " at " + r.label);
+                        }
+                    }
                     Map<String, Rank> rolled = new java.util.TreeMap<>();
                     Set<String> dressed = new java.util.TreeSet<>();
                     for (Theme t : Theme.values()) {
@@ -785,6 +798,11 @@ public final class RealmTests {
                     }
                     dev.awaken.Awaken.LOG.info("[realms] open lands off: {} Realms can roll ({}), {} floor worlds", rolled.size(), String.join(", ", rolled.keySet()), dressed.size());
                 }
+                // nothing under a roof anywhere (no Realms, no worlds): every theme that fits stays, rather than an empty bag
+                dev.awaken.core.AwakenConfig.GATE_REALMS.set(false);
+                dev.awaken.core.AwakenConfig.GATE_WORLDS.set(false);
+                for (Rank r : Rank.values()) for (Theme t : Theme.values())
+                    if (dev.awaken.gates.Director.inBag(t, r) != t.fits(r)) bad.add("with nothing under a roof " + t.id + " at " + r.label + " left the bag");
             } finally {
                 Blueprints.replace(wasBps);
                 dev.awaken.gates.worlds.GateWorlds.replace(wasWorlds);
