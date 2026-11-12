@@ -36,20 +36,23 @@ def write():
     lines = head.format(title="Pick hold: vanilla's iron pickaxe beside the forged picks", g="",
                         what="each held at rest and digging, first person and from behind the right shoulder").splitlines()
     lines = [l.replace("facing_tour.py", "pick_hold_tour.py") for l in lines]
-    # the arena: a stone wall, stone and dirt faces in front of it (the runner's client draws fills slowly)
-    lines += ["cmd tp @s 0.5 201 0.5 0 0", "cmd forceload add -16 -16 16 16", "wait 300",
+    # the arena: a stone wall, stone and dirt faces in front of it. The runner's server runs far behind while the land
+    # round spawn is made (35 s on 12 Nov), so every command is waited for on its ticks (arms waitserver), and the
+    # client, which draws fills slowly, gets its own wait after
+    lines += ["cmd tp @s 0.5 201 0.5 0 0", "cmd forceload add -16 -16 16 16", "arms waitserver 100", "wait 100",
               "cmd fill -8 200 -6 8 200 9 minecraft:polished_deepslate", "cmd fill -8 201 -6 8 206 8 minecraft:air",
               "cmd fill -8 201 9 8 205 9 minecraft:stone", "cmd fill 2 201 8 7 204 8 minecraft:dirt",
-              "cmd fill -7 201 8 -2 204 8 minecraft:stone", "wait 200"]
+              "cmd fill -7 201 8 -2 204 8 minecraft:stone", "arms waitserver 40", "wait 200"]
     for cam in ("first", "back"):
         lines += [f"camera {cam}", f"cmd awaken fx sidecam {0 if cam == 'first' else 35}", f"opt fov {70 if cam == 'first' else 50}", "wait 4"]
         v = "1p" if cam == "first" else "3p"
         for name, item, ground in ITEMS:
             x = 4.5 if ground == "dirt" else -4.5
             n = f"ph_{name}_{v}"
-            lines += [f"cmd tp @s {x} 201 6.5 0 12", f"cmd item replace entity @s weapon.mainhand with {item}", "wait 60",
-                      f"arms film {n}_rest {FT.FILM} 2 3", f"wait {FT.FILM + 1}",
-                      f"arms film {n} {STRIKE} {GAP} 3", "wait 1", "cmd awaken delve demo strike", "wait 24"]
+            # the demo's blows start when the server's answer lands, a tick or two after it has run the command
+            lines += [f"cmd tp @s {x} 201 6.5 0 12", f"cmd item replace entity @s weapon.mainhand with {item}", "arms waitserver 10",
+                      "wait 40", f"arms film {n}_rest {FT.FILM} 2 3", f"wait {FT.FILM + 1}",
+                      "cmd awaken delve demo strike", "arms waitserver 2", f"arms film {n} {STRIKE} {GAP} 3", "wait 24"]
     lines += ["cmd awaken fx sidecam 0", "opt fov 70", "quit"]
     with open(TOUR, "w") as f:
         f.write("\n".join(lines) + "\n")
