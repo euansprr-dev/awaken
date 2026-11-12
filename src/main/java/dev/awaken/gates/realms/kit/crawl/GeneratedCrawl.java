@@ -194,6 +194,14 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
         super(ctx, salt);
     }
 
+    /** The crossings onto the lines' side routes (SPEC §72.3): never asked for, so the walk check takes them as leaps. */
+    private final List<Leap> sideLeaps = new ArrayList<>();
+
+    @Override
+    public List<Leap> leaps() {
+        return sideLeaps;
+    }
+
     public final List<int[]> finds() {
         return finds;
     }
@@ -277,6 +285,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                     press ? BeatSkin.or(k.tooth, tooth(m)) : BeatSkin.or(k.crumble, thinFloor(m)), AIR));
         }
         finds.addAll(L.finds);
+        sideLeaps.addAll(L.leaps);
         boolean free = ctx.rank().ordinal() <= dev.awaken.progression.Rank.D.ordinal();
         course(new Course(leg, b[0] - 1, b[1], b[2] - 1, b[3] + 1, b[4] + 4, b[5] + 1, List.copyOf(L.catches), free,
                 L.lowest == Integer.MAX_VALUE ? Integer.MIN_VALUE : L.lowest));
@@ -656,7 +665,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                     h = Math.atan2(bl.dx(), bl.dz());
                     ex = qx + bl.dx() * tailLen;
                     ez = qz + bl.dz() * tailLen;
-                    made.add(new Object[]{lineId, LegKind.MOVEMENT, line.name(), bl.x(bl.a / 2, 0), (feet + to) / 2, bl.z(bl.a / 2, 0), Math.max(8, bl.a / 2 + 3), -1, none});
+                    int[] legAt = bl.middle();
+                    made.add(new Object[]{lineId, LegKind.MOVEMENT, line.name(), legAt[0], legAt[1], legAt[2], Math.max(8, bl.a / 2 + 3), -1, none});
                 } else {
                     // it didn't hold where it was put: the way is today's from the line's start, and the run says so
                     lineId = null;
@@ -794,7 +804,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                         BeatLine xl = new BeatLine(id, x0, feet, z0, ddx, ddz);
                         if (across.lay(xl) && placeLine(id, xl, m, across.name())) {
                             used.add("crossing LINE");
-                            made.add(new Object[]{id, LegKind.MOVEMENT, across.name(), xl.x(xl.a / 2, 0), (feet + xl.feet) / 2, xl.z(xl.a / 2, 0), Math.max(8, xl.a / 2 + 3), -1, none});
+                            int[] legAt = xl.middle();
+                            made.add(new Object[]{id, LegKind.MOVEMENT, across.name(), legAt[0], legAt[1], legAt[2], Math.max(8, xl.a / 2 + 3), -1, none});
                             feet = xl.feet;
                             cx = xl.x(xl.a, 0);
                             cz = xl.z(xl.a, 0);
@@ -821,8 +832,8 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                         BeatLine wl = new BeatLine(id, x0, feet, z0, ddx, ddz);
                         if (BeatWell.lay(well, wl, up, ctx.rank(), null) && placeLine(id, wl, m, well.form().title)) {
                             used.add("well " + well.form());
-                            int[] b = taken.getLast();
-                            made.add(new Object[]{id, LegKind.MOVEMENT, well.form().title, (b[0] + b[3]) / 2, (feet + wl.feet) / 2, (b[2] + b[5]) / 2, 14, -1, none});
+                            int[] legAt = wl.middle();
+                            made.add(new Object[]{id, LegKind.MOVEMENT, well.form().title, legAt[0], legAt[1], legAt[2], 14, -1, none});
                             feet = wl.feet;
                             cx = wl.x(wl.a, 0);
                             cz = wl.z(wl.a, 0);

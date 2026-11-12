@@ -6,6 +6,7 @@ import dev.awaken.gates.realms.check.MoveProof;
 import dev.awaken.gates.realms.kit.crawl.Sculpt.Role;
 import dev.awaken.progression.Rank;
 
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -493,13 +494,46 @@ public final class Beats {
         return true;
     }
 
+    /** The gulf's lengths a switchback tries, longest first, and where along it the wall changes side (the middle first). */
+    private static List<int[]> switchSizes() {
+        List<int[]> out = new java.util.ArrayList<>();
+        for (int g = 12; g >= 7; g--) {
+            int mid = g / 2;
+            for (int d = 0; d <= g / 2 - 2; d++) {
+                out.add(new int[]{g, mid - d});
+                if (d > 0 && mid + d <= g - 2) out.add(new int[]{g, mid + d});
+            }
+        }
+        return out;
+    }
+
     private static int[] searchSwitch(int side, Rank rank) {
-        for (int g = 12; g >= 9; g--) for (int h = g / 2 - 1; h <= g / 2 + 1; h++) {
+        for (int[] gh : switchSizes()) {
             BeatLine L = scratch();
-            switchOf(L, g, h, side, false);
-            if (proves(L, rank)) return new int[]{g, h};
+            switchOf(L, gh[0], gh[1], side, false);
+            if (proves(L, rank)) return gh;
         }
         return NONE;
+    }
+
+    /**
+     * Why a beat that is sized by the body's own proof found no size (for the tests' log): each size tried and the first
+     * move it failed, or "holds". Empty for beats that aren't searched this way.
+     */
+    public static List<String> whyNoShape(Beat b, int side, Rank rank) {
+        List<String> out = new java.util.ArrayList<>();
+        if (b != Beat.SWITCHBACK) return out;
+        for (int[] gh : switchSizes()) {
+            BeatLine L = scratch();
+            switchOf(L, gh[0], gh[1], side, false);
+            pad(L, 3);
+            L.s.done();
+            var view = L.s.view(Sculpt.PLAIN);
+            String why = null;
+            for (Land.Move m : L.moves) if ((why = MoveProof.prove(view, m, rank)) != null) break;
+            out.add(gh[0] + "/" + gh[1] + ": " + (why == null ? "holds" : why));
+        }
+        return out;
     }
 
     static void switchOf(BeatLine L, int g, int h, int side, boolean teach) {
@@ -900,6 +934,7 @@ public final class Beats {
                 L.wall(mid, F + 4, 4 * s, mid, F + 8, 4 * s);
                 L.keep(mid, F + 5, 3 * s, mid, F + 6, 3 * s);
                 L.find(mid, 3 * s, F + 5);
+                L.leap("stride", mid, 2 * s, F, mid, 3 * s, F + 5);
             }
             case ANCHOR, LEAP -> {
                 // the bay: a pit six across and the ledge beyond it; an anchor ring in the roof over its middle
@@ -913,6 +948,7 @@ public final class Beats {
                 L.wall(a0 + 1, F - 8, Math.min(c0, c1), a0 + 3, F - 8, Math.max(c0, c1));
                 L.keep(a0 + 1, F, lc, a0 + 3, F + 1, lc + s);
                 L.find(mid, lc + s, F);
+                L.leap(b == Beat.ANCHOR ? "swing" : "double", mid, s, F, mid, lc, F);
                 if (b == Beat.ANCHOR) L.anchor(mid, s * (2 + gap / 2), roof);
             }
             default -> {}

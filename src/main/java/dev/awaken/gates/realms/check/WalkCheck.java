@@ -250,6 +250,83 @@ public final class WalkCheck {
     }
 
     /**
+     * Where the walk from the Mouth stops on the lines of beats (SPEC §72.4), said so a test's log shows why: for the first
+     * line it never gets onto, and every line it gets onto but not off, the move whose end nothing stands on, or the cell
+     * it stood in nearest the line's end (or start) with the columns round it (top down from two over the feet to four
+     * under: # solid, ~ water, H a rung, . open). Empty when every line is crossed.
+     */
+    public static List<String> stuck(Land land, Walk walk) {
+        List<String> out = new ArrayList<>();
+        Cells cells = null;
+        boolean before = false;
+        for (Land.Line l : land.lines()) {
+            if (l.fallback()) continue;
+            boolean on = walk.reaches(l.x0(), l.y0(), l.z0(), 2), off = walk.reaches(l.x1(), l.y1(), l.z1(), 2);
+            if (off || !on && before) continue;
+            if (cells == null) cells = paint(land);
+            StringBuilder sb = new StringBuilder(l.leg()).append(' ').append(l.beats()).append(" from ").append(l.x0()).append(' ').append(l.y0()).append(' ').append(l.z0())
+                    .append(" to ").append(l.x1()).append(' ').append(l.y1()).append(' ').append(l.z1()).append(": ");
+            if (!on) {
+                before = true;
+                sb.append("never got onto it; nearest ").append(nearest(walk, cells, land, l.leg(), l.x0(), l.y0(), l.z0()));
+                out.add(sb.toString());
+                continue;
+            }
+            for (Land.Move mv : land.moves()) {
+                if (!mv.leg().equals(l.leg())) continue;
+                boolean started = false;
+                for (int dx = -1; dx <= 1 && !started; dx++) for (int dz = -1; dz <= 1 && !started; dz++) for (int dy = -1; dy <= 1 && !started; dy++)
+                    started = walk.seen().contains(pack(mv.x0() + dx, mv.y0() + dy, mv.z0() + dz));
+                if (!started) {
+                    sb.append("never at the start of ").append(MoveProof.describe(mv)).append(" (").append(columns(cells, mv.x0(), mv.y0(), mv.z0())).append("); ");
+                    break;
+                }
+                if (stand(cells, mv.x1(), mv.y1(), mv.z1()) == null) {
+                    sb.append("nothing stands at the end of ").append(MoveProof.describe(mv)).append(" (").append(columns(cells, mv.x1(), mv.y1(), mv.z1())).append("); ");
+                    break;
+                }
+            }
+            sb.append("nearest its end ").append(nearest(walk, cells, land, l.leg(), l.x1(), l.y1(), l.z1()));
+            out.add(sb.toString());
+        }
+        return out;
+    }
+
+    /** The stood cell in a leg's Course (or within twelve) nearest a point, and the columns round it. */
+    private static String nearest(Walk walk, Cells cells, Land land, String leg, int x, int y, int z) {
+        int[] box = {x - 12, y - 12, z - 12, x + 12, y + 12, z + 12};
+        for (Land.Course c : land.courses()) if (c.leg().equals(leg)) box = new int[]{Math.min(c.x0(), x - 4), Math.min(c.y0(), y - 4), Math.min(c.z0(), z - 4), Math.max(c.x1(), x + 4), Math.max(c.y1(), y + 4), Math.max(c.z1(), z + 4)};
+        int[] best = null;
+        long bestD = Long.MAX_VALUE;
+        for (int xx = box[0]; xx <= box[3]; xx++) for (int zz = box[2]; zz <= box[5]; zz++) for (int yy = box[1]; yy <= box[4]; yy++) {
+            if (!walk.seen().contains(pack(xx, yy, zz))) continue;
+            long d = (long) (xx - x) * (xx - x) + (long) (yy - y) * (yy - y) * 4 + (long) (zz - z) * (zz - z);
+            if (d < bestD) {
+                bestD = d;
+                best = new int[]{xx, yy, zz};
+            }
+        }
+        if (best == null) return "nothing stood in its box";
+        return best[0] + " " + best[1] + " " + best[2] + " [" + columns(cells, best[0], best[1], best[2]) + "]";
+    }
+
+    /** A cell's own column and the four round it, top down from two over the feet to four under. */
+    private static String columns(Cells cells, int x, int y, int z) {
+        StringBuilder sb = new StringBuilder();
+        int[][] at = {{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+        String[] name = {"here", "+x", "-x", "+z", "-z"};
+        for (int i = 0; i < at.length; i++) {
+            sb.append(i == 0 ? "" : " ").append(name[i]).append(' ');
+            for (int yy = y + 2; yy >= y - 4; yy--) {
+                int xx = x + at[i][0], zz = z + at[i][1];
+                sb.append(cells.at(xx, yy, zz) ? (cells.half(xx, yy, zz) ? '_' : '#') : cells.water(xx, yy, zz) ? '~' : cells.climb(xx, yy, zz) ? 'H' : '.');
+                if (yy == y) sb.append('|');
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
      * The needed moves of a land's beats that aren't (SPEC §72.4): from each one's start, a walk with no moves and no leaps,
      * kept inside the stretch it belongs to (its Course), and stepping no more than a block up from where the feet really
      * are, still gets to within a cell of its end. Empty when every move a beat asks for is asked for.

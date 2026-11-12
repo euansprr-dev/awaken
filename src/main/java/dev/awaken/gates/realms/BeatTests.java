@@ -81,6 +81,9 @@ public final class BeatTests {
                 if (!any) never.add(b.name());
             }
             for (String line : bad) Awaken.LOG.error("[beats] alone: {}", line);
+            // what each size of a beat with no shape failed on, so the log says what to change
+            for (String n : never) for (Rank rank : new Rank[]{Beat.valueOf(n).rank, Rank.S}) for (String why : Beats.whyNoShape(Beat.valueOf(n), 1, rank))
+                Awaken.LOG.error("[beats] no shape: {} at {} {}", n, rank, why);
             if (!never.isEmpty()) h.fail("these beats never found a shape: " + never);
             if (!bad.isEmpty()) h.fail(bad.size() + " beats don't hold alone, the first: " + bad.getFirst());
             Awaken.LOG.info("[beats] alone: {} built, {} moves proved", built, proved);
@@ -103,6 +106,8 @@ public final class BeatTests {
                 runs++;
                 var walk = WalkCheck.walk(land);
                 if (!walk.unreachable().isEmpty()) bad.add(at + "can't reach " + walk.unreachable());
+                // where the walk stops on a line, so the log says which move or cell to look at
+                for (String st : WalkCheck.stuck(land, walk)) Awaken.LOG.error("[beats] stuck: {}{}", at, st);
                 var route = RouteCheck.check(land, walk);
                 if (!route.problems().isEmpty()) bad.add(at + route.summary() + ": " + route.problems());
                 int half = land.halfSize();

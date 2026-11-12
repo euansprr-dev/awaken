@@ -57,6 +57,11 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             return 0;
         }
 
+        /** More floors in a column under its own (feet2, roof, wet each), for a part that runs under itself (a well's flights); null for most. */
+        public int @org.jspecify.annotations.Nullable [] more(int x, int z) {
+            return null;
+        }
+
         /** Takes the rock out, and stands water in what it says is a pool. */
         void carve(V v) {
             for (int x = Math.max(x0, v.x0 - 1); x <= Math.min(x1, v.x0 + 16); x++) for (int z = Math.max(z0, v.z0 - 1); z <= Math.min(z1, v.z0 + 16); z++) {
@@ -1090,6 +1095,8 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
                 if (f == NONE) continue;
                 low = Math.min(low, Math.floorDiv(f, 2));
                 top = Math.max(top, p.roof(x, z));
+                int[] more = p.more(x, z);
+                if (more != null) for (int i = 0; i < more.length; i += 3) low = Math.min(low, Math.floorDiv(more[i], 2));
             }
         }
         bx0 -= 14;
@@ -1340,16 +1347,23 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         for (int x = Math.max(p.x0, v.x0 - 1); x <= Math.min(p.x1, v.x0 + 16); x++) for (int z = Math.max(p.z0, v.z0 - 1); z <= Math.min(p.z1, v.z0 + 16); z++) {
             int f = p.feet2(x, z);
             if (f == NONE) continue;
-            for (int y = Math.floorDiv(f, 2), roof = p.roof(x, z); y < roof; y++) {
-                if (v.get(x, y, z) != null) continue;
-                boolean onFloor = rock(v, near, x, y - 1, z), underRoof = rock(v, near, x, y + 1, z);
-                int wx = 0, wz = 0;
-                if (rock(v, near, x + 1, y, z)) wx = 1;
-                else if (rock(v, near, x - 1, y, z)) wx = -1;
-                else if (rock(v, near, x, y, z + 1)) wz = 1;
-                else if (rock(v, near, x, y, z - 1)) wz = -1;
-                if (onFloor || underRoof || wx != 0 || wz != 0) adorn(v, m, p, x, y, z, onFloor, underRoof, wx, wz);
-            }
+            dress(v, m, p, near, x, z, Math.floorDiv(f, 2), p.roof(x, z));
+            // and every floor under it, where a part runs under itself
+            int[] more = p.more(x, z);
+            if (more != null) for (int i = 0; i < more.length; i += 3) dress(v, m, p, near, x, z, Math.floorDiv(more[i], 2), more[i + 1]);
+        }
+    }
+
+    private void dress(V v, M m, Part p, List<Part> near, int x, int z, int from, int roof) {
+        for (int y = from; y < roof; y++) {
+            if (v.get(x, y, z) != null) continue;
+            boolean onFloor = rock(v, near, x, y - 1, z), underRoof = rock(v, near, x, y + 1, z);
+            int wx = 0, wz = 0;
+            if (rock(v, near, x + 1, y, z)) wx = 1;
+            else if (rock(v, near, x - 1, y, z)) wx = -1;
+            else if (rock(v, near, x, y, z + 1)) wz = 1;
+            else if (rock(v, near, x, y, z - 1)) wz = -1;
+            if (onFloor || underRoof || wx != 0 || wz != 0) adorn(v, m, p, x, y, z, onFloor, underRoof, wx, wz);
         }
     }
 }

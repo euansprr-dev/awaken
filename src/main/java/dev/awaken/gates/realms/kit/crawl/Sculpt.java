@@ -99,7 +99,10 @@ public final class Sculpt extends CrawlLand.Part {
 
     private static volatile @Nullable BlockState anchor;
 
-    private final Map<Long, int[]> cols = new HashMap<>();
+    /** Per column, every floor cut in it (feet2, roof, wet): one, or more where a flight runs under another (a well's). */
+    private final Map<Long, List<int[]>> cols = new HashMap<>();
+    /** Per column (once done), the floors under its highest one, (feet2, roof, wet) each. */
+    private final Map<Long, int[]> lower = new HashMap<>();
     public final List<Box> solids = new ArrayList<>(), airs = new ArrayList<>(), keeps = new ArrayList<>(), walls = new ArrayList<>();
     /** Unseen lights over a climb (x, y, z), set only where nothing else is. */
     public final List<int[]> lights = new ArrayList<>();
@@ -131,10 +134,17 @@ public final class Sculpt extends CrawlLand.Part {
         if (frozen) throw new IllegalStateException("sculpt " + name + " is finished");
     }
 
-    /** A column: feet (twice their height, odd a half step), the first solid cell over the head, and water on the floor. */
+    /**
+     * A column: feet (twice their height, odd a half step), the first solid cell over the head, and water on the floor. Cut
+     * again where it already has air or a floor, it is cut anew; cut clear of what it has (a well's flight under the one
+     * above it, with rock between), it is another floor in the same column.
+     */
     public void column(int x, int z, int feet2, int roof, int wet) {
         open();
-        cols.put(key(x, z), new int[]{feet2, roof, wet});
+        List<int[]> at = cols.computeIfAbsent(key(x, z), k -> new ArrayList<>(1));
+        int lo = Math.floorDiv(feet2, 2) - 1, hi = roof - 1;
+        at.removeIf(c -> Math.floorDiv(c[0], 2) - 1 <= hi && c[1] - 1 >= lo);
+        at.add(new int[]{feet2, roof, wet});
         grow(x, z, x, z);
     }
 
@@ -144,8 +154,16 @@ public final class Sculpt extends CrawlLand.Part {
         cols.remove(key(x, z));
     }
 
-    public int[] columnAt(int x, int z) {
-        return cols.get(key(x, z));
+    /** A column's highest floor (feet2, roof, wet), or null. */
+    public int @Nullable [] columnAt(int x, int z) {
+        List<int[]> at = cols.get(key(x, z));
+        return at == null || at.isEmpty() ? null : highest(at);
+    }
+
+    private static int[] highest(List<int[]> at) {
+        int[] top = at.getFirst();
+        for (int[] c : at) if (c[0] > top[0]) top = c;
+        return top;
     }
 
     private static Box box(int ax, int ay, int az, int bx, int by, int bz, Role role, int arg) {
@@ -193,11 +211,25 @@ public final class Sculpt extends CrawlLand.Part {
         java.util.Arrays.fill(feet, CrawlLand.NONE);
         for (var e : cols.entrySet()) {
             long k = e.getKey();
+            List<int[]> at = e.getValue();
+            if (at.isEmpty()) continue;
             int x = (int) (k >> 32), z = (int) k;
             int i = (x - gx0) * nz + (z - gz0);
-            feet[i] = e.getValue()[0];
-            top[i] = e.getValue()[1];
-            water[i] = e.getValue()[2];
+            // the column's own floor is its highest; the others are drawn as more floors in it
+            int[] c = highest(at);
+            feet[i] = c[0];
+            top[i] = c[1];
+            water[i] = c[2];
+            if (at.size() > 1) {
+                int[] more = new int[3 * (at.size() - 1)];
+                int j = 0;
+                for (int[] o : at) if (o != c) {
+                    more[j++] = o[0];
+                    more[j++] = o[1];
+                    more[j++] = o[2];
+                }
+                lower.put(k, more);
+            }
         }
         index(solids, solidCols);
         index(airs, airCols);
@@ -236,6 +268,11 @@ public final class Sculpt extends CrawlLand.Part {
     public int wet(int x, int z) {
         int i = idx(x, z);
         return i < 0 ? 0 : water[i];
+    }
+
+    @Override
+    public int @Nullable [] more(int x, int z) {
+        return lower.get(key(x, z));
     }
 
     /** The last-made solid box holding this cell (a later box over an earlier one wins), or null. */
@@ -279,12 +316,22 @@ public final class Sculpt extends CrawlLand.Part {
         if (solidAt(x, y, z) != null) return false;
         if (airBox(x, y, z)) return true;
         int f = feet2(x, z);
-        return f != CrawlLand.NONE && y >= airFrom(f) && y < roof(x, z);
+        if (f != CrawlLand.NONE && y >= airFrom(f) && y < roof(x, z)) return true;
+        int[] more = more(x, z);
+        if (more != null) for (int i = 0; i < more.length; i += 3) if (y >= airFrom(more[i]) && y < more[i + 1]) return true;
+        return false;
     }
 
     @Override
     void carve(V v) {
         super.carve(v);
+        if (!lower.isEmpty()) for (int x = Math.max(x0, v.x0 - 1); x <= Math.min(x1, v.x0 + 16); x++) for (int z = Math.max(z0, v.z0 - 1); z <= Math.min(z1, v.z0 + 16); z++) {
+            int[] more = more(x, z);
+            if (more != null) for (int i = 0; i < more.length; i += 3) {
+                int from = Math.floorDiv(more[i], 2), wet = more[i + 2];
+                for (int y = from; y < more[i + 1]; y++) v.set(x, y, z, y < from + wet ? WATER : null);
+            }
+        }
         for (Box b : airs) for (int x = Math.max(b.x0, v.x0 - 1); x <= Math.min(b.x1, v.x0 + 16); x++) for (int z = Math.max(b.z0, v.z0 - 1); z <= Math.min(b.z1, v.z0 + 16); z++) {
             for (int y = b.y0; y <= b.y1; y++) v.set(x, y, z, null);
         }
@@ -293,6 +340,15 @@ public final class Sculpt extends CrawlLand.Part {
     @Override
     <M extends Mats> void lay(V v, CrawlLand<M> land, M m) {
         super.lay(v, land, m);
+        if (!lower.isEmpty()) for (int x = Math.max(x0, v.x0 - 1); x <= Math.min(x1, v.x0 + 16); x++) for (int z = Math.max(z0, v.z0 - 1); z <= Math.min(z1, v.z0 + 16); z++) {
+            int[] more = more(x, z);
+            if (more != null) for (int i = 0; i < more.length; i += 3) {
+                int f = more[i], y = Math.floorDiv(f, 2);
+                if (v.get(x, y - 1, z) == null) continue;
+                v.set(x, y - 1, z, land.floor(m, this, x, y - 1, z));
+                if ((f & 1) != 0 && v.get(x, y, z) == null) v.set(x, y, z, land.step(m));
+            }
+        }
         for (Box b : solids) for (int x = Math.max(b.x0, v.x0 - 1); x <= Math.min(b.x1, v.x0 + 16); x++) for (int z = Math.max(b.z0, v.z0 - 1); z <= Math.min(b.z1, v.z0 + 16); z++) {
             for (int y = b.y0; y <= b.y1; y++) v.set(x, y, z, land.beatBlock(m, this, b.role, b.arg, x, y, z, y == b.y1));
         }
@@ -363,14 +419,23 @@ public final class Sculpt extends CrawlLand.Part {
         if (airBox(x, y, z)) return AIR;
         int f = feet2(x, z);
         if (f == CrawlLand.NONE) return paint.rock(x, y, z);
-        int from = Math.floorDiv(f, 2), roof = roof(x, z), wet = wet(x, z);
+        BlockState b = level(paint, f, roof(x, z), wet(x, z), x, y, z);
+        if (b != null) return b;
+        int[] more = more(x, z);
+        if (more != null) for (int i = 0; i < more.length && b == null; i += 3) b = level(paint, more[i], more[i + 1], more[i + 2], x, y, z);
+        return b != null ? b : paint.rock(x, y, z);
+    }
+
+    /** What one floor of a column makes of a cell: its air, water, half step or floor block, or null if the cell isn't its. */
+    private static @Nullable BlockState level(Paint paint, int f, int roof, int wet, int x, int y, int z) {
+        int from = Math.floorDiv(f, 2);
         if (y >= from && y < roof) {
             if (y < from + wet) return WATER;
             if ((f & 1) != 0 && y == from) return paint.step();
             return AIR;
         }
         if (y == from - 1) return paint.floor(x, y, z);
-        return paint.rock(x, y, z);
+        return null;
     }
 
     private static final class View implements BlockGetter {

@@ -37,6 +37,8 @@ public final class BeatLine {
     public final List<int[]> finds = new ArrayList<>();
     /** Anchor rings for the rope over a side route (x, y, z). */
     public final List<int[]> anchors = new ArrayList<>();
+    /** The crossing onto each side route (a stride up a wall, a swing or a leap over a pit): never asked for, taken by the walk check. */
+    public final List<Land.Leap> leaps = new ArrayList<>();
     public final java.util.Set<Land.Family> families = java.util.EnumSet.noneOf(Land.Family.class);
     /** The lowest a body may be in this line before the run puts it back (the lowest catch ledge, less three). */
     public int lowest = Integer.MAX_VALUE;
@@ -163,6 +165,11 @@ public final class BeatLine {
         finds.add(new int[]{x(a, c), y, z(a, c)});
     }
 
+    /** A side route's crossing, from where the feet stand (a0, c0, y0) to where they land (a1, c1, y1): which move it takes. */
+    public void leap(String move, int a0, int c0, int y0, int a1, int c1, int y1) {
+        leaps.add(new Land.Leap(move, x(a0, c0), y0, z(a0, c0), x(a1, c1), y1, z(a1, c1)));
+    }
+
     /** An anchor ring set in the roof cell (a, c, y), for the rope. */
     public void anchor(int a, int c, int y) {
         anchors.add(new int[]{x(a, c), y, z(a, c)});
@@ -280,5 +287,11 @@ public final class BeatLine {
 
     public int endZ() {
         return z(a - 1, 0);
+    }
+
+    /** A cell the feet stand on near the middle of the line (its middle catch): where its leg is, for the route and the tours. */
+    public int[] middle() {
+        if (catches.isEmpty()) return new int[]{x(a / 2, 0), feet, z(a / 2, 0)};
+        return catches.get(catches.size() / 2).clone();
     }
 }

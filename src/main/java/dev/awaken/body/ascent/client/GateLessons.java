@@ -37,7 +37,10 @@ public final class GateLessons {
      */
     static Vec3[] pace(List<Vec3> path) {
         List<Vec3> out = new ArrayList<>();
-        Vec3 a = path.get(0), b = path.get(1), dir = b.subtract(a).normalize().scale(0.01);
+        // it waits facing the way it will go: toward the first point that isn't where it stands
+        Vec3 a = path.get(0), b = path.get(1);
+        for (int i = 2; i < path.size() && b.distanceToSqr(a) < 1e-6; i++) b = path.get(i);
+        Vec3 dir = b.subtract(a).normalize().scale(0.01);
         for (int i = 0; i < WAIT; i++) out.add(a.add(dir.scale(i)));
         for (int i = 0; i + 1 < path.size(); i++) {
             Vec3 p = path.get(i), q = path.get(i + 1), d = q.subtract(p);
