@@ -93,7 +93,7 @@ public final class ArmsWalls {
         if (cut >= GRASS_MAX || !p.getAbilities().mayBuild || p.isSpectator()) return 0;
         ServerLevel level = p.level();
         BlockPos feet = p.blockPosition();
-        if (HearthHooks.inside(level, feet) || CityHooks.inCity(level, feet)
+        if (!dev.awaken.core.api.Ready.at(level, feet) || HearthHooks.inside(level, feet) || CityHooks.inCity(level, feet)
                 || level.structureManager().getStructureWithPieceAt(feet, StructureTags.VILLAGE).isValid()) return 0;
         int r = (int) Math.ceil(reach), n = 0;
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();

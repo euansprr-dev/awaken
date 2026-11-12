@@ -122,6 +122,9 @@ final class TetherVow {
 
     /** The vault whose blueprint holds {@code pos}, or null (not a vault, or its turn can't be read: an old layout). */
     static @Nullable Site siteAt(ServerLevel level, BlockPos pos) {
+        // a player flying faster than the land is made: its structure references aren't there to read yet (asking waits for
+        // the generator: 1.2 s a time in a flight at 32 blocks a second, tour pulse-flight-ci); the next look finds it
+        if (!dev.awaken.core.api.Ready.at(level, pos)) return null;
         StructureStart start = level.structureManager().getStructureWithPieceAt(pos, Above.RUINS_TAG);
         if (!start.isValid() || !(start.getStructure() instanceof PrecursorRuinStructure prs) || !prs.kind().isVault()) return null;
         // the piece's own box (the blueprint's): the start's is padded on every side

@@ -97,7 +97,8 @@ public final class DayJournal {
                 while (d.biomesSeen.size() > 256) d.biomesSeen.remove(d.biomesSeen.iterator().next());
                 capture(sp, Snapshot.Kind.BIOME, pos, "your first " + Describe.pretty(biome));
             }
-            StructureStart start = level.structureManager().getStructureWithPieceAt(pos, h -> true);
+            // (never on land still being made: asking for its structures would wait for the generator, SPEC §12 Ready)
+            StructureStart start = dev.awaken.core.api.Ready.at(level, pos) ? level.structureManager().getStructureWithPieceAt(pos, h -> true) : StructureStart.INVALID_START;
             if (start.isValid()) {
                 var key = level.registryAccess().lookupOrThrow(Registries.STRUCTURE).getKey(start.getStructure());
                 if (key != null && d.structuresSeen.add(key.toString())) {

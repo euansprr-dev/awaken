@@ -832,7 +832,9 @@ of `AwakenConfig.Client`.
   streams in), `spareNanos(server)` (time left before the next tick is due). Every server-side check before a world read
   goes through it (the sweep of 12 Nov: 347 checks in 149 files); Far Sight keeps its own "already held" check, and
   `GateService.pregenFloor` keeps the ticket check so it never adds a second ticket. A read the player asked for
-  (commands, a teleport's landing, a respawn) still uses the game's own and may wait.
+  (commands, a teleport's landing, a respawn) still uses the game's own and may wait. A structure lookup at a player's
+  own feet asks `Ready.at` first (the Tether vow's look, the Day Journal's, a sweep's grass): a player flying at 32 blocks
+  a second outruns the generator, and the lookup waited 1.2 s for the chunk under them (tour `pulse-flight-ci`).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`, `armoury`: is this spot in an Armoury, §27.13), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks` (`lead(mob, x, z, speed, ticks)`: a
@@ -11959,7 +11961,11 @@ same roads and plans for a seed, the bench's fingerprint unchanged):
   `village_tick_holds` holds it: a wave of ~360 lattice chunks queued 2,400 out and world generation waiting on a cold
   lattice chunk beside it, then 15 s of the server thread's road calls for a player flying 40 blocks a second over new
   land. On the Mac (five planners, another build sharing the cores): no wait, the most work in a call 0.45 ms of CPU
-  (19 ms by the clock: the cores were shared), the longest tick 196 ms, the planners busy every tick;
+  (19 ms by the clock: the cores were shared), the longest tick 196 ms, the planners busy every tick. It and
+  `village_road_starts_wait` hold their 250 ms limit on a tick less the garbage collections inside it (the pause time
+  the JVM's collector beans count, ZGC's and Shenandoah's concurrent "Cycles" left out), and say in the line how much of
+  the longest tick was a collection: in the full suite on CI the longest tick swung 35-642 ms with the road work in it
+  under 1 ms of CPU, so a collection must not fail the test, only a wait;
 - a lattice chunk lays a lane only if it can reach it, judged from the roads the lane may join that are laid already:
   a lane runs from a street end to the point of those roads nearest the settlement's middle and keeps inside its
   search's ellipse (every point within 1.225 (δ + E + 24) + 44 of that street end, δ the nearest laid point or 650, E
