@@ -17,7 +17,9 @@ import java.util.concurrent.locks.LockSupport;
  * generation is waiting for, then the towns' and wayhouses' sites the server thread's searches asked for, then what lies
  * ahead of the players, nearest first (held back while the server is late with a tick). While new land is coming in
  * round a player ({@code LandFirst}) only the jobs for that land run, on every planner (world generation's own and the
- * lattice chunks it's about to reach): the rest are held until it's in.
+ * lattice chunks it's about to reach): the rest are held until it's in, a minute from their ask at most. Then a search
+ * the server thread asked for (a region's sites) runs whatever the land does, and a piece ahead of the players is let
+ * go: nobody waits on it, and the next pass asks for it again when it's wanted, as the land's own once a player nears.
  * A job only asks for a piece (a plan, a hub, a road, a lattice chunk's legs): each piece is still made once by
  * whichever thread asks first while the others wait for it, so the network is exactly what one thread would lay, and no
  * thread ever waits for a job still queued.
@@ -86,8 +88,9 @@ final class RoadPlanners {
         if (!mine[0]) return false;
         // what world generation waits for, or a piece of a lattice chunk the land coming in will reach in a moment
         boolean forLand = tier == URGENT || tier == AHEAD && order / 4 <= front;
-        long seq = SEQ.incrementAndGet();
+        long seq = SEQ.incrementAndGet(), asked = System.nanoTime();
         Job[] self = new Job[1];
+        boolean[] due = {false};
         self[0] = new Job(rank, seq, () -> {
             // a more urgent copy of this job was queued since (a player came nearer) or has run: that one does the work
             Long now = PENDING.get(key);
@@ -96,9 +99,10 @@ final class RoadPlanners {
             // land waits until it's in (Euan's Mac, 12 Nov: five planners at 4.6 cores while he flew), and the ones that
             // are have every planner: world generation waits for them (holding the near ones left 15 s in 30 of road
             // starts laying legs itself, run 43209363904; two at a time, Euan's new world waited almost two minutes)
-            if (!forLand && dev.awaken.core.api.LandFirst.streaming()) {
+            // held a minute from its ask at most (release): a planner that takes it up later runs it
+            if (!forLand && !due[0] && dev.awaken.core.api.LandFirst.streaming() && System.nanoTime() - asked < dev.awaken.core.api.LandFirst.MOST_NS) {
                 DEFERRED.incrementAndGet();
-                HELD.add(self[0]);
+                HELD.add(new Held(self[0], key, rank, asked, tier == SOON, due));
                 return;
             }
             PENDING.remove(key, rank);
@@ -116,8 +120,19 @@ final class RoadPlanners {
 
     /** Jobs held while land came in (the timer's line). */
     static final AtomicLong DEFERRED = new AtomicLong();
-    /** Jobs held while land comes in, queued again in their order once it's in ({@link #release}). */
-    private static final java.util.concurrent.ConcurrentLinkedQueue<Job> HELD = new java.util.concurrent.ConcurrentLinkedQueue<>();
+    /** Jobs held a minute while land came in, then let go (the timer's line): pieces ahead of the players nobody waited on. */
+    static final AtomicLong LET_GO = new AtomicLong();
+
+    /** A job held while land comes in: its key and rank (to let it go), when it was asked for, whether it's a search. */
+    private record Held(Job job, String key, long rank, long asked, boolean search, boolean[] due) implements Comparable<Held> {
+        @Override
+        public int compareTo(Held o) {
+            return Long.compare(asked, o.asked);
+        }
+    }
+
+    /** Jobs held while land comes in, the longest asked for first ({@link #release}). */
+    private static final PriorityBlockingQueue<Held> HELD = new PriorityBlockingQueue<>();
     /**
      * How near a player (squared, in chunks) a lattice chunk is for the land coming in: the ring world generation makes
      * structure starts in round the view distance, and one lattice spacing past it (set each pass, {@link #front}).
@@ -131,14 +146,32 @@ final class RoadPlanners {
         front = r * r;
     }
 
-    /** Once the land is in, the jobs held while it came are queued again (each server tick; nothing to do most). */
+    /** (Each server tick; nothing to do most) the held jobs whose time has come. */
     static void release() {
-        if (HELD.isEmpty() || dev.awaken.core.api.LandFirst.streaming()) return;
+        if (!HELD.isEmpty()) release(System.nanoTime());
+    }
+
+    /**
+     * Once the land is in, every job held while it came is queued again. While it still comes, the ones asked for a minute
+     * ago or more: a search the server thread asked for runs then whatever the land does (SPEC §12: nothing waits on land
+     * first forever), and a piece ahead of the players is let go, to be asked for again when it's wanted. {@code now} is
+     * {@code System.nanoTime()} (the test passes a minute on).
+     */
+    static void release(long now) {
+        boolean coming = dev.awaken.core.api.LandFirst.streaming();
         ThreadPoolExecutor p = pool;
-        for (Job j; (j = HELD.poll()) != null; ) {
+        for (Held h; (h = HELD.peek()) != null && (!coming || now - h.asked() >= dev.awaken.core.api.LandFirst.MOST_NS); ) {
+            Held x = HELD.poll(); // the head, or one asked for still earlier
+            if (x == null) return;
+            if (coming && !x.search()) {
+                PENDING.remove(x.key(), x.rank());
+                LET_GO.incrementAndGet();
+                continue;
+            }
+            x.due()[0] = coming;
             if (p == null || p.isShutdown()) continue; // the server stopped: they go with it
             try {
-                p.execute(j);
+                p.execute(x.job());
             } catch (java.util.concurrent.RejectedExecutionException e) {
                 HELD.clear();
                 return;
@@ -164,6 +197,12 @@ final class RoadPlanners {
 
     static boolean pending(String key) {
         return PENDING.containsKey(key);
+    }
+
+    /** Whether a job is held while land comes in (the test). */
+    static boolean held(String key) {
+        for (Held x : HELD) if (x.key().equals(key)) return true;
+        return false;
     }
 
     static boolean on() {

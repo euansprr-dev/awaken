@@ -855,9 +855,12 @@ of `AwakenConfig.Client`.
   however long the land keeps coming (a flight over new ground) each search starts within a minute of being asked for,
   plus the work ahead of it (the Horizon's sinkholes, eight on one worker, waited a minute each one after another).
   The Horizon's sinkholes, lode regions and village plans, and every `later()` job, wait that way; the ruin finder
-  keeps its 2 s a spot at the start (a trickle on purpose, 64 waiting at most). Road jobs held while land comes in
-  have no span: a job for land a player nears is queued again as that land's own and runs at once.
-  `core_land_first_never_starves` holds both rules.
+  keeps its 2 s a spot at the start (a trickle on purpose, 64 waiting at most). The road planners' jobs held while land
+  comes in are held a minute from their ask at most too: then a region's site search (the server thread asked for it)
+  runs whatever the land does, and a piece ahead of the players is let go (nobody waits on it, and the next pass asks
+  for it again, as that land's own once a player nears; the road timer's line counts them), so the planners stay off
+  the cores through a long flight. `core_land_first_never_starves` and `village_road_held_answered` hold these with
+  land coming in the whole time.
   `noiseSampled()`, called by the overworld's `CityBasinFunction` (every column and chunk of its terrain passes through
   it), counts terrain noise sampled on the server thread and logs it with its caller at most every 10 s ("terrain
   noise on the server thread"): with Tectonic a column costs tens of milliseconds there. What it found on the tour
