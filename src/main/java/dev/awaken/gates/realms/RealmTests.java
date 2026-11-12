@@ -801,6 +801,27 @@ public final class RealmTests {
             if (!bad.isEmpty()) h.fail(bad.size() + " wrong, first: " + bad.getFirst() + (bad.size() > 1 ? "; " + bad.subList(1, Math.min(6, bad.size())) : ""));
             h.succeed();
         });
+        // design aid (SPEC §50.9 "Open lands, fixed"): each open land still without its way, and Saltcomb, from straight above,
+        // with its sites, run and stones, into logs/landmaps (CI keeps run/logs); passes once the maps are written
+        AwakenTests.register("realm_land_maps", 6000, h -> {
+            java.nio.file.Path dir = net.neoforged.fml.loading.FMLPaths.GAMEDIR.get().resolve("logs/landmaps");
+            Map<String, Land> lands = new java.util.LinkedHashMap<>();
+            lands.put("saltcomb", salt(1, NOW));
+            lands.put("kingsroot", keep(1, NOW));
+            lands.put("quiet_barrow", barrow(1, NOW));
+            lands.put("vine_seat", vine(1, NOW));
+            lands.put("glass_sea", dev.awaken.gates.realms.kit.land.LandTests.land("awaken:glass_country", "glass_desert", dev.awaken.gates.realms.kit.land.Landform.Kind.CAUSEWAY, "glass_serpent", Rank.D, 1, NOW));
+            lands.put("high_caps", dev.awaken.gates.realms.kit.land.LandTests.land("awaken:fungal_country", "fungal_hollow", dev.awaken.gates.realms.kit.land.Landform.Kind.ISLES, "mother_of_spores", Rank.E, 1, NOW));
+            for (var e : lands.entrySet()) {
+                try {
+                    dev.awaken.gates.realms.check.LandMap.write(e.getValue(), dir, e.getKey());
+                    dev.awaken.Awaken.LOG.info("[realms] land map {} written", e.getKey());
+                } catch (java.io.IOException | RuntimeException ex) {
+                    h.fail("the map of " + e.getKey() + ": " + ex);
+                }
+            }
+            h.succeed();
+        });
         // Lights and seals (SPEC §50.9; Euan, 12 Nov: "nothing guided me... the big building was closed. So how do I open the doors?"):
         // a land that shows its Wardens has one seal for each, in a row just outside the Lord's door, and says what is left in plain words
         AwakenTests.register("realm_seals", 400, h -> {
