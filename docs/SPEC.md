@@ -1525,7 +1525,7 @@ docs/sound/plan.html):
   glints) and a muffle (1.1 kHz, nature 0.2). **Dreams**: clarity follows lucidity (the air's filter from 900 Hz at
   lucidity 0 to open at 80). **Living Wilds happenings** heard from afar (`living.client.PulseSound`, from the tells
   the server already sends): stampede rumble (260 blocks), murmuration wings (200), the Deep Tide's drone (320; a
-  hush 0.3 over 200+), caravan bells (160), the Wild Hunt's horn (400) and its hounds baying (220; a hush 0.1 over 200),
+  hush 0.3 over 200+), caravan bells (64, softer), the Wild Hunt's horn (400) and its hounds baying (220; a hush 0.1 over 200),
   kites over a carrion circle (180), a migrating herd lowing (220), a beast duel's roars (260); level = (1 − d/range)²;
   a happening near lets nature step back (× (1 − 0.6 × 0.8 × its level)). Each air pair or trio repeats together no
   sooner than 30 minutes (census test). **The hush before a Lord**: a gate room's own one-shots (`gate.ambient.*`)
@@ -5564,11 +5564,13 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - **Data** `data/<ns>/awaken/happening/<id>.json`, schema 1: `title`, `family`, `behaviour` (code), `when` {`time`,
   `moon`, `moon_weight`, `moon_only`, `weather`}, `groups` (fauna biome groups), `bands`, `duration_s`, `weight`,
   `witness_radius`, `tell` (haze, dustline, flock, circle, storm, ghost, fog, lanterns, roar), `tell_radius`,
+  (`weight` 0: the Pulse never picks it on its own; a command still starts it),
   `rumours` (with `{dir}`). No em dashes.
 - **The launch set** (behaviours in `Herds`, `Skies`, `Hunts`, `Tides`, `People`):
   - The Great Migration (dawn/day, grazing lands): a herd of 10-14 of the land's grazer crosses 140 blocks in 5 min;
-    hunters come at the stragglers at a third and two thirds of the way. Stampede (day): 8-10 at a full run, 90 blocks
-    in 40 s; 4 damage and a shove to anyone in the way (once per 1.5 s).
+    hunters come at the stragglers at a third and two thirds of the way. Stampede (day; weight 0 since 12 Nov 2026, Euan:
+    "they're very boring and like they look bad", so only a command runs it): 8-10 at a full run, 90 blocks in 40 s; 4 damage and a
+    shove to anyone in the way (once per 1.5 s). A Wild Lands herd still bolts when attacked (§41.4).
   - Murmuration (dusk, over water): client-drawn only; witnessing it gives `awaken:lucidity_start` +10 for that
     play-day (a perk source). Carrion Circle: kites over a barrel of remains (bones, leather, arrows, 40% a creature
     part, 25% a worn iron sword) and scattered bone blocks; the remains stay.
@@ -5580,8 +5582,9 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
     Huntmaster 6. Beast Duel (bands 1+): two named beasts fight; the winner is left at 45% health.
   - The Deep Tide (new moon only, dusk/night, 10 min): fog out of a broken gate within 300 (else open ground); while it's
     up the night's hunters, elites and camps are two levels harder everywhere (`Regions.creatureLevel`).
-  - Caravan (day, ×3 on the half moons): a wandering trader ("Caravan Master") and 2-3 trader llamas walk 140 blocks in
-    6 min; trade as usual. 40% are ambushed halfway by 3-4 pillagers; if the master lives, everyone within 40 gets
+  - Caravan (day, weight 0.4, ×1.5 on the half moons): a wandering trader ("Caravan Master") and 2-3 trader llamas
+    walk about 100 blocks of road and pass by in 75 s; trade as usual. (12 Nov 2026, Euan: it came too often and stayed
+    for six minutes ringing bells round his Hearth; it was weight 1.5, ×3, 160 blocks in 6 min, bells heard to 160.) 40% are ambushed halfway by 3-4 pillagers; if the master lives, everyone within 40 gets
     0.15 of a level (budget "pulse", 0.15 per 10 min) and 4 emeralds.
 - **Tells** (payload `living_happenings`: id, tell, centre, radius, progress, line direction; to players within 512
   every 2 s, an empty list once when the last goes). `living.client.PulseFx` draws them in an alpha pass (unfogged,
@@ -12155,7 +12158,7 @@ first town placed on purpose, a wayhouse at a region's heart for "a day's walk")
 the 14-wide exits (they shift W3's fields); the mining roll (one in three villages, one in ten hamlets); the town's
 numbers (wall 64, or 76 when that fits under 25 homes, square 11, lanes 24 apart, squared to the compass, 3-block
 frontage slots) and its people bounds; the mine's depths (24, then 16); the Deep Mine's cause, timings and pay; the
-assayer's goods and the lode map's price; the caravan's stretch (50-160, 160 long) and its prosperity; the Atlas's
+assayer's goods and the lode map's price; the caravan's stretch (50-160, 100 long since 12 Nov) and its prosperity; the Atlas's
 record limits; the Awakened Villages pack holds the roads.
 
 **Left.** A caravan come to your village stays only as long as the Pulse's caravan does (no trade of its own at the
@@ -18867,7 +18870,8 @@ Built in `dev.awaken.bells` (`Bells`, `BellSites`, `DreamBells`, `BellCatalog`) 
   Bell for Roots, Ash).
 - **Big Days**: the Siege Bell with the Night Bell when a home holds a raid and its member is B rank or above.
 - **The wild's big moments** (source WILDS; they were down as Big Days, but the World Pulse already holds them, §21.6):
-  from C rank, witnessing a Stampede rings the Stampede Bell and witnessing the Deep Tide (new moon) the Flood Bell
+  from C rank, witnessing a Great Migration rings the Herd Bell (id `stampede`; it was the Stampede Bell, rung by a
+  Stampede, until the Stampede stopped running on its own on 12 Nov) and witnessing the Deep Tide (new moon) the Flood Bell
   (`Bells.witnessed`, called from `Pulse.witness`); at A rank, standing under open sky between 16000 and 20000 on a new
   moon's night rings the Eclipse Bell. Every bell but the Seed (00) and the True Bell (36) now has a source (both came with stage 7, §43.14).
 - **Carillon** (Remembered leads while you're in the city): the Roost's bell rings for you within 16 of the Roost at C

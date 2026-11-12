@@ -71,7 +71,7 @@ final class PulseSound {
             switch (s.tell) {
                 case "dustline" -> loudest = Math.max(loudest, loop(mc, id, LivingContent.TELL_STAMPEDE.get(), x, y, z, d, 260F, 0.9F));
                 case "flock" -> loudest = Math.max(loudest, loop(mc, id, LivingContent.TELL_WINGS.get(), x, y + 12, z, d, 200F, 0.7F));
-                case "lanterns" -> loudest = Math.max(loudest, loop(mc, id, LivingContent.TELL_BELLS.get(), x, y + 1, z, d, 160F, 0.6F));
+                case "lanterns" -> loudest = Math.max(loudest, loop(mc, id, LivingContent.TELL_BELLS.get(), x, y + 1, z, d, 64F, 0.45F));
                 case "fog" -> {
                     loudest = Math.max(loudest, loop(mc, id, LivingContent.TELL_TIDE.get(), x, y, z, d, 320F, 0.8F));
                     Soundscape.hush(s, new Vec3(x, y, z), Math.max(200F, s.radius * 1.5F), 0.3F, 30);

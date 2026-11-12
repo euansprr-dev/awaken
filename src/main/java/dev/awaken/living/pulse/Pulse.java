@@ -218,6 +218,7 @@ public final class Pulse extends SavedData {
             if (only != null && !e.getKey().equals(only) && !e.getKey().endsWith(":" + only)) continue;
             if (only == null && !fits(d, time, weather, moon, band)) continue;
             if (only == null && e.getKey().equals(lastKind.get(p.getUUID()))) continue;
+            if (only == null && d.weight() <= 0) continue; // weight 0: never on its own, only by command (the Stampede, 12 Nov)
             double w = d.weight();
             if (!d.when().moon().isEmpty() && d.when().moon().contains(moon)) w *= d.when().moonWeight();
             String path = net.minecraft.resources.Identifier.parse(e.getKey()).getPath();

@@ -725,15 +725,16 @@ public final class Bells {
     }
 
     /**
-     * A World Pulse happening witnessed (SPEC §43.13), from C rank: the Stampede Bell lying in a stampede's wake, the Flood
+     * A World Pulse happening witnessed (SPEC §43.13), from C rank: the Herd Bell (id "stampede") lying in a Great
+     * Migration's wake (the Stampede no longer runs on its own since 12 Nov, so the bell moved to the herd that does), the Flood
      * Bell left at your feet when the Deep Tide comes up under the new moon (§43.16 stage 5). {@code happening} is the
      * happening's path ("stampede").
      */
     public static void witnessed(ServerPlayer p, String happening) {
         if (Progression.rank(p).ordinal() < Rank.C.ordinal()) return;
         switch (happening) {
-            case "stampede" -> found(p, "stampede", "in the wake of a stampede",
-                    "[The herd's leader lost something as it thundered past: a bell, lying in its wake.]");
+            case "great_migration", "stampede" -> found(p, "stampede", "in the wake of a great migration",
+                    "[The herd's leader lost something as it went by: a bell, lying in the trampled grass.]");
             case "deep_tide" -> {
                 BellCatalog.Def d = BellCatalog.of("flood");
                 if (!has(p, d.id())) FoundBells.leave(p.level(), p.blockPosition(), d, List.of(p), "when the Deep Tide came up under the new moon",

@@ -55,7 +55,7 @@ final class HundredPeal {
     /** The Kinsong: how far it reaches, how long the land's beasts stay calm, and how long till the Deep's things come. */
     static final int KINSONG_REACH = 48, KINSONG_CALM = 20 * 60, KINSONG_HUNTED = 20 * 30, KINSONG_AGAIN = 20 * 60 * 5;
     static final String KINSONG = "kinsong", KINSONG_NAME = "The Kinsong",
-            KINSONG_WORDS = "Calms the land's beasts round you: a stampede stops, a frightened herd settles, an angry beast lies down, and a Gnawed one is let go.";
+            KINSONG_WORDS = "Calms the land's beasts round you: a frightened herd settles, an angry beast lies down, and a Gnawed one is let go.";
     /** The Deep's own creatures, which come for whoever plays the Kinsong. */
     static final List<String> DEEP_THEMES = List.of("awaken:abyssal_shrine", "awaken:nightmare", "awaken:bell_crypt");
 

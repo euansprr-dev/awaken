@@ -24,7 +24,7 @@ final class People {
     private People() {}
 
     /**
-     * A Caravan: a trader and their llamas walking a stretch of a real road over six minutes (SPEC §28.9: the roads between
+     * A Caravan: a trader and their llamas walking a stretch of a real road, passing by in about a minute (SPEC §28.9: the roads between
      * the settlements; open ground where no road is laid near), lanterns and smoke over them, bound for the settlement at
      * the road's end; where that's in reach they come in to it, and its trade and news arrive with them. Trade with them
      * on the way. Some days raiders hit it halfway: drive them off and the caravan pays, and the village it's bound for
@@ -38,7 +38,7 @@ final class People {
 
         @Override
         public @Nullable Plan plan(ServerLevel level, ServerPlayer p, HappeningDef def, RandomSource r) {
-            var road = dev.awaken.core.api.RoadHooks.stretch(level, p.blockPosition(), 50, 160, 160, r.nextLong());
+            var road = dev.awaken.core.api.RoadHooks.stretch(level, p.blockPosition(), 50, 160, 100, r.nextLong());
             if (road.isPresent() && road.get().points().size() >= 2) {
                 planned = road.get();
                 var pts = planned.points();

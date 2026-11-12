@@ -71,7 +71,7 @@ public final class BellCatalog {
             "08|hill|The Hill Bell|B|PEOPLE|STRIDE",
             "09|founders|The Founders' Bell|C|PEOPLE|SMELT",
             "10|boulder|The Boulder Bell|A|WILDS|GUARD",
-            "11|stampede|The Stampede Bell|C|WILDS|STRIDE",
+            "11|stampede|The Herd Bell|C|WILDS|STRIDE",
             "12|nook|The Nook Bell|E|OWN|KIN",
             "13|falling|The Falling Bell|B|LUCIDIUM|FEATHER",
             "14|sung_iron|The Sung Iron Bell|C|DEEP|SMELT",
