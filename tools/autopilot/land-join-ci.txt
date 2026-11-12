@@ -108,5 +108,6 @@ wait 100
 cmd awaken core land
 shotnow lj_180s
 cmd awaken village road columns 1600
-wait 2400
+# the roads' check takes ~120 s on the runner, the overworld's (a quarter of the far columns) ~45 s more
+wait 4400
 quit

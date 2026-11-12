@@ -12120,6 +12120,12 @@ fingerprint unchanged):
   one `getBaseColumn` gives. `/awaken village road columns [count]` checks it block for block over the roads' noise and
   the overworld's own (Tectonic's in a tour) and times both ways, with where a column's time goes;
   `village_columns_exact` checks vanilla's noise. `-Dawaken.noiseColumns=false` reads every column the generator's way.
+  Measured in the land-join tour (CI's macOS runner, Tectonic, Euan's seed): 1,856 columns over 53 biomes, none differ,
+  and in the same run a column takes 4.3-5.7 ms ours against 6.0-9.0 ms the generator's way (1.4-1.6x; its lookups by
+  value were 0.6-0.8 ms of it; ours is the aquifer 1.7-1.8, the density 1.9-2.2 and the blocks 0.4-0.5). Sharing the
+  aquifer's surface samples or a column's density with its neighbours isn't exact (a sampler context's cached volume
+  and a fresh sample at the same place can differ in the last bit, so a block at the edge of solid could flip), so the
+  rest of a column's cost stays.
 - one shared reading of the land (`SharedLand`, behind `RoadWorld.terrain()`: 64 stripes of 4,096 recent columns and
   4,096 older ones), so a site search, the plan on its site, a village's fallback hamlet, a town's wider wall and the
   roads over it read each column once;
