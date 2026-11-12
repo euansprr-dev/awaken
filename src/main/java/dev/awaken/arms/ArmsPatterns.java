@@ -153,10 +153,15 @@ final class ArmsPatterns {
     // ---- the people who teach early -----------------------------------------------------------------------------------
 
     /** A chain finished: the person who teaches a style at its end pays it (once per person). */
+    /** A quest chain's id without "awaken:": style_homes names Oren's chain bare, a chain taken in person isn't. */
+    private static String bareChain(String id) {
+        return id.startsWith("awaken:") ? id.substring("awaken:".length()) : id;
+    }
+
     static void questDone(ServerPlayer p, String chain) {
         for (ArmsHomes.Home h : ArmsHomes.all()) {
             ArmsHomes.Teacher t = h.teacher();
-            if (t == null || !t.chain().equals(chain)) continue;
+            if (t == null || !bareChain(t.chain()).equals(bareChain(chain))) continue;
             ArmsProgress g = ArmsProgress.of(p);
             if (!g.claimedPeople.add(t.person())) return;
             p.setData(ArmsContent.PROGRESS, g);

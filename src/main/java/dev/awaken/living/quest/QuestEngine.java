@@ -86,7 +86,7 @@ public final class QuestEngine {
     public static boolean start(ServerPlayer p, String chain, long scene) {
         QuestDef d = QuestBook.get(chain);
         QuestState s = state(p);
-        if (d == null || s.has(chain) || s.done.contains(chain)) return false;
+        if (d == null || s.holds(chain) || s.finished(chain)) return false;
         if (s.active.size() >= QuestState.MAX_ACTIVE) {
             Signal.toast(p, Component.literal("Your journal is full. Finish or drop a chain first."));
             return false;

@@ -63,12 +63,13 @@ final class FarErrands {
     static boolean ready(ServerPlayer p) {
         if (!LivingModule.shown(p.level().getServer())) return true;
         QuestState s = QuestEngine.state(p);
-        if (s.done().contains(BRAM)) return true;
+        if (s.finished(BRAM)) return true;
         QuestDef d = QuestBook.get(BRAM);
         if (d == null) return true;
         int ilse = -1;
         for (int i = 0; i < d.steps().size(); i++) if (d.steps().get(i).objective().type().equals("talk") && d.steps().get(i).objective().target().equals("ilse")) ilse = i;
-        for (QuestState.Active a : s.active()) if (a.chain().equals(BRAM)) return ilse >= 0 && a.step() > ilse;
+        // the first thread takes Bram's chain as "awaken:the_last_delivery": compare either form
+        for (QuestState.Active a : s.active()) if (QuestBook.same(a.chain(), BRAM)) return ilse >= 0 && a.step() > ilse;
         return false;
     }
 
@@ -136,7 +137,7 @@ final class FarErrands {
     static boolean offerOren(ServerPlayer p, boolean keep) {
         QuestDef d = QuestBook.get(OREN);
         QuestState s = QuestEngine.state(p);
-        if (d == null || s.has(OREN) || s.done().contains(OREN) || !Requirements.met(p, d.requires())) return false;
+        if (d == null || s.holds(OREN) || s.finished(OREN) || !Requirements.met(p, d.requires())) return false;
         if (keep) FarPost.keepLetter(p, "Oren at the Forge", OREN_LETTER);
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("A letter from Oren at the Forge")).dialogue()
                 .body(Component.literal(OREN_LETTER))

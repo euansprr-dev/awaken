@@ -29,6 +29,19 @@ public final class QuestBook {
         return d != null ? d : defs.get(Awaken.MODID + ":" + id);
     }
 
+    /**
+     * Whether two chain ids name the same chain. A chain is kept under the id it was taken with: a person in the city
+     * hands over "awaken:orens_first_steel", a letter "orens_first_steel", so a save can hold either form.
+     */
+    public static boolean same(String a, String b) {
+        return bare(a).equals(bare(b));
+    }
+
+    private static String bare(String id) {
+        String ns = Awaken.MODID + ":";
+        return id.startsWith(ns) ? id.substring(ns.length()) : id;
+    }
+
     public static void replace(Map<String, QuestDef> next) {
         defs = Collections.unmodifiableMap(new TreeMap<>(next));
     }
