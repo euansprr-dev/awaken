@@ -114,9 +114,10 @@ public final class Pillars {
         double rx = l.pos().getX() + 0.5 - cam.x, ry = l.pos().getY() - cam.y, rz = l.pos().getZ() + 0.5 - cam.z;
         double dist = Math.sqrt(rx * rx + rz * rz + ry * ry);
         float k = dist > clamp ? (float) (clamp / dist) : 1F;
-        // a Warden's pillar widens with distance as a gate's does, so it still reads from across the land; a seal stays slim
-        float widen = l.seal() ? 1F : (float) Math.max(1.0, Math.sqrt(rx * rx + rz * rz) / 96.0);
-        float solid = (l.seal() ? 0.12F : 0.22F) * widen, halo = (l.seal() ? 0.16F : 0.32F) * widen;
+        // a Warden's pillar widens with distance as a gate's does, so it still reads from across the land (the first tour's
+        // read as a laser line from the Mouth); a seal is short and stays its size, but full enough to see from the road
+        float widen = l.seal() ? 1F : (float) Math.max(1.0, Math.sqrt(rx * rx + rz * rz) / 72.0);
+        float solid = (l.seal() ? 0.3F : 0.3F) * widen, halo = (l.seal() ? 0.6F : 0.5F) * widen;
         double r = halo * 16 * k + 2, px = cam.x + rx * k, py = cam.y + ry * k, pz = cam.z + rz * k;
         if (!e.getFrustum().isVisible(new net.minecraft.world.phys.AABB(px - r, py - 2, pz - r, px + r, py + l.height() * k, pz + r))) return;
         out.add(new Draw(rx * k - 0.5, ry * k, rz * k - 0.5, k, l.height(), l.colour(), l.colour(), solid, halo, alpha));

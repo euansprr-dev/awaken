@@ -74,7 +74,8 @@ public final class RealmLights {
     static void tick(ServerPlayer p, GateRecord g, RealmPlan plan, RealmRef ref, int t) {
         Land land = plan.land();
         if (!shows(land)) return;
-        long now = p.level().getGameTime();
+        // the player's own ticks: a world whose clock is stopped still counts them
+        long now = p.tickCount;
         long[] told = TOLD.get(p);
         if (told == null || told[0] != g.id) TOLD.put(p, told = new long[]{g.id, now, 0});
         if (told[2] == 0 || (t + p.getId()) % AGAIN < 10) {
