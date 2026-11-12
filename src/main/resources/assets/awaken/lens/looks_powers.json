@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "_about": "The powers' casts (dev.awaken.powers.client.fx.CastLens; docs/power-anims/PLAN.md D8), merged with looks.json by Lens. Played through LensClient.override for the cast's length only; Lens off: the screen flash of FxScreen carries it.",
+  "_about": "The powers' casts (dev.awaken.powers.client.fx.CastLens; docs/power-anims/PLAN.md D8), merged with looks.json by Lens. Laid over the place's own look and under the player's grade (LensClient.accent, SPEC 22 'A power's look') for the cast's length only: each look is read as what it changes from the default look in looks.json, so write it as the overworld would be while it plays. Lens off: the screen flash of FxScreen carries it.",
   "looks": {
     "awaken:cast_flow": {
       "_name": "Flow: the world slows to a quarter speed, the colour drains a little, the frame cools and closes in",

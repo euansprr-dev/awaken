@@ -83,3 +83,26 @@ fresh start's picture every time (run 43201767617). One fault found and fixed on
 its light history from before the switch for a moment. Not confirmed as what he saw (SPEC §22 "A Look switched back
 to").
 
+
+## A power's look over the place's own
+
+Euan, with two pictures of one deck, the second while holding a beam: "is intentional, that everything is way less
+bright when you're using the power." It was not: a cast's look went through Lens's story-scene channel, which
+replaces the place's look and switches the player's grade off (he plays on Vivid). Now it is laid over the place's
+look, under the grade (SPEC §22 "A power's look"; `/awaken lens accent off` is the old way).
+
+`power-look-before-after.jpg` (run 43221056273, `tools/autopilot/steady60-powers-look-ci.txt`, the Vivid grade on):
+the same deck at rest and with a beam held two seconds, the old way above, the new way below. The look in numbers,
+from the same run:
+
+| | grade (vibrance, azure, leaf) | exposure | contrast | saturation | warmth | bloom |
+|---|---|---|---|---|---|---|
+| at rest | 0.40, 0.50, 0.65 | 1.000 | 1.100 | 1.040 | -0.080 | 0.863 |
+| beam held, before | 0, 0, 0 | 1.030 | 1.040 | 1.040 | 0.060 | 1.450 |
+| beam held, after | 0.40, 0.50, 0.65 | 1.030 | 1.059 | 0.966 | -0.080 | 1.668 |
+
+Measured on the shots, a beam held against rest (patches away from the arm and the beam): before, the sky lost 8%
+of its brightness and 20% of its colour, the grass 25% of its colour, the water 46%, the leaves 42%. After, every
+patch is brighter (sky 4%, grass 13%, water 18%, leaves 15%: the beam's own light and bloom), the grass keeps its
+colour, and the water and leaves lose 17 to 19% (the bloom's white over them, and the 7% the beam's look takes).
+Flow, a look written to drain the world, still does both ways (grass colour -45% before, -44% after).
