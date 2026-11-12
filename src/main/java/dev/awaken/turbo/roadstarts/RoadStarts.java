@@ -68,6 +68,8 @@ public final class RoadStarts {
 
     public static void init(IEventBus modBus) {
         RoadStartsConfig.register();
+        // a lattice chunk set aside holds every chunk that needs it: the land is coming in while one waits (SPEC §12)
+        dev.awaken.core.api.LandFirst.atWork(() -> !OUT.isEmpty());
         modBus.addListener(ModConfigEvent.Loading.class, e -> refresh());
         modBus.addListener(ModConfigEvent.Reloading.class, e -> refresh());
         NeoForge.EVENT_BUS.addListener(ServerAboutToStartEvent.class, e -> {
