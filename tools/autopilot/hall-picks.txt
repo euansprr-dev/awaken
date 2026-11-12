@@ -18,15 +18,20 @@ cmd awaken admin levels 13
 cmd awaken admin rankup
 # a lode's heart taught the Breaker; the Sounder waits for a Delver lamp
 cmd awaken admin counter "awaken:delve/deed_heart" 1
-cmd tp @s 0.5 201 0.5 0 0
-cmd forceload add -16 -16 16 16
-wait 300
-cmd fill -8 200 -5 8 200 11 minecraft:polished_deepslate
-cmd fill -8 201 -5 8 206 11 minecraft:air
-cmd setblock 0 201 4 awaken:war_anvil[facing=north]
-cmd setblock -2 201 3 awaken:forge[facing=east]
-cmd setblock -3 203 2 minecraft:lantern
-cmd setblock 3 203 5 minecraft:lantern
+# the smithy high over where this seed spawns you (1037 -555), whose chunks are already made: 0,0 can still be waiting for its
+# roads after 300 ticks on the runner, and a platform there never came (the first run fell into the sea)
+cmd tp @s 1040.5 290 -551.5 0 0
+cmd forceload add 1024 -568 1056 -536
+wait 100
+cmd fill 1032 289 -557 1048 289 -541 minecraft:polished_deepslate
+cmd fill 1032 290 -557 1048 295 -541 minecraft:air
+cmd setblock 1040 290 -548 awaken:war_anvil[facing=north]
+cmd setblock 1038 290 -549 awaken:forge[facing=east]
+cmd setblock 1037 292 -550 minecraft:lantern
+cmd setblock 1043 292 -547 minecraft:lantern
+cmd effect give @s minecraft:water_breathing infinite 0 true
+cmd effect give @s minecraft:slow_falling infinite 0 true
+cmd effect give @s minecraft:resistance infinite 4 true
 wait 20
 cmd gamemode survival
 cmd give @s iron_ingot 5
@@ -61,7 +66,7 @@ shot w1708_close_sounder
 screen close
 wait 10
 # at the anvil: an iron pickaxe opens the Hall on the Picks wall
-cmd tp @s 0.5 201 3.25 0 35
+cmd tp @s 1040.5 290 -548.75 0 35
 cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
 wait 20
 use
