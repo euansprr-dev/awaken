@@ -4480,7 +4480,7 @@
     },
     {
       "vertex_shader": "minecraft:core/screenquad",
-      "fragment_shader": "awaken:post/lens_composite_lit",
+      "fragment_shader": "awaken:post/lens_composite_lit_tiles",
       "inputs": [
         {
           "sampler_name": "In",

@@ -1,0 +1,70 @@
+slot.sh: tour slot taken by look-steady-60 after 0s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+first_view.png
+t_own_control.png
+t_own_pboth.png
+t_own_pself.png
+t_own_ptwin.png
+t_own_same.png
+t_own_twin.png
+t_sky_pboth.png
+t_sky_pself.png
+t_sky_ptwin.png
+t_sky_twin.png
+t_tree_pboth.png
+t_tree_pself.png
+t_tree_ptwin.png
+t_tree_twin.png
+t_ultra_own_pboth.png
+t_ultra_own_pself.png
+t_ultra_own_ptwin.png
+t_ultra_own_twin.png
+t_ultra_tree_pboth.png
+t_ultra_tree_pself.png
+t_ultra_tree_ptwin.png
+t_ultra_tree_twin.png
+t_west_pboth.png
+t_west_pself.png
+t_west_ptwin.png
+t_west_twin.png
+[03:25:05] [IO-Worker-3/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_ultra_tree_ptwin
+[03:25:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[03:25:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_ultra_tree_pboth
+[03:25:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain ultra_twincheck_precise_self: chain awaken:lens_probe_ultra_twincheck_precise_self
+[03:25:09] [IO-Worker-3/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_ultra_tree_pboth
+[03:25:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[03:25:11] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_ultra_tree_pself
+[03:25:11] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+[03:25:11] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 60
+[03:25:12] [IO-Worker-4/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_ultra_tree_pself
+[03:25:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain ultra_twincheck: chain awaken:lens_probe_ultra_twincheck
+[03:25:15] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[03:25:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_ultra_own_twin
+[03:25:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain ultra_twincheck_precise_twin: chain awaken:lens_probe_ultra_twincheck_precise_twin
+[03:25:18] [IO-Worker-4/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_ultra_own_twin
+[03:25:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[03:25:20] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_ultra_own_ptwin
+[03:25:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain ultra_twincheck_precise_both: chain awaken:lens_probe_ultra_twincheck_precise_both
+[03:25:21] [IO-Worker-4/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_ultra_own_ptwin
+[03:25:22] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[03:25:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_ultra_own_pboth
+[03:25:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain ultra_twincheck_precise_self: chain awaken:lens_probe_ultra_twincheck_precise_self
+[03:25:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[03:25:25] [IO-Worker-4/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_ultra_own_pboth
+[03:25:27] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_ultra_own_pself
+[03:25:27] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+[03:25:27] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[03:25:28] [IO-Worker-5/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_ultra_own_pself
+[03:25:29] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_twincheck_control: chain awaken:lens_probe_cinematic_twincheck_control
+[03:25:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[03:25:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_own_control
+[03:25:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_twincheck_same: chain awaken:lens_probe_cinematic_twincheck_same
+[03:25:33] [IO-Worker-4/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_own_control
+[03:25:34] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[03:25:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_own_same
+[03:25:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain off: chain from the Look
+[03:25:37] [IO-Worker-4/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_own_same
+[03:25:37] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 20
+[03:25:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens cinematic
+[03:25:40] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit

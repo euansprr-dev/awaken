@@ -1,0 +1,150 @@
+# Steady 60, third pass (12 Nov): what the composite's size costs (tools/lens/regs.py). Each variant against probe_none,
+# alternating so a drift shows; then before and after stills, A B A B A with even spacing, so the noise between two
+# frames of the same code is measured over the same time as the change across.
+# His world, pack and settings on the Dell, as steady60-perf12.txt. Probe chains (tools/lens/probes.py) never take
+# straight out, so they are read against probe_none, never against the real chain.
+# WORLD="New World V20" tools/steady60-tour.sh tools/autopilot/steady60-perf12-c.txt perf12-c
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1950
+cmd awaken living calm
+screen close
+key dismiss
+screen close
+display DELL fullscreen
+wait 200
+info
+camera first
+hud off
+pixels gpu on
+cmd gamemode spectator
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 900
+opt vsync 0
+opt maxFps 260
+# ---- 1. at the tree
+lens chain cinematic_none
+wait 60
+pixels gpu reset
+perf t_none 8
+pixels gpu t_none
+lens chain cinematic_comp_u
+wait 60
+pixels gpu reset
+perf t_comp_u 8
+pixels gpu t_comp_u
+lens chain cinematic_comp_nodbg
+wait 60
+pixels gpu reset
+perf t_comp_nodbg 8
+pixels gpu t_comp_nodbg
+lens chain cinematic_comp_u_nodbg
+wait 60
+pixels gpu reset
+perf t_comp_u_nodbg 8
+pixels gpu t_comp_u_nodbg
+lens chain cinematic_none
+wait 60
+pixels gpu reset
+perf t_none 8
+pixels gpu t_none
+lens chain cinematic_comp_lean
+wait 60
+pixels gpu reset
+perf t_comp_lean 8
+pixels gpu t_comp_lean
+lens chain cinematic_comp_u_lean
+wait 60
+pixels gpu reset
+perf t_comp_u_lean 8
+pixels gpu t_comp_u_lean
+lens chain cinematic_u_all
+wait 60
+pixels gpu reset
+perf t_u_all 8
+pixels gpu t_u_all
+lens chain cinematic_none
+wait 60
+pixels gpu reset
+perf t_none 8
+pixels gpu t_none
+lens chain cinematic_u_all
+wait 60
+pixels gpu reset
+perf t_u_all 8
+pixels gpu t_u_all
+lens chain cinematic_comp_u_nodbg
+wait 60
+pixels gpu reset
+perf t_comp_u_nodbg 8
+pixels gpu t_comp_u_nodbg
+lens chain cinematic_none
+wait 60
+pixels gpu reset
+perf t_none 8
+pixels gpu t_none
+# ---- 2. stills at the tree: today's and every pass from the block alone, A B A B A, 100 ticks apart
+lens chain cinematic_none
+wait 100
+shotnow s_tree_ref_1
+lens chain cinematic_u_all
+wait 100
+shotnow s_tree_new_1
+lens chain cinematic_none
+wait 100
+shotnow s_tree_ref_2
+lens chain cinematic_u_all
+wait 100
+shotnow s_tree_new_2
+lens chain cinematic_none
+wait 100
+shotnow s_tree_ref_3
+# ---- 3. where he stood
+cmd tp @s -1535.03 72.1 -725.14 -151.9 7.7
+wait 60
+lens chain cinematic_none
+wait 60
+pixels gpu reset
+perf o_none 8
+pixels gpu o_none
+lens chain cinematic_comp_u_nodbg
+wait 60
+pixels gpu reset
+perf o_comp_u_nodbg 8
+pixels gpu o_comp_u_nodbg
+lens chain cinematic_u_all
+wait 60
+pixels gpu reset
+perf o_u_all 8
+pixels gpu o_u_all
+lens chain cinematic_comp_u_lean
+wait 60
+pixels gpu reset
+perf o_comp_u_lean 8
+pixels gpu o_comp_u_lean
+lens chain cinematic_none
+wait 60
+pixels gpu reset
+perf o_none 8
+pixels gpu o_none
+lens chain cinematic_none
+wait 100
+shotnow s_own_ref_1
+lens chain cinematic_u_all
+wait 100
+shotnow s_own_new_1
+lens chain cinematic_none
+wait 100
+shotnow s_own_ref_2
+lens chain cinematic_u_all
+wait 100
+shotnow s_own_new_2
+lens chain cinematic_none
+wait 100
+shotnow s_own_ref_3
+lens chain off
+quit

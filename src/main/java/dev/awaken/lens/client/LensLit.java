@@ -93,6 +93,7 @@ final class LensLit {
             long t0 = System.nanoTime();
             RenderSystem.getDevice().createCommandEncoder().writeToTexture(texture.getTexture(), pixels, 0, 0, 0, 0, WIDTH, HEIGHT);
             uploadNanos = System.nanoTime() - t0;
+            dev.awaken.turbo.pixels.Pixels.mark(1); // measurement only (the GPU timing's trace)
             sweeps++;
             originX = jobX;
             originY = jobY;
@@ -118,6 +119,7 @@ final class LensLit {
         jobLx = lx / flat;
         jobLy = ly / flat;
         state = WORKING;
+        dev.awaken.turbo.pixels.Pixels.mark(2);
         worker.execute(this::work);
     }
 

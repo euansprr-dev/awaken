@@ -1,0 +1,53 @@
+slot.sh: tour slot taken by look-steady-60 after 0s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+s_own_new_1.png
+s_own_new_2.png
+s_own_ref_1.png
+s_own_ref_2.png
+s_own_ref_3.png
+s_tree_new_1.png
+s_tree_new_2.png
+s_tree_ref_1.png
+s_tree_ref_2.png
+s_tree_ref_3.png
+[02:01:41] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu o_u_all: o_u_all samples=493 world_p50=14.94ms world_p95=15.32ms world_p99=15.63ms upscale_p50=0.45ms upscale_p99=0.75ms
+[02:01:41] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu o_u_all
+[02:01:41] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_comp_u_lean: chain awaken:lens_probe_cinematic_comp_u_lean
+[02:01:42] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 60
+[02:01:45] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[02:01:45] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[02:01:45] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf o_comp_u_lean 8
+[02:01:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf o_comp_u_lean frames=534 avg_fps=66.5 p50=14.85ms p95=17.39ms p99=18.98ms max=22.59ms tick_p95=6.15ms heap=6974/8192MB fb=3840x2160 load=3.1 occluded=false minimized=false
+[02:01:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu o_comp_u_lean: o_comp_u_lean samples=535 world_p50=13.71ms world_p95=14.08ms world_p99=14.39ms upscale_p50=0.44ms upscale_p99=0.71ms
+[02:01:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu o_comp_u_lean
+[02:01:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_none: chain awaken:lens_probe_cinematic_none
+[02:01:54] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 60
+[02:01:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[02:01:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[02:01:57] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf o_none 8
+[02:02:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf o_none frames=402 avg_fps=50.1 p50=19.87ms p95=22.25ms p99=23.81ms max=34.45ms tick_p95=6.19ms heap=1510/8192MB fb=3840x2160 load=3.4 occluded=false minimized=false
+[02:02:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu o_none: o_none samples=403 world_p50=18.52ms world_p95=19.02ms world_p99=19.43ms upscale_p50=0.45ms upscale_p99=0.88ms
+[02:02:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu o_none
+[02:02:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_none: chain awaken:lens_probe_cinematic_none
+[02:02:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:02:11] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow s_own_ref_1
+[02:02:11] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_u_all: chain awaken:lens_probe_cinematic_u_all
+[02:02:12] [IO-Worker-50/INFO] [de.aw.Awaken/]: [autopilot] screenshot s_own_ref_1
+[02:02:12] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:02:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow s_own_new_1
+[02:02:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_none: chain awaken:lens_probe_cinematic_none
+[02:02:18] [IO-Worker-41/INFO] [de.aw.Awaken/]: [autopilot] screenshot s_own_new_1
+[02:02:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:02:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow s_own_ref_2
+[02:02:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_u_all: chain awaken:lens_probe_cinematic_u_all
+[02:02:25] [IO-Worker-50/INFO] [de.aw.Awaken/]: [autopilot] screenshot s_own_ref_2
+[02:02:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:02:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow s_own_new_2
+[02:02:30] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_none: chain awaken:lens_probe_cinematic_none
+[02:02:31] [IO-Worker-41/INFO] [de.aw.Awaken/]: [autopilot] screenshot s_own_new_2
+[02:02:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:02:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow s_own_ref_3
+[02:02:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain off: chain from the Look
+[02:02:37] [IO-Worker-41/INFO] [de.aw.Awaken/]: [autopilot] screenshot s_own_ref_3
+[02:02:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit

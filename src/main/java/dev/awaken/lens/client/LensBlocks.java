@@ -33,11 +33,17 @@ import java.util.Arrays;
  * block's lower half); a texel of all ones is a section not read yet. A chunk's eight sections sit side by side in the
  * texture (x = block x mod 128, y = (block z mod 128) * 8 + section mod 8), so a chunk uploads as one piece.
  *
+ * <p>Under the map, rows 1024 to 1031 are its open map (SPEC §22 "The walk's reads"): one texel a column of 4x4 blocks
+ * across, 32 bits up it, a bit set where all 64 blocks of those 4 levels are read and open. The light pass's walk then
+ * fetches no block texel in a stretch of open air. A chunk's 16 open texels sit side by side (x = chunk slot x * 16 +
+ * (z / 4 mod 4) * 4 + x / 4 mod 4, y = 1024 + chunk slot z) and go up in the same tick as its block texels, so the two
+ * never disagree.
+ *
  * <p>Nothing here is drawn and nothing is redone per frame: a section is read when it enters the window or changes
  * (a few each tick, nearest first), and a frame's cost is the walk the light pass makes for the pixels that need it.
  */
 final class LensBlocks {
-    static final int SIZE = 128, CHUNKS = SIZE / 16, SLOTS = 8;
+    static final int SIZE = 128, CHUNKS = SIZE / 16, SLOTS = 8, OPEN_ROW = SIZE * SLOTS, OPEN_ROWS = CHUNKS;
     /** Within this many blocks of the camera (on x and z) every section has been read once the window has settled. */
     static final float TRUSTED = 46f;
     static final int UNKNOWN = 0xFFFFFFFF, CELLS = CHUNKS * CHUNKS * SLOTS * 256;
@@ -54,7 +60,7 @@ final class LensBlocks {
     private final int[] heldY = new int[CHUNKS * CHUNKS * SLOTS];
     private final boolean[] known = new boolean[CHUNKS * CHUNKS * SLOTS];
     private final boolean[] dirty = new boolean[CHUNKS * CHUNKS];
-    private final ByteBuffer staging = MemoryUtil.memAlloc(16 * 16 * SLOTS * 4);
+    private final ByteBuffer staging = MemoryUtil.memAlloc(16 * 16 * SLOTS * 4), openStaging = MemoryUtil.memAlloc(16 * 4);
     private final int[] scratch = new int[256];
     private final int[] order = ringOrder();
     private byte[] kinds = new byte[0];
@@ -134,7 +140,10 @@ final class LensBlocks {
                     if (level.getChunkSource().getChunk(cx, cz, ChunkStatus.FULL, false) instanceof LevelChunk c) chunk = c;
                     else break;
                 }
-                if (read(level, chunk, slot, k)) reads++;
+                if (read(level, chunk, slot, k)) {
+                    reads++;
+                    dev.awaken.turbo.pixels.Pixels.mark(256);
+                }
             }
         }
         // look again at what is known, for blocks placed and broken. The 27 sections round the camera in turn, three a
@@ -227,6 +236,7 @@ final class LensBlocks {
             if (!dirty[slot]) continue;
             dirty[slot] = false;
             sent++;
+            dev.awaken.turbo.pixels.Pixels.mark(32); // measurement only (the GPU timing's trace)
             staging.clear();
             // texel (x, z * 8 + k): rows run z by z, each z eight rows of sixteen columns
             for (int z = 0; z < 16; z++) {
@@ -237,13 +247,34 @@ final class LensBlocks {
             }
             staging.flip();
             int tx = (slot % CHUNKS) * 16, ty = (slot / CHUNKS) * 16 * SLOTS;
-            RenderSystem.getDevice().createCommandEncoder().writeToTexture(texture.getTexture(), staging, 0, 0, tx, ty, 16, 16 * SLOTS);
+            var encoder = RenderSystem.getDevice().createCommandEncoder();
+            encoder.writeToTexture(texture.getTexture(), staging, 0, 0, tx, ty, 16, 16 * SLOTS);
+            // its open map, from the same cells: texel (z / 4) * 4 + x / 4 of the chunk's sixteen, bit k * 4 + q where
+            // section slot k's levels 4q to 4q + 3 are open in all sixteen of its columns (a section not read yet is all
+            // ones, so never open)
+            openStaging.clear();
+            for (int oz = 0; oz < 4; oz++) {
+                for (int ox = 0; ox < 4; ox++) {
+                    int open = 0;
+                    for (int k = 0; k < SLOTS; k++) {
+                        int any = 0, base = (slot * SLOTS + k) * 256;
+                        for (int z = oz * 4; z < oz * 4 + 4; z++) {
+                            for (int x = ox * 4; x < ox * 4 + 4; x++) any |= cells[base + z * 16 + x];
+                        }
+                        for (int q = 0; q < 4; q++) if (((any >>> (q * 8)) & 0xFF) == 0) open |= 1 << (k * 4 + q);
+                    }
+                    openStaging.putInt(open);
+                }
+            }
+            openStaging.flip();
+            encoder.writeToTexture(texture.getTexture(), openStaging, 0, 0, tx, OPEN_ROW + slot / CHUNKS, 16, 1);
         }
     }
 
     void close() {
         texture.close();
         MemoryUtil.memFree(staging);
+        MemoryUtil.memFree(openStaging);
     }
 
     private static int[] ringOrder() {
@@ -266,9 +297,14 @@ final class LensBlocks {
         Texture() {
             var device = RenderSystem.getDevice();
             texture = device.createTexture(() -> "awaken lens block map", GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
-                    GpuFormat.RGBA8_UNORM, SIZE, SIZE * SLOTS, 1, 1);
+                    GpuFormat.RGBA8_UNORM, SIZE, OPEN_ROW + OPEN_ROWS, 1, 1);
             textureView = device.createTextureView(texture);
             sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
+            // the open map starts with nothing known open, so until a chunk's first upload the walk reads its block
+            // texels as it always did
+            ByteBuffer none = MemoryUtil.memCalloc(SIZE * OPEN_ROWS * 4);
+            device.createCommandEncoder().writeToTexture(texture, none, 0, 0, 0, OPEN_ROW, SIZE, OPEN_ROWS);
+            MemoryUtil.memFree(none);
         }
     }
 }

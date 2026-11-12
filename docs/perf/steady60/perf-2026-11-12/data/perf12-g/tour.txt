@@ -1,0 +1,51 @@
+slot.sh: tour slot taken by look-steady-60 after 0s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+n_own_ref_1.png
+n_own_ref_2.png
+n_own_ref_3.png
+n_tree_ref_1.png
+n_tree_ref_2.png
+n_tree_ref_3.png
+t_own_notlite.png
+t_tree_notlite.png
+[02:40:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[02:40:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:40:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[02:40:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[02:40:26] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:40:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf run_lensoff frames=1207 avg_fps=59.8 p50=16.51ms p95=20.60ms p99=23.09ms max=28.18ms tick_p95=7.37ms heap=6128/8192MB fb=3840x2160 load=2.3 occluded=false minimized=false
+[02:40:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[02:40:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_lensoff: run_lensoff samples=1208 world_p50=5.27ms world_p95=7.03ms world_p99=8.47ms upscale_p50=0.50ms upscale_p99=2.01ms
+[02:40:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_lensoff
+[02:40:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] cmd tp @s -1560.5 69 -715.5 -90 12
+[02:40:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:40:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[02:40:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[02:40:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf start_lensoff 10
+[02:40:46] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf start_lensoff frames=601 avg_fps=60.0 p50=16.53ms p95=19.54ms p99=21.59ms max=25.46ms tick_p95=7.19ms heap=7290/8192MB fb=3840x2160 load=2.4 occluded=false minimized=false
+[02:40:46] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu start_lensoff: start_lensoff samples=602 world_p50=4.63ms world_p95=6.74ms world_p99=7.47ms upscale_p50=0.58ms upscale_p99=1.48ms
+[02:40:46] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu start_lensoff
+[02:40:46] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens cinematic
+[02:40:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] cmd tp @s -1560.5 69 -715.5 -90 12
+[02:40:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:40:54] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart run_twin_2
+[02:40:54] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[02:40:54] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[02:40:54] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[02:40:54] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:40:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[02:40:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[02:40:59] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:41:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[02:41:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[02:41:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:41:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[02:41:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[02:41:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:41:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf run_twin_2 frames=1157 avg_fps=57.3 p50=17.20ms p95=21.55ms p99=23.84ms max=56.41ms tick_p95=8.53ms heap=3966/8192MB fb=3840x2160 load=2.7 occluded=false minimized=false
+[02:41:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[02:41:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_twin_2: run_twin_2 samples=1158 world_p50=14.83ms world_p95=17.54ms world_p99=18.55ms upscale_p50=0.42ms upscale_p99=1.20ms
+[02:41:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_twin_2
+[02:41:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain off: chain from the Look
+[02:41:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit

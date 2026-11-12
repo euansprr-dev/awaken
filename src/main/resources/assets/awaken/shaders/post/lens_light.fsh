@@ -45,7 +45,11 @@ layout(std140) uniform LensConfig {
 
 layout(location = 0) out vec4 fragColor;
 
+#ifdef LENS_UNIFORMS
+vec4 P(int i) { return LensP[i]; }
+#else
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
+#endif
 
 // The Sun Pass (SPEC §22 "Steady Light"; frame texel 17: z the block map's trusted reach in blocks, 0 without one;
 // w its lowest y): from o toward the light through the block map, block by block. Where the heightfield has one top
@@ -53,6 +57,11 @@ vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, iv
 // is the block's own shape. Returns what gets through; status 0 when the walk settled it (a block stopped the sun), 1
 // when the ray left the map in the open at tOut (the heightfield carries on from there), 2 where the map isn't read
 // yet (the heightfield's own answer stands).
+// What the walk reads (Steady 60, 12 Nov; SPEC §22 "The walk's reads"): it steps through every cell as it always did,
+// and only leaves out reads whose answer it already has. The map's open map (LensBlocks, rows 1024 to 1031: one texel a
+// 4x4-block column, a bit for every 4 blocks of height, set where all 64 blocks are read and open) says where a whole
+// stretch of air is open, so no texel there is fetched; and a texel is fetched once for as long as the walk stays in
+// it (a section's column holds 16 blocks). Same cells, same order, same answers: only fewer fetches.
 float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
     vec4 f17 = F(17);
     vec3 cam = F(12).xyz;
@@ -64,6 +73,9 @@ float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
     float t = 0.0;
     status = 1;
     tOut = 0.0;
+    // the open map's texel the walk is in and its bits; the block texel last fetched and its bits
+    ivec2 openAt = ivec2(-1), fineAt = ivec2(-1);
+    uint open = 0u, bits = 0u;
     for (int i = 0; i < 72; i++) {
         // into the next block the ray crosses (never the one it starts in: a stair's own step, a slab's own top)
         if (next.x < next.y && next.x < next.z) {
@@ -81,8 +93,20 @@ float blockRay(vec3 o, vec3 l, out int status, out float tOut) {
         }
         tOut = t;
         if (abs(float(c.x) + 0.5 - cam.x) > reach || abs(float(c.z) + 0.5 - cam.z) > reach || float(c.y) < yMin || float(c.y) >= yMin + 128.0) return 1.0;
-        vec4 raw = texelFetch(BlocksSampler, ivec2(c.x & 127, (c.z & 127) * 8 + ((c.y >> 4) & 7)), 0);
-        uint bits = uint(raw.r * 255.0 + 0.5) | (uint(raw.g * 255.0 + 0.5) << 8) | (uint(raw.b * 255.0 + 0.5) << 16) | (uint(raw.a * 255.0 + 0.5) << 24);
+        // (a cell in a stretch the open map knows is open: the texel would say open, so it isn't fetched)
+        ivec2 oa = ivec2(((c.x >> 4) & 7) * 16 + ((c.z >> 2) & 3) * 4 + ((c.x >> 2) & 3), 1024 + ((c.z >> 4) & 7));
+        if (oa != openAt) {
+            openAt = oa;
+            vec4 ro = texelFetch(BlocksSampler, oa, 0);
+            open = uint(ro.r * 255.0 + 0.5) | (uint(ro.g * 255.0 + 0.5) << 8) | (uint(ro.b * 255.0 + 0.5) << 16) | (uint(ro.a * 255.0 + 0.5) << 24);
+        }
+        if (((open >> uint((c.y & 127) >> 2)) & 1u) != 0u) continue;
+        ivec2 fa = ivec2(c.x & 127, (c.z & 127) * 8 + ((c.y >> 4) & 7));
+        if (fa != fineAt) {
+            fineAt = fa;
+            vec4 raw = texelFetch(BlocksSampler, fa, 0);
+            bits = uint(raw.r * 255.0 + 0.5) | (uint(raw.g * 255.0 + 0.5) << 8) | (uint(raw.b * 255.0 + 0.5) << 16) | (uint(raw.a * 255.0 + 0.5) << 24);
+        }
         if (bits == 0xFFFFFFFFu) {
             status = 2;
             return 1.0;

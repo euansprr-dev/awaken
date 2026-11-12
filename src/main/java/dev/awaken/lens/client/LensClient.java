@@ -60,6 +60,18 @@ public final class LensClient {
     private static LensGlow glow;
     static final Identifier CINEMATIC = Awaken.id("lens_cinematic");
     static final Identifier ULTRA = Awaken.id("lens_ultra");
+    // their Tiles twins (SPEC §22 "Steady 60"; tools/lens/block.py): the same chains with the composite that reads Lens's
+    // values from the uniform block alone, run while Tiles hands that block over
+    static final Identifier CINEMATIC_TILES = Awaken.id("lens_cinematic_tiles");
+    static final Identifier ULTRA_TILES = Awaken.id("lens_ultra_tiles");
+    // the twins' two composites, by their place in the chain (tools/lens/block.py checks them): the calm one, then the
+    // twin's own; Tiles leaves one out every frame (leftOut)
+    private static final int CALM_AT = 12, FULL_AT = 13;
+    private static final String CINEMATIC_CALM = CINEMATIC_TILES + "/" + CALM_AT, CINEMATIC_FULL = CINEMATIC_TILES + "/" + FULL_AT,
+            ULTRA_CALM = ULTRA_TILES + "/" + CALM_AT, ULTRA_FULL = ULTRA_TILES + "/" + FULL_AT;
+    // this frame's choice (afterLevel): the calm composite runs only once LensBlock has found the frame calm
+    private static String leaveCinematic = CINEMATIC_CALM, leaveUltra = ULTRA_CALM;
+    private static boolean calmLast;
     /** Lens 2 (SPEC §22): the frame's matrices in floats ({@code awaken:lens_frame}) and the terrain's heights. */
     static final Identifier FRAME = Awaken.id("textures/effect/lens_frame.png");
     static final Identifier HEIGHT = Awaken.id("textures/effect/lens_height.png");
@@ -233,6 +245,33 @@ public final class LensClient {
     // measurement only (autopilot `lens chain <id>`): a probe chain in place of Cinematic's or Ultra's (tools/lens/probes.py)
     private static @org.jspecify.annotations.Nullable Identifier forcedChain, lastForced;
 
+    // measurement only (autopilot `lens twin off|setting`): Cinematic and Ultra as written even while the block is live
+    private static boolean noTwin;
+
+    /** Autopilot {@code lens twin off|setting}: the A/B switch for the Tiles twins (SPEC §22 "Steady 60"). */
+    public static String twin(String arg) {
+        noTwin = arg.trim().equals("off");
+        return "twin " + (noTwin ? "off" : "with Tiles' block") + (dev.awaken.turbo.tiles.Tiles.blockLive() ? " (block live)" : " (block not live)");
+    }
+
+    // measurement only (autopilot `lens calm off|setting`): the twin's own composite every frame, calm or not
+    private static boolean noCalm;
+
+    /** Autopilot {@code lens calm off|setting}: the A/B switch for the twins' calm composite (SPEC §22 "Steady 60"). */
+    public static String calm(String arg) {
+        noCalm = arg.trim().equals("off");
+        return "calm composite " + (noCalm ? "off" : "on calm frames") + (calmLast ? " (last frame calm)" : " (last frame not calm)");
+    }
+
+    /**
+     * Tiles, for each post pass: whether it is left out this frame. Each Tiles twin has two composites, both drawing the
+     * whole of swap from the same inputs, and one is left out: the calm one, unless this frame's values (LensBlock.calm,
+     * read from the very block the composites read) have every path it lacks switched off; then the twin's own.
+     */
+    public static boolean leftOut(String pass) {
+        return pass.equals(leaveCinematic) || pass.equals(leaveUltra);
+    }
+
     /** Autopilot {@code lens chain <name>|off}: runs awaken:lens_probe_<name> instead of the Look's chain (Cinematic or Ultra on). */
     public static String chain(String name) {
         String n = name.trim();
@@ -317,6 +356,8 @@ public final class LensClient {
     }
 
     private static void tick() {
+        // measurement only (the GPU timing's trace): a tick ran in this frame, and whether the governor stood Lens back
+        dev.awaken.turbo.pixels.Pixels.mark(tickBudget() < 500_000L ? 128 | 64 : 128);
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null || mc.level == null) {
@@ -353,6 +394,14 @@ public final class LensClient {
             default -> SWIFT;
         };
         if (want != null && want != SWIFT && want != LITE && forcedChain != null) want = forcedChain;
+        // Steady 60 (SPEC §22): while Tiles hands Lens's passes the live uniform block, Cinematic and Ultra run their twins,
+        // whose composite reads its values from the block alone: the very values it reads now, without a texture read
+        // beside each that made it a per-pixel register (some 4 ms of a 4K frame). A development view keeps the chain as
+        // written (the twin has none)
+        if (debug == 0 && !noTwin && dev.awaken.turbo.tiles.Tiles.blockLive()) {
+            if (want == CINEMATIC) want = CINEMATIC_TILES;
+            else if (want == ULTRA) want = ULTRA_TILES;
+        }
         // Lite is the Air and nothing else: its chain has no other sky to fall back to
         if (want == LITE && forcedAir == null) air = true;
         // the server replaces this list whenever it syncs post effects, so Lens re-asserts itself every tick, first
@@ -363,8 +412,10 @@ public final class LensClient {
         if (want != LITE) effects.remove(LITE);
         if (want != CINEMATIC) effects.remove(CINEMATIC);
         if (want != ULTRA) effects.remove(ULTRA);
+        if (want != CINEMATIC_TILES) effects.remove(CINEMATIC_TILES);
+        if (want != ULTRA_TILES) effects.remove(ULTRA_TILES);
         boolean wasFramed = framed;
-        lit = want == CINEMATIC || want == ULTRA || want != null && want == forcedChain;
+        lit = want == CINEMATIC || want == ULTRA || want == CINEMATIC_TILES || want == ULTRA_TILES || want != null && want == forcedChain;
         framed = lit || want == LITE;
         if (want != null) {
             ensureParams();
@@ -439,7 +490,7 @@ public final class LensClient {
         } else if (litAir != null) {
             litAir.forget();
         }
-        if (lit && !scene) LensParticles.tick(mc, want == ULTRA, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null,
+        if (lit && !scene) LensParticles.tick(mc, want == ULTRA || want == ULTRA_TILES, biomeFor, lightStrength, lightDir, warm, warmth, sunHere ? heightfield : null,
                 air && sunHere, sunDir.y, rain);
         // a hard cut on joining a world
         float k = snap ? 1f : ease;
@@ -637,7 +688,10 @@ public final class LensClient {
         // both textures are written for this frame: the same values as one uniform block (Tiles binds it on Apple's path)
         if (params != null) {
             if (block == null) block = new LensBlock();
-            block.write(framed ? lensFrame : null, params);
+            calmLast = block.write(framed ? lensFrame : null, params);
+            boolean calm = calmLast && !noCalm;
+            leaveCinematic = calm ? CINEMATIC_FULL : CINEMATIC_CALM;
+            leaveUltra = calm ? ULTRA_FULL : ULTRA_CALM;
             if (framed && lensFrame != null && WorldProjection.ready()) {
                 // the world's own matrices and sun over the CPU's estimate (LensFrame's texels 0-11 and 21, whole: a
                 // value of the frame's own must never ride in one of them)

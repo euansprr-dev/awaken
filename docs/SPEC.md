@@ -6493,6 +6493,67 @@ optimise for macOS"; docs/perf/LENS-APPLE.md):
   - Lens writes the same values to a live buffer each frame (the parameters as byte/255, what the texture fetch
     returns), and Tiles' PostPass hook binds it.
   - With LensUse.x at 0 (not bound), F() and P() read the textures as before.
+- **The Tiles twins** (Steady 60, 12 Nov; tools/lens/block.py writes `lens_cinematic_tiles` and `lens_ultra_tiles`,
+  composite `lens_composite_lit_tiles.fsh`; autopilot `lens twin off|setting`):
+  - Why: with the block bound every value is one constant load, but each F() and P() still chose per pixel between
+    the block and its texture, and a value that may come from a texture is a per-pixel register: some 60 of them were
+    held through the whole lit composite. A shader that size runs only as fast as its registers let the GPU keep
+    pixels in flight, so the composite ran slower for code it never reached (the Dell at 4K, his settings: leaving out
+    the near clouds' walk saved 2.2 ms where nearly every pixel leaves it at once, the water 1.5 ms with no water in
+    view, and the parts summed to more than the 11.5 ms the composite cost; tools/lens/regs.py).
+  - Each lit chain has a twin, written from it by block.py, whose composite reads the block alone (LENS_UNIFORMS),
+    has no development views (LENS_NO_DEBUG) and none of Lite's paths (LENS_NOT_LITE: these chains never run as Lite,
+    LensParams writing texel 25 as framed && !lit; 0.1-0.2 ms more, bit for bit against the twin without it, twin
+    check `_notlite`). LensClient runs the twin while Tiles has handed the block over and
+    still would (`Tiles.blockLive`), no development view is on and `lens twin` isn't off; else the chain as written.
+  - Same picture, to well under the scene's own noise: with the block bound the composite already read every value
+    from it, and the twin makes the same reads of the same block. It is not bit for bit: once the Metal compiler
+    knows a value is the same for every pixel it orders some sums differently, and a pixel balanced on a threshold
+    can land the other way, chiefly far leaves where the light buffer's nearest-distance pick ties (upsampleAt).
+    tools/lens/twincheck.py, both composites of one frame from the same inputs at 4K, six views: 0.13-0.53% of the
+    shot marked (marks three pixels wide: about 1,200 to 4,900 pixels of 8.3 million differ). The composite as
+    written with its own values one bit up (`_nudge`) marks 0.4-1.8%; two frames of the scene as written one tick
+    apart differ in 76-80% of pixels, by over 4 steps in 24-32%. Without the development views alone it is bit for
+    bit (0 pixels; `_nodbg`). GLSL's `precise` on every sum leading to that pick (PROBE_PRECISE, twin check
+    `_precise_twin`, `_both`, `_self`; tour steady60-perf12-k, six views) leaves the twin's marks as they were
+    (0.13-0.46% against 0.15-0.45%) while it moves the composite as written by at most 0.0024%: the rounding comes
+    in wherever a block value meets arithmetic, not in one sum, so there is no cheap way to pin it. Left as it is.
+    In a frame that loses the block mid-way (Tiles off on a failure) the twin draws the game's own picture, and the
+    next tick runs the chain as written.
+  - Never edit a twin: edit its chain and run block.py. probes.py builds the probe chains from the twins (the twin's
+    own composite alone).
+  - **The calm composite** (`lens_composite_lit_tiles_calm.fsh`, LENS_CALM; autopilot `lens calm off|setting`): each
+    twin carries a second composite, just before its own, without the paths that are off in a calm frame: rain's
+    wet, storm cells (in the composite and its cloud walk), heat's shimmer, frost's rime, the motion smear, a holo
+    panel's focus, the tear and the old water (only without the Air). Both draw the whole of swap from the same
+    inputs; every frame Tiles leaves one out (`Tiles.skip` asks `LensClient.leftOut`; the PostPass hook already
+    cancels a pass at its head): the calm one, unless `LensBlock.calm` finds every one of those switches off in the
+    block it has just written, then the twin's own. The test is each path's own (`f16.z > 0 && F(15).x > 0`,
+    `P(20).r > 0 && airOn() <= 0`, `P(20).g` or `.b > 0`, `P(16).r > 0.004`, `int(F(20).y + 0.5)`, `P(14).r > 0`,
+    `P(13).r > 0`) on the floats the composite reads, none in the texels the world's matrices are copied over, so a
+    frame never runs the calm composite where a path it lacks would have drawn anything. No chain switch, so the
+    histories carry on. With the skip hook gone both run and the twin's own, drawn last, is what stays. block.py
+    places the two at LensClient's CALM_AT and FULL_AT and fails if they move. The Dell at 4K, his settings
+    (tour steady60-perf12-h, the twin's own against the calm one, two pairs each): 0.76 ms where he stood (14.32 →
+    13.55), 0.83 at the tree (13.81 → 12.98), 0.87 running (15.63 → 14.76).
+  - Same picture: on a calm frame the two run the same code, less the paths that draw nothing there.
+    tools/lens/twincheck.py `_calm` (the twin's own composite and the calm one on one frame at 4K, eight views:
+    the tree, where he stood, the sky, west at morning and dusk, the sky at night, Ultra at the tree and where he
+    stood): 39 to 241 pixels marked of 8.3 million (marks three pixels wide: some 5 to 27 pixels differ, each by one
+    step of 8 bits, but for one pixel in two of the views), the compiler's last-bit ordering again, a hundredth of
+    what the twin itself shows. In rain the frame is not calm and the twin's own composite runs (`lens calm` says
+    which the last frame was).
+  - Steady 60, measured (12 Nov, his world, pack and settings on the Dell at 4K, borderless; tour steady60-perf12-i;
+    docs/perf/steady60/perf-2026-11-12): the chain as written against the twin with its calm composite, GPU world pass:
+    where he stood 18.66 → 13.7 ms (49 → 60 fps, the cap), the tree 18.24 → 12.83, turning 19.62 → 14.45 (47 → 59.8
+    fps), running 19.98 → 14.99 (45 → 57.5 fps; the terrain itself costs 0.6 ms more running). What is left would cost
+    quality and is not applied (the report's list: Pixels 0.80 or 0.75, the Sun Pass off). Running's slow frames (tour
+    steady60-perf12-j, each frame's GPU time beside what Lens did in it, tools/lens/slowframes.py) are the stretches
+    looking west, the morning sun behind: there the game costs 1.2 ms more (Lens off 4.5 → 5.8) and Lens 1.5 more
+    (8.6 → 10.2), every frame of that view; 95-98% of the slowest 5% fall there. None of Lens's periodic work (the lit
+    air's upload and sweep, the sun map's rows and sweep, heightfield and block map uploads and reads, the 150 µs tick
+    budget) is more common on the slow frames than on the rest, and frames with it are within 0.3 ms of those
+    without, so there is nothing to spread.
 - **Together, measured** (GPU world pass, old path → new; frame p50):
 
   | Look | GPU world pass | frame p50 |
@@ -6657,6 +6718,15 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
   the walk would have stopped (`walkEnd`: the trusted box's edge or 72 cells). Everything else walks. The lit air
   never shades a surface itself: it reaches farther than the walk, and where it called a block dark and the walk
   beside it found the sun, the difference lay on open grass as a patchwork under a low sun (Euan 2026-11-10).
+  - **The walk's reads** (Steady 60, 12 Nov): under the block map, rows 1024 to 1031 are its open map, one texel a
+    4x4 of columns within a chunk, one bit for each four levels of each of its eight sections, set where all 64 blocks
+    are read and open (a section not read yet is all ones, so never open). It goes up with the chunk's block texels,
+    from the same cells, in the same call. The walk reads the open texel when it enters a new 4x4, steps through an
+    open level's cells without reading their block texel, and fetches a block texel only when it moves to a new one
+    (one texel is a column of a section, sixteen blocks). The cells it visits, their order, the arithmetic and every
+    answer are as before: `tools/lens/walkcheck.py` ran the walk as it stood at 5a1f0582b beside it on every pixel of
+    ten frames (four suns, three views, 3 to 50% of pixels walking) and not one differed in status, exit distance or
+    answer, bit for bit. 0.2 ms at the tree (the world pass 17.49 to 17.28 ms, the Dell, his settings).
 - **The sun's rays** (on with the Sun Pass and the Air; autopilot `lens rays`). Two parts.
   - **The lit air** (`LensLit`): how much of the sun reaches every block of air in the block map's window, 0..1, as an
     R8 texture `awaken:lens_lit` (2048x1024: 128 slices of 128x128, x across and y up, sixteen slices a row), addressed

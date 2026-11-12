@@ -1,0 +1,2 @@
+slot.sh: tour slot taken by look-steady-60 after 0s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)

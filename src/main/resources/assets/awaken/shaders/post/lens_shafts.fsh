@@ -22,8 +22,16 @@ layout(location = 0) out vec4 fragColor;
 
 #include <awaken:lens_block.glsl>
 
+#ifdef LENS_UNIFORMS
+vec4 P(int i) { return LensP[i]; }
+#else
 vec4 P(int i) { return LensUse.x > 0.5 ? LensP[i] : texelFetch(ParamsSampler, ivec2(i, 0), 0); }
+#endif
+#ifdef LENS_UNIFORMS
+vec4 F(int i) { return LensF[i]; }
+#else
 vec4 F(int i) { return LensUse.x > 0.5 ? LensF[i] : texelFetch(FrameSampler, ivec2(i, 0), 0); }
+#endif
 
 void main() {
     // fog glow: the wide glow on two rings around this pixel (a soft halo several times the glow's own reach)

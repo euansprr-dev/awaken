@@ -1,0 +1,124 @@
+# Steady 60, eleventh pass (12 Nov): can the twin's rounding be pinned? GLSL's `precise` on the sums that lead to the
+# light buffer's neighbour pick (PROBE_PRECISE in lens_frame.glsl and lens_composite.glsl: the unprojection, the
+# distance, its one-byte code, the bilinear weights and the distance match), tools/lens/twincheck.py. On one frame each:
+# the twin as it is against the composite as written (the marks to beat), the twin so against the composite as written
+# (must read 0 to keep it), both so, and the composite as written so against itself as it is; the control and the
+# composite against itself as checks of the check. His world, pack and settings, the Dell's whole 3840x2160 without a
+# border (his screen is locked; steady60-perf12-f.txt). Count with tools/lens/walkcompare.py.
+# WORLD="New World V20" tools/steady60-tour.sh tools/autopilot/steady60-perf12-k.txt perf12-k
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1950
+cmd awaken living calm
+screen close
+key dismiss
+screen close
+display DELL borderless
+wait 200
+info
+camera first
+hud off
+cmd gamemode spectator
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 900
+shotnow first_view
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 60
+lens chain cinematic_twincheck
+wait 40
+shotnow t_tree_twin
+lens chain cinematic_twincheck_precise_twin
+wait 40
+shotnow t_tree_ptwin
+lens chain cinematic_twincheck_precise_both
+wait 40
+shotnow t_tree_pboth
+lens chain cinematic_twincheck_precise_self
+wait 40
+shotnow t_tree_pself
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 60
+lens chain cinematic_twincheck
+wait 40
+shotnow t_own_twin
+lens chain cinematic_twincheck_precise_twin
+wait 40
+shotnow t_own_ptwin
+lens chain cinematic_twincheck_precise_both
+wait 40
+shotnow t_own_pboth
+lens chain cinematic_twincheck_precise_self
+wait 40
+shotnow t_own_pself
+cmd tp @s -1543.5 69 -715.5 90 20
+wait 60
+lens chain cinematic_twincheck
+wait 40
+shotnow t_west_twin
+lens chain cinematic_twincheck_precise_twin
+wait 40
+shotnow t_west_ptwin
+lens chain cinematic_twincheck_precise_both
+wait 40
+shotnow t_west_pboth
+lens chain cinematic_twincheck_precise_self
+wait 40
+shotnow t_west_pself
+cmd tp @s -1535.03 72 -725.14 -151.9 -35
+wait 60
+lens chain cinematic_twincheck
+wait 40
+shotnow t_sky_twin
+lens chain cinematic_twincheck_precise_twin
+wait 40
+shotnow t_sky_ptwin
+lens chain cinematic_twincheck_precise_both
+wait 40
+shotnow t_sky_pboth
+lens chain cinematic_twincheck_precise_self
+wait 40
+shotnow t_sky_pself
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 60
+lens chain ultra_twincheck
+wait 40
+shotnow t_ultra_tree_twin
+lens chain ultra_twincheck_precise_twin
+wait 40
+shotnow t_ultra_tree_ptwin
+lens chain ultra_twincheck_precise_both
+wait 40
+shotnow t_ultra_tree_pboth
+lens chain ultra_twincheck_precise_self
+wait 40
+shotnow t_ultra_tree_pself
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 60
+lens chain ultra_twincheck
+wait 40
+shotnow t_ultra_own_twin
+lens chain ultra_twincheck_precise_twin
+wait 40
+shotnow t_ultra_own_ptwin
+lens chain ultra_twincheck_precise_both
+wait 40
+shotnow t_ultra_own_pboth
+lens chain ultra_twincheck_precise_self
+wait 40
+shotnow t_ultra_own_pself
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 40
+lens chain cinematic_twincheck_control
+wait 40
+shotnow t_own_control
+lens chain cinematic_twincheck_same
+wait 40
+shotnow t_own_same
+lens chain off
+wait 20
+lens cinematic
+quit

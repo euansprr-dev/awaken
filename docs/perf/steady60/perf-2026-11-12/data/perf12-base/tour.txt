@@ -1,0 +1,78 @@
+slot.sh: tour slot taken by look-steady-60 after 0s
+  installed skinlayers3d-neoforge-1.11.4-mc26.3.jar
+  installed AmbientSounds_NEOFORGE_v6.3.11_mc26.3.jar
+  installed appleskin-neoforge-mc26.3-3.0.10.jar
+  installed architectury-neoforge-22.0.5.jar
+  installed BendableCuboidsMerged-2.1.0+mc.26.3.jar
+  installed CameraOverhaul-v2.1.2-neoforge+mc[26.3-plus].jar
+  installed cloth-config-neoforge-26.3.159.jar
+  installed Controlling-neoforge-26.3-26.3.4.jar
+  installed smooth_steps-neoforge-1.2.1.jar
+  installed CreativeCore_NEOFORGE_v2.14.24_mc26.3.jar
+  installed dynamic-fps-3.11.10+minecraft-26.3.0-neoforge.jar
+  installed entity_model_features-3.3.12-26.3-neoforge.jar
+  installed entityculling-neoforge-1.11.3-mc26.3.jar
+  installed entity_texture_features-7.2.6-26.3-neoforge.jar
+  installed ferritecore-9.0.0-neoforge.jar
+  installed FreshAnimations_v1.11.1_26.1+.zip
+  installed ImmediatelyFast-NeoForge-1.17.1+26.3.jar
+  installed ImmersiveVFX-1.7.6-neoforge.jar
+  installed Jade-mc26.3-NeoForge-26.3.5.jar
+  installed jei-26.3-neoforge-31.14.0.72.jar
+  installed lithium-neoforge-0.26.2+mc26.3.jar
+  installed lithostitched-2.0.6-neoforge-26.3.jar
+  installed mezz_config-26.3-neoforge-0.6.8-standalone.jar
+  installed midnightlib-neoforge-1.10.0+26.3.jar
+  installed moreculling-neoforge-26.3-1.9.0.jar
+  installed MouseTweaks-neoforge-mc26.3-2.31.jar
+  installed notenoughanimations-neoforge-1.12.6-mc26.3.jar
+  installed PlayerAnimationLibMerged-1.2.8+mc.26.3.jar
+  installed Searchables-neoforge-26.3-1.0.3.jar
+  installed ShoulderSurfing-NeoForge-26.3-5.2.0.jar
+  installed sodium-neoforge-0.9.3-beta.1+mc26.3.jar
+  installed sound-physics-remastered-neoforge-1.5.2+26.3.jar
+  installed tectonic-3.0.31-neoforge-26.3.jar
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+p1_own.png
+p2_tree.png
+[01:41:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[01:41:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf probe_prefilter 10
+[01:42:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf probe_prefilter frames=536 avg_fps=53.4 p50=18.52ms p95=20.99ms p99=22.71ms max=25.27ms tick_p95=5.49ms heap=2664/8192MB fb=3840x2160 load=2.7 occluded=false minimized=false
+[01:42:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu probe_prefilter: probe_prefilter samples=537 world_p50=17.15ms world_p95=17.46ms world_p99=17.82ms upscale_p50=0.43ms upscale_p99=0.61ms
+[01:42:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu probe_prefilter
+[01:42:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_shafts: chain awaken:lens_probe_cinematic_shafts
+[01:42:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 60
+[01:42:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[01:42:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[01:42:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf probe_shafts 10
+[01:42:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf probe_shafts frames=536 avg_fps=53.4 p50=18.55ms p95=21.11ms p99=22.20ms max=22.84ms tick_p95=5.86ms heap=3752/8192MB fb=3840x2160 load=2.6 occluded=false minimized=false
+[01:42:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu probe_shafts: probe_shafts samples=537 world_p50=17.17ms world_p95=17.42ms world_p99=17.63ms upscale_p50=0.43ms upscale_p99=0.57ms
+[01:42:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu probe_shafts
+[01:42:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_bloom: chain awaken:lens_probe_cinematic_bloom
+[01:42:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 60
+[01:42:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[01:42:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[01:42:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf probe_bloom 10
+[01:42:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf probe_bloom frames=533 avg_fps=53.1 p50=18.61ms p95=21.22ms p99=22.68ms max=23.80ms tick_p95=6.32ms heap=4826/8192MB fb=3840x2160 load=2.4 occluded=false minimized=false
+[01:42:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu probe_bloom: probe_bloom samples=534 world_p50=17.27ms world_p95=17.56ms world_p99=17.83ms upscale_p50=0.43ms upscale_p99=0.53ms
+[01:42:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu probe_bloom
+[01:42:31] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain off: chain from the Look
+[01:42:32] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens off
+[01:42:34] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[01:42:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[01:42:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[01:42:39] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf lensoff_raw 10
+[01:42:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf lensoff_raw frames=2301 avg_fps=229.2 p50=4.25ms p95=5.98ms p99=7.35ms max=16.68ms tick_p95=7.50ms heap=7606/8192MB fb=3840x2160 load=2.4 occluded=false minimized=false
+[01:42:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu lensoff_raw: lensoff_raw samples=2302 world_p50=2.76ms world_p95=2.89ms world_p99=3.05ms upscale_p50=0.45ms upscale_p99=0.50ms
+[01:42:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu lensoff_raw
+[01:42:49] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens cinematic
+[01:42:51] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[01:42:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[01:42:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[01:42:56] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf tree_raw_last 10
+[01:43:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf tree_raw_last frames=522 avg_fps=52.1 p50=18.99ms p95=21.49ms p99=23.14ms max=24.26ms tick_p95=5.55ms heap=2780/8192MB fb=3840x2160 load=2.0 occluded=false minimized=false
+[01:43:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu tree_raw_last: tree_raw_last samples=523 world_p50=17.56ms world_p95=17.77ms world_p99=17.86ms upscale_p50=0.44ms upscale_p99=0.54ms
+[01:43:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu tree_raw_last
+[01:43:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens cost: tick cost over 3503 ticks, mean/worst ms: heightfield 0.112/2.56, block map 0.172/1.80, lit air 0.019/1.54; sweep 11.01 ms on its worker, upload 0.08 ms, 1477 volumes; sun map sweep 6.93 ms on its worker, 1050 sweeps
+[01:43:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit

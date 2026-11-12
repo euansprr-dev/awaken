@@ -1,0 +1,249 @@
+# Steady 60, eighth pass (12 Nov): the twins' calm composite (SPEC §22 "Steady 60"), on his world, pack and settings, the
+# Dell's whole 3840x2160 without a border (his screen is locked; steady60-perf12-f.txt). First the twin check of the calm
+# composite against the twin's own on one frame, every view (must be 0 or the rounding the twin itself shows), with
+# rain on to see the switch go back to the twin's own; then `lens calm off` (the twin's own every frame, the branch
+# before this) against `lens calm setting`, alternating, where he stood, at the tree and running.
+# WORLD="New World V20" tools/steady60-tour.sh tools/autopilot/steady60-perf12-h.txt perf12-h
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1950
+cmd awaken living calm
+screen close
+key dismiss
+screen close
+display DELL borderless
+wait 200
+info
+camera first
+hud off
+pixels gpu on
+cmd gamemode spectator
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 900
+# ---- 1. the calm check: the twin's own composite against the calm one on one frame
+lens calm setting
+lens chain cinematic_twincheck_calm
+wait 60
+shotnow t_tree_calm
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 60
+shotnow t_own_calm
+cmd tp @s -1535.03 72 -725.14 -151.9 -35
+wait 40
+shotnow t_sky_calm
+cmd tp @s -1543.5 69 -715.5 90 20
+wait 40
+shotnow t_west_calm
+cmd time set 12600
+wait 60
+shotnow t_dusk_west_calm
+cmd time set 18000
+cmd tp @s -1535.03 72 -725.14 -151.9 -35
+wait 60
+shotnow t_night_sky_calm
+cmd time set 1950
+lens chain ultra_twincheck_calm
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 60
+shotnow t_ultra_tree_calm
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 40
+shotnow t_ultra_own_calm
+lens chain cinematic_twincheck_control
+wait 40
+shotnow t_own_control
+lens chain off
+# the switch: calm in clear weather, the twin's own in rain, calm again once it clears
+wait 40
+lens calm setting
+cmd weather rain 1000000
+wait 200
+lens calm setting
+shotnow p_rain
+cmd weather clear 1000000
+wait 200
+lens calm setting
+# ---- 2. where he stood (creative, the hand drawn, the HUD on), raw (vsync off): off on off on
+hud on
+cmd gamemode creative
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 200
+opt vsync 0
+opt maxFps 260
+lens calm off
+wait 100
+pixels gpu reset
+perf own_full_1 10
+pixels gpu own_full_1
+lens calm setting
+wait 100
+pixels gpu reset
+perf own_calm_1 10
+pixels gpu own_calm_1
+lens calm off
+wait 100
+pixels gpu reset
+perf own_full_2 10
+pixels gpu own_full_2
+lens calm setting
+wait 100
+pixels gpu reset
+perf own_calm_2 10
+pixels gpu own_calm_2
+lens cost
+shot p_own_calm
+# ---- 3. the tree
+cmd gamemode spectator
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 100
+lens calm off
+wait 100
+pixels gpu reset
+perf tree_full_1 10
+pixels gpu tree_full_1
+lens calm setting
+wait 100
+pixels gpu reset
+perf tree_calm_1 10
+pixels gpu tree_calm_1
+lens calm off
+wait 100
+pixels gpu reset
+perf tree_full_2 10
+pixels gpu tree_full_2
+lens calm setting
+wait 100
+pixels gpu reset
+perf tree_calm_2 10
+pixels gpu tree_calm_2
+# ---- 4. running through the trees: four legs of 5 s
+lens calm off
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_full_1
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_full_1
+lens calm setting
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_calm_1
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_calm_1
+lens calm off
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_full_2
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_full_2
+lens calm setting
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_calm_2
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_calm_2
+# ---- 5. as he plays (vsync, 60 cap): running, then where he stood
+opt vsync 1
+opt maxFps 60
+lens calm off
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_played_full
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_played_full
+lens calm setting
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_played_calm
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_played_calm
+cmd gamemode creative
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 100
+lens calm off
+wait 100
+pixels gpu reset
+perf own_played_full 10
+pixels gpu own_played_full
+lens calm setting
+wait 100
+pixels gpu reset
+perf own_played_calm 10
+pixels gpu own_played_calm
+lens calm setting
+quit

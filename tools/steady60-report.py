@@ -50,6 +50,8 @@ def main(argv):
     order = [m.group(1) for m in re.finditer(r"\[autopilot\] perf (\S+) frames=", log)]
     rows = {}
     for path in sorted((root / "perf-traces").glob("*.txt")):
+        if path.name.startswith("gpu_"):
+            continue  # the per-frame GPU traces (tools/lens/slowframes.py reads them)
         w = window(path)
         if w:
             w.update(gpu.get(path.stem, {}))

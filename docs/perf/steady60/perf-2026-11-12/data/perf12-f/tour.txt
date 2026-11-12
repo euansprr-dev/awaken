@@ -1,0 +1,59 @@
+slot.sh: tour slot taken by look-steady-60 after 0s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+p_own_twin.png
+t_night_own.png
+t_night_own_nudge.png
+t_own.png
+t_own_nudge.png
+t_own_same.png
+t_tree.png
+t_tree_nudge.png
+t_tree_same.png
+t_ultra_own.png
+t_ultra_own_nudge.png
+t_water.png
+t_water_control.png
+t_water_nudge.png
+t_west.png
+t_west_nudge.png
+[02:28:38] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:28:43] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfstart run_played_twin
+[02:28:43] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[02:28:43] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[02:28:43] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[02:28:43] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:28:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[02:28:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[02:28:48] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:28:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look -90 12
+[02:28:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide 0.28 0 0 100
+[02:28:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:28:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] look 90 12
+[02:28:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] glide -0.28 0 0 100
+[02:28:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:29:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf run_played_twin frames=1121 avg_fps=55.5 p50=17.79ms p95=22.38ms p99=26.48ms max=77.16ms tick_p95=9.65ms heap=3604/8192MB fb=3840x2160 load=2.7 occluded=false minimized=false
+[02:29:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perfend
+[02:29:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_played_twin: run_played_twin samples=1122 world_p50=15.46ms world_p95=18.25ms world_p99=19.36ms upscale_p50=0.44ms upscale_p99=1.27ms
+[02:29:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu run_played_twin
+[02:29:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens cost: tick cost over 5488 ticks, mean/worst ms: heightfield 0.130/2.39, block map 0.200/0.72, lit air 0.022/0.43; sweep 10.39 ms on its worker, upload 0.14 ms, 1785 volumes; sun map sweep 7.22 ms on its worker, 1192 sweeps
+[02:29:03] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens twin setting: twin with Tiles' block (block live)
+[02:29:04] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] opt vsync 0
+[02:29:05] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] opt maxFps 260
+[02:29:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] hud off
+[02:29:06] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] cmd fill -1534 71 -734 -1528 71 -729 minecraft:water
+[02:29:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] cmd tp @s -1535.03 72 -725.14 -151.9 30
+[02:29:07] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_twincheck: chain awaken:lens_probe_cinematic_twincheck
+[02:29:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[02:29:13] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_water
+[02:29:13] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_twincheck_control: chain awaken:lens_probe_cinematic_twincheck_control
+[02:29:14] [IO-Worker-75/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_water
+[02:29:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[02:29:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_water_control
+[02:29:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_twincheck_nudge: chain awaken:lens_probe_cinematic_twincheck_nudge
+[02:29:17] [IO-Worker-73/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_water_control
+[02:29:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 40
+[02:29:20] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] shotnow t_water_nudge
+[02:29:20] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain off: chain from the Look
+[02:29:21] [IO-Worker-73/INFO] [de.aw.Awaken/]: [autopilot] screenshot t_water_nudge
+[02:29:21] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit

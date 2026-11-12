@@ -1,0 +1,397 @@
+# Steady 60, ninth pass (12 Nov): the choices that would cost something, measured for Euan to choose from and NOT applied
+# (README "Choices that would cost something"): Pixels at 0.80 and 0.75 (his is 0.85), the Sun Pass off (the shadow fix's
+# walk), Lens's temporal on (his is off), Pixels steady (the scale drops when frames come late), each against the branch
+# as it stands (calm composite on), running and where he stood, on his world, pack and settings, the Dell's whole
+# 3840x2160 without a border (steady60-perf12-f.txt). Last, what a day-only composite would save (tools/lens/regs.py calm_noday).
+# WORLD="New World V20" tools/steady60-tour.sh tools/autopilot/steady60-perf12-i.txt perf12-i
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1950
+cmd awaken living calm
+screen close
+key dismiss
+screen close
+display DELL borderless
+wait 200
+info
+camera first
+hud on
+pixels gpu on
+lens calm setting
+cmd gamemode spectator
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 900
+opt vsync 0
+opt maxFps 260
+# ---- 0. the chain as written (as he plays it today: `lens twin off`) against this branch (twin, calm composite), the
+# same tour: raw (vsync off) then as he plays (vsync, 60 cap)
+cmd gamemode creative
+lens twin off
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 100
+pixels gpu reset
+perf f_own_written_1 10
+pixels gpu f_own_written_1
+lens twin setting
+wait 100
+pixels gpu reset
+perf f_own_branch_1 10
+pixels gpu f_own_branch_1
+lens twin off
+wait 100
+pixels gpu reset
+perf f_own_written_2 10
+pixels gpu f_own_written_2
+lens twin setting
+wait 100
+pixels gpu reset
+perf f_own_branch_2 10
+pixels gpu f_own_branch_2
+cmd gamemode spectator
+lens twin off
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 100
+pixels gpu reset
+perf f_tree_written 10
+pixels gpu f_tree_written
+lens twin setting
+wait 100
+pixels gpu reset
+perf f_tree_branch 10
+pixels gpu f_tree_branch
+lens twin off
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 100
+pixels gpu reset
+turn 1.5 240
+perf f_turn_written 12
+pixels gpu f_turn_written
+lens twin setting
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 100
+pixels gpu reset
+turn 1.5 240
+perf f_turn_branch 12
+pixels gpu f_turn_branch
+lens twin off
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart f_run_written
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu f_run_written
+lens twin setting
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart f_run_branch
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu f_run_branch
+opt vsync 1
+opt maxFps 60
+cmd gamemode creative
+lens twin off
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 100
+pixels gpu reset
+perf f_own_played_written 10
+pixels gpu f_own_played_written
+lens twin setting
+wait 100
+pixels gpu reset
+perf f_own_played_branch 10
+pixels gpu f_own_played_branch
+cmd gamemode spectator
+lens twin off
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 100
+pixels gpu reset
+turn 1.5 240
+perf f_turn_played_written 12
+pixels gpu f_turn_played_written
+lens twin setting
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 100
+pixels gpu reset
+turn 1.5 240
+perf f_turn_played_branch 12
+pixels gpu f_turn_played_branch
+lens twin off
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart f_run_played_written
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu f_run_played_written
+lens twin setting
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart f_run_played_branch
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu f_run_played_branch
+lens twin setting
+opt vsync 0
+opt maxFps 260
+cmd gamemode spectator
+# ---- 1. running through the trees
+pixels config
+lens sunpass setting
+lens temporal setting
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_base_1
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_base_1
+pixels state
+pixels 0.80 sharp
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_px080
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_px080
+pixels state
+pixels 0.75 sharp
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_px075
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_px075
+pixels state
+pixels config
+lens sunpass off
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_nosun
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_nosun
+pixels state
+lens sunpass setting
+lens temporal on
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_temporal
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_temporal
+pixels state
+lens temporal setting
+pixels steady
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_steady
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_steady
+pixels state
+pixels config
+lens sunpass setting
+lens temporal setting
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_base_2
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_base_2
+pixels state
+# ---- 2. where he stood (creative, the hand drawn)
+cmd gamemode creative
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 200
+pixels config
+lens sunpass setting
+lens temporal setting
+wait 100
+pixels gpu reset
+perf own_base_1 10
+pixels gpu own_base_1
+pixels 0.80 sharp
+wait 100
+pixels gpu reset
+perf own_px080 10
+pixels gpu own_px080
+pixels 0.75 sharp
+wait 100
+pixels gpu reset
+perf own_px075 10
+pixels gpu own_px075
+pixels config
+lens sunpass off
+wait 100
+pixels gpu reset
+perf own_nosun 10
+pixels gpu own_nosun
+lens sunpass setting
+lens temporal on
+wait 100
+pixels gpu reset
+perf own_temporal 10
+pixels gpu own_temporal
+lens temporal setting
+pixels steady
+wait 100
+pixels gpu reset
+perf own_steady 10
+pixels gpu own_steady
+pixels config
+lens sunpass setting
+lens temporal setting
+wait 100
+pixels gpu reset
+perf own_base_2 10
+pixels gpu own_base_2
+# ---- 3. a day-only composite? the calm composite with and without the night sky's code, in probe chains, A B A B
+pixels config
+lens sunpass setting
+lens temporal setting
+lens chain cinematic_comp_calm
+wait 100
+pixels gpu reset
+perf own_pcalm_1 10
+pixels gpu own_pcalm_1
+lens chain cinematic_comp_calm_noday
+wait 100
+pixels gpu reset
+perf own_pnoday_1 10
+pixels gpu own_pnoday_1
+lens chain cinematic_comp_calm
+wait 100
+pixels gpu reset
+perf own_pcalm_2 10
+pixels gpu own_pcalm_2
+lens chain cinematic_comp_calm_noday
+wait 100
+pixels gpu reset
+perf own_pnoday_2 10
+pixels gpu own_pnoday_2
+lens chain off
+quit

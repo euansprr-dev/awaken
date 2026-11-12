@@ -1,0 +1,326 @@
+# Steady 60, sixth pass (12 Nov): what is left after the Tiles twin, on his world, pack and settings, the Dell's whole
+# 3840x2160 without a border (his screen is locked; steady60-perf12-f.txt). Probe chains (no straight out, so read against
+# comp_u_nodbg, the twin's composite in a probe chain): the twin without Lite's paths (notlite), every pass from the block
+# (u_all_twin), and the twin without what is off on a clear day (u_lean, a choice for Euan: it costs a chain switch).
+# Also the scene's own noise one tick apart (n_*_ref_1/2, the chain as written) and the twin check of notlite (must be 0).
+# WORLD="New World V20" tools/steady60-tour.sh tools/autopilot/steady60-perf12-g.txt perf12-g
+world copied
+waitworld
+wait 100
+cmd gamerule send_command_feedback false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1950
+cmd awaken living calm
+screen close
+key dismiss
+screen close
+display DELL borderless
+wait 200
+info
+camera first
+hud off
+pixels gpu on
+cmd gamemode spectator
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 900
+# ---- 1. the scene's own noise, one tick apart (the chain as written), and the twin check of notlite
+lens twin off
+wait 100
+shotnow n_tree_ref_1
+wait 1
+shotnow n_tree_ref_2
+wait 1
+shotnow n_tree_ref_3
+lens chain cinematic_twincheck_notlite
+wait 60
+shotnow t_tree_notlite
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+lens chain off
+wait 100
+shotnow n_own_ref_1
+wait 1
+shotnow n_own_ref_2
+wait 1
+shotnow n_own_ref_3
+lens chain cinematic_twincheck_notlite
+wait 60
+shotnow t_own_notlite
+lens chain off
+lens twin setting
+# ---- 2. where he stood: the candidates by GPU time, raw (vsync off), A B C D A
+hud on
+cmd gamemode creative
+cmd tp @s -1535.03 72 -725.14 -151.9 7.7
+wait 200
+opt vsync 0
+opt maxFps 260
+lens chain cinematic_comp_u_nodbg
+wait 100
+pixels gpu reset
+perf own_base_1 10
+pixels gpu own_base_1
+lens chain cinematic_comp_u_nodbg_notlite
+wait 100
+pixels gpu reset
+perf own_notlite 10
+pixels gpu own_notlite
+lens chain cinematic_u_all_twin
+wait 100
+pixels gpu reset
+perf own_u_all 10
+pixels gpu own_u_all
+lens chain cinematic_comp_u_lean
+wait 100
+pixels gpu reset
+perf own_lean 10
+pixels gpu own_lean
+lens chain cinematic_comp_u_nodbg
+wait 100
+pixels gpu reset
+perf own_base_2 10
+pixels gpu own_base_2
+# ---- 3. the tree, still
+cmd gamemode spectator
+cmd tp @s -1543.5 69 -715.5 -90 20
+wait 100
+lens chain cinematic_comp_u_nodbg
+wait 100
+pixels gpu reset
+perf tree_base_1 10
+pixels gpu tree_base_1
+lens chain cinematic_comp_u_nodbg_notlite
+wait 100
+pixels gpu reset
+perf tree_notlite 10
+pixels gpu tree_notlite
+lens chain cinematic_u_all_twin
+wait 100
+pixels gpu reset
+perf tree_u_all 10
+pixels gpu tree_u_all
+lens chain cinematic_comp_u_lean
+wait 100
+pixels gpu reset
+perf tree_lean 10
+pixels gpu tree_lean
+lens chain cinematic_comp_u_nodbg
+wait 100
+pixels gpu reset
+perf tree_base_2 10
+pixels gpu tree_base_2
+# ---- 4. running through the trees (four legs of 5 s): the twin as it runs, the candidates, and where running's extra
+# GPU time goes (each pass left out, and Lens off, running and standing at the start of the run)
+lens chain off
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_twin
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_twin
+lens chain cinematic_comp_u_nodbg
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_base
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_base
+lens chain cinematic_u_all_twin
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_u_all
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_u_all
+lens chain cinematic_comp_u_lean
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_lean
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_lean
+lens chain cinematic_light
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_nolight
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_nolight
+lens chain cinematic_clouds
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_noclouds
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_noclouds
+lens chain cinematic_composite
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_nocomp
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_nocomp
+lens chain cinematic_none
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_none
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_none
+lens chain cinematic_none
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+pixels gpu reset
+perf start_none 10
+pixels gpu start_none
+lens chain cinematic_light
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+pixels gpu reset
+perf start_nolight 10
+pixels gpu start_nolight
+lens chain cinematic_clouds
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+pixels gpu reset
+perf start_noclouds 10
+pixels gpu start_noclouds
+lens chain cinematic_composite
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+pixels gpu reset
+perf start_nocomp 10
+pixels gpu start_nocomp
+lens chain off
+lens off
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_lensoff
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_lensoff
+
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+pixels gpu reset
+perf start_lensoff 10
+pixels gpu start_lensoff
+lens cinematic
+cmd tp @s -1560.5 69 -715.5 -90 12
+wait 100
+perfstart run_twin_2
+pixels gpu reset
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+look -90 12
+glide 0.28 0 0 100
+wait 100
+look 90 12
+glide -0.28 0 0 100
+wait 100
+perfend
+pixels gpu run_twin_2
+lens chain off
+quit

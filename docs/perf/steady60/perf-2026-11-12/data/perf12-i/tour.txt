@@ -1,0 +1,43 @@
+slot.sh: tour slot taken by look-steady-60 after 0s
+33 pack files in run-autopilot/mods (comfort, feel, perf, sound, world)
+screenshots:
+[03:06:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_base_2: own_base_2 samples=600 world_p50=13.84ms world_p95=14.82ms world_p99=14.94ms upscale_p50=0.44ms upscale_p99=1.20ms
+[03:06:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_base_2
+[03:06:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels config: scale 1.00 (4K 0.85), SHARP, ready
+[03:06:16] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels config
+[03:06:17] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens sunpass setting: sun pass from the setting
+[03:06:18] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens temporal setting: temporal from the setting
+[03:06:19] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_comp_calm: chain awaken:lens_probe_cinematic_comp_calm
+[03:06:20] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:06:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[03:06:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[03:06:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_pcalm_1 10
+[03:06:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_pcalm_1 frames=598 avg_fps=59.6 p50=17.34ms p95=18.87ms p99=19.72ms max=21.21ms tick_p95=7.94ms heap=7494/8192MB fb=3840x2160 load=2.9 occluded=false minimized=false
+[03:06:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_pcalm_1: own_pcalm_1 samples=599 world_p50=13.91ms world_p95=14.71ms world_p99=14.92ms upscale_p50=0.43ms upscale_p99=0.48ms
+[03:06:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_pcalm_1
+[03:06:35] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_comp_calm_noday: chain awaken:lens_probe_cinematic_comp_calm_noday
+[03:06:36] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:06:41] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[03:06:41] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[03:06:41] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_pnoday_1 10
+[03:06:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_pnoday_1 frames=600 avg_fps=59.8 p50=17.33ms p95=18.80ms p99=20.42ms max=23.19ms tick_p95=6.63ms heap=2690/8192MB fb=3840x2160 load=2.5 occluded=false minimized=false
+[03:06:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_pnoday_1: own_pnoday_1 samples=601 world_p50=13.63ms world_p95=13.93ms world_p99=14.10ms upscale_p50=0.44ms upscale_p99=1.28ms
+[03:06:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_pnoday_1
+[03:06:52] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_comp_calm: chain awaken:lens_probe_cinematic_comp_calm
+[03:06:53] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:06:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[03:06:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[03:06:58] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_pcalm_2 10
+[03:07:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_pcalm_2 frames=598 avg_fps=59.6 p50=17.24ms p95=19.07ms p99=22.31ms max=50.98ms tick_p95=9.79ms heap=1836/8192MB fb=3840x2160 load=2.7 occluded=false minimized=false
+[03:07:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_pcalm_2: own_pcalm_2 samples=599 world_p50=13.84ms world_p95=14.80ms world_p99=14.98ms upscale_p50=0.44ms upscale_p99=1.16ms
+[03:07:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_pcalm_2
+[03:07:08] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain cinematic_comp_calm_noday: chain awaken:lens_probe_cinematic_comp_calm_noday
+[03:07:09] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] wait 100
+[03:07:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset: gpu timing reset
+[03:07:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu reset
+[03:07:14] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_pnoday_2 10
+[03:07:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] perf own_pnoday_2 frames=599 avg_fps=59.7 p50=17.15ms p95=19.04ms p99=21.21ms max=23.07ms tick_p95=8.13ms heap=3288/8192MB fb=3840x2160 load=3.1 occluded=false minimized=false
+[03:07:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_pnoday_2: own_pnoday_2 samples=600 world_p50=13.90ms world_p95=14.24ms world_p99=14.91ms upscale_p50=0.44ms upscale_p99=0.55ms
+[03:07:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] pixels gpu own_pnoday_2
+[03:07:24] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] lens chain off: chain from the Look
+[03:07:25] [Render thread/INFO] [de.aw.Awaken/]: [autopilot] quit
