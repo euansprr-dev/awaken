@@ -16,14 +16,31 @@ final class AscentSwingTests {
     private AscentSwingTests() {}
 
     static void register() {
-        dev.awaken.core.test.AwakenTests.register("ascent_swing_bench", 20, AscentSwingTests::bench);
-        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_swing_level", 40, AscentSwingTests::level);
-        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_sling_level", 40, AscentSwingTests::sling);
-        dev.awaken.core.test.AwakenTests.register("ascent_swing_over_nothing", 20, AscentSwingTests::overNothing);
-        dev.awaken.core.test.AwakenTests.register("ascent_swing_held", 20, AscentSwingTests::held);
-        dev.awaken.core.test.AwakenTests.register("ascent_rope_chain", 20, AscentSwingTests::ropeChain);
-        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_aimed", 40, AscentSwingTests::aimed);
-        dev.awaken.core.test.AwakenTests.register("ascent_sky_stair", 20, AscentSwingTests::skyStair);
+        dev.awaken.core.test.AwakenTests.register("ascent_swing_bench", 20, today(AscentSwingTests::bench));
+        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_swing_level", 40, today(AscentSwingTests::level));
+        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_sling_level", 40, today(AscentSwingTests::sling));
+        dev.awaken.core.test.AwakenTests.register("ascent_swing_over_nothing", 20, today(AscentSwingTests::overNothing));
+        dev.awaken.core.test.AwakenTests.register("ascent_swing_held", 20, today(AscentSwingTests::held));
+        dev.awaken.core.test.AwakenTests.register("ascent_rope_chain", 20, today(AscentSwingTests::ropeChain));
+        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_aimed", 40, today(AscentSwingTests::aimed));
+        dev.awaken.core.test.AwakenTests.register("ascent_sky_stair", 20, today(AscentSwingTests::skyStair));
+        RealRopeTests.register();
+    }
+
+    /**
+     * A test of the assisted swing as it was before the real swing (SPEC §62.9): run with {@link AscentSwing#real} off,
+     * which is that swing exactly (the switch's other side). The real swing has its own tests ({@link RealRopeTests}).
+     */
+    static java.util.function.Consumer<GameTestHelper> today(java.util.function.Consumer<GameTestHelper> test) {
+        return h -> {
+            boolean was = AscentSwing.real;
+            AscentSwing.real = false;
+            try {
+                test.accept(h);
+            } finally {
+                AscentSwing.real = was;
+            }
+        };
     }
 
     /**
@@ -523,11 +540,12 @@ final class AscentSwingTests {
             h.assertTrue(AscentSwing.aimed(space, falling, ex, hy, ez, 0, down, AscentRules.TETHER_RANGE, true, w, pick) && pick.sling,
                     String.format("falling from 10 up, the crown under you: still slung off (sling %b; sling: %s)", pick.sling,
                             AscentSwing.SLING_NO[w.aimSling]));
-            // and from the floor, the floor 15 ahead looked at: slung off it
+            // and from the floor, the floor 15 ahead looked at: slung off it (the bite is the look's hit, as every hit 0.04
+            // out of the face it met: LevelSpace.ray)
             for (BlockPos q : BlockPos.betweenClosed(o.offset(6, 1, 19), o.offset(10, 3, 21))) level.setBlock(q, air, flags);
             float ahead = (float) -Math.toDegrees(Math.atan2(by - gy, 15));
             h.assertTrue(AscentSwing.aimed(space, ground, ex, gy, ez, 0, ahead, AscentRules.TETHER_RANGE, true, w, pick)
-                    && pick.sling && Math.abs(pick.y - by) < 0.01 && pick.py >= ground.y + 1.49,
+                    && pick.sling && Math.abs(pick.y - (by + 0.04)) < 0.01 && pick.py >= ground.y + 1.49,
                     String.format("from the floor, the floor 15 ahead: slung off it (sling %b, bite %.2f up, pull at %.2f over the hand; sling: %s)",
                             pick.sling, pick.y - by, pick.py - ground.y, AscentSwing.SLING_NO[w.aimSling]));
             h.assertTrue(AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the floor as a real anchor");
@@ -679,6 +697,13 @@ final class AscentSwingTests {
             StringBuilder trace = new StringBuilder();
             StairStats st = stairRuns(dev.awaken.above.ruin.SkyRig.Stair.DEFAULT, trace);
             rows.append("\nbuilt ").append(st).append(trace);
+            // the real swing (SPEC §62.9) on the stair as built, logged beside it (its own gates are RealRopeTests')
+            AscentSwing.real = true;
+            try {
+                rows.append("\nreal ").append(stairRuns(dev.awaken.above.ruin.SkyRig.Stair.DEFAULT));
+            } finally {
+                AscentSwing.real = false;
+            }
             gate(bad, st.hopUp >= st.hopOf - 1, "the hopping bot gets up " + st.hopUp + " of " + st.hopOf);
             gate(bad, st.keyUp * 3 >= st.keyOf * 2, "the key-only bot gets up " + st.keyUp + " of " + st.keyOf);
             gate(bad, st.hard == 0, st.hard + " hard hits on the stair");

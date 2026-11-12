@@ -360,7 +360,8 @@ public final class SwingBench {
                 if (p == null && !groundThrow && markerOn && marker.zip && (!AscentSwing.guide || marker.len <= AscentSwing.T.wallZip
                         && AscentSwing.zipClear(w, hx, hy, hz, marker))) p = marker;
                 if (p != null && !p.zip) {
-                    rope.set(p.x, p.y, p.z, p.len, p.fitLen);
+                    // the pick's rope (a real one with AscentSwing.real, SPEC §62.9)
+                    rope.throwFor(p);
                     zip = false;
                     travel = AscentSwing.travel(p.len);
                     AscentSwing.entry(k, yaw);
@@ -514,8 +515,7 @@ public final class SwingBench {
                     k.z += k.vz;
                     if (travel == 0 && !zip && !sling) {
                         if (assist) {
-                            double r = Math.sqrt(sq(k.x - rope.ax) + sq(k.y - rope.ay) + sq(k.z - rope.az));
-                            rope.len = Math.max(AscentRules.TETHER_MIN, Math.min(rope.len, r));
+                            AscentSwing.bite(w, k, rope, yaw);
                         } else {
                             double r = Math.sqrt(sq(k.x - tax) + sq(k.y - tay) + sq(k.z - taz));
                             tlen = Math.max(AscentRules.TETHER_MIN, Math.min(tlen, r));
@@ -875,13 +875,11 @@ public final class SwingBench {
         AscentSwing.Work w = new AscentSwing.Work();
         AscentSwing.Pick pick = new AscentSwing.Pick();
         if (!AscentSwing.find(space, k, 0, AscentRules.TETHER_RANGE, w, pick) || pick.zip) return Double.NaN;
-        AscentSwing.Rope rope = new AscentSwing.Rope().set(pick.x, pick.y, pick.z, pick.len, pick.fitLen);
+        AscentSwing.Rope rope = new AscentSwing.Rope().throwFor(pick);
         AscentSwing.entry(k, 0);
         double[] sc = new double[3];
         for (int travel = AscentSwing.travel(pick.len); travel > 0; travel--) AscentRules.carryStep(k, 0f, 0.5, 0, sc);
-        double d = Math.sqrt(sq(k.x - rope.ax) + sq(k.y - rope.ay) + sq(k.z - rope.az));
-        rope.len = Math.max(AscentRules.TETHER_MIN, Math.min(rope.len, d));
-        rope.fitLen = Math.min(rope.fitLen, rope.len);
+        AscentSwing.bite(space, k, rope, 0);
         for (int i = 0, held = 0; ; i++) {
             if (i > 300) return Double.NaN;
             int how = AscentSwing.tick(space, k, rope, 0, 1, w);
@@ -964,10 +962,15 @@ public final class SwingBench {
         }
         for (String[] set : new String[][] {PLACES, WOODS}) {
             for (String p : set) {
+                AscentSwing.real = false;
                 System.out.println(bench(p, false));
                 System.out.println(bench(p, true));
                 System.out.println("hold   " + bench(p, true, true));
                 System.out.println("key    " + benchKey(p));
+                // the real swing (SPEC §62.9) beside them: the same bots on the real rope
+                AscentSwing.real = true;
+                System.out.println("real   " + bench(p, true, true));
+                System.out.println("realkey " + benchKey(p));
             }
         }
     }

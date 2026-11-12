@@ -145,11 +145,25 @@ public final class AscentFp {
                 // other hand comes up onto the rope under the weight, letting go again as you rise out of it
                 float jolt = AscentMoves.swinging() ? Ease.at(Ease.SMOOTH, 1F - (t - AscentMoves.swingCatchAt) / 7F) : 0;
                 float weight = 0;
+                if (AscentMoves.hoisting()) {
+                    // the real swing's hoist (SPEC §62.9): hand over hand up the line, the fists trading places as it hauls
+                    float haul = Mth.sin(t * Mth.PI / 6F);
+                    FirstPerson.View.fist(v.fistMain, 1, m * ROPE_X, ROPE_Y + 0.06F * haul, ROPE_Z + 0.02F * haul);
+                    FirstPerson.View.fist(v.fistOff, in, m * (ROPE_X - 0.11F), ROPE_Y - 0.06F * haul, ROPE_Z - 0.02F * haul);
+                    break;
+                }
                 if (AscentMoves.swinging() && AscentMoves.ropeTaut) {
                     var k = AscentMoves.K;
-                    dev.awaken.body.ascent.AscentSwing.pivot(k.x, k.z, AscentMoves.ax, AscentMoves.ay, AscentMoves.az,
-                            p.getYRot() + AscentMoves.ROPE.bend, PV);
-                    weight = Ease.at(Ease.SMOOTH, 1F - (float) dev.awaken.body.ascent.AscentSwing.angleFromBottom(k, PV[0], PV[1], PV[2]) / 35F);
+                    double ang;
+                    if (AscentMoves.ROPE.real) {
+                        // a real rope hangs from its anchor itself: how far it is from straight down
+                        ang = dev.awaken.body.ascent.RealRope.angle(k, AscentMoves.ROPE);
+                    } else {
+                        dev.awaken.body.ascent.AscentSwing.pivot(k.x, k.z, AscentMoves.ax, AscentMoves.ay, AscentMoves.az,
+                                p.getYRot() + AscentMoves.ROPE.bend, PV);
+                        ang = dev.awaken.body.ascent.AscentSwing.angleFromBottom(k, PV[0], PV[1], PV[2]);
+                    }
+                    weight = Ease.at(Ease.SMOOTH, 1F - (float) ang / 35F);
                 }
                 FirstPerson.View.fist(v.fistMain, 1, m * ROPE_X, ROPE_Y - 0.07F * jolt - 0.03F * weight, ROPE_Z + 0.05F * jolt);
                 // the other hand joins to pump (forward) and climbs over to reel in (sneak)

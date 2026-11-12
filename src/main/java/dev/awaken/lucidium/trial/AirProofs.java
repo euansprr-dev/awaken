@@ -123,13 +123,12 @@ final class AirProofs {
         AscentSwing.Pick pick = new AscentSwing.Pick();
         String when = throwAt == THROW_EARLY ? "thrown early" : "thrown late";
         if (!AscentSwing.find(space, k, 0, AscentRules.TETHER_RANGE, w, pick) || pick.zip) return fail("the rope " + when + " finds nothing to swing from");
-        AscentSwing.Rope rope = new AscentSwing.Rope().set(pick.x, pick.y, pick.z, pick.len, pick.fitLen);
+        // the pick's rope, bitten as the client bites it (a real one with AscentSwing.real, SPEC §62.9)
+        AscentSwing.Rope rope = new AscentSwing.Rope().throwFor(pick);
         AscentSwing.entry(k, 0);
         double[] sc = new double[3];
         for (int travel = AscentSwing.travel(pick.len); travel > 0; travel--, t++) AscentRules.carryStep(k, 0f, 0.5, 0, sc);
-        double d = Math.sqrt(sq(k.x - rope.ax) + sq(k.y - rope.ay) + sq(k.z - rope.az));
-        rope.len = Math.max(AscentRules.TETHER_MIN, Math.min(rope.len, d));
-        rope.fitLen = Math.min(rope.fitLen, rope.len);
+        AscentSwing.bite(space, k, rope, 0);
         AscentRules.Kin c = new AscentRules.Kin();
         int best = -1;
         double bestScore = -1e9, nearest = Double.NaN;
