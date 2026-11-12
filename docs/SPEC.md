@@ -12109,8 +12109,17 @@ within 2,400 of the centre), painting a road chunk 0.9-3.1 ms (cold); a town pla
 slower ones planned twice, the second with the wider wall; 48 ms on the test valley), painted at about 0.3 ms a chunk
 over ~75-110 chunks, at most 6 lights a chunk. On Euan's terrain (Tectonic with the Awakened preset, the city basin) a
 land read is a whole noise column (26.3 samples it all), 0.63 ms on the M4 (3x vanilla) and ~2.7 ms on CI's runner, so
-the land is nearly all of the cost and the only lever is reading fewer columns. What keeps it down (every cut exact: the
-same roads and plans for a seed, the bench's fingerprint unchanged):
+the land is nearly all of the cost. What keeps it down (every cut exact: the same roads and plans for a seed, the bench's
+fingerprint unchanged):
+- the planners' own read of a column (`village.world.NoiseColumns`, one a thread, behind `GenTerrain`): the generator's
+  `getBaseColumn` made a new noise chunk for every column, whose sampler set looks each density function up by its
+  value, a hash of the whole function tree seven times a column (the final density and the aquifer's six), and ran the
+  aquifer down all 384 blocks. Ours binds the same sampler objects, found once a thread by identity, and stops at the
+  first solid block; everything else is the generator's (the volume, context, buffers, aquifer, its fluid picker
+  through an access transformer, since Tectonic sets its own), read top down in the same order, so each block is the
+  one `getBaseColumn` gives. `/awaken village road columns [count]` checks it block for block over the roads' noise and
+  the overworld's own (Tectonic's in a tour) and times both ways, with where a column's time goes;
+  `village_columns_exact` checks vanilla's noise. `-Dawaken.noiseColumns=false` reads every column the generator's way.
 - one shared reading of the land (`SharedLand`, behind `RoadWorld.terrain()`: 64 stripes of 4,096 recent columns and
   4,096 older ones), so a site search, the plan on its site, a village's fallback hamlet, a town's wider wall and the
   roads over it read each column once;

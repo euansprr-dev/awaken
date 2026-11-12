@@ -79,6 +79,23 @@ public final class RoadTests {
         h.succeed();
     }
 
+    /**
+     * SPEC §28.9, Cost: the planners' noise columns are the generator's own, block for block (vanilla's noise here; the
+     * command {@code /awaken village road columns} checks Tectonic's in a tour).
+     */
+    private static void columnsExact(GameTestHelper h) {
+        var reg = h.getLevel().registryAccess();
+        var ns = reg.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE_SETTINGS).getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
+        var preset = reg.lookupOrThrow(net.minecraft.core.registries.Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+                .getOrThrow(net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+        var gen = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(preset), ns);
+        var rs = net.minecraft.world.level.levelgen.RandomState.create(reg.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE), 4242L, ns.value());
+        var r = dev.awaken.village.world.NoiseColumnsCheck.run(gen, net.minecraft.world.level.LevelHeightAccessor.create(-64, 384), rs, 300, -200, 144, 12_000);
+        Awaken.LOG.info("[road] columns exact: {}", r.line());
+        h.assertTrue(r.columns() > 300 && r.differ() == 0, "the planners' columns are the generator's: " + r.line());
+        h.succeed();
+    }
+
     public static void register() {
         RoadBanksTests.register();
         ArrivalTests.register();
@@ -92,6 +109,7 @@ public final class RoadTests {
         AwakenTests.register("village_tall_things_keep_off_region", 20, RoadTests::tallThingsKeepOffRegion);
         AwakenTests.register("village_town_plan", 400, RoadTests::towns);
         AwakenTests.register("village_wide_roads", 1200, RoadTests::wideRoads);
+        AwakenTests.register("village_columns_exact", 400, RoadTests::columnsExact);
         AwakenTests.register("village_march_ranks", 20, h -> {
             // a march post writes the land's rank range plainly (SPEC §21.10)
             String[] want = {"1–9", "10–24", "25–44", "45–69", "70–99", "100+"};
