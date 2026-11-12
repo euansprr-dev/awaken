@@ -7349,9 +7349,16 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
   - **What is water**: a level surface at the height a still fluid stands in its block (0.8889), seen from above,
     by the pixel's own world height (within 0.004), with the composite's normal up (or none, on an edge); lava, which
     stands at the same height, is told by the game's colour. So it needs no heightfield (Lite has none) and holds
-    at any distance. Flowing water and falls are not level and stay the game's. Under cover (parameter texel 21 r,
-    and on Cinematic the pixel's own cover) it stays the game's too: a cave's lake has no sky to hold. It gives way
-    with the game's own fog, and by the look's `water` (0.6 is whole).
+    at any distance. Flowing water and falls are not level and stay the game's. Under cover it stays the game's too:
+    a cave's lake has no sky to hold. On Cinematic and Ultra that is the water's own cover, by the heightfield over
+    it (as Lens's light reads a surface's: shade from a roof's edge, gone six blocks in), read for the water itself
+    where the light has no sun to give; on Lite, and before the heightfield is up, the camera's (parameter texel
+    21 r). (It was the camera's and the light's together, and the light reads nothing in a Realm, whose look gives
+    it no sun (all of them: a Realm is lit by its own lamps, under the overworld's sky, so the Air is on there): a
+    Realm's pool under a hall's roof was open water, mirroring the sky in a closed room, with a pale line along every
+    block's edge. Euan, in an E-rank Hive gate's Realm, 12 Nov: "seems like there's an issue with the water in this
+    gate here creating squares in the water". The gates' own world has no sky, and no Air.) It gives way with the game's own fog, and by the look's
+    `water` (0.6 is whole).
   - **The body**: jewel tones from the place's own water colour (the hue of the game's pixel: a marsh stays dark, a
     steppe pale), drawn toward aqua where you look down into it and toward indigo where it runs deep and far, lit
     by the hour and by Lens's own shade (the lit and the raw pixel differ by nothing else). Near you the game's
@@ -7374,7 +7381,9 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     it, soft-edged, breathing in and out along the shore, a faint ring off it now and then, and aqua shallows within
     a block of the shore. For it the heightfield marks water under leaves too (it marked open water only, and every column
     under a tree's crown read as a bank). A bridge overhead reads as a bank as well: the water under its edge
-    ripples.
+    ripples. Only water whose own column is open has a shore (its top is the heightfield's water mark): under a
+    roof or a bridge every column round it has that roof for its top, and each read as a bank, a lattice of pale
+    lines one block square.
   - **Cost**: only water pixels pay. Lite: arithmetic (some forty hashes and three cosines), the sky model twice,
     and three reads.
     Cinematic: the mirrored cloud walk and four heights more. Not measured: frame times need the Mac.
