@@ -290,6 +290,23 @@ public abstract class Land {
         return null;
     }
 
+    /** As {@link #legView}, for the fight or ambush nearest the Mouth (the first fight, as the open-land check counts it). */
+    public final double[] firstFightView(int back) {
+        Site mouth = mouth();
+        Leg best = null;
+        for (Leg l : route()) {
+            if (l.kind() != LegKind.FIGHT && l.kind() != LegKind.AMBUSH) continue;
+            if (best == null || Math.hypot(l.x() - mouth.x(), l.z() - mouth.z()) < Math.hypot(best.x() - mouth.x(), best.z() - mouth.z())) best = l;
+        }
+        if (best == null) return null;
+        int n = 0;
+        for (Leg l : route()) {
+            if (l.id().equals(best.id())) break;
+            if (l.kind() == best.kind()) n++;
+        }
+        return legView(best.kind(), n, back);
+    }
+
     /** The leg a den's monsters belong to (a fight or an ambush), or null. */
     public final Leg legOfDen(int index) {
         for (Leg l : route()) if ((l.kind() == LegKind.FIGHT || l.kind() == LegKind.AMBUSH) && l.site() == index) return l;

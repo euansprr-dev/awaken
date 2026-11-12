@@ -23609,8 +23609,23 @@ lines and the seals as one glow on a lit door, so each has its own look (`Pillar
   pulled apart and a last red glow in it, nothing lit.
 - Saltcomb's plan-2 road keeps no lamp on the ramp up to the court and none within 16 of the door's line (x = 0, Mouth to
   door): from the road, two lamp poles stood across the seals.
+- **A land with no door** (no `heart_open`; none today: the designed lands have theirs and a rolled land's is the grate across
+  its way in, `GeneratedLand.heartDoor`) would have its row at the edge of the Lord's place, toward the leg that leads there
+  (the leg whose exits hold the Lord's, else the Mouth): the Lord's radius out from it, never nearer that leg than 8. Its
+  words say so: "the seals at the edge of the Lord's place" where a land with a door says "the seals on the Lord's door", in
+  the first word on the lights and in every toast as a Warden falls (the last: "The way to the Lord is open."), from
+  `RealmLights.hasDoor`. `realm_seal_words` checks that each land's words name where its seals really stand.
+- **A row stands in the open.** Each seal needs nothing solid over its feet up to a block over its disc (`RealmLights.sealClear`,
+  the land painted a chunk at a time). The row goes out away from the Lord; if a seal would stand in something (the Barrow's
+  door is a stair up its ship's side, and away from the Lord runs along the hull) it faces the Mouth, then the quarter nearest
+  that, and so on; none clear keeps the first. `realm_seals` checks every open land and two rolled ones.
 - Tours: `/awaken gate realm_warden_down <n>` counts the land's nth Warden as beaten (`RealmLive.wardenBeaten`), so a shot
-  shows a broken seal beside whole ones (`tools/autopilot/realm-saltcomb-way.txt`).
+  shows a broken seal beside whole ones (`tools/autopilot/realm-saltcomb-way.txt`). `/awaken gate realm_leg seals 0 <back>
+  <up>` stands `back` out in front of the row, facing it (`RealmLights.sealView`); `realm_leg first_fight 0 <back> <up>` looks
+  at the fight or ambush nearest the Mouth (`Land.firstFightView`). Each open land has Saltcomb's set of shots in
+  `realm-<land>-way.txt` (Mouth at noon with the lights, each Warden, each line of stones, the seals whole then one broken, the
+  first fight, the HUD line); `realm-ways-seals.txt` shoots only the seals of the Barrow, the Vine Seat, the Glass Sea and the
+  High Caps.
 
 Sent on arrival and every 30 s; when a Warden falls its pillar fades over 2.5 s and its seal breaks (the whole disc fades
 over the broken ring, `ClientGates.realmLights`), a toast says "A seal on the Lord's door has broken. 2 Wardens are left, each under a light."

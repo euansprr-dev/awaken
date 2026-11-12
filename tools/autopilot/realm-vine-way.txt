@@ -1,0 +1,77 @@
+# The Vine Seat on plan 2 (SPEC 50.9 "Open lands, fixed"): its designed way (the causeway and the great stair, stones on the second tier), shot as Saltcomb's was:
+# the Mouth at noon with the Warden lights, each Warden, every line of stones, the Lord's door with its seals (whole,
+# then one broken), the first fight and the HUD line. Entered with gate realm_enter at seed 1, today's plan.
+world autopilot_realm_vine_way creative 20261123
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+
+cmd awaken gate realm_enter E awaken:vine_seat 1
+need realm
+# the System's word on the lights, six seconds in (the first two open lands only); the HUD's goal line from the start
+wait 150
+shotnow vineway_teach
+screen close
+hud off
+wait 20
+
+# from the way in at noon: each Warden's light over the land
+cmd awaken gate realm_at MOUTH 0 0 3 0
+look 190 -14
+wait 80
+shot vineway_mouth_noon
+look 220 -14
+wait 40
+shot vineway_mouth_noon_a
+look 160 -14
+wait 40
+shot vineway_mouth_noon_b
+
+# each Warden under its light, from a little short of it
+cmd awaken gate realm_leg WARDEN 0 24 8
+wait 80
+shot vineway_warden_0
+cmd awaken gate realm_leg WARDEN 1 24 8
+wait 80
+shot vineway_warden_1
+cmd awaken gate realm_leg WARDEN 2 24 8
+wait 80
+shot vineway_warden_2
+
+# every line of stones, from a little short of it, a few blocks up
+cmd awaken gate realm_leg MOVEMENT 0 14 6
+wait 80
+shot vineway_stones_0
+cmd awaken gate realm_leg MOVEMENT 1 14 6
+wait 80
+shot vineway_stones_1
+
+# the Lord's door from in front of its seals (the Lord's own leg stands a rolled land's camera inside the ring, facing away): one seal for each Warden, all whole; then one Warden beaten
+cmd awaken gate realm_leg seals 0 12 4
+wait 80
+shot vineway_door_seals
+cmd awaken gate realm_warden_down 0
+wait 80
+shot vineway_door_seal_broken
+
+# the first fight (the fight or ambush nearest the way in), its monsters out: a creative camera, so none come for it
+cmd difficulty normal
+cmd awaken gate realm_leg first_fight 0 14 4
+wait 200
+shot vineway_first_fight
+
+# the run on the HUD at that camp, folded to its one line: the goal stays
+hud on
+cmd awaken gate realm_leg first_fight 0 8 2
+wait 200
+shot vineway_hud
+quit

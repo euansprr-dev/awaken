@@ -101,6 +101,13 @@ public final class RealmTests {
         return dev.awaken.gates.realms.kit.land.LandTests.land(program, theme, kind, lord, rank, seed, NOW);
     }
 
+    /** The lands whose seals are checked: every designed open land on today's plan, Saltcomb's old plan, and two rolled lands. */
+    private static Land[] sealLands() {
+        return new Land[]{salt(1, NOW), salt(1), amber(1, NOW), keep(1, NOW), barrow(1, NOW), vine(1, NOW),
+                rolled("awaken:glass_country", "glass_desert", dev.awaken.gates.realms.kit.land.Landform.Kind.CAUSEWAY, "glass_serpent", Rank.D, 1),
+                rolled("awaken:fungal_country", "fungal_hollow", dev.awaken.gates.realms.kit.land.Landform.Kind.ISLES, "mother_of_spores", Rank.E, 1)};
+    }
+
     /** What every line of stones to jump along has to be: on the ground, a jump up onto it, a step a stone, gaps a running jump clears. */
     private static void stones(Land land, dev.awaken.gates.realms.kit.piece.Hops hop, String what, List<String> bad) {
         var st = hop.stones;
@@ -838,10 +845,12 @@ public final class RealmTests {
             h.succeed();
         });
         // Lights and seals (SPEC §50.9; Euan, 12 Nov: "nothing guided me... the big building was closed. So how do I open the doors?"):
-        // a land that shows its Wardens has one seal for each, in a row just outside the Lord's door, and says what is left in plain words
+        // a land that shows its Wardens has one seal for each, in a row just outside the Lord's door (or the edge of a doorless
+        // Lord's place), in the open, and says what is left in plain words
         AwakenTests.register("realm_seals", 400, h -> {
-            for (Land land : new Land[]{salt(1, NOW), salt(1), amber(1, NOW)}) {
+            for (Land land : sealLands()) {
                 String at = land.ctx.id() + " plan " + land.ctx.version() + ": ";
+                Land.Site lord = land.site(Land.SiteKind.LORD);
                 if (!RealmLights.shows(land)) h.fail(at + "shows no lights");
                 List<int[]> seals = RealmLights.seals(land);
                 int wardens = land.sites(Land.SiteKind.WARDEN).size();
@@ -850,12 +859,45 @@ public final class RealmTests {
                 for (int[] seal : seals) {
                     double door = Double.MAX_VALUE;
                     for (Land.Edit e : land.change("heart_open")) door = Math.min(door, Math.hypot(e.x() - seal[0], e.z() - seal[2]));
+                    // a land with no door: the row stands at the edge of the Lord's place
+                    if (land.change("heart_open").isEmpty()) door = Math.max(0, Math.hypot(lord.x() - seal[0], lord.z() - seal[2]) - lord.radius());
                     if (door > 8) h.fail(at + "a seal at " + seal[0] + "," + seal[2] + " stands " + (int) door + " from the Lord's door");
+                    if (!RealmLights.sealClear(land, seal)) h.fail(at + "a seal at " + seal[0] + "," + seal[1] + "," + seal[2] + " stands in something");
                     if (!spots.add((long) seal[0] << 32 | seal[2] & 0xFFFFFFFFL)) h.fail(at + "two seals stand in one place");
                 }
             }
             if (!RealmLights.doorCount(1).startsWith("One seal is left") || !RealmLights.doorCount(3).startsWith("3 seals are left")) h.fail("the door's count reads wrong");
             if (RealmLights.colour("hive") == RealmLights.colour("no_such_theme")) h.fail("the hive's lights have no colour of their own");
+            h.succeed();
+        });
+        // The words say where the seals are (SPEC §50.9): "on the Lord's door" for a land whose seals stand by its door, "at the
+        // edge of the Lord's place" for one with none, in the System's first word on the lights and in every toast as a Warden falls
+        AwakenTests.register("realm_seal_words", 400, h -> {
+            for (Land land : sealLands()) {
+                String at = land.ctx.id() + " plan " + land.ctx.version() + ": ";
+                boolean door = RealmLights.hasDoor(land);
+                // where its seals really stand: within 8 of the door, else within 8 of the Lord's place's edge
+                Land.Site lord = land.site(Land.SiteKind.LORD);
+                for (int[] seal : RealmLights.seals(land)) {
+                    double near = Double.MAX_VALUE;
+                    for (Land.Edit e : land.change("heart_open")) near = Math.min(near, Math.hypot(e.x() - seal[0], e.z() - seal[2]));
+                    boolean byDoor = near <= 8;
+                    if (byDoor != door) h.fail(at + "a seal at " + seal[0] + "," + seal[2] + (door ? " isn't by the door the words name" : " stands by a door the words don't name"));
+                    if (!door && Math.hypot(lord.x() - seal[0], lord.z() - seal[2]) - lord.radius() > 8) h.fail(at + "a seal isn't at the edge of the Lord's place");
+                }
+                List<String> lines = new java.util.ArrayList<>(List.of(RealmLights.teachLine(door)));
+                for (int left = 0; left <= 3; left++) lines.add(RealmLights.brokenLine(door, left));
+                for (String line : lines) {
+                    if (line.contains("door") != door) h.fail(at + (door ? "says nothing of the door its seals stand by: " : "names a door it hasn't got: ") + line);
+                    if (!door && !line.contains("the edge of the Lord's place")) h.fail(at + "doesn't say where its seals are: " + line);
+                }
+            }
+            // and both ways of saying it, whatever lands there are today
+            for (boolean door : new boolean[]{true, false}) {
+                String where = door ? "the seals on the Lord's door" : "the seals at the edge of the Lord's place";
+                if (!RealmLights.teachLine(door).contains(where)) h.fail("the first word doesn't say " + where);
+                if (RealmLights.brokenLine(door, 2).contains("door") != door || RealmLights.brokenLine(door, 0).contains("door") != door) h.fail("a toast says the wrong place");
+            }
             h.succeed();
         });
         // Life leans to the way (SPEC §50.9; Euan, 12 Nov: "barely any mobs... randomly placed"): on a designed land of today's plan

@@ -105,11 +105,15 @@ final class GateCommands {
                                     c.getSource().sendFailure(Component.literal("You're not in a Realm."));
                                     return 0;
                                 }
-                                var kind = dev.awaken.gates.realms.Land.LegKind.valueOf(StringArgumentType.getString(c, "kind").toUpperCase());
+                                // "first_fight": the fight or ambush nearest the way in, whatever its place in the run's list;
+                                // "seals": out in front of the seals on the Lord's door, facing them
+                                String named = StringArgumentType.getString(c, "kind");
                                 int back = IntegerArgumentType.getInteger(c, "back");
-                                double[] view = plan.land().legView(kind, IntegerArgumentType.getInteger(c, "index"), back);
+                                double[] view = named.equalsIgnoreCase("first_fight") ? plan.land().firstFightView(back)
+                                        : named.equalsIgnoreCase("seals") ? dev.awaken.gates.realms.RealmLights.sealView(plan.land(), back)
+                                        : plan.land().legView(dev.awaken.gates.realms.Land.LegKind.valueOf(named.toUpperCase()), IntegerArgumentType.getInteger(c, "index"), back);
                                 if (view == null) {
-                                    c.getSource().sendFailure(Component.literal("This run has no such " + kind + " leg."));
+                                    c.getSource().sendFailure(Component.literal("This run has no such " + named + " leg."));
                                     return 0;
                                 }
                                 var at = dev.awaken.gates.realms.Realms.world(g.realm.orElseThrow().cell(), (int) Math.round(view[0]), (int) view[1] + IntegerArgumentType.getInteger(c, "up"), (int) Math.round(view[2]));
