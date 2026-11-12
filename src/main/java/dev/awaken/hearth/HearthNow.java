@@ -185,11 +185,16 @@ public final class HearthNow {
         return kinds >= 2;
     }
 
-    /** "Sanctuary: bed ✓ · mat ✗", shortened until it fits the tracker. Public for the tests. */
+    /**
+     * "Sanctuary: bed ✓ · mat ✗", shortened until it fits the tracker. Pieces keep their own names (never a word that
+     * could mean another block); when even the plain list is too long, the first missing pieces are named and the rest
+     * counted ("Forge: anvil and 2 more"), then just the count (SPEC §28.2). Public for the tests.
+     */
     public static String progress(RoomType t, HearthRecord h) {
         if (t.furniture.isEmpty()) return Fit.first(Fit.TRACKER, t.label + ": " + t.needs, t.label);
         StringBuilder full = new StringBuilder(t.label).append(": "), tight = new StringBuilder(t.label).append(": "),
                 missing = new StringBuilder(t.label).append(": "), plain = new StringBuilder(t.label).append(": ");
+        List<String> lacking = new ArrayList<>();
         boolean first = true, firstMissing = true;
         for (Furniture f : t.furniture) {
             boolean have = h.furniture.length > f.ordinal() && h.furniture[f.ordinal()] > 0;
@@ -207,11 +212,17 @@ public final class HearthNow {
                 }
                 missing.append(f.shortName).append(" ✗");
                 plain.append(f.shortName);
+                lacking.add(f.shortName);
                 firstMissing = false;
             }
             first = false;
         }
-        return Fit.first(Fit.TRACKER, full.toString(), tight.toString(), missing.toString(), plain.toString());
+        List<String> options = new ArrayList<>(List.of(full.toString(), tight.toString(), missing.toString(), plain.toString()));
+        for (int named = lacking.size() - 1; named >= 1; named--) {
+            options.add(t.label + ": " + String.join(", ", lacking.subList(0, named)) + " and " + (lacking.size() - named) + " more");
+        }
+        if (lacking.size() > 1) options.add(t.label + ": " + lacking.size() + " to add");
+        return Fit.first(Fit.TRACKER, options.toArray(String[]::new));
     }
 
     static boolean holds(ServerPlayer p, Item item) {

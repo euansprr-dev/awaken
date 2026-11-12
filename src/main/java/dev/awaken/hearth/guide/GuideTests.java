@@ -91,6 +91,15 @@ public final class GuideTests {
                     }
                 }
             }
+            // the Forge's line keeps the Fitting Stand's whole name (never "stand", Euan 2026-11-12); empty, it names its
+            // first piece and counts the rest; grown from an Armoury, it names what's left to add (SPEC §28.2)
+            rec.furniture = new int[Furniture.COUNT];
+            String forge = dev.awaken.hearth.HearthNow.progress(RoomType.ARMORY, rec);
+            h.assertTrue(forge.equals("Forge: anvil and 2 more"), "the empty Forge names its first piece: " + forge);
+            rec.furniture[Furniture.FITTING_STAND.ordinal()] = 1;
+            forge = dev.awaken.hearth.HearthNow.progress(RoomType.ARMORY, rec);
+            h.assertTrue(forge.equals("Forge: anvil ✗ Forge ✗"), "the Armoury's Forge names what's left: " + forge);
+            h.assertTrue(Furniture.FITTING_STAND.shortName.equals("Fitting Stand"), "the Fitting Stand keeps its name on the tracker");
             h.assertTrue(Fit.px("Right-click your campfire") <= Fit.TRACKER && Fit.px("Right-click your Anchor") <= Fit.TRACKER, "the guide nudge fits");
             h.assertTrue(Fit.px("Within 48 blocks: yours.") <= Fit.TOAST && Fit.px("Free: your first Sanctuary.") <= Fit.TOAST, "welcome and offer lines fit");
             // the guide's data survives the wire

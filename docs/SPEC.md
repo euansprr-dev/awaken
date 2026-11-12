@@ -10934,6 +10934,11 @@ as a Forge again once a Fitting Stand stands in it; every step it finished stays
 a Forge (§27.14, `had(ARMORY)`), and the Forge's window says what the room lacks ("needs an anvil and a Fitting Stand in
 this room"). The home stage's forge (`HomeStage`) has a Fitting Stand where its armour stand stood. Test
 `hearth_armoury_room`.
+The Now tracker's room line (`HearthNow.progress`, 148 px) keeps every piece's own name: the Fitting Stand is "Fitting
+Stand" there too, never "stand", which would read as the armour stand again. When even the plain list of what's missing
+is too long, the line names the first missing pieces and counts the rest ("Forge: anvil and 2 more"), and only then
+falls back to the count ("Forge: 3 to add"). A Forge grown from an Armoury already has its Fitting Stand, so its line
+names what's left: "Forge: anvil ✗ Forge ✗". Test `hearth_guide_matches_roomtype`.
 
 **Room kinds** (`RoomType`; effects in `RoomEffects`, `Breaks`, `Town`). Shelter (every closed room; the first: toast
 "First shelter · Rest heals here. From now on the Hearth reads everything you build."), Bedroom (a bed), Sanctuary,
