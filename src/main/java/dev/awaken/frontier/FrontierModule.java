@@ -81,9 +81,13 @@ public final class FrontierModule {
             Flights.tick(server);
             if (server.getTickCount() % 40 == 7) Moorings.tick(server);
             if (server.getTickCount() % 100 == 31) FrontierPost.tick(server);
+            if (server.getTickCount() % 40 == 23) Waking.tick(server);
         });
         bus.addListener((ServerStoppingEvent e) -> Flights.stopping(e.getServer()));
-        bus.addListener((ServerStoppedEvent e) -> Flights.clear());
+        bus.addListener((ServerStoppedEvent e) -> {
+            Flights.clear();
+            Waking.clear();
+        });
         bus.addListener((PlayerEvent.PlayerLoggedInEvent e) -> {
             if (e.getEntity() instanceof ServerPlayer p) Flights.loggedIn(p);
         });
@@ -95,6 +99,11 @@ public final class FrontierModule {
         bus.addListener(EventPriority.HIGH, FrontierModule::onBreak);
         bus.addListener(EventPriority.HIGH, FrontierModule::onPlace);
         bus.addListener(FrontierModule::onExplode);
+        // waking at the landing before a Hearth (SPEC §67.12): the fall's place first, the land warmed last
+        bus.addListener(EventPriority.HIGHEST, Waking::onDeath);
+        bus.addListener(EventPriority.LOWEST, Waking::onFallen);
+        bus.addListener(EventPriority.HIGH, Waking::onRespawnPosition);
+        bus.addListener(Waking::onRespawned);
     }
 
     /** The helm flies you; the hold takes what the city asked for (or a keepsake, home) and keeps your letters; the board is Hale's. */

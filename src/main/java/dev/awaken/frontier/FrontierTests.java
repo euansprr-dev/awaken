@@ -1,12 +1,19 @@
 package dev.awaken.frontier;
 
 import dev.awaken.core.api.FarLanding;
+import dev.awaken.core.api.HearthHooks;
 import dev.awaken.core.test.AwakenTests;
 import dev.awaken.living.region.RegionMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,7 +24,8 @@ import java.util.Set;
 /**
  * The Far Landing's checks (SPEC §67), one per mechanism and all pure: the landing is fair and the same every time on
  * twenty seeds; the land under rules 4 is measured from the landing (E round it, the city's ring kept) while rules 3 is
- * untouched; the skiff and its jetty fit their footprint in every facing, with the helm on the deck.
+ * untouched; the skiff and its jetty fit their footprint in every facing, with the helm on the deck. One is not pure:
+ * a landed player with no Hearth wakes at the landing, through the server's own respawn (§67.12).
  */
 final class FrontierTests {
     private FrontierTests() {}
@@ -121,6 +129,53 @@ final class FrontierTests {
             }
             h.assertTrue(Flights.compass(0, -100).equals("north") && Flights.compass(100, 0).equals("east"), "the compass reads the way Minecraft does");
             h.succeed();
+        });
+        AwakenTests.registerIsolated("frontier_wakes_at_landing", 100, h -> {
+            // Euan 12 Nov: "if you die before placing your hearth, it spawns you ALL THE WAY BACK IN CARILLON" (SPEC §67.12)
+            Set<BlockPos> plan = new HashSet<>();
+            for (List<Skiff.Part> parts : List.of(Skiff.skiff(), Skiff.jetty(), Skiff.landingExtras()))
+                for (Skiff.Part part : parts) plan.add(new BlockPos(part.x(), part.y(), part.z()));
+            BlockPos bay = Waking.BAY;
+            h.assertTrue(plan.contains(bay.below()) && !plan.contains(bay) && !plan.contains(bay.above()), "the bay has pier underfoot and room to stand");
+            ServerLevel level = h.getLevel();
+            MinecraftServer server = level.getServer();
+            FrontierData d = FrontierData.get(server);
+            FrontierData.Mooring before = d.landing();
+            ServerPlayer a = h.makeMockServerPlayerInLevel(), b = h.makeMockServerPlayerInLevel();
+            try {
+                // a has crossed and fell out by the landing, with no Hearth and no bed: they wake on its pier, by the hold
+                BlockPos fell = a.blockPosition();
+                FrontierData.Mooring m = new FrontierData.Mooring(fell, Direction.EAST, true, Moorings.LOOK);
+                d.landing(m);
+                d.mark(a.getUUID(), "landed");
+                h.assertTrue(a.getRespawnConfig() == null && HearthHooks.hearthsOf(a).isEmpty(), "no Hearth and no bed");
+                Waking.onDeath(new LivingDeathEvent(a, level.damageSources().generic()));
+                a = server.getPlayerList().respawn(a, false, Entity.RemovalReason.KILLED);
+                Vec3 want = Vec3.atBottomCenterOf(Skiff.at(m.origin(), m.facing(), bay));
+                h.assertTrue(a.level() == server.overworld() && Math.abs(a.getX() - want.x) < 0.01 && Math.abs(a.getZ() - want.z) < 0.01,
+                        "a wakes at the landing's bay " + want + ", not at " + a.position());
+                BlockPos hold = Skiff.at(m.origin(), m.facing(), Skiff.HOLD);
+                Vec3 look = Vec3.directionFromRotation(0F, a.getYRot());
+                h.assertTrue(look.x * (hold.getX() - want.x) + look.z * (hold.getZ() - want.z) > 0.5, "facing the hold (yaw " + a.getYRot() + ")");
+                // b, in the same world, never crossed: world spawn, as before (each by their own journey)
+                Vec3 spawn = Vec3.atBottomCenterOf(server.findRespawnDimension().getRespawnData().pos());
+                Waking.onDeath(new LivingDeathEvent(b, level.damageSources().generic()));
+                b = server.getPlayerList().respawn(b, false, Entity.RemovalReason.KILLED);
+                h.assertTrue(b.position().distanceToSqr(want) > 4, "b hasn't landed: world spawn, not the landing (at " + b.position() + ")");
+                // a falls by the city with the landing far off: the city is nearer, world spawn
+                d.landing(new FrontierData.Mooring(BlockPos.containing(spawn).offset(6000, 0, 0), Direction.EAST, true, Moorings.LOOK));
+                a.snapTo(spawn.x, spawn.y, spawn.z);
+                Waking.onDeath(new LivingDeathEvent(a, level.damageSources().generic()));
+                a = server.getPlayerList().respawn(a, false, Entity.RemovalReason.KILLED);
+                h.assertTrue(Math.abs(a.getX() - spawn.x) < 64 && Math.abs(a.getZ() - spawn.z) < 64, "a fall by the city wakes in the city (at " + a.position() + ")");
+                h.succeed();
+            } finally {
+                d.landing(before);
+                for (ServerPlayer p : List.of(a, b)) {
+                    d.marks.remove(p.getUUID());
+                    server.getPlayerList().remove(p);
+                }
+            }
         });
     }
 }

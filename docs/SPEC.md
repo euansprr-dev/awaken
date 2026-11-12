@@ -12393,6 +12393,9 @@ really want to update it and it's a choice").
   blocked) wakes at their Hearth instead, whatever the flag says. The one world-spawn respawn left with a Hearth is the
   Hearth turned off in the config (`features.hearth = false`), logged `[hearth] <name> wakes at world spawn though they have a
   Hearth`.
+- **Before a Hearth, out on the journey** (§67.12, Euan 2026-11-12: "if you die before placing your hearth, it spawns you
+  ALL THE WAY BACK IN CARILLON"): a player who has landed at the Far Landing, with no Hearth and no bed of their own, wakes
+  on the landing's pier, not at world spawn. The rules above are unchanged: once you have a Hearth they decide.
 - Every Hearth respawn logs `[hearth] <name> wakes at <hearth> (<pos>): <why>` and a director-log line.
 - **Said plainly**: Your Hearth's facts row "If you fall": "you wake here, by the fire, wherever you are" or "you wake
   at the bed you chose last. Use the fire to wake here again" (`HearthService.wakesAt`, the respawn's own rule).
@@ -26319,11 +26322,39 @@ until you've landed); "Go and hear the … rung for you" (optional); "Go home to
 - GameTests (`FrontierTests`, pure): `frontier_landing_fair` (20 seeds, 5–7 km, fair ground, the same every time),
   `frontier_levels_rules_four` (E to 1,300 round the landing, the city's ring, rules 3 unchanged, harder past it),
   `frontier_skiff_shape` (every facing: no two parts in one block, all in the footprint, the stand on the deck, the bow
-  the way it faces, every lashed side of canvas against a spar).
+  the way it faces, every lashed side of canvas against a spar), and `frontier_wakes_at_landing` (isolated, through the
+  server's own respawn: a landed player with no Hearth or bed wakes in the bay facing the hold; a partner who never
+  crossed wakes at world spawn; a fall by the city with the landing far off wakes in the city).
 - `look` 0-5 frame the berth; 6-11 are close on the canvas where it meets its wood (each wing's root at its boom from
   under and over, the wind-wheel from astern and its quarter, the pennant at the mast).
 - Tours: `far-landing-flight`, `far-landing-world`, `far-landing-homecoming`, `skiff-sails` (seed 4245).
 - Nothing here has been played by a person. The skiff and mooring picture goes to Euan before merge.
+
+**67.12 Waking on the journey before a Hearth** (Euan 2026-11-12, after a /kill in gate 4 woke him in the city: "Shit
+another MAJOR issue lol, if you die before placing your hearth, it spawns you ALL THE WAY BACK IN CARILLON"). Once
+you've crossed, a fall never sends you back to the city just because you haven't set your Hearth down yet.
+- **The rule** (`frontier.Waking`): a player who has landed (their own `landed` mark), has no Hearth they own or share
+  (`HearthHooks.hearthsOf` empty) and whom vanilla is sending to world spawn (no respawn point set, or its bed gone or
+  blocked) wakes on the Far Landing's pier instead: in the bay at plan (-6, 1, -6), pier planks underfoot, under the bay's
+  roof, facing the hold. The rule only acts when the fall was nearer the landing than world spawn, so someone who flew
+  home and fell in Carillon still wakes in Carillon. A fall in another dimension counts from where they last stood in
+  the overworld (sampled every two seconds); a fall with no known place counts as near the landing.
+- **A fall in a gate** counts from the gate's door (`Gates.doorOf`, read at the highest priority while the run still knows
+  it), so a gate out in the far country wakes you at the landing, not in the city.
+- **Everything else is unchanged.** The listener runs at HIGH, before the Descent's checkpoint, the Hearth (§28.10) and a
+  party's gate door (§70.3), and each of those still decides after it exactly as before. A bed or inn room of your own is
+  left to vanilla. Placing the Hearth takes over at once: you have one, so the rule stops. The End fight's exit is left
+  alone. A bed that's gone still shows vanilla's "no home bed" line.
+- **Co-op**: each player by their own landing mark and their own fall. A partner who joins and hasn't crossed wakes at
+  world spawn as before; one who has crossed wakes at the landing.
+- **Old worlds**: a world made before the Far Landing has no landing mooring saved and no `landed` marks (both only
+  ever exist under `TheLull.farLanding`), so nothing changes there. The rule reads those two, not the region map.
+- **The land is ready**: a lowest-priority `LivingDeathEvent` listener warms the bay's land (`Passage.warm`, as §28.9's
+  Hearth respawn) when the player will wake there.
+- **Said once**: the first wake there toasts "You woke up back at the Far Landing. Until you set down your Hearth or
+  sleep in a bed, this is where you'll wake if you fall." (once-mark `woke_landing`). Every wake logs `[frontier] <name>
+  wakes at the Far Landing (<pos>): no Hearth, no bed, fell at <pos>` and a director-log line; a fall nearer the city
+  logs `[frontier] <name> wakes at world spawn: they fell nearer the city than the landing`.
 
 ## 68. The Whole Boss Fight (plan docs/boss-experience/PLAN.md, page https://claude.ai/artifact/VDXqPTJJxktRgDLiJJRdH7; Euan approved all fourteen decisions 2026-11-11: "Go with all")
 
