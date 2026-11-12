@@ -23337,9 +23337,12 @@ lines and the seals as one glow on a lit door, so each has its own look (`Pillar
   pulled apart and a last red glow in it, nothing lit.
 - Saltcomb's plan-2 road keeps no lamp on the ramp up to the court and none within 16 of the door's line (x = 0, Mouth to
   door): from the road, two lamp poles stood across the seals.
-- **A land with no door** (a rolled land's Lord stands in the open: no `heart_open`) has its row at the edge of the Lord's
-  place, toward the leg that leads there (the leg whose exits hold the Lord's, else the Mouth): the Lord's radius out from it,
-  never nearer that leg than 8.
+- **A land with no door** (no `heart_open`; none today: the designed lands have theirs and a rolled land's is the grate across
+  its way in, `GeneratedLand.heartDoor`) would have its row at the edge of the Lord's place, toward the leg that leads there
+  (the leg whose exits hold the Lord's, else the Mouth): the Lord's radius out from it, never nearer that leg than 8. Its
+  words say so: "the seals at the edge of the Lord's place" where a land with a door says "the seals on the Lord's door", in
+  the first word on the lights and in every toast as a Warden falls (the last: "The way to the Lord is open."), from
+  `RealmLights.hasDoor`. `realm_seal_words` checks that each land's words name where its seals really stand.
 - **A row stands in the open.** Each seal needs nothing solid over its feet up to a block over its disc (`RealmLights.sealClear`,
   the land painted a chunk at a time). The row goes out away from the Lord; if a seal would stand in something (the Barrow's
   door is a stair up its ship's side, and away from the Lord runs along the hull) it faces the Mouth, then the quarter nearest

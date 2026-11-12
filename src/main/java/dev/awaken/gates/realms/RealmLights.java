@@ -87,19 +87,19 @@ public final class RealmLights {
         }
         if (told[2] == 1 && now - told[1] >= TEACH_AFTER) {
             told[2] = 2;
-            teach(p, g);
+            teach(p, g, land);
         }
     }
 
     /** The first time or two you're in an open land, the System says what the lights are. Then never again (SPEC §50.9; Euan, 11 Nov: teach, then go quiet). */
-    private static void teach(ServerPlayer p, GateRecord g) {
+    private static void teach(ServerPlayer p, GateRecord g, Land land) {
         RealmState st = RealmData.get(p.level().getServer()).state(g.id);
         if (st.heartOpen || g.bossDead) return;
         GateMemory mem = p.getData(GatesRegistry.MEMORY.get());
         if (mem.openLandsTold >= TEACH_LANDS) return;
         mem.openLandsTold++;
         Signal.send(p, SignalWindow.builder(SignalWindow.Kind.GATE, Component.literal("Find the Wardens"))
-                .body(Component.literal("Each pillar of light in the sky stands over a Warden. Beat every one of them and the seals on the Lord's door break."))
+                .body(Component.literal(teachLine(hasDoor(land))))
                 .priority(4).ttl(20 * 10).build());
     }
 
@@ -148,14 +148,39 @@ public final class RealmLights {
         RealmPlan plan = Realms.plan(g);
         if (plan == null || !shows(plan.land())) return;
         sync(level, g);
-        Component line = Component.literal(left <= 0 ? "The last seal on the Lord's door has broken. The way in is open."
-                : left == 1 ? "A seal on the Lord's door has broken. One Warden is left, under the last light."
-                : "A seal on the Lord's door has broken. " + left + " Wardens are left, each under a light.");
+        Component line = Component.literal(brokenLine(hasDoor(plan.land()), left));
         for (ServerPlayer p : level.players()) {
             if (Runs.run(p).gateId != g.id) continue;
             Signal.toast(p, line);
             level.playSound(null, p.blockPosition(), SoundEvents.BEACON_DEACTIVATE, SoundSource.AMBIENT, 0.7F, left <= 0 ? 0.7F : 1.1F);
         }
+    }
+
+    /**
+     * Whether the land's Lord is behind a door (every open land today: the designed ones' and a rolled land's grate across
+     * the way in). The seals stand by it and the words say so; a land without one has its seals at the edge of the Lord's
+     * place, and the words say that instead (SPEC §50.9).
+     */
+    static boolean hasDoor(Land land) {
+        return !land.change("heart_open").isEmpty();
+    }
+
+    /** Where the seals are, in words: by the door, or at the edge of the Lord's place for a land with no door. */
+    private static String sealsAt(boolean door) {
+        return door ? "on the Lord's door" : "at the edge of the Lord's place";
+    }
+
+    /** The System's word on the lights, the first time or two (SPEC §50.9). */
+    static String teachLine(boolean door) {
+        return "Each pillar of light in the sky stands over a Warden. Beat every one of them and the seals " + sealsAt(door) + " break.";
+    }
+
+    /** Said when a Warden falls; {@code left}: Wardens still standing. */
+    static String brokenLine(boolean door, int left) {
+        String seal = "seal " + sealsAt(door) + " has broken.";
+        return left <= 0 ? "The last " + seal + (door ? " The way in is open." : " The way to the Lord is open.")
+                : left == 1 ? "A " + seal + " One Warden is left, under the last light."
+                : "A " + seal + " " + left + " Wardens are left, each under a light.";
     }
 
     /** At the shut door, with a count: said once for each count you come back with (SPEC §50.9). */
@@ -167,10 +192,10 @@ public final class RealmLights {
     /**
      * Where a land's seals stand, one per Warden, land coordinates (x, y of the feet, z): a short row just outside the
      * Lord's door, across the way in. The door is the run of blocks the moment {@code heart_open} clears that lies nearest
-     * the way in; the row stands a couple of blocks out from it, on the side away from the Lord. A land with no door (a
-     * rolled land's Lord stands in the open) has its row where the way comes to the Lord's place. A row that would stand in
-     * something (the Barrow's door is a stair up its ship's side, and away from the Lord runs along the hull) faces the
-     * Mouth instead, or the nearest open quarter. Empty when the land has no Wardens or no Lord.
+     * the way in; the row stands a couple of blocks out from it, on the side away from the Lord. A land with no door (none
+     * today: a rolled land's door is the grate across its way in) would have its row where the way comes to the Lord's
+     * place. A row that would stand in something (the Barrow's door is a stair up its ship's side, and away from the Lord
+     * runs along the hull) faces the Mouth instead, or the nearest open quarter. Empty when the land has no Wardens or no Lord.
      */
     public static List<int[]> seals(Land land) {
         return row(land).seals();

@@ -1,6 +1,6 @@
-# Re-shoot of the seals alone in four open lands (SPEC 50.9 "Lights and seals"), after the row moved clear of the Barrow's hull,
-# the Vine Seat's door shot turned to face the door, and the rolled lands (Glass Sea, High Caps) got a row at the edge of the
-# Lord's place. Each land: in front of its seals, all whole, then one Warden beaten; then out and into the next.
+# Re-shoot of the seals alone in four open lands (SPEC 50.9 "Lights and seals"), after the row moved clear of the Barrow's hull
+# and every door shot came to stand in front of its seals (the Vine Seat's faced a wall; the rolled lands' stood inside the
+# Lord's ring, facing away from the grate). Each land: in front of its seals, all whole, then one Warden beaten; then out and into the next.
 # The full tours are realm-<land>-way.txt; this one only shoots what changed.
 world autopilot_realm_ways_seals creative 20261126
 waitworld
@@ -48,7 +48,7 @@ shot sealsway_vine_broken
 cmd awaken gate leave
 wait 200
 
-# the Glass Sea (rolled): the row where the way comes to the Lord's place
+# the Glass Sea (rolled): the row out from the grate across the way in
 cmd awaken gate realm_enter D awaken:glass_sea 1
 need realm
 wait 150

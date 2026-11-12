@@ -43,7 +43,7 @@ cmd awaken gate realm_leg MOVEMENT 1 14 6
 wait 80
 shot glassway_stones_1
 
-# the Lord's door from in front of its seals (a rolled land's Lord stands in the open: the edge of its place): one seal for each Warden, all whole; then one Warden beaten
+# the Lord's door from in front of its seals (the Lord's own leg stands a rolled land's camera inside the ring, facing away): one seal for each Warden, all whole; then one Warden beaten
 cmd awaken gate realm_leg seals 0 12 4
 wait 80
 shot glassway_door_seals
