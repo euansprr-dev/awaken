@@ -25818,10 +25818,15 @@ improving the design and experience of it"): the first look was a plank box with
 **67.5 The flight (`Flights`, `client.FlightFilm`, `client.CloudCrossing`, `client.SkiffFx`, `client.FlightAir`).**
 - The helm takes you once Ilse has given you her coal (`FarPost.ready`: The Last Delivery past its talk-to-Ilse step, or
   the story off; `/awaken frontier ready` for tours). Everyone on the deck flies together. Overworld only.
-- The server: a lift of 120 ticks (a sneak-use after your first flight: 14, straight into the cloud); the far land loads
-  under a `frontier_flight` ticket (radius 3, 90 s); the move happens once the lift is over and the land is loaded, or
-  after 40 s more. `teleportTo` keeps the client's camera. No damage from the helm until the client says it has set down
-  (`Landed`) or 30 s after the move. A logout or a server stop mid-air puts you on the far deck before you are saved; a
+- The server: a lift of 120 ticks (a sneak-use after your first flight: 14, straight into the cloud); the far land is
+  made and loaded under a `frontier_flight` ticket (240 s) as far round its mooring as the traveller will see it: their
+  view distance, the server's if less, at least 4 and at most 12 chunks (`Flights.landRadius`), since the descent comes
+  in from 190 back. The move happens once the lift is over and all of that land is made, or 2 minutes after the lift
+  (a warning in the log; the film still holds). Nothing on the server thread ever waits for land still being made:
+  a mooring is chosen and built only when every chunk it reads is made and loaded now (`Moorings.loaded` asks
+  `getChunkNow`, not `hasChunk`, which is true as soon as a ticket wants a chunk; on 12 Nov a new world's far land froze
+  the server for half a minute mid-flight and set Euan down on a deck, a tree and sky). `teleportTo` keeps the client's
+  camera. No damage from the helm until the client says it has set down (`Landed`) or 90 s after the move. A logout or a server stop mid-air puts you on the far deck before you are saved; a
   crash does on your next login (`pending`).
 - The client films it as one `OpeningCamera` shot through `Cinema`. The resting skiff is swapped on that client for
   barriers (unseen, still solid) and drawn block by block with its own models (`submitMovingBlock`), each block turned
@@ -25839,10 +25844,11 @@ improving the design and experience of it"): the first look was a plank box with
   - **The crossing** is an overlay drawn like the gates' crossing: the painting of where you're going
     (`textures/gui/frontier/crossing_out.png` / `crossing_home.png`, a sky gradient without it), "OUT ON THE WIND" or
     "HOME ON THE WIND", the name surfacing from its middle, a gold rule, how far and which way, a hair of light that
-    fills as the land arrives. It is the film's own layer, so it is kept through the shot's hidden HUD
-    (`Cinema.keepLayer`). It holds at least 3 s and until the far land is drawn (or 20 s): drawn means nothing is
-    left to draw anywhere, or the land round the mooring is (its own nine chunks and 38 of the 49 round it), since
-    the far land can go on arriving for a long while and the skiff can come down as it does.
+    creeps while the far land is made and fills as it reaches you. It is the film's own layer, so it is kept through the shot's hidden HUD
+    (`Cinema.keepLayer`). It holds at least 3 s, until the server has moved you (so while the far land is made), and then
+    until that land is on this client and drawn (or 60 s): every chunk in a disc round where you stand, one less than
+    the land made or your render distance (`FlightFilm.landArrived`; the packet carries the radius), and drawn means
+    nothing is left to draw anywhere, or the land round the mooring is (its own nine chunks and 38 of the 49 round it).
   - **It comes down** over 110 ticks, in from 190 back and 120 up, out of thinning cloud: the wings flare to 24 degrees
     as it brakes and fold flat as it settles, the wheel runs down to rest exactly as it stood (three turns, eased), two
     bells, dust off the pad, the hull onto its cradle with a dip. The real far skiff returns six ticks before the end.

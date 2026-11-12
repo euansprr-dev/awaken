@@ -121,11 +121,15 @@ final class Moorings {
         return true;
     }
 
-    /** Every chunk within {@code r} of a spot is loaded. */
+    /**
+     * Every chunk within {@code r} of a spot is made and loaded now. Not {@code hasChunk}: that is true as soon as a ticket
+     * wants the chunk, while it is still being made, and reading its ground then waits for it on the server thread (a
+     * new world's far land froze the server for half a minute mid-flight, 12 Nov).
+     */
     static boolean loaded(ServerLevel level, BlockPos spot, int r) {
         for (int x = (spot.getX() - r) >> 4; x <= (spot.getX() + r) >> 4; x++)
             for (int z = (spot.getZ() - r) >> 4; z <= (spot.getZ() + r) >> 4; z++)
-                if (!level.hasChunk(x, z)) return false;
+                if (level.getChunkSource().getChunkNow(x, z) == null) return false;
         return true;
     }
 

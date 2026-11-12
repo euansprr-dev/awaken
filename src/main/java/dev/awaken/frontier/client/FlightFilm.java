@@ -45,8 +45,13 @@ public final class FlightFilm {
     static final int LIFT = 120, QUICK_LIFT = 14, DESCENT = 110, QUICK_DESCENT = 50;
     /** The cloud starts covering this long before the lift ends; it holds at least this long once covering; it parts over this long. */
     static final int COVER_IN = 22, HOLD_MIN = 60, PART = 34;
-    /** Give the land this long to arrive and draw before parting anyway. */
-    static final int WAIT_LAND = 20 * 20;
+    /**
+     * Once moved, give the land this long to arrive and draw before parting anyway (the server only moves you once it has
+     * made the land, so this is the last guard, not the wait: the cloud holds while the far land is made).
+     */
+    static final int WAIT_LAND = 20 * 60;
+    /** The land round the far berth must be here this far out (chunks) before the cloud parts, never more than the view. */
+    static final int NEAR_DRAWN = 3;
     /** The skiff wakes for this long before it lifts, watched from outside (a quick flight has none). */
     static final int WAKE = 40;
     /** A skiff that came for you: the view goes from your own eyes up to its helm over this long. */
@@ -66,6 +71,8 @@ public final class FlightFilm {
         final Direction fromFacing;
         Direction toFacing;
         final boolean quick, home, drawn, wake;
+        /** How far round the far berth the server makes the land before it moves you (chunks). */
+        final int land;
         /** A skiff that came for you: your own eyes when it began (x, y, z, yaw, pitch). */
         double @Nullable [] startEye;
         /** How far the wake's camera is lifted to stand clear of the land. */
@@ -89,6 +96,7 @@ public final class FlightFilm {
             this.toFacing = Direction.from2DDataValue(m.toFacing());
             this.quick = m.quick();
             this.drawn = m.drawn();
+            this.land = m.land();
             this.wake = !m.quick() && !m.drawn();
             this.home = m.title().equals("Carillon");
             this.title = m.title();
@@ -600,6 +608,26 @@ public final class FlightFilm {
     }
 
     /**
+     * How much of the land the server made round the far berth has reached this client (0 to 1); 0 before the move.
+     * A disc round where you stand, a chunk inside both the land made (a square round the berth) and the chunks the
+     * server sends you (a disc of your view distance), so it can always fill.
+     */
+    static float landArrived(Minecraft mc) {
+        Flight f = cur;
+        LocalPlayer p = mc.player;
+        if (f == null || f.arrivedAt < 0 || mc.level == null || p == null) return 0;
+        int r = Math.max(NEAR_DRAWN, Math.min(f.land, mc.options.getEffectiveRenderDistance()) - 1);
+        int cx = p.getBlockX() >> 4, cz = p.getBlockZ() >> 4, here = 0, all = 0;
+        for (int dx = -r; dx <= r; dx++)
+            for (int dz = -r; dz <= r; dz++) {
+                if (dx * dx + dz * dz > r * r) continue;
+                all++;
+                if (mc.level.hasChunk(cx + dx, cz + dz)) here++;
+            }
+        return here / (float) all;
+    }
+
+    /**
      * The far end's land is here and drawn: either nothing is left to draw anywhere, or the land round the mooring is
      * (the far land can go on arriving while the skiff comes down; waiting for all of it can hold the cloud for long).
      */
@@ -609,9 +637,9 @@ public final class FlightFilm {
         if (f == null || p == null || mc.level == null) return false;
         if (p.distanceToSqr(f.to.getX() + 0.5, f.to.getY(), f.to.getZ() + 0.5) > 48 * 48) return false;
         int cx = f.to.getX() >> 4, cz = f.to.getZ() >> 4;
-        for (int dx = -3; dx <= 3; dx++)
-            for (int dz = -3; dz <= 3; dz++)
-                if (!mc.level.hasChunk(cx + dx, cz + dz)) return false;
+        // the whole country the server made for you has reached this client, not just the patch under the deck: the
+        // descent comes in from 190 back and looks out over it (12 Nov: a deck, a tree and sky, the rest 10-20 s later)
+        if (landArrived(mc) < 1) return false;
         if (mc.levelRenderer.hasRenderedAllSections()) return true;
         int drawn = 0;
         for (int dx = -3; dx <= 3; dx++)

@@ -40,10 +40,17 @@ final class Flights {
 
     /** The lift, in ticks (the client's film is the same length); a quick flight goes straight into the cloud. */
     static final int LIFT = 120, QUICK_LIFT = 14;
-    /** The land at the far end loads in this radius (chunks) round its mooring. */
-    static final int LOAD_RADIUS = 3;
-    /** How long the move waits for the land before going anyway; how long the shield lasts after the move. */
-    static final int WAIT_MAX = 20 * 40, SHIELD_AFTER = 20 * 30;
+    /**
+     * The land at the far end is made and loaded under a ticket round its mooring, as far as the traveller will see it
+     * (their view distance, the server's if less) but never less than {@code LAND_MIN} nor more than {@code LAND_MAX}
+     * chunks: the descent comes in from 190 blocks back, so you land into a whole country, not a patch.
+     */
+    static final int LAND_MIN = 4, LAND_MAX = 12;
+    /**
+     * How long the move waits for that land before going anyway (the cloud holds meanwhile, and the film holds it on
+     * until the land is on the client too); how long the shield lasts after the move (the film waits up to a minute).
+     */
+    static final int WAIT_MAX = 20 * 120, SHIELD_AFTER = 20 * 90;
     /** A watcher this near the mooring sees it lift away. */
     static final int SEEN_RANGE = 160;
     /** Where you stand by a skiff that has come for you (south-facing, from its berth's middle): off its quarter, on the pier's side. */
@@ -55,15 +62,17 @@ final class Flights {
         final FrontierData.Mooring dest;
         final boolean quick;
         final ChunkPos chunk;
+        final int radius;
         @Nullable CompletableFuture<?> land;
-        int age, movedAt = -1;
+        int age, movedAt = -1, readyAt = -1;
         boolean ticket;
 
-        Flight(UUID who, Moorings.Which to, FrontierData.Mooring dest, boolean quick) {
+        Flight(UUID who, Moorings.Which to, FrontierData.Mooring dest, boolean quick, int radius) {
             this.who = who;
             this.to = to;
             this.dest = dest;
             this.quick = quick;
+            this.radius = radius;
             this.chunk = ChunkPos.containing(dest.origin());
         }
 
@@ -73,6 +82,12 @@ final class Flights {
     }
 
     private static final Map<UUID, Flight> FLYING = new HashMap<>();
+
+    /** How far round the far mooring the land is made for this traveller (chunks): as far as they'll see, within limits. */
+    static int landRadius(ServerPlayer p) {
+        int view = Math.min(p.requestedViewDistance(), p.level().getServer().getPlayerList().getViewDistance());
+        return Math.clamp(view, LAND_MIN, LAND_MAX);
+    }
 
     static boolean flying(UUID who) {
         return FLYING.containsKey(who);
@@ -137,7 +152,7 @@ final class Flights {
         for (int x = -Skiff.DECK_X - 6; x <= Skiff.DECK_X + 6; x += 2)
             for (int z = Skiff.DECK_Z0 - 2; z <= Skiff.DECK_Z1 + 2; z += 2) {
                 BlockPos c = Skiff.at(beside, facing, x, 0, z);
-                if (level.hasChunk(c.getX() >> 4, c.getZ() >> 4))
+                if (level.getChunkSource().getChunkNow(c.getX() >> 4, c.getZ() >> 4) != null) // never wait on land still being made
                     top = Math.max(top, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, c.getX(), c.getZ()));
             }
         BlockPos origin = new BlockPos(beside.getX(), top - Skiff.KEEL, beside.getZ());
@@ -162,14 +177,14 @@ final class Flights {
         List<UUID> ids = party.stream().map(ServerPlayer::getUUID).toList();
         for (ServerPlayer p : party) {
             boolean quick = quickAsked && data.marked(p.getUUID(), "flown");
-            Flight f = new Flight(p.getUUID(), to, there, quick);
-            f.land = level.getChunkSource().addTicketAndLoadWithRadius(FrontierModule.FLIGHT_TICKET.get(), f.chunk, LOAD_RADIUS);
+            Flight f = new Flight(p.getUUID(), to, there, quick, landRadius(p));
+            f.land = level.getChunkSource().addTicketAndLoadWithRadius(FrontierModule.FLIGHT_TICKET.get(), f.chunk, f.radius);
             f.ticket = true;
             FLYING.put(p.getUUID(), f);
             double[] s = Moorings.stand(there);
             data.pending(p.getUUID(), new FrontierData.Dest(s[0], s[1], s[2], (float) s[3]));
             AwakenNet.send(p, new FrontierNet.Fly(FrontierNet.Fly.START, from, fromFacing.get2DDataValue(), there.origin(),
-                    there.facing().get2DDataValue(), quick, title, line, ids, drawn));
+                    there.facing().get2DDataValue(), quick, title, line, ids, drawn, f.radius));
         }
         if (drawn) return; // nobody else sees a skiff that was never built there
         float bearing = bearing(from, there.origin());
@@ -224,7 +239,16 @@ final class Flights {
                     continue;
                 }
                 boolean landReady = f.land == null || f.land.isDone();
-                if (f.age >= f.lift() && (landReady || f.age >= f.lift() + WAIT_MAX)) move(p, f);
+                if (landReady && f.readyAt < 0) {
+                    f.readyAt = f.age;
+                    Awaken.LOG.info("[frontier] the land at the {} is made and loaded {} chunks round after {} s", f.to == Moorings.Which.RIDGE ? "ridge" : "landing",
+                            f.radius, String.format(java.util.Locale.ROOT, "%.1f", f.age / 20.0));
+                }
+                if (f.age >= f.lift() && (landReady || f.age >= f.lift() + WAIT_MAX)) {
+                    if (!landReady) Awaken.LOG.warn("[frontier] the land at the {} still isn't made after {} s; setting down anyway (the film holds the cloud)",
+                            f.to == Moorings.Which.RIDGE ? "ridge" : "landing", f.age / 20);
+                    move(p, f);
+                }
             } else if (f.age - f.movedAt >= SHIELD_AFTER) {
                 finish(p, f);
                 it.remove();
@@ -249,7 +273,8 @@ final class Flights {
         boolean first = data.mark(f.who, "flown");
         if (f.to == Moorings.Which.LANDING) data.mark(f.who, "landed");
         release(level, f);
-        AwakenNet.send(p, new FrontierNet.Fly(FrontierNet.Fly.ARRIVED, BlockPos.ZERO, 0, dest.origin(), dest.facing().get2DDataValue(), f.quick, "", "", List.of(), false));
+        AwakenNet.send(p, new FrontierNet.Fly(FrontierNet.Fly.ARRIVED, BlockPos.ZERO, 0, dest.origin(), dest.facing().get2DDataValue(), f.quick, "", "", List.of(), false,
+                f.radius));
         Awaken.LOG.info("[frontier] {} set down at the {} ({}){}", p.getName().getString(), f.to == Moorings.Which.RIDGE ? "ridge" : "landing",
                 dest.origin().toShortString(), first ? ", the first flight" : "");
     }
@@ -259,12 +284,12 @@ final class Flights {
     }
 
     private static FrontierNet.Fly end(Flight f) {
-        return new FrontierNet.Fly(FrontierNet.Fly.END, BlockPos.ZERO, 0, BlockPos.ZERO, 0, f.quick, "", "", List.of(), false);
+        return new FrontierNet.Fly(FrontierNet.Fly.END, BlockPos.ZERO, 0, BlockPos.ZERO, 0, f.quick, "", "", List.of(), false, f.radius);
     }
 
     private static void release(ServerLevel level, Flight f) {
         if (f.ticket) {
-            level.getChunkSource().removeTicketWithRadius(FrontierModule.FLIGHT_TICKET.get(), f.chunk, LOAD_RADIUS);
+            level.getChunkSource().removeTicketWithRadius(FrontierModule.FLIGHT_TICKET.get(), f.chunk, f.radius);
             f.ticket = false;
         }
     }

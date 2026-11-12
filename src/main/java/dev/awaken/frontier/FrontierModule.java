@@ -45,7 +45,7 @@ public final class FrontierModule {
     static final DeferredRegister<TicketType> TICKETS = DeferredRegister.create(Registries.TICKET_TYPE, Awaken.MODID);
     /** Holds the far end's land loaded while a skiff flies to it (dropped when the travellers are moved). */
     static final DeferredHolder<TicketType, TicketType> FLIGHT_TICKET = TICKETS.register("frontier_flight",
-            () -> new TicketType(20L * 90, TicketType.FLAG_LOADING));
+            () -> new TicketType(20L * 240, TicketType.FLAG_LOADING)); // outlasts the longest wait for the far land (Flights.WAIT_MAX)
 
     static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Awaken.MODID);
     static final DeferredRegister<ParticleType<?>> PARTICLES = DeferredRegister.create(Registries.PARTICLE_TYPE, Awaken.MODID);

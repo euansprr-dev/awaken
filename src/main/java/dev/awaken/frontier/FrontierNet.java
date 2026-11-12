@@ -29,14 +29,15 @@ public final class FrontierNet {
      * {@code from} (it came for you, SPEC §67 homecoming), so the client draws it as built and hides nothing there.
      */
     public record Fly(int kind, BlockPos from, int fromFacing, BlockPos to, int toFacing, boolean quick, String title, String line,
-                      List<UUID> party, boolean drawn) implements CustomPacketPayload {
+                      List<UUID> party, boolean drawn, int land) implements CustomPacketPayload {
         public static final int START = 0, ARRIVED = 1, END = 2;
         public static final Type<Fly> TYPE = new Type<>(Awaken.id("frontier_fly"));
         public static final StreamCodec<ByteBuf, Fly> STREAM_CODEC = StreamCodec.composite(
                 ByteBufCodecs.VAR_INT, Fly::kind, BlockPos.STREAM_CODEC, Fly::from, ByteBufCodecs.VAR_INT, Fly::fromFacing,
                 BlockPos.STREAM_CODEC, Fly::to, ByteBufCodecs.VAR_INT, Fly::toFacing, ByteBufCodecs.BOOL, Fly::quick,
                 ByteBufCodecs.stringUtf8(128), Fly::title, ByteBufCodecs.stringUtf8(256), Fly::line,
-                UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list(16)), Fly::party, ByteBufCodecs.BOOL, Fly::drawn, Fly::new);
+                UUIDUtil.STREAM_CODEC.apply(ByteBufCodecs.list(16)), Fly::party, ByteBufCodecs.BOOL, Fly::drawn, ByteBufCodecs.VAR_INT, Fly::land,
+                Fly::new);
 
         @Override
         public Type<Fly> type() {
