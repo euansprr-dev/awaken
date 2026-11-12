@@ -1076,6 +1076,10 @@ public final class AscentSwing {
 
     /** A swing never starts slower than a jog along the heading (no dead hang from a slow entry). */
     public static void entry(AscentRules.Kin k, double heading) {
+        if (real) {
+            RealRope.entry(k, heading);
+            return;
+        }
         double hx = fx(heading), hz = fz(heading), along = k.vx * hx + k.vz * hz, floor = T.entryFloor;
         if (along < floor) {
             k.vx += hx * (floor - along);

@@ -25015,7 +25015,12 @@ this."
 - **The bite** (`RealRope.bite`): what goes in toward the anchor is turned along the way you already go round it, 0.8
   of it kept (`biteKeep`), so the rope is taut from the first tick; under 0.15 b/t across, the fall itself is turned down
   the arc. The rope's least length keeps the feet a block over the floor under the anchor (`skim` 1.0, the floor looked
-  for 1.5 behind and up to 3 ahead along the look), never under 85% of the bite (`easeLeast`).
+  for 1.5 behind and up to 3 ahead along the look), never under 85% of the bite (`easeLeast`). With no room for the body
+  under the anchor at that length (an oak's top over its trunk) there is nothing to swing under and the rope keeps its
+  length: eased in, a rope round the oak drew you into its crown (CI run 43239558452; the Java played in Python,
+  `scratchpad/rope2/jport.py` of the session, agreed with the run's report to the hundredth).
+- **The throw's entry** (`RealRope.entry`): never slower than a jog (0.75 b/t) along the way you already go, along the
+  look only from a standstill. Along the look (the old rope's), a look at something beside you shoved you sideways at it.
 - **The rope's four gentle hands.** It eases in toward that length only while you fall, 0.3 a tick at most (`ease`).
   The feet skim a block over the floor, the speed down turned along the way you go. Forward steers the speed across
   toward the look, 2.5 degrees a tick (`steer`), only within 75 degrees of the way you go (`steerWithin`; swinging back,

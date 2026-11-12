@@ -39,7 +39,8 @@ public final class RealRope {
      * along the way you already go round it ({@link AscentSwing.Tune#biteKeep} of it kept), so the rope is taut from the
      * first tick: going past something, round it; dropping, down the arc (with almost nothing across, the fall itself is
      * turned down the arc). Its least length (the ease) keeps the feet a skim over the floor under the anchor, never under
-     * {@link AscentSwing.Tune#easeLeast} of the bite. A hoist's rope is the swing's length and starts hauling instead.
+     * {@link AscentSwing.Tune#easeLeast} of the bite; with no room for the body under the anchor at that length, none. A
+     * hoist's rope is the swing's length and starts hauling instead.
      */
     public static void bite(SwingSpace s, AscentRules.Kin k, AscentSwing.Rope rope, double yaw) {
         AscentSwing.Tune t = AscentSwing.T;
@@ -75,6 +76,27 @@ public final class RealRope {
         double floor = -1e9, fx = AscentSwing.fx(yaw), fz = AscentSwing.fz(yaw);
         for (double o : FIT_AT) floor = Math.max(floor, s.floorUnder(rope.ax - fx * o, rope.ay - 1.2, rope.az - fz * o));
         rope.fit = Math.max(rope.len * t.easeLeast, Math.min(rope.len, rope.ay - floor - t.skim - AscentRules.HAND_HEIGHT));
+        // no room to hang under the anchor (an oak's top over its trunk): nothing to swing under, so nothing to ease in for;
+        // a rope round the thing that eased in would draw you into its crown (first CI run 43239558452)
+        if (rope.fit < rope.len - 1e-6 && s.bodyHits(rope.ax, rope.ay - rope.fit - AscentRules.HAND_HEIGHT, rope.az)) rope.fit = rope.len;
+    }
+
+    /**
+     * The throw's entry for a real rope (AscentSwing.entry's): never slower than a jog, {@link AscentSwing.Tune#entryFloor},
+     * along the way you already go (along the look only from a standstill). Along the look, a look at something beside you
+     * would shove you sideways at it: a pull before the rope has even bitten.
+     */
+    static void entry(AscentRules.Kin k, double yaw) {
+        double floor = AscentSwing.T.entryFloor, h = k.hspeed();
+        if (h >= floor) return;
+        if (h > 0.05) {
+            k.vx *= floor / h;
+            k.vz *= floor / h;
+            return;
+        }
+        double hx = AscentSwing.fx(yaw), hz = AscentSwing.fz(yaw), along = k.vx * hx + k.vz * hz;
+        k.vx += hx * (floor - along);
+        k.vz += hz * (floor - along);
     }
 
     /** The floor under a rope's anchor is looked for here along the look (blocks behind and ahead of it). */
