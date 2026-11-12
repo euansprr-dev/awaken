@@ -417,7 +417,8 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
             int x0 = (int) Math.round(cx - lx * len / 2.0), z0 = (int) Math.round(cz - lz * len / 2.0);
             int x1 = (int) Math.round(cx + lx * len / 2.0), z1 = (int) Math.round(cz + lz * len / 2.0);
             List<Hops.Stone> line = Hops.follow(x0, z0, x1, z1, 3, 1, 2, seed + side * 7L + len, this);
-            String why = WayPlanner.misfit(this, all, (x, z) -> ground(x, z) > water() + 1, new ArrayList<>(), line);
+            // dry ground, or a sea that has set hard (the Glass Sea's glass is a floor like any other)
+            String why = WayPlanner.misfit(this, all, (x, z) -> ground(x, z) > water() + 1 || frozen && ground(x, z) >= water(), new ArrayList<>(), line);
             if (why != null) {
                 tally.merge(why, 1, Integer::sum);
                 continue;
