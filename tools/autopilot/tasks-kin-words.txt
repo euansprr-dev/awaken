@@ -65,6 +65,9 @@ cmd awaken admin kin meet burrowbun
 cmd awaken admin kin meet pebblepup
 cmd awaken admin kin meet puffwool
 wait 40
+# every step and its key, into the log
+cmd awaken tasks
+wait 20
 # ---- Tasks, the Hearth tab ----
 screen band tasks
 holo run
@@ -75,18 +78,29 @@ shot k00_hearth_tab
 tasks focus kin/need/lampwing
 wait 30
 shot k01_lampwing_lesson
+# the board shows a few steps a lane and folds the rest under Later: pin each one to read it on top
+cmd awaken tasks pin kin/need/burrowbun
+wait 40
 tasks focus kin/need/burrowbun
 wait 30
 shot k02_burrowbun
+cmd awaken tasks pin kin/want/pebblepup
+wait 40
 tasks focus kin/want/pebblepup
 wait 30
 shot k03_pebblepup
+cmd awaken tasks pin kin/want/puffwool
+wait 40
 tasks focus kin/want/puffwool
 wait 30
 shot k04_puffwool
+cmd awaken tasks pin hearth/forge
+wait 40
 tasks focus hearth/forge
 wait 30
 shot k05_forge_needs_fitting_stand
+cmd awaken tasks unpin
+wait 20
 screenkey esc
 wait 10
 screen close
