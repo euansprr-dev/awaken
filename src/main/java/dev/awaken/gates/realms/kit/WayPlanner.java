@@ -65,6 +65,8 @@ public final class WayPlanner {
         final List<String> exits = new ArrayList<>();
         Hops hops;
         int[] newDen;
+        /** Before the first stones (the first camp, a place the way must pass): no branch starts here. */
+        boolean early;
 
         Stop(String id, Land.LegKind kind, String name, int x, int y, int z, int radius, int site) {
             this.id = id;
@@ -132,6 +134,7 @@ public final class WayPlanner {
             taken.add(new int[]{at[0], at[1], 12});
         }
         arrive.exits.add(camp1.id);
+        camp1.early = true;
         stops.add(camp1);
         // the places the way must pass first, a stop each
         Stop from = camp1;
@@ -139,6 +142,7 @@ public final class WayPlanner {
             int[] v = via.get(i);
             if (Math.hypot(v[0] - from.x, v[2] - from.z) > MOST) return no("the way's stop at " + v[0] + "," + v[2] + " is " + (int) Math.hypot(v[0] - from.x, v[2] - from.z) + " from " + from.id);
             Stop s = new Stop("via" + (i + 1), Land.LegKind.BREATHER, "On the way", v[0], v[1], v[2], 6, -1);
+            s.early = true;
             from.exits.add(s.id);
             stops.add(s);
             taken.add(new int[]{v[0], v[2], 8});
@@ -240,7 +244,21 @@ public final class WayPlanner {
                 if (next != null) branchMoves = true;
             }
             if (next == null) {
-                next = stopNear(land, pieces, among, ok, dens, used, taken, "camp" + n[0], "A camp on the way", px, pz, nextDen[0], new double[][]{{cur.x, cur.z}});
+                // straight on, or turned up to 70 degrees round what stands in the way (a hill), so long as it gains ground
+                double before = Math.hypot(tx - cur.x, tz - cur.z);
+                for (int turn : new int[]{0, 30, -30, 50, -50, 70, -70}) {
+                    double c = Math.cos(Math.toRadians(turn)), sn = Math.sin(Math.toRadians(turn)), vx = u[0] * c - u[1] * sn, vz = u[0] * sn + u[1] * c;
+                    Stop s = stopNear(land, pieces, among, ok, dens, used, taken, "camp" + n[0], "A camp on the way", cur.x + vx * STEP, cur.z + vz * STEP, nextDen[0], new double[][]{{cur.x, cur.z}});
+                    if (s == null) continue;
+                    if (turn != 0 && Math.hypot(tx - s.x, tz - s.z) > before - 16) {
+                        // it gains too little: give back what it took
+                        if (s.newDen == null) used.remove(s.site);
+                        else taken.removeLast();
+                        continue;
+                    }
+                    next = s;
+                    break;
+                }
                 if (next == null) return no("no camp near " + (int) px + "," + (int) pz + " (from " + cur.id + "): " + why());
                 if (next.newDen != null) nextDen[0]++;
             }
@@ -518,7 +536,7 @@ public final class WayPlanner {
         Stop best = null;
         double bd = Double.MAX_VALUE;
         for (Stop s : stops) {
-            if (s.kind == Land.LegKind.LORD || s.kind == Land.LegKind.ARRIVE) continue;
+            if (s.kind == Land.LegKind.LORD || s.kind == Land.LegKind.ARRIVE || s.early) continue;
             double d = Math.hypot(s.x - x, s.z - z);
             if (d < bd) {
                 bd = d;
