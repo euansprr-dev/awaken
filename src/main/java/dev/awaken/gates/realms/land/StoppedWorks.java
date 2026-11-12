@@ -4,6 +4,10 @@ import dev.awaken.gates.block.ThemeBlocks;
 import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
@@ -76,6 +80,18 @@ public final class StoppedWorks extends GeneratedCrawl<StoppedWorks.M> {
     @Override
     protected M mats() {
         return m();
+    }
+
+    /** Its beats (SPEC §72.3): the pipe run overhead, presses and grating; the slide under a press that starts again. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.TEETH, Family.GRIP, 3, Family.LOW, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(StoppedWorks.M m) {
+        return super.beatSkin(m).beam(m.pipe).lip(m.brass).scuff(m.sheetOld).rail(m.iron).plinth(m.brick).deck(m.grate).dust(m.plate).glow(m.gauge).line(BeatSkin.named("drainpipe"));
     }
 
     @Override

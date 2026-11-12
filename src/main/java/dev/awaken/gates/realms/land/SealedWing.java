@@ -3,6 +3,10 @@ package dev.awaken.gates.realms.land;
 import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CopperBulbBlock;
@@ -69,6 +73,18 @@ public final class SealedWing extends GeneratedCrawl<SealedWing.M> {
     @Override
     protected M mats() {
         return m();
+    }
+
+    /** Its beats (SPEC §72.3): panel walls to run, bulkheads that close; the slide under the closing bulkheads. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.TEETH, Family.WALL, 3, Family.LOW, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(SealedWing.M m) {
+        return super.beatSkin(m).scuff(m.panel).lip(m.frame).beam(m.frame).rail(m.iron).deck(m.plate).plinth(m.seam).dust(m.line).glow(m.strip).line(BeatSkin.named("hanging_ladder"));
     }
 
     @Override

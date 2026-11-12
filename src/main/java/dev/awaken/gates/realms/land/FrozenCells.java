@@ -3,6 +3,10 @@ package dev.awaken.gates.realms.land;
 import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
@@ -66,6 +70,18 @@ public final class FrozenCells extends GeneratedCrawl<FrozenCells.M> {
     @Override
     protected M mats() {
         return m();
+    }
+
+    /** Its beats (SPEC §72.3): slides under the cell bars on frost floors, cell walls to vault; the long slide down the iced gallery. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.SLIDE, Family.LOW, 3, Family.LEDGE, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(FrozenCells.M m) {
+        return super.beatSkin(m).dust(m.tiles).deck(m.tiles).scuff(m.packed).lip(m.carved).beam(net.minecraft.world.level.block.Blocks.QUARTZ_PILLAR.defaultBlockState()).rail(m.carved).plinth(m.pale).glow(m.iceLit);
     }
 
     @Override

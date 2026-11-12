@@ -4,6 +4,10 @@ import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.N;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -61,6 +65,18 @@ public final class Sporewell extends GeneratedCrawl<Sporewell.M> {
     @Override
     protected M mats() {
         return m();
+    }
+
+    /** Its beats (SPEC §72.3): fungus shelves to mantle, wells to chimney up; the well chimney. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.CHIMNEY, Family.LEDGE, 3, Family.WALL, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(Sporewell.M m) {
+        return super.beatSkin(m).lip(m.cap).plinth(m.stem).beam(m.stem).scuff(m.veined).rail(m.stem).dust(m.moss).deck(m.loam).glow(m.gills);
     }
 
     @Override

@@ -4,6 +4,10 @@ import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.N;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
@@ -75,6 +79,18 @@ public final class RimeHollow extends GeneratedCrawl<RimeHollow.M> {
     @Override
     protected M mats() {
         return m();
+    }
+
+    /** Its beats (SPEC §72.3): hangs and shimmies along pale lips under the icicles, ice chutes down; the long ice chute. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.CHUTE, Family.LEDGE, 3, Family.LOW, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(RimeHollow.M m) {
+        return super.beatSkin(m).lip(m.pale).scuff(m.packed).beam(m.stone).plinth(m.pale).rail(m.stone).glow(m.iceLit);
     }
 
     @Override

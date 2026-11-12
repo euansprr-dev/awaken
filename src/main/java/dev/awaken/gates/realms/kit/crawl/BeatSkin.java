@@ -114,6 +114,15 @@ public final class BeatSkin {
         return this;
     }
 
+    /**
+     * A climb line of the city's kit by name (SPEC §12: awaken:drainpipe, awaken:trellis, awaken:wall_ivy,
+     * awaken:hanging_ladder), so the gates never reach into the city's classes; a ladder where it isn't there.
+     */
+    public static BlockState named(String id) {
+        BlockState s = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id(id)).defaultBlockState();
+        return s.isAir() ? LADDER : s;
+    }
+
     static BlockState or(@Nullable BlockState s, BlockState fallback) {
         return s != null ? s : fallback;
     }

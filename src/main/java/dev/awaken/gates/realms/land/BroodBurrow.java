@@ -3,6 +3,10 @@ package dev.awaken.gates.realms.land;
 import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.N;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -44,6 +48,18 @@ public final class BroodBurrow extends GeneratedCrawl<Broodwarren.M> {
     @Override
     protected Broodwarren.M mats() {
         return Broodwarren.m();
+    }
+
+    /** Its beats (SPEC §72.3): low burrows to slide through, comb walls to run; the slide and jump out of a burrow. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.SLIDEJUMP, Family.LOW, 3, Family.WALL, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(Broodwarren.M m) {
+        return super.beatSkin(m).dust(m.earth).scuff(m.paperDark).lip(m.resin).beam(m.timber).rail(m.resin).plinth(m.cell).deck(m.paperPale).glow(m.cellLit);
     }
 
     @Override

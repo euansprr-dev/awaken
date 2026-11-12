@@ -3,6 +3,10 @@ package dev.awaken.gates.realms.land;
 import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.IronBarsBlock;
@@ -63,6 +67,18 @@ public final class SunkenStacks extends GeneratedCrawl<SunkenStacks.M> {
     @Override
     protected M mats() {
         return m();
+    }
+
+    /** Its beats (SPEC §72.3): shelf bays to mantle and run along, fallen shelves; the broken climb along the drowned stacks. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.BROKEN, Family.LEDGE, 3, Family.WALL, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(SunkenStacks.M m) {
+        return super.beatSkin(m).plinth(m.shelf).scuff(m.shelf).beam(m.shelf).lip(m.carved).rail(m.boards).deck(m.tiles).dust(m.rough).glow(m.sea).line(BeatSkin.named("hanging_ladder"));
     }
 
     @Override
