@@ -87,11 +87,17 @@ public final class WayPlanner {
         return plan(land, pieces, Set.of(), ok, dress, seed, build);
     }
 
+    public static boolean plan(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, Dress dress, long seed, Build build) {
+        return plan(land, pieces, among, List.of(), ok, dress, seed, build);
+    }
+
     /**
      * As above, with the labels of pieces a camp may stand among ({@code among}: a tree's crown overhead, a pole or a stub
      * of wall in the camp): a line of stones still keeps clear of everything built, since it clears the air over itself.
+     * {@code via}: places (x, y, z) the way must pass straight after the first camp, in order, each a stop of its own (a
+     * bridge over a gorge no stone can cross); the first stones are looked for past the last of them.
      */
-    public static boolean plan(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, Dress dress, long seed, Build build) {
+    public static boolean plan(Land land, List<? extends Piece<?>> pieces, Set<String> among, List<int[]> via, Ground ok, Dress dress, long seed, Build build) {
         Land.Site mouth = land.mouth();
         List<Land.Site> lords = land.sites(Land.SiteKind.LORD), wardens = land.sites(Land.SiteKind.WARDEN);
         WHY.remove();
@@ -127,18 +133,29 @@ public final class WayPlanner {
         }
         arrive.exits.add(camp1.id);
         stops.add(camp1);
+        // the places the way must pass first, a stop each
+        Stop from = camp1;
+        for (int i = 0; i < via.size(); i++) {
+            int[] v = via.get(i);
+            if (Math.hypot(v[0] - from.x, v[2] - from.z) > MOST) return no("the way's stop at " + v[0] + "," + v[2] + " is " + (int) Math.hypot(v[0] - from.x, v[2] - from.z) + " from " + from.id);
+            Stop s = new Stop("via" + (i + 1), Land.LegKind.BREATHER, "On the way", v[0], v[1], v[2], 6, -1);
+            from.exits.add(s.id);
+            stops.add(s);
+            taken.add(new int[]{v[0], v[2], 8});
+            from = s;
+        }
 
         // straight after it, the first stones: every way on starts past them
-        Stop climb = stones(land, pieces, ok, dress, taken, seed, "climb1", "Stones beyond the first camp", camp1.x, camp1.z, dir, laid);
-        if (climb == null) return no("no stones past the first camp at " + camp1.x + "," + camp1.z + ": " + why());
+        Stop climb = stones(land, pieces, ok, dress, taken, seed, "climb1", "Stones beyond the first camp", from.x, from.z, dir, laid);
+        if (climb == null) return no("no stones past " + from.id + " at " + from.x + "," + from.z + ": " + why());
         stops.add(climb);
         double[] past = new double[]{climb.hops.end()[0], climb.hops.end()[2]};
         Stop hub = stopNear(land, pieces, among, ok, dens, used, taken, "camp2", "A camp past the stones", past[0] + dir[0] * 28, past[1] + dir[1] * 28, nextDen);
         if (hub == null) return no("no camp past the first stones near " + (int) (past[0] + dir[0] * 28) + "," + (int) (past[1] + dir[1] * 28) + ": " + why());
         if (hub.newDen != null) nextDen++;
         stops.add(hub);
-        camp1.exits.add(climb.id);
-        camp1.exits.add(hub.id); // or round the stones on foot: the run has a way round
+        from.exits.add(climb.id);
+        from.exits.add(hub.id); // or round the stones on foot: the run has a way round
         climb.exits.add(hub.id);
 
         // a way on to each Warden, nearest first, and to the Lord's door last; a branch that can't be laid yet is tried
@@ -334,8 +351,33 @@ public final class WayPlanner {
             tally.merge(why, 1, Integer::sum);
             if (k == 0) break;
         }
+        // nothing on the coarse rings: every block of the ground in reach, nearest first (a terrace's camp band is 2 wide)
+        int[] best = null;
+        double bestD = Double.MAX_VALUE;
+        for (int dx = -far; dx <= far; dx++) for (int dz = -far; dz <= far; dz++) {
+            double d = Math.hypot(dx, dz);
+            if (d < near || d > far || d >= bestD) continue;
+            if (dir != null && arc < 180 && Math.abs(gap(Math.atan2(dz, dx), Math.atan2(dir[1], dir[0]))) > Math.toRadians(arc)) continue;
+            if (unfit(land, pieces, among, ok, taken, x + dx, z + dz) == null) {
+                best = new int[]{x + dx, z + dz};
+                bestD = d;
+            }
+        }
+        if (best != null) return best;
         WHY.set("camp spots " + tally);
         return null;
+    }
+
+    private static double gap(double a, double b) {
+        double d = (a - b) % (2 * Math.PI);
+        return d > Math.PI ? d - 2 * Math.PI : d < -Math.PI ? d + 2 * Math.PI : d;
+    }
+
+    /** Why a camp can't stand here, or null when it can (for a land that splices in a camp of its own, as a rolled land's first). */
+    public static String campMisfit(Land land, List<? extends Piece<?>> pieces, Set<String> among, Ground ok, int x, int z) {
+        List<int[]> stones = new ArrayList<>();
+        for (Piece<?> p : pieces) if (p instanceof Hops h) for (Hops.Stone s : h.stones) stones.add(new int[]{s.x(), s.z(), 3});
+        return unfit(land, pieces, among, ok, stones, x, z);
     }
 
     /** Why a camp can't stand here (null: it can): too near the edge, on something built, on the plan, on a way, by a site, bad or uneven ground. */
@@ -373,7 +415,7 @@ public final class WayPlanner {
                 if (Math.hypot(x - (p.x0 + p.x1) / 2.0, z - (p.z0 + p.z1) / 2.0) < TRUNK + pad) return p;
                 continue;
             }
-            if (x + pad >= p.x0 && x - pad <= p.x1 && z + pad >= p.z0 && z - pad <= p.z1) return p;
+            if (p.stands(x, z, pad)) return p;
         }
         return null;
     }

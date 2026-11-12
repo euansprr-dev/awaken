@@ -377,7 +377,10 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         form.lay();
         if (grid == null) throw new IllegalStateException(kind + " laid no ways");
         furnish();
-        if (ctx.version() >= 2) secondStretch();
+        if (ctx.version() >= 2) {
+            secondStretch();
+            earlyCamp();
+        }
         clearSites();
     }
 
@@ -402,16 +405,67 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         }
         walks.sort(java.util.Comparator.comparingDouble((Leg[] w) -> -Math.hypot(w[1].x() - w[0].x(), w[1].z() - w[0].z())));
         java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
-        for (Leg[] w : walks) if (stretchBy(w[0], w[1], tally)) return;
+        for (Leg[] w : walks) if (stretchBy(w[0], w[1], tally, NEAR_MIDDLE, ASIDE, LONG)) return;
+        // none beside the middle of any walk (water or the ways fill it, as between the High Caps' tables): nearer either
+        // end, on the walk's own line or further aside, and shorter
+        for (Leg[] w : walks) if (stretchBy(w[0], w[1], tally, NEAR_ENDS, WIDE, SHORT)) return;
         dev.awaken.Awaken.LOG.info("[realms] {}: no second stretch of stones by any of {} walks ({})", ctx.id(), walks.size(), tally);
     }
 
+    /** Where along a walk, how far aside of it and how long a second stretch is tried: first beside its middle, then nearer its ends. */
+    private static final double[] NEAR_MIDDLE = {0.35, 0.5, 0.25, 0.65}, NEAR_ENDS = {0.15, 0.85, 0.75, 0.1, 0.9};
+    private static final int[] ASIDE = {9, -9, 15, -15, 22, -22}, WIDE = {0, 9, -9, 15, -15, 22, -22, 30, -30}, LONG = {32, 24}, SHORT = {32, 24, 18};
+
+    /**
+     * Plan version 2: a fight within the open-land check's 60 blocks of the Mouth. Where the run's first fight is further in
+     * (the High Caps' is on the next table over), a camp on level dry ground nearer, with a den of its own, between the way
+     * in and the leg it led to. Where none fits, the run is as before, with a line in the log.
+     */
+    private void earlyCamp() {
+        Site mouth = mouth();
+        Leg arrive = null;
+        double first = Double.MAX_VALUE;
+        for (Leg l : route()) {
+            if (l.kind() == LegKind.ARRIVE) arrive = l;
+            if (l.kind() == LegKind.FIGHT || l.kind() == LegKind.AMBUSH) first = Math.min(first, Math.hypot(l.x() - mouth.x(), l.z() - mouth.z()));
+        }
+        if (arrive == null || arrive.exits().isEmpty() || first <= EARLY) return;
+        Leg to = leg(arrive.exits().getFirst());
+        if (to == null) return;
+        List<? extends Piece<?>> all = pieces();
+        java.util.Set<String> among = java.util.Set.of("a glowcap", "a lamp", "a thread of light");
+        double toward = Math.atan2(to.z() - mouth.z(), to.x() - mouth.x());
+        java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
+        for (int r = 18; r <= EARLY - 4; r += 2) for (int k = 0; k <= 180; k += 8) for (int sign = -1; sign <= 1; sign += 2) {
+            double a = toward + Math.toRadians(k * sign);
+            int x = mouth.x() + (int) Math.round(Math.cos(a) * r), z = mouth.z() + (int) Math.round(Math.sin(a) * r);
+            if (Math.hypot(to.x() - x, to.z() - z) > 86) {
+                tally.merge("far", 1, Integer::sum);
+            } else {
+                String why = WayPlanner.campMisfit(this, all, among, (cx, cz) -> ground(cx, cz) > water() + 1 || frozen && ground(cx, cz) >= water(), x, z);
+                if (why == null) {
+                    int den = sites(SiteKind.DEN).size(), y = ground(x, z) + 1;
+                    site(SiteKind.DEN, x, y, z, 9, "");
+                    if (!between(arrive.id(), to.id(), "near", LegKind.FIGHT, "A camp near the way in", x, y, z, 8, den))
+                        dev.awaken.Awaken.LOG.warn("[realms] {}: the camp near the way in couldn't be put before {}", ctx.id(), to.id());
+                    return;
+                }
+                tally.merge(why, 1, Integer::sum);
+            }
+            if (k == 0) break;
+        }
+        dev.awaken.Awaken.LOG.info("[realms] {}: the first fight is {} in and no camp fits nearer ({})", ctx.id(), (int) first, tally);
+    }
+
+    /** The first fight is wanted within this of the Mouth: the open-land check's 60, less a little. */
+    private static final int EARLY = 56;
+
     /** A line of stones beside the walk from one leg to the next, spliced in between them; false when none fits there. */
-    private boolean stretchBy(Leg from, Leg to, java.util.Map<String, Integer> tally) {
+    private boolean stretchBy(Leg from, Leg to, java.util.Map<String, Integer> tally, double[] ats, int[] sides, int[] lens) {
         double best = Math.hypot(to.x() - from.x(), to.z() - from.z());
         double ux = (to.x() - from.x()) / best, uz = (to.z() - from.z()) / best;
         List<? extends Piece<?>> all = pieces();
-        for (int turn : WayPlanner.TURNS) for (double at : new double[]{0.35, 0.5, 0.25, 0.65}) for (int side : new int[]{9, -9, 15, -15, 22, -22}) for (int len : new int[]{32, 24}) {
+        for (int turn : WayPlanner.TURNS) for (double at : ats) for (int side : sides) for (int len : lens) {
             double cx = from.x() + (to.x() - from.x()) * at - uz * side, cz = from.z() + (to.z() - from.z()) * at + ux * side;
             double c = Math.cos(Math.toRadians(turn)), sn = Math.sin(Math.toRadians(turn)), lx = ux * c - uz * sn, lz = ux * sn + uz * c;
             int x0 = (int) Math.round(cx - lx * len / 2.0), z0 = (int) Math.round(cz - lz * len / 2.0);

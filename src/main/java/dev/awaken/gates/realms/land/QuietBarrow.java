@@ -162,7 +162,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         // plan version 2 (SPEC §50.9): a designed way over the moor, camps and stones on dry heather off the mounds and the path
         if (ctx.version() >= 2) {
             M m = m();
-            designWay((x, z) -> ground(x, z) > water() + 1 && !inBarrow(x, z) && pathDist(x, z) > 5,
+            // the moor lies a block over the water (63 on 62): that counts as dry
+            designWay((x, z) -> ground(x, z) > water() && !inBarrow(x, z) && pathDist(x, z) > 5,
                     new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band), java.util.Set.of("standing stone"));
         }
     }

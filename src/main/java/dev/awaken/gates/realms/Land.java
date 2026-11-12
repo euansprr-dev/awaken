@@ -114,13 +114,18 @@ public abstract class Land {
      * exit from {@code from} to {@code to} now goes through it. False when {@code from} doesn't lead on to {@code to}.
      */
     protected final boolean between(String from, String to, String id, LegKind kind, String name, int x, int y, int z, int radius) {
+        return between(from, to, id, kind, name, x, y, z, radius, -1);
+    }
+
+    /** As above, for a leg with a site of its own (a fight's den). */
+    protected final boolean between(String from, String to, String id, LegKind kind, String name, int x, int y, int z, int radius, int site) {
         for (int i = 0; i < legs.size(); i++) {
             Leg l = legs.get(i);
             if (!l.id().equals(from) || !l.exits().contains(to)) continue;
             List<String> ex = new ArrayList<>(l.exits());
             ex.set(ex.indexOf(to), id);
             legs.set(i, new Leg(l.id(), l.kind(), l.name(), l.x(), l.y(), l.z(), l.radius(), l.site(), l.pack(), l.when(), List.copyOf(ex)));
-            legs.add(new Leg(id, kind, name, x, y, z, radius, -1, List.of(), "", List.of(to)));
+            legs.add(new Leg(id, kind, name, x, y, z, radius, site, List.of(), "", List.of(to)));
             route = null;
             return true;
         }

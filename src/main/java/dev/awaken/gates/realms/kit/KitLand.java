@@ -74,7 +74,12 @@ public abstract class KitLand<M extends Mats> extends Land {
 
     /** As above, with the labels of this land's pieces a camp may stand among (a tree's crown, a pole, a stub of wall). */
     protected final boolean designWay(WayPlanner.Ground ok, WayPlanner.Dress dress, java.util.Set<String> among) {
-        boolean done = WayPlanner.plan(this, pieces, among, ok, dress, seed, new WayPlanner.Build() {
+        return designWay(ok, dress, among, List.of());
+    }
+
+    /** As above, with places the way must pass straight after its first camp, in order (x, y, z: a bridge over a gorge). */
+    protected final boolean designWay(WayPlanner.Ground ok, WayPlanner.Dress dress, java.util.Set<String> among, List<int[]> via) {
+        boolean done = WayPlanner.plan(this, pieces, among, via, ok, dress, seed, new WayPlanner.Build() {
             @Override
             public int den(int x, int z) {
                 site(SiteKind.DEN, x, ground(x, z) + 1, z, 10, "");

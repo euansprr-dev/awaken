@@ -40,5 +40,13 @@ public abstract class Piece<M> {
         return x >= x0 && x <= x1 && z >= z0 && z <= z1;
     }
 
+    /**
+     * Whether something of this piece stands within {@code pad} of here, seen from above: its box, unless the piece knows
+     * its own shape better (a root's curve, whose box is mostly air). A way's planner keeps camps and stones clear of it.
+     */
+    public boolean stands(int x, int z, int pad) {
+        return x + pad >= x0 && x - pad <= x1 && z + pad >= z0 && z - pad <= z1;
+    }
+
     public abstract void draw(V v, M m);
 }
