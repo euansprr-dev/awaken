@@ -504,6 +504,28 @@ final class AscentSwingTests {
                     && pick.zip && Double.isNaN(pick.top) && Math.abs(pick.y - (by + 6.01)) < 0.02,
                     String.format("from under a canopy: up under it (zip %b, top %.2f, at %.2f)", pick.zip, pick.top, pick.y - by));
             h.assertTrue(AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the canopy's underside as a real anchor");
+            // lower than you (12 Nov 2026, Euan: "even the ground or anything in front of me but slightly lower ... use the
+            // rope as a sling"): 10 up (a hill's top), a low crown 14.5 ahead looked down at is slung off, the pull aimed
+            // a little over the hand
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(6, 7, 2), o.offset(10, 7, 7))) level.setBlock(q, air, flags);
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(6, 1, 19), o.offset(10, 3, 21))) level.setBlock(q, leaves, flags);
+            AscentRules.Kin high = new AscentRules.Kin().set(bx + 8.5, by + 10 + AscentRules.HAND_HEIGHT, bz + 4.5, 0, 0.3, 0.36);
+            double hy = by + 10 + 1.62;
+            float down = (float) -Math.toDegrees(Math.atan2(by + 2 - hy, 19 - 4.5));
+            h.assertTrue(AscentSwing.aimed(space, high, ex, hy, ez, 0, down, AscentRules.TETHER_RANGE, true, w, pick)
+                    && pick.sling && Math.abs(pick.top - (by + 3)) < 0.01 && pick.py >= high.y + 1.49 && pick.y < high.y
+                    && pick.z - bz > 18.5 && pick.z - bz < 19.5,
+                    String.format("from 10 up, a crown under you: slung off (sling %b, top %.2f, pull at %.2f over the hand, bite at z %.2f; sling: %s, onto: %s)",
+                            pick.sling, pick.top - by, pick.py - high.y, pick.z - bz, AscentSwing.SLING_NO[w.aimSling], AscentSwing.ONTO_NO[w.aimOnto]));
+            h.assertTrue(AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the low crown's face as a real anchor");
+            // and from the floor, the floor 15 ahead looked at: slung off it
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(6, 1, 19), o.offset(10, 3, 21))) level.setBlock(q, air, flags);
+            float ahead = (float) -Math.toDegrees(Math.atan2(by - gy, 15));
+            h.assertTrue(AscentSwing.aimed(space, ground, ex, gy, ez, 0, ahead, AscentRules.TETHER_RANGE, true, w, pick)
+                    && pick.sling && Math.abs(pick.y - by) < 0.01 && pick.py >= ground.y + 1.49,
+                    String.format("from the floor, the floor 15 ahead: slung off it (sling %b, bite %.2f up, pull at %.2f over the hand; sling: %s)",
+                            pick.sling, pick.y - by, pick.py - ground.y, AscentSwing.SLING_NO[w.aimSling]));
+            h.assertTrue(AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the floor as a real anchor");
         } finally {
             AscentSwing.guide = guide;
             AscentSwing.hold = hold;

@@ -509,8 +509,14 @@ public final class AscentSwing {
     /** What must be clear when what comes after is yours: the first ticks of a sling's pull, the first blocks of a pull. */
     static final int AIM_OPEN_TICKS = 8;
     static final double AIM_OPEN_PULL = 6;
+    /**
+     * A sling off something lower than you (a crown under your hill, the ground ahead): the point it pulls toward is at
+     * least this far over the hand, so it flings you on past it, never down at it; and the rope bites no steeper under
+     * the hand than this many blocks down per block ahead (40 degrees).
+     */
+    static final double AIM_LOW_LIFT = 1.5, AIM_LOW_DOWN = 0.84;
     /** Why the look's target gave no sling ({@link Work#aimSling}), and no pull onto its top ({@link Work#aimOnto}): for the log. */
-    public static final String[] SLING_NO = {"", "too near", "too steep", "under the hand", "its way is closed", "no top in reach"};
+    public static final String[] SLING_NO = {"", "too near", "too steep", "too far under the hand", "its way is closed", "no top in reach"};
     public static final String[] ONTO_NO = {"", "no top in reach", "its top is under the hand", "no room on its top",
             "the rope's line is blocked", "the way up is closed", "too far"};
     private static final int SLING_CLOSED = 4, ONTO_CLOSED = 5;
@@ -527,12 +533,15 @@ public final class AscentSwing {
      * rope's line clear, the arc clear to the window);</li>
      * <li>with {@code slings} (the guide) the rest. A sling past its top along your look: the top of whatever stands over
      * the cell it hit, leaves and logs alike, up to {@link #AIM_TOP_UP} over it; {@link #findSling}'s rules for one hit
-     * at any reach, except that what the flight meets once it is past the point over the top is yours to steer;</li>
+     * at any reach, except that what the flight meets once it is past the point over the top is yours to steer. Lower
+     * than you (a crown under your hill, the ground ahead), it is still a sling: off it and on, the point it pulls toward
+     * {@link #AIM_LOW_LIFT} over the hand (12 Nov 2026, Euan: "if a tree is in front of me or anything, even the ground
+     * ... but slightly lower, I'd like to basically use the rope as a sling to sling myself off of that place");</li>
      * <li>onto its top: the rope bites its edge over the face it hit and pulls you straight up to it and over (a crown's
      * tier, a ledge, a roof), with room for the body there: a target too near or too steep to sling past;</li>
      * <li>up under it (a branch, a canopy, a ceiling, 2 or more over the hand): pulled up to it, then hanging there;</li>
-     * <li>still it, when the ways above were closed only further on: the sling past a side face whose pull is clear for
-     * its first {@link #AIM_OPEN_TICKS} ticks (a pull that would then meet something lets go with a hop), or the pull onto
+     * <li>still it, when the ways above were closed only further on: the sling past it whose pull is clear for its
+     * first {@link #AIM_OPEN_TICKS} ticks (a pull that would then meet something lets go with a hop), or the pull onto
      * its top or up under it whose first {@link #AIM_OPEN_PULL} blocks are clear (pressed against something, it lets go).</li>
      * </ol>
      * {@link Work#aimT} is how far the look met a block (NaN for none within reach): a press that took nothing shows its
@@ -566,7 +575,7 @@ public final class AscentSwing {
         w.aimOnto = ontoTop(s, hand, a, top, reach, w, out, false);
         if (w.aimOnto == 0 || underIt(s, hand, a, reach, w, out, false)) return true;
         // 5. still it, its way clear at the start
-        return w.aimSling == SLING_CLOSED && a.ny == 0 && top >= hand.y + 1 && slingPast(s, hand, a, top, yaw, w, out, AIM_OPEN_TICKS) == 0
+        return w.aimSling == SLING_CLOSED && slingPast(s, hand, a, top, yaw, w, out, AIM_OPEN_TICKS) == 0
                 || w.aimOnto == ONTO_CLOSED && ontoTop(s, hand, a, top, reach, w, out, true) == 0
                 || underIt(s, hand, a, reach, w, out, true);
     }
@@ -581,14 +590,16 @@ public final class AscentSwing {
         if (Double.isNaN(top)) return 5;
         double hx = a.x, hy = a.y, hz = a.z;
         double fx = fx(yaw), fz = fz(yaw), dx = hx - hand.x, dz = hz - hand.z;
-        double ahead = dx * fx + dz * fz, side = Math.abs(dx * -fz + dz * fx), rise = top + t.slingOver - hand.y;
+        // the point it pulls toward: over the top, and over a top lower than you a little over the hand (off it and on)
+        double py = Math.max(top + t.slingOver, hand.y + AIM_LOW_LIFT);
+        double ahead = dx * fx + dz * fz, side = Math.abs(dx * -fz + dz * fx), rise = py - hand.y;
         if (ahead < t.slingFrom) return 1;
-        if (rise < 1 || top < hy - 0.5) return 3;
+        if (top < hy - 0.5 || hand.y - hy > ahead * AIM_LOW_DOWN) return 3;
         if (rise > ahead * 1.2) return 2;
         double lx = hand.x + fx * ahead - hx, lz = hand.z + fz * ahead - hz, ld = Math.sqrt(lx * lx + lz * lz);
         double lean = !hold ? 0 : ld > t.slingLean ? t.slingLean / ld : 1, px = hx + lx * lean, pz = hz + lz * lean;
-        if (!slingClear(s, hand, px, top + t.slingOver, pz, w, true, open)) {
-            if (lean * ld < 0.05 || !slingClear(s, hand, hx, top + t.slingOver, hz, w, true, open)) return SLING_CLOSED;
+        if (!slingClear(s, hand, px, py, pz, w, true, open)) {
+            if (lean * ld < 0.05 || !slingClear(s, hand, hx, py, hz, w, true, open)) return SLING_CLOSED;
             px = hx;
             pz = hz;
         }
@@ -596,7 +607,7 @@ public final class AscentSwing {
         out.y = hy;
         out.z = hz;
         out.px = px;
-        out.py = top + t.slingOver;
+        out.py = py;
         out.pz = pz;
         out.top = top;
         out.len = out.fitLen = Math.sqrt(dx * dx + (hy - hand.y) * (hy - hand.y) + dz * dz);

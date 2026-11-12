@@ -5142,8 +5142,9 @@ top), client wiring in `AscentMoves`. The server is unchanged (it still checks e
   at an anchor that failed this press, and not for 10 ticks after a press that missed. A tap within 5 ticks of a throw
   carries that throw through, never a second rope (see "The held chain, a link at a time" below). Flying free with the key held, what's within 12 ticks is flown round (a nudge sideways or down, speed kept),
   else zipped over, else hopped (+0.3 or +0.45). From the ground a press throws as before (a hop into the swing).
-- **The marker.** Every other tick in the air off the rope (or with the key held on the ground) the same search runs and
-  `AscentRender` draws the result: a small point with four ticks turning round it, sized with distance, eased between
+- **The marker.** Every other tick, always (on the ground, in the air, swinging, slinging; never rappelling; since 12 Nov
+  2026, before only in the air off the rope or on the ground with the key held), the same search runs and
+  `AscentRender` draws the result (on the rope: where the next rope goes, never on the place the rope holds now): a small point with four ticks turning round it, sized with distance, eased between
   picks, cool white for a swing, warm gold for a zip; drawn a little toward the eye so its face doesn't cut it. Budget:
   about 1.2 ms a search warm on the GameTest server (16 ms cold, once); a search running over 1.5 ms (a dense wood) puts
   the marker on every fourth tick.
@@ -24672,12 +24673,32 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
     room for the body there (a crown's tier, a stalk, a ledge, a roof; the lip zip's own arrival);
   - up under it, when it is an underside 2 or more over the hand (a branch, a canopy, a ceiling): pulled up to it, then
     hanging there, as from a ring;
-  - still it, when those ways were closed only further on: a sling past a side face over the hand whose pull is clear
+  - still it, when those ways were closed only further on: a sling past it whose pull is clear
     for its first 8 ticks (what it would then meet lets it go with a hop), or the pull onto its top or up under it whose
     first 6 blocks are clear (pressed against something, it lets go);
-  - else nothing: the floor, open sky, a face too tall to top within 16 and too steep to sling past. The log's line for
+  - else nothing: the floor under 6 ahead, open sky, a face too tall to top within 16 and too steep to sling past. The log's line for
     such a press now says which rule said no: "[rope] the look met Block{minecraft:oak_leaves} 18.4 off, which the rope
     can't take from here (no swing; sling: too steep; onto its top: the way up is closed; no underside to hang from)".
+- **Lower than you is a sling; the marker always** (12 Nov 2026, Euan on build 3e5d97f9b: "look at the last click I
+  just did. Again, it went through a tree. And ... the place where you can see where the rope is about to land is very
+  inconsistent. Sometimes you can't see the place the rope is going to land at all ... I'd like it to be basically
+  constant ... so you always know where you're about to lock onto"; then "if a tree is in front of me or anything, even
+  the ground or anything is in front of me, but slightly lower, I'd like to basically use the rope as a sling to sling
+  myself off of that place in front of me"). His last two presses: oak leaves 21.6 and 19.8 off, refused with "sling:
+  its way is closed / under the hand; onto its top: its top is under the hand". Every way the rope took a block asked
+  for it over the hand (a swing 4 over, a sling's point 1 over, a pull onto a top 0.3 over, a hang 2 over), so
+  standing higher than a crown nothing took it.
+  - A sling past what the look met (`AscentSwing.aimed`, its second way) now takes it lower than you: its pull aims at
+    the point over its top or 1.5 over the hand, whichever is higher (`AIM_LOW_LIFT`), so the rope flings you on past
+    it, never down at it. A crown under your hill, a low roof, the ground itself 6 or more ahead; not steeper under the
+    hand than 40 degrees (`AIM_LOW_DOWN`, 0.84 down a block ahead; else "too far under the hand"). The lenient sling
+    (its first 8 ticks clear) takes it too, side face or top face, low or high. GameTest `ascent_rope_aimed`: from 10
+    up, a crown 14.5 ahead looked down at is slung off; from the floor, the floor 15 ahead is slung off; the server
+    takes both points; a look 40 degrees down at the floor 2 to 6 off still gives nothing (under the sling's 6).
+  - The marker looks every other tick in every state but the rappel (`AscentMoves.marker`): on the ground with the key
+    up (it never did, so looking at a tree from the floor showed nothing), and on the rope, where it shows where the
+    next rope goes (hidden when that is within 1.5 of the place the rope holds now: the rope shows that). Its search
+    budget is as before (over 1.5 ms puts it on every fourth tick).
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8
@@ -24956,7 +24977,7 @@ mechanism, and `tasks_ledger`, `ui_text_never_cut`, `ui_word_budget`, `journey_l
   longer teach), plus two moments of the Lesson's own (`Lesson.offerOwn`):
   | Move | Earned (§62, unchanged) | Its moment | The prompt |
   |---|---|---|---|
-  | Sling | with the rope | on foot, where a rope held now would sling (nothing to swing from, a top ahead: `AscentMoves.slingFromGround`, the marker's own two looks twice a second while the lesson can still teach, because the marker itself only looks in the air or with the key held); and wherever the marker shows a sling. Not within half a minute of the rope's own first lesson | Hold + rope key, pinned on the top the rope would bite: "It throws you up and over" |
+  | Sling | with the rope | on foot, where a rope held now would sling (nothing to swing from, a top ahead: `AscentMoves.slingFromGround`, the marker's own two looks twice a second while the lesson can still teach, written when the marker looked only in the air or with the key held); and wherever the marker shows a sling (since 12 Nov 2026 on the ground too). Not within half a minute of the rope's own first lesson | Hold + rope key, pinned on the top the rope would bite: "It throws you up and over" |
   | Spring | Tether mastery 3 | a pull is carrying you up onto a top, forward not held | Hold + forward: "Spring off the top" (stays 3.5 s: the pull is over before it is read) |
   | Rope strike | Tether mastery 5 | on the rope or in its carry, a creature out of reach under the crosshair | the attack key, pinned on the creature as it moves: "Your rope pulls you into it" |
   | Flare | with wings | gliding down with the ground within 14 blocks; and after a hard landing on wings | no key: "Level out just before you land" |
