@@ -33,22 +33,25 @@ public final class Shaping {
     public static final int UNDO_MAX = 32, RUN_MAX = 64;
     private static final double REACH_BUFFER = 2.0;
 
-    /** A block as it stood: enough to tell if it has been changed since, and to put it back. */
-    record Snapshot(BlockState state, @Nullable BlockState base, @Nullable BlockState look) {
+    /**
+     * A block as it stood: enough to tell if it has been changed since, and to put it back. Compared in the Mallet's terms,
+     * so a corner turning because a neighbour changed, or a stair standing as a cut of itself, isn't a change.
+     */
+    record Snapshot(BlockState state, RealShapes.@Nullable Parts parts) {
         static Snapshot of(Level level, BlockPos pos) {
             BlockState s = level.getBlockState(pos);
-            if (level.getBlockEntity(pos) instanceof ShapedBlockEntity be) return new Snapshot(s, be.base(), be.look());
-            return new Snapshot(s, null, null);
+            return new Snapshot(s, RealShapes.read(level, pos, s));
         }
 
         boolean matches(Level level, BlockPos pos) {
             Snapshot now = of(level, pos);
-            return now.state == this.state && now.base == this.base && now.look == this.look;
+            return this.parts != null ? this.parts.equals(now.parts) : now.state == this.state;
         }
 
-        void restore(ServerLevel level, BlockPos pos) {
-            level.setBlock(pos, this.state, Block.UPDATE_ALL);
-            if (this.base != null && this.look != null && level.getBlockEntity(pos) instanceof ShapedBlockEntity be) be.set(this.base, this.look);
+        /** Puts it back as the Mallet would write it: the corner it turns now comes from the neighbours now. */
+        void restore(ServerLevel level, BlockPos pos, ServerPlayer actor) {
+            if (this.parts != null) RealShapes.write(level, pos, this.parts, actor);
+            else level.setBlock(pos, this.state, Block.UPDATE_ALL);
         }
     }
 
@@ -121,7 +124,7 @@ public final class Shaping {
         Snapshot before = Snapshot.of(level, pos);
         ShapingRules.Aim aim = ShapingRules.aim(p.shape(), p.facing(), face, hit.x - pos.getX(), hit.y - pos.getY(), hit.z - pos.getZ());
         ShapingRules.Cut cut = ShapingRules.next(p.shape(), p.facing(), aim);
-        RealShapes.write(level, pos, new RealShapes.Parts(p.base(), p.look(), cut.shape(), cut.facing()));
+        RealShapes.write(level, pos, new RealShapes.Parts(p.base(), p.look(), cut.shape(), cut.facing()), sp);
         remember(sp, new Undo(level.dimension(), new ArrayList<>(List.of(new Change(pos.immutable(), before, Snapshot.of(level, pos))))));
         fx(level, pos, p.look(), ShapingPayloads.FX_KNOCK, face, sp);
         return true;
@@ -140,7 +143,7 @@ public final class Shaping {
         BlockState worn = Looks.fit(look, p.look());
         Snapshot before = Snapshot.of(level, pos);
         boolean real = p.shape() == Shape.FULL && p.base() == p.look() && Looks.sameFamily(p.base().getBlock(), look.getBlock());
-        RealShapes.write(level, pos, real ? new RealShapes.Parts(worn, worn, Shape.FULL, p.facing()) : new RealShapes.Parts(p.base(), worn, p.shape(), p.facing()));
+        RealShapes.write(level, pos, real ? new RealShapes.Parts(worn, worn, Shape.FULL, p.facing()) : new RealShapes.Parts(p.base(), worn, p.shape(), p.facing()), sp);
         fx(level, pos, worn, ShapingPayloads.FX_LOOK, face, sp);
         return new Change(pos.immutable(), before, Snapshot.of(level, pos));
     }
@@ -218,7 +221,7 @@ public final class Shaping {
         for (int i = undo.changes().size() - 1; i >= 0; i--) {
             Change c = undo.changes().get(i);
             if (!dev.awaken.core.api.Ready.loaded(level, c.pos()) || !c.after().matches(level, c.pos()) || !ShapingRules.mayChange(sp, level, c.pos())) continue;
-            c.before().restore(level, c.pos());
+            c.before().restore(level, c.pos(), sp);
             back++;
             RealShapes.Parts p = RealShapes.read(level, c.pos(), level.getBlockState(c.pos()));
             if (p != null) fx(level, c.pos(), p.look(), ShapingPayloads.FX_UNDO, seen(sp, c.pos()), sp);
