@@ -40,8 +40,9 @@ import java.util.Set;
  * Helping (SPEC §43.5, step 3): each kind's own small act, never a fetch list, worked out from its want. A warm light
  * where a Lampwing can see it; soft ground tilled near a Burrowbun; the branches over a Mossback cut back, or water
  * brought to it; a shiny stone tossed by a Pebblepup's pile. The right act gets its tell, the band's chime and a line;
- * close but wrong gets a nudge, and after a few misses the nudge points closer (never naming the act). Three helps of one
- * beast and it trusts you. Stage 6's four (SPEC §43.13): flowers planted round a Bumblepuff's bare nest, lots of them; a
+ * close but wrong gets a nudge, and after a few misses the nudge says plainly what to do. Once you've met a kind, its
+ * act is said plainly everywhere ({@link #howTo}; Euan 2026-11-12: "I never know what I have to do with them"). Three
+ * helps of one beast and it trusts you. Stage 6's four (SPEC §43.13): flowers planted round a Bumblepuff's bare nest, lots of them; a
  * branch of a Loomworm's own tree brought down to it; a lost Cloudcalf led home to its pod by someone up at its height;
  * and a Boulderback waited for in the dark, light put away, until it comes to you.
  */
@@ -657,7 +658,7 @@ public final class KinHelp {
         };
     }
 
-    /** Close but wrong: a nudge; after three, the nudge points closer, and still never says what to do. */
+    /** Close but wrong: a nudge; after three, the nudge says plainly what to do ({@link #closer}). */
     static void nudge(KinBeast b, ServerPlayer p, String line) {
         Kinship ks = Kinship.of(p);
         Kinship.Kind s = ks.kind(b.kind());
@@ -669,25 +670,54 @@ public final class KinHelp {
         KinWatch.say(p, s.misses >= 3 ? line + " " + closer(b.kind()) : line, 8);
     }
 
+    /** After a few wrong tries: what to do, short and plain (the same act {@link #howTo} spells out). */
     static String closer(KinKind k) {
         return switch (k) {
-            case LAMPWING -> "[It keeps looking from the trees to the warm glow of a torch, and back.]";
-            case BURROWBUN -> "[It keeps pawing at the grass, as if the top needed breaking up first.]";
-            case MOSSBACK -> "[It keeps looking up at the branches over it, and over at the nearest water.]";
-            case PEBBLEPUP -> "[It's staring at the glinting bits in the rock nearby.]";
-            case TOTTER -> "[It keeps going from the things lying about to its row, and back.]";
-            case THATCHBACK -> "[It keeps looking up at the trees, then at its dam.]";
-            case EMBERKIT -> "[It keeps edging toward anything warm. A fire, most of all.]";
-            case PUFFWOOL -> "[It keeps turning so you can see the burrs tangled in its wool.]";
-            case DUMPLIN -> "[They keep looking for the tallest thing about. Something they could see from far off.]";
-            case PONDLING -> "[It keeps peering down at something dark on the bottom of the pond.]";
-            case SNUFFLET -> "[It keeps snuffling at one patch of ground and looking up at you.]";
-            case CHIMEWREN -> "[They go quiet whenever a bell sounds anywhere, and listen.]";
-            case BUMBLEPUFF -> "[It keeps landing on the bare ground round its nest, looking for something that isn't there any more.]";
-            case LOOMWORM -> "[It keeps stretching up toward the leaves over its log, far out of reach.]";
-            case CLOUDCALF -> "[It keeps turning toward the calling, then looking at anyone up high with it.]";
-            case BOULDERBACK -> "[It never takes its eyes off your light. It won't come any nearer while it's out.]";
-            default -> "";
+            case LAMPWING -> "[It wants a warm light it can see: a torch or a lantern set on the ground near it.]";
+            case BURROWBUN -> "[It wants the ground by it tilled with a hoe.]";
+            case MOSSBACK -> "[Pour water right beside it, out where the sun reaches it.]";
+            case PEBBLEPUP -> "[Drop something shiny by its pile: a gold nugget, quartz, lapis, amethyst or a gem.]";
+            case TOTTER -> "[Drop a stick, a flint, a bone, a feather, a sapling or a mushroom by its row.]";
+            case THATCHBACK -> "[Drop whole logs by its dam.]";
+            case EMBERKIT -> "[Set a lit campfire or a magma block right beside it.]";
+            case PUFFWOOL -> "[Use a brush on it to get the burrs out.]";
+            case DUMPLIN -> "[Stand on something high where they can see you, then lead them to their nest.]";
+            case PONDLING -> "[Break the dark rot on the bottom of its pond, every block of it.]";
+            case SNUFFLET -> "[Dig straight down where it's snuffling, two blocks deep.]";
+            case CHIMEWREN -> "[Ring your Handbell near them.]";
+            case BUMBLEPUFF -> "[Plant flowers round its nest: three or more.]";
+            case LOOMWORM -> "[Drop leaves or a sapling from the same tree as its log.]";
+            case CLOUDCALF -> "[Get up to its height and lead it toward the calling.]";
+            case BOULDERBACK -> "[Put your light away and keep still in the dark. It'll come to you.]";
+        };
+    }
+
+    /**
+     * What to do for one of a kind, said plainly (SPEC §43.5; Euan 2026-11-12: "we need to make it a bit more clear what
+     * you need to actually do once you find that thing"): the act this class checks for, in words to read aloud. The
+     * Tasks step, the Hearth page, the line when you first meet one and the nudges all say this.
+     */
+    public static String howTo(KinKind k) {
+        return switch (k) {
+            case LAMPWING -> "Lampwings come to warm light. At night, stand where one can see you and set a torch or a lantern on the ground within "
+                    + NEAR + " blocks of it. Not a soul torch: it shies away from cold blue light.";
+            case BURROWBUN -> "Till the ground near one with a hoe, within " + NEAR + " blocks of it. It wants soft, broken soil to dig in; a hole dug with a shovel won't do.";
+            case MOSSBACK -> "Pour a bucket of water right beside one, out in the open where the sun reaches it. If branches shade it, cut them back first.";
+            case PEBBLEPUP -> "Drop something shiny by its pile of stones: a gold nugget, raw gold, quartz, lapis, an amethyst shard or a gem. It pushes plain stone away.";
+            case TOTTER -> "Drop one of the things it collects by its row: a stick, a flint, a bone, a feather, a sapling or a mushroom.";
+            case THATCHBACK -> "Drop whole logs by its dam on the riverbank. Planks won't do.";
+            case EMBERKIT -> "Set a lit campfire or a magma block down right beside one, or light a fire next to it with flint and steel. Not soul fire.";
+            case PUFFWOOL -> "Use a brush on one to get the burrs out of its wool (a brush is a feather, a copper ingot and a stick). Shears only frighten it.";
+            case DUMPLIN -> "Stand up high where the flock can see you: on a rock, a stump or a block you set down, at least a block and a half above them. "
+                    + "They follow you. Lead them to their nest, a flattened hay bale out in the grass about twenty blocks away.";
+            case PONDLING -> "Dive into its pond and break the dark Pond Rot on the bottom, every block of it.";
+            case SNUFFLET -> "Dig straight down where it's snuffling, two blocks deep, and see what's buried there.";
+            case CHIMEWREN -> "Ring a bell near the flock: your Handbell (a stick over two copper ingots), or wake a sleeping bell near them. "
+                    + "They only come once you've woken a bell of your own.";
+            case BUMBLEPUFF -> "Plant flowers round its old nest, " + FLOWERS + " or more within " + NEST_REACH + " blocks of it. Bone meal on the grass there brings flowers up too.";
+            case LOOMWORM -> "Drop a branch of its own tree by it: leaves or a sapling from the same tree as the log it lies on. Leaves off the wrong tree it turns away.";
+            case CLOUDCALF -> "Climb or fly up close to it, at its height or no more than four blocks under it, and it follows you. Lead it toward the calling and the puffs of cloud until it's with its pod.";
+            case BOULDERBACK -> "Put every light out of your hands, then keep still near it in the dark for half a minute. Crouch if you want to creep closer. It comes to you.";
         };
     }
 

@@ -142,13 +142,15 @@ public final class KinPage {
         };
     }
 
+    /** Where to look for one, and once you've met one or heard where they live, what to do for it (as the Tasks step says). */
     static String rumour(ServerPlayer p, KinKind k, BlockPos from, boolean home) {
         Kinship.Kind s = Kinship.of(p).kind(k);
-        if (k == KinKind.LAMPWING && Kinship.of(p).lesson == 1) return "The one that's been watching your fire, from the trees nearby.";
-        if (s.met) return "You've met one: " + k.where + ".";
+        if (k == KinKind.LAMPWING && Kinship.of(p).lesson == 1) return "The one that's been watching your fire, from the trees nearby. " + KinGoals.LESSON;
+        if (s.met) return "You've met one: " + k.where + ". " + KinHelp.howTo(k);
         BlockPos at = KinSpawner.rumourFor(p, k, from);
         if (at == null) return "None lives within a long walk of here.";
-        return KinSpawner.rumourLine(p, k, at, from, home);
+        String line = KinSpawner.rumourLine(p, k, at, from, home);
+        return s.heard ? line + " " + KinHelp.howTo(k) : line;
     }
 
     private static List<String> beast(ServerLevel level, KinWorld.Homed m, int ofKind) {
@@ -213,8 +215,11 @@ public final class KinPage {
 
     private static List<String> card(ServerPlayer p, KinKind k, Kinship.Kind s, BlockPos from, boolean home) {
         String where = s.met ? "Met on day " + (s.metDay + 1) + ", near " + s.metX + ", " + s.metZ + "." : "Heard of, not met.";
+        // what it wants and what to do, plainly, from the moment you meet one; watching it adds its own lines first
         List<String> wants = new ArrayList<>();
-        for (int i = 0; i < Math.min(s.watched, k.watch.size()); i++) wants.add(k.watch.get(i));
+        for (int i = 0; i < Math.min(s.watched, k.watch.size() - 1); i++) wants.add(k.watch.get(i));
+        wants.add(k.watch.getLast());
+        wants.add(KinHelp.howTo(k));
         String step = s.step().label + (s.step() == Kinship.Step.KIN ? " · it calls you " + k.callsYou : "");
         String rumour = s.met ? "" : rumour(p, k, from, home);
         return List.of(k.id(), k.title, s.met ? "1" : "0", where, "Could live with you. " + k.job, wants.isEmpty() ? "?" : String.join("\n", wants), step,

@@ -10547,10 +10547,12 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   Track had it), and the tower's next step when it's yours to do (set the frame down at home, clear room for the belfry
   or the stone tower, raise the Great Belfry, ring the Hundred Peal). A tower that only wants more bells adds nothing:
   the leads are that. Reads the Book, never changes it.
-- **The beasts' wants** (phase 3): a want you've read by watching a beast three times is a plain Hearth step ("Give the
-  Burrowbun what it wants", its third watch line, "Help one three times and it trusts you; then it follows you home"),
-  until one of its kind lives with you; the first fire's Lampwing, before you've watched it, is "Watch what's been
-  watching your fire". Both under `kin.KinGoals`.
+- **The beasts' wants** (phase 3; since 2026-11-12, §43.5 "Said plainly"): every kind you've met is a plain Hearth step
+  ("Bring a Burrowbun home", `kin/want/<id>` where the home doesn't ask for it yet), what to do for it
+  (`KinHelp.howTo`) and how it comes home, until one of its kind lives with you; no watching first. The first fire's
+  Lampwing is "Set out a light for what's watching your fire" ("Make friends with the Lampwing at your fire" once met):
+  torches or a lantern on the ground near the trees at night, three times, and it settles by your fire. Under
+  `kin.KinGoals`.
 - **Truths come true by themselves** (phase 3, `Progression.truthDue`, `truthsCatchUp`): from level 5 (the road's
   `awaken:truths`), a Truth whose rank has come, whose emergence (if any) has happened and whose deed is done is true,
   its reward unchanged; no offers, no declaring, all 32 can be earned. Lived before level 5 or before its rank, it comes
@@ -18894,9 +18896,30 @@ once, in plain words what it was and why the owner went back, and you keep it (`
 - **What the System tells, and never tells.** Every kin card says "Could live with you" and its home job; quarry cards
   say "Quarry"; the Deep's things get no card. Each Hearth need carries a rumour: the sort of animal and a real region,
   picked from an actual place that kind lives within 600 blocks, named by landmarks the player knows, Track a rough
-  bearing. Watching adds up to three want lines, vague to plain; the third states the want. The help is never stated.
-  The right act gets the beast's tell, the band's chime and a line; a near miss gets a nudge line; after a few misses
-  the line points closer, never naming the act. The Kin list always holds at least one rumour not yet followed.
+  bearing. Watching adds up to three want lines, vague to plain; the third states the want. The right act gets the
+  beast's tell, the band's chime and a line; a near miss gets a nudge line; after a few misses the line says plainly
+  what to do (`KinHelp.closer`). The Kin list always holds at least one rumour not yet followed.
+- **Said plainly** (Euan 2026-11-12, changing the 29 Oct rule that the help is never stated: "All the directions for the
+  kins I really don't like ... just go out at night and watch it for a moment. Like how is that going to help you? ...
+  I've found a few kins so far in the game, and I never know what I have to do with them"). Once you've met a kind or
+  heard where one lives, everything says what to do for it, in one set of words (`KinHelp.howTo`, the act the code
+  checks): the Tasks step, the Hearth page's need rows and its Kin card ("What it wants": its want, then the act), the
+  Journal's Beasts page, and the line when you first meet one. The step adds how it comes home: three helps and it
+  trusts you, then it follows a few steps behind (more than 48 blocks ahead and it stops; go back for it), and what
+  the home lacks for it when it has no nook it likes. Watching stays: its first two lines go on the card, but nothing
+  waits on it. A kind you haven't met or heard of stays unnamed. The acts, as said: Lampwing, at night a torch or a
+  lantern on the ground within 10 blocks where it can see you, never a soul light; Burrowbun, till the ground near it
+  with a hoe; Mossback, water poured beside it in the open (branches over it cut back); Pebblepup, something shiny
+  dropped by its pile (gold nugget, raw gold, quartz, lapis, amethyst, a gem); Totter, a stick, flint, bone, feather,
+  sapling or mushroom dropped by its row; Thatchback, whole logs by its dam; Emberkit, a lit campfire or magma beside
+  it, or a fire lit next to it; Puffwool, a brush; Dumplins, stand a block and a half above the flock and lead them to
+  their nest, a flattened hay bale about twenty blocks off; Pondling, every block of Pond Rot broken; Snufflet, dig two
+  down where it snuffles; Chimewrens, a Handbell rung near them (once you've woken a bell); Bumblepuff, three or more
+  flowers round its nest; Loomworm, leaves or a sapling of its log's tree; Cloudcalf, get up to its height and lead it
+  to the calling; Boulderback, no light in your hands and keep still near it for half a minute. The first fire's
+  Lampwing: "It comes to warm light. At night, set a torch or a lantern on the ground near the trees, within 10 blocks
+  of it. Do that three times, a few seconds apart, and it trusts you and settles by your fire." Test
+  `kin_every_kind_says_what_to_do`.
 - The System translates beasts in brackets as subtitles do, only up close and only for kinds read, more as Kinship grows.
   Only the beast you're looking at (within 8 blocks, a 20° cone, in sight), at most one line every 25 s, and a line is
   given once until what it says changes (Euan 2026-10-30: a Lampwing asleep by the fire said so every 25 s;
@@ -22867,7 +22890,7 @@ The Tasks page (§27.13) keeps its model: steps stay derived from the world, no 
 
 **Tests.** `tasks_caps` walks the seven stops of `docs/tasks-progression/proof/rows-at-each-stop.txt` (Now at most 7, a tab at most 3, one row per thread, nothing lost, a lesson never on top). `tasks_slots_stay` covers places holding, the next step taking the finished one's place, Set aside and Undo, a pin in Later, trails giving way, an old save.
 
-**The Hearth tab.** Three lines of work. `hearth.home`: the guide, the Anchor, the Forge's tiers and the home's tiers (a tier only shows once your rank opens it; until then the foot of the tab says when, because nothing on the list is out of reach). `hearth.build`: the Armoury, the Forge room, and **Add to your home** (`hearth/add`), one row with up to three picks. `hearth.beasts`: the beasts, each a Lead, a kind your standing rooms are waiting on first (a Storehouse waits on a Totter, an Ore Shed on a Pebblepup, a Smeltery on an Emberkit, a Rookery on a Chimewren).
+**The Hearth tab.** Three lines of work. `hearth.home`: the guide, the Anchor, the Forge's tiers and the home's tiers (a tier only shows once your rank opens it; until then the foot of the tab says when, because nothing on the list is out of reach). `hearth.build`: the Armoury, the Forge room, and **Add to your home** (`hearth/add`), one row with up to three picks. `hearth.beasts`: the beasts, each a Lead, a kind your standing rooms are waiting on first (a Storehouse waits on a Totter, an Ore Shed on a Pebblepup, a Smeltery on an Emberkit, a Rookery on a Chimewren). A kind you've met says plainly what to do for it and how it comes home (§43.5 "Said plainly"): the one Lead that says what comes after it.
 
 Picks are `HearthGoals.OPTIONS`, in the order they're offered: a room you've started comes first and the one you picked stays on offer. Each has the rank it's told at, which is not a lock: a room counts whenever it's built. Pick one and the row becomes it, with Change to go back. The Storehouse is told at C-rank, with the Granary Keystone as a Lead (every town's granary keeps one against a ground-floor wall). The Sanctuary is a pick once there's an Anchor. The Now tracker's room suggestion now covers the works too, once two of their pieces are down.
 

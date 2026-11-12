@@ -138,7 +138,8 @@ public final class KinWatch {
         Kinship.save(p, ks);
         Progression.count(p, "awaken:kin_read");
         KinKind k = b.kind();
-        say(p, "[A " + k.title + ": " + k.sort + ". It could live with you. Filed on your Hearth page.]", 10);
+        // what to do for it, plainly, the moment you meet one (Euan 2026-11-12: "I never know what I have to do with them")
+        say(p, "[A " + k.title + ": " + k.sort + ". It could live with you. " + KinHelp.howTo(k) + " It's on your Hearth page.]", 16);
     }
 
     // ---- watching ---------------------------------------------------------------------------------------------------

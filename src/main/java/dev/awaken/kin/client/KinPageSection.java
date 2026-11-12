@@ -48,7 +48,7 @@ final class KinPageSection extends UiSection {
 
     /**
      * The Journal's Beasts category (SPEC §27.13): every kind that lives in the world, a "?" until you've met one, then
-     * where you met it, the work it could do and what it wants once you've watched it.
+     * where you met it, the work it could do, what it wants and what to do for it (SPEC §43.5).
      */
     static List<Catalogue.Slot> slots() {
         ask();
