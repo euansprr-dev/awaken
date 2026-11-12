@@ -27529,7 +27529,7 @@ plan with `leaperTrial` once it says it is ready, which it does not until someon
   proves each crossing against the reach above (the walk check takes the land's word for which crossings need a move);
   par set from real runs. Nobody has played it.
 
-## 72. Gates in Motion (PROPOSED, not built; plan docs/gates-in-motion/PLAN.md; waiting on Euan's answers on the approval page)
+## 72. Gates in Motion (PROPOSED, not built; plan docs/gates-in-motion/PLAN.md, page https://claude.ai/artifact/EMPut1PgjJCgoXnDcSsK1v; waiting on Euan's answers)
 
 Euan, 12 Nov 2026: the gates' parkour is "very boring": little wall running, simple jumps, no mantling, no sliding; a bit
 of fighting on the spiral stairs; "extrapolate this to every possible level". Renumber at merge if 72 is taken.

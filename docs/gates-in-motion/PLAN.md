@@ -1,6 +1,7 @@
 # Gates in Motion: plan
 
-Status: plan only, waiting for Euan's approval. Nothing here is built. Draft SPEC §72 at the end of SPEC.md.
+Status: plan only, waiting for Euan's approval on the page https://claude.ai/artifact/EMPut1PgjJCgoXnDcSsK1v (his answers save there). Nothing here is built.
+Draft SPEC §72 at the end of SPEC.md; page copy docs/gates-in-motion/gates-in-motion.html.
 
 Euan, 12 Nov 2026: "right now the parkour is very boring. Like there's very not much wall running. The jumps are
 extremely simple to do. No mantling or anything. It doesn't really feel dynamic. No sliding either. I think sliding would
