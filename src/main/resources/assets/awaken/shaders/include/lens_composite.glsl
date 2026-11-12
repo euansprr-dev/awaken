@@ -216,7 +216,9 @@ vec4 hazeAir(vec3 dir, float reach, vec3 gameFog, vec4 p1, vec4 sunset) {
         vec3 sky = mix(gameFog, airFog(dir, f22.xyz, f16.z), airOn());
         vec3 amb = mix(vec3(luma(sky)), sky, 0.6);
         float into = max(dot(dir, f14.xyz), 0.0);
-        vec3 direct = lightColour(p1, sunset) * f14.w * mix(0.30 + 0.50 * into * into * into, 0.25, f16.y);
+        // (by night the moon's share is the larger: mist under a dark sky is seen by the little light it catches, and
+        // lit by the sky alone it was only a darkness over the distance)
+        vec3 direct = lightColour(p1, sunset) * f14.w * mix(0.30 + 0.50 * into * into * into, 0.70, f16.y);
         vec3 lit = min(col.rgb * (amb * 0.62 + direct * col.w), vec3(1.0));
         add += left * (1.0 - through) * lit;
         left *= through;

@@ -105,6 +105,36 @@ final class PulseFx {
         SHOWN.clear();
     }
 
+    /**
+     * Tours (autopilot {@code tell <kind> <blocks>}, {@code tell off}): one tell held on the ground that far ahead of
+     * the camera (0: round it), as the server would send it, until told off or a real tell list arrives. A dust
+     * line runs across the view.
+     */
+    static String test(String tell, float distance) {
+        SHOWN.remove(-1);
+        Minecraft mc = Minecraft.getInstance();
+        if (tell.equals("off") || mc.player == null || mc.level == null) return "no test tell";
+        Vec3 look = mc.player.getLookAngle();
+        double len = Math.max(0.01, Math.sqrt(look.x * look.x + look.z * look.z));
+        Shown s = new Shown();
+        s.tell = tell;
+        s.px = s.x = mc.player.getX() + look.x / len * distance;
+        s.pz = s.z = mc.player.getZ() + look.z / len * distance;
+        s.py = s.y = mc.level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, Mth.floor(s.x), Mth.floor(s.z));
+        s.radius = switch (tell) {
+            case "dustline" -> 14;
+            case "haze" -> 22;
+            case "fog" -> 30;
+            default -> 12;
+        };
+        s.progress = 0.5F;
+        s.dx = (float) (-look.z / len);
+        s.dz = (float) (look.x / len);
+        s.since = s.born = LivingClient.ticks - 1000;
+        SHOWN.put(-1, s);
+        return tell + " held at " + Mth.floor(s.x) + " " + Mth.floor(s.y) + " " + Mth.floor(s.z);
+    }
+
     // ---- drawing ----------------------------------------------------------------------------------------------------
 
     private static RenderType alpha, light;
@@ -215,7 +245,7 @@ final class PulseFx {
                         0.5F * a, 0xC9AC7C, 1F, 7F, secs);
             case "fog": { // the Deep Tide: fog lying on the ground, wider as the night goes on
                 float grow = 0.65F + 0.35F * Mth.clamp(s.progress * 3, 0, 1);
-                return dev.awaken.lens.client.LensClient.haze(x, y + 1.2, z, 1, 0, r * grow, r * grow, 4.5F, 0.8F * a, 0xAEB6C2, 0.6F, 11F, secs);
+                return dev.awaken.lens.client.LensClient.haze(x, y + 1.2, z, 1, 0, r * grow, r * grow, 4.5F, 0.8F * a, 0xAEB6C2, 0.8F, 11F, secs);
             }
             case "roar": { // a duel's dust, bursting with each crash
                 float beat = (now % 60) / 60F, wide = 4 + beat * r * 0.7F;

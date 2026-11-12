@@ -809,6 +809,10 @@ public final class Autopilot {
                 Awaken.LOG.info("[autopilot] pixels {}: {}", arg.trim(), dev.awaken.turbo.pixels.Pixels.autopilot(arg));
                 if (!arg.trim().startsWith("gpu")) waitTicks = 10;
             }
+            case "tell" -> { // tell <haze|dustline|fog|roar> <blocks> | off: a happening's dust or fog held that far ahead, on the ground
+                String[] t = arg.trim().split("\\s+");
+                Awaken.LOG.info("[autopilot] tell {}: {}", arg.trim(), dev.awaken.living.client.LivingClient.testTell(t[0], t.length > 1 ? Float.parseFloat(t[1]) : 0F));
+            }
             case "lensdebug" -> {
                 dev.awaken.lens.client.LensClient.debug(Integer.parseInt(arg.trim()));
                 waitTicks = 10;
