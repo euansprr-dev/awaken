@@ -6,6 +6,8 @@ import dev.awaken.armour.ArmourSet;
 import dev.awaken.armour.net.ArmourPayloads;
 import dev.awaken.arms.ArmsApiAccess;
 import dev.awaken.core.test.AwakenTests;
+import dev.awaken.delve.forged.ForgedPicks;
+import dev.awaken.delve.forged.PickForm;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,6 +39,15 @@ final class HallTests {
         h.assertTrue(HallServer.wall(p).at(katana, 5) == HallNet.OVER, "a known pattern above your level shows its true look and waits");
         p.getInventory().add(new ItemStack(BuiltInRegistries.ITEM.getValue(Awaken.id("wildhide_katana"))));
         h.assertTrue(HallServer.wall(p).at(katana, 0) == HallNet.MADE, "holding one makes it yours on the wall");
+        // the Picks wall (SPEC §49.4, §52): four forms at six ranks; a form not learned yet is a shape until its deed
+        h.assertTrue(w.picks().length == HallNet.PICK_COLS * HallNet.ROWS, "a niche for every pick form at every rank");
+        int breaker = PickForm.BREAKER.ordinal(), mattock = PickForm.MATTOCK.ordinal();
+        h.assertTrue(w.pick(breaker, 0) == HallNet.SHAPE, "the Breaker waits for a lode's heart, got " + w.pick(breaker, 0));
+        h.assertTrue(w.pick(PickForm.DELVER.ordinal(), 0) != HallNet.SHAPE, "the Delver is known from the start");
+        dev.awaken.progression.Progression.setCounter(p, PickForm.BREAKER.opens, 1);
+        h.assertTrue(HallServer.wall(p).pick(breaker, 0) != HallNet.SHAPE, "a lode's heart teaches the Breaker");
+        p.getInventory().add(new ItemStack(ForgedPicks.get(PickForm.MATTOCK, 0)));
+        h.assertTrue(HallServer.wall(p).pick(mattock, 0) == HallNet.MADE, "carrying a pick makes it yours on the wall");
         h.succeed();
     }
 

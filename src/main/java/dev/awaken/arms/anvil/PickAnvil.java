@@ -178,10 +178,15 @@ public final class PickAnvil {
         return ForgedPicks.is(s) || old(s) != null;
     }
 
-    /** What an old tool is remade as: its form and rank; null when it isn't one. */
-    record Remade(PickForm form, int tier) {}
+    /** Any pickaxe at all, vanilla's too: at the anvil's door it opens the Hall on its Picks wall (SPEC §49.4). */
+    public static boolean isPick(ItemStack s) {
+        return holds(s) || s.is(net.minecraft.tags.ItemTags.PICKAXES);
+    }
 
-    static @Nullable Remade old(ItemStack s) {
+    /** What an old tool is remade as: its form and rank; null when it isn't one. */
+    public record Remade(PickForm form, int tier) {}
+
+    public static @Nullable Remade old(ItemStack s) {
         int v = PickVerses.verse(s);
         if (v >= 0) return new Remade(PickForm.DELVER, tierOfVerse(v));
         Identifier key = BuiltInRegistries.ITEM.getKey(s.getItem());
@@ -196,12 +201,25 @@ public final class PickAnvil {
         return v == 0 ? 0 : v <= 2 ? 1 : v <= 4 ? 2 : v == 5 ? 3 : 4;
     }
 
-    /** Use with a pick in hand and the anvil free: its window. False when it isn't one. */
+    /**
+     * Use with a pick in hand and the anvil free: what this anvil can do to it, row by row. The Hall's Picks wall puts each
+     * row on the niche it makes (SPEC §52); the old cards window, behind classicScreens, lists them. False when it isn't one.
+     */
     static boolean open(ServerPlayer p, ServerLevel level, WarAnvilBlockEntity be) {
         ItemStack s = p.getMainHandItem();
         if (!holds(s)) return false;
         AwakenNet.send(p, new AnvilPayloads.Held(be.getBlockPos(), options(p, level, be.getBlockPos(), s), List.of(), ""));
         return true;
+    }
+
+    /**
+     * The Hall asked again (what you carry changed): the rows for the pick in your hand, or none when there isn't one now or
+     * the anvil is busy, so the Hall drops what it showed.
+     */
+    public static void sendHeld(ServerPlayer p, BlockPos pos) {
+        if (p.level() instanceof ServerLevel level && dev.awaken.core.api.Ready.loaded(level, pos) && level.getBlockEntity(pos) instanceof WarAnvilBlockEntity be
+                && be.work() == null && be.slot().isEmpty() && open(p, level, be)) return;
+        AwakenNet.send(p, new AnvilPayloads.Held(pos, List.of(), List.of(), ""));
     }
 
     private static final int FORM = 100;
@@ -335,7 +353,8 @@ public final class PickAnvil {
         return null;
     }
 
-    private static String howOpens(PickForm f) {
+    /** How a form not yet learned opens, in plain words: the deed, never a secret (SPEC §49.2). */
+    public static String howOpens(PickForm f) {
         return f == PickForm.BREAKER ? "You don't know how to make one of these yet. Break a lode's heart, and you'll know what the head has to stand up to."
                 : "You don't know how to make one of these yet. Light one of the old Delver's lamps, and you'll start listening to the rock.";
     }

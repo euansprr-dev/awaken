@@ -1,10 +1,11 @@
-"""The Hall of Arms' backdrops (SPEC §52): the wall of niches and the terraces, lit and dark. Own art, numpy only.
-Run: python3 tools/art/hall/backdrops.py   (writes assets/awaken/textures/gui/hall/*.png)
-The niche layout here is the same arithmetic as dev.awaken.hall.client.HallLayout: change them together."""
-import numpy as np, os, math
+"""The Hall of Arms' backdrops (SPEC §52): the wall of niches, the Picks wall and the terraces, lit and dark. Own art, numpy only.
+Run: python3 tools/art/hall/backdrops.py [picks]   (writes assets/awaken/textures/gui/hall/*.png; "picks" writes only the Picks wall)
+The niche layouts here are the same arithmetic as dev.awaken.hall.client.HallLayout and PickLayout: change them together."""
+import numpy as np, os, math, sys
 from PIL import Image
+ONLY_PICKS=len(sys.argv)>1 and sys.argv[1]=='picks'
 R=os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','..'))
-O=R+'/src/main/resources/assets/awaken/textures/gui/hall'
+O=os.environ.get('HALL_OUT',R+'/src/main/resources/assets/awaken/textures/gui/hall')
 W,H=1708,960
 rng=np.random.default_rng(7)
 # ---------- layout
@@ -21,6 +22,14 @@ for r in range(6):
         x+=fg
     y=top-GAP
 wall=dict(cells=cells,rows=rows,P=P)
+# the Picks wall (PickLayout): the same rows, four forms across, each its own bay, narrower and centred
+PICK_WIDE=980; PICK_GAP=46
+pick_cells=[]
+for r in range(6):
+    top,bot=rows[r]
+    tw=PICK_WIDE*P[r]; fg=PICK_GAP*P[r]; cw=(tw-fg*3)/4; x=854-tw/2
+    for c in range(4):
+        pick_cells.append(dict(r=r,c=c,f=c,x=round(x+cw/2,2),y0=top,y1=bot,w=round(cw,2))); x+=cw+fg
 # terraces: E nearest; staggered like a choir; Strider Bulwark Channeler Duelist Lord
 TERR=[(940,288,322),(786,232,272),(646,190,232),(520,154,198),(408,126,168),(312,102,142)]
 terr=[]
@@ -42,79 +51,83 @@ def smooth(a,b,x):
 def save(a,n):
     Image.fromarray((np.clip(a,0,1)*255).astype(np.uint8),'RGB').save(O+'/'+n+'.png',optimize=True)
 # ---------- the wall
-rt=[top for top,_ in rows]; ry=[b for _,b in rows]
-ys=np.array([BOT]+[t for t in rt])
-vs=np.arange(7.0)
-v=np.interp(-yy,-ys,vs)  # continuous row coord
-v=np.where(yy<ys[-1],6+(ys[-1]-yy)/70.,v)
-pv=np.interp(v,np.arange(6),P)
-pv=np.where(v>5,P[5]-(v-5)*.05,pv)
-u=(xx-854)/pv
-cw=30.;ch=.22
-course=np.floor(v/ch)
-sx=u/cw+0.5*(course%2)
-fu=sx-np.floor(sx); fv=v/ch-course
-b=vnoise(sx,course,3)
-fine=vnoise(u/ (7.),v*18,5)*.5+vnoise(u/15.,v*9,9)*.5
-mortar=1-(1-smooth(0,.05,fu)*smooth(1,.95,fu))*.75; mortar=mortar*(1-(1-smooth(0,.08,fv)*smooth(1,.92,fv))*.75)
-stone=(.52+.38*b)*(.62+.5*fine)*mortar
-alb=np.dstack([stone*.56,stone*.52,stone*.52])
-# ribs between the five bays and at the sides
-rib=np.zeros((H,W)); ribhi=np.zeros((H,W))
-acc=0; 
-for edge in [0,4,6,10,13,16]:
-    # centre of the gap for each row via cells
-    pts=[]
-    for r in range(6):
-        cs=[c for c in cells if c['r']==r]
-        if edge==0: x=cs[0]['x']-cs[0]['w']/2-13*P[r]
-        elif edge==16: x=cs[-1]['x']+cs[-1]['w']/2+13*P[r]
-        else: x=(cs[edge-1]['x']+cs[edge-1]['w']/2+cs[edge]['x']-cs[edge]['w']/2)/2
-        pts.append(x)
-    xc=np.interp(v,np.arange(6),pts); xc=np.where(v>5,854+(pts[5]-854)*(pv/P[5]),xc)
-    hw=11*pv
-    d=(xx-xc)/hw
-    m=smooth(1.08,.9,np.abs(d))
-    rib=np.maximum(rib,m)
-    ribhi=np.maximum(ribhi,m*smooth(-.9,-.4,d)*smooth(.1,-.3,d))
-alb=alb*(1-rib[...,None])+np.dstack([.30+.0*rib,.28+.0*rib,.29+0*rib])*rib[...,None]*(.75+.5*fine[...,None])
-alb=alb+ribhi[...,None]*.10
-# ledges
-led=np.zeros((H,W)); 
-for r in range(6):
-    top,bot=rows[r]
-    led=np.maximum(led,smooth(bot+9,bot+6,yy)*smooth(bot,bot+2,yy))
-alb=alb*(1-led[...,None]*.45)+led[...,None]*.28
-nicheI=np.zeros((H,W)); nicheR=np.zeros((H,W)); floorg=np.zeros((H,W))
-for c in cells:
-    x,y0,y1,w=c['x'],c['y0'],c['y1'],c['w']*.90
-    x0,x1=int(x-w/2-4),int(x+w/2+4); yA,yB=int(y0-2),int(y1+2)
-    sub=(max(0,yA),min(H,yB),max(0,x0),min(W,x1))
-    yy2=yy[sub[0]:sub[1],sub[2]:sub[3]]; xx2=xx[sub[0]:sub[1],sub[2]:sub[3]]
-    s=(xx2-x)/(w/2); t=(y1-yy2)/(y1-y0)
-    lim=np.where(t<.70,1.0,np.clip(1-((t-.70)/.30)**1.5,0,1))
-    ins=np.abs(s)-lim; ins=np.where((t<0)|(t>1),1,ins)
-    # hard-stepped for a pixel look
-    m=(ins<0).astype(float); rim=((ins<.09)&(ins>=-0.0)).astype(float)
-    nicheI[sub[0]:sub[1],sub[2]:sub[3]]=np.maximum(nicheI[sub[0]:sub[1],sub[2]:sub[3]],m)
-    nicheR[sub[0]:sub[1],sub[2]:sub[3]]=np.maximum(nicheR[sub[0]:sub[1],sub[2]:sub[3]],rim)
-    g=np.exp(-(((t-.0)/.34)**2))*np.exp(-(s/.8)**2)*m
-    floorg[sub[0]:sub[1],sub[2]:sub[3]]=np.maximum(floorg[sub[0]:sub[1],sub[2]:sub[3]],g)
-inner=np.dstack([.055,.046,.048])*(1+.5*fine[...,None])
-alb=alb*(1-nicheI[...,None])+inner*nicheI[...,None]
-alb=alb*(1-nicheR[...,None])+np.dstack([.42,.36,.31])*nicheR[...,None]
-# light
-key=smooth(-.2,1.1,(yy/H))**.8*.95+.12
-shaft=np.exp(-(((xx-854)/(380-yy*.05))**2))*(.5)*(1-yy/H*.55)
 warm=np.array([1.0,.74,.50]); cool=np.array([.40,.55,.85])
-L=(key[...,None]*warm*1.2 + shaft[...,None]*np.array([.85,.8,.75])*1.0 + .09*cool)
-lit=alb*L + floorg[...,None]*warm*.85
-vig=1-.62*smooth(.55,1.25,np.hypot((xx-854)/854,(yy-520)/520))
-lit=lit*vig[...,None]
-lit=np.clip(lit,0,1)**.92
-dark=alb*(.13*cool+.05)+floorg[...,None]*.012
-dark=dark*vig[...,None]
-save(lit,'wall_lit'); save(dark,'wall_dark')
+def paint_wall(cells,edges,side,lit_name,dark_name):
+    rt=[top for top,_ in rows]; ry=[b for _,b in rows]
+    ys=np.array([BOT]+[t for t in rt])
+    vs=np.arange(7.0)
+    v=np.interp(-yy,-ys,vs)  # continuous row coord
+    v=np.where(yy<ys[-1],6+(ys[-1]-yy)/70.,v)
+    pv=np.interp(v,np.arange(6),P)
+    pv=np.where(v>5,P[5]-(v-5)*.05,pv)
+    u=(xx-854)/pv
+    cw=30.;ch=.22
+    course=np.floor(v/ch)
+    sx=u/cw+0.5*(course%2)
+    fu=sx-np.floor(sx); fv=v/ch-course
+    b=vnoise(sx,course,3)
+    fine=vnoise(u/ (7.),v*18,5)*.5+vnoise(u/15.,v*9,9)*.5
+    mortar=1-(1-smooth(0,.05,fu)*smooth(1,.95,fu))*.75; mortar=mortar*(1-(1-smooth(0,.08,fv)*smooth(1,.92,fv))*.75)
+    stone=(.52+.38*b)*(.62+.5*fine)*mortar
+    alb=np.dstack([stone*.56,stone*.52,stone*.52])
+    # ribs between the five bays and at the sides
+    rib=np.zeros((H,W)); ribhi=np.zeros((H,W))
+    acc=0; 
+    for edge in edges:
+        # centre of the gap for each row via cells
+        pts=[]
+        for r in range(6):
+            cs=[c for c in cells if c['r']==r]
+            if edge==0: x=cs[0]['x']-cs[0]['w']/2-side*P[r]
+            elif edge==len(cs): x=cs[-1]['x']+cs[-1]['w']/2+side*P[r]
+            else: x=(cs[edge-1]['x']+cs[edge-1]['w']/2+cs[edge]['x']-cs[edge]['w']/2)/2
+            pts.append(x)
+        xc=np.interp(v,np.arange(6),pts); xc=np.where(v>5,854+(pts[5]-854)*(pv/P[5]),xc)
+        hw=11*pv
+        d=(xx-xc)/hw
+        m=smooth(1.08,.9,np.abs(d))
+        rib=np.maximum(rib,m)
+        ribhi=np.maximum(ribhi,m*smooth(-.9,-.4,d)*smooth(.1,-.3,d))
+    alb=alb*(1-rib[...,None])+np.dstack([.30+.0*rib,.28+.0*rib,.29+0*rib])*rib[...,None]*(.75+.5*fine[...,None])
+    alb=alb+ribhi[...,None]*.10
+    # ledges
+    led=np.zeros((H,W)); 
+    for r in range(6):
+        top,bot=rows[r]
+        led=np.maximum(led,smooth(bot+9,bot+6,yy)*smooth(bot,bot+2,yy))
+    alb=alb*(1-led[...,None]*.45)+led[...,None]*.28
+    nicheI=np.zeros((H,W)); nicheR=np.zeros((H,W)); floorg=np.zeros((H,W))
+    for c in cells:
+        x,y0,y1,w=c['x'],c['y0'],c['y1'],c['w']*.90
+        x0,x1=int(x-w/2-4),int(x+w/2+4); yA,yB=int(y0-2),int(y1+2)
+        sub=(max(0,yA),min(H,yB),max(0,x0),min(W,x1))
+        yy2=yy[sub[0]:sub[1],sub[2]:sub[3]]; xx2=xx[sub[0]:sub[1],sub[2]:sub[3]]
+        s=(xx2-x)/(w/2); t=(y1-yy2)/(y1-y0)
+        lim=np.where(t<.70,1.0,np.clip(1-((t-.70)/.30)**1.5,0,1))
+        ins=np.abs(s)-lim; ins=np.where((t<0)|(t>1),1,ins)
+        # hard-stepped for a pixel look
+        m=(ins<0).astype(float); rim=((ins<.09)&(ins>=-0.0)).astype(float)
+        nicheI[sub[0]:sub[1],sub[2]:sub[3]]=np.maximum(nicheI[sub[0]:sub[1],sub[2]:sub[3]],m)
+        nicheR[sub[0]:sub[1],sub[2]:sub[3]]=np.maximum(nicheR[sub[0]:sub[1],sub[2]:sub[3]],rim)
+        g=np.exp(-(((t-.0)/.34)**2))*np.exp(-(s/.8)**2)*m
+        floorg[sub[0]:sub[1],sub[2]:sub[3]]=np.maximum(floorg[sub[0]:sub[1],sub[2]:sub[3]],g)
+    inner=np.dstack([.055,.046,.048])*(1+.5*fine[...,None])
+    alb=alb*(1-nicheI[...,None])+inner*nicheI[...,None]
+    alb=alb*(1-nicheR[...,None])+np.dstack([.42,.36,.31])*nicheR[...,None]
+    # light
+    key=smooth(-.2,1.1,(yy/H))**.8*.95+.12
+    shaft=np.exp(-(((xx-854)/(380-yy*.05))**2))*(.5)*(1-yy/H*.55)
+    L=(key[...,None]*warm*1.2 + shaft[...,None]*np.array([.85,.8,.75])*1.0 + .09*cool)
+    lit=alb*L + floorg[...,None]*warm*.85
+    vig=1-.62*smooth(.55,1.25,np.hypot((xx-854)/854,(yy-520)/520))
+    lit=lit*vig[...,None]
+    lit=np.clip(lit,0,1)**.92
+    dark=alb*(.13*cool+.05)+floorg[...,None]*.012
+    dark=dark*vig[...,None]
+    save(lit,lit_name); save(dark,dark_name)
+if not ONLY_PICKS: paint_wall(cells,[0,4,6,10,13,16],13,'wall_lit','wall_dark')
+paint_wall(pick_cells,[0,1,2,3,4],PICK_GAP/2,'pick_lit','pick_dark')
+if ONLY_PICKS: sys.exit(0)
 # ---------- terraces
 feet=[t[0] for t in TERR]
 ty=np.array(feet+[feet[-1]-58,feet[-1]-116,feet[-1]-190,feet[-1]-280,-400.])

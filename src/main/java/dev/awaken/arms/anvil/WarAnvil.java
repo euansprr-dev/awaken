@@ -96,8 +96,13 @@ public final class WarAnvil {
             Signal.send(p, n.ttl(20 * 10).build());
             return;
         }
-        // a pick in hand: its own window (§49.4)
-        if (PickAnvil.open(p, level, be)) return;
+        // any pickaxe in hand: the Hall opens on its Picks wall, and a forged or old pick's rows follow it, each to the
+        // niche it makes (§49.4, §52). The view goes first: it is what opens the screen the rows are drawn on.
+        if (PickAnvil.isPick(p.getMainHandItem())) {
+            ArmsArmoury.openAnvil(p, be.getBlockPos());
+            PickAnvil.open(p, level, be);
+            return;
+        }
         // one of Arms' weapons in hand: its window (temper, reforge, attune; §46.8), the Armoury a button away
         if (AnvilHeld.open(p, level, be)) return;
         ArmsArmoury.openAnvil(p, be.getBlockPos());

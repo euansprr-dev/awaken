@@ -19,15 +19,27 @@ public final class HallNet {
     public static final String[] COLUMNS = {"longsword", "katana", "rapier", "greatblade", "axe", "maul", "spear", "glaive", "scythe", "warstaff",
             "daggers", "twinblades", "gauntlets", "chainblade", "shieldblade", "precursor"};
 
-    /** Server → the fighter: level, one state a niche ({@code niches[col * ROWS + tier]}), and a bit for each Lord-forged weapon held. */
-    public record Wall(int level, byte[] niches, int lords) implements CustomPacketPayload {
+    /** The Picks wall's columns (SPEC §49, §52): the four forms, in PickForm's order. */
+    public static final int PICK_COLS = 4;
+
+    /**
+     * Server → the fighter: level, one state a niche ({@code niches[col * ROWS + tier]}), a bit for each Lord-forged weapon
+     * held, and the Picks wall's niches the same way ({@code picks[form * ROWS + tier]}; never OFFER, SHAPE for a form whose
+     * deed isn't done).
+     */
+    public record Wall(int level, byte[] niches, int lords, byte[] picks) implements CustomPacketPayload {
         public static final Type<Wall> TYPE = new Type<>(Awaken.id("hall_wall"));
         public static final StreamCodec<ByteBuf, Wall> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.VAR_INT, Wall::level, ByteBufCodecs.BYTE_ARRAY, Wall::niches, ByteBufCodecs.VAR_INT, Wall::lords, Wall::new);
+                ByteBufCodecs.VAR_INT, Wall::level, ByteBufCodecs.BYTE_ARRAY, Wall::niches, ByteBufCodecs.VAR_INT, Wall::lords,
+                ByteBufCodecs.BYTE_ARRAY, Wall::picks, Wall::new);
         @Override public Type<Wall> type() { return TYPE; }
 
         public int at(int col, int tier) {
             return niches[col * ROWS + tier];
+        }
+
+        public int pick(int form, int tier) {
+            return picks[form * ROWS + tier];
         }
     }
 

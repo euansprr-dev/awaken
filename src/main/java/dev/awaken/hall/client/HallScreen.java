@@ -20,24 +20,27 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The Hall of Arms (SPEC §52), where the Armoury's doors and the Fitting Stand now open: the Wall of every weapon and the
- * terraces of every suit, and any one of them brought close. It draws what the server sends and asks the server to do
+ * The Hall of Arms (SPEC §52), where the Armoury's doors and the Fitting Stand now open: the Wall of every weapon, the
+ * terraces of every suit and the wall of forged picks, and any one of them brought close. It draws what the server sends and asks the server to do
  * everything. Doesn't pause the game.
  */
 public final class HallScreen extends Screen implements dev.awaken.signal.client.QuietScreen, dev.awaken.signal.client.ReadingScreen {
-    public static final int ARMS = 0, ARMOUR = 1;
+    public static final int ARMS = 0, ARMOUR = 1, PICKS = 2, WINGS = 3;
     private static final float TABS_Y = 32F, TAB_X = 30F, WING_FADE = .22F;
 
     private final WallView wall = new WallView();
     private final TerraceView terrace = new TerraceView();
+    private final PickWallView picks = new PickWallView();
     private final Embers embers = new Embers();
-    private final Component armsTab = Stage.blackletter("Arms"), armourTab = Stage.blackletter("Armour");
+    private final Component armsTab = Stage.blackletter("Arms"), armourTab = Stage.blackletter("Armour"), picksTab = Stage.blackletter("Picks");
     private @Nullable Stage stage;
     private @Nullable CloseView close;
     private int wing;
     private float wingFade = 1F;
     /** Whether this opening has already gone to the suit its stand is holding. */
     private boolean heldShown;
+    /** Whether this opening has already brought close what the pick in your hand can become (SPEC §49.4). */
+    private boolean pickShown;
     private long last = System.nanoTime();
     private float time;
     private float aimX = 854F, aimY = 430F;
@@ -46,7 +49,7 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
     private int ticks, inventoryHash;
     /** Until the mouse really moves the lantern stays where it is (a tour's cursor sits in a corner). */
     private boolean mouseMovedSinceKey;
-    private float armsRight, armourLeft, armourRight;
+    private float armsRight, armourLeft, armourRight, picksLeft, picksRight;
 
     public HallScreen() {
         this(ARMS);
@@ -55,6 +58,10 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
     public HallScreen(int wing) {
         super(Component.translatable("screen.awaken.armoury"));
         this.wing = wing;
+        // only an opening on the Picks wall (a pickaxe in hand at the anvil) goes to the pick in hand, never a tab
+        this.pickShown = wing != PICKS;
+        // rows for a pick in hand belong to the anvil this opening is at: they come after this
+        HallClient.held = null;
         HallSounds.open();
     }
 
@@ -67,6 +74,14 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
         cursorShown = false;
         wall.hover = null;
         terrace.hover = null;
+        picks.hover = null;
+        picks.handHover = false;
+    }
+
+    @Override
+    public void removed() {
+        HallClient.held = null;
+        super.removed();
     }
 
     @Override
@@ -113,17 +128,35 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
                 c = close;
             }
         }
+        // a forged pick in hand at the anvil opens on its form at the next rank up, an old pick on what it is remade as;
+        // Esc steps back to the wall
+        if (c == null && !pickShown && wing == PICKS) {
+            pickShown = true;
+            HallLayout.Cell at = picks.handTarget(w);
+            if (at != null) {
+                aimX = at.x();
+                aimY = at.cy();
+                openPick(at.col(), at.tier());
+                c = close;
+            }
+        }
         if (c == null) {
             float sx = s.sx(mx), sy = s.sy(my);
             if (mouseMovedSinceKey) {
                 if (wing == ARMS) wall.hover = HallLayout.at(sx, sy);
-                else terrace.hover = TerraceLayout.at(sx, sy);
+                else if (wing == PICKS) {
+                    picks.hover = PickLayout.at(sx, sy);
+                    picks.handHover = picks.hover == null && picks.handAt(sx, sy);
+                } else terrace.hover = TerraceLayout.at(sx, sy);
                 aimX = sx;
                 aimY = sy;
             }
             if (wing == ARMS) {
                 wall.move(dt, aimX, aimY);
                 wall.draw(s, w, 1F, 0F, 0F);
+            } else if (wing == PICKS) {
+                picks.move(dt, aimX, aimY);
+                picks.draw(s, w, 1F, 0F, 0F);
             } else {
                 terrace.move(dt, aimX, aimY);
                 terrace.draw(s, w, 1F, 0F, 0F);
@@ -132,6 +165,7 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
             tabs(s);
             s.g.nextStratum();
             if (wing == ARMS) wall.ui(s, w);
+            else if (wing == PICKS) picks.ui(s, w);
             else terrace.ui(s, w, sx, sy);
             s.g.nextStratum();
             embers.draw(s, dt, time, 0xFFB56A, 1F);
@@ -144,6 +178,7 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
         float e = c.eased();
         if (e < 1F) {
             if (wing == ARMS) wall.draw(s, w, 1F + 2.2F * e, c.zoomX(), c.zoomY());
+            else if (wing == PICKS) picks.draw(s, w, 1F + 2.2F * e, c.zoomX(), c.zoomY());
             else terrace.draw(s, w, 1F + 2.2F * e, c.zoomX(), c.zoomY());
         }
         s.g.nextStratum();
@@ -160,12 +195,16 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
         armourLeft = armsRight + 34F;
         s.title(armourTab, armourLeft, TABS_Y, 2F, wing == ARMOUR ? Stage.LANTERN : Stage.DIM);
         armourRight = armourLeft + s.titleWidth(armourTab, 2F);
+        picksLeft = armourRight + 34F;
+        s.title(picksTab, picksLeft, TABS_Y, 2F, wing == PICKS ? Stage.LANTERN : Stage.DIM);
+        picksRight = picksLeft + s.titleWidth(picksTab, 2F);
     }
 
     private int tabAt(float x, float y) {
         if (y < TABS_Y - 8F || y > TABS_Y + 64F) return -1;
         if (x >= TAB_X - 8F && x < armsRight + 16F) return ARMS;
-        if (x >= armourLeft - 16F && x < armourRight + 8F) return ARMOUR;
+        if (x >= armourLeft - 16F && x < armourRight + 16F) return ARMOUR;
+        if (x >= picksLeft - 16F && x < picksRight + 8F) return PICKS;
         return -1;
     }
 
@@ -173,6 +212,13 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
         HallSounds.reach();
         wall.hover = null;
         close = new PieceView(col, tier, HallLayout.cell(col, tier));
+    }
+
+    private void openPick(int col, int tier) {
+        HallSounds.reach();
+        picks.hover = null;
+        picks.handHover = false;
+        close = new PickView(col, tier, PickLayout.cell(col, tier));
     }
 
     private void openSuit(TerraceLayout.Fig f, int slot) {
@@ -189,14 +235,22 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
     /** Dev: what a click would show. */
     void show(String what, int n) {
         if (what.equals("wing")) {
-            wing(n);
+            wing(Math.floorMod(n, WINGS));
             wingFade = 1F;
         } else if (what.equals("looks")) {
             openLooks();
         } else if (what.equals("hover")) {
             // tours can't move the pointer: the n-th suit (or the n-th kind's E-rank niche) as if pointed at
             mouseMovedSinceKey = false;
-            if (wing == ARMOUR) {
+            if (wing == PICKS) {
+                // -1: the pick in your hand, as if pointed at
+                picks.hover = n < 0 ? null : PickLayout.cell(Math.floorMod(n, PickLayout.COLS), Math.min(2, HallNet.ROWS - 1));
+                picks.handHover = n < 0;
+                if (picks.hover != null) {
+                    aimX = picks.hover.x();
+                    aimY = picks.hover.cy();
+                }
+            } else if (wing == ARMOUR) {
                 TerraceLayout.Fig[] figs = TerraceLayout.figs();
                 TerraceLayout.Fig f = figs[Math.floorMod(n, figs.length)];
                 terrace.hover = f;
@@ -214,6 +268,11 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
             wing(ARMOUR);
             wingFade = 1F;
             openSuit(TerraceLayout.of(set), n);
+        } else if (dev.awaken.delve.forged.PickForm.ofStyle(what) != null) {
+            wing(PICKS);
+            wingFade = 1F;
+            pickShown = true;
+            openPick(dev.awaken.delve.forged.PickForm.ofStyle(what).ordinal(), Math.clamp(n, 0, HallNet.ROWS - 1));
         } else {
             int col = HallLayout.styleColumn(what);
             if (col < 0) return;
@@ -243,6 +302,10 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
             clickTerrace(x, y);
             return true;
         }
+        if (wing == PICKS) {
+            clickPicks(w, x, y);
+            return true;
+        }
         int f = wall.filterAt(x, y);
         if (f >= 0) {
             wall.filter = f;
@@ -260,6 +323,21 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
             openPiece(cell.col(), cell.tier());
         }
         return true;
+    }
+
+    private void clickPicks(HallNet.Wall w, float x, float y) {
+        int f = picks.filterAt(x, y);
+        if (f >= 0) {
+            picks.filter = f;
+            return;
+        }
+        HallLayout.Cell cell = PickLayout.at(x, y);
+        if (cell == null && picks.handAt(x, y)) cell = picks.handTarget(w);
+        if (cell != null) {
+            aimX = cell.x();
+            aimY = cell.cy();
+            openPick(cell.col(), cell.tier());
+        }
     }
 
     private void clickTerrace(float x, float y) {
@@ -337,9 +415,11 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
             case InputConstants.KEY_RETURN -> enter();
             case dev.awaken.holo.ui.StageKeys.NEXT -> {
                 if (wing == ARMS) wall.filter = (wall.filter + 1) % 3;
+                else if (wing == PICKS) picks.filter = (picks.filter + 1) % 3;
                 else terrace.filter = (terrace.filter + 1) % 3;
             }
-            case dev.awaken.holo.ui.StageKeys.BESIDE_BACK, dev.awaken.holo.ui.StageKeys.BESIDE_ON -> wing(wing == ARMS ? ARMOUR : ARMS);
+            case dev.awaken.holo.ui.StageKeys.BESIDE_BACK -> wing((wing + WINGS - 1) % WINGS);
+            case dev.awaken.holo.ui.StageKeys.BESIDE_ON -> wing((wing + 1) % WINGS);
             default -> {
                 return super.keyPressed(event);
             }
@@ -354,6 +434,8 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
         }
         if (wing == ARMS) {
             openPiece(cursorCol, cursorTier);
+        } else if (wing == PICKS) {
+            openPick(cursorCol, cursorTier);
         } else {
             ArmourSet set = TerraceLayout.set(Math.min(cursorCol, cursorTier == 0 ? 3 : 4), cursorTier);
             if (set != null) openSuit(TerraceLayout.of(set), -1);
@@ -367,7 +449,7 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
     }
 
     private void moveCursor(int dc, int dt) {
-        int cols = wing == ARMS ? HallNet.COLS : 5;
+        int cols = wing == ARMS ? HallNet.COLS : wing == PICKS ? PickLayout.COLS : 5;
         if (cursorShown) {
             cursorCol = Math.clamp(cursorCol + dc, 0, cols - 1);
             cursorTier = Math.clamp(cursorTier + dt, 0, HallNet.ROWS - 1);
@@ -378,6 +460,12 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
         if (wing == ARMS) {
             HallLayout.Cell c = HallLayout.cell(cursorCol, cursorTier);
             wall.hover = c;
+            aimX = c.x();
+            aimY = c.cy();
+        } else if (wing == PICKS) {
+            HallLayout.Cell c = PickLayout.cell(cursorCol, cursorTier);
+            picks.hover = c;
+            picks.handHover = false;
             aimX = c.x();
             aimY = c.cy();
         } else {
@@ -404,8 +492,13 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
             boolean first = ticks == 10;
             inventoryHash = hash;
             if (first) return;
-            PieceView p = close instanceof PieceView v ? v : null;
-            ArmouryCache.ask(ArmsArmoury.REFRESH, p != null ? p.style : "longsword", p != null ? ArmsArmoury.TIERS[p.tier] : "");
+            // a pick's refresh also sends again what the anvil can do to the pick in your hand now
+            if (close instanceof PickView pv) ArmouryCache.ask(ArmsArmoury.REFRESH, pv.style, ArmsArmoury.TIERS[pv.tier]);
+            else if (close == null && wing == PICKS) ArmouryCache.ask(ArmsArmoury.REFRESH, HallPicks.style(0), "");
+            else {
+                PieceView p = close instanceof PieceView v ? v : null;
+                ArmouryCache.ask(ArmsArmoury.REFRESH, p != null ? p.style : "longsword", p != null ? ArmsArmoury.TIERS[p.tier] : "");
+            }
             ClientPacketDistributor.sendToServer(new HallNet.Ask(HallNet.REFRESH, "", HallClient.standPos()));
         }
     }

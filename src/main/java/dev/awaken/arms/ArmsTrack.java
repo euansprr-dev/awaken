@@ -39,6 +39,9 @@ public final class ArmsTrack {
         String style = t.substring(0, colon);
         int tier = ArmsArmoury.tierIndex(t.substring(colon + 1));
         Item weapon = ArmsItems.item(ArmsArmoury.recipeId(style, Math.max(0, tier)));
+        // a forged pick can be tracked from the Hall's Picks wall too (SPEC §49.9)
+        var form = dev.awaken.delve.forged.PickForm.ofStyle(style);
+        if (weapon == null && form != null && tier >= 0) weapon = dev.awaken.delve.forged.ForgedPicks.get(form, tier);
         return tier < 0 || weapon == null ? null : new Tracked(style, tier, ArmsArmoury.recipeId(style, tier), weapon);
     }
 

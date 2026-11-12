@@ -271,7 +271,7 @@ public final class ArmsArmoury {
     // ---- what the screen does ----------------------------------------------------------------------------------------
 
     public static void onAct(ServerPlayer p, ArmsPayloads.ArmouryAct a) {
-        // picks are forged at this door but aren't patterns: nothing to buy, draw, or track here (§49.4)
+        // picks are forged at this door but aren't patterns: nothing to buy or draw (§49.4)
         if (dev.awaken.delve.forged.PickForm.ofStyle(a.style()) != null) {
             pickAct(p, a);
             return;
@@ -336,8 +336,33 @@ public final class ArmsArmoury {
 
     private static void pickAct(ServerPlayer p, ArmsPayloads.ArmouryAct a) {
         var anvil = anvilOf(p);
+        var form = dev.awaken.delve.forged.PickForm.ofStyle(a.style());
         switch (a.op()) {
             case DETAIL -> sendDetail(p, a.style(), a.tier().isEmpty() ? null : a.tier());
+            // the Hall's Picks wall: what you carry changed, so the wall, the pick's page and what the anvil can do to
+            // the pick in your hand are sent again (an empty row list when there's none now)
+            case REFRESH -> {
+                sendView(p);
+                sendDetail(p, a.style(), a.tier().isEmpty() ? null : a.tier());
+                if (anvil != null) dev.awaken.arms.anvil.PickAnvil.sendHeld(p, anvil);
+            }
+            // tracked like a weapon: its parts on the task card until one is made (SPEC §49.9)
+            case TRACK -> {
+                int t = a.tier().isEmpty() ? bestTier(p) : tierIndex(a.tier());
+                if (t >= 0 && form != null && dev.awaken.delve.forged.ForgedPicks.open(p, form)) {
+                    ArmsProgress g = ArmsProgress.of(p);
+                    g.tracked = form.style() + ":" + TIERS[t];
+                    p.setData(ArmsContent.PROGRESS, g);
+                    dev.awaken.core.api.TrailsApi.unfollow(p);
+                    sendView(p);
+                }
+            }
+            case UNTRACK -> {
+                ArmsProgress g = ArmsProgress.of(p);
+                g.tracked = "";
+                p.setData(ArmsContent.PROGRESS, g);
+                sendView(p);
+            }
             case FORGE_IT, FROM_MEMORY, AGAIN -> {
                 int t = tierIndex(a.tier());
                 if (anvil == null || t < 0) return;

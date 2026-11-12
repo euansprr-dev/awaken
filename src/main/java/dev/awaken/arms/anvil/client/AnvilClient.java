@@ -180,11 +180,19 @@ public final class AnvilClient {
     }
 
     /** The HUD steps aside while the scene holds the view (subtitles and chat stay). */
-    /** The weapon held to the anvil: its window, in the Hall's own form unless the old screens are on. */
+    /**
+     * The weapon held to the anvil: its window, in the Hall's own form unless the old screens are on. A forged or old pick's
+     * rows go to the Hall's Picks wall, each on the niche it makes (SPEC §49.4); an empty list only clears them.
+     */
     private static void onHeld(AnvilPayloads.Held msg) {
         Minecraft mc = Minecraft.getInstance();
-        if (dev.awaken.hall.client.HallConfig.classic() || !msg.rites()) mc.gui.setScreen(new AnvilHeldScreen(msg));
-        else dev.awaken.hall.client.AnvilStage.show(msg);
+        if (dev.awaken.hall.client.HallConfig.classic()) {
+            if (!msg.options().isEmpty()) mc.gui.setScreen(new AnvilHeldScreen(msg));
+        } else if (msg.rites()) {
+            dev.awaken.hall.client.AnvilStage.show(msg);
+        } else {
+            dev.awaken.hall.client.HallClient.pickRows(msg);
+        }
     }
 
     private static void hideHud(RenderGuiLayerEvent.Pre e) {

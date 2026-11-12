@@ -17,6 +17,16 @@ public final class HallClient {
     static dev.awaken.armour.net.ArmourPayloads.@Nullable Offers suits;
     /** Who is at work on this stand, if it isn't you. */
     static @Nullable String busy;
+    /** What the War Anvil can do to the pick in your hand, while the Hall is open there (SPEC §49.4); null when nothing. */
+    static dev.awaken.arms.anvil.AnvilPayloads.@Nullable Held held;
+
+    /**
+     * The anvil's rows for a forged or old pick in your hand: the Picks wall puts each on the niche it makes. Only kept: a
+     * reply never changes the screen, and with the Hall shut they wait for nothing (it forgets them when it opens or closes).
+     */
+    public static void pickRows(dev.awaken.arms.anvil.AnvilPayloads.Held msg) {
+        held = msg.options().isEmpty() || !(Minecraft.getInstance().gui.screen() instanceof HallScreen) ? null : msg;
+    }
 
     /** The Fitting Stand's door: the Hall opens on the Armour wing. */
     public static void openStand(dev.awaken.armour.net.ArmourPayloads.Offers offers, @Nullable String forger) {

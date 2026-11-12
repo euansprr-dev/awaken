@@ -7,6 +7,8 @@ import dev.awaken.arms.ArmsForge;
 import dev.awaken.arms.ArmsHomes;
 import dev.awaken.arms.LordForged;
 import dev.awaken.arms.anvil.SmithMemory;
+import dev.awaken.delve.forged.ForgedPicks;
+import dev.awaken.delve.forged.PickForm;
 import dev.awaken.progression.Progression;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,7 +39,23 @@ public final class HallServer {
             boolean offer = !known && home != null && home.rank().ordinal() <= rank;
             for (int t = 0; t < HallNet.ROWS; t++) niches[c * HallNet.ROWS + t] = (byte) state(p, style, t, level, known, offer);
         }
-        return new HallNet.Wall(level, niches, lords(p));
+        byte[] picks = new byte[HallNet.PICK_COLS * HallNet.ROWS];
+        for (PickForm f : PickForm.values()) for (int t = 0; t < HallNet.ROWS; t++) picks[f.ordinal() * HallNet.ROWS + t] = (byte) pickState(p, f, t, level);
+        return new HallNet.Wall(level, niches, lords(p), picks);
+    }
+
+    /** A pick's niche (SPEC §49, §52): the same states as a weapon's, a form not yet learned standing as a shape. */
+    private static int pickState(ServerPlayer p, PickForm f, int tier, int level) {
+        if (!ForgedPicks.open(p, f)) return HallNet.SHAPE;
+        if (carries(p, f, tier) || SmithMemory.of(p).remembers(f.style(), tier)) return HallNet.MADE;
+        if (level < ArmsArmoury.LEVEL[tier]) return HallNet.OVER;
+        if (p.hasInfiniteMaterials()) return HallNet.READY;
+        for (var n : ArmsArmoury.needs(p, f.style(), tier)) if (n.have() < n.need()) return HallNet.KNOWN;
+        return HallNet.READY;
+    }
+
+    private static boolean carries(ServerPlayer p, PickForm f, int tier) {
+        return ArmsForge.count(p, ForgedPicks.get(f, tier)) > 0;
     }
 
     private static int state(ServerPlayer p, String style, int tier, int level, boolean known, boolean offer) {
