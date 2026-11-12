@@ -25,7 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Finds Precursor ruins without generating chunks: walks the structure sets' placement grids (pure maths), then checks
- * the start biome for the nearest candidates only. Results per chunk are cached for the session. Used by the
+ * the start biome for the nearest candidates only. Results per chunk are cached for the session; a game's lookup on the
+ * server thread has the land's samples taken on a thread of their own and finds them on a later call. Used by the
  * Scanner's sky omens, the Observatory and {@code /awaken above ruin locate}.
  */
 public final class RuinLocator {
@@ -35,7 +36,7 @@ public final class RuinLocator {
 
     private static final Map<Long, Boolean> VALID = new ConcurrentHashMap<>();
     private static final int MAX_UNCACHED = 8;
-    private static long cachedSeed;
+    private static volatile long cachedSeed;
 
     private static long key(ChunkPos chunk, RuinKind kind) {
         return chunk.pack() * 31 + kind.ordinal();
@@ -47,6 +48,57 @@ public final class RuinLocator {
             cachedSeed = level.getSeed();
         }
         return VALID.containsKey(key(chunk, kind));
+    }
+
+    // ---- off the server thread (SPEC §12 LandFirst, §17.11) ------------------------------------------------------------
+
+    /**
+     * A budget at least this big is a command's or a test's: its spots are worked out on the spot, wherever it asks. A
+     * game's own lookups (the Horizon, the windways, the markers, the scanner: 4-14) never are on the server thread.
+     */
+    static final int ASK_NOW = 32;
+    /** At most this many spots wait to be worked out (a later call asks again for the rest). */
+    static final int MOST_WAITING = 64;
+    /** While land comes in round a player each spot waits this long at most first: a trickle, never the generator's cores. */
+    static final long HOLD_NS = 2_000_000_000L;
+    private static final java.util.Set<Long> WORKING = ConcurrentHashMap.newKeySet();
+    private static java.util.concurrent.@Nullable ExecutorService finder;
+
+    private static synchronized java.util.concurrent.ExecutorService finder() {
+        if (finder == null) finder = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "Awaken ruin finder");
+            t.setDaemon(true);
+            t.setPriority(Thread.MIN_PRIORITY);
+            return t;
+        });
+        return finder;
+    }
+
+    /**
+     * Whether the spot takes the ruin, or null while that's being worked out. On the server thread a spot not known yet
+     * is worked out on the finder's thread (each is a noise column: tens of milliseconds with Tectonic, and Euan's join of
+     * 12 Nov stood 32 s in them), unless {@code now}; anywhere else, at once.
+     */
+    private static @Nullable Boolean known(ServerLevel level, RuinKind kind, Holder<Structure> structure, ChunkPos chunk, boolean now) {
+        long k = key(chunk, kind);
+        Boolean v = VALID.get(k);
+        if (v != null) return v;
+        if (now || !level.getServer().isSameThread()) return valid(level, kind, structure, chunk);
+        if (WORKING.size() < MOST_WAITING && WORKING.add(k)) {
+            long seed = cachedSeed;
+            finder().execute(() -> {
+                try {
+                    dev.awaken.core.api.LandFirst.hold(HOLD_NS);
+                    // never into the next world's answers
+                    if (level.getServer().isRunning() && cachedSeed == seed) valid(level, kind, structure, chunk);
+                } catch (RuntimeException e) {
+                    dev.awaken.Awaken.LOG.warn("[above] working out a {} ruin's spot at {} failed: {}", kind, chunk, e.toString());
+                } finally {
+                    WORKING.remove(k);
+                }
+            });
+        }
+        return null;
     }
 
     private static boolean valid(ServerLevel level, RuinKind kind, Holder<Structure> structure, ChunkPos chunk) {
@@ -173,11 +225,12 @@ public final class RuinLocator {
         candidates.sort(Comparator.comparingDouble(Candidate::dist));
         List<Found> out = new ArrayList<>();
         // Each uncached candidate costs a terrain height sample; cap them per call (results are cached, so repeated
-        // calls finish the job) to keep one call to a few milliseconds.
+        // calls finish the job). On the server thread the samples are taken on the finder's thread ({@link #known}).
         int[] checks = {0};
         RuinSpacing.Grids grids = RuinSpacing.Grids.of(level.registryAccess(), state.getLevelSeed());
         var structures = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
-        // the spacing rule's neighbours cost a sample each too, from the same budget
+        boolean now = maxUncached >= ASK_NOW;
+        // the spacing rule's neighbours cost a sample each too, from the same budget (null: not known yet, ask later)
         RuinSpacing.Ground ground = (k, chunk) -> {
             var s = structures.get(k.structure);
             if (s.isEmpty()) return false;
@@ -185,7 +238,7 @@ public final class RuinLocator {
                 if (checks[0] >= maxUncached) return null;
                 checks[0]++;
             }
-            return valid(level, k, s.get(), chunk);
+            return known(level, k, s.get(), chunk, now);
         };
         for (Candidate c : candidates) {
             if (out.size() >= max) break;
@@ -196,7 +249,8 @@ public final class RuinLocator {
                 if (checks[0] >= maxUncached) continue;
                 checks[0]++;
             }
-            if (!valid(level, c.kind(), c.structure(), c.chunk())) continue;
+            // not known yet (worked out off the server thread): a later call finds it
+            if (!Boolean.TRUE.equals(known(level, c.kind(), c.structure(), c.chunk(), now))) continue;
             if (grids != null && RuinSpacing.spaced(c.kind())) {
                 Boolean keeps = RuinSpacing.keeps(c.kind(), c.chunk(), grids, ground);
                 if (keeps == null) continue; // out of samples: a later call finishes it (they are cached)

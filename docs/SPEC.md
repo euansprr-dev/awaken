@@ -844,7 +844,13 @@ of `AwakenConfig.Client`.
   searches: that pool is the game's own, where world generation runs. `/awaken core land` says the count.
   `noiseSampled()`, called by the overworld's `CityBasinFunction` (every column and chunk of its terrain passes through
   it), counts terrain noise sampled on the server thread and logs it with its caller at most every 10 s ("terrain
-  noise on the server thread"): with Tectonic a column costs tens of milliseconds there. Road
+  noise on the server thread"): with Tectonic a column costs tens of milliseconds there. What it found on the tour
+  (12 Nov): the ruin search (`RuinLocator.near` from the windways, the Horizon's landmarks, the markers, the scanner and
+  the Way Up; 308 volumes in 12 s at a join, through the spacing rule's neighbours) and a region's secrets
+  (`WonderWatch.findSecrets`). Both now take their samples off the server thread: a ruin spot not known yet is worked
+  out on the "Awaken ruin finder" thread (lowest priority, each spot first held up to 2 s while land comes in, 64
+  waiting at most) and counts from a later call, as a spent budget always did; a command's or a test's budget (32 or
+  more) is still answered at once; a region's secrets not worked out yet come from `later()`. Road
   starts' status reads "on, no new chunk has reached it yet" until the first new chunk's structure starts run through
   its hook (a world already made round its players: the first minutes).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
