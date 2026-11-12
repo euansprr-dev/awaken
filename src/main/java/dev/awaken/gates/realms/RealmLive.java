@@ -515,6 +515,20 @@ public final class RealmLive {
         int index = dead.getPersistentData().getIntOr(SITE, -1);
         RealmPlan plan = Realms.plan(g);
         if (index < 0 || plan == null) return;
+        wardenFell(level, g, plan, index);
+    }
+
+    /** Tours: the {@code nth} Warden of the land as if beaten (its pillar fades, its seal breaks, its share is banked). */
+    public static boolean wardenBeaten(ServerLevel level, GateRecord g, int nth) {
+        RealmPlan plan = Realms.plan(g);
+        if (plan == null) return false;
+        List<Land.Site> wardens = plan.land().sites(Land.SiteKind.WARDEN);
+        if (nth < 0 || nth >= wardens.size()) return false;
+        wardenFell(level, g, plan, wardens.get(nth).index());
+        return true;
+    }
+
+    private static void wardenFell(ServerLevel level, GateRecord g, RealmPlan plan, int index) {
         MinecraftServer server = level.getServer();
         RealmData data = RealmData.get(server);
         RealmState st = data.state(g.id);

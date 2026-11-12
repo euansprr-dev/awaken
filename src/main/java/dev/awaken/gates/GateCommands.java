@@ -217,6 +217,14 @@ final class GateCommands {
                 dev.awaken.gates.realms.RealmLive.openHeart(c.getSource().getLevel(), g);
                 return 1;
             }));
+            // tours: the nth Warden of the land you're in as if beaten, so a shot can show a broken seal beside whole ones (SPEC §50.9)
+            gate.then(Commands.literal("realm_warden_down").requires(AwakenCommands.admin())
+                    .then(Commands.argument("nth", IntegerArgumentType.integer(0)).executes(c -> {
+                        GateRecord g = dev.awaken.gates.run.Runs.gateOf(c.getSource().getPlayerOrException());
+                        var level = dev.awaken.gates.realms.Realms.level(c.getSource().getServer());
+                        if (g == null || g.realm.isEmpty() || level == null) return 0;
+                        return dev.awaken.gates.realms.RealmLive.wardenBeaten(level, g, IntegerArgumentType.getInteger(c, "nth")) ? 1 : 0;
+                    })));
             // a Realm by name (SPEC §50.7), whatever the switch says: the next gate to form near you is that land
             gate.then(Commands.literal("realm").requires(AwakenCommands.admin())
                     .then(Commands.argument("rank", StringArgumentType.word()).then(Commands.argument("id", StringArgumentType.greedyString()).executes(c -> {

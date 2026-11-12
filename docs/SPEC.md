@@ -23310,7 +23310,9 @@ Hushlings with one of the theme's own. A theme with no herds rolls from its rost
 
 **The run on the HUD.** In a Realm the run HUD's hint line reads "Camps 2 / 5 · Wardens 1 / 3" (packs that stand and wait and
 are all down, of those the run has; a herd that keeps its own habits isn't counted), on open ground "Seals broken 1 / 3 ·
-Camps 2 / 5", then "Every Warden is down. The way on is open." until the Lord falls (`RealmLive.hint`).
+Camps 2 / 5", then "Every Warden is down. The way on is open." until the Lord falls (`RealmLive.hint`). In a Realm this line
+never folds away with the clear screen (§40.6): the run card's one line is the rank and land with this goal under it, from
+the first step (`RunHudLayer`; the manager's review of the 12 Nov tour found only "E HIVE" there).
 
 #### Open lands, fixed (page https://claude.ai/artifact/9ifcnaxemAp1Gc2AF1Jtwt; Euan 12 Nov, all five decisions: "Go ahead with the full plan")
 What Euan found on Saltcomb Flats: nothing showed where to go, the Lord's building was shut with no word of how it opens,
@@ -23319,10 +23321,26 @@ few monsters and those scattered, no movement. The runs under a roof work becaus
 **Lights and seals** (`gates.realms.RealmLights`, payload `GatePayloads.RealmLights`, drawn by `client.Pillars.realm`). A land
 that shows its Wardens (`RealmLights.shows`: it has a country, `RealmCountry.has`, a Lord and Wardens) puts a pillar of light
 in the theme's colour (`RealmLights.COLOURS`, warm white for a theme without one) 360 high over every Warden still standing,
-and an 11-high seal light for each in a short row just outside the Lord's door (`RealmLights.seals`: the blocks `heart_open`
-clears nearest the Mouth are the door; the row stands 3 out, away from the Lord, 2.5 apart, on the ground). The Lord stays
-unnamed and unlit (decision 1). Sent on arrival and every 30 s; when a Warden falls its pillar and one seal fade over 2.5 s
-(`ClientGates.realmLights`), a toast says "A seal on the Lord's door has broken. 2 Wardens are left, each under a light."
+and a seal for each in a short row just outside the Lord's door (`RealmLights.seals`: the blocks `heart_open` clears nearest
+the Mouth are the door; the row stands 3 out, away from the Lord, 4 apart (3 for more than three Wardens), on the ground).
+The Lord stays unnamed and unlit (decision 1). The manager's tour review (12 Nov) found the pillars still read as laser
+lines and the seals as one glow on a lit door, so each has its own look (`Pillars.warden`, `Pillars.seal`):
+- **A Warden's pillar** is a column of the land's colour: a warm core (halfway to white, never a white thread, 0.9 half-wide),
+  a body of coloured air 2.4 half-wide that stands against a noon sky (paled by at most a fifth, so amber stays amber;
+  alpha 0.61 at noon, 0.4 at night when the added light carries it) and a haze 6.5 half-wide, each with the bell falloff, so
+  both edges are soft. Those widths hold out to 48 blocks and grow with distance past it, so the pillar keeps one width on
+  screen from anywhere in the land.
+- **A seal** is a disc you can count from the road, hung 5 over its feet and turned to face you (`RealmLights.SEAL_LIFT`).
+  Whole, it's a medallion: a dark face with a rim (it reads even against a lit door), a ring of the land's light round a hot
+  middle, a halo, and a soft shaft of light down to the ground. Broken (`RealmLight.broken`: its Warden is down; sent until
+  the door opens, so the row always shows how many there were), it's a dark ash ring split top and bottom with the halves
+  pulled apart and a last red glow in it, nothing lit.
+- Saltcomb's plan-2 road keeps no lamp on the ramp up to the court (one stood in the door's line).
+- Tours: `/awaken gate realm_warden_down <n>` counts the land's nth Warden as beaten (`RealmLive.wardenBeaten`), so a shot
+  shows a broken seal beside whole ones (`tools/autopilot/realm-saltcomb-way.txt`).
+
+Sent on arrival and every 30 s; when a Warden falls its pillar fades over 2.5 s and its seal breaks (the whole disc fades
+over the broken ring, `ClientGates.realmLights`), a toast says "A seal on the Lord's door has broken. 2 Wardens are left, each under a light."
 (one-left and last-seal variants) with the beacon's power-down sound, and when the heart opens all lights go. The first two
 open lands you enter teach it once, six seconds in, in a System window "Find the Wardens": "Each pillar of light in the sky
 stands over a Warden. Beat every one of them and the seals on the Lord's door break." (`GateMemory.openLandsTold`, schema 3,

@@ -75,12 +75,14 @@ public final class GatePayloads {
 
     /**
      * One light an open land shows while its way to the Lord is shut (SPEC §50.9 "Lights and seals"): a tall pillar over a
-     * Warden still standing, or a short seal at the Lord's door, one per Warden. {@code pos} is its foot, in the world.
+     * Warden still standing ({@code height} tall), or a seal at the Lord's door, one per Warden, a disc of light
+     * {@code height} over its feet, whole or {@code broken} (its Warden is down: a dark, split ring). {@code pos} is its
+     * foot, in the world.
      */
-    public record RealmLight(BlockPos pos, int colour, int height, boolean seal) {
+    public record RealmLight(BlockPos pos, int colour, int height, boolean seal, boolean broken) {
         public static final StreamCodec<ByteBuf, RealmLight> CODEC = StreamCodec.composite(
                 BlockPos.STREAM_CODEC, RealmLight::pos, ByteBufCodecs.INT, RealmLight::colour, ByteBufCodecs.VAR_INT, RealmLight::height,
-                ByteBufCodecs.BOOL, RealmLight::seal, RealmLight::new);
+                ByteBufCodecs.BOOL, RealmLight::seal, ByteBufCodecs.BOOL, RealmLight::broken, RealmLight::new);
     }
 
     /** Every light of one gate's land that is lit now; one gone since the last list fades out on the client. */

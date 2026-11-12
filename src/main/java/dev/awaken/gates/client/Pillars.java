@@ -38,9 +38,12 @@ import org.lwjgl.system.MemoryUtil;
 public final class Pillars {
     private Pillars() {}
 
-    private record Draw(double dx, double dy, double dz, float scale, int height, int core, int glow, float solid, float halo, float alpha) {
+    /** What a draw is: a gate's pillar, a Warden's pillar, or a seal at the Lord's door, whole or broken (SPEC §50.9). */
+    private static final int GATE = 0, WARDEN = 1, SEAL = 2, SEAL_BROKEN = 3;
+
+    private record Draw(double dx, double dy, double dz, float scale, int height, int core, int glow, float solid, float halo, float alpha, int kind) {
         Draw(double dx, double dy, double dz, float scale, int height, int core, int glow, float solid, float halo) {
-            this(dx, dy, dz, scale, height, core, glow, solid, halo, 1F);
+            this(dx, dy, dz, scale, height, core, glow, solid, halo, 1F, GATE);
         }
     }
 
@@ -112,15 +115,17 @@ public final class Pillars {
 
     private static void realmDraw(ExtractLevelRenderStateEvent e, Vec3 cam, double clamp, GatePayloads.RealmLight l, float alpha, List<Draw> out) {
         double rx = l.pos().getX() + 0.5 - cam.x, ry = l.pos().getY() - cam.y, rz = l.pos().getZ() + 0.5 - cam.z;
-        double dist = Math.sqrt(rx * rx + rz * rz + ry * ry);
+        double flat = Math.sqrt(rx * rx + rz * rz), dist = Math.sqrt(flat * flat + ry * ry);
         float k = dist > clamp ? (float) (clamp / dist) : 1F;
-        // a Warden's pillar widens with distance as a gate's does, so it still reads from across the land (the first tour's
-        // read as a laser line from the Mouth); a seal is short and stays its size, but full enough to see from the road
-        float widen = l.seal() ? 1F : (float) Math.max(1.0, Math.sqrt(rx * rx + rz * rz) / 72.0);
-        float solid = (l.seal() ? 0.3F : 0.3F) * widen, halo = (l.seal() ? 0.6F : 0.5F) * widen;
-        double r = halo * 16 * k + 2, px = cam.x + rx * k, py = cam.y + ry * k, pz = cam.z + rz * k;
-        if (!e.getFrustum().isVisible(new net.minecraft.world.phys.AABB(px - r, py - 2, pz - r, px + r, py + l.height() * k, pz + r))) return;
-        out.add(new Draw(rx * k - 0.5, ry * k, rz * k - 0.5, k, l.height(), l.colour(), l.colour(), solid, halo, alpha));
+        // a Warden's pillar keeps about one width on screen past 48 blocks, so from across the land it is a column of light
+        // and not a thread (two tours read the old one as a laser line from the Mouth); a seal is its own size
+        float widen = l.seal() ? 1F : (float) Math.max(1.0, flat / 48.0);
+        float reach = l.seal() ? SEAL_REACH : WARDEN_HAZE * widen;
+        double r = reach * k + 2, px = cam.x + rx * k, py = cam.y + ry * k, pz = cam.z + rz * k;
+        double top = (l.seal() ? l.height() + SEAL_REACH : l.height()) * k;
+        if (!e.getFrustum().isVisible(new net.minecraft.world.phys.AABB(px - r, py - 2, pz - r, px + r, py + top, pz + r))) return;
+        int kind = !l.seal() ? WARDEN : l.broken() ? SEAL_BROKEN : SEAL;
+        out.add(new Draw(rx * k - 0.5, ry * k, rz * k - 0.5, k, l.height(), l.colour(), l.colour(), widen, widen, alpha, kind));
     }
 
     /**
@@ -268,11 +273,19 @@ public final class Pillars {
         float tx = -bx, tz = -bz, tl = (float) Math.sqrt(tx * tx + tz * tz);
         if (tl < 1e-4F) return;
         float rx = -tz / tl, rz = tx / tl;
+        float breath = (0.9F + 0.1F * Mth.sin(time * 0.045F + bx * 0.01F)) * d.alpha();
+        if (d.kind() == SEAL || d.kind() == SEAL_BROKEN) {
+            seal(d, bx, by, bz, rx, rz, time, day, breath, light);
+            return;
+        }
         // its top stays inside the far plane (vanilla's beam, and our first pillar, were cut off flat there)
         float h = Math.min(d.height() * k, (float) Math.sqrt(Math.max(0F, far * far - tl * tl)) - by);
         if (h < 6F) return;
+        if (d.kind() == WARDEN) {
+            warden(d, bx, by, bz, rx, rz, h, time, day, breath, light);
+            return;
+        }
         float[] bell = k < 0.999F ? FAR : NEAR;
-        float breath = (0.9F + 0.1F * Mth.sin(time * 0.045F + bx * 0.01F)) * d.alpha();
         if (light) {
             // the core: thin and hot, light added (Lens's bloom takes it); stronger at night; it reaches highest
             ribbon(bell, bx, by, bz, rx, rz, h, d.solid() * 1.4F * k, brighten(d.core()), (0.55F + 0.45F * day) * breath, time, 0.6F, 1F);
@@ -285,6 +298,130 @@ public final class Pillars {
             ribbon(bell, bx, by, bz, rx, rz, h, d.halo() * 6F * k, air, 0.5F * tint * breath, time, 1.0F, 0.65F);
             ribbon(bell, bx, by, bz, rx, rz, h, d.halo() * 16F * k, air, 0.18F * tint * d.alpha(), time, 0.4F, 0.5F);
         }
+    }
+
+    /** A Warden's pillar: half-widths of its core, its body and its haze, in blocks at 48 blocks off (wider further out). */
+    private static final float WARDEN_CORE = 0.9F, WARDEN_BODY = 2.4F, WARDEN_HAZE = 6.5F;
+
+    /**
+     * A Warden's pillar (SPEC §50.9 "Lights and seals"; manager's tour review, 12 Nov: "still read as thin laser lines"):
+     * its own look, not a gate's. A column of the land's colour several blocks wide, soft at both edges, with a warm core
+     * that never burns to a white thread. By day the body is coloured air strong enough to stand against a noon sky (only
+     * lightly paled, so amber stays amber); at night the added light carries it.
+     */
+    private static void warden(Draw d, float bx, float by, float bz, float rx, float rz, float h, float time, float day, float breath, boolean light) {
+        float w = d.solid() * d.scale();
+        int c = d.core();
+        if (light) {
+            ribbon(NEAR, bx, by, bz, rx, rz, h, WARDEN_CORE * w, warm(c), (0.7F + 0.3F * day) * breath, time, 0.5F, 1F);
+            ribbon(NEAR, bx, by, bz, rx, rz, h, WARDEN_BODY * w, c, 0.3F * day * breath, time, 0.8F, 0.85F);
+        } else {
+            int air = tinted(c, day);
+            ribbon(NEAR, bx, by, bz, rx, rz, h, WARDEN_BODY * w, air, (0.75F - 0.35F * day) * breath, time, 0.8F, 0.8F);
+            ribbon(NEAR, bx, by, bz, rx, rz, h, WARDEN_HAZE * w, air, (0.28F - 0.1F * day) * d.alpha(), time, 0.4F, 0.55F);
+        }
+    }
+
+    /** How far a seal's light reaches from its middle, in blocks (its halo). */
+    private static final float SEAL_REACH = 2.8F;
+    private static final float[] SEAL_FACE_R = {0F, 1.3F, 1.55F, 1.85F, 2.1F}, SEAL_FACE = {0.6F, 0.6F, 0.8F, 0.45F, 0F};
+    private static final float[] SEAL_HALO_R = {1.8F, 2.2F, SEAL_REACH}, SEAL_HALO = {0.3F, 0.14F, 0F};
+    private static final float[] SEAL_RING_R = {0.8F, 1.0F, 1.18F, 1.36F, 1.56F}, SEAL_RING = {0F, 0.6F, 1F, 0.6F, 0F};
+    private static final float[] SEAL_CORE_R = {0F, 0.25F, 0.5F, 0.8F}, SEAL_CORE = {1F, 0.8F, 0.35F, 0F};
+    private static final float[] BROKEN_R = {0.85F, 1.05F, 1.4F, 1.72F, 1.9F}, BROKEN = {0F, 0.75F, 0.9F, 0.75F, 0F};
+    private static final float[] EMBER_R = {1.05F, 1.25F, 1.45F}, EMBER = {0F, 1F, 0F};
+
+    /**
+     * A seal at the Lord's door (manager's tour review, 12 Nov: "I can't tell there are three seals, or which are broken"):
+     * a disc you can count from the road, hung over its feet and turned to face you. Whole, it's a medallion: a dark face
+     * with a rim, so it stands out even against a lit door, a ring of the land's light round a hot middle, a halo, and a
+     * soft shaft of light down to the ground. Broken, its Warden down, it's a dark ring split in two with a crack top and
+     * bottom, the halves pulled apart, a last red glow cooling in it, and nothing lit.
+     */
+    private static void seal(Draw d, float bx, float by, float bz, float rx, float rz, float time, float day, float breath, boolean light) {
+        float k = d.scale(), cy = by + d.height() * k;
+        int c = d.core();
+        if (d.kind() == SEAL_BROKEN) {
+            if (light) disc(bx, cy, bz, rx, rz, EMBER_R, EMBER, k, 0xFF9A3A16, 0.2F * d.alpha(), 0.22F * k);
+            else disc(bx, cy, bz, rx, rz, BROKEN_R, BROKEN, k, ash(c), 0.9F * d.alpha(), 0.22F * k);
+            return;
+        }
+        if (light) {
+            disc(bx, cy, bz, rx, rz, SEAL_RING_R, SEAL_RING, k, warm(c), (0.85F + 0.15F * day) * breath, 0F);
+            disc(bx, cy, bz, rx, rz, SEAL_CORE_R, SEAL_CORE, k, warm(c), 0.9F * breath, 0F);
+            // the shaft from the ground up to the disc, fading out into it
+            ribbon(NEAR, bx, by, bz, rx, rz, d.height() * k, 0.45F * k, warm(c), 0.35F * breath, time, 0.3F, 1F);
+        } else {
+            disc(bx, cy, bz, rx, rz, SEAL_FACE_R, SEAL_FACE, k, dark(c), d.alpha(), 0F);
+            disc(bx, cy, bz, rx, rz, SEAL_HALO_R, SEAL_HALO, k, tinted(c, day), (1.1F - 0.4F * day) * d.alpha(), 0F);
+        }
+    }
+
+    /** Segments round a disc. */
+    private static final int ROUND = 28;
+
+    /**
+     * A disc facing the camera (turned about the upright, as the ribbons are): rings from {@code radii[i]} to the next, each
+     * edge's strength {@code profile[i]}, sizes times {@code k}. {@code split} over 0 cracks it top and bottom and pulls the
+     * halves apart by that much, the left one sagging.
+     */
+    private static void disc(float cx, float cy, float cz, float rx, float rz, float[] radii, float[] profile, float k, int rgb, float strength, float split) {
+        if (strength < 0.004F) return;
+        int quad = stretched ? 96 : 64;
+        for (int s = 0; s < ROUND; s++) {
+            float a0 = s * Mth.TWO_PI / ROUND, a1 = (s + 1) * Mth.TWO_PI / ROUND, mid = (a0 + a1) * 0.5F;
+            float ox = 0, oy = 0;
+            if (split > 0) {
+                // the cracks: a little off the top and bottom, so it reads broken and not just two arcs
+                if (gap(mid, Mth.HALF_PI + 0.3F) < 0.2F || gap(mid, -Mth.HALF_PI - 0.25F) < 0.2F) continue;
+                boolean left = Mth.cos(mid) < 0;
+                ox = left ? -split : split;
+                oy = left ? -split * 0.8F : 0;
+            }
+            float c0 = Mth.cos(a0), s0 = Mth.sin(a0), c1 = Mth.cos(a1), s1 = Mth.sin(a1);
+            for (int i = 0; i + 1 < radii.length; i++) {
+                if (at + quad > end) return;
+                float r0 = radii[i] * k, r1 = radii[i + 1] * k;
+                int i0 = col(rgb, strength * profile[i]), i1 = col(rgb, strength * profile[i + 1]);
+                vertex(cx + rx * (r0 * c0 + ox), cy + r0 * s0 + oy, cz + rz * (r0 * c0 + ox), i0);
+                vertex(cx + rx * (r1 * c0 + ox), cy + r1 * s0 + oy, cz + rz * (r1 * c0 + ox), i1);
+                vertex(cx + rx * (r1 * c1 + ox), cy + r1 * s1 + oy, cz + rz * (r1 * c1 + ox), i1);
+                vertex(cx + rx * (r0 * c1 + ox), cy + r0 * s1 + oy, cz + rz * (r0 * c1 + ox), i0);
+            }
+        }
+    }
+
+    /** How far apart two angles are, in radians (0 to pi). */
+    private static float gap(float a, float b) {
+        return Math.abs(Mth.wrapDegrees((a - b) * Mth.RAD_TO_DEG)) * Mth.DEG_TO_RAD;
+    }
+
+    /** The land's colour, paled only a little by day (a Warden's light stays its own colour against a noon sky). */
+    private static int tinted(int c, float day) {
+        float lift = 0.2F * Mth.clamp((1F - day) / 0.6F, 0F, 1F);
+        return lerpWhite(c, lift);
+    }
+
+    /** Halfway to white: a warm core, not a white thread. */
+    private static int warm(int c) {
+        return lerpWhite(c, 0.5F);
+    }
+
+    /** A seal's face: the colour deep in shadow. */
+    private static int dark(int c) {
+        int r = c >> 16 & 255, g = c >> 8 & 255, b = c & 255;
+        return 0xFF000000 | r * 18 / 100 << 16 | g * 16 / 100 << 8 | b * 14 / 100;
+    }
+
+    /** A broken seal: the colour burnt to ash, a dark grey with a little of its warmth left. */
+    private static int ash(int c) {
+        int r = c >> 16 & 255, g = c >> 8 & 255, b = c & 255, grey = (r + g + b) / 3;
+        return 0xFF000000 | (grey * 22 + r * 6) / 100 << 16 | (grey * 22 + g * 4) / 100 << 8 | (grey * 22 + b * 3) / 100;
+    }
+
+    private static int lerpWhite(int c, float t) {
+        int r = c >> 16 & 255, g = c >> 8 & 255, b = c & 255;
+        return 0xFF000000 | (int) (r + (255 - r) * t) << 16 | (int) (g + (255 - g) * t) << 8 | (int) (b + (255 - b) * t);
     }
 
     /**

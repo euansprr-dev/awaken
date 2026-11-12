@@ -17,9 +17,12 @@ cmd gamerule send_command_feedback false
 
 cmd awaken gate realm_enter E awaken:saltcomb_flats
 need realm
-# the System says what the lights are six seconds in, the first two open lands only
-wait 200
-shot saltway_teach
+# the System says what the lights are six seconds in, the first two open lands only, for ten seconds: taken at once (no
+# settle, which waited past it), twice in case the server's six seconds ran late; the HUD's goal line shows from the start
+wait 150
+shotnow saltway_teach
+wait 70
+shotnow saltway_teach_b
 screen close
 hud off
 wait 20
@@ -39,7 +42,7 @@ look 160 -18
 wait 40
 shot saltway_mouth_dusk_west
 
-# the seals on the Lord's door, from the road
+# the seals on the Lord's door, from the road: one disc for each Warden, all whole
 cmd awaken gate realm_at MOUTH 0 0 6 -196
 look 180 -6
 wait 80
@@ -73,9 +76,18 @@ cmd awaken gate realm_leg WARDEN 2 16 5
 wait 80
 shot saltway_warden_2
 
-# the run on the HUD at a camp
+# one Warden beaten: its seal goes dark and splits beside the two still whole (and the toast says so)
+cmd time set 6000
+cmd awaken gate realm_at MOUTH 0 0 6 -196
+look 180 -6
+wait 60
+cmd awaken gate realm_warden_down 0
+wait 80
+shot saltway_door_seal_broken
+
+# the run on the HUD at a camp, folded to its one line: the goal stays
 hud on
 cmd awaken gate realm_leg FIGHT 0 8 2
-wait 60
+wait 200
 shot saltway_hud
 quit

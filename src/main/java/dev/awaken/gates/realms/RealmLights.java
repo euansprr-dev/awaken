@@ -24,8 +24,8 @@ import java.util.WeakHashMap;
 /**
  * An open land shows you what to do (SPEC §50.9 "Lights and seals"; Euan, 12 Nov: "nothing guided me... the big building
  * was closed. So how do I open the doors?"). A pillar of light in the land's colour stands over each Warden still
- * standing, seen from anywhere in the land, and the Lord's door carries one short seal of the same light for each. A
- * Warden down, its pillar and one seal fade out; the last one down, the door opens. The Lord is never lit or named.
+ * standing, seen from anywhere in the land, and the Lord's door carries one seal for each, a disc of the same light. A
+ * Warden down, its pillar fades out and its seal goes dark and splits; the last one down, the door opens. The Lord is never lit or named.
  * Under a roof, and in a crawl, the run itself shows the way and nothing here is drawn.
  */
 public final class RealmLights {
@@ -33,8 +33,8 @@ public final class RealmLights {
 
     /** Told again every half minute, in case a client missed it, as a Realm's air is. */
     private static final int AGAIN = 600;
-    /** How tall a Warden's pillar stands, and a seal at the door. */
-    static final int WARDEN_HEIGHT = 360, SEAL_HEIGHT = 11;
+    /** How tall a Warden's pillar stands, and how high over its feet a seal's disc hangs at the door. */
+    static final int WARDEN_HEIGHT = 360, SEAL_LIFT = 5;
     /** How long after you arrive the System says what the lights are (the arch's card has had its turn by then), and in how many open lands. */
     private static final int TEACH_AFTER = 20 * 6, TEACH_LANDS = 2;
 
@@ -100,7 +100,10 @@ public final class RealmLights {
                 .priority(4).ttl(20 * 10).build());
     }
 
-    /** What is lit for this gate now: a pillar and a seal for each Warden still standing, nothing once the door is open. */
+    /**
+     * What is lit for this gate now: a pillar and a whole seal for each Warden still standing, a broken seal for each one
+     * down (so the door always shows how many there were and how many are left), nothing once the door is open.
+     */
     static List<GatePayloads.RealmLight> lit(MinecraftServer server, GateRecord g, RealmPlan plan, RealmRef ref) {
         Land land = plan.land();
         RealmState st = RealmData.get(server).state(g.id);
@@ -111,11 +114,11 @@ public final class RealmLights {
         List<GatePayloads.RealmLight> out = new ArrayList<>(wardens.size() * 2);
         for (int i = 0; i < wardens.size(); i++) {
             Land.Site s = wardens.get(i);
-            if (st.wardensDown.contains(s.index())) continue;
-            out.add(new GatePayloads.RealmLight(Realms.world(ref.cell(), s.x(), s.y(), s.z()), colour, WARDEN_HEIGHT, false));
+            boolean down = st.wardensDown.contains(s.index());
+            if (!down) out.add(new GatePayloads.RealmLight(Realms.world(ref.cell(), s.x(), s.y(), s.z()), colour, WARDEN_HEIGHT, false, false));
             if (i < seals.size()) {
                 int[] c = seals.get(i);
-                out.add(new GatePayloads.RealmLight(Realms.world(ref.cell(), c[0], c[1], c[2]), colour, SEAL_HEIGHT, true));
+                out.add(new GatePayloads.RealmLight(Realms.world(ref.cell(), c[0], c[1], c[2]), colour, SEAL_LIFT, true, down));
             }
         }
         return out;
@@ -135,7 +138,7 @@ public final class RealmLights {
     }
 
     /**
-     * A Warden is down: its light and one seal fade, everyone in the gate hears a seal break and is told how many are left.
+     * A Warden is down: its light fades and its seal breaks, everyone in the gate hears a seal break and is told how many are left.
      * {@code left}: Wardens still standing. The last one is said by the door opening.
      */
     static void wardenDown(ServerLevel level, GateRecord g, int left) {
@@ -205,7 +208,8 @@ public final class RealmLights {
         }
         ox /= ol;
         oz /= ol;
-        double side = 2.5;
+        // far enough apart that each seal is a thing of its own from the road (they were 2.5 apart and read as one glow)
+        double side = n <= 3 ? 4 : 3;
         List<int[]> out = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             double across = (i - (n - 1) / 2.0) * side;

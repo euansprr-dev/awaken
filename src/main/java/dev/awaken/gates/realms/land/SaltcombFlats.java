@@ -962,6 +962,8 @@ public final class SaltcombFlats extends KitLand<SaltcombFlats.M> {
         for (int i = 5; i < stones.size(); i += 3) {
             Stone s = stones.get(i);
             if (s.r > 9) continue;
+            // today's plan: no lamp on the ramp up to the court, where one stood in front of the door's seals (manager's tour review, 12 Nov)
+            if (v2 && s.z < 72) continue;
             int side = i % 2 == 0 ? -1 : 1;
             Vox p = new Vox("Road lamp");
             int x = s.x + side * (s.r - 2);
