@@ -4,8 +4,10 @@
 # dust and fog were flat discs of one fixed colour, up to eleven blocks across, drawn twice over. Lens now draws each as
 # a soft volume in its picture (SPEC §22 "Dust and fog as air"); without Lens the veils take the hour's light, are
 # drawn once and fade as the camera comes into them.
-# A stampede and a migration by day, the Deep Tide at dusk and at night, a duel: each from afar, from its edge and
-# from inside, as air and then as the veils (`lens haze off`).
+# In an open meadow: a stampede and a migration by day, the Deep Tide at dusk and at night, each from afar (the tour's
+# glass stand), and from inside on the ground at eye height, as air and then as the veils (`lens haze off`).
+# (Run 43231633144 shot the city for the stampede: the first passage had not yet begun when the script asked. And a
+# stampede lasts forty seconds: its shots come straight after it starts.)
 # Run: tools/tour-ci.sh tools/autopilot/steady60-dustfog-ci.txt 2400
 # ci knobs: LENS=cinematic PACK=perf
 world dustfog creative 20261025
@@ -31,58 +33,69 @@ opt fov 90
 opt gamma 100
 lens grade vivid
 cmd item replace entity @s weapon.mainhand with minecraft:air
-cmd awaken living goto greenwild
-wait 100
+cmd awaken living goto blossom_meadow
+wait 300
 waitpassage
-wait 400
+wait 300
+waitpassage
+wait 600
 shot land_day
-# a stampede by day
+# a stampede by day (forty seconds long)
 cmd awaken living happen stampede
-wait 60
-cmd awaken living near 70
-wait 50
-shot stampede_far_air
+wait 45
+cmd awaken living near 60
+wait 30
+shotnow stampede_far_air
 lens haze off
-wait 4
-shot stampede_far_veils
-lens haze on
-cmd awaken living near 24
-wait 40
-shot stampede_edge_air
-lens haze off
-wait 4
-shot stampede_edge_veils
+wait 3
+shotnow stampede_far_veils
 lens haze on
 cmd awaken living near 5
-wait 40
-shot stampede_inside_air
+wait 30
+cmd tp @s ~ ~-3 ~
+wait 12
+shotnow stampede_inside_air
 lens haze off
-wait 4
-shot stampede_inside_veils
+wait 3
+shotnow stampede_inside_veils
 lens haze on
 cmd awaken living calm
 wait 20
-# a migration's dust
+# a migration's dust (five minutes long: time to look)
 cmd awaken living happen great_migration
 wait 60
 cmd awaken living near 60
 wait 50
 shot migration_far_air
-cmd awaken living near 6
+lens haze off
+wait 4
+shot migration_far_veils
+lens haze on
+cmd awaken living near 14
 wait 40
+cmd tp @s ~ ~-3 ~
+wait 20
+shot migration_edge_air
+lens haze off
+wait 4
+shot migration_edge_veils
+lens haze on
+cmd awaken living near 4
+wait 40
+cmd tp @s ~ ~-3 ~
+wait 20
 shot migration_inside_air
 lens haze off
 wait 4
 shot migration_inside_veils
 lens haze on
-cmd awaken living calm
+# the same, looking into the sun and away from it
+look -90 -5
 wait 20
-# a duel's dust
-cmd awaken living happen beast_duel
-wait 60
-cmd awaken living near 18
-wait 60
-shot duel_air
+shot migration_inside_east
+look 90 -5
+wait 20
+shot migration_inside_west
 cmd awaken living calm
 wait 20
 # the Deep Tide at dusk
@@ -90,11 +103,13 @@ cmd time set 13000
 wait 60
 cmd awaken living happen deep_tide
 wait 80
-cmd awaken living near 60
+cmd awaken living near 50
 wait 60
 shot tide_dusk_far_air
 cmd awaken living near 6
 wait 40
+cmd tp @s ~ ~-3 ~
+wait 20
 shot tide_dusk_inside_air
 # and deep in the night
 cmd time set 18500
@@ -104,16 +119,25 @@ lens haze off
 wait 4
 shot tide_night_inside_veils
 lens haze on
+look 0 -5
+wait 20
+shot tide_night_inside_south
 cmd awaken living near 34
 wait 40
+cmd tp @s ~ ~-3 ~
+wait 20
 shot tide_night_edge_air
 lens haze off
 wait 4
 shot tide_night_edge_veils
 lens haze on
-cmd awaken living near 70
+cmd awaken living near 60
 wait 40
 shot tide_night_far_air
+lens haze off
+wait 4
+shot tide_night_far_veils
+lens haze on
 cmd awaken living calm
 wait 10
 quit
