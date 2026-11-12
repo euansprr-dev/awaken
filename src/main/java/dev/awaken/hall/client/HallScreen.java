@@ -248,7 +248,8 @@ public final class HallScreen extends Screen implements dev.awaken.signal.client
             // tours can't move the pointer: the n-th suit (or the n-th kind's E-rank niche) as if pointed at
             mouseMovedSinceKey = false;
             if (wing == PICKS) {
-                HallLayout.Cell cell = PickLayout.cell(Math.floorMod(n, PickLayout.COLS), Math.min(2, HallNet.ROWS - 1));
+                // 0-3 a form at C, 4-7 at E (where a first pick's re-draw rows sit)
+                HallLayout.Cell cell = PickLayout.cell(n % PickLayout.COLS, n < PickLayout.COLS ? 2 : 0);
                 picks.hover = cell;
                 picks.handHover = false;
                 aimX = cell.x();

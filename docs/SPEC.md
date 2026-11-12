@@ -22801,8 +22801,8 @@ receding rows, so the tide, the rank letters and the lantern line up with it; it
 painted by `tools/art/hall/backdrops.py` with the layout `PickLayout` reads: 980 sheet pixels wide on the near row, 46 between bays).
 `HallNet.Wall.picks` carries each niche's state, judged by `HallServer.pickState`: a form not learned yet (Breaker until a lode's heart,
 Sounder until a Delver lamp) is `SHAPE` and drawn as plain iron with its name and how it opens, never black (it's a form you know of);
-`OVER` above your level; `KNOWN` short of parts; `READY`; `MADE` carried or remembered. Picks are drawn as freshly forged: the rank
-rings (mesh groups 1-5) are left out. The same hover state as the weapons (brackets, warm light, the pick again 10% larger), the same
+`OVER` above your level; `KNOWN` short of parts; `READY`; `MADE` carried or remembered. Picks are drawn whole, rank rings and all, as
+the item is in the creative tab (leaving the rings out opens gaps in the haft). The same hover state as the weapons (brackets, warm light, the pick again 10% larger), the same
 filters, a blue mark under a tracked niche and an amber one under the pick in your hand. Under the tabs, where the Lord seals sit
 on Arms, the pick in your hand with a line on what the anvil can do to it; it has a hover state and a click brings close the niche
 it can become. **A pick brought close** (`PickView`): the six ranks of its form on the left; on the right rank and name, the form's

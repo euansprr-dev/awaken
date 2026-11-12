@@ -86,9 +86,12 @@ wait 40
 cmd awaken hall view hand 0
 wait 30
 shot w1708_anvil_forged_wall
-cmd awaken hall view hover 1
+cmd awaken hall view hover 5
 wait 40
 shot w1708_anvil_redraw_hover
+cmd awaken hall piece pick_breaker 0
+wait 80
+shot w1708_anvil_redraw_close
 screen close
 wait 10
 # the old pick: Remake it on what it becomes, free

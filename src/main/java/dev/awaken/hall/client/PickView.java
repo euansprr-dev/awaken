@@ -232,7 +232,7 @@ final class PickView extends CloseView {
         needsHeading = "What it takes";
         if (!rows.isEmpty()) {
             List<AnvilPayloads.Cost> costs = rows.getFirst().costs();
-            for (AnvilPayloads.Cost c : costs) needs.add(Panel.need(s, c.tag(), c.id(), c.label(), c.have(), c.need(), Panel.across(costs.size())));
+            for (AnvilPayloads.Cost c : costs) needs.add(Panel.need(s, c.tag(), c.id(), "", c.have(), c.need(), Panel.across(costs.size())));
             if (costs.isEmpty()) needsHeading = "";
         } else if (here != null) {
             for (ArmsPayloads.NeedRow n : here.needs()) needs.add(Panel.need(s, n.kind().equals("tag"), n.id(), "", n.have(), n.need(), Panel.across(here.needs().size())));
@@ -276,7 +276,7 @@ final class PickView extends CloseView {
         if (!rows.isEmpty()) {
             // the pick in your hand would become this one: the anvil's own row, its words and its readiness the server's
             AnvilPayloads.Option first = rows.getFirst();
-            primary = new Act(lowerFirst(first.button()), FROM_HELD, first.kind(), true, first.ready(), 0);
+            primary = new Act(verb(first), FROM_HELD, first.kind(), true, first.ready(), 0);
             line = first.line();
             if (first.ready()) whyColour = Stage.LABEL;
             for (int i = 1; i < rows.size(); i++) subs.add(new Act(rows.get(i).button(), FROM_HELD, rows.get(i).kind(), false, rows.get(i).ready(), 0));
@@ -315,8 +315,16 @@ final class PickView extends CloseView {
         why = line.isEmpty() ? List.of() : s.wrap(line, TEXT_W, 3F);
     }
 
-    private static String lowerFirst(String s) {
-        return s.isEmpty() ? s : s.substring(0, 1).toLowerCase(Locale.ROOT) + s.substring(1);
+    /** The hold button's words: short, since the niche already names what it makes ("Remake it as a Gatewrought Mattock" won't fit). */
+    private static String verb(AnvilPayloads.Option row) {
+        return switch (row.kind() % 100) {
+            case dev.awaken.arms.anvil.AnvilWork.RAISE -> "raise yours to this";
+            case dev.awaken.arms.anvil.AnvilWork.REDRAW -> "re-draw yours as this";
+            case dev.awaken.arms.anvil.AnvilWork.WORK_IN -> "work in what you've done";
+            case dev.awaken.arms.anvil.AnvilWork.DRESS -> "dress the edge";
+            case dev.awaken.arms.anvil.AnvilWork.MIGRATE -> "remake it as this";
+            default -> row.button().isEmpty() ? row.button() : row.button().substring(0, 1).toLowerCase(Locale.ROOT) + row.button().substring(1);
+        };
     }
 
     private void drawPanel(Stage s, float dx, float mx, float my, float dt, float time) {
@@ -332,7 +340,7 @@ final class PickView extends CloseView {
         s.glow(X + wide / 2F, y + 12F * nameSize, wide / 2F + 40F, 22F * nameSize, Stage.RANK[tier], .22F);
         s.title(name, X, y, nameSize, Stage.TITLE);
         y += 26F * nameSize + 4F;
-        y = Panel.lines(s, blurb, y, 2, Stage.LABEL) + 16F;
+        y = Panel.lines(s, blurb, y, blurb.size(), Stage.LABEL) + 16F;
 
         float x = X;
         for (String[] st : stats) {
@@ -351,14 +359,18 @@ final class PickView extends CloseView {
         float primaryTop = (hasSubs ? subTop - 12F : bottom) - 60F;
         float actionTop = primary != null ? primaryTop : hasSubs ? subTop : bottom;
         float whyTop = actionTop - 12F - why.size() * 30F;
-        float needTop = whyTop - 8F - (needs.isEmpty() ? 0F : Panel.needsHeight(needs.size()));
+        // what it takes needs its row; the line under it saying where a material comes from moves to a tip when there's no room
+        float needTop = whyTop - 8F - (needs.isEmpty() ? 0F : Panel.needsHeight(needs.size()) - Panel.SOURCE_H);
 
         // what sets it apart: as many marks as fit above what it takes, never one cut in half
         overMark = null;
-        s.text("What makes it different", X, y, 3F, Stage.EDGE);
-        y += 32F;
-        for (HallSpecial.Mark m : marks) {
-            if (y + 30F > needTop) break;
+        int fit = Math.min(marks.size(), (int) ((needTop - y - 40F) / 30F));
+        if (fit > 0) {
+            s.text("What makes it different", X, y, 3F, Stage.EDGE);
+            y += 32F;
+        }
+        for (int i = 0; i < fit; i++) {
+            HallSpecial.Mark m = marks.get(i);
             boolean on = fly >= 1F && mx >= X - 6F && mx < RIGHT + 6F && my >= y - 3F && my < y + 27F;
             if (on) {
                 overMark = m;
@@ -373,7 +385,7 @@ final class PickView extends CloseView {
 
         // a full panel keeps what it takes and leaves the hint under it to a tip
         boolean roomy = y + Panel.needsHeight(needs.size()) <= whyTop - 8F;
-        hoverNeed = needs.isEmpty() ? -1 : Panel.needs(s, needsHeading, needs, Math.max(y, needTop), mx, my, fly >= 1F, time, roomy);
+        hoverNeed = needs.isEmpty() ? -1 : Panel.needs(s, needsHeading, needs, y, mx, my, fly >= 1F, time, roomy);
         Panel.lines(s, why, whyTop, why.size(), whyColour);
         primaryY0 = primaryTop;
         primaryY1 = primaryTop + 60F;
@@ -397,7 +409,7 @@ final class PickView extends CloseView {
             sx += w + 14F;
         }
         pendingFor = Math.max(0F, pendingFor - dt);
-        if (!roomy && hoverNeed >= 0) Panel.sourceTip(s, needs.get(hoverNeed), Math.max(y, needTop) + 34F + Panel.NEED_H);
+        if (!roomy && hoverNeed >= 0) Panel.sourceTip(s, needs.get(hoverNeed), y + 34F + (needs.size() + Panel.across(needs.size()) - 1) / Panel.across(needs.size()) * Panel.NEED_H);
         if (overMark != null) tip(s, overMark.says(), mx, my);
         g.pose().popMatrix();
     }

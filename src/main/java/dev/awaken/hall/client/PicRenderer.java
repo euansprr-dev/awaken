@@ -124,10 +124,8 @@ final class PicRenderer extends PictureInPictureRenderer<PicState> {
         boolean hidden = !ours && (base == Placed.SHAPE || base == Placed.IRON); // vanilla's light can't black it out, so a colour must
         int accent = p.accent() == -1 ? up.mesh().accent() : p.accent();
         WeaponMesh mesh = up.mesh();
-        // a forged pick stands as it comes off the anvil: no ring for a rank it was raised through (SPEC §49.8, the groups)
-        byte[] rings = mesh.groups();
         store.submitCustomGeometry(ps, ours ? HallPipelines.weapon(tex) : HallPipelines.fallback(tex),
-                (pose, buffer) -> emit(accent, mesh.pos(), mesh.uv(), mesh.normal(), mesh.along(), mesh.vertices(), pose, buffer, overlay, ours, hidden, rings));
+                (pose, buffer) -> emit(accent, mesh.pos(), mesh.uv(), mesh.normal(), mesh.along(), mesh.vertices(), pose, buffer, overlay, ours, hidden));
         ps.popPose();
     }
 
@@ -154,20 +152,18 @@ final class PicRenderer extends PictureInPictureRenderer<PicState> {
                 ps.pushPose();
                 FittingStandRenderer.rest(ps, b);
                 store.submitCustomGeometry(ps, ours ? HallPipelines.weapon(tex) : HallPipelines.fallback(tex),
-                        (pose, buffer) -> emit(m.accent(), m.pos(), m.uv(), m.normal(), m.along(), m.vertices(), pose, buffer, overlay, ours, hidden, null));
+                        (pose, buffer) -> emit(m.accent(), m.pos(), m.uv(), m.normal(), m.along(), m.vertices(), pose, buffer, overlay, ours, hidden));
                 ps.popPose();
             }
         }
         ps.popPose();
     }
 
-    private static void emit(int accent, float[] p, float[] uv, byte[] n, byte[] along, int count, PoseStack.Pose pose, VertexConsumer buffer, int overlay, boolean ours, boolean hidden,
-                             byte @org.jspecify.annotations.Nullable [] rings) {
+    private static void emit(int accent, float[] p, float[] uv, byte[] n, byte[] along, int count, PoseStack.Pose pose, VertexConsumer buffer, int overlay, boolean ours, boolean hidden) {
         int shade = hidden ? 14 : 255;
         int r = ours ? accent >> 16 & 255 : shade, g = ours ? accent >> 8 & 255 : shade, b = ours ? accent & 255 : shade;
         int light = LightCoordsUtil.FULL_BRIGHT;
         for (int i = 0; i < count; i += 3) {
-            if (rings != null && rings[i / 3] != 0) continue;
             for (int c = i; c < i + 3; c++) corner(buffer, pose, p, uv, n, c, r, g, b, ours ? along[c] & 255 : 255, light, overlay);
             if (!ours) corner(buffer, pose, p, uv, n, i + 2, r, g, b, 255, light, overlay);
         }

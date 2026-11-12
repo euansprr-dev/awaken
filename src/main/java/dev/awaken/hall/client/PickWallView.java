@@ -26,7 +26,7 @@ final class PickWallView {
     private static final int KEY_DARK = 13, KEY_LIT = 14, KEY_HOVER = 15;
     private static final int HOT = 0xFFC4E6FF;
     /** The pick in your hand, under the tabs: where it's drawn, and the box a click takes. */
-    private static final float HAND_X = 30F, HAND_Y = 96F, HAND_ICON = 3F, HAND_W = 420F, HAND_H = 58F;
+    private static final float HAND_X = 30F, HAND_Y = 96F, HAND_ICON = 3F, HAND_W = 400F, HAND_H = 58F;
 
     private final Component quiet = Stage.blackletter("Every pick you could carry");
     private final Component[] letters = new Component[HallNet.ROWS];
@@ -212,8 +212,8 @@ final class PickWallView {
             case HallNet.READY -> "You can forge this now";
             case HallNet.KNOWN -> "You don't have the parts yet";
             case HallNet.OVER -> "Opens later at level " + ArmsArmoury.LEVEL[h.tier()];
-            default -> HallPicks.form(h.col()) == dev.awaken.delve.forged.PickForm.BREAKER ? "Not learned yet: break a lode's heart"
-                    : "Not learned yet: light a Delver's lamp";
+            default -> HallPicks.form(h.col()) == dev.awaken.delve.forged.PickForm.BREAKER ? "Learn it: break a lode's heart"
+                    : "Learn it: light a Delver's lamp";
         };
     }
 
@@ -228,8 +228,9 @@ final class PickWallView {
     private void purse(Stage s) {
         var v = ArmouryCache.view;
         if (v != null) {
-            String door = v.door() == ArmsArmoury.ANVIL ? "At the War Anvil" : "Take a pick to a War Anvil to make it";
-            s.right(door, 1684F, 18F, 3F, Stage.EDGE);
+            boolean anvil = v.door() == ArmsArmoury.ANVIL;
+            s.right(anvil ? "At the" : "Picks are made", 1684F, 18F, 3F, Stage.EDGE);
+            s.right(anvil ? "War Anvil" : "at a War Anvil", 1684F, 46F, 3F, Stage.LANTERN);
         }
         WallView.filters(s, filter, filterX, ready, tracked);
     }
