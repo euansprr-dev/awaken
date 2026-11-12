@@ -401,23 +401,35 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
                 to = b;
             }
         }
-        if (from == null) return;
+        if (from == null) {
+            dev.awaken.Awaken.LOG.info("[realms] {}: no walk over 44 between two legs for a second stretch of stones", ctx.id());
+            return;
+        }
         double ux = (to.x() - from.x()) / best, uz = (to.z() - from.z()) / best;
         List<? extends Piece<?>> all = pieces();
-        for (double at : new double[]{0.35, 0.5, 0.25}) for (int side : new int[]{9, -9, 15, -15, 22, -22}) for (int len : new int[]{32, 24}) {
+        java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
+        for (int turn : WayPlanner.TURNS) for (double at : new double[]{0.35, 0.5, 0.25, 0.65}) for (int side : new int[]{9, -9, 15, -15, 22, -22}) for (int len : new int[]{32, 24}) {
             double cx = from.x() + (to.x() - from.x()) * at - uz * side, cz = from.z() + (to.z() - from.z()) * at + ux * side;
-            int x0 = (int) Math.round(cx - ux * len / 2.0), z0 = (int) Math.round(cz - uz * len / 2.0);
-            int x1 = (int) Math.round(cx + ux * len / 2.0), z1 = (int) Math.round(cz + uz * len / 2.0);
+            double c = Math.cos(Math.toRadians(turn)), sn = Math.sin(Math.toRadians(turn)), lx = ux * c - uz * sn, lz = ux * sn + uz * c;
+            int x0 = (int) Math.round(cx - lx * len / 2.0), z0 = (int) Math.round(cz - lz * len / 2.0);
+            int x1 = (int) Math.round(cx + lx * len / 2.0), z1 = (int) Math.round(cz + lz * len / 2.0);
             List<Hops.Stone> line = Hops.follow(x0, z0, x1, z1, 3, 1, 2, seed + side * 7L + len, this);
-            if (!WayPlanner.fits(this, all, (x, z) -> ground(x, z) > water() + 1,
-                    new ArrayList<>(), line)) continue;
+            String why = WayPlanner.misfit(this, all, (x, z) -> ground(x, z) > water() + 1, new ArrayList<>(), line);
+            if (why != null) {
+                tally.merge(why, 1, Integer::sum);
+                continue;
+            }
             Hops h = new Hops(line, dress.rock(), dress.stone(), dress.dark(), "stones to jump along");
             int[] a = h.start(), b = h.end();
-            if (!between(from.id(), to.id(), "climb", LegKind.MOVEMENT, "Stones to jump along", (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, 9)) return;
+            if (!between(from.id(), to.id(), "climb", LegKind.MOVEMENT, "Stones to jump along", (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, 9)) {
+                dev.awaken.Awaken.LOG.warn("[realms] {}: the second stretch couldn't be put between {} and {}", ctx.id(), from.id(), to.id());
+                return;
+            }
             pieces.add(h);
             course(h.course("climb", this));
             return;
         }
+        dev.awaken.Awaken.LOG.info("[realms] {}: no second stretch of stones by the walk from {} to {} ({})", ctx.id(), from.id(), to.id(), tally);
     }
 
     // ---- the ground -----------------------------------------------------------------------------------------------------------

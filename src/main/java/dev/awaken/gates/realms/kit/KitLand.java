@@ -91,7 +91,7 @@ public abstract class KitLand<M extends Mats> extends Land {
                 pieces.add(h);
             }
         });
-        if (!done) dev.awaken.Awaken.LOG.warn("[realms] {}: no way through could be planned; its run stays read off its sites", ctx.id());
+        if (!done) dev.awaken.Awaken.LOG.warn("[realms] {}: no way through could be planned ({}); its run stays read off its sites", ctx.id(), WayPlanner.why());
         return done;
     }
 

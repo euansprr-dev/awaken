@@ -32,6 +32,19 @@ public final class WayPlanner {
 
     public record Dress(BlockState body, BlockState cap, BlockState band) {}
 
+    /** Why the last plan on this thread came to nothing, for the log: what was looked for, where, and what stood in its way. */
+    private static final ThreadLocal<String> WHY = new ThreadLocal<>();
+
+    public static String why() {
+        String w = WHY.get();
+        return w == null ? "" : w;
+    }
+
+    private static boolean no(String why) {
+        WHY.set(why);
+        return false;
+    }
+
     /** What the planner asks the land to do, all at once once the run is whole. */
     public interface Build {
         /** A new den site at the ground there; its index. */
@@ -73,7 +86,8 @@ public final class WayPlanner {
     public static boolean plan(Land land, List<? extends Piece<?>> pieces, Ground ok, Dress dress, long seed, Build build) {
         Land.Site mouth = land.mouth();
         List<Land.Site> lords = land.sites(Land.SiteKind.LORD), wardens = land.sites(Land.SiteKind.WARDEN);
-        if (lords.isEmpty() || wardens.isEmpty()) return false;
+        WHY.remove();
+        if (lords.isEmpty() || wardens.isEmpty()) return no("no Lord or no Wardens");
         Land.Site lord = lords.getFirst();
         List<Land.Site> dens = land.sites(Land.SiteKind.DEN);
         int nextDen = dens.size();
@@ -98,7 +112,7 @@ public final class WayPlanner {
         }
         if (camp1 == null) {
             int[] at = spot(land, pieces, ok, taken, mouth.x(), mouth.z(), dir, FIRST_NEAR, FIRST_FAR, 30);
-            if (at == null) return false;
+            if (at == null) return no("no first camp " + FIRST_NEAR + " to " + FIRST_FAR + " from the Mouth: " + why());
             camp1 = new Stop("camp1", Land.LegKind.FIGHT, "A camp near the way in", at[0], land.ground(at[0], at[1]) + 1, at[1], 8, nextDen++);
             camp1.newDen = at;
             taken.add(new int[]{at[0], at[1], 12});
@@ -108,11 +122,11 @@ public final class WayPlanner {
 
         // straight after it, the first stones: every way on starts past them
         Stop climb = stones(land, pieces, ok, dress, taken, seed, "climb1", "Stones beyond the first camp", camp1.x, camp1.z, dir, laid);
-        if (climb == null) return false;
+        if (climb == null) return no("no stones past the first camp at " + camp1.x + "," + camp1.z + ": " + why());
         stops.add(climb);
         double[] past = new double[]{climb.hops.end()[0], climb.hops.end()[2]};
         Stop hub = stopNear(land, pieces, ok, dens, used, taken, "camp2", "A camp past the stones", past[0] + dir[0] * 28, past[1] + dir[1] * 28, nextDen);
-        if (hub == null) return false;
+        if (hub == null) return no("no camp past the first stones near " + (int) (past[0] + dir[0] * 28) + "," + (int) (past[1] + dir[1] * 28) + ": " + why());
         if (hub.newDen != null) nextDen++;
         stops.add(hub);
         camp1.exits.add(climb.id);
@@ -151,10 +165,14 @@ public final class WayPlanner {
                 dens2[0] = denAt;
             }
         }
-        if (!targets.isEmpty()) return false;
+        if (!targets.isEmpty()) {
+            StringBuilder left = new StringBuilder();
+            for (Land.Site t : targets) left.append(left.isEmpty() ? "" : ", ").append(t.kind()).append(' ').append(t.index()).append(" at ").append(t.x()).append(',').append(t.z());
+            return no("no way to " + left + ": " + why());
+        }
 
         // whole: put it all down
-        for (Stop s : stops) if (s.newDen != null && build.den(s.newDen[0], s.newDen[1]) != s.site) return false;
+        for (Stop s : stops) if (s.newDen != null && build.den(s.newDen[0], s.newDen[1]) != s.site) return no("a new den came out as another index than planned");
         for (Hops h : laid) build.stones(h);
         for (Stop s : stops) {
             build.leg(s.leg());
@@ -170,7 +188,7 @@ public final class WayPlanner {
         // the Lord's leg is its door: the hall itself may stand high in the middle of something no camp can be near
         int tx = isLord ? door[0] : t.x(), ty = isLord ? door[1] : t.y(), tz = isLord ? door[2] : t.z();
         Stop cur = nearest(stops, tx, tz);
-        if (cur == null) return false;
+        if (cur == null) return no("nowhere to start a branch from");
         boolean branchMoves = false;
         int guard = 0;
         while (Math.hypot(tx - cur.x, tz - cur.z) > MOST && guard++ < 12) {
@@ -184,7 +202,7 @@ public final class WayPlanner {
             }
             if (next == null) {
                 next = stopNear(land, pieces, ok, dens, used, taken, "camp" + n[0], "A camp on the way", px, pz, nextDen[0]);
-                if (next == null) return false;
+                if (next == null) return no("no camp near " + (int) px + "," + (int) pz + " (from " + cur.id + "): " + why());
                 if (next.newDen != null) nextDen[0]++;
             }
             n[0]++;
@@ -192,7 +210,7 @@ public final class WayPlanner {
             stops.add(next);
             cur = next;
         }
-        if (Math.hypot(tx - cur.x, tz - cur.z) > MOST) return false;
+        if (Math.hypot(tx - cur.x, tz - cur.z) > MOST) return no("still " + (int) Math.hypot(tx - cur.x, tz - cur.z) + " short of " + tx + "," + tz);
         String id = isLord ? "lord" : "warden" + t.index();
         Stop end = new Stop(id, isLord ? Land.LegKind.LORD : Land.LegKind.WARDEN, isLord ? "The Lord's door" : "A Warden's ground",
                 tx, ty, tz, isLord ? 12 : Math.max(12, t.radius()), isLord ? -1 : t.index());
@@ -243,11 +261,18 @@ public final class WayPlanner {
      */
     private static Stop stones(Land land, List<? extends Piece<?>> pieces, Ground ok, Dress dress, List<int[]> taken, long seed,
                                String id, String name, double x, double z, double[] dir, List<Hops> laid) {
-        for (int along : new int[]{12, 20, 6, 28}) for (int side : new int[]{0, 10, -10, 20, -20}) for (int len : new int[]{34, 26}) {
+        java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
+        for (int turn : TURNS) for (int along : new int[]{12, 20, 6, 28}) for (int side : new int[]{0, 10, -10, 20, -20}) for (int len : new int[]{34, 26}) {
             double sx = x + dir[0] * along - dir[1] * side, sz = z + dir[1] * along + dir[0] * side;
-            int x0 = (int) Math.round(sx), z0 = (int) Math.round(sz), x1 = (int) Math.round(sx + dir[0] * len), z1 = (int) Math.round(sz + dir[1] * len);
+            // a line up a slope steeper than a block a stone can't climb it, so across the slope is tried too
+            double c = Math.cos(Math.toRadians(turn)), sn = Math.sin(Math.toRadians(turn)), lx = dir[0] * c - dir[1] * sn, lz = dir[0] * sn + dir[1] * c;
+            int x0 = (int) Math.round(sx), z0 = (int) Math.round(sz), x1 = (int) Math.round(sx + lx * len), z1 = (int) Math.round(sz + lz * len);
             List<Hops.Stone> line = Hops.follow(x0, z0, x1, z1, 3, 1, 2, seed + along * 31L + side, land);
-            if (!fits(land, pieces, ok, taken, line)) continue;
+            String why = misfit(land, pieces, ok, taken, line);
+            if (why != null) {
+                tally.merge(why, 1, Integer::sum);
+                continue;
+            }
             Hops h = new Hops(line, dress.body(), dress.cap(), dress.band(), "stones to jump along");
             laid.add(h);
             for (Hops.Stone s : line) taken.add(new int[]{s.x(), s.z(), 3});
@@ -256,43 +281,67 @@ public final class WayPlanner {
             st.hops = h;
             return st;
         }
+        WHY.set("stone lines " + tally);
         return null;
     }
+
+    /** The turns off the way's own line a stretch of stones is tried at, the way itself first. */
+    static final int[] TURNS = {0, 35, -35, 70, -70, 100, -100};
 
     /**
      * Whether every stone stands on good ground, over it by a block or more (the first a jump up from it, {@link Hops#on}),
      * the line reaching three up somewhere so a fall off it counts, clear of what is built and of the plan so far.
      */
     public static boolean fits(Land land, List<? extends Piece<?>> pieces, Ground ok, List<int[]> taken, List<Hops.Stone> line) {
+        return misfit(land, pieces, ok, taken, line) == null;
+    }
+
+    /** Why a line of stones can't stand here, or null when it can (the reasons {@link #fits} goes by, for the log). */
+    public static String misfit(Land land, List<? extends Piece<?>> pieces, Ground ok, List<int[]> taken, List<Hops.Stone> line) {
         int high = 0;
         for (Hops.Stone s : line) {
             int g = land.ground(s.x(), s.z());
-            if (!ok.ok(s.x(), s.z()) || s.top() < g + 1 || s.top() > g + 8 || land.edge(s.x(), s.z()) > -40) return false;
-            if (covered(pieces, s.x(), s.z(), s.r() + 2) || near(taken, s.x(), s.z(), 3) || onWay(land, s.x(), s.z(), s.r() + 1)) return false;
+            if (land.edge(s.x(), s.z()) > -40) return "edge";
+            if (!ok.ok(s.x(), s.z())) return "ground";
+            if (s.top() < g + 1) return "buried";
+            if (s.top() > g + 8) return "high";
+            if (covered(pieces, s.x(), s.z(), s.r() + 2)) return "built";
+            if (near(taken, s.x(), s.z(), 3)) return "taken";
+            if (onWay(land, s.x(), s.z(), s.r() + 1)) return "way";
             high = Math.max(high, s.top() - g);
         }
-        return high >= 3 && line.getFirst().top() - land.ground(line.getFirst().x(), line.getFirst().z()) <= 1;
+        if (high < 3) return "low";
+        return line.getFirst().top() - land.ground(line.getFirst().x(), line.getFirst().z()) > 1 ? "first" : null;
     }
 
     /** A place for a camp: good ground over a ring of it, clear of what is built and of the plan, from {@code near} to {@code far} out (along {@code dir} when given). */
     private static int[] spot(Land land, List<? extends Piece<?>> pieces, Ground ok, List<int[]> taken, int x, int z, double[] dir, int near, int far, int arc) {
+        java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
         for (int r = near; r <= far; r += 4) for (int k = 0; k <= arc; k += 6) for (int sign = -1; sign <= 1; sign += 2) {
             double a = (dir == null ? 0 : Math.atan2(dir[1], dir[0])) + Math.toRadians(k * sign) + (dir == null ? k * 0.21 : 0);
             int cx = x + (int) Math.round(Math.cos(a) * r), cz = z + (int) Math.round(Math.sin(a) * r);
-            if (good(land, pieces, ok, taken, cx, cz)) return new int[]{cx, cz};
+            String why = unfit(land, pieces, ok, taken, cx, cz);
+            if (why == null) return new int[]{cx, cz};
+            tally.merge(why, 1, Integer::sum);
             if (k == 0) break;
         }
+        WHY.set("camp spots " + tally);
         return null;
     }
 
-    private static boolean good(Land land, List<? extends Piece<?>> pieces, Ground ok, List<int[]> taken, int x, int z) {
-        if (land.edge(x, z) > -48 || covered(pieces, x, z, 10) || near(taken, x, z, 14) || onWay(land, x, z, 8)) return false;
-        for (Land.Site s : land.sites()) if (Math.hypot(s.x() - x, s.z() - z) < s.radius() + 14) return false;
+    /** Why a camp can't stand here (null: it can): too near the edge, on something built, on the plan, on a way, by a site, bad or uneven ground. */
+    private static String unfit(Land land, List<? extends Piece<?>> pieces, Ground ok, List<int[]> taken, int x, int z) {
+        if (land.edge(x, z) > -48) return "edge";
+        if (covered(pieces, x, z, 10)) return "built";
+        if (near(taken, x, z, 14)) return "taken";
+        if (onWay(land, x, z, 8)) return "way";
+        for (Land.Site s : land.sites()) if (Math.hypot(s.x() - x, s.z() - z) < s.radius() + 14) return "site";
         int g = land.ground(x, z);
         for (int dx = -6; dx <= 6; dx += 3) for (int dz = -6; dz <= 6; dz += 3) {
-            if (!ok.ok(x + dx, z + dz) || Math.abs(land.ground(x + dx, z + dz) - g) > 3) return false;
+            if (!ok.ok(x + dx, z + dz)) return "ground";
+            if (Math.abs(land.ground(x + dx, z + dz) - g) > 3) return "uneven";
         }
-        return true;
+        return null;
     }
 
     /** Whether something built stands over this ground. A piece the size of the land (a city's pass, its roads) doesn't count. */
