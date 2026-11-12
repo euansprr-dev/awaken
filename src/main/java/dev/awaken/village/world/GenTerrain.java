@@ -31,18 +31,16 @@ public record GenTerrain(ChunkGenerator generator, LevelHeightAccessor heights, 
 
     @Override
     public int top(int x, int z) {
-        NoiseColumns c = NoiseColumns.of(generator, heights, random);
+        long v = ours(x, z);
+        if (v != NONE) return (int) (v >> 32);
         COLUMNS.increment();
-        return c != null ? (int) (c.both(x, z, null) >> 32) : generator.getFirstOccupiedHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, heights, random);
+        return generator.getFirstOccupiedHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, heights, random);
     }
 
     @Override
     public int water(int x, int z) {
-        NoiseColumns c = NoiseColumns.of(generator, heights, random);
-        if (c != null) {
-            COLUMNS.increment();
-            return (int) c.both(x, z, null);
-        }
+        long v = ours(x, z);
+        if (v != NONE) return (int) v;
         int top = top(x, z);
         COLUMNS.increment();
         int floor = generator.getFirstOccupiedHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, heights, random);
@@ -57,13 +55,25 @@ public record GenTerrain(ChunkGenerator generator, LevelHeightAccessor heights, 
      */
     @Override
     public long both(int x, int z) {
-        // the planners' own read of the generator's column, block for block the same (SPEC §28.9, Cost)
-        NoiseColumns c = NoiseColumns.of(generator, heights, random);
-        if (c != null) {
+        long v = ours(x, z);
+        return v != NONE ? v : vanilla(x, z);
+    }
+
+    /** No column of ours (another kind of generator, switched off, or a read that failed). */
+    private static final long NONE = Long.MIN_VALUE;
+
+    /** The planners' own read of the generator's column, block for block the same (SPEC §28.9, Cost), or {@link #NONE}. */
+    private long ours(int x, int z) {
+        try {
+            NoiseColumns c = NoiseColumns.of(generator, heights, random);
+            if (c == null) return NONE;
+            long v = c.both(x, z, null);
             COLUMNS.increment();
-            return c.both(x, z, null);
+            return v;
+        } catch (RuntimeException | LinkageError e) {
+            NoiseColumns.failed(e);
+            return NONE;
         }
-        return vanilla(x, z);
     }
 
     /** {@link #both} read through the generator's own {@code getBaseColumn} (the check, generators of other kinds). */

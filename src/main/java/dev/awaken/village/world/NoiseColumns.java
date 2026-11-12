@@ -39,12 +39,17 @@ import java.util.function.Predicate;
 public final class NoiseColumns {
     /** Off with {@code -Dawaken.noiseColumns=false}: every column the generator's own way (a check, a way out). */
     static final boolean ON = !"false".equals(System.getProperty("awaken.noiseColumns"));
+    /** Set at the first read that fails: from then on every column is read the generator's own way (one log line). */
+    private static volatile boolean failed;
+    /** Bumped when a server stops: a thread's columns over the world that's gone are dropped at its next read. */
+    private static volatile int epoch;
 
     private static final ThreadLocal<NoiseColumns[]> MINE = ThreadLocal.withInitial(() -> new NoiseColumns[2]);
     private static final Identifier AQUIFER = Identifier.withDefaultNamespace("aquifer");
     /** The generator's own fields: no beardifier, no blending (what {@code getBaseColumn} passes). */
     private static final ContextMap FIELDS = ContextMap.builder().set(Beardifier.CONTEXT_KEY, null).build();
 
+    private final int born = epoch;
     private final NoiseBasedChunkGenerator generator;
     private final RandomState random;
     private final int minY, height;
@@ -68,10 +73,11 @@ public final class NoiseColumns {
 
     /** This thread's columns for a generator, or null when it isn't a noise generator (or they're switched off). */
     static @Nullable NoiseColumns of(net.minecraft.world.level.chunk.ChunkGenerator generator, LevelHeightAccessor heights, RandomState random) {
-        if (!ON || !(generator instanceof NoiseBasedChunkGenerator g)) return null;
+        if (!ON || failed || !(generator instanceof NoiseBasedChunkGenerator g)) return null;
         NoiseColumns[] mine = MINE.get();
         for (int i = 0; i < mine.length; i++) {
             NoiseColumns c = mine[i];
+            if (c != null && c.born != epoch) mine[i] = c = null;
             if (c != null && c.generator == g && c.random == random && c.minY == heights.getMinY() && c.height == heights.getHeight()) {
                 if (i > 0) {
                     mine[i] = mine[0];
@@ -84,6 +90,18 @@ public final class NoiseColumns {
         System.arraycopy(mine, 0, mine, 1, mine.length - 1);
         mine[0] = c;
         return c;
+    }
+
+    /** (Server stopped) the columns over that world are dropped, each thread's at its next read. */
+    public static void forget() {
+        epoch++;
+    }
+
+    /** A read of ours failed: logged once, and from now on the generator's own way. */
+    static void failed(Throwable e) {
+        if (failed) return;
+        failed = true;
+        dev.awaken.Awaken.LOG.error("[road] the planners' noise columns failed: reading the generator's own from now on", e);
     }
 
     private DensitySampler sampler(DensityFunction f) {
