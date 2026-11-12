@@ -62,3 +62,24 @@ where it was bare; and at rest five seconds later, let go in both.
 Not cured by this: a shadow whose caster is still off the screen on the way in, and the strip at rest once the hold
 has let go. `/awaken lens edgehold off` is the picture as it was.
 
+## Power effects against Lens (the same day)
+
+Euan: "when I use powers and there's water behind it, the powers and the water clash weirdly and create this weird
+like glitch effect ... it's not just with the water, it's with the entire shader pack basically."
+
+Three of the effects' five render types wrote depth, and Lens works from depth: every glow's whole quad was a surface
+to it, so the water, fog, shade and sky behind were wrong in the quad's shape. The effects are now drawn into Lens's
+light layer and laid over its finished picture (SPEC §36.11). `power-effects-over-lens.jpg` (run 43207945509): a
+beam across a shaded deck with and without its dark wedge, a charged shot against the sky, a prism lance. The old
+and new rows are separate casts, not the same frame.
+
+Effects are no longer shaded, hazed by distance or graded; they still bloom. `/awaken fx glow off` is the old way.
+Not measured: frame time while effects are on screen.
+
+## A Look switched off and back on
+
+Euan: "I also turned off cinematic mode then back on, and the shadows broke." His order of switches on CI gave the
+fresh start's picture every time (run 43201767617). One fault found and fixed on the way: a chain that came back read
+its light history from before the switch for a moment. Not confirmed as what he saw (SPEC §22 "A Look switched back
+to").
+

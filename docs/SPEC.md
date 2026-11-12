@@ -6800,6 +6800,17 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     particles are light, not things: they draw through their own pipeline (`awaken:pipeline/lens_particle`, the
     particle pipeline without a depth write), so no shadow, contact darkness or haze of Lens's falls under them (in the
     depth they cast blocky little shadows, Euan 2026-11-10), and one within 1.2 to 3.4 blocks of the eye fades out. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
+- **A Look switched back to** (12 Nov). Euan, playing: "I also turned off cinematic mode then back on, and the
+  shadows broke". Each chain keeps its own histories (the light buffer's, the clouds'), which stay as they were when
+  it last ran. Switched from Cinematic to Lite and back, the frame values never stopped (Lite reads them), so
+  Cinematic took its light of a quarter of a minute ago, from wherever the camera then looked, for last frame's:
+  stale shade for a moment after the switch. A chain that starts or comes back now starts its histories afresh
+  (`LensClient.ran`, `LensFrame.reset`). That is the one fault found. His own order of switches on CI
+  (`tools/autopilot/steady60-lookswitch-ci.txt`, `tools/lens/samecheck.py`, run 43201767617: Cinematic, Swift nine
+  seconds, Lite five, back; again; each alone; quickly) gave the fresh start's ground and shadows every time: what
+  differed was what moves anyway (the high cloud, leaves, motes). In his screenshot the orange lattice is leaf
+  litter and the two hard dark stripes are, as far as the log shows, the contact shadows of the ropes he had thrown
+  (a thin rope casts as if half a block thick): not confirmed by him, and not changed here.
 - **The Sun Pass in play, a part at a time** (development; client commands, nothing saved): `/awaken lens sunpass
   off|on|setting` (the block map's walk; off leaves the heightfield's answer alone), `/awaken lens rays off|on|setting`
   (the lit air, and with it the shortcut that spares sure pixels the walk), and `/awaken lens paths on|off`, which
@@ -7170,6 +7181,15 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     it stays behind the hand (the hand's own depth, "Reach and cover"). Not laid in a development view. During a
     story's tear from black `open` gives the main target instead, as it does whenever no chain will lay the layer
     (Lens off, Swift, VFX): the same draw there gives the same picture on the game's own sky.
+  - **The power effects go this way too** (12 Nov, §36.11; `LensGlow.laying()`). Light that only adds covers
+    nothing: its blend leaves the layer's alpha alone, and `lens_lay` lays a texel that has colour or cover. The lit
+    prefilter takes the layer as an input (`Glow`) and adds it to what blooms, as it will lie over the picture, so
+    light that is no longer in the frame still glows. A texture input in a chain needs its `width` and `height`:
+    without them the whole chain fails to parse and the game draws without Lens (run 43203754646);
+    `tools/lens/block.py` refuses such a chain.
+  - **Never for a chain that isn't running.** `laysLight` also asks the game whether the chain Lens asserted this
+    tick loaded and compiled (`ShaderManager.getPostChain`): light drawn for a last pass that never runs is lost
+    (in that same run the effects vanished whole). Then `open` gives the main target, as with Lens off.
   - Why the last pass and not the composite: the composite reads sixteen textures, which is all one shader stage
     may have on Apple's GPUs without argument buffers; a seventeenth could cost the whole chain there.
   - Cost: the copy it replaces, plus two texture reads a pixel. The layer is 33 MB at 4K, made the first time
@@ -17502,6 +17522,38 @@ Gate: a level-5 bench costs at most +0.5 ms p50 and +1 ms p99 over level 1.
   anything hung, carried, ridden or meant to be in the ground is left be.
 - Charges, leaps and knockback all go through `Entity.move`, so they stop at walls; a blink checks the body's box.
 ---------------------------------------------------------------------------------------------------------------------
+
+**36.11 Effects over Lens** (12 Nov; `powers.client.fx.FxGlow`, §22 "Light over the Air"). Euan, playing: "when I use
+powers and there's water behind it, the powers and the water clash weirdly and create this weird like glitch effect
+... it's not just with the water, it's with the entire shader pack basically. The water color changes, the colors
+change around." FxRender's five batches use the game's own render types, and three of them write depth (lightning
+for the meshes, energy swirl for additive sprites, translucent entity for smoke and dust). Lens works from the
+world's depth, so every glow's whole quad, clear corners and all, was a surface to it: the water behind lost
+Lens's water and showed the game's flat teal in the quad's shape, and the fog, shade and sky behind were worked out
+for the effect's distance. Leaving the depth writes out is not enough: light that is only in the frame is part of
+whatever lies behind it, and Lens paints its own sky and fog over that. So while Lens will lay its light layer
+(`LensGlow.laying()`: Lite, Cinematic, Ultra, the chain loaded, no story tear) FxRender hands the five batches to
+FxGlow and not to the game: after the level they are drawn into Lens's layer, in the same order, from the same
+vertex code, through pipelines that are the render types' own snippets with the depth write taken out
+(`pipeline/fx_glow_meshes`, `_add_sprites`, `_lit_sprites`, `_bright_sprites`; the two additive blends leave the
+layer's alpha alone), tested against the world's depth. The alpha-blended batches (smoke and dust, ink) are sorted
+far to near, as the game sorts a translucent type. Each batch has a mapped buffer of its own (12,288 quads for the
+meshes and for the underlay, 6,144 additive sprites, 4,096 each for smoke and ink: what does not fit is not drawn
+that frame); nothing is allocated per frame. With no chain to lay the layer (Lens off, Swift, VFX, a tear, a
+pipeline that did not compile, or a failure here, which switches this path off for the session) the batches go the
+game's own way exactly as before.
+What changes to the eye: the world behind an effect is Lens's own (water, fog, shade, sky), with no quad-shaped
+patch; an effect is no longer shaded by a shadow it stands in, hazed by the Air for its distance, or graded (it is
+light, and shows the colours it was made with); it blooms as before (the lit prefilter adds the layer); it stays
+behind the hand. Debris, ground waves and afterimages are not part of this (solid things write depth rightly; the
+afterimages' translucent bodies still do, which is theirs to settle).
+Checked on CI (`tools/autopilot/steady60-fx-over-lens-ci.txt`, run 43207945509; a deck over a pool above the cloud
+layer, a beam, a prism lance and a charged shot across water, against the sky and over a wall's shade, each first
+with `/awaken fx glow off`, the game's own way, then on): the beam's dark wedge over the shaded deck is gone and
+the beam is a clean line with its ring; the charged shot's hard-edged disc is a soft orb; nothing missing, no error
+in the log (`power-effects-over-lens.jpg` in docs/perf/steady60/play-2026-11-12). Not measured: frame time. While
+effects are live the chain's last pass runs as a full-screen pass (Tiles' straight out stands back), which a frame
+without effects skips. `/awaken fx glow off|on` for A/B in play.
 
 ## 40. Clear screen and lock-on (plan docs/hud-lockon/plan.html; Euan approved all six recommendations 2026-10-28: "Go ahead with all recommendations")
 

@@ -39,7 +39,8 @@ final class FxRender {
     // render types are created on first draw (never during class loading on a server or before the GPU is up)
     private static RenderType addMesh, addSprites, litSprites, brightSprites, underlay;
 
-    private static final SubmitNodeCollector.CustomGeometryRenderer MESHES = (pose, vc) -> {
+    // (package-private: FxGlow draws the same five batches into Lens's light layer when Lens will lay it)
+    static final SubmitNodeCollector.CustomGeometryRenderer MESHES = (pose, vc) -> {
         long t0 = FxStats.begin();
         try {
             drawMeshes(vc);
@@ -48,10 +49,10 @@ final class FxRender {
         }
         FxStats.end(t0);
     };
-    private static final SubmitNodeCollector.CustomGeometryRenderer ADD_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.ADD);
-    private static final SubmitNodeCollector.CustomGeometryRenderer LIT_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.LIT);
-    private static final SubmitNodeCollector.CustomGeometryRenderer BRIGHT_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.BRIGHT);
-    private static final SubmitNodeCollector.CustomGeometryRenderer UNDERLAY = (pose, vc) -> {
+    static final SubmitNodeCollector.CustomGeometryRenderer ADD_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.ADD);
+    static final SubmitNodeCollector.CustomGeometryRenderer LIT_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.LIT);
+    static final SubmitNodeCollector.CustomGeometryRenderer BRIGHT_SPRITES = (pose, vc) -> safeSprites(vc, FxPool.BRIGHT);
+    static final SubmitNodeCollector.CustomGeometryRenderer UNDERLAY = (pose, vc) -> {
         long t0 = FxStats.begin();
         try {
             drawUnderlay(vc);
@@ -145,12 +146,20 @@ final class FxRender {
             whiteU = (white.getU0() + white.getU1()) * 0.5f;
             whiteV = (white.getV0() + white.getV1()) * 0.5f;
         }
-        // draw order: daylight underlays, lit smoke and dust, additive light, then dark ink on top
-        if (white != null && !FxWorld.minimal()) out.order(1).submitCustomGeometry(ps, underlay, UNDERLAY);
-        if (sprites || shapes) out.order(2).submitCustomGeometry(ps, litSprites, LIT_SPRITES);
-        if (shapes) out.order(3).submitCustomGeometry(ps, addMesh, MESHES);
-        if (shapes || sprites) out.order(3).submitCustomGeometry(ps, addSprites, ADD_SPRITES);
-        if (sprites || shapes) out.order(4).submitCustomGeometry(ps, brightSprites, BRIGHT_SPRITES);
+        // draw order: daylight underlays, lit smoke and dust, additive light, then dark ink on top.
+        // While Lens will lay its light layer over the picture the five go into that layer after the level (FxGlow:
+        // the game's render types write depth, and Lens took every glow's whole quad for a surface); otherwise the
+        // game's own way
+        boolean wantUnder = white != null && !FxWorld.minimal(), wantSprites = sprites || shapes;
+        if (FxGlow.takes()) {
+            FxGlow.want(wantUnder, wantSprites, shapes, wantSprites, wantSprites);
+        } else {
+            if (wantUnder) out.order(1).submitCustomGeometry(ps, underlay, UNDERLAY);
+            if (wantSprites) out.order(2).submitCustomGeometry(ps, litSprites, LIT_SPRITES);
+            if (shapes) out.order(3).submitCustomGeometry(ps, addMesh, MESHES);
+            if (wantSprites) out.order(3).submitCustomGeometry(ps, addSprites, ADD_SPRITES);
+            if (wantSprites) out.order(4).submitCustomGeometry(ps, brightSprites, BRIGHT_SPRITES);
+        }
         FxDebris.submit(ps, out, cx, cy, cz, pt);
         FxGroundWave.submit(ps, out, cx, cy, cz, pt);
         FxAfterimages.submit(ps, out, cx, cy, cz);

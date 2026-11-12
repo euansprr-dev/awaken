@@ -1,0 +1,174 @@
+# The Look switched and switched back (Euan, playing, 12 Nov: "I also turned off cinematic mode then back on, and the
+# shadows broke": Cinematic to Swift, nine seconds, to Lite, five seconds, back to Cinematic; then bright orange
+# lattice patches on the ground under a tree, hard black stripes no caster explains, the tree's shadow wrong). Whatever
+# the order and however often, a Look switched back to must draw exactly what a fresh start draws.
+# A small scene on a lawn over the cloud layer (no cloud shadows to drift between shots): a tree, leaf litter, fence
+# posts, flowers, tall grass, a wall and a slab, under a high sun, the plants held still, his render scale. Two views
+# fresh (and the first again, for the picture's own noise from shot to shot), then after his own order of switches,
+# after the same again, and after Swift alone and Lite alone. tools/lens/samecheck.py compares each with the fresh one.
+# After every switch the log takes Lens's own account of itself (the twin, the calm composite, Tiles, Pixels).
+# SPEC §22 "A Look switched back to".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-lookswitch-ci.txt 2400
+# ci knobs: LENS=cinematic PACK=perf
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule random_tick_speed 0
+cmd weather clear 1000000
+cmd time set 5000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s -20.5 231 60.5 180 10
+cmd forceload add -80 -16 64 112
+wait 300
+cmd fill -75 230 -10 50 230 50 minecraft:grass_block
+cmd fill -75 230 51 50 230 110 minecraft:grass_block
+cmd fill -12 231 56 -12 235 56 minecraft:oak_log
+cmd fill -14 235 54 -10 236 58 minecraft:oak_leaves[persistent=true]
+cmd fill -13 237 55 -11 237 57 minecraft:oak_leaves[persistent=true]
+cmd fill -12 235 56 -12 235 56 minecraft:oak_log
+cmd fill -16 231 57 -14 231 59 minecraft:leaf_litter[segment_amount=3]
+cmd fill -13 231 58 -11 231 60 minecraft:leaf_litter[segment_amount=2]
+cmd fill -15 231 60 -13 231 61 minecraft:leaf_litter[segment_amount=4]
+cmd fill -19 231 55 -17 231 57 minecraft:short_grass
+cmd fill -18 231 53 -16 231 54 minecraft:tall_grass[half=lower]
+cmd fill -18 232 53 -16 232 54 minecraft:tall_grass[half=upper]
+cmd setblock -16 231 62 minecraft:oak_fence
+cmd setblock -11 231 62 minecraft:oak_fence
+cmd setblock -9 231 59 minecraft:oak_fence
+cmd setblock -17 231 60 minecraft:poppy
+cmd setblock -12 231 61 minecraft:dandelion
+cmd setblock -10 231 57 minecraft:cornflower
+cmd fill -8 231 53 -8 233 55 minecraft:cobblestone
+cmd fill -8 231 56 -7 231 57 minecraft:stone_slab
+cmd gamemode spectator
+camera first
+hud off
+lookswitch cinematic
+opt fov 90
+pixels 0.85 sharp
+wait 200
+cmd awaken terrain waving debug 3
+cmd time set 5000
+wait 300
+# --- fresh
+lens twin setting
+lens calm setting
+lens tiles setting
+lens straight setting
+lens block setting
+pixels state
+lens cost
+cmd tp @s -18.5 231 63.5 -135 18
+wait 120
+shot s0_fresh_a
+cmd tp @s -21.5 233 66.5 -135 28
+wait 120
+shot s0_fresh_b
+cmd tp @s -18.5 231 63.5 -135 18
+wait 120
+shot s0_again_a
+# --- his order: Swift nine seconds, Lite five, back
+lookswitch swift
+wait 180
+cmd tp @s -18.5 231 63.5 -135 18
+wait 60
+shot s1_swift_a
+lookswitch lite
+wait 100
+shot s1_lite_a
+lookswitch cinematic
+wait 240
+lens twin setting
+lens calm setting
+lens tiles setting
+lens straight setting
+lens block setting
+pixels state
+lens cost
+cmd tp @s -18.5 231 63.5 -135 18
+wait 120
+shot s1_back_a
+cmd tp @s -21.5 233 66.5 -135 28
+wait 120
+shot s1_back_b
+# --- the same again
+lookswitch swift
+wait 180
+lookswitch lite
+wait 100
+lookswitch cinematic
+wait 240
+lens twin setting
+lens calm setting
+lens tiles setting
+lens straight setting
+lens block setting
+pixels state
+lens cost
+cmd tp @s -18.5 231 63.5 -135 18
+wait 120
+shot s2_back_a
+cmd tp @s -21.5 233 66.5 -135 28
+wait 120
+shot s2_back_b
+# --- Swift alone, then Lite alone
+lookswitch swift
+wait 120
+lookswitch cinematic
+wait 240
+lens twin setting
+lens calm setting
+lens tiles setting
+lens straight setting
+lens block setting
+pixels state
+lens cost
+cmd tp @s -18.5 231 63.5 -135 18
+wait 120
+shot s3_swift_back_a
+lookswitch lite
+wait 120
+lookswitch cinematic
+wait 240
+lens twin setting
+lens calm setting
+lens tiles setting
+lens straight setting
+lens block setting
+pixels state
+lens cost
+cmd tp @s -18.5 231 63.5 -135 18
+wait 120
+shot s4_lite_back_a
+# --- and quickly, a second each
+lookswitch swift
+wait 20
+lookswitch lite
+wait 20
+lookswitch cinematic
+wait 20
+lookswitch swift
+wait 20
+lookswitch cinematic
+wait 240
+lens twin setting
+lens calm setting
+lens tiles setting
+lens straight setting
+lens block setting
+pixels state
+lens cost
+cmd tp @s -18.5 231 63.5 -135 18
+wait 120
+shot s5_quick_back_a
+quit

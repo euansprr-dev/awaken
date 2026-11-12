@@ -107,6 +107,14 @@ final class FxStats {
                 .then(Commands.literal("voice")
                         .then(Commands.literal("new").executes(c -> voice(c.getSource(), true)))
                         .then(Commands.literal("classic").executes(c -> voice(c.getSource(), false))))
+                // Effects over Lens (FxGlow): off draws them the game's own way, into the frame Lens reads, as before
+                // 12 Nov; on (or setting) into Lens's light layer whenever Lens will lay it. For A/B in play and in tours.
+                .then(Commands.literal("glow").then(Commands.argument("what", StringArgumentType.word()).executes(c -> {
+                    String line = FxGlow.force(StringArgumentType.getString(c, "what"));
+                    dev.awaken.Awaken.LOG.info("[fx] {}", line);
+                    c.getSource().sendSystemMessage(net.minecraft.network.chat.Component.literal(line));
+                    return 1;
+                })))
                 .then(Commands.literal("stats").executes(c -> {
                     report("stats");
                     reset();

@@ -46,3 +46,11 @@ for tier in ("cinematic", "ultra"):
     assert (at[0], at[0] + 1) == (CALM_AT, FULL_AT), f"{tier}: the composites sit at {at[0]} and {at[0] + 1}: set LensClient's CALM_AT, FULL_AT"
     (FX / f"lens_{tier}_tiles.json").write_text(json.dumps(d, indent=2) + "\n")
     print(f"{tier}: twin lens_{tier}_tiles.json (calm composite {CALM_AT}, the twin's own {FULL_AT})")
+
+# A texture input ("location") without its width and height keeps the whole chain from loading: the game logs the
+# parse error and draws without Lens (run 43203754646: a Glow input added by hand, and every lit chain was off).
+missing = [f"{p.name}: {i['sampler_name']}" for p in sorted(FX.glob("lens_*.json")) for ps in json.loads(p.read_text())["passes"]
+           for i in ps.get("inputs", []) if "location" in i and not ("width" in i and "height" in i)]
+if missing:
+    raise SystemExit("texture inputs without width and height (the chain will not load): " + ", ".join(missing[:8])
+                     + (f" and {len(missing) - 8} more: run tools/lens/probes.py after fixing the chain" if len(missing) > 8 else ""))
