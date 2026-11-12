@@ -17,7 +17,7 @@ cmd effect give @s minecraft:night_vision infinite 0 true
 hud off
 
 cmd awaken gate beat_hall A awaken:green_dark
-wait 200
+wait 600
 cmd awaken gate beat_at PIPE 3 0
 wait 100
 shot green_dark_pipe

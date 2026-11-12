@@ -27564,6 +27564,7 @@ signs as it goes.
 - **Flow**: rail run (E), crumble run (D: the floor falls in behind you and comes back after 100 ticks, so a partner can
   still cross), drop and roll (E, 4 to 6).
 - **Side routes**, never on the way and never required: stride wall (E), swing out on a rope anchor (D), leap gap (C).
+  Each has a find at its end, and its crossing is a `Land.Leap` (stride, swing, double) that the walk check takes.
 - A beat's moves are **asked for** (needed) except a chute, rail, pipe, crumble or drop, which are the way's flow.
 
 **72.3 The composer** (`Composer.java`). It picks every line's beats for the leg's height change and room, the rank and the
@@ -27581,7 +27582,10 @@ kind's accents, from the run's own `Random` (so the rooms and ways of plan 2 com
   families. **Shafts** (`BeatWell`, about twenty-four down or up, flights round a core turning on a landing at each corner):
   six forms, spiral with landings, broken spiral (jump, run along the wall or drop to a hang), chimney (up: wall jumps and
   ledges; down from C: chains), chain fall (from D), ledges round a well, square well (from D: a wall run each side).
-  Going up gets the climbing forms. A well that can't be had is the shaft of before.
+  Going up gets the climbing forms. A well that can't be had is the shaft of before. A well's fifth and sixth flights run
+  under its first and second: a `Sculpt` column cut clear of the floor it already has (rock between them) is another
+  floor in it (`Part.more`), carved, laid, dressed and proved like its own; cut where it already has air or a floor, it is
+  cut anew. A line's, a crossing's and a well's leg stands on its middle catch (`BeatLine.middle`).
 - **Accents** (each in the kind's own stone, `beatSkin`):
 
 | Kind | Signature | Leans to |
@@ -27681,7 +27685,8 @@ on Gentle a caught fall costs half (§70.4).
 **72.8 Bench, hall and tours.** The bench writes `beats: N lines, M fell back, K moves, H holds, X needless; families {...}`
 and each line. `/awaken gate beat_hall <rank> <kind>` lays every beat at or below the rank in one row in the kind's own
 blocks at y 236, running east from beside you, proves every move again where it stands and logs `[beats] hall: ...`;
-`/awaken gate beat_at <n|NAME> <back> <up>` stands you short of one. `tools/autopilot/beat-hall-tours.py` writes
+`/awaken gate beat_at <n|NAME> <back> <up>` stands you short of one, back along the way the hall runs there (it turns at
+the corner run). A hall tour waits 600 ticks after laying it, so the client has every block before the first shot. `tools/autopilot/beat-hall-tours.py` writes
 `beats-<kind>.txt` (its signature and five every kind has; `all` for every beat). The `realm-<kind>` tours' MOVEMENT legs
 now show the lines. The run logs `[beats] gate ...` for holds standing, a family shown and a line crossed clean.
 
@@ -27689,3 +27694,6 @@ now show the lines. The run logs `[beats] gate ...` for holds standing, a family
 facings, on plain stone), `beats_crawls_play` (every kind on plan 3 at a rank that turns with the kind, six more at S:
 walks, routes, floats nothing, no needless move, every family turns up, a tenth or less fall back), `beats_old_plans_unchanged`,
 `beats_skins_keep_their_shapes`, `beats_brood_slide`, `beats_fall_is_caught_under_the_ledges`, `beats_shown_is_saved`.
+A beat with no shape logs each size it tried and why (`Beats.whyNoShape`, `[beats] no shape:`); a crawl that doesn't walk
+logs where the walk stops on each line (`WalkCheck.stuck`, `[beats] stuck:`: the move whose end nothing stands on, or the
+nearest cell stood in with the columns round it).

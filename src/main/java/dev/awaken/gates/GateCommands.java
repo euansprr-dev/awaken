@@ -424,7 +424,8 @@ final class GateCommands {
             p.sendSystemMessage(Component.literal("No beat " + index + " in a hall here."));
             return 0;
         }
-        p.teleportTo(level, st[0] - back + 0.5, st[1] + up, st[2] + 0.5, Set.of(), st[3], 12F, true);
+        // back along the way the hall runs there (it turns at a corner)
+        p.teleportTo(level, st[0] - back * st[4] + 0.5, st[1] + up, st[2] - back * st[5] + 0.5, Set.of(), st[3], 12F, true);
         if (p.isCreative()) {
             p.getAbilities().flying = true;
             p.onUpdateAbilities();

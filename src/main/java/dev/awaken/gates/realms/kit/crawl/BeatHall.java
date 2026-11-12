@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class BeatHall {
     private BeatHall() {}
 
-    /** A laid hall: each beat it has, where each starts (x, y, z, the yaw along it) and what didn't hold. */
+    /** A laid hall: each beat it has, where each starts (x, y, z, the yaw along it, the way along: dx, dz) and what didn't hold. */
     public record Laid(String kind, Rank rank, List<String> beats, List<int[]> starts, List<String> skipped, List<String> failures, int blocks) {}
 
     /** The last hall laid in each level, for {@link #start}. */
@@ -61,7 +61,8 @@ public final class BeatHall {
                 skipped.add(b.title + " (from " + b.rank + ")");
                 continue;
             }
-            int[] start = {L.x(L.a, 0), L.feet, L.z(L.a, 0), -90};
+            // the hall turns at a corner: each start says which way it runs there
+            int[] start = {L.x(L.a, 0), L.feet, L.z(L.a, 0), Math.round(L.yaw(1, 0)), L.dx(), L.dz()};
             if (!Beats.build(b, L, t, side, rank, r)) {
                 skipped.add(b.title + " (found no shape that holds)");
                 continue;

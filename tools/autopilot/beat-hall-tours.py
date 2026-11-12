@@ -25,7 +25,8 @@ while i < len(args):
            'world autopilot_%s creative 20261113' % name.replace('-', '_'), 'waitworld', 'gui 0', 'cmd weather clear 1000000', 'cmd time set 6000', 'cmd time pause',
            'cmd awaken admin awaken', 'wait 200', 'cmd awaken powers starter 1', 'wait 20', 'screen close', 'cmd gamerule send_command_feedback false',
            'cmd effect give @s minecraft:night_vision infinite 0 true', 'hud off', '',
-           'cmd awaken gate beat_hall A awaken:%s' % kind, 'wait 200']
+           # two and a half million blocks: half a minute before the client has them all, or the first shots are the sky
+           'cmd awaken gate beat_hall A awaken:%s' % kind, 'wait 600']
     for b in beats:
         # five seconds: the chunks round a new place come in, then the shot
         out += ['cmd awaken gate beat_at %s 3 0' % b, 'wait 100', 'shot %s_%s' % (kind, b.lower())]
