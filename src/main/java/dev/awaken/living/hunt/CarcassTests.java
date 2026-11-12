@@ -32,6 +32,7 @@ public final class CarcassTests {
 
     public static void register() {
         AwakenTests.registerIsolated("hunt_beaten_beast_carcass_attributes", 260, CarcassTests::beatenBeastCarcass);
+        AwakenTests.register("hunt_carcass_goes_off_the_overworld", 80, CarcassTests::goesOffTheOverworld);
     }
 
     /** What the watcher saw of the body the moment it was laid: its first tick's problem, or "" for none; null until then. */
@@ -121,6 +122,43 @@ public final class CarcassTests {
                 .thenExecute(() -> {
                     Mob body = seen.body;
                     h.assertTrue(!body.isRemoved() && Carcass.is(body) && body.tickCount >= 20, "the body lies there, ticking (" + body.tickCount + " ticks)");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A body's minute is counted in the level it lies in (SPEC §41.4): one in a gate's realm or a stratum used to be looked
+     * for in the overworld only, so it lay there until the land was reloaded. The GameTest server has no realms, so the
+     * Nether stands in: a body whose minute is up goes at the next second's sweep, and its bones stay there as a sign.
+     */
+    static void goesOffTheOverworld(GameTestHelper h) {
+        ServerLevel far = h.getLevel().getServer().getLevel(net.minecraft.world.level.Level.NETHER);
+        h.assertTrue(far != null, "the Nether exists");
+        BlockPos at = new BlockPos(24000 + 8, 120, 8); // out where a realm's cell would be, held loaded for the test
+        int cx = at.getX() >> 4, cz = at.getZ() >> 4;
+        far.setChunkForced(cx, cz, true);
+        Mob[] body = new Mob[1];
+        AwakenTests.onEnd(h, () -> {
+            if (body[0] != null && !body[0].isRemoved()) body[0].discard();
+            far.setChunkForced(cx, cz, false);
+        });
+        far.setBlockAndUpdate(at.below(), Blocks.STONE.defaultBlockState());
+        far.setBlockAndUpdate(at, Blocks.AIR.defaultBlockState());
+        far.setBlockAndUpdate(at.above(), Blocks.AIR.defaultBlockState());
+        var cow = net.minecraft.world.entity.EntityTypes.COW.create(far, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+        h.assertTrue(cow != null, "a cow to lay");
+        cow.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0F, 0F);
+        body[0] = Carcass.lay(far, cow, Set.of());
+        h.assertTrue(body[0] != null && Carcass.is(body[0]) && body[0].level() == far, "its body lies in the Nether");
+        body[0].setData(dev.awaken.living.LivingContent.CARCASS, far.getGameTime() - 1); // its minute is up
+        h.startSequence()
+                .thenWaitUntil(() -> h.assertTrue(body[0].isRemoved(), "a body whose minute is up in another level goes within a second"))
+                .thenExecute(() -> {
+                    boolean bones = false;
+                    for (dev.awaken.living.population.Spoor.Mark m : dev.awaken.living.population.Spoor.of(far).near(body[0].getX(), body[0].getZ(), 1)) {
+                        if (m.kind() == dev.awaken.living.population.Spoor.Kind.KILL && m.species().equals(Carcass.HUNTER)) bones = true;
+                    }
+                    h.assertTrue(bones, "its bones stay where it lay, in its own level");
                 })
                 .thenSucceed();
     }

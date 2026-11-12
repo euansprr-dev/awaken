@@ -18234,7 +18234,8 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
   on its side as at the end of a fall, without the red; our own renderers too, `LivingHooks.carcass`) lies there for a minute. Every hunter who hurt it carves it three times
   (use it): an alpha's first carve is always the land's hide, then hide 40%, its first part 25%, meat 25% (beef, pork, mutton;
   leather for goats and horses; bone for the rest), two string 10%. Someone who didn't fight it can't. Each hunter studies the
-  kind for ten research. When every hunter has carved, or the minute is up, it goes in a puff and its bones stay as a sign
+  kind for ten research. When every hunter has carved, or the minute is up (counted in the level it lies in: a gate's realm,
+  a stratum, the overworld), it goes in a puff and its bones stay as a sign
   ("Bones: a hunter carved an aurochs here..."). The game's own drops still fall. A body loaded after its minute is gone; one
   loaded within it can be carved by anyone (who fought it isn't saved).
 - **Saved**: `awaken:quarry` on the quarry (schemaVersion 1: damage per part, parts broken, whether it limped, its hunters).
