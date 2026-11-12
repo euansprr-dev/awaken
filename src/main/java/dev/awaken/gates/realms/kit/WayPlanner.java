@@ -169,7 +169,8 @@ public final class WayPlanner {
         // a way on to each Warden, nearest first, and to the Lord's door last; a branch that can't be laid yet is tried
         // again once the others are down (a Warden up on a terrace is reached from the one below it)
         List<Land.Site> targets = new ArrayList<>(wardens);
-        targets.sort(java.util.Comparator.comparingDouble(s -> Math.hypot(s.x() - hub.x, s.z() - hub.z)));
+        Stop at = hub;
+        targets.sort(java.util.Comparator.comparingDouble(s -> Math.hypot(s.x() - at.x, s.z() - at.z)));
         targets.add(lord);
         int[] door = door(land, lord);
         int[] n = {3};
