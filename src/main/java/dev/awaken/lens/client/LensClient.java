@@ -184,6 +184,16 @@ public final class LensClient {
     private static @org.jspecify.annotations.Nullable String overrideLook;
     private static boolean overrideChanged;
     private static float ease = 0.06f;
+    // a power's look (SPEC §22 "A power's look"): what it changes, laid over the place's own look once that has eased
+    // and under the player's grade; `accent` is what is laid now, eased toward the look's shift or back to rest
+    private static @org.jspecify.annotations.Nullable String accentLook;
+    private static final float[] accentTo = new float[Look.SIZE], accent = new float[Look.SIZE], accented = Look.neutral();
+    private static boolean accentStale, accentLaid;
+    private static float accentEase = 0.3f;
+    static {
+        Looks.shift(null, accentTo);
+        Looks.shift(null, accent);
+    }
     // a story scene keeps Lens on although the setting is off (a cutscene): after it, this many ticks to fade to neutral
     private static int linger;
     private static boolean wasOff;
@@ -291,6 +301,7 @@ public final class LensClient {
                     LensGrades.reload(manager);
                     lookFor = null; // re-resolve the current place's look
                     biomeFor = null;
+                    accentStale = true;
                     java.util.Arrays.fill(placeStale, true);
                     WorldProjection.recheck();
                 }));
@@ -316,6 +327,7 @@ public final class LensClient {
                         .then(lensSwitch("rays", LensClient::rays))
                         .then(lensSwitch("paths", LensClient::paths))
                         .then(lensSwitch("edgehold", LensClient::edgeHold))
+                        .then(lensSwitch("accent", LensClient::accentSwitch))
                         .then(net.minecraft.commands.Commands.literal("small")
                                 .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
                                         .executes(c -> {
@@ -434,6 +446,12 @@ public final class LensClient {
             lit = false;
             framed = false;
             overrideLook = null;
+            accentLook = null;
+            accentMoment = null;
+            accentStale = false;
+            accentLaid = false;
+            Looks.shift(null, accentTo);
+            Looks.shift(null, accent);
             linger = 0;
             tear = tearStep = crush = crushTarget = bloomBoost = bloomTarget = 0f;
             java.util.Arrays.fill(placeWeight, 0f);
@@ -570,10 +588,31 @@ public final class LensClient {
         // a hard cut on joining a world
         float k = snap ? 1f : ease;
         for (int i = 0; i < Look.SIZE; i++) current[i] += (target[i] - current[i]) * k;
+        // a power's look over it: never over a story moment's (that plays as authored), never while Lens is off. It is
+        // laid after the place's own slow easing, at its own pace, so a cast's look arrives with the cast
+        if (accentStale) {
+            Looks.shift(accentLook, accentTo);
+            accentStale = false;
+        }
+        boolean accentShown = accentLook != null && overrideLook == null && !off;
+        float[] shown = current;
+        if (accentShown || accentLaid) {
+            accentLaid = false;
+            for (int i = 0; i < Look.SIZE; i++) {
+                boolean scale = Look.scales(i);
+                float rest = scale ? 1f : 0f;
+                accent[i] += ((accentShown ? accentTo[i] : rest) - accent[i]) * (snap ? 1f : accentEase);
+                if (Math.abs(accent[i] - rest) > 0.0005f) accentLaid = true;
+                else if (!accentShown) accent[i] = rest;
+                float v = scale ? current[i] * accent[i] : current[i] + accent[i];
+                accented[i] = i == Look.WARMTH ? v : Math.max(0f, v);
+            }
+            shown = accented;
+        }
         // the player's grade over it; a story moment's look plays as it was authored, and with Lens off there is no
         // grade over the plain frame a scene eases back to
         LensGrades.tick(overrideLook != null || off);
-        LensGrades.apply(current, graded);
+        LensGrades.apply(shown, graded);
         snap = false;
         if (tearStep > 0) {
             tear = Math.min(1f, tear + tearStep);
@@ -612,6 +651,68 @@ public final class LensClient {
             placeStale[layer] = true;
         }
         placeWeight[layer] = lookId == null ? 0f : Math.clamp(weight, 0f, 1f);
+    }
+
+    /**
+     * A power's look over the place's own (SPEC §22 "A power's look"): {@code lookId} (an exact key in lens/*.json, such
+     * as {@code awaken:cast_beam}) is read as what it changes from the default look, and that is laid over wherever the
+     * player stands, under their grade, eased in over about {@code fadeTicks}. The place keeps its own look and the
+     * player their grade: unlike a story moment's look ({@link #override}), which replaces both and wins over this while
+     * it plays. Only while Lens draws ({@link #active()}); one at a time, the last set.
+     */
+    public static void accent(String lookId, int fadeTicks) {
+        if (accentAsMoment) { // the A/B switch: as it was, through the moment channel
+            if (overrideLook != null && !overrideLook.equals(accentMoment)) return;
+            accentMoment = lookId;
+            override(lookId, fadeTicks);
+            return;
+        }
+        accentEase = rate(fadeTicks);
+        if (lookId.equals(accentLook)) return;
+        accentLook = lookId;
+        accentStale = true;
+    }
+
+    /** The power's look laid now ({@link #accent}), or null. */
+    public static @org.jspecify.annotations.Nullable String accenting() {
+        if (accentMoment != null) return accentMoment.equals(overrideLook) ? accentMoment : null;
+        return accentLook;
+    }
+
+    /** The power's look eased away over about {@code fadeTicks}. */
+    public static void clearAccent(int fadeTicks) {
+        if (accentMoment != null) {
+            if (accentMoment.equals(overrideLook)) clearOverride(fadeTicks);
+            accentMoment = null;
+        }
+        if (accentLook == null) return;
+        accentLook = null;
+        accentStale = true;
+        accentEase = rate(fadeTicks);
+    }
+
+    // the A/B switch for a power's look: laid over the place (as built), or through the moment channel as it was
+    private static boolean accentAsMoment;
+    private static @org.jspecify.annotations.Nullable String accentMoment;
+
+    /**
+     * {@code /awaken lens accent off|on} (autopilot {@code lens accent}): a power's look laid over the place's own and
+     * under the grade (on, as built), or in place of both as it was until 12 Nov (off), for A/B in play. Takes hold with
+     * the next cast.
+     */
+    public static String accentSwitch(String arg) {
+        accentAsMoment = arg.trim().equals("off");
+        return "a power's look " + (accentAsMoment ? "replaces the place's look and the grade (as it was)" : "is laid over the place's look, under the grade (built in)");
+    }
+
+    /** Autopilot {@code lens look}: the look as drawn now (the place's, a power's over it, the grade over that), in numbers. */
+    public static String lookNow() {
+        float[] s = LensGrades.shader();
+        return String.format(java.util.Locale.ROOT,
+                "exposure %.3f contrast %.3f saturation %.3f warmth %.3f bloom %.3f vignette %.3f; grade vibrance %.2f azure %.2f leaf %.2f; %s",
+                graded[Look.EXPOSURE], graded[Look.CONTRAST], graded[Look.SATURATION], graded[Look.WARMTH], graded[Look.BLOOM], graded[Look.VIGNETTE],
+                s[0], s[4], s[5],
+                overrideLook != null ? "a moment's look, " + overrideLook : accentLook != null ? "a power's look over the place's, " + accentLook : "the place's own");
     }
 
     /** The moment's look playing now ({@link #override}), or null for the place's own. */

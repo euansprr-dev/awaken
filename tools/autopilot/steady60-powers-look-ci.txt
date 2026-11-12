@@ -1,0 +1,97 @@
+# A power's look over the place's own (Euan, playing, 12 Nov, with two pictures of one deck, the second while holding
+# a beam: "is intentional, that everything is way less bright when you're using the power."). A cast's look went
+# through Lens's moment channel, which replaces the place's look and switches the player's grade off: his Vivid
+# grade was gone for as long as the beam was held. It is now laid over the place's look, under the grade
+# (LensClient.accent, SPEC §22 "A power's look").
+# A deck at y 232 (over the cloud layer) with a pool, a lawn and a tree beyond it and open sky, the Vivid grade on,
+# in first person. Each round: the look in numbers and a shot at rest, then with a beam held two seconds, then after
+# it has let go. First as it was (`lens accent off`), then as built. Then Flow, a look written to drain the world,
+# both ways, to show that it still does.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-powers-look-ci.txt 1800
+# ci knobs: LENS=cinematic PACK=perf
+world powerslook creative 4242
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 3000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+cmd tp @s 0.5 232 0.5 0 8
+cmd forceload add -32 -32 48 64
+wait 100
+# a deck, a pool beyond it, a lawn with a tree to the left, a wall to the right
+cmd fill -14 228 -8 14 231 40 minecraft:smooth_stone
+cmd fill -12 231 3 12 231 36 minecraft:water
+cmd fill -14 232 -8 14 252 40 minecraft:air
+cmd fill -3 231 2 3 231 6 minecraft:smooth_stone
+cmd fill -12 231 3 -4 231 20 minecraft:grass_block
+cmd fill -7 232 11 -7 236 11 minecraft:oak_log
+cmd fill -10 236 8 -4 239 14 minecraft:oak_leaves[persistent=true]
+cmd fill 9 232 6 9 236 14 minecraft:stone_bricks
+wait 60
+camera first
+lookswitch cinematic
+opt fov 90
+lens grade vivid
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd awaken admin power showcase beam 1
+wait 300
+# beam, as it was
+lens accent off
+cmd tp @s 0.5 232 0.5 0 -4
+look 0 -4
+wait 40
+lens look
+shot was_beam_rest
+hold power1 50
+wait 40
+lens look
+shotnow was_beam_held
+wait 80
+lens look
+# beam, as built
+lens accent on
+cmd awaken admin power showcase beam 1
+wait 30
+lens look
+shot now_beam_rest
+hold power1 50
+wait 40
+lens look
+shotnow now_beam_held
+wait 80
+lens look
+# Flow (a look written to drain the world), as it was
+lens accent off
+cmd awaken admin power showcase flow 1
+wait 30
+shot was_flow_rest
+hold power1 2
+wait 30
+lens look
+shotnow was_flow_cast
+wait 160
+# Flow, as built
+lens accent on
+cmd awaken admin power showcase flow 1
+wait 30
+shot now_flow_rest
+hold power1 2
+wait 30
+lens look
+shotnow now_flow_cast
+wait 160
+lens look
+quit

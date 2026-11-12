@@ -742,6 +742,15 @@ public final class Autopilot {
                     Awaken.LOG.info("[autopilot] lens cost: {}", dev.awaken.lens.client.LensClient.cost());
                     return true;
                 }
+                if (arg.trim().startsWith("accent")) { // lens accent off|on: a power's look over the place's own (built in), or in place of it as it was
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.accentSwitch(arg.trim().substring(6)));
+                    waitTicks = 10;
+                    return true;
+                }
+                if (arg.trim().equals("look")) { // lens look: the look as drawn now, in numbers
+                    Awaken.LOG.info("[autopilot] lens look: {}", dev.awaken.lens.client.LensClient.lookNow());
+                    return true;
+                }
                 if (arg.trim().startsWith("edgehold")) { // lens edgehold off|on|setting: contact shadows kept where the screen can't see their caster
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.edgeHold(arg.trim().substring(8)));
                     waitTicks = 20;

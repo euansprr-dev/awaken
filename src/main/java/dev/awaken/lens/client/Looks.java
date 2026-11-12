@@ -74,6 +74,22 @@ final class Looks {
         return key != null && EXACT.containsKey(key);
     }
 
+    /**
+     * A look as what it changes ({@code out}): for each of its numbers, how it differs from the default look (the one
+     * its missing values were read from): a ratio for the picture's scales ({@link Look#scales}), a difference for the
+     * rest. A look that changes nothing, or an unknown key, is all ones and zeros. So a look written as the overworld
+     * would be while it plays can be laid over any place (LensClient's accent, SPEC §22 "A power's look").
+     */
+    static void shift(String key, float[] out) {
+        float[] look = key == null ? null : EXACT.get(key);
+        for (int i = 0; i < Look.SIZE; i++) {
+            boolean scale = Look.scales(i);
+            if (look == null) out[i] = scale ? 1f : 0f;
+            else if (scale) out[i] = fallback[i] > 0.001f ? look[i] / fallback[i] : 1f;
+            else out[i] = look[i] - fallback[i];
+        }
+    }
+
     /** True when some look is keyed on this biome. */
     static boolean hasBiome(String biome) {
         return biome != null && BIOME.containsKey(biome);

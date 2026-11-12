@@ -6799,6 +6799,28 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     particles are light, not things: they draw through their own pipeline (`awaken:pipeline/lens_particle`, the
     particle pipeline without a depth write), so no shadow, contact darkness or haze of Lens's falls under them (in the
     depth they cast blocky little shadows, Euan 2026-11-10), and one within 1.2 to 3.4 blocks of the eye fades out. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
+- **A power's look** (12 Nov; `LensClient.accent`, `Looks.shift`, powers' `CastLens`, §36.5). Euan, playing, with
+  two pictures of the same deck, one while holding a beam: "is intentional, that everything is way less bright when
+  you're using the power." It was not. A cast's look (`looks_powers.json`) went through the moment channel
+  (`LensClient.override`), which is a story scene's: it replaces the place's own look (the biome's, a cave's, a
+  dimension's) with the look as written, and it switches the player's grade off for its length. So for as long as a
+  beam was held, his Vivid grade (the azure sky, the bright greens, the lifted shade) was gone and the land wore the
+  overworld's default look with the beam's numbers, although the beam's look is written to lift the light. Now a
+  power's look is an **accent**: read as what it changes from the default look (the one a look's missing values come
+  from): a ratio for exposure, contrast and saturation, a difference for every other number (`Looks.shift`); that is
+  laid over the place's look after the place's own slow easing (so it arrives with the cast, at its own pace), and
+  the player's grade goes over the result as always. In the overworld's default look a cast draws exactly the
+  numbers its look was written with; anywhere else the place keeps its own character and takes the same change; the
+  grade never leaves. Numbers that would go under zero stop at zero (warmth may). A story moment's look still
+  replaces everything and plays as authored: Lens hides the accent for that moment's length and brings it back if
+  the cast outlasts it. One accent at a time (the last set); only while Lens draws. Lens's own drifting motes and
+  the view's motion feel, which a story scene stops, now carry on through a cast. Arms' perfect dodge
+  (`awaken:arms_breath`, twelve ticks) and the Living Wilds' level moment still take the moment channel: they are
+  written as a beat in which the world drains, and are left so.
+  What it looks like: the same world, with the cast's own colour over it. The looks written to change the world
+  (Flow and Red Hour drain it, Void Maw and Legion darken it) still do, by the same amounts, from wherever you
+  stand. The beam's own look lifts exposure 3% and softens contrast and colour by 4% and 7% (as written; under the
+  old way that softening was hidden inside the larger loss).
 - **A Look switched back to** (12 Nov). Euan, playing: "I also turned off cinematic mode then back on, and the
   shadows broke". Each chain keeps its own histories (the light buffer's, the clouds'), which stay as they were when
   it last ran. Switched from Cinematic to Lite and back, the frame values never stopped (Lite reads them), so
@@ -7058,7 +7080,8 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     thickens the Air's near haze. `look.scale` and `look.add` change any single number of the place's look by its
     name in the looks files (bloom, sunGlow, mist, ...). Clouds, shadows and the passes are not a grade's to change.
   - **Where it holds.** Every world (it is the player's taste, not a place's). A story moment's look
-    (`LensClient.override`) plays as it was authored: the grade eases out for its length and back after. A change of
+    (`LensClient.override`) plays as it was authored: the grade eases out for its length and back after. A power's
+    look (`LensClient.accent`, "A power's look" above) is laid under the grade, which stays. A change of
     grade eases over about a third of a second. Parameter texels 22 to 24 carry it.
   - **Vivid**: an azure sky (`azure` 0.5), bright greens (`leaf` 0.65), `vibrance` 0.4, `dark` 0.3, `rise` 0.1,
     `punch` 0.25, `gold` 0.3, `split` 0.25, the near haze 1.25 times as thick, and a little more bloom, sun glow, sky
@@ -13064,7 +13087,8 @@ setting (D13).
   (`CastAnims.tick`) and at a channel's let-go (`endMoment`): your view kick and hold through Arms' `CombatFeedback`, the field of view through `FxScreen`, a
   flash and a Lens bloom pulse on the big ones; others feel it by distance (16 blocks). Reduced motion halves it; the camera shake setting turns the kicks off.
 - **Lens** (`lens.client.LensClient.pulse`, `assets/awaken/lens/looks_powers.json`, `CastLens`): your own cast's look for its length (Flow, Foresight, Overload,
-  Legion, Citadel, Void Maw; the beam and Prism Lance while held), never over a story's or Arms' moment, only while Lens draws.
+  Legion, Citadel, Void Maw; the beam and Prism Lance while held), laid over the place's own look and under your grade (`LensClient.accent`, §22 "A power's look",
+  12 Nov: until then it replaced both, and the world dulled for as long as a beam was held), hidden while a story's or Arms' moment plays, only while Lens draws.
 - **Beams from the core** (`origin: "core"` in a profile; Prism Lance): `Anchors.CORE` (the sternum sampled from the model; in your first person a point low in
   the view); its orb and beam start there.
 - **Sound** (`tools/art/specs/audio_power_kits.py`): the 43 vanilla-remix `power.*` events are now authored (115 files, 1.4 MB): Kinetic weight, Velocity air,
@@ -17451,7 +17475,8 @@ cast's first sound, the family's `power.tier3_<family>` (or `tier5_` at 5) plays
 the level bits for a profiled power (`LadderFx.tierSound`, once per caster per 12 ticks, no packet), from the server for the
 rest (`Cast.sound`, once per cast). Their subtitles say only that the power is stronger ("Power swells", "Awakened power roars"): every sound has one. Lens: Red
 Hour, Black Star, Sunspear, Daystar, Critical Mass and The Risen Guard have their own short look (`awaken:awake_<power>` in
-looks_powers.json), on your own screen through `CastLens`, never over a story's or Arms' moment, only while Lens draws.
+looks_powers.json), on your own screen through `CastLens`, laid over the place's look and under your grade (§22 "A power's look"), hidden while a story's or
+Arms' moment plays, only while Lens draws.
 
 **36.6 The moment.** A level-up in a fight plays a short sting (a bloom on you, a rising chime, the key's frame flashes). When
 calm (or once the fight ends) a Signal window names the new step and what it does, with the `EVOLVE` bloom and a chord every

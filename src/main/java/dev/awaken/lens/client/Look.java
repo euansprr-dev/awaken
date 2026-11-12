@@ -34,6 +34,14 @@ final class Look {
         return v;
     }
 
+    /**
+     * Whether a look's number at {@code i} is a scale of the picture (exposure, contrast, saturation): a look laid over
+     * another ({@link Looks#shift}) multiplies these and adds the rest.
+     */
+    static boolean scales(int i) {
+        return i == EXPOSURE || i == CONTRAST || i == SATURATION;
+    }
+
     /** Reads a look; missing fields keep the values from {@code base}. */
     static float[] parse(JsonObject o, float[] base) {
         float[] v = base.clone();
