@@ -249,7 +249,7 @@ final class Groves {
         for (int i = 0; i < 48 && placed < FLOWERS; i++) {
             double ang = r.nextDouble() * Math.PI * 2, d = 1.2 + r.nextDouble() * (RADIUS - 2.0);
             int x = c.getX() + (int) Math.round(Math.cos(ang) * d), z = c.getZ() + (int) Math.round(Math.sin(ang) * d);
-            if (!level.hasChunkAt(x, z)) continue;
+            if (!dev.awaken.core.api.Ready.at(level, x, z)) continue;
             BlockPos at = Spots.surface(level, x, z).above();
             if (Math.abs(at.getY() - c.getY() - 1) > 3 || !level.getBlockState(at).isAir()) continue;
             BlockState f = BLOOMS[r.nextInt(BLOOMS.length)].defaultBlockState();

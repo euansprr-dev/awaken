@@ -326,7 +326,7 @@ public final class SkyRig {
             for (int y = ground; y < first.getY(); y++) for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++) {
                 if (dx * dx + dz * dz > 5) continue;
                 m.set(first.getX() + dx, y, first.getZ() + dz);
-                if (!level.isLoaded(m)) continue;
+                if (!dev.awaken.core.api.Ready.loaded(level, m)) continue;
                 BlockState b = level.getBlockState(m);
                 if (b.is(net.minecraft.tags.BlockTags.LEAVES) || b.is(Blocks.VINE)) {
                     level.setBlock(m, Blocks.AIR.defaultBlockState(), flags);

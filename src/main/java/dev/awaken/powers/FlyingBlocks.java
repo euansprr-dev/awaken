@@ -137,7 +137,7 @@ public final class FlyingBlocks {
         if (--f.life < 0 || f.display.isRemoved() || f.owner.isRemoved()) return true;
         Vec3 from = f.pos;
         Vec3 to = from.add(f.vel);
-        if (!f.level.isLoaded(BlockPos.containing(to))) return true;
+        if (!dev.awaken.core.api.Ready.loaded(f.level, BlockPos.containing(to))) return true;
         f.vel = f.vel.scale(0.985).add(0, -f.gravity, 0);
         BlockHitResult wall = f.level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, CollisionContext.empty()));
         Vec3 end = wall.getType() == HitResult.Type.MISS ? to : wall.getLocation();

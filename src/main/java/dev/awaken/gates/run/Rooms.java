@@ -351,7 +351,7 @@ public final class Rooms {
         for (Room.Feature ft : r.features) {
             if (ft.kind() != Room.FeatureKind.SHRINE && ft.kind() != Room.FeatureKind.SEAL) continue;
             BlockPos at = GateService.feature(g, f, r, ft);
-            if (!level.isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
             Block here = level.getBlockState(at).getBlock();
             if (!(here instanceof GateBlocks.Shrine || here instanceof GateBlocks.Seal)) continue;
             int gap = 0;

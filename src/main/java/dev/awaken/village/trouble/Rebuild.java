@@ -197,7 +197,7 @@ final class Rebuild implements Plot {
         for (int[] col : cols) {
             for (int dy = 0; dy < h; dy++) {
                 BlockPos at = new BlockPos(col[0], y0 + dy, col[1]);
-                if (!c.level().isLoaded(at) || !c.level().getBlockState(at).isAir()) break;
+                if (!dev.awaken.core.api.Ready.loaded(c.level(), at) || !c.level().getBlockState(at).isAir()) break;
                 TroubleDirector.lay(c.level(), t, at, Blocks.SCAFFOLDING.defaultBlockState().setValue(ScaffoldingBlock.DISTANCE, 0));
             }
         }
@@ -221,7 +221,7 @@ final class Rebuild implements Plot {
         int plot = -1;
         for (int i = 0; i < dmg.size() && budget > 0; i++) {
             Villages.Damage d = dmg.get(i);
-            if (!c.level().isLoaded(d.pos())) continue;
+            if (!dev.awaken.core.api.Ready.loaded(c.level(), d.pos())) continue;
             BlockState now = c.level().getBlockState(d.pos());
             if (!now.isAir() && !Char.isCharred(now) && !now.canBeReplaced() && !now.is(Blocks.SCAFFOLDING)) {
                 Villages.repaired(server, l.key(), d.pos()); // someone already put something there: theirs stands
@@ -304,7 +304,7 @@ final class Rebuild implements Plot {
             if (b.plot() != plot) continue;
             BlockPos door = p.ground(b.doorX(), b.doorZ());
             BlockPos lintel = door.above(3);
-            if (!c.level().isLoaded(lintel)) return;
+            if (!dev.awaken.core.api.Ready.loaded(c.level(), lintel)) return;
             BlockState was = c.level().getBlockState(lintel);
             if (was.isAir() || was.hasBlockEntity()) lintel = lintel.above();
             if (c.level().getBlockState(lintel).isAir()) return;
@@ -339,7 +339,7 @@ final class Rebuild implements Plot {
         int put = 0;
         for (Villages.Damage d : dmg) {
             int plot = l.plan().plotAt(d.pos().getX() - l.plan().ox, d.pos().getZ() - l.plan().oz);
-            if (plot == worst || !c.level().isLoaded(d.pos())) continue;
+            if (plot == worst || !dev.awaken.core.api.Ready.loaded(c.level(), d.pos())) continue;
             BlockState now = c.level().getBlockState(d.pos());
             if (now.isAir() || Char.isCharred(now) || now.canBeReplaced()) c.level().setBlock(d.pos(), d.original(), Block.UPDATE_CLIENTS);
             Villages.repaired(server, l.key(), d.pos());
@@ -371,7 +371,7 @@ final class Rebuild implements Plot {
         int put = 0;
         for (Villages.Damage d : Villages.damage(server, l.key())) {
             if (put >= n) break;
-            if (!level.isLoaded(d.pos())) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, d.pos())) continue;
             BlockState now = level.getBlockState(d.pos());
             if (now.isAir() || Char.isCharred(now) || now.canBeReplaced()) {
                 level.setBlock(d.pos(), d.original(), Block.UPDATE_ALL);

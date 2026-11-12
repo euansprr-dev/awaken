@@ -108,7 +108,7 @@ public final class GateExterior {
     static boolean repair(MinecraftServer server, GateRecord g) {
         ServerLevel over = server.overworld();
         if (!g.structurePlaced || g.state == GateState.RELEASED || g.state == GateState.BUILDING) return false;
-        if (!over.isLoaded(Overworld.anchor(g.pos)) || !over.isLoaded(g.pos.offset(16, 0, 16)) || !over.isLoaded(g.pos.offset(-16, 0, -16))) return false;
+        if (!dev.awaken.core.api.Ready.loaded(over, Overworld.anchor(g.pos)) || !dev.awaken.core.api.Ready.loaded(over, g.pos.offset(16, 0, 16)) || !dev.awaken.core.api.Ready.loaded(over, g.pos.offset(-16, 0, -16))) return false;
         if (Overworld.stands(over, g) || !REBUILT.add(g.id)) return false;
         boolean legacy = Overworld.legacy(over, g);
         Overworld.sweepLegacy(over, g, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
@@ -214,7 +214,7 @@ public final class GateExterior {
         int cr = (radius >> 4) + 1;
         for (int cx = c0.x() - cr; cx <= c0.x() + cr; cx++) {
             for (int cz = c0.z() - cr; cz <= c0.z() + cr; cz++) {
-                if (!level.hasChunk(cx, cz)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, cx, cz)) continue;
                 LevelChunk chunk = level.getChunk(cx, cz);
                 for (BlockEntity be : chunk.getBlockEntities().values()) {
                     if (be instanceof GateVortexBlockEntity v && v.gateId() < 0) found.add(v);

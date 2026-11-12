@@ -109,7 +109,7 @@ public final class WorldProps {
             double x = o.getX() + pr.mark.cx(), y = o.getY() + pr.mark.y1() + 1, z = o.getZ() + pr.mark.cz();
             if (pr.gear || pr.orb) y = o.getY() + pr.mark.y0() + 0.5;
             if (pr.wheel) y = o.getY() + pr.mark.y0();
-            if (p.distanceToSqr(x, y, z) > NEAR * NEAR || !level.hasChunkAt(BlockPos.containing(x, y, z))) continue;
+            if (p.distanceToSqr(x, y, z) > NEAR * NEAR || !dev.awaken.core.api.Ready.at(level, BlockPos.containing(x, y, z))) continue;
             pr.display = spawn(level, x, y, z, pr, o);
         }
     }

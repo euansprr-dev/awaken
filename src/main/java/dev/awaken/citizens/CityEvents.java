@@ -861,7 +861,7 @@ final class CityEvents {
             int x = l.cx + pick.x0() + 1 + (int) Math.floorMod(CitizenWork.mixHash(seed + 40 + t), (long) Math.max(1, pick.x1() - pick.x0() - 1));
             int z = l.cz + pick.z0() + 1 + (int) Math.floorMod(CitizenWork.mixHash(seed + 80 + t), (long) Math.max(1, pick.z1() - pick.z0() - 1));
             BlockPos top = new BlockPos(x, l.streetY + pick.top() + 8, z);
-            if (!c.level.isLoaded(top)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(c.level, top)) continue;
             while (top.getY() > l.streetY + 2 && c.level.getBlockState(top).isAir()) top = top.below();
             BlockPos at = top.above();
             if (!c.level.getBlockState(at).isAir()) continue;
@@ -957,7 +957,7 @@ final class CityEvents {
         for (int t = 0; t < 8; t++) {
             if (data[8 + t * 3] == Integer.MIN_VALUE) continue;
             BlockPos p = new BlockPos(data[8 + t * 3], data[9 + t * 3], data[10 + t * 3]);
-            if (!c.level.isLoaded(p)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(c.level, p)) continue;
             BlockState s = c.level.getBlockState(p);
             boolean on = t < want;
             int flame = Math.clamp(intensity / 250, 0, 3);
@@ -1036,7 +1036,7 @@ final class CityEvents {
             if (dd[8 + t * 3] == Integer.MIN_VALUE) continue;
             BlockPos fire = new BlockPos(dd[8 + t * 3], dd[9 + t * 3], dd[10 + t * 3]);
             for (BlockPos p : BlockPos.betweenClosed(fire.offset(-1, -2, -1), fire.offset(1, -1, 1))) {
-                if (n >= burn || !c.work.edits || !c.level.isLoaded(p)) continue;
+                if (n >= burn || !c.work.edits || !dev.awaken.core.api.Ready.loaded(c.level, p)) continue;
                 BlockState s = c.level.getBlockState(p);
                 if (s.isAir() || s.is(CitizensContent.CITY_FIRE.get()) || CitizenWork.burnt(s)) continue;
                 if (Math.floorMod(CitizenWork.mixHash(p.asLong()), 3L) != 0) continue;
@@ -1127,7 +1127,7 @@ final class CityEvents {
             int x = (int) Math.floor(mx) + (int) Math.floorMod(CitizenWork.mixHash(seed + t * 3), 7L) - 3;
             int z = (int) Math.floor(mz) + (int) Math.floorMod(CitizenWork.mixHash(seed + t * 3 + 1), 7L) - 3;
             BlockPos p = new BlockPos(x, y, z);
-            if (!c.work.edits || !c.level.isLoaded(p) || !c.level.getBlockState(p).isAir() || !c.level.getBlockState(p.below()).isSolid()) continue;
+            if (!c.work.edits || !dev.awaken.core.api.Ready.loaded(c.level, p) || !c.level.getBlockState(p).isAir() || !c.level.getBlockState(p.below()).isSolid()) continue;
             if (!site.walkable(x, z)) continue;
             c.level.setBlock(p, CitizensContent.CARGO_CRATE.get().defaultBlockState(), Block.UPDATE_ALL);
             data[3 + n * 3] = x;
@@ -1178,7 +1178,7 @@ final class CityEvents {
                 for (int t = 0; t < 10; t++) {
                     if (dd[3 + t * 3] == Integer.MIN_VALUE) continue;
                     BlockPos p = new BlockPos(dd[3 + t * 3], dd[4 + t * 3], dd[5 + t * 3]);
-                    if (!c.level.isLoaded(p)) break;
+                    if (!dev.awaken.core.api.Ready.loaded(c.level, p)) break;
                     if (c.level.getBlockState(p).is(CitizensContent.CARGO_CRATE.get())) {
                         c.level.removeBlock(p, false);
                         c.level.playSound(null, p, SoundEvents.WOOD_BREAK, SoundSource.BLOCKS, 0.6f, 1.2f);
@@ -1193,7 +1193,7 @@ final class CityEvents {
             for (int t = 0; t < 10; t++) {
                 if (dd[3 + t * 3] == Integer.MIN_VALUE) continue;
                 BlockPos p = new BlockPos(dd[3 + t * 3], dd[4 + t * 3], dd[5 + t * 3]);
-                if (c.level.isLoaded(p) && c.level.getBlockState(p).is(CitizensContent.CARGO_CRATE.get())) c.level.removeBlock(p, false);
+                if (dev.awaken.core.api.Ready.loaded(c.level, p) && c.level.getBlockState(p).is(CitizensContent.CARGO_CRATE.get())) c.level.removeBlock(p, false);
             }
             c.net.setOff(dd[0], false);
             finish(e, now);
@@ -1254,7 +1254,7 @@ final class CityEvents {
         double dist = 270 + Math.floorMod(seed >>> 8, 30L);
         int x = l.cx + (int) Math.round(Math.cos(ang) * dist) + (int) Math.floorMod(seed >>> 16, 13L) - 6;
         int z = l.cz + (int) Math.round(Math.sin(ang) * dist) + (int) Math.floorMod(seed >>> 24, 13L) - 6;
-        int y = c.level.isLoaded(new BlockPos(x, 0, z)) ? c.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) : l.streetY + 1;
+        int y = dev.awaken.core.api.Ready.loaded(c.level, new BlockPos(x, 0, z)) ? c.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) : l.streetY + 1;
         Optional<String> gate = GateHooks.openWandering(hunter, new BlockPos(x, y, z), 1, 20 * 60 * 12);
         if (gate.isEmpty()) return null;
         int id = newId();
@@ -1319,7 +1319,7 @@ final class CityEvents {
     }
 
     private void scorchField(int x, int z, long now) {
-        int y0 = c.level.isLoaded(new BlockPos(x, 0, z)) ? c.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) : -999;
+        int y0 = dev.awaken.core.api.Ready.loaded(c.level, new BlockPos(x, 0, z)) ? c.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) : -999;
         if (y0 == -999 || !c.work.edits) return;
         for (int dx = -3; dx <= 3; dx++) for (int dz = -3; dz <= 3; dz++) {
             BlockPos top = new BlockPos(x + dx, y0, z + dz);

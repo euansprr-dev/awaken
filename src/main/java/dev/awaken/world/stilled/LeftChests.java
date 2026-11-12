@@ -60,7 +60,7 @@ final class LeftChests {
     /** The chest by the well of a key's settlement, once its keyholder is near and the well's ground is loaded. */
     static void stand(ServerLevel level, ServerPlayer p, StilledContent.KeyData d) {
         BlockPos well = wellOf(level, d);
-        if (well == null || Math.hypot(well.getX() - p.getX(), well.getZ() - p.getZ()) > NEAR || !level.isLoaded(well)) return;
+        if (well == null || Math.hypot(well.getX() - p.getX(), well.getZ() - p.getZ()) > NEAR || !dev.awaken.core.api.Ready.loaded(level, well)) return;
         BlockPos at = spotBy(level, well, d.settlement().hashCode());
         if (at == null) return;
         Direction facing = Direction.fromYRot(StilledPlacer.yaw(well.getX() - at.getX(), well.getZ() - at.getZ()));
@@ -76,7 +76,7 @@ final class LeftChests {
         for (Villages.Empty e : Villages.emptyNear(level, new BlockPos(d.x(), 0, d.z()), 16)) {
             if (!e.key().equals(d.settlement()) || e.name() == null) continue;
             if (e.well() != null) return e.well();
-            if (!level.isLoaded(e.anchor())) return null;
+            if (!dev.awaken.core.api.Ready.loaded(level, e.anchor())) return null;
             return new BlockPos(e.anchor().getX(), level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, e.anchor().getX(), e.anchor().getZ()),
                     e.anchor().getZ());
         }
@@ -90,7 +90,7 @@ final class LeftChests {
             for (int k = 0; k < 16; k++) {
                 double a = start + k * Math.PI / 8;
                 int x = well.getX() + (int) Math.round(Math.cos(a) * r), z = well.getZ() + (int) Math.round(Math.sin(a) * r);
-                if (!level.isLoaded(new BlockPos(x, 0, z))) continue;
+                if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(x, 0, z))) continue;
                 BlockPos feet = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
                 if (Math.abs(feet.getY() - well.getY()) > 4) continue;
                 BlockState under = level.getBlockState(feet.below()), here = level.getBlockState(feet);

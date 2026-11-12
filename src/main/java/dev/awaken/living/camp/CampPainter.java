@@ -121,7 +121,7 @@ final class CampPainter {
     /** Replaces the natural ground block (grass, dirt, sand, stone) at a column's top. */
     private static void ground(ServerLevel level, int x, int z, BlockState s, Lists painted) {
         BlockPos at = surface(level, x, z).below();
-        if (!level.hasChunkAt(at)) return;
+        if (!dev.awaken.core.api.Ready.at(level, at)) return;
         BlockState was = level.getBlockState(at);
         if (!natural(was)) return;
         level.setBlock(at, s, 2);
@@ -130,7 +130,7 @@ final class CampPainter {
 
     /** Sets a block into air (or a plant) above the ground. */
     private static void air(ServerLevel level, BlockPos at, BlockState s, Lists painted) {
-        if (!level.hasChunkAt(at)) return;
+        if (!dev.awaken.core.api.Ready.at(level, at)) return;
         if (!level.getBlockState(at).canBeReplaced()) return;
         level.setBlock(at, s, 2);
         painted.stood().add(at.asLong());
@@ -140,11 +140,11 @@ final class CampPainter {
     static void ash(ServerLevel level, List<Long> ground, List<Long> stood) {
         for (long l : stood) {
             BlockPos at = BlockPos.of(l);
-            if (level.hasChunkAt(at)) level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
+            if (dev.awaken.core.api.Ready.at(level, at)) level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
         }
         for (long l : ground) {
             BlockPos at = BlockPos.of(l);
-            if (level.hasChunkAt(at)) level.setBlock(at, Blocks.COARSE_DIRT.defaultBlockState(), 2);
+            if (dev.awaken.core.api.Ready.at(level, at)) level.setBlock(at, Blocks.COARSE_DIRT.defaultBlockState(), 2);
         }
         stood.clear();
         ground.clear();

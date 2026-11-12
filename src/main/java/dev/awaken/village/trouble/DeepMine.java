@@ -182,7 +182,7 @@ public final class DeepMine implements Plot {
     private static void breach(Ctx c, Trouble t, VillagePlan p) {
         if (t.get("wall", 0) != 0) return;
         BlockPos f = face(p);
-        if (!c.level().isLoaded(f)) return;
+        if (!dev.awaken.core.api.Ready.loaded(c.level(), f)) return;
         VillagePlan.Mine m = p.mine;
         int sx = STEP_X[m.side2()], sz = STEP_Z[m.side2()], cx = STEP_X[(m.side2() + 1) & 3], cz = STEP_Z[(m.side2() + 1) & 3];
         BlockPos.MutableBlockPos q = new BlockPos.MutableBlockPos();
@@ -233,7 +233,7 @@ public final class DeepMine implements Plot {
     private void nest(Ctx c, Trouble t, VillageService.Live l) {
         VillagePlan p = l.plan();
         BlockPos cav = cavern(p);
-        if (!c.level().isLoaded(cav)) return;
+        if (!dev.awaken.core.api.Ready.loaded(c.level(), cav)) return;
         if (t.get("woke", 0) == 0) {
             boolean near = false;
             for (ServerPlayer pl : c.level().players()) near |= !pl.isSpectator() && pl.distanceToSqr(Vec3.atCenterOf(cav)) < WAKE * WAKE;
@@ -558,7 +558,7 @@ public final class DeepMine implements Plot {
     static void seal(ServerLevel level, VillagePlan p) {
         VillagePlan.Mine m = p.mine;
         BlockPos h = head(p).below();
-        if (!level.isLoaded(h)) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, h)) return;
         String wood = switch (p.family) {
             case dev.awaken.city.VillageStyles.FROST, dev.awaken.city.VillageStyles.HIGHLAND -> "spruce";
             case dev.awaken.city.VillageStyles.DESERT, dev.awaken.city.VillageStyles.SAVANNA -> "acacia";

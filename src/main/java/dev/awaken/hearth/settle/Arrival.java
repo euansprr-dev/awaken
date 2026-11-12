@@ -168,7 +168,7 @@ public final class Arrival {
             for (int side = 0; side < 5; side++) {
                 double a = Math.atan2(dz, dx) + (side == 0 ? 0 : (side % 2 == 1 ? 1 : -1) * 0.25 * ((side + 1) / 2));
                 int x = h.pos.getX() + (int) Math.round(Math.cos(a) * d), z = h.pos.getZ() + (int) Math.round(Math.sin(a) * d);
-                if (!level.isLoaded(new BlockPos(x, h.pos.getY(), z))) continue;
+                if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(x, h.pos.getY(), z))) continue;
                 int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
                 BlockPos feet = new BlockPos(x, y, z);
                 if (Math.abs(y - h.pos.getY()) > 12) continue;

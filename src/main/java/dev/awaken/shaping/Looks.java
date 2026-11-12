@@ -129,7 +129,7 @@ public final class Looks {
                 for (Direction d : Direction.values()) {
                     if (count >= cap) break;
                     BlockPos q = p.relative(d);
-                    if (!level.isLoaded(q) || !seen.add(q)) continue;
+                    if (!dev.awaken.core.api.Ready.loaded(level, q) || !seen.add(q)) continue;
                     BlockState l = lookAt(level, q);
                     if (l != null && l.is(kind)) {
                         next.add(q);

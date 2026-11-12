@@ -192,7 +192,7 @@ public final class FirstScenes {
         ServerLevel level = server.overworld();
         BlockPos col = c.offset(-3, 0, 3);
         var src = level.getChunkSource();
-        int y = level.hasChunkAt(col) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, col.getX(), col.getZ())
+        int y = dev.awaken.core.api.Ready.at(level, col) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, col.getX(), col.getZ())
                 : src.getGenerator().getBaseHeight(col.getX(), col.getZ(), Heightmap.Types.WORLD_SURFACE_WG, level, src.randomState());
         return col.atY(y);
     }

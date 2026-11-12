@@ -282,7 +282,7 @@ public final class GateService {
         if (gl == null) return;
         BlockPos e = entrance(g, area, floor);
         ChunkPos cp = ChunkPos.containing(e);
-        if (gl.getChunkSource().hasChunk(cp.x(), cp.z())) return;
+        if (gl.getChunkSource().hasChunk(cp.x(), cp.z())) return; // held already (made, or on its way): no second ticket
         gl.getChunkSource().addTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), cp, 2);
         PREGEN.add(new Pregen(gl, cp.x(), cp.z(), (int) (now(server) % Integer.MAX_VALUE)));
     }
@@ -291,7 +291,7 @@ public final class GateService {
         if (PREGEN.isEmpty() || server.getTickCount() % 20 != 0) return;
         long t = now(server) % Integer.MAX_VALUE;
         PREGEN.removeIf(p -> {
-            boolean loaded = p.level().getChunkSource().hasChunk(p.x(), p.z());
+            boolean loaded = dev.awaken.core.api.Ready.chunkReady(p.level(), p.x(), p.z());
             if (loaded || t - p.at() > 1200 || t < p.at()) {
                 p.level().getChunkSource().removeTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), new ChunkPos(p.x(), p.z()), 2);
                 return true;
@@ -428,7 +428,7 @@ public final class GateService {
             GateRecord g = reg.gate(id);
             if (g == null) return true;
             ChunkPos cp = ChunkPos.containing(g.pos);
-            if (!over.getChunkSource().hasChunk(cp.x(), cp.z())) return false;
+            if (!dev.awaken.core.api.Ready.chunkReady(over, cp.x(), cp.z())) return false;
             Overworld.remove(over, g);
             g.structurePlaced = false;
             over.getChunkSource().removeTicketWithRadius(GatesRegistry.BUILD_TICKET.get(), cp, 1);

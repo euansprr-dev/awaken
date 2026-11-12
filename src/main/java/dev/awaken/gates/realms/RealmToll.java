@@ -61,7 +61,7 @@ final class RealmToll {
     private static void apply(ServerLevel level, RealmRef ref, Land land, String moment) {
         for (Land.Edit e : land.change(moment)) {
             BlockPos at = Realms.world(ref.cell(), e.x(), e.y(), e.z());
-            if (!level.isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
             if (!e.state().isAir() && !level.getEntitiesOfClass(LivingEntity.class, new AABB(at)).isEmpty()) continue;
             level.setBlock(at, e.state(), Block.UPDATE_CLIENTS);
         }

@@ -563,7 +563,7 @@ public class FaunaMob extends AwakenMob implements RigBody {
             int ground = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             int y = ground - 2 - random.nextInt(26);
             probe.set(x, y, z);
-            if (!level.hasChunkAt(probe)) continue;
+            if (!dev.awaken.core.api.Ready.at(level, probe)) continue;
             if (level.getBlockState(probe).is(ORES)) return new BlockPos(x, ground, z);
         }
         return null;
@@ -577,7 +577,7 @@ public class FaunaMob extends AwakenMob implements RigBody {
             int top = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             for (int dy = 1; dy >= -1; dy--) {
                 probe.set(x, top + dy, z);
-                if (!level.hasChunkAt(probe)) break;
+                if (!dev.awaken.core.api.Ready.at(level, probe)) break;
                 BlockState s = level.getBlockState(probe);
                 boolean wanted = mushrooms ? s.getBlock() instanceof net.minecraft.world.level.block.MushroomBlock : s.is(BlockTags.CROPS) || s.is(BlockTags.SAPLINGS);
                 if (wanted && s.getBlock() instanceof net.minecraft.world.level.block.BonemealableBlock b
@@ -605,7 +605,7 @@ public class FaunaMob extends AwakenMob implements RigBody {
         int bx = getBlockX(), by = getBlockY(), bz = getBlockZ();
         for (int i = 0; i < 16; i++) {
             probe.set(bx + random.nextInt(25) - 12, by + random.nextInt(7) - 3, bz + random.nextInt(25) - 12);
-            if (level.hasChunkAt(probe) && isCampfire(level, probe)) return probe.immutable();
+            if (dev.awaken.core.api.Ready.at(level, probe) && isCampfire(level, probe)) return probe.immutable();
         }
         return null;
     }

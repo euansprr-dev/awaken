@@ -253,7 +253,7 @@ public final class Settlers {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int y = a.getY(); y <= b.getY(); y++) for (int z = a.getZ(); z <= b.getZ(); z++) for (int x = a.getX(); x <= b.getX(); x++) {
             m.set(x, y, z);
-            if (!level.isLoaded(m)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, m)) continue;
             BlockState s = level.getBlockState(m);
             if (s.getBlock() instanceof BedBlock && s.getValue(BedBlock.PART) == BedPart.HEAD && r.contains(m)) return m.immutable();
         }

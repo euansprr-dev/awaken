@@ -139,7 +139,7 @@ public final class Wards {
         int cx = pos.getX() >> 4, cz = pos.getZ() >> 4;
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-                if (!level.hasChunk(cx + dx, cz + dz)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, cx + dx, cz + dz)) continue;
                 LevelChunk chunk = level.getChunk(cx + dx, cz + dz);
                 Map<Structure, LongSet> refs = chunk.getAllReferences();
                 if (refs.isEmpty()) continue;
@@ -148,7 +148,7 @@ public final class Wards {
                     if (k == Kind.NONE) continue;
                     for (long ref : e.getValue()) {
                         ChunkPos start = ChunkPos.unpack(ref);
-                        if (!level.hasChunk(start.x(), start.z())) continue;
+                        if (!dev.awaken.core.api.Ready.chunkReady(level, start.x(), start.z())) continue;
                         StructureStart s = level.getChunk(start.x(), start.z()).getStartForStructure(e.getKey());
                         if (s == null || !s.isValid()) continue;
                         BoundingBox box = around(s.getBoundingBox(), k == Kind.SKY);

@@ -49,7 +49,7 @@ public final class Constructs {
      */
     public static boolean mayChange(ServerPlayer player, BlockPos pos) {
         ServerLevel level = player.level();
-        if (!level.isInWorldBounds(pos) || !level.isLoaded(pos)) return false;
+        if (!level.isInWorldBounds(pos) || !dev.awaken.core.api.Ready.loaded(level, pos)) return false;
         Optional<BlockPos> hearth = HearthHooks.nearest(level, pos, 48);
         if (hearth.isEmpty()) return true;
         if (level.dimension() != Level.OVERWORLD) return false;

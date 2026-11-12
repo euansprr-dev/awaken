@@ -293,7 +293,7 @@ final class Rifts {
             double ang = r.nextDouble() * Math.PI * 2;
             int d = min + r.nextInt(max - min + 1);
             int x = center.getX() + (int) Math.round(Math.cos(ang) * d), z = center.getZ() + (int) Math.round(Math.sin(ang) * d);
-            if (!level.hasChunkAt(x, z)) continue;
+            if (!dev.awaken.core.api.Ready.at(level, x, z)) continue;
             // stand on the ground near the tear's own height, not the column's top (an overhang or a canopy above
             // would otherwise put every spot out of reach)
             for (int dy = 4; dy >= -4; dy--) {

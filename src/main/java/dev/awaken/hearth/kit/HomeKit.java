@@ -160,7 +160,7 @@ public final class HomeKit {
 
     /** Puts a pipe's part right for its column now (after a neighbour came or went); anything else there is left alone. */
     static void refit(ServerLevel level, BlockPos pos) {
-        if (!level.isLoaded(pos)) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, pos)) return;
         BlockState s = level.getBlockState(pos);
         if (!s.is(Piece.DRAINPIPE.block.get())) return;
         BlockState want = with(s, "part", part(level, pos, facing(s)));
@@ -299,7 +299,7 @@ public final class HomeKit {
         } else if (was.is(Piece.HOIST_BEAM.block.get())) {
             Direction f = facing(was);
             BlockPos behind = at.relative(f.getOpposite());
-            if (!level.isLoaded(behind)) return;
+            if (!dev.awaken.core.api.Ready.loaded(level, behind)) return;
             BlockState b = level.getBlockState(behind), ahead = level.getBlockState(behind.relative(f));
             boolean carries = ahead.is(Piece.HOIST_BEAM.block.get()) && facing(ahead) == f;
             if (b.is(Piece.HOIST_BEAM.block.get()) && facing(b) == f && !carries) level.setBlock(behind, with(b, "pulley", "true"), Block.UPDATE_CLIENTS);

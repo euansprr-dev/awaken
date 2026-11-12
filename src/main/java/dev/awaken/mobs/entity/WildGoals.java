@@ -319,7 +319,7 @@ final class WildGoals {
         for (int i = 0; i < 10; i++) {
             int x = mob.getBlockX() + r.nextInt(17) - 8, z = mob.getBlockZ() + r.nextInt(17) - 8;
             BlockPos top = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
-            if (!level.hasChunkAt(top)) continue;
+            if (!dev.awaken.core.api.Ready.at(level, top)) continue;
             if (level.getBlockState(top.below()).is(Blocks.GRASS_BLOCK) && level.getBlockState(top).isAir() && !HearthHooks.inside(level, top)) return top;
         }
         return null;

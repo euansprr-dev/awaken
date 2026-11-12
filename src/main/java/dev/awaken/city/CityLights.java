@@ -70,7 +70,7 @@ public final class CityLights {
                 double x = l.cx + p.x0() + 0.5 * (p.x1() - p.x0()), z = l.cz + p.z0() + 0.5 * (p.z1() - p.z0());
                 for (var pl : players) {
                     double dx = pl.getX() - x, dz = pl.getZ() - z, d = dx * dx + dz * dz;
-                    if (d < bestD && level.isLoaded(BlockPos.containing(x, l.streetY, z))) {
+                    if (d < bestD && dev.awaken.core.api.Ready.loaded(level, BlockPos.containing(x, l.streetY, z))) {
                         bestD = d;
                         best = i;
                     }
@@ -156,7 +156,7 @@ public final class CityLights {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (int k = 0; k < ws.length; k++) {
             m.set(ws[k]);
-            if (!level.isLoaded(m)) return;
+            if (!dev.awaken.core.api.Ready.loaded(level, m)) return;
             if (set(level, m, wanted(i, k, storeys[i][k], tod))) switched++;
         }
     }

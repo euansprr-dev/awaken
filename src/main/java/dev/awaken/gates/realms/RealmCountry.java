@@ -116,7 +116,7 @@ public final class RealmCountry {
 
     private static void fill(ServerLevel level, GateRecord g, RealmPlan plan, RealmRef ref, RealmState st, RealmData data, Kit kit, Haunt h, long key) {
         BlockPos at = Realms.world(ref.cell(), h.x(), h.y(), h.z());
-        if (!level.isLoaded(at)) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, at)) return;
         if (h.kind() == Kind.HERD || h.kind() == Kind.SMALL) {
             herd(level, g, plan, ref, kit, h, key, at);
             return;
@@ -143,7 +143,7 @@ public final class RealmCountry {
             BlockPos second = Realms.world(ref.cell(), h.bx(), h.by(), h.bz());
             made = switch (h.kind()) {
                 case LAIR -> RealmPacks.lair(level, g, f, at, h.site());
-                case WATCH -> level.isLoaded(second) ? RealmPacks.lookout(level, g, f, at, second, h.site(), kit.lookout()) : 0;
+                case WATCH -> dev.awaken.core.api.Ready.loaded(level, second) ? RealmPacks.lookout(level, g, f, at, second, h.site(), kit.lookout()) : 0;
                 default -> RealmPacks.prowl(level, g, f, at, h.site(), Herds.of(plan.bp().theme(), h.site(), plan.seed(), false), new long[]{at.asLong(), second.asLong()});
             };
         }

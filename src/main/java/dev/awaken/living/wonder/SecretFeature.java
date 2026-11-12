@@ -139,7 +139,7 @@ public record SecretFeature() implements Feature {
                         int sx = ChunkPos.getX(key), sz = ChunkPos.getZ(key);
                         // a start one of its chunks can't read: what it does to the land can't be known alike, so keep off
                         if (Math.max(Math.max(Math.abs(sx - wx0), Math.abs(sx - wx1)), Math.max(Math.abs(sz - wz0), Math.abs(sz - wz1))) > STARTS
-                                || !level.hasChunk(sx, sz)) return name(level, refs.getKey()) + " starting past what its chunks hold (" + sx + ", " + sz + ")";
+                                || !dev.awaken.core.api.Ready.chunkReady(level, sx, sz)) return name(level, refs.getKey()) + " starting past what its chunks hold (" + sx + ", " + sz + ")";
                         StructureStart start = level.getChunk(sx, sz, ChunkStatus.STRUCTURE_STARTS).getStartForStructure(refs.getKey());
                         if (start == null || !start.isValid() || seen.contains(start)) continue;
                         seen.add(start);

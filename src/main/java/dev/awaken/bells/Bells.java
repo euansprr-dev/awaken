@@ -558,7 +558,7 @@ public final class Bells {
         BlockPos c = dev.awaken.core.api.TheLull.centre(server);
         double dx = c.getX() - h.pos.getX(), dz = c.getZ() - h.pos.getZ(), len = Math.max(1, Math.hypot(dx, dz));
         int x = h.pos.getX() + (int) Math.round(dx / len * ILSE_PATH), z = h.pos.getZ() + (int) Math.round(dz / len * ILSE_PATH);
-        if (!level.hasChunkAt(new BlockPos(x, 0, z))) return;
+        if (!dev.awaken.core.api.Ready.at(level, new BlockPos(x, 0, z))) return;
         BlockPos from = new BlockPos(x, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
         if (!dev.awaken.core.api.LivingHooks.visit(level, from, h.pos)) return;
         home.ilse = true;

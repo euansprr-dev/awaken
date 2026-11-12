@@ -50,7 +50,7 @@ public final class BellSites {
                 w.setDirty();
                 continue;
             }
-            if (!near(s.pos, p.blockPosition()) || !level.isLoaded(s.pos)) continue;
+            if (!near(s.pos, p.blockPosition()) || !dev.awaken.core.api.Ready.loaded(level, s.pos)) continue;
             clear(level, s);
             it.remove();
             w.setDirty();
@@ -81,7 +81,7 @@ public final class BellSites {
         if (PAINTING.isEmpty()) return;
         List<Paint> next = new ArrayList<>();
         for (Paint p : PAINTING) {
-            if (!level.isLoaded(p.at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, p.at)) continue;
             int r = p.ring;
             for (int k = 0; k < 2 && r <= PAINT; k++, r++) ring(level, p.at, r, level.getRandom());
             if (r <= PAINT) next.add(new Paint(p.at, r));

@@ -564,7 +564,7 @@ public final class Ledger extends SavedData {
         catchUp(p, day);
         if (p.count <= 0) return 0;
         BlockPos col = new BlockPos((int) at[0], 0, (int) at[1]);
-        if (!level.hasChunkAt(col)) return 0;
+        if (!dev.awaken.core.api.Ready.at(level, col)) return 0;
         BlockPos ground = col.atY(level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, col.getX(), col.getZ()));
         if (!level.getFluidState(ground.below()).isEmpty() || !level.getFluidState(ground).isEmpty()) return 0;
         EntityType<?> type = Herds.type(p.species);
@@ -576,7 +576,7 @@ public final class Ledger extends SavedData {
         List<UUID> made = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             int x = ground.getX() + r.nextInt(spread * 2 + 1) - spread, z = ground.getZ() + r.nextInt(spread * 2 + 1) - spread;
-            if (!level.hasChunkAt(new BlockPos(x, 0, z))) continue;
+            if (!dev.awaken.core.api.Ready.at(level, new BlockPos(x, 0, z))) continue;
             BlockPos pos = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
             if (p.kind.equals("roost")) pos = pos.above(6);
             Entity e;

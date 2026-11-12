@@ -92,7 +92,7 @@ final class GreatBelfry {
         BellWorld w = BellWorld.get(server);
         for (HearthRecord h : HearthService.data(server).snapshot()) {
             BellWorld.Home home = w.peek(h.pos);
-            if (home == null || home.raising == 0 || home.frame == null || !level.isLoaded(home.frame)) continue;
+            if (home == null || home.raising == 0 || home.frame == null || !dev.awaken.core.api.Ready.loaded(level, home.frame)) continue;
             if (now < home.raising) {
                 BlockPos f = home.frame;
                 var r = level.getRandom();
@@ -130,7 +130,7 @@ final class GreatBelfry {
         for (BlockPos q : clear) lift(level, q, carried);
         // and the Great Bells hung anywhere else at home
         for (Map.Entry<Integer, BlockPos> e : List.copyOf(home.placed.entrySet()))
-            if (Hanging.great(BellCatalog.of(e.getKey())) && level.isLoaded(e.getValue())) lift(level, e.getValue(), carried);
+            if (Hanging.great(BellCatalog.of(e.getKey())) && dev.awaken.core.api.Ready.loaded(level, e.getValue())) lift(level, e.getValue(), carried);
         // an old tower's belfry comes down under the new one
         for (BlockPos q : BellTower.tower(f, face).keySet())
             if (!plan.containsKey(q) && BellTower.ours(level.getBlockState(q))) level.setBlock(q, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);

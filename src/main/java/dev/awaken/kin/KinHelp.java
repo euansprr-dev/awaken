@@ -318,7 +318,7 @@ public final class KinHelp {
         int d = 48 + r.nextInt(25);
         int x = from.getX() + (int) Math.round(Math.cos(a) * d), z = from.getZ() + (int) Math.round(Math.sin(a) * d);
         // no chunk is loaded for it: an unloaded column takes the height it was lost at
-        int y = level.hasChunkAt(new BlockPos(x, 0, z)) ? Math.max(from.getY() - KinSpawner.CLOUD_UP, level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z))
+        int y = dev.awaken.core.api.Ready.at(level, new BlockPos(x, 0, z)) ? Math.max(from.getY() - KinSpawner.CLOUD_UP, level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z))
                 : from.getY() - KinSpawner.CLOUD_UP + 6;
         return new BlockPos(x, y + KinSpawner.CLOUD_UP, z);
     }

@@ -46,7 +46,7 @@ final class Lanterns {
     void tick(long now) {
         if (stale.length > 0 && now % 100 == 0) {
             for (int k = 0; k < stale.length; k++) {
-                if (stale[k] == Long.MIN_VALUE || !level.isLoaded(BlockPos.of(stale[k]))) continue;
+                if (stale[k] == Long.MIN_VALUE || !dev.awaken.core.api.Ready.loaded(level, BlockPos.of(stale[k]))) continue;
                 clear(stale[k]);
                 forget(stale[k]);
                 stale[k] = Long.MIN_VALUE;
@@ -114,7 +114,7 @@ final class Lanterns {
 
     private void clear(long pos) {
         BlockPos p = BlockPos.of(pos);
-        if (level.isLoaded(p) && level.getBlockState(p).is(Blocks.LIGHT)) {
+        if (dev.awaken.core.api.Ready.loaded(level, p) && level.getBlockState(p).is(Blocks.LIGHT)) {
             level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
             writes++;
         }

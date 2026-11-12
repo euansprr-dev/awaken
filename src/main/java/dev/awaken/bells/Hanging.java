@@ -224,7 +224,7 @@ final class Hanging {
         boolean changed = false;
         for (Iterator<Map.Entry<Integer, BlockPos>> it = home.placed.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<Integer, BlockPos> e = it.next();
-            if (!level.isLoaded(e.getValue())) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, e.getValue())) continue;
             if (level.getBlockEntity(e.getValue()) instanceof HooksEntity be && be.hookOf(e.getKey()) >= 0) continue;
             it.remove();
             changed = true;

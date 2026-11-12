@@ -90,7 +90,7 @@ public final class DescentSpawner {
 
     /** First standing spot at or below (x, y, z): solid floor with two air blocks above, no fluid. */
     public static BlockPos findFloor(ServerLevel level, int x, int y, int z) {
-        if (!level.hasChunk(x >> 4, z >> 4)) return null;
+        if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) return null;
         BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos(x, y, z);
         for (int i = 0; i < 12; i++, p.move(0, -1, 0)) {
             if (p.getY() <= level.getMinY() + 1) return null;

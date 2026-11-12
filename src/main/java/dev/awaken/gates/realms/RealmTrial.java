@@ -137,7 +137,7 @@ public final class RealmTrial {
             Land.Stand s = stands.get(i);
             BlockPos at = Realms.world(ref.cell(), s.x(), s.y(), s.z());
             // the stand itself: the Ascent's block, set live so that it has what a block of its kind keeps
-            if (!st.woken.contains("stand_set_" + i) && level.isLoaded(at)) {
+            if (!st.woken.contains("stand_set_" + i) && dev.awaken.core.api.Ready.loaded(level, at)) {
                 BlockState stand = standState(s.move());
                 if (stand != null) level.setBlock(at, stand, Block.UPDATE_CLIENTS);
                 st.woken.add("stand_set_" + i);
@@ -159,7 +159,7 @@ public final class RealmTrial {
         for (int i = 1; i < portals.size(); i++) {
             Land.Site s = portals.get(i);
             BlockPos at = Realms.world(ref.cell(), s.x(), s.y(), s.z());
-            if (st.woken.contains("exit_set_" + i) || !level.isLoaded(at)) continue;
+            if (st.woken.contains("exit_set_" + i) || !dev.awaken.core.api.Ready.loaded(level, at)) continue;
             ((GateBlocks.Portal) GatesRegistry.EXIT.get()).place(level, at, land.portalAxis(), 3, 3, g.plan.rank().ordinal());
             st.woken.add("exit_set_" + i);
             data.setDirty();
@@ -191,7 +191,7 @@ public final class RealmTrial {
                 Land.Slam s = land.slams().get(i);
                 if (!s.again() || (run.armed & 1 << i) != 0 || Math.abs((s.x0() + s.x1()) / 2 - lx) > 44 || Math.abs((s.z0() + s.z1()) / 2 - lz) > 44) continue;
                 BlockPos lo = Realms.world(ref.cell(), s.x0(), s.y0(), s.z0()), hi = Realms.world(ref.cell(), s.x1(), s.y1(), s.z1());
-                if (!level.isLoaded(lo) || !level.isLoaded(hi)) continue;
+                if (!dev.awaken.core.api.Ready.loaded(level, lo) || !dev.awaken.core.api.Ready.loaded(level, hi)) continue;
                 run.armed |= 1 << i;
                 if (!st.woken.contains("slam_" + s.id())) continue;
                 AABB box = new AABB(lo.getX() - 1, lo.getY() - 14, lo.getZ() - 1, hi.getX() + 2, hi.getY() + 3, hi.getZ() + 2);
@@ -464,7 +464,7 @@ public final class RealmTrial {
             // down a cell every other tick, held, and back up: it ends where it began
             int drop = age < 2 ? 0 : age < 8 ? (int) Math.min(STROKE_DROP, (age - 2) / 2 + 1) : age < 30 ? STROKE_DROP : (int) Math.max(0, STROKE_DROP - (age - 30) / 3 - 1);
             BlockPos mid = Realms.world(ref.cell(), st.x(), st.head(), st.z());
-            if (!level.isLoaded(mid)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, mid)) continue;
             BlockState head = GatesRegistry.PRESS.get().defaultBlockState(), rod = level.getBlockState(mid.above(2));
             if (rod.isAir() || rod == head) rod = Blocks.IRON_CHAIN.defaultBlockState();
             place(level, ref, st.x() - 1, st.z() - 1, st.x() + 1, st.z() + 1, st.head() - STROKE_DROP, st.head() + 1, st.head() - drop, 2, head, rod);
@@ -486,7 +486,7 @@ public final class RealmTrial {
             double mx = ox + (r.x0() + r.x1() + 1) / 2.0, mz = oz + (r.z0() + r.z1() + 1) / 2.0;
             boolean near = false;
             for (ServerPlayer q : level.players()) near |= Math.abs(q.getX() - mx) < RAM_NEAR && Math.abs(q.getZ() - mz) < RAM_NEAR;
-            if (!near || !level.isLoaded(BlockPos.containing(mx, r.feet(), mz))) continue;
+            if (!near || !dev.awaken.core.api.Ready.loaded(level, BlockPos.containing(mx, r.feet(), mz))) continue;
             long key = key(g.id, i);
             int want;
             if (r.period() > 0) {

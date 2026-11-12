@@ -154,7 +154,7 @@ public final class TrueStrikes {
      */
     static boolean accept(ServerPlayer p, BlockPos pos, Direction face, int n) {
         ServerLevel level = p.level();
-        if (!level.isLoaded(pos) || !applies(level.getBlockState(pos)) || !p.isWithinBlockInteractionRange(pos, 1.0)) return false;
+        if (!dev.awaken.core.api.Ready.loaded(level, pos) || !applies(level.getBlockState(pos)) || !p.isWithinBlockInteractionRange(pos, 1.0)) return false;
         Strike s = strike(p, pos);
         long now = level.getGameTime();
         if (n != s.trues || now - s.lastTrue < MIN_GAP) return false;

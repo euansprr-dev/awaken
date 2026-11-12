@@ -354,7 +354,7 @@ public final class PickAnvil {
 
     /** The door's Make it again: begun like a fresh forging, for half the parts. */
     public static boolean forgeAgain(ServerPlayer p, BlockPos pos, String id) {
-        if (!(p.level() instanceof ServerLevel level) || !level.isLoaded(pos) || !(level.getBlockEntity(pos) instanceof WarAnvilBlockEntity be)) return false;
+        if (!(p.level() instanceof ServerLevel level) || !dev.awaken.core.api.Ready.loaded(level, pos) || !(level.getBlockEntity(pos) instanceof WarAnvilBlockEntity be)) return false;
         if (be.work() != null || !be.slot().isEmpty() || p.distanceToSqr(Vec3.atCenterOf(pos)) > 10 * 10 || !again(p, level, pos, id)) return false;
         int tier = AnvilWork.tierOf(id);
         BlockPos fire = tier == 0 ? pos : WarAnvil.forge(level, pos);

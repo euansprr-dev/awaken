@@ -19,7 +19,7 @@ public final class HallServer {
 
     /** Answers an {@link HallNet.Ask}. A stand counts only if you're still at it; otherwise the suits are for looking. */
     public static void onAsk(ServerPlayer p, HallNet.Ask a) {
-        dev.awaken.armour.FittingStandBlockEntity be = p.level().isLoaded(a.pos()) && p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(a.pos())) <= 10 * 10
+        dev.awaken.armour.FittingStandBlockEntity be = dev.awaken.core.api.Ready.loaded(p.level(), a.pos()) && p.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(a.pos())) <= 10 * 10
                 && p.level().getBlockEntity(a.pos()) instanceof dev.awaken.armour.FittingStandBlockEntity at ? at : null;
         if (a.op() == HallNet.TRACK) dev.awaken.armour.ArmourForge.track(p, dev.awaken.armour.ArmourSet.byId(a.set()));
         if (a.op() == HallNet.UNTRACK) dev.awaken.armour.ArmourForge.track(p, null);

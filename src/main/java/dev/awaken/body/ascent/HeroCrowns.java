@@ -246,8 +246,8 @@ public final class HeroCrowns {
             if (p == null) return;
             Layout l = layout(p.tree(), HeroWorldgen.blueprint(p.tree(), p.seed()), p.seed());
             BlockPos crown = p.centre().offset(l.crown());
-            boolean loaded = level.isLoaded(crown) && level.isLoaded(p.centre());
-            for (BlockPos r : l.rings()) loaded &= level.isLoaded(p.centre().offset(r));
+            boolean loaded = dev.awaken.core.api.Ready.loaded(level, crown) && dev.awaken.core.api.Ready.loaded(level, p.centre());
+            for (BlockPos r : l.rings()) loaded &= dev.awaken.core.api.Ready.loaded(level, p.centre().offset(r));
             if (!loaded) {
                 PENDING.add(p); // later
                 return;

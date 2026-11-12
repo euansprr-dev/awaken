@@ -735,7 +735,7 @@ public final class WorldThemes {
             for (int dz = -20; dz <= 20; dz++) {
                 for (int dy = -2; dy <= 8; dy++) {
                     m.set(pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz);
-                    if (level.isLoaded(m) && level.getBlockState(m).is(mirror)) level.setBlock(m, cracked, 2);
+                    if (dev.awaken.core.api.Ready.loaded(level, m) && level.getBlockState(m).is(mirror)) level.setBlock(m, cracked, 2);
                 }
             }
         }
@@ -781,7 +781,7 @@ public final class WorldThemes {
             for (int[] s : r.spawnSpots) {
                 BlockPos p = GateService.roomFloor(g, f, r, s[0], s[1]);
                 double d = p.distSqr(pos);
-                if (d < 36 || d > 28 * 28 || !level.isLoaded(p)) continue;
+                if (d < 36 || d > 28 * 28 || !dev.awaken.core.api.Ready.loaded(level, p)) continue;
                 int room = roomAt(level, p);
                 if (room > most) {
                     most = room;
@@ -800,7 +800,7 @@ public final class WorldThemes {
             for (int dz = -5; dz <= 5; dz++) {
                 if (dx * dx + dz * dz > 25) continue;
                 m.set(at.getX() + dx, at.getY(), at.getZ() + dz);
-                if (level.isLoaded(m) && clearAt(level, m) && clearAt(level, m.move(0, 1, 0))) clear++;
+                if (dev.awaken.core.api.Ready.loaded(level, m) && clearAt(level, m) && clearAt(level, m.move(0, 1, 0))) clear++;
             }
         }
         int head = 0;
@@ -822,7 +822,7 @@ public final class WorldThemes {
             for (int dz = -20; dz <= 20; dz++) {
                 for (int dy = -6; dy <= 2; dy++) {
                     m.set(pos.getX() + dx, pos.getY() + dy, pos.getZ() + dz);
-                    if (!level.isLoaded(m) || !level.getBlockState(m).is(fluid)) continue;
+                    if (!dev.awaken.core.api.Ready.loaded(level, m) || !level.getBlockState(m).is(fluid)) continue;
                     m.move(0, 1, 0);
                     boolean open = level.getBlockState(m).isAir();
                     m.move(0, -1, 0);
@@ -873,7 +873,7 @@ public final class WorldThemes {
         for (int k = 0; k < 3; k++) {
             List<BlockPos> path = new java.util.ArrayList<>();
             for (int i = 0; i < n; i++) path.add(ring.get((near + k * 2 + i) % n).above(k * 6));
-            if (!level.isLoaded(path.getFirst())) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, path.getFirst())) continue;
             if (spectacle(level, g, "cloud_whale", path, true, 32) == null) return false;
             any = true;
         }
@@ -982,7 +982,7 @@ public final class WorldThemes {
         for (FloorLayout.Mark m : WorldLive.nearest(g, f, FloorLayout.Mark.TOUCH, pos, 48, 24)) {
             BlockPos at = WorldLive.at(g, f, m);
             WorldLive.later(i++ * 6, () -> {
-                if (!level.isLoaded(at)) return;
+                if (!dev.awaken.core.api.Ready.loaded(level, at)) return;
                 BlockState s = level.getBlockState(at);
                 if (!(s.getBlock() instanceof ThemeBlocks.Touchstone) || s.getValue(ThemeBlocks.Touchstone.LIT)) return;
                 level.setBlock(at, s.setValue(ThemeBlocks.Touchstone.LIT, true), 3);

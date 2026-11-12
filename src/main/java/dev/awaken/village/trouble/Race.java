@@ -93,7 +93,7 @@ final class Race {
             if (d > p.greenR + 26) continue;
             // the ridge's top over the plot's middle
             BlockPos top = new BlockPos((int) Math.floor(cx), p.baseY + q.lift() + q.top() + 4, (int) Math.floor(cz));
-            if (!c.level().isLoaded(top)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(c.level(), top)) continue;
             while (top.getY() > p.baseY + q.lift() + 2 && c.level().getBlockState(top).isAir()) top = top.below();
             roofs.add(new double[]{Math.atan2(cz - w.z, cx - w.x), top.above().asLong(), d});
         }

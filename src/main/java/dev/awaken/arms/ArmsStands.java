@@ -125,7 +125,7 @@ public final class ArmsStands {
             for (int dy = -2; dy <= 2; dy++)
                 for (int dz = -6; dz <= 6; dz++) {
                     m.set(hale.getX() + dx, hale.getY() + dy, hale.getZ() + dz);
-                    if (level.hasChunkAt(m) && level.getBlockEntity(m) instanceof PatternStandBlockEntity be && be.style().equals(HALE)) return true;
+                    if (dev.awaken.core.api.Ready.at(level, m) && level.getBlockEntity(m) instanceof PatternStandBlockEntity be && be.style().equals(HALE)) return true;
                 }
         for (Direction d : new Direction[] {Direction.EAST, Direction.WEST, Direction.SOUTH, Direction.NORTH}) {
             for (int dy : new int[] {0, 1, -1}) {
@@ -144,7 +144,7 @@ public final class ArmsStands {
     }
 
     private static boolean rackCell(ServerLevel level, BlockPos at) {
-        return level.hasChunkAt(at) && level.getBlockState(at).canBeReplaced() && level.getBlockState(at.above()).isAir() && level.getBlockState(at.below()).isSolid();
+        return dev.awaken.core.api.Ready.at(level, at) && level.getBlockState(at).canBeReplaced() && level.getBlockState(at.above()).isAir() && level.getBlockState(at.below()).isSolid();
     }
 
     /** The weapon a stand shows: its tier's weapon of its style. */

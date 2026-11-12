@@ -127,7 +127,7 @@ public final class KinHome {
                         for (int dz = -ring; dz <= ring; dz += 2) {
                             if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) continue;
                             int x = a.getX() + dx, z = a.getZ() + dz;
-                            if (!level.hasChunkAt(new BlockPos(x, a.getY(), z))) continue;
+                            if (!dev.awaken.core.api.Ready.at(level, new BlockPos(x, a.getY(), z))) continue;
                             BlockPos g = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
                             for (int dy = 0; dy <= 3; dy++) if (level.getBlockState(g.above(dy)).is(BlockTags.LEAVES)) return g;
                         }
@@ -162,7 +162,7 @@ public final class KinHome {
                 for (int dz = -ring; dz <= ring; dz += 2) {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) continue;
                     int x = a.getX() + dx, z = a.getZ() + dz;
-                    if (!level.hasChunkAt(new BlockPos(x, a.getY(), z))) continue;
+                    if (!dev.awaken.core.api.Ready.at(level, new BlockPos(x, a.getY(), z))) continue;
                     int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) - 1;
                     BlockPos at = new BlockPos(x, y, z);
                     if (t.ok(level.getBlockState(at), at)) return at.above();
@@ -563,7 +563,7 @@ public final class KinHome {
                 for (int dz = -r; dz <= r; dz++) {
                     m.set(c.getX() + dx, c.getY() + dy, c.getZ() + dz);
                     double d = dx * dx + dz * dz + dy * dy;
-                    if (d >= bd || !level.hasChunkAt(m) || !t.ok(m)) continue;
+                    if (d >= bd || !dev.awaken.core.api.Ready.at(level, m) || !t.ok(m)) continue;
                     bd = d;
                     best = m.immutable();
                 }
@@ -615,7 +615,7 @@ public final class KinHome {
         BlockPos c = b.blockPosition();
         for (int i = 0; i < 6; i++) {
             BlockPos at = c.offset(level.getRandom().nextInt(MOSS * 2 + 1) - MOSS, level.getRandom().nextInt(5) - 2, level.getRandom().nextInt(MOSS * 2 + 1) - MOSS);
-            if (!level.hasChunkAt(at)) continue;
+            if (!dev.awaken.core.api.Ready.at(level, at)) continue;
             BlockState s = level.getBlockState(at);
             if (s.is(BlockTags.CROPS) && s.isRandomlyTicking()) {
                 s.randomTick(level, at, level.getRandom());

@@ -819,6 +819,20 @@ of `AwakenConfig.Client`.
   soundscape over everything while renewed; at most two), `muffle(owner, cutoffHz, natureLeft, ticks)` (the air's
   filter closed and nature held back while renewed). `/awaken audio world [off|on]` (client).
   Read by the Conductor: `terrain.client.ClientWind.field()` and `terrain.client.TerrainClientConfig.leafRustle()`.
+- `dev.awaken.core.api.Ready` — is the land really there (12 Nov 2026, Euan: "the world is loading VERY VERY slowly").
+  The game's `hasChunkAt`, `hasChunk` and `isLoaded` only ask whether a chunk has a ticket: a chunk the view has just
+  reached is ticketed at once and made over the next seconds, and a block, fluid or height read off it on the server
+  thread waits for the generator (22 s at a time in his log, flying with wings over new land: the stall watch caught a
+  happening's site search in `Level.getHeight`). On the server thread `Ready` answers from the chunk cache's finished
+  chunk (`getChunkNow`), never loads and never waits; off it (another thread, the client, a worldgen region) it answers
+  as the game does. `at(level, pos | x, z)` and `chunkReady(level, cx, cz)` in place of `hasChunkAt` / `hasChunk`,
+  `loaded(level, pos)` for `isLoaded`, `area(level, ...)` for `hasChunksAt`, `chunk` / `chunkAt` (the made `LevelChunk`
+  or null), `height(level, type, x, z)` / `heightPos` (the game's answer where made, the world's floor where not: the
+  game's own answer for a chunk it doesn't hold), `settled(player, radius)` (every chunk that near made: false while land
+  streams in), `spareNanos(server)` (time left before the next tick is due). Every server-side check before a world read
+  goes through it (the sweep of 12 Nov: 347 checks in 149 files); Far Sight keeps its own "already held" check, and
+  `GateService.pregenFloor` keeps the ticket check so it never adds a second ticket. A read the player asked for
+  (commands, a teleport's landing, a respawn) still uses the game's own and may wait.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`, `armoury`: is this spot in an Armoury, §27.13), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks` (`lead(mob, x, z, speed, ticks)`: a

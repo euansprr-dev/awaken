@@ -209,7 +209,7 @@ public final class Cottage {
     private static boolean loaded(ServerLevel level, BlockPos origin, Rotation rot) {
         int[][] corners = {{CottagePlan.MIN_X, CottagePlan.MIN_Z}, {CottagePlan.MAX_X, CottagePlan.MIN_Z},
                 {CottagePlan.MIN_X, CottagePlan.MAX_Z}, {CottagePlan.MAX_X, CottagePlan.MAX_Z}};
-        for (int[] c : corners) if (!level.isLoaded(CottagePlan.at(origin, rot, c[0], 0, c[1]))) return false;
+        for (int[] c : corners) if (!dev.awaken.core.api.Ready.loaded(level, CottagePlan.at(origin, rot, c[0], 0, c[1]))) return false;
         return true;
     }
 
@@ -394,7 +394,7 @@ public final class Cottage {
         /** Returns true when the search is over (a site found and the build begun, or none found). */
         boolean tick(MinecraftServer server) {
             if (hearth.cottageBuild != null) return true; // someone else in the household asked first
-            if (!level.isLoaded(hearth.pos)) return false;
+            if (!dev.awaken.core.api.Ready.loaded(level, hearth.pos)) return false;
             if (candidates == null) {
                 candidates = candidates(level, hearth);
                 return false;

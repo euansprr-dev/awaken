@@ -95,7 +95,7 @@ final class Missing implements Plot {
         for (int i = 0; i < 96; i++) {
             double a = r.nextDouble() * Math.PI * 2, d = p.radius() + 50 + r.nextDouble() * 130;
             int x = (int) Math.floor(p.ox + Math.cos(a) * d), z = (int) Math.floor(p.oz + Math.sin(a) * d);
-            if (!level.isLoaded(new BlockPos(x, 0, z))) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(x, 0, z))) continue;
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             BlockPos at = new BlockPos(x, y, z);
             if (!level.getFluidState(at).isEmpty() || !level.getFluidState(at.below()).isEmpty()) continue;
@@ -103,7 +103,7 @@ final class Missing implements Plot {
             for (Direction dir : Direction.Plane.HORIZONTAL) {
                 for (int k = 1; k <= 3; k++) {
                     BlockPos q = at.relative(dir, k);
-                    if (!level.isLoaded(q)) continue;
+                    if (!dev.awaken.core.api.Ready.loaded(level, q)) continue;
                     int h = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, q.getX(), q.getZ());
                     if (h - y > bestDrop) {
                         bestDrop = h - y;
@@ -121,7 +121,7 @@ final class Missing implements Plot {
         for (Direction dir : Direction.Plane.HORIZONTAL)
             for (int k = 1; k <= 3; k++) {
                 BlockPos q = at.relative(dir, k);
-                if (level.isLoaded(q)) most = Math.max(most, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, q.getX(), q.getZ()) - y);
+                if (dev.awaken.core.api.Ready.loaded(level, q)) most = Math.max(most, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, q.getX(), q.getZ()) - y);
             }
         return most;
     }
@@ -145,7 +145,7 @@ final class Missing implements Plot {
             long at = t.get("clue" + k, 0);
             if (at == 0 || t.get("clued" + k, 0) != 0) continue;
             BlockPos q = BlockPos.of(at);
-            if (!c.level().isLoaded(q)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(c.level(), q)) continue;
             int y = c.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, q.getX(), q.getZ());
             BlockPos pos = new BlockPos(q.getX(), y, q.getZ());
             BlockState s = TroubleContent.TORN_CLOTH.get().defaultBlockState().setValue(TrailMark.LOOK, (int) Math.floorMod(t.id + k, 4L));
@@ -183,7 +183,7 @@ final class Missing implements Plot {
     private void find(Ctx c, Trouble t, VillageService.Live l) {
         if (Taken.rescuee(c, t) != null) return;
         BlockPos spot = BlockPos.of(t.place);
-        if (!c.level().isLoaded(spot)) return;
+        if (!dev.awaken.core.api.Ready.loaded(c.level(), spot)) return;
         boolean near = false;
         for (ServerPlayer p : c.level().players()) near |= !p.isSpectator() && p.distanceToSqr(Vec3.atCenterOf(spot)) < NEAR * NEAR;
         if (!near) return;

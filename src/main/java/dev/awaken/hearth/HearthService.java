@@ -410,7 +410,7 @@ public final class HearthService {
         if (Integer.valueOf(server.getTickCount()).equals(RESPAWNING.get(sp.getUUID()))) return;
         ServerLevel level = server.getLevel(e.getSpawnLevel());
         BlockPos bed = e.getNewSpawn();
-        if (level == null || !level.isLoaded(bed) || !isBed(level.getBlockState(bed))) return;
+        if (level == null || !dev.awaken.core.api.Ready.loaded(level, bed) || !isBed(level.getBlockState(bed))) return;
         HearthPlayer hp = player(sp);
         String dim = e.getSpawnLevel().identifier().toString();
         Optional<HearthRecord> home = data(server).hearthsOf(sp.getUUID()).stream()
@@ -462,7 +462,7 @@ public final class HearthService {
         MinecraftServer server = sp.level().getServer();
         ServerLevel level = server.getLevel(bed.respawnData().globalPos().dimension());
         BlockPos at = bed.respawnData().pos();
-        if (level == null || level.isLoaded(at) && !isBed(level.getBlockState(at))) {
+        if (level == null || dev.awaken.core.api.Ready.loaded(level, at) && !isBed(level.getBlockState(at))) {
             sp.sendOverlayMessage(Component.literal("That bed is gone."));
             return;
         }
@@ -520,7 +520,7 @@ public final class HearthService {
         if (bed == null) return h;
         ServerLevel level = sp.level().getServer().getLevel(bed.respawnData().globalPos().dimension());
         BlockPos at = bed.respawnData().pos();
-        return level == null || level.isLoaded(at) && !isBed(level.getBlockState(at)) ? h : Optional.empty();
+        return level == null || dev.awaken.core.api.Ready.loaded(level, at) && !isBed(level.getBlockState(at)) ? h : Optional.empty();
     }
 
     /** The Hearth this player wakes at: the shared one whose Anchor they used last, else their home. */
@@ -758,7 +758,7 @@ public final class HearthService {
      * loaded at tier I's state). One state read a second; a change only when they differ.
      */
     public static void showTier(ServerLevel level, HearthRecord h) {
-        if (h.hearthfire() || !level.isLoaded(h.pos)) return;
+        if (h.hearthfire() || !dev.awaken.core.api.Ready.loaded(level, h.pos)) return;
         BlockState s = level.getBlockState(h.pos);
         if (!(s.getBlock() instanceof dev.awaken.hearth.block.HearthAnchorBlock a)) return;
         int want = Math.max(1, Math.min(5, h.tier));

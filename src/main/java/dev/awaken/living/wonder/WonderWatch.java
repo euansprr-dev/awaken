@@ -122,7 +122,7 @@ public final class WonderWatch {
         for (var e : s.plan().blocks().long2ObjectEntrySet()) {
             long k = e.getLongKey();
             m.set(s.x() + BlockPos.getX(k), s.y() + BlockPos.getY(k), s.z() + BlockPos.getZ(k));
-            if (!level.hasChunkAt(m)) return false;
+            if (!dev.awaken.core.api.Ready.at(level, m)) return false;
             all++;
             if (level.getBlockState(m).is(e.getValue().getBlock())) have++;
         }

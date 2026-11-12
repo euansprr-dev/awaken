@@ -230,7 +230,7 @@ final class Taken implements Plot {
             boolean was = i < 64 ? (done >>> i & 1) != 0 : (doneHi >>> (i - 64) & 1) != 0;
             if (was) continue;
             BlockPos at = trailPoint(t, i);
-            if (!c.level().isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(c.level(), at)) continue;
             BlockPos prev = i > 0 ? trailPoint(t, i - 1) : at;
             mark(c, t, at, prev, i);
             if (i < 64) done |= 1L << i;
@@ -431,13 +431,13 @@ final class Taken implements Plot {
             if (p.isSpectator()) continue;
             if (TroubleDirector.horizontal(p.blockPosition(), den) < NEST) near = p;
         }
-        if (near == null || !c.level().isLoaded(den)) return;
+        if (near == null || !dev.awaken.core.api.Ready.loaded(c.level(), den)) return;
         spawnNest(c, t, l);
     }
 
     /** Tours and tests: in the nest now (its ground loaded). */
     static void forceNest(Ctx c, Trouble t, VillageService.Live l) {
-        if (rescuee(c, t) == null && c.level().isLoaded(BlockPos.of(t.place))) spawnNest(c, t, l);
+        if (rescuee(c, t) == null && dev.awaken.core.api.Ready.loaded(c.level(), BlockPos.of(t.place))) spawnNest(c, t, l);
     }
 
     /** Tours and tests: cut free now by this player. */
@@ -700,7 +700,7 @@ final class Taken implements Plot {
         for (int s : new int[]{1, -1, 2, -2}) {
             BlockPos wall = new BlockPos(p.ox + b.doorX() + side.getStepX() * s, y, p.oz + b.doorZ() + side.getStepZ() * s);
             BlockPos at = wall.relative(out);
-            if (!c.level().isLoaded(at) || !c.level().getBlockState(at).isAir()) continue;
+            if (!dev.awaken.core.api.Ready.loaded(c.level(), at) || !c.level().getBlockState(at).isAir()) continue;
             BlockState tok = TroubleContent.CARVED_TOKEN.get().defaultBlockState().setValue(CarvedToken.FACING, out);
             if (!tok.canSurvive(c.level(), at)) continue;
             c.level().setBlock(at, tok, net.minecraft.world.level.block.Block.UPDATE_ALL);

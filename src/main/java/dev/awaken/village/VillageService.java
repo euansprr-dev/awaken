@@ -149,7 +149,7 @@ public final class VillageService {
             return null;
         }
         BlockPos well = plan.ground(plan.well[0], plan.well[1]);
-        if (!level.isLoaded(well)) return null;
+        if (!dev.awaken.core.api.Ready.loaded(level, well)) return null;
         if (!level.getBlockState(well).is(Blocks.WATER)) {
             // a world made before the settlement could generate here (or a plan changed under it): no people
             ABSENT.add(plan.key);

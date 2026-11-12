@@ -76,7 +76,7 @@ public final class RoadAccess implements RoadHooks.Access {
                     boolean loaded = true;
                     for (int i = start; toEnd ? i <= end : i >= end; i += toEnd ? 1 : -1) {
                         BlockPos at = BlockPos.containing(road.x()[i], road.y()[i] + 1, road.z()[i]);
-                        if (!level.isLoaded(at)) {
+                        if (!dev.awaken.core.api.Ready.loaded(level, at)) {
                             loaded = false;
                             break;
                         }
