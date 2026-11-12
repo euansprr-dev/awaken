@@ -1178,6 +1178,38 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         };
     }
 
+    /**
+     * A beat placed by hand in a designed crawl (SPEC §72.7): beat {@code b} at size {@code t} (0 its smallest, 1 its
+     * largest) from (x, feet, z) along (dx, dz), dressed in this land's own skin, proved where it stands with the body's
+     * rules, and put in the land as a rolled line is: its piece, its moves, its holds, the first lesson of a family the
+     * land hasn't taught yet, its traps, the Course that puts a fall back on its ledges (free at E and D) and its line.
+     * Returns the cell past it (x, feet, z) for the way on, or null when it won't hold there, and then nothing of it is
+     * kept and the way is the land's own. Call before {@link #done}.
+     */
+    protected final int @org.jspecify.annotations.Nullable [] handBeat(String leg, Beats.Beat b, double t, int x, int feet, int z, int dx, int dz) {
+        BeatLine L = new BeatLine(leg, x, feet, z, dx, dz);
+        if (!Beats.build(b, L, t, 1, ctx.rank(), new java.util.Random(seed ^ leg.hashCode()))) return null;
+        L.s.done();
+        M m = mats();
+        if (!dev.awaken.gates.realms.check.MoveProof.failures(L.s.view(paint(m, L.s)), L.moves, ctx.rank()).isEmpty()) return null;
+        part(L.s);
+        for (Move mv : L.moves) move(mv);
+        for (Hold hd : L.holds) hold(hd.leg(), hd.kind(), hd.x(), hd.y(), hd.z(), hd.radius(), hd.count());
+        for (Lesson ls : L.lessons) if (lessons().stream().noneMatch(o -> o.family() == ls.family())) lesson(ls);
+        BeatSkin k = beats(m);
+        for (int[] tp : L.traps) {
+            boolean press = tp[6] == 0;
+            trap(new Trap(leg, press ? TrapKind.PRESS : TrapKind.CRUMBLE, tp[0], tp[1], tp[2], tp[3], tp[4], tp[5], tp[7], tp[8],
+                    press ? BeatSkin.or(k.tooth, rock(m, tp[0], tp[1], tp[2])) : BeatSkin.or(k.crumble, floor(m, L.s, tp[0], tp[1] - 1, tp[2])),
+                    Blocks.AIR.defaultBlockState()));
+        }
+        boolean free = ctx.rank().ordinal() <= dev.awaken.progression.Rank.D.ordinal();
+        course(new Course(leg, L.s.x0 - 1, L.yLo - 10, L.s.z0 - 1, L.s.x1 + 1, L.yHi + 6, L.s.z1 + 1, List.copyOf(L.catches), free,
+                L.lowest == Integer.MAX_VALUE ? Integer.MIN_VALUE : L.lowest));
+        line(new Line(leg, List.copyOf(L.beats), java.util.Set.copyOf(L.families), false, L.startX, L.startY, L.startZ, L.endX(), L.feet, L.endZ()));
+        return new int[]{L.x(L.a, 0), L.feet, L.z(L.a, 0)};
+    }
+
     /** A beat's piece in this land's own blocks, for the beat hall (SPEC §72.8): what the proof at generation reads. */
     public final Sculpt.Paint beatPaint(Part part) {
         return paint(mats(), part);

@@ -4,6 +4,8 @@ import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.N;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats;
 import dev.awaken.gates.realms.kit.crawl.CrawlLand;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
@@ -26,6 +28,9 @@ import static dev.awaken.gates.realms.kit.N.rnd;
  * that gives way), the larder (the sacs burst when you're in the middle of them), the comb ring (the Warden), the brood
  * chamber (the Lord). Clearing the larder opens the workers' crawl back up to the antechamber, and a slip behind the
  * larder's sacs leads to a cell of royal jelly most people will walk past.
+ *
+ * <p>Since plan 3 (SPEC §72.7) the throat starts with a squeeze under one of the dead tree's roots, laid down across the
+ * way with the nest's paper fallen in over it: the run's first slide, and for most people where they're shown it.
  */
 public final class Broodwarren extends CrawlLand<Broodwarren.M> {
     public static final class M extends Mats {
@@ -40,6 +45,12 @@ public final class Broodwarren extends CrawlLand<Broodwarren.M> {
     }
 
     private static volatile M mats;
+
+    /** The throat's slide (SPEC §72.7): a root of the dead tree for the beam, flakes of pale paper for the draught's dust. */
+    @Override
+    protected BeatSkin beatSkin(M m) {
+        return super.beatSkin(m).beam(Blocks.DARK_OAK_LOG.defaultBlockState()).dust(m.paperPale);
+    }
 
     static M m() {
         M p = mats;
@@ -77,7 +88,16 @@ public final class Broodwarren extends CrawlLand<Broodwarren.M> {
         patch = N.noise(seed + 912);
         // every part meets the next at the same height: a tunnel's end is the floor of the room it comes into
         root = part(new Cave("root", 0, 112, -70, 7, 8, 6, seed + 1));
-        throat = part(new Tunnel("throat", 0, 112, -63, 0, 106, -44, 2.3, 4, seed + 2));
+        // plan 3: the throat starts with the root to slide under (clear of the root's own rim, so its air can't open a
+        // way over the top), and goes on down from past it to the antechamber
+        int[] past = null;
+        if (ctx.version() >= 3) {
+            // (past it the way down is 6 in 13, as steep as a dug way goes: a tunnel won't take more than one in two)
+            part(new Tunnel("throat_in", 0, 112, -66, 0, 112, -62, 2.3, 4, seed + 17));
+            past = handBeat("throat_slide", Beats.Beat.SLIDE, 0, 0, 112, -62, 0, 1);
+        }
+        throat = past == null ? part(new Tunnel("throat", 0, 112, -63, 0, 106, -44, 2.3, 4, seed + 2))
+                : part(new Tunnel("throat", past[0], past[1], past[2], 0, 106, -44, 2.3, 4, seed + 2));
         ante = part(new Cave("ante", 0, 106, -30, 13, 13, 9, seed + 3));
         gallery = part(new Tunnel("gallery", 0, 106, -18, 0, 98, 14, 2.6, 4, seed + 4));
         part(new Tunnel("link", 0, 98, 14, 0, 98, 23, 2.4, 4, seed + 5));
