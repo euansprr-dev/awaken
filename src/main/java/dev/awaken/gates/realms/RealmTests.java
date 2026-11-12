@@ -96,9 +96,9 @@ public final class RealmTests {
     /** The plan version a gate rolls today (SPEC §50.9): the open lands' walks and float checks are run on it. */
     private static final int NOW = RealmPlan.CURRENT_VERSION;
 
-    /** A rolled land at seed 1 on today's plan. */
-    private static Land rolled(String program, String theme, dev.awaken.gates.realms.kit.land.Landform.Kind kind, String lord, Rank rank) {
-        return dev.awaken.gates.realms.kit.land.LandTests.land(program, theme, kind, lord, rank, 1, NOW);
+    /** A rolled land on today's plan. */
+    private static Land rolled(String program, String theme, dev.awaken.gates.realms.kit.land.Landform.Kind kind, String lord, Rank rank, long seed) {
+        return dev.awaken.gates.realms.kit.land.LandTests.land(program, theme, kind, lord, rank, seed, NOW);
     }
 
     /** What every line of stones to jump along has to be: on the ground, a jump up onto it, a step a stone, gaps a running jump clears. */
@@ -786,17 +786,21 @@ public final class RealmTests {
             }
             var old = salt(1);
             if (old.designed() || !old.hops().isEmpty()) bad.add("Saltcomb's first plan changed: it has a designed run or stones");
-            // every open land (SPEC §50.9 "Open lands, fixed"): each has its way and passes the open-land check
-            Land[] others = {amber(1, NOW), vine(1, NOW), keep(1, NOW), barrow(1, NOW),
-                    rolled("awaken:ember_country", "ember_mines", dev.awaken.gates.realms.kit.land.Landform.Kind.ASCENT, "ember_tyrant", Rank.E),
-                    rolled("awaken:temple_country", "overgrown_temple", dev.awaken.gates.realms.kit.land.Landform.Kind.VALLEY, "root_saint", Rank.E),
-                    rolled("awaken:frost_country", "frost_monastery", dev.awaken.gates.realms.kit.land.Landform.Kind.BASIN, "abbot_of_frost", Rank.C),
-                    rolled("awaken:glass_country", "glass_desert", dev.awaken.gates.realms.kit.land.Landform.Kind.CAUSEWAY, "glass_serpent", Rank.D),
-                    rolled("awaken:fungal_country", "fungal_hollow", dev.awaken.gates.realms.kit.land.Landform.Kind.ISLES, "mother_of_spores", Rank.E)};
+            // every open land (SPEC §50.9 "Open lands, fixed"), at four seeds (a land comes back by its id, so every gate of it
+            // rolls): each has its way and passes the open-land check
+            List<Land> others = new java.util.ArrayList<>();
+            for (long seed = 1; seed <= 4; seed++) {
+                others.addAll(List.of(amber(seed, NOW), vine(seed, NOW), keep(seed, NOW), barrow(seed, NOW),
+                        rolled("awaken:ember_country", "ember_mines", dev.awaken.gates.realms.kit.land.Landform.Kind.ASCENT, "ember_tyrant", Rank.E, seed),
+                        rolled("awaken:temple_country", "overgrown_temple", dev.awaken.gates.realms.kit.land.Landform.Kind.VALLEY, "root_saint", Rank.E, seed),
+                        rolled("awaken:frost_country", "frost_monastery", dev.awaken.gates.realms.kit.land.Landform.Kind.BASIN, "abbot_of_frost", Rank.C, seed),
+                        rolled("awaken:glass_country", "glass_desert", dev.awaken.gates.realms.kit.land.Landform.Kind.CAUSEWAY, "glass_serpent", Rank.D, seed),
+                        rolled("awaken:fungal_country", "fungal_hollow", dev.awaken.gates.realms.kit.land.Landform.Kind.ISLES, "mother_of_spores", Rank.E, seed)));
+            }
             for (Land land : others) {
                 var r = dev.awaken.gates.realms.check.OpenLandCheck.check(land);
-                dev.awaken.Awaken.LOG.info("[realms] open-land check, {}: {} {}", land.ctx.id(), r.summary(), r.problems());
-                if (!r.problems().isEmpty()) bad.add(land.ctx.id() + ": " + r.summary() + ": " + r.problems());
+                dev.awaken.Awaken.LOG.info("[realms] open-land check, {} seed {}: {} {}", land.ctx.id(), land.ctx.seed(), r.summary(), r.problems());
+                if (!r.problems().isEmpty()) bad.add(land.ctx.id() + " seed " + land.ctx.seed() + ": " + r.summary() + ": " + r.problems());
                 int lines = 0;
                 for (var p : land.pieces()) {
                     if (!(p instanceof dev.awaken.gates.realms.kit.piece.Hops hop)) continue;

@@ -434,7 +434,7 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         Leg to = leg(arrive.exits().getFirst());
         if (to == null) return;
         List<? extends Piece<?>> all = pieces();
-        java.util.Set<String> among = java.util.Set.of("a glowcap", "a lamp", "a thread of light");
+        java.util.Set<String> among = java.util.Set.of("a glowcap", "a lamp", "a thread of light", "a great tree");
         double toward = Math.atan2(to.z() - mouth.z(), to.x() - mouth.x());
         java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
         for (int r = 18; r <= EARLY - 4; r += 2) for (int k = 0; k <= 180; k += 8) for (int sign = -1; sign <= 1; sign += 2) {
@@ -454,6 +454,29 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
                 tally.merge(why, 1, Integer::sum);
             }
             if (k == 0) break;
+        }
+        // no level ground near: an ambush on the way in itself, as the rolled lands' ambushes are
+        int[] best = null;
+        double bestD = Double.MAX_VALUE;
+        for (double[] w : ways()) {
+            double len = Math.max(1, Math.hypot(w[2] - w[0], w[3] - w[1]));
+            for (double t = 0; t <= 1; t += 1 / len) {
+                int x = (int) Math.round(w[0] + (w[2] - w[0]) * t), z = (int) Math.round(w[1] + (w[3] - w[1]) * t);
+                double m = Math.hypot(x - mouth.x(), z - mouth.z()), d = Math.abs(m - 36);
+                if (d >= bestD || m < 20 || m > EARLY - 4 || Math.hypot(to.x() - x, to.z() - z) > 86 || edge(x, z) > -12) continue;
+                int g = ground(x, z);
+                if (!(g > water() + 1 || frozen && g >= water())) continue;
+                boolean clear = true;
+                for (Site s : sites()) if (s.kind() != SiteKind.MOUTH && Math.hypot(s.x() - x, s.z() - z) < s.radius() + 4) clear = false;
+                if (!clear) continue;
+                best = new int[]{x, g + 1, z};
+                bestD = d;
+            }
+        }
+        if (best != null) {
+            int den = sites(SiteKind.DEN).size();
+            site(SiteKind.DEN, best[0], best[1], best[2], 9, "");
+            if (between(arrive.id(), to.id(), "near", LegKind.AMBUSH, "An ambush on the way in", best[0], best[1], best[2], 8, den)) return;
         }
         dev.awaken.Awaken.LOG.info("[realms] {}: the first fight is {} in and no camp fits nearer ({})", ctx.id(), (int) first, tally);
     }
