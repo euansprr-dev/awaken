@@ -742,6 +742,11 @@ public final class Autopilot {
                     Awaken.LOG.info("[autopilot] lens cost: {}", dev.awaken.lens.client.LensClient.cost());
                     return true;
                 }
+                if (arg.trim().startsWith("haze")) { // lens haze off|on: a happening's dust and fog as air (built in), or its owner's veils
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.hazeSwitch(arg.trim().substring(4)));
+                    waitTicks = 10;
+                    return true;
+                }
                 if (arg.trim().startsWith("accent")) { // lens accent off|on: a power's look over the place's own (built in), or in place of it as it was
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.accentSwitch(arg.trim().substring(6)));
                     waitTicks = 10;

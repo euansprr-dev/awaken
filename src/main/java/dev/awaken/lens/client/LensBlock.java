@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Lens's per-frame values as one uniform block (shaders/include/lens_block.glsl; SPEC §22, Lens on Apple): the frame's
- * 48 texels (LensFrame), the look's 32 parameters as the floats a texture fetch of them gives (byte / 255, LensParams)
+ * 64 texels (LensFrame), the look's 32 parameters as the floats a texture fetch of them gives (byte / 255, LensParams)
  * and a flag telling the shaders to use it. Tiles' hook binds it in place of the chain's zeros, so the shaders read
  * values every pixel shares from a constant load instead of a texture fetch per pixel per use. Written once a frame,
  * after both textures are; nothing allocated per frame.
@@ -53,6 +53,7 @@ final class LensBlock {
                 && !(p(d, 20, 1) > 0f || p(d, 20, 2) > 0f)    // heat's shimmer and frost's rime (P(20).g, .b)
                 && !(p(d, 16, 0) > 0.004f)                    // the motion smear (P(16).r)
                 && (int) (f(d, 20, 1) + 0.5f) == 0            // storm cells (stormCount(), F(20).y)
+                && !(f(d, LensFrame.HAZE, 3) > 0f)            // dust or fog as air (hazeAir, F(48).w)
                 && !(p(d, 14, 0) > 0f)                        // a holo panel's focus (P(14).r)
                 && !(p(d, 13, 0) > 0f);                       // the tear (P(13).r)
     }
