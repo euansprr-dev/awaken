@@ -60,7 +60,7 @@ final class Lasting {
 
     private static boolean charredAlready(Plot.Ctx c, VillageService.Live l, int plot) {
         CityPlan.Plot q = l.plan().plots.get(plot);
-        return c.level().isLoaded(new BlockPos(l.plan().ox + q.x0(), 64, l.plan().oz + q.z0()));
+        return dev.awaken.core.api.Ready.loaded(c.level(), new BlockPos(l.plan().ox + q.x0(), 64, l.plan().oz + q.z0()));
     }
 
     private static void smoke(Plot.Ctx c, VillageService.Live l, TroubleState.Memory mem) {
@@ -101,7 +101,7 @@ final class Lasting {
                 + (level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, b.getX(), b.getZ()) > b.getY() + 1 ? 40 : 0)));
         for (BlockPos at : cells) {
             {
-                if (!level.isLoaded(at)) return;
+                if (!dev.awaken.core.api.Ready.loaded(level, at)) return;
                 if (!level.getBlockState(at).isAir() || !level.getBlockState(at.above()).isAir()
                         || !level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP)) continue;
                 level.setBlock(at, Blocks.CAMPFIRE.defaultBlockState().setValue(CampfireBlock.LIT, true).setValue(CampfireBlock.SIGNAL_FIRE, true),
@@ -120,7 +120,7 @@ final class Lasting {
     private static void douse(ServerLevel level, TroubleState.Memory mem) {
         for (int i = 0; i < mem.get("sm_n", 0); i++) {
             BlockPos at = BlockPos.of(mem.get("sm" + i, 0));
-            if (!level.isLoaded(at)) return;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) return;
             BlockState s = level.getBlockState(at);
             if (s.is(Blocks.CAMPFIRE)) level.setBlock(at, s.setValue(CampfireBlock.LIT, false), Block.UPDATE_CLIENTS);
         }
@@ -165,7 +165,7 @@ final class Lasting {
     }
 
     private static void layCamp(ServerLevel level, VillageService.Live l, TroubleState.Memory mem, BlockPos fire) {
-        if (!level.isLoaded(fire)) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, fire)) return;
         BlockPos f = fire;
         if (level.getBlockState(f).isAir() && level.getBlockState(f.below()).isSolid()) {
             level.setBlock(f, Blocks.CAMPFIRE.defaultBlockState().setValue(CampfireBlock.LIT, true), Block.UPDATE_ALL);
@@ -190,14 +190,14 @@ final class Lasting {
     static void breakCamp(ServerLevel level, VillageService.Live l, TroubleState.Memory mem) {
         for (long p : List.copyOf(mem.camp)) {
             BlockPos pos = BlockPos.of(p);
-            if (!level.isLoaded(pos)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, pos)) continue;
             BlockState s = level.getBlockState(pos);
             if (s.is(Blocks.CAMPFIRE) || s.getBlock() instanceof dev.awaken.living.wayfarer.Bedroll) level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
             mem.camp.remove(p);
         }
         for (int i = 0; i < mem.get("sm_n", 0); i++) {
             BlockPos at = BlockPos.of(mem.get("sm" + i, 0));
-            if (level.isLoaded(at) && level.getBlockState(at).is(Blocks.CAMPFIRE)) level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+            if (dev.awaken.core.api.Ready.loaded(level, at) && level.getBlockState(at).is(Blocks.CAMPFIRE)) level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
         for (int rec : mem.homeless) TroubleDirector.release(l, rec);
         mem.homeless.clear();

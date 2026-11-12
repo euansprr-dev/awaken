@@ -200,7 +200,7 @@ public final class Visions {
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
         BlockPos feet = new BlockPos(x, y, z);
         if (DayJournal.othersBase(sp, level, feet)) return;
-        if (!level.isLoaded(feet.offset(-8, 0, -8)) || !level.isLoaded(feet.offset(7, 0, 7))) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, feet.offset(-8, 0, -8)) || !dev.awaken.core.api.Ready.loaded(level, feet.offset(7, 0, 7))) return;
         CompoundTag tag = SnapshotFiles.capture(level, feet);
         Fragment f = Fragment.fromTemplate(BuiltInRegistries.BLOCK, tag);
         Dreamer d = Dreams.dreamer(sp);

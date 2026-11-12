@@ -102,7 +102,7 @@ public final class TerrainLedger extends SavedData {
         boolean changed = false;
         for (int i = l.entries.size() - 1; i >= 0; i--) {
             Entry e = l.entries.get(i);
-            if (e.restoreAt() > now || !level.isLoaded(e.pos())) continue;
+            if (e.restoreAt() > now || !dev.awaken.core.api.Ready.loaded(level, e.pos())) continue;
             if (!restore(level, e, now)) {
                 l.entries.set(i, new Entry(e.pos(), e.state(), now + 20, e.quiet()));
             } else {
@@ -132,7 +132,7 @@ public final class TerrainLedger extends SavedData {
         if (l == null || l.entries.isEmpty()) return;
         for (int i = l.entries.size() - 1; i >= 0; i--) {
             Entry e = l.entries.get(i);
-            if (!level.isLoaded(e.pos())) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, e.pos())) continue;
             BlockState current = level.getBlockState(e.pos());
             if (current.isAir() || current.canBeReplaced()) level.setBlock(e.pos(), e.state(), Block.UPDATE_ALL);
             l.entries.remove(i);

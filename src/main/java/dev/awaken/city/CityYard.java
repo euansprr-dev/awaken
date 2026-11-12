@@ -30,7 +30,7 @@ final class CityYard {
         int x0 = l.cx + X0 - MARGIN, x1 = l.cx + X1 + MARGIN, z0 = l.cz + Z0 - MARGIN, z1 = l.cz + Z1 + MARGIN;
         for (int cx = x0 >> 4; cx <= x1 >> 4; cx++)
             for (int cz = z0 >> 4; cz <= z1 >> 4; cz++)
-                if (!level.hasChunk(cx, cz)) return;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, cx, cz)) return;
         doneFor = l;
         cleared = clear(level, l, x0, z0, x1, z1);
         if (cleared > 0) dev.awaken.Awaken.LOG.info("[city] cleared {} tree blocks over the High Gate's yard", cleared);

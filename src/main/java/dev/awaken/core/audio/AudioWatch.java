@@ -130,7 +130,7 @@ final class AudioWatch {
                     out.add(new AudioNet.Emitter(AudioNet.WELL, at.getX(), at.getY() - 4, at.getZ()));
                 } else if (l.kind() != LandmarkKind.GATE) {
                     int y = l.kind() == LandmarkKind.SKY_PLATFORM ? 266
-                            : level.hasChunk(at.getX() >> 4, at.getZ() >> 4) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ())
+                            : dev.awaken.core.api.Ready.chunkReady(level, at.getX() >> 4, at.getZ() >> 4) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING, at.getX(), at.getZ())
                             : me.getY();
                     out.add(new AudioNet.Emitter(AudioNet.RUIN, at.getX(), y, at.getZ()));
                 }
@@ -140,7 +140,7 @@ final class AudioWatch {
             for (Anomaly a : AnomalyData.get(level.getServer()).active()) {
                 if (out.size() >= AudioNet.MAX_EMITTERS) break;
                 if (a.kind != AnomalyKind.FALLEN_STAR || a.target.equals(BlockPos.ZERO) || horizontal(me, a.target) > EMIT_RANGE) continue;
-                if (!level.isLoaded(a.target)) continue;
+                if (!dev.awaken.core.api.Ready.loaded(level, a.target)) continue;
                 BlockState st = level.getBlockState(a.target);
                 if (st.getBlock() instanceof FallenStarBlock && st.getValue(FallenStarBlock.SEALED)) {
                     out.add(new AudioNet.Emitter(AudioNet.STAR, a.target.getX(), a.target.getY(), a.target.getZ()));

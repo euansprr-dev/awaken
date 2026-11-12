@@ -130,7 +130,7 @@ final class GreyFields implements Plot {
             for (int x = f.x0(); x <= f.x1(); x++) {
                 for (int z = f.z0(); z <= f.z1(); z++) {
                     BlockPos soil = new BlockPos(p.ox + x, p.baseY + f.lift(), p.oz + z);
-                    if (!level.isLoaded(soil)) continue;
+                    if (!dev.awaken.core.api.Ready.loaded(level, soil)) continue;
                     BlockState s = level.getBlockState(soil), above = level.getBlockState(soil.above());
                     if (grey) {
                         if (s.is(Blocks.FARMLAND)) level.setBlock(soil, Blocks.COARSE_DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);

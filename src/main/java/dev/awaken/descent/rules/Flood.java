@@ -90,7 +90,7 @@ public final class Flood {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {
                 if (dx * dx + dz * dz > RADIUS * RADIUS) continue;
                 int x = px + dx, z = pz + dz;
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) continue;
                 for (int y = base; y <= top; y++) {
                     budget--;
                     m.set(x, y, z);
@@ -111,7 +111,7 @@ public final class Flood {
         LongIterator it = data.placed.iterator();
         while (it.hasNext()) {
             long l = it.nextLong();
-            if (level.hasChunk(BlockPos.getX(l) >> 4, BlockPos.getZ(l) >> 4)) maxY = Math.max(maxY, BlockPos.getY(l));
+            if (dev.awaken.core.api.Ready.chunkReady(level, BlockPos.getX(l) >> 4, BlockPos.getZ(l) >> 4)) maxY = Math.max(maxY, BlockPos.getY(l));
         }
         if (maxY == Integer.MIN_VALUE) return false;
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
@@ -121,7 +121,7 @@ public final class Flood {
             long l = it.nextLong();
             if (BlockPos.getY(l) != maxY) continue;
             m.set(l);
-            if (level.hasChunk(m.getX() >> 4, m.getZ() >> 4)) {
+            if (dev.awaken.core.api.Ready.chunkReady(level, m.getX() >> 4, m.getZ() >> 4)) {
                 if (level.getBlockState(m).is(Blocks.WATER)) {
                     level.setBlock(m, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS | Block.UPDATE_SKIP_ALL_SIDEEFFECTS);
                 }

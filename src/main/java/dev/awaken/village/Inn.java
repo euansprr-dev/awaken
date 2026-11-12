@@ -70,7 +70,7 @@ final class Inn {
                 for (int x = q.x0() + 1; x < q.x1() && best == null; x++) {
                     for (int z = q.z0() + 1; z < q.z1() && best == null; z++) {
                         m.set(plan.ox + x, y, plan.oz + z);
-                        if (!level.isLoaded(m)) continue;
+                        if (!dev.awaken.core.api.Ready.loaded(level, m)) continue;
                         BlockState s = level.getBlockState(m);
                         if (s.getBlock() instanceof AbstractBedBlock && s.getValue(AbstractBedBlock.PART) == BedPart.HEAD) best = m.immutable();
                     }

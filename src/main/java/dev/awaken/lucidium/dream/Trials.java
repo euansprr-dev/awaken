@@ -133,7 +133,7 @@ final class Trials {
         int reach = (int) Math.floor(front) + Course.AHEAD;
         for (int placed = 0; ad.revealed < c.reveals().size() && placed < REVEALS_PER_TICK; placed++) {
             Course.Reveal r = c.reveals().get(ad.revealed);
-            if (r.along() > reach || !ad.level.isLoaded(r.pos())) break;
+            if (r.along() > reach || !dev.awaken.core.api.Ready.loaded(ad.level, r.pos())) break;
             ad.level.setBlock(r.pos(), r.state(), ActiveDream.UPDATE);
             if (placed % 3 == 0)
                 ad.level.sendParticles(LucidiumContent.PEARL_MOTE.get(), r.pos().getX() + 0.5, r.pos().getY() + 0.9, r.pos().getZ() + 0.5,

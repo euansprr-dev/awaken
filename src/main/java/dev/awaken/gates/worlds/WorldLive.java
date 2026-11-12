@@ -577,7 +577,7 @@ public final class WorldLive {
             BlockState water = Blocks.WATER.defaultBlockState();
             for (int n = 0; n < rate && at < l.size(); n++, at++) {
                 BlockPos pos = l.get(at);
-                if (!level.hasChunkAt(pos)) {
+                if (!dev.awaken.core.api.Ready.at(level, pos)) {
                     waiting.add(pos);
                     continue;
                 }
@@ -598,12 +598,12 @@ public final class WorldLive {
             int brim = GateService.world(g, f, 0, 0, 0).getY();
             for (BlockPos p : lilies) {
                 BlockPos up = new BlockPos(p.getX(), brim, p.getZ());
-                if (level.hasChunkAt(up) && level.getBlockState(up).isAir()) level.setBlock(up, GatesRegistry.CRYPT_LILY_CANDLE.get().defaultBlockState(), QUIET);
+                if (dev.awaken.core.api.Ready.at(level, up) && level.getBlockState(up).isAir()) level.setBlock(up, GatesRegistry.CRYPT_LILY_CANDLE.get().defaultBlockState(), QUIET);
             }
             lilies.clear();
             BlockState water = Blocks.WATER.defaultBlockState();
             waiting.removeIf(p -> {
-                if (!level.hasChunkAt(p)) return false;
+                if (!dev.awaken.core.api.Ready.at(level, p)) return false;
                 if (level.getBlockState(p).isAir()) level.setBlock(p, water, QUIET);
                 return true;
             });

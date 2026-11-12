@@ -84,7 +84,7 @@ public record ClearOfSettlements(int reach) implements PlacementModifier {
                         long key = it.nextLong();
                         int sx = ChunkPos.getX(key), sz = ChunkPos.getZ(key);
                         // its start lies past what the region holds: its land can't be seen from here, so keep off it
-                        if (centre != null && (centre.getChessboardDistance(sx, sz) > STARTS || !level.hasChunk(sx, sz))) return true;
+                        if (centre != null && (centre.getChessboardDistance(sx, sz) > STARTS || !dev.awaken.core.api.Ready.chunkReady(level, sx, sz))) return true;
                         StructureStart start = level.getChunk(sx, sz, ChunkStatus.STRUCTURE_STARTS).getStartForStructure(structure);
                         if (start == null || !start.isValid()) continue;
                         // a start is named from every chunk its box crosses: test each one once

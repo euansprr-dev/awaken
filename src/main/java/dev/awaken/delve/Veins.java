@@ -82,7 +82,7 @@ public final class Veins {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         for (long c : l.cells()) {
             m.set(c);
-            if (!level.isLoaded(m)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, m)) continue;
             loaded++;
             if (l.ore().matches(level.getBlockState(m))) ore++;
         }

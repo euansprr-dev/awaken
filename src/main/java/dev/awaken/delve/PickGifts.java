@@ -279,7 +279,7 @@ public final class PickGifts {
                 m.set(a.cells()[i]);
                 a.cells()[i] = Long.MIN_VALUE;
                 BlockState s = level.getBlockState(m);
-                if (!a.ore().matches(s) || !level.isLoaded(m)) continue;
+                if (!a.ore().matches(s) || !dev.awaken.core.api.Ready.loaded(level, m)) continue;
                 List<ItemStack> drops = Block.getDrops(s, level, m, null, p, p.getMainHandItem());
                 level.destroyBlock(m, false, p);
                 for (ItemStack d : drops) if (!p.getInventory().add(d)) p.drop(d, false, net.minecraft.util.Prediction.SERVER_ONLY);

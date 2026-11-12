@@ -124,11 +124,11 @@ final class RoomRules {
         BlockPos from = ad.roomGoal;
         boolean bell = bell(ad);
         if (!bell && from != null)
-            for (BlockPos p : RoomLayouts.doorBlocks(from)) if (ad.level.isLoaded(p)) ad.level.setBlock(p, Blocks.AIR.defaultBlockState(), ActiveDream.UPDATE);
+            for (BlockPos p : RoomLayouts.doorBlocks(from)) if (dev.awaken.core.api.Ready.loaded(ad.level, p)) ad.level.setBlock(p, Blocks.AIR.defaultBlockState(), ActiveDream.UPDATE);
         ad.roomGoal = to;
         if (to != null) {
             if (!bell)
-                for (BlockPos p : RoomLayouts.doorBlocks(to)) if (ad.level.isLoaded(p)) ad.level.setBlock(p, RoomLayouts.doorState(to, p), ActiveDream.UPDATE);
+                for (BlockPos p : RoomLayouts.doorBlocks(to)) if (dev.awaken.core.api.Ready.loaded(ad.level, p)) ad.level.setBlock(p, RoomLayouts.doorState(to, p), ActiveDream.UPDATE);
             ad.level.sendParticles(LucidiumContent.PEARL_MOTE.get(), to.getX() + 0.5, to.getY() + 1.2, to.getZ() + 0.5, 16, 0.6, 0.9, 0.6, 0.02);
         }
         sendGoal(ad);
@@ -268,7 +268,7 @@ final class RoomRules {
         Entity e = ad.roomSleeper == null ? null : ad.level.getEntity(ad.roomSleeper);
         if (e == null || !e.isAlive()) {
             BlockPos at = g.offset(2, 0, 0);
-            if (!ad.level.isLoaded(at)) return;
+            if (!dev.awaken.core.api.Ready.loaded(ad.level, at)) return;
             int lv = Math.max(1, (int) (Progression.contentLevel(Progression.rank(players.getFirst())) * 0.8));
             LivingEntity sleeper = MobHooks.spawnThemed(ad.level, Nightmares.Family.GENERIC.theme(), MobRole.Role.NIGHTMARE, at, lv, Set.of(), "");
             if (!(sleeper instanceof Mob m)) return;
@@ -346,7 +346,7 @@ final class RoomRules {
         for (int dx = -PAD; dx <= PAD; dx++)
             for (int dz = -PAD; dz <= PAD + 2; dz++) {
                 BlockPos p = new BlockPos(px + dx, py - 1, pz + dz);
-                if (!ad.level.isLoaded(p)) continue;
+                if (!dev.awaken.core.api.Ready.loaded(ad.level, p)) continue;
                 ad.level.setBlock(p, Math.abs(dx) == PAD || dz == -PAD || dz == PAD + 2 ? cloud : road, ActiveDream.UPDATE);
             }
         ad.roomLanded = true;
@@ -386,7 +386,7 @@ final class RoomRules {
     static void openFold(ActiveDream ad, Course.Room r, long now) {
         ad.roomOpen = true;
         for (BlockPos p : r.things()) {
-            if (ad.level.isLoaded(p)) ad.level.setBlock(p, Blocks.AIR.defaultBlockState(), ActiveDream.UPDATE);
+            if (dev.awaken.core.api.Ready.loaded(ad.level, p)) ad.level.setBlock(p, Blocks.AIR.defaultBlockState(), ActiveDream.UPDATE);
             ad.level.sendParticles(LucidiumContent.PEARL_MOTE.get(), p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5, 8, 0.2, 0.4, 0.3, 0.02);
         }
         ad.level.playSound(null, r.things().getFirst(), LucidiumContent.DOOR.get(), SoundSource.AMBIENT, 1f, 1.2f);
@@ -399,7 +399,7 @@ final class RoomRules {
     static void seal(ActiveDream ad, Course.Room r) {
         ad.roomSealed = true;
         BlockState stone = LucidiumContent.SHIFTING_STONE.get().defaultBlockState();
-        for (BlockPos p : r.things()) if (ad.level.isLoaded(p)) ad.level.setBlock(p, stone, ActiveDream.UPDATE);
+        for (BlockPos p : r.things()) if (dev.awaken.core.api.Ready.loaded(ad.level, p)) ad.level.setBlock(p, stone, ActiveDream.UPDATE);
         ad.level.playSound(null, r.things().getFirst(), LucidiumContent.DOOR.get(), SoundSource.AMBIENT, 0.8f, 0.6f);
     }
 
@@ -435,8 +435,8 @@ final class RoomRules {
         }
         ad.roomFound |= 1 << hit;
         AABB wall = r.walls().get(hit);
-        for (BlockPos p : RoomLayouts.opening(wall)) if (ad.level.isLoaded(p)) ad.level.setBlock(p, Blocks.AIR.defaultBlockState(), ActiveDream.UPDATE);
-        for (BlockPos p : RoomLayouts.frame(wall)) if (ad.level.isLoaded(p)) ad.level.setBlock(p, LucidiumContent.WAKING_DOOR.get().defaultBlockState(), ActiveDream.UPDATE);
+        for (BlockPos p : RoomLayouts.opening(wall)) if (dev.awaken.core.api.Ready.loaded(ad.level, p)) ad.level.setBlock(p, Blocks.AIR.defaultBlockState(), ActiveDream.UPDATE);
+        for (BlockPos p : RoomLayouts.frame(wall)) if (dev.awaken.core.api.Ready.loaded(ad.level, p)) ad.level.setBlock(p, LucidiumContent.WAKING_DOOR.get().defaultBlockState(), ActiveDream.UPDATE);
         sparkle(ad, wall.getCenter());
         Dreams.playTo(sp, LucidiumContent.MANIFEST.get(), 0.9f, 1.0f);
         if (hit == r.right()) {
@@ -482,7 +482,7 @@ final class RoomRules {
         BlockPos p = r.things().get(best);
         int high = best == RoomLayouts.FLOATING ? 0 : best == RoomLayouts.DOOR ? 1 : 2;
         for (int h = 0; h <= high; h++)
-            if (ad.level.isLoaded(p.above(h))) ad.level.setBlock(p.above(h), Blocks.AIR.defaultBlockState(), ActiveDream.UPDATE);
+            if (dev.awaken.core.api.Ready.loaded(ad.level, p.above(h))) ad.level.setBlock(p.above(h), Blocks.AIR.defaultBlockState(), ActiveDream.UPDATE);
         sparkle(ad, thingAt(r, best));
         Dreams.playTo(sp, LucidiumContent.SIGN.get(), 0.9f, 1.2f);
         int left = r.things().size() - Integer.bitCount(ad.roomFound);

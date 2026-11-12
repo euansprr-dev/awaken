@@ -179,7 +179,7 @@ public final class Holdfast extends SavedData {
     private static BlockPos bell(ServerLevel level, SettlementGrid.Anchor a, ServerPlayer near) {
         VillagePlan plan = Plans.cached(a.key());
         if (plan != null) return bell(level, plan);
-        int y = level.isLoaded(new BlockPos(a.x(), 0, a.z())) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, a.x(), a.z()) + 16
+        int y = dev.awaken.core.api.Ready.loaded(level, new BlockPos(a.x(), 0, a.z())) ? level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, a.x(), a.z()) + 16
                 : near.getBlockY() + 24;
         return new BlockPos(a.x(), y, a.z());
     }

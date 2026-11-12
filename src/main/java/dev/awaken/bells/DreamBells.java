@@ -236,7 +236,7 @@ final class DreamBells {
             d.at = null;
             return;
         }
-        if (!level.isLoaded(to) || !p.blockPosition().closerThan(to, 96)) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, to) || !p.blockPosition().closerThan(to, 96)) return;
         if (!to.equals(d.at) || !level.getBlockState(to).is(BellContent.SLEEPING_BELL.get())) set(level, d, to);
     }
 
@@ -315,7 +315,7 @@ final class DreamBells {
         for (int i = 0; i < 10; i++) {
             double a = r.nextDouble() * Math.PI * 2, dist = near + r.nextInt(far - near + 1);
             int x = (int) Math.floor(p.getX() + Math.cos(a) * dist), z = (int) Math.floor(p.getZ() + Math.sin(a) * dist);
-            if (!level.isLoaded(new BlockPos(x, 0, z))) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(x, 0, z))) continue;
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
             if (y <= level.getMinY() + 1) continue;
             return new BlockPos(x, y, z);

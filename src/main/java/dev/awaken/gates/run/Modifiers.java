@@ -400,7 +400,7 @@ public final class Modifiers {
             Pour w = WATER.poll();
             ServerLevel lv = w.level();
             BlockPos p = w.at();
-            if (lv.isLoaded(p) && lv.getBlockState(p).isAir()) lv.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
+            if (dev.awaken.core.api.Ready.loaded(lv, p) && lv.getBlockState(p).isAir()) lv.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
     }
 

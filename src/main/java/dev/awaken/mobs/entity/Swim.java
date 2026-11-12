@@ -105,7 +105,7 @@ final class Swim {
             int y = mob.getBlockY() + mob.getRandom().nextInt(dy * 2 + 1) - dy;
             int z = mob.getBlockZ() + mob.getRandom().nextInt(r * 2 + 1) - r;
             m.set(x, y, z);
-            if (!level.hasChunkAt(m) || !level.getFluidState(m).is(FluidTags.WATER)) continue;
+            if (!dev.awaken.core.api.Ready.at(level, m) || !level.getFluidState(m).is(FluidTags.WATER)) continue;
             if (minDepth > 0 && !level.getFluidState(m.above()).is(FluidTags.WATER)) continue;
             return Vec3.atCenterOf(m);
         }

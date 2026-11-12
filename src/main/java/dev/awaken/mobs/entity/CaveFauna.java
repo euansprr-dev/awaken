@@ -152,7 +152,7 @@ public class CaveFauna extends FaunaMob implements WildPose {
         for (int x = -8; x <= 8; x++) {
             for (int z = -8; z <= 8; z++) {
                 probe.set(bx + x, by, bz + z);
-                if (!level.hasChunkAt(probe) || !level.getBlockState(probe).is(ORES)) continue;
+                if (!dev.awaken.core.api.Ready.at(level, probe) || !level.getBlockState(probe).is(ORES)) continue;
                 int d = x * x + z * z;
                 if (d < best) {
                     best = d;
@@ -201,7 +201,7 @@ public class CaveFauna extends FaunaMob implements WildPose {
         if (HearthHooks.inside(level, blockPosition())) return null;
         for (int i = 0; i < 14; i++) {
             probe.set(getBlockX() + random.nextInt(13) - 6, getBlockY() + random.nextInt(8) - 1, getBlockZ() + random.nextInt(13) - 6);
-            if (!level.hasChunkAt(probe)) continue;
+            if (!dev.awaken.core.api.Ready.at(level, probe)) continue;
             BlockState s = level.getBlockState(probe);
             if (s.getBlock() instanceof CaveVines && s.hasProperty(BlockStateProperties.BERRIES) && !s.getValue(BlockStateProperties.BERRIES)) return probe.immutable();
         }

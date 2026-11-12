@@ -70,7 +70,7 @@ final class LandmarkWatch {
     }
 
     private static int ruins(ServerPlayer p, ServerLevel level, BlockPos me) {
-        if (!level.hasChunkAt(me)) return 0;
+        if (!dev.awaken.core.api.Ready.at(level, me)) return 0;
         LevelChunk chunk = level.getChunkAt(me);
         Map<Structure, LongSet> refs = chunk.getAllReferences();
         if (refs.isEmpty()) return 0;
@@ -80,7 +80,7 @@ final class LandmarkWatch {
             for (long ref : e.getValue()) {
                 ChunkPos start = ChunkPos.unpack(ref);
                 String id = Landmarks.ruinId(start);
-                if (Landmarks.reached(p, id) || !level.hasChunk(start.x(), start.z())) continue;
+                if (Landmarks.reached(p, id) || !dev.awaken.core.api.Ready.chunkReady(level, start.x(), start.z())) continue;
                 StructureStart s = level.getChunk(start.x(), start.z()).getStartForStructure(ruin);
                 if (s == null || !s.isValid()) continue;
                 BoundingBox box = s.getBoundingBox().inflatedBy(RUIN_REACH);

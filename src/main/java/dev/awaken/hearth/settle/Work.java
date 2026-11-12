@@ -328,7 +328,7 @@ public final class Work {
         for (BlockPos f : h.yard.fields()) {
             if (done >= n) break;
             BlockPos crop = f.above();
-            if (!level.isLoaded(crop)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, crop)) continue;
             BlockState s = level.getBlockState(crop);
             if (!(s.getBlock() instanceof CropBlock c) || !c.isMaxAge(s)) continue;
             List<ItemStack> drops = Block.getDrops(s, level, crop, null);

@@ -31,6 +31,45 @@ public final class WildHerdTests {
         AwakenTests.registerIsolated("wild_tracking", 100, WildHerdTests::tracking);
         AwakenTests.registerIsolated("wild_hunt", 100, WildHerdTests::hunt);
         AwakenTests.registerIsolated("wild_grass", 100, WildHerdTests::grass);
+        AwakenTests.registerIsolated("wild_rays_glide", 300, WildHerdTests::raysGlide);
+    }
+
+    /**
+     * A stale ledger body never joins (SPEC §21.7): its join is cancelled, so no client keeps a frozen copy. Fliers are led
+     * through the air (§41.4): dune rays the herd's mind sends across the field glide there a hand's breadth up and circle
+     * the place, never touching the ground on the way (a path dived them into it).
+     */
+    private static void raysGlide(GameTestHelper h) {
+        ServerLevel level = h.getLevel();
+        BlockPos c = field(h, 28);
+        var stale = EntityTypes.COW.create(level, net.minecraft.world.entity.EntitySpawnReason.EVENT);
+        h.assertTrue(stale != null, "a cow");
+        stale.snapTo(c.getX() + 0.5, c.getY(), c.getZ() + 0.5);
+        stale.addTag(Ledger.TAG);
+        h.assertTrue(!level.addFreshEntity(stale) && level.getEntity(stale.getUUID()) == null && !stale.isRemoved(),
+                "a ledger body from before a restart never joins, and is never left half-removed in the level");
+
+        Ledger l = new Ledger();
+        Ledger.Pop pop = herd(l, "dune_ray", c.getX() + 10, c.getZ(), 3, 0.6F);
+        h.assertTrue(l.materialize(level, pop, new double[]{c.getX() + 10, c.getZ()}, 10) == 3, "three dune rays");
+        List<PathfinderMob> rays = l.living(level, pop.id);
+        double tx = c.getX() - 12, tz = c.getZ();
+        for (PathfinderMob m : rays) h.assertTrue(l.go(level, m, tx, tz, 1.0) && m.getNavigation().isDone(), "a ray is sent through the air, on no path");
+        AwakenTests.onEnd(h, () -> l.releaseAll(level));
+        java.util.Set<java.util.UUID> up = new java.util.HashSet<>();
+        String[] low = {null};
+        h.succeedWhen(() -> {
+            int there = 0;
+            for (PathfinderMob m : l.living(level, pop.id)) {
+                double over = m.getY() - level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, m.getBlockX(), m.getBlockZ());
+                if (over > 0.8) up.add(m.getUUID()); // risen from where it came
+                if (low[0] == null && up.contains(m.getUUID()) && (m.onGround() || over < 0.25 || over > 4.0))
+                    low[0] = String.format("%.2f over the ground%s", over, m.onGround() ? ", on it" : "");
+                if (Math.hypot(m.getX() - tx, m.getZ() - tz) < 10) there++;
+            }
+            h.assertTrue(low[0] == null, "a led ray keeps its hand's breadth over the ground: " + low[0]);
+            h.assertTrue(there == rays.size(), "the rays glide over and circle where they were sent: " + there + " of " + rays.size());
+        });
     }
 
     /** Sizes by band, old saves loading as they were, and a cell made in the wild holding herds and a pack. */

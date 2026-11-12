@@ -186,14 +186,14 @@ public final class RealmLive {
                 case DEN -> {
                     Land.Leg leg = land.legOfDen(s.index());
                     if (leg != null && leg.kind() == Land.LegKind.AMBUSH) continue; // an ambush isn't standing there to be seen: RealmRun springs it
-                    if (d2 >= WAKE * WAKE || !level.isLoaded(at) || !st.woken.add("den" + s.index())) continue;
+                    if (d2 >= WAKE * WAKE || !dev.awaken.core.api.Ready.loaded(level, at) || !st.woken.add("den" + s.index())) continue;
                     // a den nobody designed still gets a herd of its own: the theme's, gone round den by den
                     List<String> pack = leg == null || leg.pack().isEmpty() ? dev.awaken.gates.run.Herds.of(g.plan.theme().id, s.index(), g.plan.seed(), land.indoors()) : leg.pack();
                     RealmPacks.den(level, g, f, at, s.index(), pack, null);
                     data.setDirty();
                 }
                 case WARDEN -> {
-                    if (d2 >= WAKE * WAKE || !level.isLoaded(at) || !st.woken.add("warden" + s.index())) continue;
+                    if (d2 >= WAKE * WAKE || !dev.awaken.core.api.Ready.loaded(level, at) || !st.woken.add("warden" + s.index())) continue;
                     Land.Leg leg = land.legOfWarden(s.index());
                     LivingEntity e = RealmPacks.warden(level, g, f, at, s.index(), leg == null ? List.of() : leg.pack());
                     if (e != null) e.getPersistentData().putInt(SITE, s.index());

@@ -101,7 +101,7 @@ final class RealmRun {
                 case SHORTCUT -> {
                     if (!st.woken.contains("open_" + leg.id()) && met(st, leg.when())) {
                         List<Land.Edit> edits = land.change("shortcut_" + leg.id());
-                        if (!edits.isEmpty() && !level.isLoaded(Realms.world(ref.cell(), edits.getFirst().x(), edits.getFirst().y(), edits.getFirst().z()))) continue;
+                        if (!edits.isEmpty() && !dev.awaken.core.api.Ready.loaded(level, Realms.world(ref.cell(), edits.getFirst().x(), edits.getFirst().y(), edits.getFirst().z()))) continue;
                         for (Land.Edit e : edits) level.setBlock(Realms.world(ref.cell(), e.x(), e.y(), e.z()), e.state(), Block.UPDATE_CLIENTS);
                         st.woken.add("open_" + leg.id());
                         data.setDirty();
@@ -236,7 +236,7 @@ final class RealmRun {
     private static void place(ServerLevel level, RealmRef ref, List<Land.Edit> edits) {
         for (Land.Edit e : edits) {
             BlockPos at = Realms.world(ref.cell(), e.x(), e.y(), e.z());
-            if (!level.isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
             if (!e.state().isAir() && !level.getEntitiesOfClass(LivingEntity.class, new AABB(at)).isEmpty()) continue;
             level.setBlock(at, e.state(), Block.UPDATE_CLIENTS);
         }

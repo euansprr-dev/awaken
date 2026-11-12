@@ -117,7 +117,7 @@ public final class DreamRooms {
             int next = Math.floorMod(cur + 1 + rnd.nextInt(Terrain.ROOM_VARIANTS - 1), Terrain.ROOM_VARIANTS);
             int span = 15;
             BlockPos min = c.offset(-span, -3, -span);
-            if (!level.hasChunk(min.getX() >> 4, min.getZ() >> 4) || !level.hasChunk((min.getX() + 2 * span) >> 4, (min.getZ() + 2 * span) >> 4)) continue;
+            if (!dev.awaken.core.api.Ready.chunkReady(level, min.getX() >> 4, min.getZ() >> 4) || !dev.awaken.core.api.Ready.chunkReady(level, (min.getX() + 2 * span) >> 4, (min.getZ() + 2 * span) >> 4)) continue;
             boolean inside = false;
             for (ServerPlayer p : players) {
                 BlockPos lp = Layout.local(depth, p.blockPosition());

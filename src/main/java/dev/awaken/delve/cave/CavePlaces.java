@@ -102,7 +102,7 @@ public final class CavePlaces {
 
     /** The cave place whose box holds {@code pos}, or null. */
     public static @Nullable Spec at(ServerLevel level, BlockPos pos) {
-        if (level.dimension() != Level.OVERWORLD || !level.hasChunkAt(pos)) return null;
+        if (level.dimension() != Level.OVERWORLD || !dev.awaken.core.api.Ready.at(level, pos)) return null;
         for (Spec s : STAGED) if (s.box().isInside(pos)) return s;
         StructureStart st = level.structureManager().getStructureWithPieceAt(pos, h -> h.value() instanceof CaveStructure);
         Spec s = spec(st);

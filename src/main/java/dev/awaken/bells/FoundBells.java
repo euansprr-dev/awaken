@@ -146,7 +146,7 @@ final class FoundBells {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
                     for (int dy : KEEP_DY) {
                         BlockPos at = c.offset(dx, dy, dz);
-                        if (!level.isLoaded(at)) continue;
+                        if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
                         BlockState s = level.getBlockState(at);
                         if (!(s.isAir() || s.canBeReplaced()) || !level.getFluidState(at).isEmpty()) continue;
                         if (level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP)) return at;
@@ -263,7 +263,7 @@ final class FoundBells {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
                     for (int dy : KEEP_DY) {
                         BlockPos at = c.offset(dx, dy, dz);
-                        if (!level.isLoaded(at)) continue;
+                        if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
                         BlockState s = level.getBlockState(at);
                         if (!(s.isAir() || s.canBeReplaced()) || !level.getFluidState(at).isEmpty()) continue;
                         if (!level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP)) continue;
@@ -291,7 +291,7 @@ final class FoundBells {
             if (!k.gate.isEmpty() || k.dim.isEmpty()) continue;
             Identifier dim = Identifier.tryParse(k.dim);
             ServerLevel level = dim == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, dim));
-            if (level != null && !level.isLoaded(k.pos)) continue;
+            if (level != null && !dev.awaken.core.api.Ready.loaded(level, k.pos)) continue;
             if (level != null && level.getBlockEntity(k.pos) instanceof FoundBellEntity be && be.no == k.no) continue;
             BellCatalog.Def d = BellCatalog.of(k.no);
             for (var who = k.left.iterator(); who.hasNext(); ) {
@@ -344,7 +344,7 @@ final class FoundBells {
                 for (int dz = -r; dz <= r; dz++) {
                     if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
                     int x = anchor.getX() + dx, z = anchor.getZ() + dz;
-                    if (!level.hasChunk(x >> 4, z >> 4)) return null;
+                    if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) return null;
                     BlockPos at = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z), z);
                     if (Math.abs(at.getY() - anchor.getY()) > 3 || !level.getBlockState(at).isAir()) continue;
                     if (!level.getBlockState(at.below()).isFaceSturdy(level, at.below(), Direction.UP)) continue;
@@ -376,7 +376,7 @@ final class FoundBells {
             Awaken.LOG.info("[bells] the Lampwing's old bell hangs at {} for the home at {}", at.toShortString(), h.pos.toShortString());
             return;
         }
-        if (home.roost == null || !level.isLoaded(home.roost)) return;
+        if (home.roost == null || !dev.awaken.core.api.Ready.loaded(level, home.roost)) return;
         BlockState s = level.getBlockState(home.roost);
         if (!s.is(BellContent.FOUND_BELL.get())) {
             home.roost = null;
@@ -406,7 +406,7 @@ final class FoundBells {
         for (int dx = -reach; dx <= reach; dx++)
             for (int dz = -reach; dz <= reach; dz++) {
                 int x = centre.getX() + dx, z = centre.getZ() + dz;
-                if (!level.hasChunk(x >> 4, z >> 4)) continue;
+                if (!dev.awaken.core.api.Ready.chunkReady(level, x >> 4, z >> 4)) continue;
                 any = true;
                 int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) - 1, ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
                 for (int y = top; y >= ground + 3; y--) {
@@ -423,7 +423,7 @@ final class FoundBells {
         BellCatalog.Def nook = BellCatalog.of("nook");
         String where = "in the tree by your fire, where the Lampwing slept in it";
         if (best != null) return place(level, best, nook.no(), where, List.of(), anchor, true, true) ? best : null;
-        if (!any || !level.hasChunkAt(centre)) return null;
+        if (!any || !dev.awaken.core.api.Ready.at(level, centre)) return null;
         // no tree near: an old dead post at the edge of where the trees would be, an arm out, the bell under it
         int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, centre.getX(), centre.getZ());
         BlockPos foot = new BlockPos(centre.getX(), ground, centre.getZ());

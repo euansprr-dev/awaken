@@ -75,6 +75,11 @@ public final class MobsSpawner implements MobHooks.Spawner {
     }
 
     @Override
+    public boolean lead(net.minecraft.world.entity.Mob m, double x, double z, double speed, int ticks) {
+        return m instanceof dev.awaken.mobs.entity.AwakenMob a && a.lead(x, z, speed, ticks);
+    }
+
+    @Override
     public boolean peaceful(net.minecraft.world.entity.Entity e) {
         if (!(e instanceof dev.awaken.mobs.entity.FaunaMob f)) return false;
         var r = f.faunaRole();

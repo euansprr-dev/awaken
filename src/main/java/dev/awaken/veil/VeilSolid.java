@@ -45,7 +45,7 @@ public final class VeilSolid {
             for (int y = y0; y <= y1; y++) {
                 for (int z = z0; z <= z1; z++) {
                     m.set(x, y, z);
-                    if (!level.isLoaded(m)) continue;
+                    if (!dev.awaken.core.api.Ready.loaded(level, m)) continue;
                     if (isSolidForSpirit(level.getBlockState(m))) return true;
                 }
             }

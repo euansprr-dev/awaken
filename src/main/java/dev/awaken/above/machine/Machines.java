@@ -100,7 +100,7 @@ public final class Machines {
     public static void action(ServerPlayer player, BlockPos pos, String action, int index) {
         if (!AwakenConfig.ABOVE.get()) return;
         if (player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 8 * 8) return;
-        if (!player.level().isLoaded(pos) || !(player.level().getBlockEntity(pos) instanceof MachineBlockEntity be)) return;
+        if (!dev.awaken.core.api.Ready.loaded(player.level(), pos) || !(player.level().getBlockEntity(pos) instanceof MachineBlockEntity be)) return;
         if (!mayUse(player, be)) return;
         MachineType t = be.type();
         boolean keepOpen = true;

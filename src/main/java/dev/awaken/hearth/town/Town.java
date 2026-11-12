@@ -536,7 +536,7 @@ public final class Town {
     // ---- the Spire Board --------------------------------------------------------------------------------------------
 
     static void refreshBoards(ServerPlayer owner, ServerLevel level, HearthRecord h) {
-        if (h.spire != null && level.isLoaded(h.spire) && level.getBlockEntity(h.spire) instanceof SpireBoardBlockEntity be) refreshBoard(owner, be);
+        if (h.spire != null && dev.awaken.core.api.Ready.loaded(level, h.spire) && level.getBlockEntity(h.spire) instanceof SpireBoardBlockEntity be) refreshBoard(owner, be);
     }
 
     public static void refreshBoard(ServerPlayer owner, SpireBoardBlockEntity be) {

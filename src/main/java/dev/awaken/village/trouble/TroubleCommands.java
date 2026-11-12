@@ -161,7 +161,7 @@ public final class TroubleCommands {
             double a = Taken.mix(p.seed, k, 51) % 628 / 100.0;
             double r = p.radius() + 120 + k * 8;
             BlockPos at = new BlockPos((int) (p.ox + Math.cos(a) * r), 0, (int) (p.oz + Math.sin(a) * r));
-            if (!level.isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
             Camps.Camp camp = Camps.placeAt(level, "hollow_den", at, 1, Taken.mix(p.seed, k, 53));
             if (camp != null) return camp;
         }
@@ -183,7 +183,7 @@ public final class TroubleCommands {
             double a = Taken.mix(p.seed, k, 57) % 628 / 100.0;
             double r = p.radius() + 140 + k * 10;
             BlockPos at = new BlockPos((int) (p.ox + Math.cos(a) * r), 0, (int) (p.oz + Math.sin(a) * r));
-            if (!level.isLoaded(at)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, at)) continue;
             Camps.Camp camp = Camps.placeAt(level, "riftborn", at, tier, Taken.mix(p.seed, k, 59));
             if (camp != null) return camp;
         }
@@ -419,7 +419,7 @@ public final class TroubleCommands {
             double a = k * Math.PI * 2 / 24;
             int lx = (int) Math.floor(w.x + Math.cos(a) * (r + 16)), lz = (int) Math.floor(w.z + Math.sin(a) * (r + 16));
             int sx = (int) Math.floor(w.x + Math.cos(a) * r), sz = (int) Math.floor(w.z + Math.sin(a) * r);
-            if (!level.isLoaded(new BlockPos(lx + 10, 0, lz + 10)) || !level.isLoaded(new BlockPos(lx - 10, 0, lz - 10)) || !level.isLoaded(new BlockPos(sx, 0, sz)))
+            if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(lx + 10, 0, lz + 10)) || !dev.awaken.core.api.Ready.loaded(level, new BlockPos(lx - 10, 0, lz - 10)) || !dev.awaken.core.api.Ready.loaded(level, new BlockPos(sx, 0, sz)))
                 continue;
             int cy = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
             double score = 0;

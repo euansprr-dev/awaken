@@ -128,7 +128,7 @@ final class KinCommands {
                             for (int dx = -r; dx <= r; dx++)
                                 for (int dz = -r; dz <= r; dz++) {
                                     KinSpawner.Site s = KinSpawner.site(level, cx + dx, cz + dz);
-                                    if (s == null || !level.isLoaded(s.at())) continue;
+                                    if (s == null || !dev.awaken.core.api.Ready.loaded(level, s.at())) continue;
                                     int n = KinSpawner.fill(level, s).size();
                                     c.getSource().sendSuccess(() -> Component.literal(n + " " + s.kind().id() + " at " + s.at().toShortString()), false);
                                     return n;

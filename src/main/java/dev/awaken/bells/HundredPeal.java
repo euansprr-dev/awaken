@@ -215,7 +215,7 @@ final class HundredPeal {
         for (int i = 0; i < n; i++) {
             double a = r.nextDouble() * Math.PI * 2, d = 18 + r.nextInt(9);
             BlockPos col = BlockPos.containing(p.getX() + Math.cos(a) * d, p.getY(), p.getZ() + Math.sin(a) * d);
-            if (!level.isLoaded(col)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, col)) continue;
             BlockPos at = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, col);
             LivingEntity e = MobHooks.spawnThemed(level, theme, i == 0 ? MobRole.Role.ELITE : MobRole.Role.NORMAL, at, lv, Set.of(), "");
             if (e instanceof Mob m) {
@@ -266,7 +266,7 @@ final class HundredPeal {
         @Override
         public @org.jspecify.annotations.Nullable BlockPos roost(ServerLevel level, BlockPos anchor) {
             BellWorld.Home h = BellWorld.get(level.getServer()).peek(anchor);
-            return h == null || h.roost == null || !level.isLoaded(h.roost) || !level.getBlockState(h.roost).is(BellContent.FOUND_BELL.get()) ? null : h.roost;
+            return h == null || h.roost == null || !dev.awaken.core.api.Ready.loaded(level, h.roost) || !level.getBlockState(h.roost).is(BellContent.FOUND_BELL.get()) ? null : h.roost;
         }
 
         @Override

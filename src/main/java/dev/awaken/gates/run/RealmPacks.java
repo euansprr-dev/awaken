@@ -51,7 +51,7 @@ public final class RealmPacks {
 
     /** Somewhere a monster can stand: two clear cells over something with a body, or wading one deep with its head in the air. Never looks into land that isn't there yet. */
     private static boolean standable(ServerLevel level, BlockPos p) {
-        if (!level.isLoaded(p)) return false;
+        if (!dev.awaken.core.api.Ready.loaded(level, p)) return false;
         BlockPos under = p.below();
         if (level.getBlockState(under).getCollisionShape(level, under).isEmpty() || !clear(level, p.above())) return false;
         var feet = level.getBlockState(p);

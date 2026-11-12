@@ -116,7 +116,7 @@ public final class ActiveDream {
         DreamBlueprint.Sign clock = bp.signs.get(DreamSign.SPINNING_CLOCK);
         if (clock == null || clock.positions().isEmpty()) return;
         BlockPos face = clock.positions().getFirst();
-        if (!level.isLoaded(face) || !anyoneNear(players, face, 64)) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, face) || !anyoneNear(players, face, 64)) return;
         BlockState faceBlock = Blocks.QUARTZ_BLOCK.defaultBlockState();
         BlockState hand = Blocks.CONCRETE.pick(DyeColor.BLACK).defaultBlockState();
         for (BlockPos p : clockHand) level.setBlock(p, faceBlock, UPDATE);
@@ -139,7 +139,7 @@ public final class ActiveDream {
         if (s == null) return;
         if (!signsTried) {
             boolean allLoaded = true;
-            for (BlockPos p : s.positions()) allLoaded &= level.isLoaded(p);
+            for (BlockPos p : s.positions()) allLoaded &= dev.awaken.core.api.Ready.loaded(level, p);
             if (!allLoaded) return;
             signsTried = true;
             for (BlockPos p : s.positions()) {
@@ -151,7 +151,7 @@ public final class ActiveDream {
             }
         }
         for (BlockPos p : signsPlaced) {
-            if (!level.isLoaded(p) || !anyoneNear(players, p, 48)) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, p) || !anyoneNear(players, p, 48)) continue;
             if (level.getBlockEntity(p) instanceof SignBlockEntity sign) {
                 SignText.Mutable text = SignText.EMPTY.asMutable().setColor(DyeColor.PINK).setTextGlowing(true);
                 String phrase = PHRASES[random.nextInt(PHRASES.length)];
@@ -193,7 +193,7 @@ public final class ActiveDream {
         DreamBlueprint.Sign s = bp.signs.get(DreamSign.NO_SHADOW);
         if (s == null || s.positions().isEmpty()) return;
         BlockPos p = s.positions().getFirst();
-        if (shadowless == null && !shadowlessTried && level.isLoaded(p)) {
+        if (shadowless == null && !shadowlessTried && dev.awaken.core.api.Ready.loaded(level, p)) {
             shadowlessTried = true;
             BlockPos at = standingSpot(p);
             if (at == null) at = p;

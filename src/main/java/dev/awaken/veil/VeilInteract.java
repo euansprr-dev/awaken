@@ -23,7 +23,7 @@ public final class VeilInteract {
         Projection.Spirit s = Projection.live(sp);
         if (s != null && s.possessed() != null) return Result.NOT_SPIRIT; // wearing a creature: its hands, not yours
         ServerLevel level = sp.level();
-        if (!level.isLoaded(pos)) return Result.TOO_FAR;
+        if (!dev.awaken.core.api.Ready.loaded(level, pos)) return Result.TOO_FAR;
         Vec3 eye = sp.getEyePosition();
         if (eye.distanceToSqr(Vec3.atCenterOf(pos)) > REACH * REACH) return Result.TOO_FAR;
         BlockState state = level.getBlockState(pos);

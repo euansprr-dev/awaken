@@ -210,7 +210,7 @@ public final class Breaks {
                 GateRecord g = reg.gate(id);
                 if (g == null || g.state != GateState.BROKEN) return true;
                 ChunkPos cp = ChunkPos.containing(g.pos);
-                if (!over.getChunkSource().hasChunk(cp.x(), cp.z())) return false;
+                if (!dev.awaken.core.api.Ready.chunkReady(over, cp.x(), cp.z())) return false;
                 spill(over, g);
                 g.spillPending = false;
                 return true;

@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.awaken.Awaken;
 import dev.awaken.core.PlayDays;
+import dev.awaken.core.api.MobHooks;
 import dev.awaken.living.api.Regions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -411,6 +412,8 @@ public final class Ledger extends SavedData {
     /** Paths the brains may ask for in one tick, all herds and packs together, and the longest leg of one (blocks). */
     static final int PATHS_PER_TICK = 2;
     static final double LEG = 10;
+    /** How long a flier sent through the air keeps to it (its brain sends it again while it still strays or runs). */
+    static final int LEAD_TICKS = 200;
     private transient int pathsLeft = PATHS_PER_TICK;
 
     /**
@@ -419,6 +422,9 @@ public final class Ledger extends SavedData {
      * a brain does, so this is what keeps a herd of thirty under its budget.
      */
     boolean go(ServerLevel level, PathfinderMob m, double x, double z, double speed) {
+        // a flier is led through the air, with no path to search: a path ends on the ground, so a ray sent down one dived
+        // into the floor and rose again every leg
+        if (MobHooks.lead(m, x, z, speed, LEAD_TICKS)) return true;
         if (pathsLeft <= 0) return false;
         pathsLeft--;
         double dx = x - m.getX(), dz = z - m.getZ(), len = Math.hypot(dx, dz);
@@ -558,7 +564,7 @@ public final class Ledger extends SavedData {
         catchUp(p, day);
         if (p.count <= 0) return 0;
         BlockPos col = new BlockPos((int) at[0], 0, (int) at[1]);
-        if (!level.hasChunkAt(col)) return 0;
+        if (!dev.awaken.core.api.Ready.at(level, col)) return 0;
         BlockPos ground = col.atY(level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, col.getX(), col.getZ()));
         if (!level.getFluidState(ground.below()).isEmpty() || !level.getFluidState(ground).isEmpty()) return 0;
         EntityType<?> type = Herds.type(p.species);
@@ -570,7 +576,7 @@ public final class Ledger extends SavedData {
         List<UUID> made = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
             int x = ground.getX() + r.nextInt(spread * 2 + 1) - spread, z = ground.getZ() + r.nextInt(spread * 2 + 1) - spread;
-            if (!level.hasChunkAt(new BlockPos(x, 0, z))) continue;
+            if (!dev.awaken.core.api.Ready.at(level, new BlockPos(x, 0, z))) continue;
             BlockPos pos = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
             if (p.kind.equals("roost")) pos = pos.above(6);
             Entity e;
@@ -666,12 +672,16 @@ public final class Ledger extends SavedData {
         since.clear();
     }
 
-    /** A ledger body loaded from disk after a restart is nobody's now: it goes (its population will take a new one). */
-    public static void onJoin(Entity e, MinecraftServer server) {
-        if (!e.entityTags().contains(TAG)) return;
+    /**
+     * A ledger body loaded from disk after a restart is nobody's now: it doesn't join (its population will take a new one).
+     * The caller cancels the join. Discarded while it joins, it was gone before the level had it, so the level kept it
+     * anyway and every client near it saw it frozen where it was saved (Euan 12 Nov: "the dune rays are not moving").
+     */
+    public static boolean stray(Entity e, MinecraftServer server) {
+        if (!e.entityTags().contains(TAG)) return false;
         Ledger l = get(server);
-        for (List<UUID> b : l.bodies.values()) if (b.contains(e.getUUID())) return;
-        e.discard();
+        for (List<UUID> b : l.bodies.values()) if (b.contains(e.getUUID())) return false;
+        return true;
     }
 
     /** Dev: the populations near a player, one line each. */

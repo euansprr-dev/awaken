@@ -74,7 +74,7 @@ final class BellTrouble implements Plot {
         VillageService.Live l = c.live();
         if (l == null) return false;
         BlockPos bell = bellPos(l);
-        if (bell == null || !c.level().isLoaded(bell)) return false;
+        if (bell == null || !dev.awaken.core.api.Ready.loaded(c.level(), bell)) return false;
         BlockState s = c.level().getBlockState(bell);
         if (s.is(Blocks.BELL)) {
             t.put("bell_state", Block.getId(s));
@@ -131,7 +131,7 @@ final class BellTrouble implements Plot {
         // stolen: once the camp's heart falls, the bell lies there for whoever cleared it
         if (t.cause.startsWith("stolen:") && t.get("found", 0) == 0) {
             Camps.Camp camp = Camps.get(c.level().getServer()).byId((int) t.get("camp", -1));
-            if (camp != null && camp.cleared(c.day()) && c.level().isLoaded(camp.pos())) {
+            if (camp != null && camp.cleared(c.day()) && dev.awaken.core.api.Ready.loaded(c.level(), camp.pos())) {
                 ItemEntity e = new ItemEntity(c.level(), camp.pos().getX() + 0.5, camp.pos().getY() + 0.6, camp.pos().getZ() + 0.5, bellItem(l));
                 e.setUnlimitedLifetime();
                 c.level().addFreshEntity(e);
@@ -356,11 +356,11 @@ final class BellTrouble implements Plot {
         TroubleState.Memory mem = c.st().memory(t.village);
         if (l != null) {
             BlockPos bell = bellPos(l);
-            if (bell != null && c.level().isLoaded(bell) && c.level().getBlockState(bell).isAir()) {
+            if (bell != null && dev.awaken.core.api.Ready.loaded(c.level(), bell) && c.level().getBlockState(bell).isAir()) {
                 int id = (int) t.get("bell_state", 0);
                 BlockState s = id != 0 ? Block.stateById(id) : Blocks.BELL.defaultBlockState();
                 c.level().setBlock(bell, s.is(Blocks.BELL) ? s : Blocks.BELL.defaultBlockState(), Block.UPDATE_ALL);
-            } else if (bell != null && !c.level().isLoaded(bell)) {
+            } else if (bell != null && !dev.awaken.core.api.Ready.loaded(c.level(), bell)) {
                 mem.data.put("bell_hang_pending", t.get("bell_state", 0));
             }
         }
@@ -381,7 +381,7 @@ final class BellTrouble implements Plot {
         TroubleState.Memory mem = c.st().memory(t.village);
         if (mem.bell != 0) {
             BlockPos bell = bellPos(l);
-            if (bell != null && c.level().isLoaded(bell) && c.level().getBlockState(bell).isAir()) c.level().setBlock(bell, Blocks.BELL.defaultBlockState(), Block.UPDATE_ALL);
+            if (bell != null && dev.awaken.core.api.Ready.loaded(c.level(), bell) && c.level().getBlockState(bell).isAir()) c.level().setBlock(bell, Blocks.BELL.defaultBlockState(), Block.UPDATE_ALL);
             mem.bell = 0;
         }
     }

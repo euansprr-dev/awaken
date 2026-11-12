@@ -214,7 +214,7 @@ public final class Mounts {
         if (hearth.isEmpty()) return new Result(Answer.NO_HEARTH, "You have no Hearth yet. Sneak and use your " + name + " with an empty hand: it rests where it stands.");
         ServerLevel overworld = p.level().getServer().overworld();
         BlockPos h = hearth.get();
-        if (m.level() != overworld || !overworld.isLoaded(h) || !overworld.isPositionEntityTicking(h)) {
+        if (m.level() != overworld || !dev.awaken.core.api.Ready.loaded(overworld, h) || !overworld.isPositionEntityTicking(h)) {
             return new Result(Answer.HEARTH_FAR, "Your Hearth is too far for it to find alone. Ride it home, then sneak and use it with an empty hand.");
         }
         Vec3 spot = spotNear(overworld, m, h);

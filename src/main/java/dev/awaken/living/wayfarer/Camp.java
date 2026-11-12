@@ -65,7 +65,7 @@ public final class Camp {
         ServerLevel level = server.overworld();
         BlockPos camp = BlockPos.of(s.camp);
         long now = server.getTickCount();
-        if (!level.hasChunkAt(camp) || now - missedAt < 200) return null;
+        if (!dev.awaken.core.api.Ready.at(level, camp) || now - missedAt < 200) return null;
         for (BlockPos q : BlockPos.betweenClosed(camp.offset(-6, -3, -6), camp.offset(6, 3, 6))) {
             if (level.getBlockState(q).is(Blocks.CAMPFIRE)) {
                 fireAt = q.asLong();
@@ -181,7 +181,7 @@ public final class Camp {
     static void turnAway(MinecraftServer server) {
         BlockPos f = fire(server);
         ServerLevel level = server.overworld();
-        if (f == null || !level.hasChunkAt(f)) return;
+        if (f == null || !dev.awaken.core.api.Ready.at(level, f)) return;
         double cx = f.getX() + 0.5, cz = f.getZ() + 0.5;
         for (Mob m : level.getEntitiesOfClass(Mob.class, new AABB(f).inflate(TURN, 16, TURN), m -> m instanceof Enemy && m.isAlive())) {
             double dx = m.getX() - cx, dz = m.getZ() - cz, d = Math.sqrt(dx * dx + dz * dz);

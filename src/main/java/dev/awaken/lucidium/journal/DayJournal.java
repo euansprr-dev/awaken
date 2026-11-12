@@ -118,7 +118,7 @@ public final class DayJournal {
         int drops = 0;
         for (int dist = 12; dist <= 36; dist += 12) {
             int x = (int) Math.floor(sp.getX() + look.x / len * dist), z = (int) Math.floor(sp.getZ() + look.z / len * dist);
-            if (!level.isLoaded(new BlockPos(x, pos.getY(), z))) return false;
+            if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(x, pos.getY(), z))) return false;
             if (level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) <= pos.getY() - 12) drops++;
         }
         return drops >= 2;
@@ -227,7 +227,7 @@ public final class DayJournal {
             DirectorLog.log(sp, "journal", "skipped a " + kind.name().toLowerCase() + " snapshot: another player's base is near");
             return Optional.empty();
         }
-        if (!level.isLoaded(feet.offset(-8, 0, -8)) || !level.isLoaded(feet.offset(7, 0, 7))) return Optional.empty();
+        if (!dev.awaken.core.api.Ready.loaded(level, feet.offset(-8, 0, -8)) || !dev.awaken.core.api.Ready.loaded(level, feet.offset(7, 0, 7))) return Optional.empty();
         CompoundTag tag = SnapshotFiles.capture(level, feet);
         Fragment f = Fragment.fromTemplate(BuiltInRegistries.BLOCK, tag);
         if (f.solidCount() < 12) return Optional.empty(); // nothing there worth dreaming of
@@ -252,7 +252,7 @@ public final class DayJournal {
             capture(sp, Snapshot.Kind.KILLS, feet, label);
             return;
         }
-        if (othersBase(sp, level, feet) || !level.isLoaded(feet.offset(-8, 0, -8)) || !level.isLoaded(feet.offset(7, 0, 7))) return;
+        if (othersBase(sp, level, feet) || !dev.awaken.core.api.Ready.loaded(level, feet.offset(-8, 0, -8)) || !dev.awaken.core.api.Ready.loaded(level, feet.offset(7, 0, 7))) return;
         CompoundTag tag = SnapshotFiles.capture(level, feet);
         Fragment f = Fragment.fromTemplate(BuiltInRegistries.BLOCK, tag);
         Snapshot s = new Snapshot(d.newId(day), Snapshot.Kind.KILLS, day, level.dimension().identifier().toString(), feet.immutable(),

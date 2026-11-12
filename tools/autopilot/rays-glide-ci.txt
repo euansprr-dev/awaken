@@ -1,0 +1,76 @@
+# Dune rays glide (Euan 12 Nov: "they're kind of like flying and then just like face planting into the floor"). In the
+# sunscorch land: three lone rays summoned in front of the camera, then a Great Migration of rays with the camera 20
+# blocks off it, frames a second apart, then again ten seconds on. Every ray should glide low over the ground and circle,
+# never lie on it, hop up or dive nose first into it. SPEC §41.4 "Fliers are led through the air".
+# Run: tools/tour-ci.sh tools/autopilot/rays-glide-ci.txt 2400
+world rays_glide creative 20261112
+waitworld
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 400
+screen close
+cmd awaken powers starter 1
+wait 40
+screen close
+cmd gamerule advance_time false
+cmd time set 1500
+# (the land out there is not made yet in a new world: the trip is one of Awaken's passages; wait it out, then go again)
+cmd awaken living goto sunscorch
+wait 100
+waitpassage
+wait 1600
+waitpassage
+cmd awaken living goto sunscorch
+wait 400
+waitpassage
+camera first
+hud off
+# ---- lone rays: their own glide ----
+cmd tp @s ~ ~4 ~ 0 25
+wait 20
+cmd summon awaken:dune_ray ^-3 ^-3 ^10
+cmd summon awaken:dune_ray ^ ^-3 ^12
+cmd summon awaken:dune_ray ^3 ^-3 ^10
+wait 100
+shot rays_lone_01
+wait 20
+shotnow rays_lone_02
+wait 20
+shotnow rays_lone_03
+wait 20
+shotnow rays_lone_04
+wait 20
+shotnow rays_lone_05
+cmd kill @e[type=awaken:dune_ray]
+# ---- a migration of rays, 20 blocks off ----
+cmd awaken living happen great_migration
+wait 40
+cmd awaken living happenings
+cmd awaken living near 20
+wait 160
+shot rays_mig_01
+wait 20
+shotnow rays_mig_02
+wait 20
+shotnow rays_mig_03
+wait 20
+shotnow rays_mig_04
+wait 20
+shotnow rays_mig_05
+wait 20
+shotnow rays_mig_06
+wait 200
+cmd awaken living face
+wait 20
+shot rays_mig_later_01
+wait 20
+shotnow rays_mig_later_02
+wait 20
+shotnow rays_mig_later_03
+cmd awaken living happenings
+cmd awaken living calm
+quit

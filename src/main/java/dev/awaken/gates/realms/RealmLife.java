@@ -185,7 +185,7 @@ public final class RealmLife {
         Land.Site v = land.site(Land.SiteKind.VILLAGE);
         if (v == null || Math.hypot(lx - v.x(), lz - v.z()) > FOLK_WAKE) return;
         BlockPos centre = Realms.world(ref.cell(), v.x(), v.y(), v.z());
-        if (!level.isLoaded(centre) || count(level, centre, FOLK, v.radius()) >= FOLK_WANT) {
+        if (!dev.awaken.core.api.Ready.loaded(level, centre) || count(level, centre, FOLK, v.radius()) >= FOLK_WANT) {
             overhear(level, p, centre, v, kit);
             return;
         }
@@ -212,7 +212,7 @@ public final class RealmLife {
     static BlockPos open(ServerLevel level, Land land, RealmRef ref, int x, int z) {
         if (land.edge(x, z) > -8) return null;
         BlockPos top = Realms.world(ref.cell(), x, 0, z);
-        if (!level.isLoaded(top)) return null;
+        if (!dev.awaken.core.api.Ready.loaded(level, top)) return null;
         int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, top.getX(), top.getZ());
         if (Math.abs(y - (land.ground(x, z) + 1)) > 1) return null;
         BlockPos at = top.atY(y);
@@ -223,7 +223,7 @@ public final class RealmLife {
     /** A spot on the ground with room to stand, indoors or out (a hut's roof doesn't count). */
     private static BlockPos standing(ServerLevel level, Land land, RealmRef ref, int x, int z) {
         BlockPos at = Realms.world(ref.cell(), x, land.ground(x, z) + 1, z);
-        if (!level.isLoaded(at) || land.edge(x, z) > -8) return null;
+        if (!dev.awaken.core.api.Ready.loaded(level, at) || land.edge(x, z) > -8) return null;
         for (int y = 0; y < 3; y++) {
             BlockPos here = at.above(y);
             if (level.getBlockState(here).getCollisionShape(level, here).isEmpty() && level.getBlockState(here.above()).getCollisionShape(level, here.above()).isEmpty()

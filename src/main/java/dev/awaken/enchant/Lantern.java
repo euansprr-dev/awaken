@@ -100,7 +100,7 @@ final class Lantern {
 
     /** Puts a glow out (state null), if one is still there. */
     private static void put(ServerLevel level, BlockPos pos, @org.jspecify.annotations.Nullable BlockState state) {
-        if (!level.isLoaded(pos)) return;
+        if (!dev.awaken.core.api.Ready.loaded(level, pos)) return;
         BlockState s = level.getBlockState(pos);
         if (s.is(EnchantContent.LANTERN_GLOW.get())) level.setBlock(pos, state != null ? state : LanternGlowBlock.gone(s), Block.UPDATE_CLIENTS);
     }

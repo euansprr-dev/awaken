@@ -28,7 +28,7 @@ final class FamilySpots {
     static @Nullable BlockPos standable(ServerLevel level, double x, double y, double z) {
         BlockPos.MutableBlockPos m = new BlockPos.MutableBlockPos();
         int bx = (int) Math.floor(x), bz = (int) Math.floor(z), by = (int) Math.floor(y);
-        if (!level.hasChunkAt(new BlockPos(bx, by, bz))) return null;
+        if (!dev.awaken.core.api.Ready.at(level, new BlockPos(bx, by, bz))) return null;
         for (int dy = 3; dy >= -5; dy--) {
             m.set(bx, by + dy, bz);
             if (stands(level, m)) return m.immutable();
@@ -104,7 +104,7 @@ final class FamilySpots {
     static @Nullable BlockPos bed(ServerLevel level, FamilyWorld.Home home) {
         if (home.bed.isEmpty()) return null;
         BlockPos b = home.bed.get();
-        if (!level.hasChunkAt(b) || !level.getBlockState(b).is(BlockTags.BEDS)) return null;
+        if (!dev.awaken.core.api.Ready.at(level, b) || !level.getBlockState(b).is(BlockTags.BEDS)) return null;
         return b.above();
     }
 

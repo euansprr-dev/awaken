@@ -239,12 +239,12 @@ final class Views {
                     tries.add(new Try(turn, scale, lift, Math.abs(turn) * 4 + Math.abs(scale - 1) * 3 + lift * 0.35));
         tries.sort((a, b) -> Double.compare(a.cost, b.cost));
         // the ground the eye was meant to stand over: a column much higher is a roof or a wall top, not a place to stand
-        double meant = level.isLoaded(BlockPos.containing(eye)) ? ground(c, eye.x, eye.z) : mark.y;
+        double meant = dev.awaken.core.api.Ready.loaded(level, BlockPos.containing(eye)) ? ground(c, eye.x, eye.z) : mark.y;
         Vec3 narrow = null, seeing = null;
         for (Try k : tries) {
             double a = base + k.turn, r = dist * k.scale;
             double x = mark.x + Math.cos(a) * r, z = mark.z + Math.sin(a) * r;
-            if (!level.isLoaded(BlockPos.containing(x, mark.y, z))) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, BlockPos.containing(x, mark.y, z))) continue;
             double g = ground(c, x, z);
             if (g > meant + 2.5) continue;
             double y = Math.max(mark.y + up, g + 1.7) + k.lift;

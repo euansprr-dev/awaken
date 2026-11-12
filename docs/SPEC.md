@@ -819,9 +819,24 @@ of `AwakenConfig.Client`.
   soundscape over everything while renewed; at most two), `muffle(owner, cutoffHz, natureLeft, ticks)` (the air's
   filter closed and nature held back while renewed). `/awaken audio world [off|on]` (client).
   Read by the Conductor: `terrain.client.ClientWind.field()` and `terrain.client.TerrainClientConfig.leafRustle()`.
+- `dev.awaken.core.api.Ready` — is the land really there (12 Nov 2026, Euan: "the world is loading VERY VERY slowly").
+  The game's `hasChunkAt`, `hasChunk` and `isLoaded` only ask whether a chunk has a ticket: a chunk the view has just
+  reached is ticketed at once and made over the next seconds, and a block, fluid or height read off it on the server
+  thread waits for the generator (22 s at a time in his log, flying with wings over new land: the stall watch caught a
+  happening's site search in `Level.getHeight`). On the server thread `Ready` answers from the chunk cache's finished
+  chunk (`getChunkNow`), never loads and never waits; off it (another thread, the client, a worldgen region) it answers
+  as the game does. `at(level, pos | x, z)` and `chunkReady(level, cx, cz)` in place of `hasChunkAt` / `hasChunk`,
+  `loaded(level, pos)` for `isLoaded`, `area(level, ...)` for `hasChunksAt`, `chunk` / `chunkAt` (the made `LevelChunk`
+  or null), `height(level, type, x, z)` / `heightPos` (the game's answer where made, the world's floor where not: the
+  game's own answer for a chunk it doesn't hold), `settled(player, radius)` (every chunk that near made: false while land
+  streams in), `spareNanos(server)` (time left before the next tick is due). Every server-side check before a world read
+  goes through it (the sweep of 12 Nov: 347 checks in 149 files); Far Sight keeps its own "already held" check, and
+  `GateService.pregenFloor` keeps the ticket check so it never adds a second ticket. A read the player asked for
+  (commands, a teleport's landing, a respawn) still uses the game's own and may wait.
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`, `armoury`: is this spot in an Armoury, §27.13), `PartyHooks` (`members`, `sameParty`; see "Together";
-  `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks`,
+  `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks` (`lead(mob, x, z, speed, ticks)`: a
+  herd's mind or a happening sending a creature that flies, through the air; false for a walker, §41.4),
   `StoryHooks`, `DescentHooks`, `DreamHooks`, `PowerCoreHooks`, `NowHooks` (the Now tracker), `WorldHooks` (landmark rumours),
   `MovementHooks` (the body's moves for powers), `PlayerClips` (client: full-body clips on a player when the Player
   Animation Library is installed; a no-op otherwise), `FirstPerson` (Hands, §24: the world body, view stances, view
@@ -5559,6 +5574,25 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   × 2 for a kind the player hasn't witnessed, never the same kind twice running; up to three kinds are tried for a
   place. Happenings are world state, shared, and end on their own; their creatures are tagged `awaken_happening`,
   persistent, and leave with them (any no player is within 24-48 of go; the rest stay as ordinary creatures).
+  A happening that walks its creatures along its line (`Behaviours.send`) gives each one its order once a second (on the
+  Pulse's run), never every tick; a creature that flies is led through the air (§41.4, "Fliers are led through the air"),
+  a walker goes on a path. (12 Nov 2026, Euan: migrating dune rays "flying and then face planting into the floor": every
+  ray was sent down a fresh ground path every tick.)
+- **Happenings come last** (12 Nov 2026, Euan: "happenings are very like not important ... those should never be the
+  thing that takes away from anything else"). The Pulse only uses time nothing else needs:
+  - it does nothing in a tick with under 20 ms of its 50 left (`Ready.spareNanos`), or while the last hundred ticks
+    averaged 35 ms or more; its run, its planning and its bringing all wait for such a tick (a GameTest server never
+    waits between ticks, so there its happenings run on the clock);
+  - it never waits for land or makes any load: a column whose chunk isn't made is passed over (`Ready`), so a happening
+    tries later, picks elsewhere, or simply doesn't happen;
+  - a plan looks at 5 columns a tick per kind (`Behaviours.siteTries`; 40 for a command), one kind a tick, for at most
+    12 ticks, one player's plan a tick; nothing found: it looks again in 30 s;
+  - nothing is planned for a player moving faster than 10 blocks a second (over the last second), or while any chunk
+    within 4 of them isn't made yet (`Ready.settled`): a fast flight, a teleport, new land streaming in;
+  - a herd is never made in one tick: `Behaviours.bringLater` queues its creatures and the Pulse brings two a tick, each
+    where its land is made (one waits up to 200 ticks for it, then is let go; the queue isn't saved). The Migration's
+    and the Stampede's herds and the Wild Hunt's hounds come this way; a few that are given orders as they arrive (the
+    Caravan's master and llamas, raiders, hunters, the Huntmaster, a duel's pair) still come at once.
 - **The calendar**: moon phase = (clock / 24000) mod 8 (0 full, 4 new); time of day dawn 23000-1500, day, dusk
   11500-13500, night; weather clear/rain/thunder.
 - **Data** `data/<ns>/awaken/happening/<id>.json`, schema 1: `title`, `family`, `behaviour` (code), `when` {`time`,
@@ -5684,7 +5718,10 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
 - Bodies: every 2 s, a population within 96 blocks of a player (its place loaded and dry) takes min(count, 12/5/6)
   bodies (tags `awaken_ledger`, `awaken_ledger_<id>`, persistent; at most 24 near a player); they walk toward where
   their population is (herds 0.9, packs 1.1; grazing within 12). No player within 128 of any body: they're discarded.
-  A death lowers the count; a body loaded from disk that isn't current is discarded (after a restart).
+  A death lowers the count; a body loaded from disk that isn't current never joins (after a restart): its join is
+  cancelled (`Ledger.stray`, first of every listener). It is never discarded while it joins: that comes before the level
+  has it, so the level kept it and every client near it saw it frozen where it was saved (12 Nov 2026, Euan: "the dune
+  rays here are just glitched and not moving"; the same froze the ledger's cows, pigs and sheep).
 - Catch-up (when a population takes bodies after days away): herds +1 a day (+2 while their pack is wiped out), packs
   +1 per 2 days (+1 per 4 once wiped), roosts +1 a day; each night a pack lived its herd lost one (never under 2).
 - Natural spawning leaves the herd species to the ledger (`LivingHooks.ledgered`, read by `FaunaRules.verdict`:
@@ -17834,6 +17871,16 @@ flushing birds, village hunt notices. Each stage's numbers are added here as it 
   scored nearest to the pack, young +6, hurt up to +6; every member targets it; the herd is alarmed by the pack), feed (60 s
   at the kill; a person within 8 of it is attacked), retreat (to the den when the alpha falls under 30% health). One hunt a
   day; a chase ends at 30 s or 48 blocks. The kill is a real death, so the ledger's herd is one fewer.
+- **Fliers are led through the air** (12 Nov 2026, Euan on the dune rays: "flying and then face planting into the floor
+  ... It doesn't feel natural at all"): a path ends on the ground, so a ray sent down one dived into the floor, its Glide
+  lifted it again, and the next leg dived again. A herd's mind or a happening sends a creature that flies with
+  `MobHooks.lead(mob, x, z, speed, ticks)` instead (the ledger: 10 s, sent again while it strays or runs; a happening:
+  3 s, renewed each second). A glider's loop centres on the place (`FaunaGoals.Glide`): it glides over at its hand's
+  breadth and circles it, hurrying at its herd's pace (0.35 × the walker's speed, 1 to 2.2) while it is farther than its
+  loop, then its even cruise. Any other flier flies straight for the place at the height it flew (2-6 blocks over the
+  ground), a few blocks ahead with a slow sway, until within 3 blocks; then its own goals take over. A lead waits while it
+  fights, is held, brought down, ridden or (fauna) frightened, and searches no path, so it costs nothing of the path
+  budget. A walker (a vanilla herd animal included) still goes on paths.
 - **Cost**: brains share one path budget, 2 path searches a tick across every herd and pack, each leg at most 10 blocks
   (a wave held back keeps its order); a search is ~0.2 ms on the M4. Bench (`wild_herd_bench`): three herds of 30 and two
   packs of 6 near one player, grazing, then a sprinter runs through and leaves: 0.23-0.29 ms a tick average after warm-up,

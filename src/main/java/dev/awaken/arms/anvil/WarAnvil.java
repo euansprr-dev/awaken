@@ -346,7 +346,7 @@ public final class WarAnvil {
 
     /** The Armoury's Forge it, From memory or Forge the blade at this anvil: false if it can't begin (the screen says why). */
     public static boolean begin(ServerPlayer p, BlockPos pos, String id, boolean memory) {
-        return p.level() instanceof ServerLevel level && level.isLoaded(pos) && level.getBlockEntity(pos) instanceof WarAnvilBlockEntity be
+        return p.level() instanceof ServerLevel level && dev.awaken.core.api.Ready.loaded(level, pos) && level.getBlockEntity(pos) instanceof WarAnvilBlockEntity be
                 && begin(p, level, be, id, memory);
     }
 
@@ -376,7 +376,7 @@ public final class WarAnvil {
     }
 
     public static void onAct(ServerPlayer p, AnvilPayloads.Act a) {
-        if (!(p.level() instanceof ServerLevel level) || !level.isLoaded(a.pos())) return;
+        if (!(p.level() instanceof ServerLevel level) || !dev.awaken.core.api.Ready.loaded(level, a.pos())) return;
         if (!(level.getBlockEntity(a.pos()) instanceof WarAnvilBlockEntity be)) return;
         if (p.distanceToSqr(Vec3.atCenterOf(a.pos())) > 10 * 10) return;
         AnvilWork w = be.work();

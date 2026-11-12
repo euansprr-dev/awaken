@@ -297,7 +297,7 @@ public final class Inscribe {
         SESSIONS.remove(p.getUUID());
         refund(p, s);
         ServerLevel level = p.level().getServer().getLevel(s.dim);
-        if (level != null && level.isLoaded(s.pos) && level.getBlockEntity(s.pos) instanceof InscribingTableBlockEntity be
+        if (level != null && dev.awaken.core.api.Ready.loaded(level, s.pos) && level.getBlockEntity(s.pos) instanceof InscribingTableBlockEntity be
                 && p.getUUID().equals(be.writer())) be.clear();
         AwakenNet.send(p, new EnchantPayloads.Closed(s.id, line));
         if (!line.isEmpty()) p.sendSystemMessage(Component.literal(line), true);
@@ -351,7 +351,7 @@ public final class Inscribe {
         if (s == null) return;
         refund(p, s);
         ServerLevel level = p.level().getServer().getLevel(s.dim);
-        if (level != null && level.isLoaded(s.pos) && level.getBlockEntity(s.pos) instanceof InscribingTableBlockEntity be) be.clear();
+        if (level != null && dev.awaken.core.api.Ready.loaded(level, s.pos) && level.getBlockEntity(s.pos) instanceof InscribingTableBlockEntity be) be.clear();
     }
 
     // ---- lapis ----------------------------------------------------------------------------------------------------------

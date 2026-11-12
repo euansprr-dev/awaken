@@ -325,7 +325,7 @@ public final class RoomScanner {
         sideClosed = false;
         for (Direction d : DIRS) {
             BlockPos n = seed.relative(d);
-            if (!level.isLoaded(n)) {
+            if (!dev.awaken.core.api.Ready.loaded(level, n)) {
                 partial = true;
                 continue;
             }
@@ -379,7 +379,7 @@ public final class RoomScanner {
                 m.set(x + d.getStepX(), y + d.getStepY(), z + d.getStepZ());
                 long nl = m.asLong();
                 if (j.visited.contains(nl)) continue;
-                if (!level.isLoaded(m)) {
+                if (!dev.awaken.core.api.Ready.loaded(level, m)) {
                     j.stopped = Miss.Leak.OPENING;
                     partial = true; // not a leak we saw: land we couldn't read
                     break;
@@ -442,7 +442,7 @@ public final class RoomScanner {
             if (passable(seed)) starts.add(seed);
             else for (Direction d : DIRS) {
                 BlockPos n = seed.relative(d);
-                if (level.isLoaded(n) && passable(n)) starts.add(n);
+                if (dev.awaken.core.api.Ready.loaded(level, n) && passable(n)) starts.add(n);
             }
             for (BlockPos s : starts) {
                 cost += 4;
@@ -484,7 +484,7 @@ public final class RoomScanner {
                     m.set(x + d.getStepX(), y + d.getStepY(), z + d.getStepZ());
                     long nl = m.asLong();
                     if (seen.contains(nl)) continue;
-                    if (!level.isLoaded(m)) {
+                    if (!dev.awaken.core.api.Ready.loaded(level, m)) {
                         if (sideFrom.size() < 32) { sideFrom.add(l); sideTo.add(nl); }
                         continue;
                     }
@@ -514,7 +514,7 @@ public final class RoomScanner {
                     BlockPos beyond = to.offset(to.getX() - from.getX(), to.getY() - from.getY(), to.getZ() - from.getZ());
                     boolean within = to.getX() > minX && to.getX() < maxX && to.getZ() > minZ && to.getZ() < maxZ;
                     cost += 3;
-                    boolean walled = level.isLoaded(beyond) && (!passable(beyond) || !seesSky(beyond));
+                    boolean walled = dev.awaken.core.api.Ready.loaded(level, beyond) && (!passable(beyond) || !seesSky(beyond));
                     if (within || walled) {
                         leak = Miss.Leak.ROOF_HOLE;
                         at = to;
@@ -722,7 +722,7 @@ public final class RoomScanner {
         int[][] probes = {{j.minX - GROUND_OUT, czm}, {j.maxX + GROUND_OUT, czm}, {cxm, j.minZ - GROUND_OUT}, {cxm, j.maxZ + GROUND_OUT}};
         int ground = Integer.MAX_VALUE;
         for (int[] p : probes) {
-            if (!level.isLoaded(new BlockPos(p[0], j.minY, p[1]))) continue;
+            if (!dev.awaken.core.api.Ready.loaded(level, new BlockPos(p[0], j.minY, p[1]))) continue;
             ground = Math.min(ground, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, p[0], p[1]));
         }
         t.ground = ground == Integer.MAX_VALUE ? Integer.MIN_VALUE : ground;

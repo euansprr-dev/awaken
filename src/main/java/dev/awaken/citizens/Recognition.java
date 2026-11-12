@@ -215,7 +215,7 @@ final class Recognition {
                 eye = new Vec3(tmp[0], tmp[1] + 1.6, tmp[2]);
             }
             if (eye.distanceToSqr(at) > radius * radius) continue;
-            if (!c.level.isLoaded(BlockPos.containing(eye))) continue;
+            if (!dev.awaken.core.api.Ready.loaded(c.level, BlockPos.containing(eye))) continue;
             rays++;
             var hit = c.level.clip(new ClipContext(eye, at, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, b));
             if (hit.getType() == HitResult.Type.MISS || hit.getLocation().distanceToSqr(at) < 1.5 * 1.5) out.add(i);

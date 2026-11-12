@@ -221,7 +221,7 @@ public final class ArmourForge {
     // ---- acts ----------------------------------------------------------------------------------------------------------
 
     public static void onAct(ServerPlayer p, ArmourPayloads.Act a) {
-        if (!(p.level() instanceof ServerLevel level) || !level.isLoaded(a.pos())) return;
+        if (!(p.level() instanceof ServerLevel level) || !dev.awaken.core.api.Ready.loaded(level, a.pos())) return;
         if (!(level.getBlockEntity(a.pos()) instanceof FittingStandBlockEntity be)) return;
         if (p.distanceToSqr(Vec3.atCenterOf(a.pos())) > 10 * 10) return;
         ForgeWork w = be.work();
