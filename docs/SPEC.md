@@ -26551,14 +26551,31 @@ improving the design and experience of it"): the first look was a plank box with
   clear above.
 - The ridge mooring: city centre + (22, −ridge − 30), beside Aldo; built once a player is within 160. The landing's:
   built when its chunk loads. Each faces the other end (snapped). The exact spot is the best of a ±20 search on a step of
-  4 (height spread ×3, water ×6, road ×8, distance/6, and 2 a block where the ground astern drops more than 3 below
-  the pad, so the steps reach the ground soon; a tree's trunk is not the ground). A glade of 6 round the footprint is
-  cleared of logs and leaves, and in a fringe of 6 more every leaf no longer joined to a log (through other leaves,
-  within six, the way the game itself counts) comes down too, with the snow that lay on it, so a mooring in a forest
-  stands in the open with nothing left hanging. Both are guarded: breaking, placing and explosions there are refused except for
-  creative players and operators. Saved in `FrontierData` (`awaken:frontier`, schema 1); a mooring's `look` (3 now, 1
-  when absent) lets one of an older look be taken down and built again where it stood; one of look 2 only has its
-  canvas lashed (`Moorings.relash`: each canvas block of the plan still standing takes its planned state).
+  4 (height spread ×3, water ×6, road ×8, distance/6, 2 a block where the ground astern drops more than 3 below the
+  pad, so the steps reach the ground soon, and 2 for each tree's foot sampled on a step of 2 over the glade, so a berth
+  between the giants beats one that fells a giant). The ground is the land under any tree (`Moorings.ground`): the
+  no-leaves heightmap, then on down through wood, leaves and the air and plants under them to the first block that is
+  land (the no-leaves motion tag, never wood; or water). Until 12 Nov it only walked down wood, so a giant's bough, with
+  leaves under it, read as ground: Euan's ridge mooring stood on Elder Colossi (hero-tree structures, placed in each
+  chunk's own feature step, so not a matter of the order land arrives in), its pad 23 over the forest floor on a tower
+  of its own stone, the crowns round its foot. Each column is read once (`Moorings.Land`) over the ±38 the samples reach.
+  A glade of 6 round the footprint is cleared of logs, leaves and bee nests from 6 under the pad to the top of each
+  column's crowns; then over the glade and a fringe of 6 more (`Moorings.clearTrees`, reading a band of 6 past that and
+  up to 92 over the deck): wood no longer joined through wood (any of 26 neighbours) to wood resting on or against land
+  comes down, every leaf no longer joined to wood (through other leaves, within six, the way the game itself counts;
+  a persistent leaf joined to those holds too, as a colossus's far leaves are) comes down, and anything left unable to
+  stand (vines, hanging moss, moss, snow), from the top down. A mooring in a forest stands in the open with nothing
+  left hanging. Both are guarded: breaking, placing and explosions there are refused except for
+  creative players and operators. Saved in `FrontierData` (`awaken:frontier`, schema 1); a mooring's `look` (4 now, 1
+  when absent) lets one of an older look be taken down and built again where it stood; one of look 2 has its canvas
+  lashed (`Moorings.relash`: each canvas block of the plan still standing takes its planned state); one of look 2 or 3
+  has the land round it looked at again: if its pad stands 8 or more over the highest land just past it on its open
+  sides (`Moorings.perched`, ten spots on the bow and the side away from the pier), it was set on trees, and once
+  nobody is within 32 (standing on it or watching it) and nobody is flying it is taken down whole (`Moorings.raze`: its plan, its
+  footprint from the keel up, posts, steps and pad with the stone filled under them) and built again on the land
+  (anyone who logged off mid-flight to its old deck is put on the new one); else only the trees round it are cleared
+  again (`clearTrees` without the glade, never touching the mooring's footprint or posts). `/awaken frontier perch
+  ridge|landing 8-20` puts a built mooring up that high on its stone, saved as look 3, for a tour of the fix.
 - Rotations: WEST (−z, x), NORTH (−x, −z), EAST (z, −x), with `Rotation` CW 90, 180, CCW 90 for the block states (the
   canvas swaps its two upright planes on a quarter turn and turns its lashed sides, the gunwale turns its edges).
 

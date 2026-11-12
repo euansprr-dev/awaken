@@ -11,6 +11,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Half;
@@ -39,9 +40,21 @@ final class Moorings {
     static final int SEARCH = 20, SEARCH_STEP = 4;
     /** How far past the footprint the trees come down. */
     static final int GLADE = 6;
-    /** Past the glade, this far out, leaves no longer joined to a log (through leaves, within {@code HOLD}, as the game counts) come down too. */
+    /**
+     * Past the glade, this far out, wood no longer joined to a trunk and leaves no longer joined to wood (through leaves,
+     * within {@code HOLD}, as the game counts) come down too; the band of {@code HOLD} past that is read, never changed.
+     */
     static final int FRINGE = 6, HOLD = 6;
-    private static final byte LOOSE = 100;
+    /** How far a berth's samples reach from its middle: the glade, and the steps' foot astern. */
+    static final int REACH = Math.max(Math.max(Skiff.FOOT_X, Math.max(-Skiff.FOOT_Z0, Skiff.FOOT_Z1)) + GLADE, 9 - Skiff.STEPS_Z);
+    /** What each sampled tree trunk standing in a berth's glade costs it (a giant's trunk is many samples). */
+    static final double TREE = 2;
+    /** How far down through a tree the land is looked for. */
+    static final int DEEP = 96;
+    /** A saved mooring whose pad stands this far over the land all round it was set on trees' crowns (before 12 Nov). */
+    static final int PERCH = 8;
+    /** A perched mooring is taken down and built again on the land only with nobody this near it (it may be underfoot). */
+    static final int AWAY = 32;
     /** Land this far round a mooring's spot has to be loaded before it's built (the search, the footprint, the glade and its fringe). */
     static final int NEEDS = 48;
     /** A player this near the ridge's spot gets it built. */
@@ -50,10 +63,12 @@ final class Moorings {
     static final int LIFT = -Skiff.PAD;
     /**
      * The mooring's look: a saved mooring of an older look is taken down and built again (1: the plank jetty; 2: the
-     * wind-skiff), except that from 2 to 3 (the canvas lashed to its spars) only the canvas blocks change.
+     * wind-skiff), except that from 2 to 3 (the canvas lashed to its spars) only the canvas blocks change, and from 3 to 4
+     * (12 Nov) the land under it is looked at again: one set on trees' crowns is taken down and built on the land, any
+     * other has the trees round it cleared again (wood and leaves left hanging, and what hung on them).
      */
-    static final int LOOK = 3;
-    private static final int LASHED = 3;
+    static final int LOOK = 4;
+    private static final int LASHED = 3, SETTLED = 4;
 
     /** Where the ridge's mooring should be (its berth's middle, before the ground is found). */
     static BlockPos ridgeSpot(MinecraftServer server) {
@@ -109,28 +124,54 @@ final class Moorings {
         BlockPos spot = which == Which.RIDGE ? ridgeSpot(server) : landingSpot(server);
         if (spot == null || !loaded(level, spot, NEEDS)) return false;
         Direction facing = facing(server, which);
-        if (m != null && m.built() && m.look() == LASHED - 1) {
-            if (Flights.anyFlying()) return true;
-            relash(level, m, which == Which.LANDING);
-            FrontierData.Mooring lashed = new FrontierData.Mooring(m.origin(), m.facing(), true, LOOK);
-            if (which == Which.RIDGE) d.ridge(lashed);
-            else d.landing(lashed);
-            return true;
-        }
+        boolean landing = which == Which.LANDING;
+        String name = landing ? "landing's" : "ridge's";
+        FrontierData.Mooring was = null;
         if (m != null && m.built()) {
-            // an older look: nobody may be mid-flight to or from it while it's swapped
+            // an older look: nobody may be mid-flight to or from it while it changes
             if (Flights.anyFlying()) return true;
-            razeOld(level, m);
-            m = null;
+            if (m.look() >= LASHED - 1) {
+                if (perched(level, m)) {
+                    // set on trees' crowns, its pad on a stone tower over the forest floor: down, and up again on the land
+                    if (anyoneNear(level, m.origin(), AWAY)) return true;
+                    raze(level, m, landing);
+                    Awaken.LOG.info("[frontier] the {} mooring at {} stood on trees, {} over the land: taken down to be built on it", name,
+                            m.origin().toShortString(), m.origin().getY() + Skiff.PAD - around(level, m));
+                    was = m;
+                    m = null;
+                } else {
+                    if (m.look() < LASHED) relash(level, m, landing);
+                    if (m.look() < SETTLED) clearTrees(level, m.origin(), m.facing(), false);
+                    save(d, which, new FrontierData.Mooring(m.origin(), m.facing(), true, LOOK));
+                    Awaken.LOG.info("[frontier] the {} mooring at {} settled: the trees round it cleared again", name, m.origin().toShortString());
+                    return true;
+                }
+            } else {
+                razeOld(level, m);
+                m = null;
+            }
         }
         BlockPos origin = m != null ? m.origin() : choose(level, spot, facing);
-        build(level, origin, facing, which == Which.LANDING);
+        build(level, origin, facing, landing);
         FrontierData.Mooring built = new FrontierData.Mooring(origin, facing, true, LOOK);
-        if (which == Which.RIDGE) d.ridge(built);
-        else d.landing(built);
-        Awaken.LOG.info("[frontier] the {} mooring built at {} facing {}", which == Which.RIDGE ? "ridge's" : "landing's", origin.toShortString(),
-                facing.getSerializedName());
+        save(d, which, built);
+        if (was != null) d.repoint(stand(was), stand(built));
+        Awaken.LOG.info("[frontier] the {} mooring built at {} facing {}", name, origin.toShortString(), facing.getSerializedName());
         return true;
+    }
+
+    private static void save(FrontierData d, Which which, FrontierData.Mooring m) {
+        if (which == Which.RIDGE) d.ridge(m);
+        else d.landing(m);
+    }
+
+    /** Whether a player is within {@code r} of a block, across the ground: one may be standing on it, or watching it. */
+    private static boolean anyoneNear(ServerLevel level, BlockPos at, int r) {
+        for (ServerPlayer p : level.players()) {
+            double dx = p.getX() - at.getX() - 0.5, dz = p.getZ() - at.getZ() - 0.5;
+            if (dx * dx + dz * dz < (double) r * r) return true;
+        }
+        return false;
     }
 
     /**
@@ -145,34 +186,97 @@ final class Moorings {
         return true;
     }
 
-    /** The berth's middle at deck height: the flattest dry ground near the spot, clear of the road. */
+    /**
+     * The land at a column, under any tree: the height a walker stands at once the trees are down. The no-leaves heightmap
+     * stops on wood, so a giant's crown read as ground: Euan's ridge mooring of 12 Nov was set on Elder Colossi, its pad
+     * 23 over the forest floor on a tower of its own stone. This walks on down through wood, leaves and the air and plants
+     * under them to the first block that is land.
+     */
+    static int ground(ServerLevel level, int x, int z) {
+        int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+        BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos(x, top, z);
+        for (int y = top - 1, end = Math.max(level.getMinY(), top - DEEP); y >= end; y--)
+            if (land(level.getBlockState(p.setY(y)))) return y + 1;
+        return top;
+    }
+
+    /** Land a walker stands on: what the no-leaves heightmap counts, but never wood (a tree is not the ground); or water. */
+    static boolean land(BlockState s) {
+        return !s.getFluidState().isEmpty() || s.is(BlockTags.BLOCKS_MOTION_IN_HEIGHTMAP_NO_LEAVES) && !s.is(BlockTags.LOGS);
+    }
+
+    private static final byte WET = 1, ROAD = 2, TRUNK = 4;
+
+    /** The land round a spot, read once a column as the berths are weighed: its height, and whether it is wet, road or a tree's foot. */
+    private static final class Land {
+        private final ServerLevel level;
+        private final int x0, z0, size;
+        private final int[] top;
+        private final byte[] what;
+
+        Land(ServerLevel level, BlockPos spot, int r) {
+            this.level = level;
+            x0 = spot.getX() - r;
+            z0 = spot.getZ() - r;
+            size = 2 * r + 1;
+            top = new int[size * size];
+            what = new byte[size * size];
+            java.util.Arrays.fill(top, Integer.MIN_VALUE);
+        }
+
+        private int read(BlockPos c) {
+            int i = (c.getZ() - z0) * size + c.getX() - x0;
+            if (top[i] == Integer.MIN_VALUE) {
+                int y = ground(level, c.getX(), c.getZ());
+                BlockState s = level.getBlockState(new BlockPos(c.getX(), y - 1, c.getZ()));
+                byte w = 0;
+                if (!s.getFluidState().isEmpty()) w |= WET;
+                if (s.is(Blocks.DIRT_PATH) || s.is(Blocks.GRAVEL) || s.is(BlockTags.SLABS) || s.is(BlockTags.STAIRS)) w |= ROAD;
+                if (level.getBlockState(new BlockPos(c.getX(), y, c.getZ())).is(BlockTags.LOGS)) w |= TRUNK;
+                top[i] = y;
+                what[i] = w;
+            }
+            return i;
+        }
+
+        int top(BlockPos c) {
+            return top[read(c)];
+        }
+
+        boolean is(BlockPos c, byte flag) {
+            return (what[read(c)] & flag) != 0;
+        }
+    }
+
+    /** The berth's middle at deck height: the flattest dry ground near the spot, clear of the road and of the trees' trunks. */
     static BlockPos choose(ServerLevel level, BlockPos spot, Direction facing) {
+        Land land = new Land(level, spot, SEARCH + REACH);
         BlockPos best = null;
         double bestScore = Double.MAX_VALUE;
         int bestTop = level.getSeaLevel();
+        int gx = Skiff.FOOT_X + GLADE, gz0 = Skiff.FOOT_Z0 - GLADE, gz1 = Skiff.FOOT_Z1 + GLADE;
         for (int ox = -SEARCH; ox <= SEARCH; ox += SEARCH_STEP)
             for (int oz = -SEARCH; oz <= SEARCH; oz += SEARCH_STEP) {
                 BlockPos at = spot.offset(ox, 0, oz);
-                int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, wet = 0, road = 0;
+                int lo = Integer.MAX_VALUE, hi = Integer.MIN_VALUE, wet = 0, road = 0, trunks = 0;
                 for (int x = -Skiff.FOOT_X; x <= Skiff.FOOT_X; x += 2)
                     for (int z = Skiff.FOOT_Z0; z <= Skiff.FOOT_Z1; z += 2) {
                         BlockPos c = Skiff.at(at, facing, x, 0, z);
-                        int top = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, c.getX(), c.getZ());
-                        // a tree is not the ground: its trunk comes down with the glade
-                        while (top - 1 > level.getMinY() && level.getBlockState(new BlockPos(c.getX(), top - 1, c.getZ())).is(BlockTags.LOGS)) top--;
-                        BlockState s = level.getBlockState(new BlockPos(c.getX(), top - 1, c.getZ()));
-                        if (!s.getFluidState().isEmpty()) wet++;
-                        if (s.is(Blocks.DIRT_PATH) || s.is(Blocks.GRAVEL) || s.is(BlockTags.SLABS) || s.is(BlockTags.STAIRS)) road++;
+                        int top = land.top(c);
+                        if (land.is(c, WET)) wet++;
+                        if (land.is(c, ROAD)) road++;
                         lo = Math.min(lo, top);
                         hi = Math.max(hi, top);
                     }
+                // a tree standing in the glade comes down whole: a berth between the giants beats one that fells a giant
+                for (int x = -gx; x <= gx; x += 2)
+                    for (int z = gz0; z <= gz1; z += 2)
+                        if (land.is(Skiff.at(at, facing, x, 0, z), TRUNK)) trunks++;
                 // the pier's steps go down astern: where the ground falls away there they'd be a long stair on a tall wall
                 int drop = 0;
-                for (int back = 5; back <= 9; back += 4) {
-                    BlockPos c = Skiff.at(at, facing, Skiff.STEPS_X[1], 0, Skiff.STEPS_Z - back);
-                    drop = Math.max(drop, hi - level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, c.getX(), c.getZ()));
-                }
-                double score = (hi - lo) * 3.0 + wet * 6 + road * 8 + Math.hypot(ox, oz) / 6 + Math.max(0, drop - 3) * 2.0;
+                for (int back = 5; back <= 9; back += 4)
+                    drop = Math.max(drop, hi - land.top(Skiff.at(at, facing, Skiff.STEPS_X[1], 0, Skiff.STEPS_Z - back)));
+                double score = (hi - lo) * 3.0 + wet * 6 + road * 8 + Math.hypot(ox, oz) / 6 + Math.max(0, drop - 3) * 2.0 + trunks * TREE;
                 if (score < bestScore) {
                     bestScore = score;
                     best = at;
@@ -190,58 +294,9 @@ final class Moorings {
     static void build(ServerLevel level, BlockPos origin, Direction facing, boolean landing) {
         var rot = Skiff.rotation(facing);
         int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
-        // a glade: the trees round the berth come down, so it stands in the open
         BlockState air = Blocks.AIR.defaultBlockState();
-        int gx = Skiff.FOOT_X + GLADE, gz0 = Skiff.FOOT_Z0 - GLADE, gz1 = Skiff.FOOT_Z1 + GLADE, y0 = Skiff.PAD - 6, y1 = Skiff.CLEAR_UP + 16;
-        for (int x = -gx; x <= gx; x++)
-            for (int z = gz0; z <= gz1; z++)
-                for (int y = y0; y <= y1; y++) {
-                    BlockPos p = Skiff.at(origin, facing, x, y, z);
-                    BlockState st = level.getBlockState(p);
-                    if (st.is(BlockTags.LOGS) || st.is(BlockTags.LEAVES)) level.setBlock(p, air, flags);
-                }
-        // the crowns that hung past the glade's edge off trees that are gone: a leaf holds the way the game holds it,
-        // joined through other leaves to a log within six; in a fringe round the glade every leaf that isn't comes down
-        int fx = gx + FRINGE + HOLD, fz0 = gz0 - FRINGE - HOLD, fz1 = gz1 + FRINGE + HOLD, wide = 2 * fx + 1, deep = fz1 - fz0 + 1, tall = y1 - y0 + 1;
-        byte[] held = new byte[wide * deep * tall]; // 0 neither; LOOSE a leaf not reached; else 1 + how far from a log
-        int[] queue = new int[wide * deep * tall];
-        int head = 0, tail = 0;
-        for (int y = y0; y <= y1; y++)
-            for (int z = fz0; z <= fz1; z++)
-                for (int x = -fx; x <= fx; x++) {
-                    BlockState st = level.getBlockState(Skiff.at(origin, facing, x, y, z));
-                    int i = ((y - y0) * deep + z - fz0) * wide + x + fx;
-                    if (st.is(BlockTags.LOGS)) {
-                        held[i] = 1;
-                        queue[tail++] = i;
-                    } else if (st.is(BlockTags.LEAVES)) held[i] = LOOSE;
-                }
-        int[] beside = {1, -1, wide, -wide, wide * deep, -wide * deep};
-        while (head < tail) {
-            int i = queue[head++];
-            if (held[i] > HOLD) continue; // six from a log: it holds, and holds nothing further
-            int cx = i % wide, cz = i / wide % deep, cy = i / (wide * deep);
-            for (int k = 0; k < 6; k++) {
-                if (k == 0 && cx == wide - 1 || k == 1 && cx == 0 || k == 2 && cz == deep - 1 || k == 3 && cz == 0 || k == 4 && cy == tall - 1 || k == 5 && cy == 0) continue;
-                int j = i + beside[k];
-                if (held[j] != LOOSE) continue;
-                held[j] = (byte) (held[i] + 1);
-                queue[tail++] = j;
-            }
-        }
-        for (int x = -gx - FRINGE; x <= gx + FRINGE; x++)
-            for (int z = gz0 - FRINGE; z <= gz1 + FRINGE; z++) {
-                if (Math.abs(x) <= gx && z >= gz0 && z <= gz1) continue;
-                for (int y = y0; y <= y1; y++)
-                    if (held[((y - y0) * deep + z - fz0) * wide + x + fx] == LOOSE) level.setBlock(Skiff.at(origin, facing, x, y, z), air, flags);
-            }
-        // and the snow that lay on any of them
-        for (int x = -gx - FRINGE; x <= gx + FRINGE; x++)
-            for (int z = gz0 - FRINGE; z <= gz1 + FRINGE; z++)
-                for (int y = y0; y <= y1 + 1; y++) {
-                    BlockPos p = Skiff.at(origin, facing, x, y, z);
-                    if (level.getBlockState(p).is(Blocks.SNOW) && level.getBlockState(p.below()).isAir()) level.setBlock(p, air, flags);
-                }
+        // a glade: the trees round the berth come down, so it stands in the open
+        clearTrees(level, origin, facing, true);
         // clear: from the keel to the clear air above, across the whole footprint
         for (int x = -Skiff.FOOT_X; x <= Skiff.FOOT_X; x++)
             for (int z = Skiff.FOOT_Z0; z <= Skiff.FOOT_Z1; z++)
@@ -320,6 +375,248 @@ final class Moorings {
             if (!s.isAir() && !s.canBeReplaced() && !s.is(BlockTags.LEAVES) && s.getFluidState().isEmpty()) break;
             level.setBlock(p, with, flags);
         }
+    }
+
+    private static final byte AIR = 0, WOOD = 1, LEAF = 2, LEAF_KEPT = 3, SOLID = 4, HANGS = 5;
+    /** A persistent leaf joined through leaves to one wood holds (a giant's crown has them past six). */
+    private static final byte FAR = HOLD + 2;
+
+    /**
+     * The trees round a berth (SPEC §67.4). With {@code glade}, every log and leaf over the glade comes down, from six
+     * under the pad to the top of the crowns. Then over the glade and a fringe round it: wood no longer joined (through
+     * wood, as a branch joins) to any that rests on land, leaves no longer joined through leaves to wood within six (as the
+     * game holds them), and whatever hung from them or lay on them. Without {@code glade} (a mooring already built) only
+     * that second part runs, and never on a block of the mooring: what stands in the open is the player's.
+     */
+    static void clearTrees(ServerLevel level, BlockPos origin, Direction facing, boolean glade) {
+        int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
+        BlockState air = Blocks.AIR.defaultBlockState();
+        int gx = Skiff.FOOT_X + GLADE, gz0 = Skiff.FOOT_Z0 - GLADE, gz1 = Skiff.FOOT_Z1 + GLADE;
+        int ix = gx + FRINGE, iz0 = gz0 - FRINGE, iz1 = gz1 + FRINGE;
+        int fx = ix + HOLD, fz0 = iz0 - HOLD, fz1 = iz1 + HOLD;
+        int oy = origin.getY(), y0 = Skiff.PAD - 6;
+        if (glade)
+            for (int x = -gx; x <= gx; x++)
+                for (int z = gz0; z <= gz1; z++) {
+                    BlockPos c = Skiff.at(origin, facing, x, 0, z);
+                    int top = level.getHeight(Heightmap.Types.WORLD_SURFACE, c.getX(), c.getZ()) - 1 - oy;
+                    for (int y = y0; y <= top; y++) {
+                        BlockPos p = c.above(y);
+                        BlockState st = level.getBlockState(p);
+                        if (st.is(BlockTags.LOGS) || st.is(BlockTags.LEAVES) || st.is(BlockTags.BEEHIVES)) level.setBlock(p, air, flags);
+                    }
+                }
+        // read the land round it, up to the tops of the crowns
+        int y1 = Skiff.CLEAR_UP + 16;
+        for (int x = -fx; x <= fx; x++)
+            for (int z = fz0; z <= fz1; z++) {
+                BlockPos c = Skiff.at(origin, facing, x, 0, z);
+                y1 = Math.max(y1, level.getHeight(Heightmap.Types.WORLD_SURFACE, c.getX(), c.getZ()) - 1 - oy);
+            }
+        // no tree stands taller than this over a deck (a colossus is 46), whatever cliff rises in the band
+        y1 = Math.min(y1, Math.min(level.getMaxY() - oy, Skiff.CLEAR_UP + 80));
+        int wide = 2 * fx + 1, deep = fz1 - fz0 + 1, tall = y1 - y0 + 1, n = wide * deep * tall, layer = wide * deep;
+        byte[] kind = new byte[n], reach = new byte[n];
+        int[] queue = new int[n];
+        for (int y = y0; y <= y1; y++)
+            for (int z = fz0; z <= fz1; z++)
+                for (int x = -fx; x <= fx; x++) {
+                    BlockState st = level.getBlockState(Skiff.at(origin, facing, x, y, z));
+                    kind[((y - y0) * deep + z - fz0) * wide + x + fx] = st.isAir() ? AIR : st.is(BlockTags.LOGS) ? WOOD
+                            : st.is(BlockTags.LEAVES) ? (st.hasProperty(LeavesBlock.PERSISTENT) && st.getValue(LeavesBlock.PERSISTENT) ? LEAF_KEPT : LEAF)
+                            : land(st) ? SOLID : HANGS;
+                }
+        // wood holds if it rests on or against land, or (through wood) on wood that does; the band past the fringe and
+        // the bottom layer are taken to hold, since what joins them may lie outside what was read
+        int head = 0, tail = 0;
+        int[] face = {1, -1, wide, -wide, layer, -layer};
+        for (int i = 0; i < n; i++) {
+            if (kind[i] != WOOD) continue;
+            int cx = i % wide - fx, cz = i / wide % deep + fz0, cy = i / layer;
+            boolean holds = Math.abs(cx) > ix || cz < iz0 || cz > iz1 || cy == 0;
+            for (int k = 0; k < 6 && !holds; k++)
+                if (step(i, k, wide, deep, tall)) holds = kind[i + face[k]] == SOLID;
+            if (holds) {
+                reach[i] = 1;
+                queue[tail++] = i;
+            }
+        }
+        while (head < tail) {
+            int i = queue[head++], cx = i % wide, cz = i / wide % deep, cy = i / layer;
+            for (int dy = -1; dy <= 1; dy++)
+                for (int dz = -1; dz <= 1; dz++)
+                    for (int dx = -1; dx <= 1; dx++) {
+                        int x = cx + dx, z = cz + dz, y = cy + dy;
+                        if (x < 0 || x >= wide || z < 0 || z >= deep || y < 0 || y >= tall) continue;
+                        int j = (y * deep + z) * wide + x;
+                        if (kind[j] != WOOD || reach[j] != 0) continue;
+                        reach[j] = 1;
+                        queue[tail++] = j;
+                    }
+        }
+        for (int i = 0; i < n; i++)
+            if (kind[i] == WOOD && reach[i] == 0 && inner(i, wide, deep, fx, fz0, ix, iz0, iz1)) {
+                if (cut(level, origin, facing, i, wide, deep, fx, fz0, y0, glade, air, flags)) kind[i] = AIR;
+            }
+        // leaves hold the way the game holds them: through leaves to wood within six; a persistent one joined to those holds too
+        java.util.Arrays.fill(reach, (byte) 0);
+        head = tail = 0;
+        for (int i = 0; i < n; i++)
+            if (kind[i] == WOOD) {
+                reach[i] = 1;
+                queue[tail++] = i;
+            }
+        while (head < tail) {
+            int i = queue[head++];
+            for (int k = 0; k < 6; k++) {
+                if (!step(i, k, wide, deep, tall)) continue;
+                int j = i + face[k];
+                if (reach[j] != 0 || kind[j] != LEAF && kind[j] != LEAF_KEPT) continue;
+                if (reach[i] <= HOLD) reach[j] = (byte) (reach[i] + 1);
+                else if (kind[j] == LEAF_KEPT) reach[j] = FAR; // six from wood: only a persistent leaf goes on
+                else continue;
+                queue[tail++] = j;
+            }
+        }
+        for (int i = 0; i < n; i++)
+            if ((kind[i] == LEAF || kind[i] == LEAF_KEPT) && reach[i] == 0 && inner(i, wide, deep, fx, fz0, ix, iz0, iz1)) {
+                if (cut(level, origin, facing, i, wide, deep, fx, fz0, y0, glade, air, flags)) kind[i] = AIR;
+            }
+        // what hung from them or lay on them (vines, moss, snow): from the top down, so a hanging run goes with its top
+        for (int i = n - 1; i >= 0; i--) {
+            if (kind[i] != HANGS || !inner(i, wide, deep, fx, fz0, ix, iz0, iz1)) continue;
+            int cx = i % wide - fx, cz = i / wide % deep + fz0, cy = i / layer + y0;
+            BlockPos p = Skiff.at(origin, facing, cx, cy, cz);
+            if (!glade && kept(cx, cy, cz)) continue;
+            BlockState st = level.getBlockState(p);
+            if (!st.isAir() && st.getFluidState().isEmpty() && !st.canSurvive(level, p)) level.setBlock(p, air, flags);
+        }
+    }
+
+    /** Whether cell {@code i}'s neighbour on face {@code k} (east, west, south, north, up, down in the read box) is in it. */
+    private static boolean step(int i, int k, int wide, int deep, int tall) {
+        int cx = i % wide, cz = i / wide % deep, cy = i / (wide * deep);
+        return switch (k) {
+            case 0 -> cx < wide - 1;
+            case 1 -> cx > 0;
+            case 2 -> cz < deep - 1;
+            case 3 -> cz > 0;
+            case 4 -> cy < tall - 1;
+            default -> cy > 0;
+        };
+    }
+
+    /** Whether cell {@code i} lies over the glade or its fringe (what may change), not the band past them (only read). */
+    private static boolean inner(int i, int wide, int deep, int fx, int fz0, int ix, int iz0, int iz1) {
+        int cx = i % wide - fx, cz = i / wide % deep + fz0;
+        return Math.abs(cx) <= ix && cz >= iz0 && cz <= iz1;
+    }
+
+    /** Takes out the block of cell {@code i}, unless it's the mooring's own; true when it's gone. */
+    private static boolean cut(ServerLevel level, BlockPos origin, Direction facing, int i, int wide, int deep, int fx, int fz0, int y0, boolean glade,
+                               BlockState air, int flags) {
+        int cx = i % wide - fx, cz = i / wide % deep + fz0, cy = i / (wide * deep) + y0;
+        if (!glade && kept(cx, cy, cz)) return false;
+        level.setBlock(Skiff.at(origin, facing, cx, cy, cz), air, flags);
+        return true;
+    }
+
+    /** A block of a built mooring (local): its footprint from the pad up, or one of its posts. */
+    private static boolean kept(int x, int y, int z) {
+        if (Math.abs(x) <= Skiff.FOOT_X && z >= Skiff.FOOT_Z0 && z <= Skiff.FOOT_Z1 && y >= Skiff.PAD) return true;
+        if (y < 0) for (int[] xz : Skiff.POSTS) if (xz[0] == x && xz[1] == z) return true;
+        return false;
+    }
+
+    /** Spots just past the pad on its open sides (the bow, and the side away from the pier), where nothing of the mooring stands. */
+    private static final int[][] AROUND = {{11, -8}, {11, -4}, {11, 0}, {11, 4}, {11, 8}, {-6, 12}, {-3, 12}, {0, 12}, {3, 12}, {6, 12}};
+
+    /** The highest land just round a built mooring, under any trees. */
+    static int around(ServerLevel level, FrontierData.Mooring m) {
+        int best = Integer.MIN_VALUE;
+        for (int[] xz : AROUND) {
+            BlockPos c = Skiff.at(m.origin(), m.facing(), xz[0], 0, xz[1]);
+            best = Math.max(best, ground(level, c.getX(), c.getZ()));
+        }
+        return best;
+    }
+
+    /** Whether a built mooring's pad stands well over the land all round it: set on trees' crowns, not on the ground. */
+    static boolean perched(ServerLevel level, FrontierData.Mooring m) {
+        return m.origin().getY() + Skiff.PAD - around(level, m) >= PERCH;
+    }
+
+    /**
+     * Takes a wind-skiff mooring down to the land it was built on: every block of its plan, its footprint from the keel
+     * up, its posts, its steps and the stone under them, and its pad with the stone filled under it.
+     */
+    static void raze(ServerLevel level, FrontierData.Mooring m, boolean landing) {
+        int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
+        BlockState air = Blocks.AIR.defaultBlockState();
+        BlockPos o = m.origin();
+        Direction f = m.facing();
+        List<Skiff.Part> parts = new ArrayList<>(Skiff.jetty());
+        parts.addAll(Skiff.skiff());
+        parts.addAll(landing ? Skiff.landingExtras() : Skiff.ridgeExtras());
+        for (Skiff.Part part : parts) {
+            BlockPos p = Skiff.at(o, f, part.x(), part.y(), part.z());
+            if (!level.getBlockState(p).isAir()) level.setBlock(p, air, flags);
+        }
+        for (int x = -Skiff.FOOT_X; x <= Skiff.FOOT_X; x++)
+            for (int z = Skiff.FOOT_Z0; z <= Skiff.FOOT_Z1; z++)
+                for (int y = Skiff.KEEL; y <= Skiff.CLEAR_UP; y++) {
+                    BlockPos p = Skiff.at(o, f, x, y, z);
+                    if (!level.getBlockState(p).isAir()) level.setBlock(p, air, flags);
+                }
+        for (int[] xz : Skiff.POSTS)
+            for (int y = -1; y > -40; y--) {
+                BlockPos p = Skiff.at(o, f, xz[0], y, xz[1]);
+                if (!level.getBlockState(p).is(Blocks.SPRUCE_LOG)) break;
+                level.setBlock(p, air, flags);
+            }
+        for (int k = 0; k < 16; k++)
+            for (int x : Skiff.STEPS_X) {
+                BlockPos p = Skiff.at(o, f, x, -k, Skiff.STEPS_Z - k);
+                if (!level.getBlockState(p).is(Blocks.SPRUCE_STAIRS)) continue;
+                level.setBlock(p, air, flags);
+                unfill(level, p, flags);
+            }
+        int reach = (int) Math.ceil(Math.sqrt(Skiff.PAD_R2));
+        for (int x = -reach; x <= reach; x++)
+            for (int z = -reach; z <= reach; z++) {
+                if (x * x + z * z > Skiff.PAD_R2) continue;
+                BlockPos top = Skiff.at(o, f, x, Skiff.PAD, z);
+                if (!level.getBlockState(top).isAir()) level.setBlock(top, air, flags);
+                unfill(level, top, flags);
+            }
+    }
+
+    /** The stone a column was filled with under a pad or a step ({@link #fillDown}), taken out down to the land. */
+    private static void unfill(ServerLevel level, BlockPos top, int flags) {
+        for (int y = 1; y <= 24; y++) {
+            BlockPos p = top.below(y);
+            BlockState s = level.getBlockState(p);
+            if (!s.is(Blocks.COBBLESTONE) && !s.is(Blocks.STONE_BRICKS)) break;
+            level.setBlock(p, Blocks.AIR.defaultBlockState(), flags);
+        }
+    }
+
+    /**
+     * For a tour (SPEC §67.4): a built mooring put up again {@code up} over where it stands, on its stone, and saved as the
+     * look before, as the old ground search left one on trees' crowns. Its next check takes it down and builds it on the land.
+     */
+    static boolean perch(ServerLevel level, Which which, int up) {
+        MinecraftServer server = level.getServer();
+        FrontierData.Mooring m = get(server, which);
+        if (m == null || !m.built()) return false;
+        boolean landing = which == Which.LANDING;
+        raze(level, m, landing);
+        BlockPos high = m.origin().above(up);
+        build(level, high, m.facing(), landing);
+        save(FrontierData.get(server), which, new FrontierData.Mooring(high, m.facing(), true, SETTLED - 1));
+        Awaken.LOG.info("[frontier] the {} mooring put up {} over its land at {}, as if built on trees", landing ? "landing's" : "ridge's", up,
+                high.toShortString());
+        return true;
     }
 
     /** The pad's kerb: stone brick, some of it mossy or cracked with age. */

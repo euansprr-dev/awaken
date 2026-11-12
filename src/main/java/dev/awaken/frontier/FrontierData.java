@@ -145,6 +145,17 @@ public final class FrontierData extends SavedData {
         return pending.get(who);
     }
 
+    /** A mooring built again somewhere else: anyone caught mid-flight to its old deck is put on its new one. */
+    void repoint(double[] was, double[] now) {
+        for (Map.Entry<UUID, Dest> e : pending.entrySet()) {
+            Dest d = e.getValue();
+            if (Math.abs(d.x() - was[0]) < 1 && Math.abs(d.y() - was[1]) < 1 && Math.abs(d.z() - was[2]) < 1) {
+                e.setValue(new Dest(now[0], now[1], now[2], (float) now[3]));
+                setDirty();
+            }
+        }
+    }
+
     void letter(UUID who, Letter l) {
         List<Letter> list = letters.computeIfAbsent(who, k -> new ArrayList<>());
         list.add(l);
