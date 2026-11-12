@@ -22,7 +22,10 @@ import java.util.concurrent.locks.LockSupport;
  * <p>
  * The server thread counts the missing chunks twice a second (a hash lookup each: about a thousand for a view of 16);
  * any thread may ask. With no chunk made for {@link #STILL_NS} the land isn't coming in, whatever is missing (a chunk
- * waiting on something, a paused world), so nothing waits on it forever.
+ * waiting on something, a paused world), so nothing waits on it forever, unless the generator is waiting on work of
+ * ours ({@link #atWork}: the roads of a lattice chunk it set aside). That is the land coming in too: Euan's new world of
+ * 12 Nov stood 30 s at a time with no chunk made and 333 missing while it waited for its roads, and counted as still,
+ * it let the road planners take up work kilometres away beside what it waited for.
  */
 public final class LandFirst {
     private LandFirst() {}
@@ -100,6 +103,21 @@ public final class LandFirst {
         dev.awaken.Awaken.LOG.warn("[core] terrain noise on the server thread ({} volumes since last told): {}", n, who);
     }
 
+    private static final java.util.List<java.util.function.BooleanSupplier> AT_WORK = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    /**
+     * (Init) whether world generation is waiting on work of ours now (any thread): while it is and chunks in view are
+     * missing, the land is coming in though no chunk is made.
+     */
+    public static void atWork(java.util.function.BooleanSupplier waiting) {
+        AT_WORK.add(waiting);
+    }
+
+    private static boolean generatorWaits() {
+        for (var w : AT_WORK) if (w.getAsBoolean()) return true;
+        return false;
+    }
+
     /** (Server tick, CoreModule) the count. */
     public static void tick(MinecraftServer server) {
         Thread self = Thread.currentThread();
@@ -114,7 +132,7 @@ public final class LandFirst {
                 for (int z = cz - r; z <= cz + r; z++) if (v.isInViewDistance(x, z) && cache.getChunkNow(x, z) == null) n++;
         }
         missing = n;
-        streaming = n > 0 && System.nanoTime() - lastMade < STILL_NS;
+        streaming = n > 0 && (System.nanoTime() - lastMade < STILL_NS || generatorWaits());
     }
 
     /** (ChunkEvent.Load, CoreModule) a chunk was made or read: the generator is at work. */

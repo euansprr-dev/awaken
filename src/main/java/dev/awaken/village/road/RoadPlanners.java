@@ -16,7 +16,7 @@ import java.util.concurrent.locks.LockSupport;
  * left for the game) that make the network's pieces before anyone waits for them, the most urgent job first: what world
  * generation is waiting for, then the towns' and wayhouses' sites the server thread's searches asked for, then what lies
  * ahead of the players, nearest first (held back while the server is late with a tick). While new land is coming in
- * round a player ({@code LandFirst}) only the jobs for that land run, two at a time (world generation's own and the
+ * round a player ({@code LandFirst}) only the jobs for that land run, on every planner (world generation's own and the
  * lattice chunks it's about to reach): the rest are held until it's in.
  * A job only asks for a piece (a plan, a hub, a road, a lattice chunk's legs): each piece is still made once by
  * whichever thread asks first while the others wait for it, so the network is exactly what one thread would lay, and no
@@ -93,52 +93,28 @@ final class RoadPlanners {
             Long now = PENDING.get(key);
             if (now == null || now != rank) return;
             // land comes first (SPEC §28.9, Cost): while new land is coming in round a player, a job that isn't for that
-            // land waits until it's in, and the ones that are run LEAN at a time, so the planners never take the
-            // generator's cores (Euan's Mac, 12 Nov: five planners at 4.6 cores while he flew) and the generator never
-            // waits for roads they could have laid first (run 43209363904: holding those too left 15 s in 30 of road
-            // starts laying lattice chunks' legs themselves)
-            if (dev.awaken.core.api.LandFirst.streaming()) {
-                if (!forLand) {
-                    DEFERRED.incrementAndGet();
-                    HELD.add(self[0]);
-                    return;
-                }
-                if (WORKING.get() >= LEAN) {
-                    DEFERRED.incrementAndGet();
-                    ThreadPoolExecutor p = pool;
-                    if (p == null || p.isShutdown()) return; // the server stopped: the job goes with it
-                    try {
-                        p.execute(self[0]); // back in its place: it's next once a planner is free
-                    } catch (java.util.concurrent.RejectedExecutionException e) {
-                        return;
-                    }
-                    LockSupport.parkNanos(DEFER_NS);
-                    return;
-                }
+            // land waits until it's in (Euan's Mac, 12 Nov: five planners at 4.6 cores while he flew), and the ones that
+            // are have every planner: world generation waits for them (holding the near ones left 15 s in 30 of road
+            // starts laying legs itself, run 43209363904; two at a time, Euan's new world waited almost two minutes)
+            if (!forLand && dev.awaken.core.api.LandFirst.streaming()) {
+                DEFERRED.incrementAndGet();
+                HELD.add(self[0]);
+                return;
             }
             PENDING.remove(key, rank);
             // ahead of the players, a job starts between the server's ticks or within a late one's first 40 ms
             if (tier == AHEAD) for (long t0 = System.nanoTime(); RoadTimer.serverLate() && System.nanoTime() - t0 < HOLD_NS; ) LockSupport.parkNanos(5_000_000L);
-            WORKING.incrementAndGet();
             try {
                 work.run();
             } catch (RuntimeException e) {
                 Awaken.LOG.error("[road] planning {} failed", key, e);
-            } finally {
-                WORKING.decrementAndGet();
             }
         });
         pool().execute(self[0]);
         return true;
     }
 
-    /** While land comes in, the jobs for it run this many at a time (the rest wait their turn in the queue). */
-    static final int LEAN = 2;
-    /** A planner whose job went back in the queue rests this long before it takes the next (no spinning). */
-    static final long DEFER_NS = 50_000_000L;
-    /** Planners at work on a job now. */
-    private static final AtomicInteger WORKING = new AtomicInteger();
-    /** Jobs put back or held while land came in (the timer's line). */
+    /** Jobs held while land came in (the timer's line). */
     static final AtomicLong DEFERRED = new AtomicLong();
     /** Jobs held while land comes in, queued again in their order once it's in ({@link #release}). */
     private static final java.util.concurrent.ConcurrentLinkedQueue<Job> HELD = new java.util.concurrent.ConcurrentLinkedQueue<>();

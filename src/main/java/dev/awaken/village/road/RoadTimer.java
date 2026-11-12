@@ -111,11 +111,11 @@ final class RoadTimer {
         Awaken.LOG.info("[road] " + line);
     }
 
-    /** Land first (SPEC §28.9, Cost): how often a planner put its job back while land came in, and the chunks missing now. */
+    /** Land first (SPEC §28.9, Cost): the jobs held while land came in, and the chunks missing now. */
     private static String landFirst() {
-        long put = RoadPlanners.DEFERRED.getAndSet(0);
+        long held = RoadPlanners.DEFERRED.getAndSet(0);
         int missing = dev.awaken.core.api.LandFirst.missing();
-        return put == 0 && missing == 0 ? "" : "; land first: jobs put back " + put + " times, " + missing + " chunks in view not made yet"
+        return held == 0 && missing == 0 ? "" : "; land first: " + held + " jobs held, " + missing + " chunks in view not made yet"
                 + (dev.awaken.core.api.LandFirst.streaming() ? " (land coming in)" : "");
     }
 

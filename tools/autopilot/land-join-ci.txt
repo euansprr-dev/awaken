@@ -1,0 +1,109 @@
+# A fresh world's first minutes (SPEC §12 LandFirst, §28.9 Cost; Euan 12 Nov 15:29 UTC, "Chunk loading fix didn't work":
+# a new world, joined in Carillon's Commons, the land round him came in over almost two minutes, white sky and floating
+# chunk edges meanwhile). His world's seed, at his render distance (16), standing where the game puts him, no moves.
+# Every five seconds the chunks in view not made yet (/awaken core land); shots without waiting for the terrain at about
+# 15 s, 45 s, 90 s and 150 s after the opening. Read the log for "[core] land", "[road] timer", "has run" (the stall
+# watch) and "Can't keep up"; the time from "joined the game" to the first "0 chunks in view not made yet".
+# Run: tools/tour-ci.sh tools/autopilot/land-join-ci.txt 2400 PACK=perf,world TECTONIC=awakened
+world land_join creative -2048970511949968766
+waitworld
+gui 0
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 40
+screen close
+cmd gamerule advance_time false
+cmd time set 1500
+camera first
+hud off
+cmd tp @s ~ ~ ~ 90 12
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+shotnow lj_15s
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+shotnow lj_45s
+cmd tp @s ~ ~ ~ -90 12
+shotnow lj_45s_east
+cmd tp @s ~ ~ ~ 90 12
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+shotnow lj_90s
+cmd tp @s ~ ~ ~ -90 12
+shotnow lj_90s_east
+cmd tp @s ~ ~ ~ 90 12
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+shotnow lj_150s
+cmd tp @s ~ ~ ~ -90 12
+shotnow lj_150s_east
+cmd tp @s ~ ~ ~ 90 12
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+wait 100
+cmd awaken core land
+shotnow lj_180s
+quit
