@@ -678,9 +678,11 @@ public final class RoadNet {
      */
     public static void prefetch(net.minecraft.server.MinecraftServer server) {
         RoadTimer.tick(server, RoadPlanners.queued(), unknown);
+        RoadPlanners.release();
         if (server.getTickCount() % 40 != 21) return;
         RoadWorld w = RoadWorld.get();
         if (w == null) return;
+        RoadPlanners.front(server.getPlayerList().getViewDistance());
         int behind = 0;
         for (net.minecraft.server.level.ServerPlayer p : server.overworld().players()) behind += ahead(w, p.getBlockX() >> 4, p.getBlockZ() >> 4, PER_PASS);
         unknown = behind;
@@ -688,30 +690,35 @@ public final class RoadNet {
 
     /**
      * One pass ahead of a player at chunk (pcx, pcz): the nearest {@code most} lattice chunks within {@link #AHEAD} whose
-     * legs aren't known or queued are handed to the planners (the caller only queues them: the server thread never fans
-     * out or plans here); how many are left.
+     * legs aren't known are handed to the planners, or handed again nearer the front of their queue as the player comes
+     * closer (the caller only queues them: the server thread never fans out or plans here); how many weren't queued yet.
      */
     static int ahead(RoadWorld w, int pcx, int pcz, int most) {
         int reach = AHEAD / 16 / Road.LATTICE + 1;
         List<long[]> want = new ArrayList<>();
         int lx = Math.floorDiv(pcx, Road.LATTICE), lz = Math.floorDiv(pcz, Road.LATTICE);
+        int fresh = 0;
         for (int i = lx - reach; i <= lx + reach; i++)
             for (int j = lz - reach; j <= lz + reach; j++) {
                 int cx = i * Road.LATTICE, cz = j * Road.LATTICE;
                 long key = ((long) cx << 32) ^ (cz & 0xffffffffL);
-                if (LEGS.containsKey(key) || RoadPlanners.pending("L" + key) || RoadPlanners.pending("F" + key)) continue;
+                if (LEGS.containsKey(key)) continue;
                 long d = (long) (cx - pcx) * (cx - pcx) + (long) (cz - pcz) * (cz - pcz);
                 if (d * 256 > (long) AHEAD * AHEAD) continue;
+                if (!RoadPlanners.pending("L" + key) && !RoadPlanners.pending("F" + key)) fresh++;
                 want.add(new long[]{d, cx, cz, key});
             }
         want.sort((u, v) -> Long.compare(u[0], v[0]));
-        for (int k = 0; k < Math.min(most, want.size()); k++) {
+        // a lattice chunk queued from far off keeps its place only until the player comes nearer: queued again nearer the
+        // front, it's laid before the land reaches it, and the copy further back finds it done (SPEC §28.9, Cost)
+        for (int k = 0, queued = 0; k < want.size() && queued < most; k++) {
             long[] u = want.get(k);
             // the fan-out reads the region map and the grid (up to a few ms): a planner does it, just ahead of the pieces it queues
-            RoadPlanners.job("F" + u[3], RoadPlanners.AHEAD, u[0] * 4, () -> fanOut(w, (int) u[1], (int) u[2], RoadPlanners.AHEAD, u[0]));
-            RoadPlanners.job("L" + u[3], RoadPlanners.AHEAD, u[0] * 4 + 3, () -> startsIn((int) u[1], (int) u[2]));
+            boolean f = RoadPlanners.job("F" + u[3], RoadPlanners.AHEAD, u[0] * 4, () -> fanOut(w, (int) u[1], (int) u[2], RoadPlanners.AHEAD, u[0]));
+            boolean l = RoadPlanners.job("L" + u[3], RoadPlanners.AHEAD, u[0] * 4 + 3, () -> startsIn((int) u[1], (int) u[2]));
+            if (f || l) queued++;
         }
-        return want.size();
+        return fresh;
     }
 
     /** Lattice chunks within reach of the players whose legs weren't known at the last pass (the timer's line). */

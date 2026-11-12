@@ -159,8 +159,34 @@ public final class Secrets {
         return out;
     }
 
+    /** Regions whose secrets are being worked out off the server thread. */
+    private static final Set<Long> PENDING = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /**
+     * A region's secrets if they're worked out already, else none for now: they're worked out off the server thread, last
+     * ({@code LandFirst.later}), and count from a later ask (a region's are a few noise columns: Euan's join, 12 Nov).
+     */
+    static List<Site> known(long seed, RegionMap map, RegionMap.Region r, Wonders.Terrain t) {
+        if (r.commons()) return List.of();
+        long k = mix(seed, r.id());
+        if (CACHE.containsKey(k)) return of(seed, map, r, t);
+        if (PENDING.add(k)) dev.awaken.core.api.LandFirst.later().execute(() -> {
+            try {
+                of(seed, map, r, t);
+            } finally {
+                PENDING.remove(k);
+            }
+        });
+        return List.of();
+    }
+
     /** Secrets within {@code radius} of the box (the regions at nine points across it). */
     public static List<Site> near(long seed, RegionMap map, Wonders.Terrain t, int x0, int z0, int x1, int z1, int radius) {
+        return near(seed, map, t, x0, z0, x1, z1, radius, true);
+    }
+
+    /** As above; with {@code wait} false (the server thread) a region not worked out yet gives none for now ({@link #known}). */
+    public static List<Site> near(long seed, RegionMap map, Wonders.Terrain t, int x0, int z0, int x1, int z1, int radius, boolean wait) {
         Set<Long> seen = new HashSet<>();
         List<Site> out = new ArrayList<>(3);
         int ex0 = x0 - radius, ez0 = z0 - radius, ex1 = x1 + radius, ez1 = z1 + radius;
@@ -168,7 +194,7 @@ public final class Secrets {
             for (int j = 0; j < 3; j++) {
                 RegionMap.Region r = map.regionAt(ex0 + (ex1 - ex0) * i / 2, ez0 + (ez1 - ez0) * j / 2);
                 if (!seen.add(r.id())) continue;
-                for (Site s : of(seed, map, r, t)) if (s.x() >= ex0 && s.x() <= ex1 && s.z() >= ez0 && s.z() <= ez1) out.add(s);
+                for (Site s : wait ? of(seed, map, r, t) : known(seed, map, r, t)) if (s.x() >= ex0 && s.x() <= ex1 && s.z() >= ez0 && s.z() <= ez1) out.add(s);
             }
         return out;
     }

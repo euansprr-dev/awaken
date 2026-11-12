@@ -199,6 +199,7 @@ public record CityBasinFunction(DensityFunction input, Mode mode, Optional<Densi
 
         @Override
         public void sampleVolume(SamplerContext context, DensityBuffer out, DensityVolume volume) {
+            dev.awaken.core.api.LandFirst.noiseSampled(); // (SPEC §12) on the server thread: counted and told with its caller
             input.sampleVolume(context, out, volume);
             int index = 0;
             for (int z = 0; z < volume.sizeZ(); z++) {

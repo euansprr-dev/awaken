@@ -835,6 +835,24 @@ of `AwakenConfig.Client`.
   (commands, a teleport's landing, a respawn) still uses the game's own and may wait. A structure lookup at a player's
   own feet asks `Ready.at` first (the Tether vow's look, the Day Journal's, a sweep's grass): a player flying at 32 blocks
   a second outruns the generator, and the lookup waited 1.2 s for the chunk under them (tour `pulse-flight-ci`).
+- `dev.awaken.core.api.LandFirst` — is new land still coming in round a player (12 Nov 2026, Euan: "still not loading
+  fast enough"). The server thread counts, twice a second, the chunks inside each player's view not made yet
+  (`missing()`, a hash lookup each); `streaming()` is true while some are missing and a chunk was made or read in the
+  last 5 s (with none made for 5 s the land isn't coming in, whatever is missing, so nothing waits on it forever).
+  `hold(mostNs)` waits off the server thread while it's true; `later()` is two threads of our own at the lowest
+  priority whose jobs each wait first (at most a minute), in place of `Util.backgroundExecutor()` for optional
+  searches: that pool is the game's own, where world generation runs. `/awaken core land` says the count.
+  `noiseSampled()`, called by the overworld's `CityBasinFunction` (every column and chunk of its terrain passes through
+  it), counts terrain noise sampled on the server thread and logs it with its caller at most every 10 s ("terrain
+  noise on the server thread"): with Tectonic a column costs tens of milliseconds there. What it found on the tour
+  (12 Nov): the ruin search (`RuinLocator.near` from the windways, the Horizon's landmarks, the markers, the scanner and
+  the Way Up; 308 volumes in 12 s at a join, through the spacing rule's neighbours) and a region's secrets
+  (`WonderWatch.findSecrets`). Both now take their samples off the server thread: a ruin spot not known yet is worked
+  out on the "Awaken ruin finder" thread (lowest priority, each spot first held up to 2 s while land comes in, 64
+  waiting at most) and counts from a later call, as a spent budget always did; a command's or a test's budget (32 or
+  more) is still answered at once; a region's secrets not worked out yet come from `later()`. Road
+  starts' status reads "on, no new chunk has reached it yet" until the first new chunk's structure starts run through
+  its hook (a world already made round its players: the first minutes).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`, `armoury`: is this spot in an Armoury, §27.13), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks` (`lead(mob, x, z, speed, ticks)`: a
@@ -11336,7 +11354,11 @@ rough land drops it. On real overworld noise (seed 26102610, the 41 anchors with
 one per region, hamlets two times in three. **The first hamlet** (`FirstHamlet`) is found at the server's start, after
 terrain picks the city's site and before any chunk generates: up the road north 760-1,060 (the camp is at 450), then
 96 and 192 to either side, then the roads east, west and south, then 240 further out, the first spot whose land takes a
-hamlet of four homes or more. Clear of the city reserve (+8) by the planner; gates never open on a settlement's ground
+hamlet of four homes or more. Found once per world: the answer (the spot, or none, when the nominal one stands) is kept
+in `<world>/awaken/first_hamlet` with the seed and the centre it was found for, and every later start reads it instead
+of searching (the search reads up to 480 plans' land on the server thread before anyone can join: 16 s at every start
+of Euan's world, 12 Nov, six minutes on a seed whose roads take none); the spot's plan is then made off the server
+thread, last (`LandFirst.later`). Clear of the city reserve (+8) by the planner; gates never open on a settlement's ground
 or within 64 of it, planned ones included (`Villages.reserved`, read by `gates/Director`); a Hearth can't be founded
 within 8 (`hearth/Embers`, `HearthService`).
 
@@ -11975,7 +11997,21 @@ same roads and plans for a seed, the bench's fingerprint unchanged):
   (nearest first): its settlements' plans, its highroads' hubs, then their pieces and Carillon's roads, then the lanes;
   each piece is still made once by whoever asks first, and no thread waits for a job still queued. A job ahead of the
   players starts between the server's ticks or within a tick's first 40 ms (`RoadTimer.serverLate`, from the server
-  tick's start and end; held a second at most, so the queue keeps moving). The pass ahead (`RoadNet.ahead`, on the
+  tick's start and end; held a second at most, so the queue keeps moving). Land comes first (`core.api.LandFirst`, §12;
+Euan's Mac, 12 Nov: five planners used 4.6 cores while he flew over new land, and Tectonic's land came in half empty):
+while new land is coming in round a player only the jobs for that land run, two at a time (a third goes back in the
+queue in its place and the planner rests 50 ms before it takes the next): world generation's own, and the pieces of a
+lattice chunk within the ring world generation makes structure starts in (the view distance, the generation pyramid's ten chunks
+round a full one, `ChunkLevel.RADIUS_AROUND_FULL_CHUNK`, and one lattice spacing past it). The rest (a job further ahead, one a search asked for) is held
+aside and queued again in its order once the land is in. Holding the near lattice chunks too had left world
+generation laying their legs itself (run 43209363904: 15 s in 30 on the road starts thread, one chunk 5 s), where the
+planners had laid them first (run 43205566659, the same flight before Land first: 11 ms). The pass ahead queues a
+lattice chunk again nearer the front of the queue as a player comes closer (a job is queued again only when it's more
+urgent), and the copy further back finds a newer one queued or run and does nothing; the lode plans'
+and the Horizon's sinkhole workers, the village planner and the optional searches (the pick's trail to an adit, the
+Hearth's mouth for a metal, a region's wonder, the Well's site, now on `LandFirst.later()` instead of the game's own
+worldgen pool) wait before each job, at most a minute. No road, village or place is left out: each only comes later.
+The road timer's line counts the jobs put back or held and the chunks in view not made yet. The pass ahead (`RoadNet.ahead`, on the
   server thread twice a second) only queues: a lattice chunk's fan-out (the region map and the grid, a few ms) runs
   on a planner. The laid roads' index by chunk is read without a lock (copy-on-write lists, a batch's points filed in
   one copy): a creature's road distance on the server thread had waited 31 ms for a planner filing a batch.
@@ -12026,7 +12062,9 @@ finder reading a chunk still generating, then one tick of 4.5 minutes in it; the
 already whole). A watch on the server thread (`RoadTimer.watch`) logs any tick (or task between ticks) over two seconds
 with its stack, always (a player's log says what held the server; on a tour over one second, sampled 20 times a
 second), again every 10 s while the same tick runs, each time with the first frames of every thread not waiting for
-work, of any name (a chunk the server thread waits for waits on one of them; those waiting for work counted), Road
+work, of any name (a stack's first 24 frames, then when they don't reach the tick the rest from the first frame of ours
+on, else the last ten above it: a density function's frames alone filled the 24 of Euan's 32 s stall at a join, 12 Nov,
+and the caller was cut off) (a chunk the server thread waits for waits on one of them; those waiting for work counted), Road
 starts' lattice chunks not given back with what each waits for (its roads, the worldgen dispatcher to take it up, its
 step) and how long, each level's worldgen and light dispatchers (queue head, asleep, both executors' state), its light
 tasks, generation tasks not yet run and chunk tasks for the server thread, and the chunk under each player followed to

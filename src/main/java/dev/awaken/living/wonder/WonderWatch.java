@@ -98,7 +98,7 @@ public final class WonderWatch {
     static void findSecrets(ServerPlayer p, ServerLevel level) {
         RegionMap map = RegionService.mapIfReady(level.getServer());
         if (map == null) return;
-        var all = Secrets.near(level.getSeed(), map, terrain(level), p.getBlockX(), p.getBlockZ(), p.getBlockX(), p.getBlockZ(), Secrets.FIND);
+        var all = Secrets.near(level.getSeed(), map, terrain(level), p.getBlockX(), p.getBlockZ(), p.getBlockX(), p.getBlockZ(), Secrets.FIND, false);
         for (Secrets.Site s : all) {
             double dx = s.x() - p.getX(), dz = s.z() - p.getZ();
             if (dx * dx + dz * dz > (double) Secrets.FIND * Secrets.FIND || Math.abs(p.getY() - s.y()) > 6) continue;

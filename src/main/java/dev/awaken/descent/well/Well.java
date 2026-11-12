@@ -11,7 +11,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.util.Util;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -86,7 +85,7 @@ public final class Well {
         ChunkGenerator gen = overworld.getChunkSource().getGenerator();
         RandomState rs = overworld.getChunkSource().randomState();
         building = true;
-        CompletableFuture.supplyAsync(() -> pick(sites, gen, rs, overworld), Util.backgroundExecutor())
+        CompletableFuture.supplyAsync(() -> pick(sites, gen, rs, overworld), dev.awaken.core.api.LandFirst.later())
                 .thenAcceptAsync(site -> {
                     data.state = WellData.CHOSEN;
                     data.spawnX = spawn.getX();
