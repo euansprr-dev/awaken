@@ -349,15 +349,19 @@ public final class LensClient {
                         }));
     }
 
-    // The small shade's reach (SPEC §22 "The small shade's reach"): contact shadows from and to, ambient shade from
-    // and to, in blocks; an end not past its start leaves that shade whole at every distance.
+    // The small shade's reach (SPEC §22 "The small shade's reach"): how wide a texel of the light buffer may be on a
+    // surface, in the art's pixels (sixteenths of a block), where the contact shadows fade from and to, then the
+    // ambient shade; an end not past its start leaves that shade whole at every distance.
     private static final float[] SMALL = {0f, 0f, 0f, 0f};
     private static float @org.jspecify.annotations.Nullable [] forcedSmall;
+    /** The light buffer's height in texels (the chains' {@code awaken:lens_light} target). */
+    private static final float LIGHT_ROWS = 540f;
 
     /**
      * {@code /awaken lens small <contact from> <contact to> <ambient from> <ambient to>} (autopilot {@code lens small}):
-     * where the depth-made contact shadows and the ambient shade fade out, in blocks, for A/B shots and for tuning in
-     * play; {@code setting} puts the built-in reach back. An end not past its start: no fade.
+     * where the depth-made contact shadows and the ambient shade fade out, as the width of a light texel in the art's
+     * pixels, for A/B shots and for tuning in play; {@code setting} puts the built-in reach back. An end not past its
+     * start: no fade. The answer says what the numbers come to in blocks at the view in use.
      */
     public static String small(String arg) {
         String[] w = arg.trim().split("\\s+");
@@ -371,8 +375,19 @@ public final class LensClient {
             forcedSmall = null;
         }
         float[] s = forcedSmall != null ? forcedSmall : SMALL;
-        return String.format(java.util.Locale.ROOT, "small shade: contact shadows fade %.0f to %.0f, ambient shade %.0f to %.0f blocks%s",
-                s[0], s[1], s[2], s[3], forcedSmall != null ? "" : " (built in)");
+        // a texel is one art pixel wide this many blocks off, at the view in use
+        double fov = Minecraft.getInstance().options.fov().get();
+        double one = LIGHT_ROWS / (2.0 * Math.tan(Math.toRadians(fov / 2.0))) / 16.0;
+        return String.format(java.util.Locale.ROOT, "small shade%s: contact shadows fade from %s to %s, ambient shade from %s to %s",
+                forcedSmall != null ? "" : " (built in)", reach(s[0], s[1], one, true), reach(s[0], s[1], one, false),
+                reach(s[2], s[3], one, true), reach(s[2], s[3], one, false));
+    }
+
+    /** One end of a reach in words: the texel width in art pixels and the blocks that is at this view, or "never". */
+    private static String reach(float from, float to, double blocksAtOne, boolean start) {
+        if (to <= from) return start ? "nowhere" : "nowhere (whole at every distance)";
+        float v = start ? from : to;
+        return String.format(java.util.Locale.ROOT, "%.1f px (%.0f blocks)", v, v * blocksAtOne);
     }
 
     private static boolean showPaths;

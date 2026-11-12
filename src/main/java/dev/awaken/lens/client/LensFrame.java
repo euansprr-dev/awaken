@@ -103,8 +103,9 @@ final class LensFrame {
         paths = on;
     }
 
-    // the small shade's reach (texels 30 to 33, w): the distances over which the depth-made contact shadows and the
-    // ambient shade fade out, each a start and an end in blocks (an end not past its start: no fade)
+    // the small shade's reach (texels 30 to 33, w): how wide a texel of the light buffer may be on a surface, in the
+    // art's pixels (sixteenths of a block), before the depth-made contact shadows and the ambient shade fade out, each
+    // a start and an end (an end not past its start: no fade)
     private float contactFrom, contactTo, ambientFrom, ambientTo;
 
     void small(float contactFrom, float contactTo, float ambientFrom, float ambientTo) {

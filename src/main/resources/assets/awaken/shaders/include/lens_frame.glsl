@@ -17,8 +17,8 @@
 //   24-41 each plate: camera-relative centre,
 //        half-width and half-height vectors (3 texels a plate); 42-47 the storm cells (lens_storm_frame.glsl)
 //        (their w's are spare: 24-27 the land's horizon, lens_air.glsl; 28 the camera's z in the lit air's volume;
-//        29 the development view of the Sun Pass's parts, lens_light.fsh; 30 to 33 the small shade's reach: where the
-//        contact shadows fade from and to, then the ambient shade, in blocks, lens_light.fsh)
+//        29 the development view of the Sun Pass's parts, lens_light.fsh; 30 to 33 the small shade's reach: how wide a
+//        light texel may be, in the art's pixels, where the contact shadows fade from and to, then the ambient shade)
 
 #include <awaken:lens_block.glsl>
 

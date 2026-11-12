@@ -1,15 +1,18 @@
 # Far tall grass, measured (Euan, playing at 4K, 12 Nov: "all the grass and the shadows and everything just becomes one
-# big shimmering block of weirdness ... can we change the logic of how shadow is on swaying grass so that it just makes
-# it look less shimmery? Because like right now I'm on native 4K and it still just looks very shimmery"). A lawn over
-# the cloud layer, dense with short grass, clumps of tall grass and flowers, under a high sun; the camera at rest,
-# looking down its length from eight blocks up (the far grass a broad band of the picture, as on a hillside) and from
-# eye height. Bursts of five frames two ticks apart: what differs between them is what shimmers.
-# Each burst a different thing left out, so the numbers say which part it is: as built; the plants stilled (what Lens
-# itself changes from frame to frame); the contact shadows off, the ambient shade off, both off (`lens small`); Swift
-# (no light of Lens's at all: the game's own grass); and reaches for the fade. tools/lens/meadow.py reads the shots.
+# big shimmering block of weirdness ... because you have that breathing movement, especially with your camera ... can
+# we change the logic of how shadow is on swaying grass so that it just makes it look less shimmery? Because like right
+# now I'm on native 4K and it still just looks very shimmery"). A lawn over the cloud layer, dense with short grass,
+# clumps of tall grass and flowers, under a high sun, seen down its length from eight blocks up (the far grass a broad
+# band of the picture, as on a hillside) and from three. The pack's renderer and feel are on, as he plays: the plants
+# sway (the sway needs Sodium; run 43166685979 had none, nothing moved, and only the ambient shade's own noise showed)
+# and the camera breathes (Camera Overhaul's idle sway). Bursts of six frames two ticks apart.
+# Each burst a different thing left out, so the numbers say which part it is: as it was (no fade); the plants stilled
+# (the camera's breathing alone); the contact shadows off, the ambient shade off, both off; Swift (none of Lens's
+# light: the game's own grass, the floor no fix can go under); and reaches for the fade (`lens small`, in the art's
+# pixels a light texel spans: at this view one is 17 blocks off). tools/lens/meadow.py reads the shots.
 # SPEC §22 "The small shade's reach".
 # Run: tools/tour-ci.sh tools/autopilot/steady60-meadow-ci.txt 2400
-# ci knobs: LENS=cinematic
+# ci knobs: LENS=cinematic PACK=perf,feel
 world steadystill creative 4545
 waitworld
 wait 60
@@ -262,17 +265,19 @@ cmd time set 5000
 cmd tp @s 44.5 237 50.5 90 14
 wait 300
 shot v1_whole
-lens small setting
+lens small 0 0 0 0
 wait 80
-shotnow v1_a_built_1
+shotnow v1_a_was_1
 wait 2
-shotnow v1_a_built_2
+shotnow v1_a_was_2
 wait 2
-shotnow v1_a_built_3
+shotnow v1_a_was_3
 wait 2
-shotnow v1_a_built_4
+shotnow v1_a_was_4
 wait 2
-shotnow v1_a_built_5
+shotnow v1_a_was_5
+wait 2
+shotnow v1_a_was_6
 wait 2
 cmd awaken terrain waving debug 3
 wait 80
@@ -286,8 +291,10 @@ shotnow v1_b_still_4
 wait 2
 shotnow v1_b_still_5
 wait 2
+shotnow v1_b_still_6
+wait 2
 cmd awaken terrain waving debug 0
-lens small 0 0.01 0 0
+lens small 0 0.001 0 0
 wait 80
 shotnow v1_c_nocontact_1
 wait 2
@@ -299,7 +306,9 @@ shotnow v1_c_nocontact_4
 wait 2
 shotnow v1_c_nocontact_5
 wait 2
-lens small 0 0 0 0.01
+shotnow v1_c_nocontact_6
+wait 2
+lens small 0 0 0 0.001
 wait 80
 shotnow v1_d_noambient_1
 wait 2
@@ -311,7 +320,9 @@ shotnow v1_d_noambient_4
 wait 2
 shotnow v1_d_noambient_5
 wait 2
-lens small 0 0.01 0 0.01
+shotnow v1_d_noambient_6
+wait 2
+lens small 0 0.001 0 0.001
 wait 80
 shotnow v1_e_neither_1
 wait 2
@@ -323,43 +334,78 @@ shotnow v1_e_neither_4
 wait 2
 shotnow v1_e_neither_5
 wait 2
-lens small 16 40 16 40
+shotnow v1_e_neither_6
+wait 2
+lens small 0.75 2 0.75 2
 wait 80
-shotnow v1_g_fade_16_40_1
+shotnow v1_g_both_0.75_2_1
 wait 2
-shotnow v1_g_fade_16_40_2
+shotnow v1_g_both_0.75_2_2
 wait 2
-shotnow v1_g_fade_16_40_3
+shotnow v1_g_both_0.75_2_3
 wait 2
-shotnow v1_g_fade_16_40_4
+shotnow v1_g_both_0.75_2_4
 wait 2
-shotnow v1_g_fade_16_40_5
+shotnow v1_g_both_0.75_2_5
 wait 2
-lens small 24 56 24 56
+shotnow v1_g_both_0.75_2_6
+wait 2
+lens small 1 2.5 1 2.5
 wait 80
-shotnow v1_h_fade_24_56_1
+shotnow v1_h_both_1_2.5_1
 wait 2
-shotnow v1_h_fade_24_56_2
+shotnow v1_h_both_1_2.5_2
 wait 2
-shotnow v1_h_fade_24_56_3
+shotnow v1_h_both_1_2.5_3
 wait 2
-shotnow v1_h_fade_24_56_4
+shotnow v1_h_both_1_2.5_4
 wait 2
-shotnow v1_h_fade_24_56_5
+shotnow v1_h_both_1_2.5_5
 wait 2
-lens small 16 40 0 0
+shotnow v1_h_both_1_2.5_6
+wait 2
+lens small 1.5 3.5 1.5 3.5
 wait 80
-shotnow v1_i_fade_contact_only_16_40_1
+shotnow v1_i_both_1.5_3.5_1
 wait 2
-shotnow v1_i_fade_contact_only_16_40_2
+shotnow v1_i_both_1.5_3.5_2
 wait 2
-shotnow v1_i_fade_contact_only_16_40_3
+shotnow v1_i_both_1.5_3.5_3
 wait 2
-shotnow v1_i_fade_contact_only_16_40_4
+shotnow v1_i_both_1.5_3.5_4
 wait 2
-shotnow v1_i_fade_contact_only_16_40_5
+shotnow v1_i_both_1.5_3.5_5
+wait 2
+shotnow v1_i_both_1.5_3.5_6
+wait 2
+lens small 1 2.5 0 0
+wait 80
+shotnow v1_j_contact_1_2.5_1
+wait 2
+shotnow v1_j_contact_1_2.5_2
+wait 2
+shotnow v1_j_contact_1_2.5_3
+wait 2
+shotnow v1_j_contact_1_2.5_4
+wait 2
+shotnow v1_j_contact_1_2.5_5
+wait 2
+shotnow v1_j_contact_1_2.5_6
 wait 2
 lens small setting
+wait 80
+shotnow v1_k_built_1
+wait 2
+shotnow v1_k_built_2
+wait 2
+shotnow v1_k_built_3
+wait 2
+shotnow v1_k_built_4
+wait 2
+shotnow v1_k_built_5
+wait 2
+shotnow v1_k_built_6
+wait 2
 lookswitch swift
 wait 160
 wait 80
@@ -373,25 +419,29 @@ shotnow v1_f_swift_4
 wait 2
 shotnow v1_f_swift_5
 wait 2
+shotnow v1_f_swift_6
+wait 2
 lookswitch cinematic
 wait 240
-# --- at eye height, the same way
-cmd tp @s 44.5 231 50.5 90 4
+# --- from three blocks up, the same way
+cmd tp @s 44.5 232 50.5 90 5
 wait 300
 shot v2_whole
-lens small setting
+lens small 0 0 0 0
 wait 80
-shotnow v2_a_built_1
+shotnow v2_a_was_1
 wait 2
-shotnow v2_a_built_2
+shotnow v2_a_was_2
 wait 2
-shotnow v2_a_built_3
+shotnow v2_a_was_3
 wait 2
-shotnow v2_a_built_4
+shotnow v2_a_was_4
 wait 2
-shotnow v2_a_built_5
+shotnow v2_a_was_5
 wait 2
-lens small 0 0.01 0 0.01
+shotnow v2_a_was_6
+wait 2
+lens small 0 0.001 0 0.001
 wait 80
 shotnow v2_e_neither_1
 wait 2
@@ -403,29 +453,49 @@ shotnow v2_e_neither_4
 wait 2
 shotnow v2_e_neither_5
 wait 2
-lens small 16 40 16 40
+shotnow v2_e_neither_6
+wait 2
+lens small 1 2.5 1 2.5
 wait 80
-shotnow v2_g_fade_16_40_1
+shotnow v2_h_both_1_2.5_1
 wait 2
-shotnow v2_g_fade_16_40_2
+shotnow v2_h_both_1_2.5_2
 wait 2
-shotnow v2_g_fade_16_40_3
+shotnow v2_h_both_1_2.5_3
 wait 2
-shotnow v2_g_fade_16_40_4
+shotnow v2_h_both_1_2.5_4
 wait 2
-shotnow v2_g_fade_16_40_5
+shotnow v2_h_both_1_2.5_5
 wait 2
-lens small 24 56 24 56
-wait 80
-shotnow v2_h_fade_24_56_1
-wait 2
-shotnow v2_h_fade_24_56_2
-wait 2
-shotnow v2_h_fade_24_56_3
-wait 2
-shotnow v2_h_fade_24_56_4
-wait 2
-shotnow v2_h_fade_24_56_5
+shotnow v2_h_both_1_2.5_6
 wait 2
 lens small setting
+wait 80
+shotnow v2_k_built_1
+wait 2
+shotnow v2_k_built_2
+wait 2
+shotnow v2_k_built_3
+wait 2
+shotnow v2_k_built_4
+wait 2
+shotnow v2_k_built_5
+wait 2
+shotnow v2_k_built_6
+wait 2
+lookswitch swift
+wait 160
+wait 80
+shotnow v2_f_swift_1
+wait 2
+shotnow v2_f_swift_2
+wait 2
+shotnow v2_f_swift_3
+wait 2
+shotnow v2_f_swift_4
+wait 2
+shotnow v2_f_swift_5
+wait 2
+shotnow v2_f_swift_6
+wait 2
 quit

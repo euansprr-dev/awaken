@@ -443,10 +443,25 @@ vec4 history(vec3 p, bool sky, bool z01) {
     return wsum > 0.0 ? vec4(acc / wsum, wsum) : vec4(0.0);
 }
 
-// How much of the small shade (the contact shadows, the ambient shade) a surface d blocks off keeps: all of it up to
-// `from`, none past `to` (frame texels 30 to 33, w; `to` not past `from`: all of it everywhere).
-float smallKeep(float d, float from, float to) {
-    return to > from ? 1.0 - smoothstep(from, to, d) : 1.0;
+// The small shade's reach (SPEC §22; frame texels 30 to 33, w). The contact shadows and the ambient shade are made
+// from this buffer's own depth, one sample a texel, and what casts them in a meadow is a blade, a stem or a petal: one
+// or two of the art's pixels wide. Near the eye a texel is far smaller than that and the shade is the plant's own.
+// Far off a texel spans several blades and the gaps between them, and its one sample lands on a blade in one frame and
+// on the ground behind it in the next, as the plants sway and the camera breathes: the shade flips, and a far meadow
+// is a flicker of dark flecks (Euan, playing at 4K, 12 Nov: "there's so much going on in such a small area of view ...
+// right now I'm on native 4K and it still just looks very shimmery"). So the small shade is kept while the buffer can
+// see what casts it, and let go as it can't.
+// texelArt: how wide one of this buffer's texels is on a surface at this pixel's depth, in the art's pixels
+// (sixteenths of a block). It follows the view: a wider view or a smaller buffer lets go sooner, a spyglass keeps
+// the shade of the far grass it brings near.
+float texelArt(mat4 inv, vec2 uv, float depth, vec3 p, bool z01) {
+    return length(unproject(inv, uv + vec2(0.0, 1.0 / OutSize.y), depth, z01) - p) * 16.0;
+}
+
+// how much of a small shade is kept where a texel is `art` pixels wide: all of it up to `from`, none past `to` (`to`
+// not past `from`: all of it everywhere)
+float smallKeep(float art, float from, float to) {
+    return to > from ? 1.0 - smoothstep(from, to, art) : 1.0;
 }
 
 void main() {
@@ -484,6 +499,7 @@ void main() {
     if (!sky && !hand && !onPlate(p)) {
         vec3 n = normalAt(px, p, depth, inv, z01, InSize);
         mat4 vp = frameMat(4);
+        float art = texelArt(inv, uv, depth, p, z01);
         // (a face turned from the light is left to the composite, except inside the Sun Pass's block map, where the
         // block it belongs to shades it exactly)
         bool mapped = F(17).z > 0.0 && max(abs(p.x), abs(p.z)) < F(17).z - 1.0;
@@ -522,7 +538,7 @@ void main() {
             }
             l = normalize(l + (a1 * cos(ang) + cross(l, a1) * sin(ang)) * rad);
             vis = sunVisibility(ps, n, l, still, ultra);
-            float keepContact = smallKeep(dist, F(30).w, F(31).w);
+            float keepContact = smallKeep(art, F(30).w, F(31).w);
             if (vis > 0.0 && dist < 96.0 && keepContact > 0.0)
                 vis *= mix(1.0, contactShadow(ps, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra), keepContact);
             // the clouds' moving shadows
@@ -530,7 +546,7 @@ void main() {
             // and a storm cell's, long across the land when the sun is low
             if (vis > 0.0) vis *= stormShadow(p, f14.xyz, f12.y);
         }
-        float keepAmbient = smallKeep(dist, F(32).w, F(33).w);
+        float keepAmbient = smallKeep(art, F(32).w, F(33).w);
         if (dist < 96.0 && keepAmbient > 0.0) ao = mix(1.0, ambient(p, n, noise, noise2, vp, z01, zFar, ultra), keepAmbient);
     }
     float strength = f14.w * P(6).a * P(19).r;
