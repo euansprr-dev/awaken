@@ -85,7 +85,11 @@ wait 60
 shot rt_08_over_the_forest
 # an old world's mooring as the old ground search left Euan's: put up 16 on its stone over the land and saved as the look
 # before (no command on the build he played: there this part does nothing). The camera within 32 holds it while it's
-# photographed; far off, its next check takes it down and builds it on the land.
+# photographed (so it goes near first); far off, its next check takes it down and builds it on the land.
+frontier mark
+cmd awaken frontier look ridge 0
+frontier moved
+wait 20
 cmd awaken frontier perch ridge 16
 frontier mark
 cmd awaken frontier look ridge 0

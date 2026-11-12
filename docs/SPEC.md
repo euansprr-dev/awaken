@@ -26571,8 +26571,9 @@ improving the design and experience of it"): the first look was a plank box with
   lashed (`Moorings.relash`: each canvas block of the plan still standing takes its planned state); one of look 2 or 3
   has the land round it looked at again: if its pad stands 8 or more over the highest land just past it on its open
   sides (`Moorings.perched`, ten spots on the bow and the side away from the pier), it was set on trees, and once
-  nobody is within 32 (standing on it or watching it) and nobody is flying it is taken down whole (`Moorings.raze`: its plan, its
-  footprint from the keel up, posts, steps and pad with the stone filled under them) and built again on the land
+  nobody is within 32 (standing on it or watching it) and nobody is flying it is taken down whole (`Moorings.raze`: its posts and its
+  steps with the stone under them first, while they can be found, then its plan, its footprint from the keel up, and its
+  pad with the stone filled under it) and built again on the land
   (anyone who logged off mid-flight to its old deck is put on the new one); else only the trees round it are cleared
   again (`clearTrees` without the glade, never touching the mooring's footprint or posts). `/awaken frontier perch
   ridge|landing 8-20` puts a built mooring up that high on its stone, saved as look 3, for a tour of the fix.

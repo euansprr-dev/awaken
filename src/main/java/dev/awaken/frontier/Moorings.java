@@ -134,7 +134,7 @@ final class Moorings {
                 if (perched(level, m)) {
                     // set on trees' crowns, its pad on a stone tower over the forest floor: down, and up again on the land
                     if (anyoneNear(level, m.origin(), AWAY)) return true;
-                    raze(level, m, landing);
+                    raze(level, m, landing, true);
                     Awaken.LOG.info("[frontier] the {} mooring at {} stood on trees, {} over the land: taken down to be built on it", name,
                             m.origin().toShortString(), m.origin().getY() + Skiff.PAD - around(level, m));
                     was = m;
@@ -547,27 +547,15 @@ final class Moorings {
     }
 
     /**
-     * Takes a wind-skiff mooring down to the land it was built on: every block of its plan, its footprint from the keel
-     * up, its posts, its steps and the stone under them, and its pad with the stone filled under it.
+     * Takes a wind-skiff mooring down to the land it was built on: its posts, its steps and the stone under them (first,
+     * while they can still be found: the top step and the posts' heads lie in the footprint), every block of its plan, its
+     * footprint from the keel up, and with {@code pad} its pad and the stone filled under it.
      */
-    static void raze(ServerLevel level, FrontierData.Mooring m, boolean landing) {
+    static void raze(ServerLevel level, FrontierData.Mooring m, boolean landing, boolean pad) {
         int flags = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
         BlockState air = Blocks.AIR.defaultBlockState();
         BlockPos o = m.origin();
         Direction f = m.facing();
-        List<Skiff.Part> parts = new ArrayList<>(Skiff.jetty());
-        parts.addAll(Skiff.skiff());
-        parts.addAll(landing ? Skiff.landingExtras() : Skiff.ridgeExtras());
-        for (Skiff.Part part : parts) {
-            BlockPos p = Skiff.at(o, f, part.x(), part.y(), part.z());
-            if (!level.getBlockState(p).isAir()) level.setBlock(p, air, flags);
-        }
-        for (int x = -Skiff.FOOT_X; x <= Skiff.FOOT_X; x++)
-            for (int z = Skiff.FOOT_Z0; z <= Skiff.FOOT_Z1; z++)
-                for (int y = Skiff.KEEL; y <= Skiff.CLEAR_UP; y++) {
-                    BlockPos p = Skiff.at(o, f, x, y, z);
-                    if (!level.getBlockState(p).isAir()) level.setBlock(p, air, flags);
-                }
         for (int[] xz : Skiff.POSTS)
             for (int y = -1; y > -40; y--) {
                 BlockPos p = Skiff.at(o, f, xz[0], y, xz[1]);
@@ -581,6 +569,20 @@ final class Moorings {
                 level.setBlock(p, air, flags);
                 unfill(level, p, flags);
             }
+        List<Skiff.Part> parts = new ArrayList<>(Skiff.jetty());
+        parts.addAll(Skiff.skiff());
+        parts.addAll(landing ? Skiff.landingExtras() : Skiff.ridgeExtras());
+        for (Skiff.Part part : parts) {
+            BlockPos p = Skiff.at(o, f, part.x(), part.y(), part.z());
+            if (!level.getBlockState(p).isAir()) level.setBlock(p, air, flags);
+        }
+        for (int x = -Skiff.FOOT_X; x <= Skiff.FOOT_X; x++)
+            for (int z = Skiff.FOOT_Z0; z <= Skiff.FOOT_Z1; z++)
+                for (int y = Skiff.KEEL; y <= Skiff.CLEAR_UP; y++) {
+                    BlockPos p = Skiff.at(o, f, x, y, z);
+                    if (!level.getBlockState(p).isAir()) level.setBlock(p, air, flags);
+                }
+        if (!pad) return;
         int reach = (int) Math.ceil(Math.sqrt(Skiff.PAD_R2));
         for (int x = -reach; x <= reach; x++)
             for (int z = -reach; z <= reach; z++) {
@@ -603,14 +605,15 @@ final class Moorings {
 
     /**
      * For a tour (SPEC §67.4): a built mooring put up again {@code up} over where it stands, on its stone, and saved as the
-     * look before, as the old ground search left one on trees' crowns. Its next check takes it down and builds it on the land.
+     * look before, as the old ground search left one on trees' crowns. Its next check takes it down and builds it on the
+     * land. Its old pad stays under the new stone, so the land is as the mooring found it once that's gone.
      */
     static boolean perch(ServerLevel level, Which which, int up) {
         MinecraftServer server = level.getServer();
         FrontierData.Mooring m = get(server, which);
         if (m == null || !m.built()) return false;
         boolean landing = which == Which.LANDING;
-        raze(level, m, landing);
+        raze(level, m, landing, false);
         BlockPos high = m.origin().above(up);
         build(level, high, m.facing(), landing);
         save(FrontierData.get(server), which, new FrontierData.Mooring(high, m.facing(), true, SETTLED - 1));
