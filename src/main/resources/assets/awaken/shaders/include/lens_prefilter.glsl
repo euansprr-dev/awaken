@@ -8,6 +8,7 @@ uniform sampler2D ParamsSampler;
 #ifdef LENS_LIGHT
 uniform sampler2D CloudsSampler;   // Lens 2's clouds (lens_clouds.fsh): rgb their light, a what shows through
 uniform sampler2D FrameSampler;    // LensFrame: texel 22 w the Air
+uniform sampler2D GlowSampler;     // LensGlow's layer: the light laid over the finished picture (the power effects)
 #include <awaken:lens_frame.glsl>
 #include <awaken:lens_air.glsl>
 #include <awaken:lens_storm_frame.glsl>
@@ -40,6 +41,14 @@ void main() {
             + texture(InSampler, texCoord + t * vec2(-1.0, 1.0)).rgb + texture(InSampler, texCoord + t * vec2(1.0, 1.0)).rgb) * 0.25;
     float sky = texture(DepthSampler, texCoord).r < 1.0e-7 ? 1.0 : 0.0;
 #ifdef LENS_LIGHT
+    // the light the chain's last pass lays over the picture is not in the frame (SPEC §22 "Light over the Air": the
+    // power effects are drawn into Lens's layer, never into the frame it reads), and it blooms as the frame does:
+    // it joins what blooms here as it will lie there (premultiplied colour over what it covers; one clear texel on
+    // a frame nothing drew)
+    {
+        vec4 glow = texture(GlowSampler, texCoord);
+        c = c * (1.0 - glow.a) + glow.rgb;
+    }
     // the clouds are part of the sky that blooms and that the shafts are made of: bright edges glow, cloud cuts the rays
     // (Lite, parameter texel 25 r, draws no far clouds' buffer: its sampler is a stand-in)
     vec4 cl = P(25).r > 0.5 ? vec4(0.0, 0.0, 0.0, 1.0) : texture(CloudsSampler, texCoord);

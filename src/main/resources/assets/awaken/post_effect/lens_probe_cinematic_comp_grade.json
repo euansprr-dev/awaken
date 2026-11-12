@@ -2781,6 +2781,10 @@
           "location": "awaken:lens_cloud_cells",
           "width": 128,
           "height": 128
+        },
+        {
+          "sampler_name": "Glow",
+          "location": "awaken:lens_glow"
         }
       ],
       "output": "awaken:lens_half",

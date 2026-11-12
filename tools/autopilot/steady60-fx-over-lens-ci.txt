@@ -1,0 +1,319 @@
+# Power effects over Lens (Euan, playing, 12 Nov: "when I use powers and there's water behind it, the powers and the
+# water clash weirdly and create this weird like glitch effect ... it's not just with the water, it's with the entire
+# shader pack basically. The water color changes, the colors change around"). The effects' render types wrote depth,
+# so Lens took each glow's whole quad for a surface: the water behind lost its look in the quad's shape, and fog,
+# shade and sky behind were worked out for the effect's distance. They are now drawn into Lens's light layer (powers'
+# FxGlow, SPEC §36.12 and §22 "Light over the Air").
+# A stone deck over a pool with open sky beyond, a husk four and a half blocks ahead, in first person: three aimed
+# powers, each cast looking across the water, then up against the sky, then down at the deck in a wall's shade; two
+# frames of each cast; the whole round first the game's own way (`awaken fx glow off`: as it was), then over Lens.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-fx-over-lens-ci.txt 2400
+# ci knobs: LENS=cinematic PACK=perf
+world powerfx creative 4242
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 3000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+cmd tp @s 0.5 200 0.5 0 8
+cmd forceload add -32 -32 48 64
+wait 100
+# a deck, a pool beyond it, a wall to the east for shade
+cmd fill -14 196 -8 14 199 40 minecraft:smooth_stone
+cmd fill -12 199 3 12 199 36 minecraft:water
+cmd fill -14 200 -8 14 220 40 minecraft:air
+cmd fill -3 199 2 3 199 6 minecraft:smooth_stone
+cmd fill 5 200 -6 5 206 1 minecraft:stone_bricks
+wait 60
+camera first
+lookswitch cinematic
+opt fov 90
+wait 300
+cmd awaken fx glow off
+wait 20
+# beam, water
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 6
+wait 20
+cmd awaken admin power cast beam
+wait 2
+shotnow was_beam_water_2
+wait 3
+wait 5
+shotnow was_beam_water_4
+wait 60
+# beam, sky
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 -38
+wait 20
+cmd awaken admin power cast beam
+wait 2
+shotnow was_beam_sky_2
+wait 3
+wait 5
+shotnow was_beam_sky_4
+wait 60
+# beam, shade
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look -70 30
+wait 20
+cmd awaken admin power cast beam
+wait 2
+shotnow was_beam_shade_2
+wait 3
+wait 5
+shotnow was_beam_shade_4
+wait 60
+# prism_lance, water
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 6
+wait 20
+cmd awaken admin power cast prism_lance
+wait 2
+shotnow was_prism_lance_water_2
+wait 3
+wait 5
+shotnow was_prism_lance_water_4
+wait 60
+# prism_lance, sky
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 -38
+wait 20
+cmd awaken admin power cast prism_lance
+wait 2
+shotnow was_prism_lance_sky_2
+wait 3
+wait 5
+shotnow was_prism_lance_sky_4
+wait 60
+# prism_lance, shade
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look -70 30
+wait 20
+cmd awaken admin power cast prism_lance
+wait 2
+shotnow was_prism_lance_shade_2
+wait 3
+wait 5
+shotnow was_prism_lance_shade_4
+wait 60
+# charged_shot, water
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 6
+wait 20
+cmd awaken admin power cast charged_shot
+wait 2
+shotnow was_charged_shot_water_2
+wait 3
+wait 5
+shotnow was_charged_shot_water_4
+wait 60
+# charged_shot, sky
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 -38
+wait 20
+cmd awaken admin power cast charged_shot
+wait 2
+shotnow was_charged_shot_sky_2
+wait 3
+wait 5
+shotnow was_charged_shot_sky_4
+wait 60
+# charged_shot, shade
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look -70 30
+wait 20
+cmd awaken admin power cast charged_shot
+wait 2
+shotnow was_charged_shot_shade_2
+wait 3
+wait 5
+shotnow was_charged_shot_shade_4
+wait 60
+cmd awaken fx glow on
+wait 20
+# beam, water
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 6
+wait 20
+cmd awaken admin power cast beam
+wait 2
+shotnow now_beam_water_2
+wait 3
+wait 5
+shotnow now_beam_water_4
+wait 60
+# beam, sky
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 -38
+wait 20
+cmd awaken admin power cast beam
+wait 2
+shotnow now_beam_sky_2
+wait 3
+wait 5
+shotnow now_beam_sky_4
+wait 60
+# beam, shade
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look -70 30
+wait 20
+cmd awaken admin power cast beam
+wait 2
+shotnow now_beam_shade_2
+wait 3
+wait 5
+shotnow now_beam_shade_4
+wait 60
+# prism_lance, water
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 6
+wait 20
+cmd awaken admin power cast prism_lance
+wait 2
+shotnow now_prism_lance_water_2
+wait 3
+wait 5
+shotnow now_prism_lance_water_4
+wait 60
+# prism_lance, sky
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 -38
+wait 20
+cmd awaken admin power cast prism_lance
+wait 2
+shotnow now_prism_lance_sky_2
+wait 3
+wait 5
+shotnow now_prism_lance_sky_4
+wait 60
+# prism_lance, shade
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look -70 30
+wait 20
+cmd awaken admin power cast prism_lance
+wait 2
+shotnow now_prism_lance_shade_2
+wait 3
+wait 5
+shotnow now_prism_lance_shade_4
+wait 60
+# charged_shot, water
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 6
+wait 20
+cmd awaken admin power cast charged_shot
+wait 2
+shotnow now_charged_shot_water_2
+wait 3
+wait 5
+shotnow now_charged_shot_water_4
+wait 60
+# charged_shot, sky
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look 0 -38
+wait 20
+cmd awaken admin power cast charged_shot
+wait 2
+shotnow now_charged_shot_sky_2
+wait 3
+wait 5
+shotnow now_charged_shot_sky_4
+wait 60
+# charged_shot, shade
+cmd kill @e[type=!minecraft:player,distance=..80]
+cmd tp @s 0.5 200 0.5 0 8
+cmd summon minecraft:husk 0.5 200 4.5 {NoAI:1b,PersistenceRequired:1b,Rotation:[180f,0f]}
+cmd awaken admin power reset
+wait 8
+look -70 30
+wait 20
+cmd awaken admin power cast charged_shot
+wait 2
+shotnow now_charged_shot_shade_2
+wait 3
+wait 5
+shotnow now_charged_shot_shade_4
+wait 60
+quit

@@ -29,7 +29,8 @@ void main() {
     vec3 c = texture(InSampler, texCoord).rgb;
     vec4 g = texture(GlowSampler, texCoord);
     // most pixels of most frames hold none; a development view (texel 0 red: 255 = the picture) shows what it shows
-    if (g.a > 0.0 && int(P(0).r * 255.0 + 0.5) == 255) {
+    // (light that only adds covers nothing: its alpha is 0 and its colour is all there is of it)
+    if ((g.a > 0.0 || max(g.r, max(g.g, g.b)) > 0.0) && int(P(0).r * 255.0 + 0.5) == 255) {
         // the layer was tested against the world's depth, which has no hand in it: the hand and what it holds stay in
         // front (known by their own depth where Lens has it, parameter texel 26 r)
         bool hand = P(26).r > 0.5 && texture(HandSampler, texCoord).r > 0.0;

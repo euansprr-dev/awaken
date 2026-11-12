@@ -89,6 +89,16 @@ public final class LensGlow extends AbstractTexture {
         return encoder.createRenderPass(label, main.getColorTextureView(), Optional.empty(), main.getDepthTextureView(), OptionalDouble.empty());
     }
 
+    /**
+     * Whether a pass opened now draws into the layer the chain will lay over its finished picture (not straight onto
+     * the main target): for what must not be in the frame Lens reads at all, such as the power effects, whose render
+     * types write depth (powers' FxGlow). Asked at any time in a frame, before {@link #open}.
+     */
+    public static boolean laying() {
+        LensGlow g = it;
+        return g != null && !g.failed && LensClient.laysLight();
+    }
+
     /** Whether this frame's chain has light to lay (Tiles: the picture can't skip its last pass then). */
     public static boolean laid() {
         LensGlow g = it;
