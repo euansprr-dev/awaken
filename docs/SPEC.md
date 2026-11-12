@@ -25024,8 +25024,9 @@ this."
   swing's drive along its lower half (decision 6). An arc whose far side has no room loses speed before it gets there:
   no arc tops the rope's room (`Rope.cap`).
 - **Where it bites: the swing played forward** (`RealRope.aimed`, `RealRope.play`). The look's ray meets a block; the
-  points tried are the hit, the top over it (12 up at most) and 1.5 and 3 in along the look where the top goes on, the
-  underside over open air in its column, and each of those 2 and 3 blocks either side across the look where there is
+  points tried are the hit, the top over it (12 up at most) and 1.5 and 3 in along the look where the thing goes on, each
+  at the top of its own column (an oak's wide lower crown is 2 under its top: a rope from there runs you through the
+  leaves; first CI run 43239558452), the underside over open air in its column, and each of those 2 and 3 blocks either side across the look where there is
   something to bite. Each is thrown and played forward from your own speed: the flight out, the bite, 45 ticks with
   forward held. **Under** (decision 1): it crosses the anchor's line within 1.5 across the look and its first arc and
   back meets nothing. **Round**: it passes beside, turns you 45 degrees or more within 20 ticks on a rope 9 or shorter
@@ -25059,7 +25060,8 @@ this."
   16.5 before the tall tree: hoisted to the swing's start in under a second, then under the crown and 3 past its anchor,
   nothing touched); `ascent_rope_from_top` (13 up and 13 before the crown: swung under it and out past its far side,
   nothing touched). The older rope tests run with the switch off (`AscentSwingTests.today`). The sky stair and the swing
-  bench log a real-rope row beside the old (not gated).
+  bench log a real-rope row beside the old (not gated). First CI run (43239558452): the stair as built, hop bot 12/12 up
+  in 21.8 s on the real rope (27.9 s on the old), 1 hard hit (the old 0); key bot 6/6.
 - **Two test fixes in the same pass** (build 2f9a81888, run 43223608913). `ascent_rope_aimed`'s floor sling expected the
   bite on the floor's top; the bite is the look's hit, 0.04 out of the face as every hit (`LevelSpace.ray`, since
   f6edb498c): the test was wrong. `ascent_sky_stair`'s 2 hard hits came from cef8fba45 letting `find`'s own search use

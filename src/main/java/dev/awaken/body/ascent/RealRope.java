@@ -400,7 +400,8 @@ public final class RealRope {
 
     /**
      * Where you look, for the real rope (AscentSwing.aimed's, SPEC §62.9): the look's ray meets a block within reach;
-     * the points round it are the hit, the top over it (and 1.5 and 3 further in along the look, where the top goes on),
+     * the points round it are the hit, the top over it (and 1.5 and 3 further in along the look where the thing goes on,
+     * each at the top of its own column),
      * the underside over open air in its column, and each of those 2 and 3 blocks either side across the look where there
      * is something to bite. Each is played forward ({@link #play}): the fastest swing under wins, else the fastest swing
      * round. Else, for something tall, the hoist ({@link #hoist}). Else, with {@code slings}, the rest as the aimed rope
@@ -476,10 +477,11 @@ public final class RealRope {
         double top = s.topThrough(a, TOP_UP);
         if (!Double.isNaN(top)) {
             n = put(p, n, a.x, top - 0.3, a.z);
-            // a little in from the edge the look met: over the thing, not its lip
+            // a little in from the edge the look met: over the thing, not its lip, at the top of its own column (an oak's
+            // crown is two wide layers and a narrow top 2 higher: the wide layer's top is too low to swing round)
             for (double in : IN) {
                 double qx = a.x + lfx * in, qz = a.z + lfz * in;
-                if (solid(s, qx, top - 0.5, qz)) n = put(p, n, qx, top - 0.3, qz);
+                if (solid(s, qx, top - 0.5, qz)) n = put(p, n, qx, columnTop(s, qx, top - 0.5, qz) - 0.3, qz);
             }
         }
         if (a.ny == 0) {
@@ -507,6 +509,13 @@ public final class RealRope {
         p[n * 3 + 1] = y;
         p[n * 3 + 2] = z;
         return n + 1;
+    }
+
+    /** The top of the run of solid cells from the one at (x, y, z) up ({@link #TOP_UP} at most). */
+    private static double columnTop(SwingSpace s, double x, double y, double z) {
+        double cy = Math.floor(y);
+        for (int i = 0; i < TOP_UP && solid(s, x, cy + 1.5, z); i++) cy += 1;
+        return cy + 1;
     }
 
     private static boolean solid(SwingSpace s, double x, double y, double z) {
