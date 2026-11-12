@@ -226,7 +226,7 @@ def plates():
     return L + ["quit"]
 
 
-# faces in one plane (SPEC 44.14): the set in Euan's 12 Nov shot (Rootwarden) and one of each other rank, close on where
+# faces in one plane (SPEC 44.15): the set in Euan's 12 Nov shot (Rootwarden) and one of each other rank, close on where
 # the pieces meet, on an armour stand and on a Fitting Stand. Every view is shot twice, the camera a hundredth of a block
 # apart: two faces in one plane fight differently from each spot, so a flicker shows as a difference between the pair
 PLANES = ["rootwarden", "hornlord", "sunward", "tidebreaker", "lordscale", "nightcourt"]

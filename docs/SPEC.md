@@ -20221,6 +20221,38 @@ standing (the old one goes to your pack, as before). Offers of the held set say 
 - A stand left holding pieces of two sets from before this rule is held by the first of them until it is cleared.
 - Test: `armour_forge_fold_starfire` (the lock, the offers' flags, one piece taken, the stand free again).
 
+**44.15 Depth steps: no two faces in one plane (Euan, 12 Nov 2026: "a huge amount of pixels overlapping each other and
+glitching around").** A set is drawn as up to fourteen meshes, one per piece and bone (helmet; cuirass, each arm, three cape
+links; belt, each leg, two cloths; each boot), each where its bone stands, and all of them were designed on one grid. So a
+sleeve's front lay in the cuirass's front plane, a belt's in the thigh plates', one boot's in the other's, a helm's side in
+the cuirass's, and a plate's inner side in the skin's: 40 to 100 pairs of faces a set. Two faces in one plane fight for
+every pixel, which is the flicker he saw on the chest, at the shoulders, at the waist and down the legs. It was there with
+Lens off as well: it is the meshes, not the light.
+- **The rule:** every mesh is built a hair bigger than it was designed, each by its own **depth step**. Its boxes are grown
+  on every side by the step and its surface is worked out again from the grown boxes, so it stays closed and none of its
+  own faces double up (`armour_sets.py` `_stepped`: exact for boxes square to each other; a turned box that shares a plane
+  with an earlier one has that one's grown outline cut out of it). Vanilla does the same with its 0.5 and 1.0 armour layers.
+- **The steps** (`DEPTH`, in 128ths of a texel): helmet 4; cuirass 16, arms 20, cape links 8, 4, 8; belt 12, right leg 4,
+  left leg 8, cloths 6; right boot 12, left boot 16. Meshes that can meet differ by 4 (a 512th of a block), the cloths by
+  2 from either leg. A bone's living parts (§44.10) stand 1, 2, 3 over its still mesh, awakened parts 1 under their piece's.
+  Nothing is 0, so no plate lies in the skin. The largest, the arms', is 0.16 of a texel (a hundredth of a block): no
+  silhouette changes, and the texture is the same file.
+- **Why that is enough:** the game's depth buffer is 32-bit float with near and far swapped; on Vulkan (what the pack runs)
+  it tells faces a 512th of a block apart at any distance armour is drawn at. By the arithmetic (not measured), on OpenGL
+  without clip control (a Mac's own OpenGL) the same step holds to about 50 blocks, the cloths' and the living parts'
+  smaller ones to about 30 to 40.
+- **Every drawer gets it** because it is in the mesh files: worn, the first-person arm, an armour stand, the Fitting
+  Stand, the Hall of Arms, the Inscribing Table and a piece in the hand. No shader, pipeline or Java drawing changed.
+- **Icons** are drawn from the set as designed, without the steps (they are the approved pictures).
+- **Checks:** the kit's `check` refuses a set with any two triangles that face the same way, lie within three quarters of
+  a step of one plane and overlap, in three poses: worn at rest over the skin, on an armour stand (its leg pieces sit a
+  texel higher) and as the stands hold it (arms out 0.1 rad). `ARMOUR_DEPTH=0` builds without steps, to see the check
+  fail. In the game: test `armour_no_shared_planes` (`ArmourPlanes`: the same walk over every shipped mesh of every set).
+- **A new set, a new part:** design it on the grid as before. If the check names two meshes of the same step that now
+  meet, give one a step of its own in `DEPTH`.
+- Tour: `tools/autopilot/armour-audit-planes.txt` (six sets close on the chest and the legs, an armour stand and a
+  Fitting Stand; each view twice, a hundredth of a block apart, so a flicker shows as a difference between the pair).
+
 ## 45. Enchanting: the Inscribing Table (plan docs/enchanting/PLAN.md, page https://claude.ai/artifact/TsFe2Y1CfJrTxeyFZMKYiF; Euan approved the full plan 2026-11-02: "Go ahead with the full plan. AAA LEVEL BABY. Make it look AMAZING")
 
 Module `enchant` (`dev.awaken.enchant`). The rule: **your forge decides how strong a thing is; enchantments add what the
