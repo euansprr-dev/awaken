@@ -25048,6 +25048,30 @@ this."
   and the swing after it, played 55 ticks, must meet nothing and carry you 3 past the anchor. Sneak doesn't reel while it
   hauls. Its sound is `ascent.rope_hoist` (the crossbow's loading and the lead's tie, every 6 ticks of the haul), relayed
   as `EV_HOIST`; first person hauls hand over hand.
+- **The hoist is the first rope's only** (12 Nov 2026, after his first play; `AscentSwing.Work.first`,
+  `AscentMoves.firstRope`, `groundAt`). Euan: "it synthetically pulls you into the position for the perfect swing ...
+  It shouldn't move you from your current position to somewhere else before the swing starts", and "that hoist decision
+  is decent for the first one, but all ones after that need to just use the momentum and the direction". Only the first
+  rope since you stood on the ground off a rope may hoist (no rope bitten since then, none held now). Every rope after it
+  swings from where you are: where nothing swings cleanly, mid-chain, a swing under, round or along a wall may skim the
+  floor for up to 30 ticks (`SKIM_SWOOP`, against 4): a low swoop with your own speed, where the first rope would haul
+  you up. A clean swing beats a swoop. The heading's own search (`find`) never hoisted and keeps the 4.
+- **A swing along the wall** (`RealRope.WALL`, his cliff: "I should be able to start a swing from the side of a mountain
+  or from a wall like this. Right now, it just doesn't connect to the wall"). Two parts:
+  - *The slide* (`RealRope.step`): the body never goes into a wall or a cliff. A move that would bring it within 0.12 of
+    one (`SLIDE_SIDE`, the picker's sweep's margin; at its own size when it is already nearer, as the game's collision
+    leaves you against a wall you ran along) drops the part across the face and turns the speed along what is left, its
+    size kept (looking square at the face, along the side the look leans to), as the skim does on the floor. A swing
+    under or round counts a slide as meeting something (its way must be clear, as before); the hoist's too.
+  - *The move*: the look meets a side face that goes on at least 4 blocks down under the point (`WALL_DOWN`; a wall or a
+    cliff, not an oak's crown over air). That point, the lip over it on the same face, and their copies across the look
+    are on the wall. Played forward, a swing there that is neither a clean under nor round is a swing along the wall when
+    it slides 3 or more along the face and 1 or more past the anchor, then rises 30 degrees or more up the far side, and in
+    45 ticks meets nothing but the face it slides on, skimming 16 ticks at most (30 mid-chain). Under beats round beats a
+    swing along the wall beats the first rope's hoist. Its throw never sends you at the face: the entry's jog is turned
+    along it (`RealRope.entry`'s `wall`). Its marker is the plain swing's. The Python model (`scratchpad/rope2/wall2.py`):
+    from a sprint jump along a cliff the swing slides 17 along its face and rises 10 up it; mid-chain at 1 b/t, 12; from
+    a standstill a step from its foot, 14.
 - **Where nothing swings** (decision 3): the aimed rope's own answers as before, the sling thrown 3 past the side of the
   thing you're on (`SLING_ASIDE`, `slingPast`'s `aside`) so the next press swings round it; then onto its top, up under it.
   A sling or zip rope is never real.
@@ -25064,6 +25088,10 @@ this."
   60 degrees or more in a second, feet 0.9 or more over the floor, nothing touched); `ascent_rope_hoist` (a sprint jump
   16.5 before the tall tree: hoisted to the swing's start in under a second, then under the crown and 3 past its anchor,
   nothing touched); `ascent_rope_from_top` (13 up and 13 before the crown: swung under it and out past its far side,
+  nothing touched); `ascent_rope_wall` (a cliff 23 high: from a sprint jump along it, mid-chain at 1 b/t 6 up, and
+  standing a step from its foot looking up it, the press swings along the wall, 8 or more along the face and 6, 8 and 7
+  or more up it, nothing touched); `ascent_rope_chain` (mid-chain at the tall tree, where the jump from the ground
+  hoists: a swing from where you are, under the crown and 3 past its anchor, feet 0.9 or more over the floor, no haul,
   nothing touched). The older rope tests run with the switch off (`AscentSwingTests.today`). The sky stair and the swing
   bench log a real-rope row beside the old (not gated). First CI run (43239558452): the stair as built, hop bot 12/12 up
   in 21.8 s on the real rope (27.9 s on the old), 1 hard hit (the old 0); key bot 6/6.

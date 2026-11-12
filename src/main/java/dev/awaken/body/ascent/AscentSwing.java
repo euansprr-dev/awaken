@@ -217,7 +217,7 @@ public final class AscentSwing {
          */
         public boolean real, hoist;
         public double base, fit, cap = 88, hoistLen, hx, hy, hz;
-        public int skimming, hoistAge;
+        public int skimming, hoistAge, sliding;
 
         public Rope set(double ax, double ay, double az, double len, double fitLen) {
             this.ax = ax;
@@ -229,7 +229,7 @@ public final class AscentSwing {
             bend = 0;
             base = fit = len;
             cap = T.holdCap;
-            skimming = hoistAge = 0;
+            skimming = hoistAge = sliding = 0;
             return this;
         }
 
@@ -274,6 +274,7 @@ public final class AscentSwing {
             hz = o.hz;
             skimming = o.skimming;
             hoistAge = o.hoistAge;
+            sliding = o.sliding;
         }
     }
 
@@ -288,11 +289,12 @@ public final class AscentSwing {
         /** A swing whose rope reels you up into its arc as it bites (the aimed rope's swing under something, SPEC §62). */
         public boolean reel;
         /**
-         * The real swing's (SPEC §62.9): what it does ({@link RealRope#UNDER}, {@link RealRope#ROUND}, {@link RealRope#HOIST};
-         * 0 for any other pick), its arc's room ({@code cap}, degrees from the bottom), and a hoist's start (hx, hy, hz) and
-         * the swing's rope from there ({@code hoistLen}).
+         * The real swing's (SPEC §62.9): what it does ({@link RealRope#UNDER}, {@link RealRope#ROUND}, {@link RealRope#HOIST},
+         * {@link RealRope#WALL}; 0 for any other pick), the wall face it bit ({@code wall}, RealRope's code, 0 for none),
+         * its arc's room ({@code cap}, degrees from the bottom), and a hoist's start (hx, hy, hz) and the swing's rope from
+         * there ({@code hoistLen}).
          */
-        public int move;
+        public int move, wall;
         public boolean hoist;
         public double cap = 88, hoistLen, hx, hy, hz;
 
@@ -315,6 +317,7 @@ public final class AscentSwing {
             pz = o.pz;
             reel = o.reel;
             move = o.move;
+            wall = o.wall;
             hoist = o.hoist;
             cap = o.cap;
             hoistLen = o.hoistLen;
@@ -349,10 +352,19 @@ public final class AscentSwing {
         final AscentRules.Kin rk = new AscentRules.Kin();
         final Rope rr = new Rope();
         final Pick rc = new Pick();
-        final double[] rpts = new double[72], rbest = new double[8];
+        final double[] rpts = new double[72], rbest = new double[24];
+        /** Which of the real rope's points sit on a wall's face, and that face's normal (x, z), for a swing along it. */
+        final int[] rwall = new int[24], rbestWall = new int[4];
+        /**
+         * Whether a real rope may hoist you up to its swing ({@link RealRope}): only the first rope since you stood on the
+         * ground. Once you swing, every rope starts where you are (12 Nov 2026, Euan: "all ones after that need to just use
+         * the momentum and the direction"). The client sets it before each look; true elsewhere.
+         */
+        public boolean first = true;
         double playScore, playCap;
         /** Why the last played real swing was refused (RealRope.NO), and what it did: for the tests' report. */
-        int playNo, playHitAt, playSkim;
+        int playNo, playHitAt, playSkim, playSlide;
+        boolean playSwoop;
         double playTurn, playBite, playHx, playHy, playHz;
 
         public Work() {
@@ -444,7 +456,7 @@ public final class AscentSwing {
         out.zip = false;
         out.sling = false;
         out.reel = fitLen < len * FIT_MIN;
-        out.move = 0;
+        out.move = out.wall = 0;
         out.hoist = false;
         out.cap = t.holdCap;
         return true;
@@ -1076,8 +1088,13 @@ public final class AscentSwing {
 
     /** A swing never starts slower than a jog along the heading (no dead hang from a slow entry). */
     public static void entry(AscentRules.Kin k, double heading) {
+        entry(k, heading, 0);
+    }
+
+    /** As {@link #entry(AscentRules.Kin, double)}, for a rope on a wall's face ({@code wall}, RealRope's code; 0 for none). */
+    public static void entry(AscentRules.Kin k, double heading, int wall) {
         if (real) {
-            RealRope.entry(k, heading);
+            RealRope.entry(k, heading, wall);
             return;
         }
         double hx = fx(heading), hz = fz(heading), along = k.vx * hx + k.vz * hz, floor = T.entryFloor;

@@ -117,6 +117,8 @@ public final class AscentMoves {
     static int ticks, stateAge, groundTicks;
     static int fireAt = -100, biteAt = -100, releaseAt = -100, launchAt = -100, deployAt = -100, foldAt = -100, boomAt = -100,
             landAt = -100, flapAt = -100, bonkAt = -100, missAt = -100, soarAt = -100;
+    /** The last tick you stood on the ground off a rope: the first rope after it may hoist you (SPEC §62.9). */
+    static int groundAt = -100;
     static float releaseQuality, landSpeed, bonkSpeed, biteStrength;
     static boolean boomArmed = true;
     /** A rope that missed: where it flew to (drawn for a moment, falling slack). */
@@ -982,6 +984,7 @@ public final class AscentMoves {
         if (AscentSwing.real) {
             // the real swing (SPEC §62.9): played again from where you are now; one that no longer swings is looked for anew
             boolean view = dev.awaken.body.client.feel.ShoulderView.aim(VIEW);
+            WORK.first = firstRope();
             if (!dev.awaken.body.ascent.RealRope.still(SPACE, HAND, view ? VIEW[0] : p.getYRot(), PICK, WORK)) return null;
         } else if (!PICK.zip && !PICK.sling && PICK.fitLen < d * AscentSwing.FIT_MIN) {
             // a swing whose way has grown long for its fit since it looked reels in to it
@@ -991,12 +994,22 @@ public final class AscentMoves {
         return PICK;
     }
 
+    /**
+     * Whether the next rope is the first since you stood on the ground (SPEC §62.9): only it may hoist you up to its swing;
+     * every rope after it swings from where your momentum has you (Euan 12 Nov: "I can't keep doing it every swing,
+     * otherwise it ... completely breaks momentum every time").
+     */
+    private static boolean firstRope() {
+        return !state.rope && groundAt >= biteAt;
+    }
+
     /** The search a press runs ({@link #pick}), before the bite is checked. */
     private static AscentSwing.@org.jspecify.annotations.Nullable Pick search(LocalPlayer p, Vec3 eye, float yaw, float pitch, boolean lips) {
         SPACE.at(p.level(), p);
         hand(p);
         // where you look first (SPEC §62, "The rope goes where you look"): the block under the crosshair, swung from or
         // slung past; else the best along the heading, as ever
+        WORK.first = firstRope();
         pickAimed = AscentSwing.aimed(SPACE, HAND, eye.x, eye.y, eye.z, yaw, pitch, reach(p), AscentSwing.guide, WORK, PICK);
         if (pickAimed) return PICK;
         if (AscentSwing.findAfter(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
@@ -1054,7 +1067,7 @@ public final class AscentMoves {
         swinging = true;
         ropeTravel = AscentSwing.travel(len);
         ropeTaut = false;
-        AscentSwing.entry(K, heading);
+        AscentSwing.entry(K, heading, pk.wall);
         setState(p, AscentState.TETHER);
         if (ROPE.real) trace(String.format("%s %.1f off (%.0f° up, %.1f aside, room %.0f°)", dev.awaken.body.ascent.RealRope.MOVE[pk.move], pk.len, pk.elev, pk.side, pk.cap));
         else trace(String.format("swing %.1f (fits %.1f, %.0f° up, %.1f aside)", pk.len, pk.fitLen, pk.elev, pk.side));
@@ -1203,6 +1216,7 @@ public final class AscentMoves {
         Vec3 eye = p.getEyePosition();
         markerOverhead = overheadMark(p, eye, yaw, pitch);
         markerAt = ticks;
+        WORK.first = firstRope();
         markerOn = markerOverhead
                 || AscentSwing.aimed(SPACE, HAND, eye.x, eye.y, eye.z, yaw, pitch, reach(p), AscentSwing.guide, WORK, MARKER)
                 || AscentSwing.findAfter(SPACE, HAND, yaw, reach(p), WORK, MARKER)
@@ -2753,6 +2767,7 @@ public final class AscentMoves {
         // the game has moved the body by this tick's step: its motion is left at nothing until the next (SPEC §62), so
         // whatever is there then came from outside (a cast, a blast, a knock), whether it was set or added
         LocalPlayer p = Minecraft.getInstance().player;
+        if (p != null && p.onGround() && !state.rope) groundAt = ticks;
         zeroed = rested = p != null && state != AscentState.NONE && sent;
         if (zeroed) p.setDeltaMovement(Vec3.ZERO);
     }
@@ -2801,6 +2816,6 @@ public final class AscentMoves {
         aether = 1;
         AscentFlow.reset();
         ticks = 0;
-        fireAt = biteAt = releaseAt = launchAt = deployAt = foldAt = boomAt = landAt = flapAt = bonkAt = missAt = soarAt = -100;
+        fireAt = biteAt = releaseAt = launchAt = deployAt = foldAt = boomAt = landAt = flapAt = bonkAt = missAt = soarAt = groundAt = -100;
     }
 }
