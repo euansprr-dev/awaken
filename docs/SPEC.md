@@ -25090,7 +25090,7 @@ this."
   nothing touched); `ascent_rope_from_top` (13 up and 13 before the crown: swung under it and out past its far side,
   nothing touched); `ascent_rope_wall` (a cliff 23 high: from a sprint jump along it, mid-chain at 1 b/t 6 up, and
   standing a step from its foot looking up it, the press swings along the wall, 8 or more along the face and 6, 8 and 7
-  or more up it, nothing touched); `ascent_rope_chain` (mid-chain at the tall tree, where the jump from the ground
+  or more up it, nothing touched); `ascent_rope_momentum` (mid-chain at the tall tree, where the jump from the ground
   hoists: a swing from where you are, under the crown and 3 past its anchor, feet 0.9 or more over the floor, no haul,
   nothing touched). The older rope tests run with the switch off (`AscentSwingTests.today`). The sky stair and the swing
   bench log a real-rope row beside the old (not gated). First CI run (43239558452): the stair as built, hop bot 12/12 up

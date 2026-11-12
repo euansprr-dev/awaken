@@ -25,7 +25,7 @@ final class RealRopeTests {
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_hoist", 40, real(RealRopeTests::hoist));
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_from_top", 40, real(RealRopeTests::fromTop));
         dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_wall", 40, real(RealRopeTests::wall));
-        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_chain", 40, real(RealRopeTests::chain));
+        dev.awaken.core.test.AwakenTests.registerIsolated("ascent_rope_momentum", 40, real(RealRopeTests::chain));
     }
 
     /** A test on the real rope (the switch on), the jar's tune, the held rope and the guide as the client has them. */
