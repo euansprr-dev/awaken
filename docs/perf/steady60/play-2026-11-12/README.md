@@ -106,3 +106,20 @@ of its brightness and 20% of its colour, the grass 25% of its colour, the water 
 patch is brighter (sky 4%, grass 13%, water 18%, leaves 15%: the beam's own light and bloom), the grass keeps its
 colour, and the water and leaves lose 17 to 19% (the bloom's white over them, and the 7% the beam's look takes).
 Flow, a look written to drain the world, still does both ways (grass colour -45% before, -44% after).
+
+## Dust and fog as air
+
+Euan, of a wood at night and of a stampede he stood in: "smth wrong with the fog here, making things very washed out
+and flat"; "it makes everything look very pale and flat instead of actually looking good like a fog or something ...
+even without the shaders it looks bad as well. So I think it's an issue with those textures themselves". Both were
+Living Wilds happenings' tells (the Deep Tide's fog, a stampede's dust line): flat discs facing the camera, one fixed
+colour, unlit, drawn twice over. Lens now draws each as a soft volume in its picture (SPEC §22 "Dust and fog as
+air"); without Lens the discs take the hour's light, are drawn once and fade as the camera comes into them.
+
+`dust-and-fog-as-air.jpg` (run 43240496428, `tools/autopilot/steady60-dustfog-ci.txt`, the Vivid grade): the clear
+view on the left of each row; a stampede's dust by a morning sun; the Deep Tide at dusk; the Deep Tide at night.
+`/awaken lens haze off` in play leaves them to the discs, for comparison.
+
+Not measured: frame time with a volume on screen. Not seen: his own two spots with their happenings (a happening
+starts where it will; four tours at his saved spots were beside the point, two of them in another world: his is the
+Awakened Pack's terrain).
