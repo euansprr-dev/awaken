@@ -27529,10 +27529,11 @@ plan with `leaperTrial` once it says it is ready, which it does not until someon
   proves each crossing against the reach above (the walk check takes the land's word for which crossings need a move);
   par set from real runs. Nobody has played it.
 
-## 72. Gates in Motion (PROPOSED, not built; plan docs/gates-in-motion/PLAN.md, page https://claude.ai/artifact/EMPut1PgjJCgoXnDcSsK1v; waiting on Euan's answers)
+## 72. Gates in Motion (APPROVED 12 Nov 2026, being built; plan docs/gates-in-motion/PLAN.md, build docs/gates-in-motion/BUILD-PLAN.md)
 
 Euan, 12 Nov 2026: the gates' parkour is "very boring": little wall running, simple jumps, no mantling, no sliding; a bit
-of fighting on the spiral stairs; "extrapolate this to every possible level". Renumber at merge if 72 is taken.
+of fighting on the spiral stairs; "extrapolate this to every possible level". Approved the same day: "Go ahead with the full plan in
+INSANE detail and attention" (every recommendation; both kinds of teaching). Renumber at merge if 72 is taken.
 
 **72.1 Why it is flat today.** Every move in the Runner's Kit is everyone's from the first second (§16.3), but a rolled
 crawl never asks for one: its crossings are sprint jumps over one to three cells, level or down (§50.9, `CrawlLand.Chasm`),
@@ -27556,7 +27557,7 @@ mock player with the real rules through every beat at its smallest and largest s
 simpler beat, then today's crossing (`beats.fallback`, at most 3% of legs on the sweep).
 
 **72.5 Fights in motion.** Holds (2-4 light monsters on a landing, leashed, never locking the way), perches (C+), one chase
-(B+), dens and stands with ledges and wall-run rings. A hit never throws a player off a wall or a ledge (pending Euan).
+(B+), dens and stands with ledges and wall-run rings. A hit never throws a player off a wall or a ledge.
 
 **72.6 Teaching, co-op, data.** Signs in each kind's stone; the gold `LessonFigure` once per family per player (GateMemory
 schema +1); a clean line gives a quiet Flow. Timed beats cycle for a partner (§70). `RealmPlan.CURRENT_VERSION` +1 so open
