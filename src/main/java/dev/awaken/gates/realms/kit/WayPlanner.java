@@ -164,12 +164,24 @@ public final class WayPlanner {
             if (hub != null) break;
         }
         if (hub == null) {
-            // anywhere level within 60 of the stones and a walk of both ends (their own clearance may fill the near ground)
-            int[] at = spot(land, pieces, among, ok, taken, climb.x, climb.z, null, 10, 60, 180, keep);
+            // anywhere level within 84 of the stones and a walk of both ends (their own clearance may fill the near ground)
+            int[] at = spot(land, pieces, among, ok, taken, climb.x, climb.z, null, 10, 84, 180, keep);
             if (at != null) {
                 taken.add(new int[]{at[0], at[1], 12});
                 hub = new Stop("camp2", Land.LegKind.FIGHT, "A camp past the stones", at[0], land.ground(at[0], at[1]) + 1, at[1], 8, nextDen);
                 hub.newDen = at;
+            }
+        }
+        if (hub == null) {
+            // or the land's own den nearest the stones, unused and a walk of both ends (a moor of mounds and paths may hold no new one)
+            Land.Site best = null;
+            for (Land.Site d : dens) {
+                if (used.contains(d.index()) || beyond(keep, d.x(), d.z())) continue;
+                if (best == null || Math.hypot(d.x() - climb.x, d.z() - climb.z) < Math.hypot(best.x() - climb.x, best.z() - climb.z)) best = d;
+            }
+            if (best != null) {
+                used.add(best.index());
+                hub = new Stop("camp2", Land.LegKind.FIGHT, "A camp past the stones", best.x(), best.y(), best.z(), 8, best.index());
             }
         }
         if (hub == null) return no("no camp past the first stones near " + (int) (past[0] + dir[0] * 28) + "," + (int) (past[1] + dir[1] * 28) + ": " + why());

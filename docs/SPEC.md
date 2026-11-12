@@ -23369,7 +23369,17 @@ stone dressed in the land's own stone with a band of its accent; its course catc
   Vine Seat the lagoon on its causeway (0, 165) and climbs the great stair (0, 78) before its stones. What counts as ground
   is each land's own: Kingsroot's two wards (4 clear of either curtain, which stands 11 inside its line, and clear of the
   rubble spilling from each breach), the Vine Seat's steps (a block in from either lip, off the great stair and out of its
-  rooms; its crown's floor is not one), the Barrow's moor (63, a block over the water, counts as dry).
+  rooms; its crown's floor is not one), the Barrow's moor (63, a block over the water, counts as dry; the way keeps 8 off the
+  Lord's ship, whose hull is masses the planner can't see).
+  Every stop is within a walk (88) of the one it leads from (`keep`): stones, the hub and each camp on a branch are only
+  looked for where that holds. The hub is tried 28 past the first stones, 28 to either side and 10 past; failing those, a
+  new camp anywhere level within 84 of them, or the land's own unused den nearest them. The camp and the vias near the Mouth are early stops: no branch starts from
+  one, so every Warden is reached past the first stones. A branch's camp may turn up to 70 degrees round a hill (30, 50, 70
+  either way) so long as it gains 16 on the target; a turn that gains less is given back. When the first forty blocks past
+  a stop are full, stones are looked for further along (6 to 46) and further aside (up to 48), as short as 22. A run with
+  fewer than two movement legs gets a second line of stones on its longest walk over 30 (`WayPlanner.moreStones`).
+  A stone's footing goes down through drifts, plants and leaves to the ground (`Hops.footed`): a frost or sand drift holds a
+  boot, not a stone.
 - **The rolled lands** (`GeneratedLand.secondStretch`): beside a walk of over 44 blocks between two legs of the run that are
   neither movement nor the Lord's (the longest that takes one), a second stretch of stones in the country's rock, spliced in
   as a movement leg ("Stones to jump along", `Land.between`). Tried first beside a walk's middle; only when no walk takes
@@ -23378,7 +23388,10 @@ stone dressed in the land's own stone with a band of its accent; its course catc
   Where no line fits, the run is as before, with a line in the log. A rolled land whose first fight is more than 56 blocks
   from the Mouth (`GeneratedLand.earlyCamp`; the High Caps' is on the next table over) gets a camp with a den of its own
   18 to 52 from the Mouth, toward the leg the way in led to and within 86 of it, spliced in before it ("A camp near the way
-  in", leg `near`); it may stand among glowcaps, lamps and threads of light.
+  in", leg `near`); it may stand among glowcaps, lamps, threads of light and round a great tree. Where no camp fits, a
+  point on the way 20 to 52 in (36 first), dry and 12 in from the edge, holds an ambush instead ("An ambush on the way
+  in"). Any walk still over 88 gets a rest spliced into its middle (`GeneratedLand.rests`, "A rest on the way", a
+  breather): the point on the way, or on the straight line, nearest the middle and within 86 of both ends.
 - Every line is tried along the way and turned off it up to 100 degrees (`WayPlanner.TURNS`): a slope steeper than a block a
   stone can't be climbed straight up, so the line crosses it. A camp keeps 12 blocks in from the land's edge (as the
   country's haunts' places do), six from anything built and from a site's own radius; a stone 12 in

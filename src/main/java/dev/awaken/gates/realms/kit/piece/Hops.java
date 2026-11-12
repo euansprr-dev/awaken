@@ -1,9 +1,11 @@
 package dev.awaken.gates.realms.kit.piece;
 
 import dev.awaken.gates.realms.Land;
+import dev.awaken.gates.realms.kit.Kinds;
 import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.Piece;
 import dev.awaken.gates.realms.kit.V;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -123,6 +125,18 @@ public final class Hops extends Piece<Mats> {
         return new int[]{s.x(), s.top() + 1, s.z()};
     }
 
+    /**
+     * Down to what carries a stone: a drift, a plant or a crown's leaves hold a boot but not a stone (the float check finds
+     * a stone left on a frost drift or a sand drift), so the footing goes on through them to the ground.
+     */
+    private void footed(V v, int x, int y, int z) {
+        for (int k = y; k >= 0; k--) {
+            BlockState at = v.get(x, k, z);
+            if (V.holds(at) && Kinds.of(at) == Kinds.BODY && !(at.getBlock() instanceof LeavesBlock)) return;
+            v.set(x, k, z, body);
+        }
+    }
+
     @Override
     public void draw(V v, Mats m) {
         for (Stone s : stones) {
@@ -136,7 +150,7 @@ public final class Hops extends Piece<Mats> {
                 // a band of the land's accent a few blocks under the top, so a stone reads as cut and set, not grown
                 v.set(x, s.top() - 1, z, body);
                 v.set(x, s.top() - 2, z, rim ? band : body);
-                v.foot(x, s.top() - 3, z, body);
+                footed(v, x, s.top() - 3, z);
             }
             // nothing grows or rests on a stone you're meant to land on
             for (int dx = -r; dx <= r; dx++) for (int dz = -r; dz <= r; dz++) for (int y = s.top() + 1; y <= s.top() + 3; y++) {

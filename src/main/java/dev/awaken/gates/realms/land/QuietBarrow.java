@@ -163,7 +163,8 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         if (ctx.version() >= 2) {
             M m = m();
             // the moor lies a block over the water (63 on 62): that counts as dry
-            designWay((x, z) -> ground(x, z) > water() && !inBarrow(x, z) && pathDist(x, z) > 5,
+            // and the Lord's ship on its hill is masses, not pieces, so the planner keeps 8 off its hull and posts by hand
+            designWay((x, z) -> ground(x, z) > water() && !inBarrow(x, z) && pathDist(x, z) > 5 && clearOfShip(x, z, 8),
                     new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band), java.util.Set.of("standing stone"));
         }
     }
@@ -686,6 +687,12 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
     }
 
     // ---- what grows -------------------------------------------------------------------------------------------------------------
+
+    private boolean clearOfShip(int x, int z, int pad) {
+        for (Blockout.Mass[] set : new Blockout.Mass[][]{hullParts, posts})
+            for (Blockout.Mass m : set) if (x >= m.x0 - pad && x <= m.x1 + pad && z >= m.z0 - pad && z <= m.z1 + pad) return false;
+        return true;
+    }
 
     private boolean inBarrow(int x, int z) {
         for (Barrow b : barrows) if (b.in(x, z)) return true;
