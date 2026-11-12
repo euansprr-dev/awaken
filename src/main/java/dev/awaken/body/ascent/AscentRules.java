@@ -65,6 +65,26 @@ public final class AscentRules {
     public static final double DOUBLE_JUMP = 0.52;
     /** An air dash: once an airtime, along the look's heading at this speed (or a third faster than you were going). */
     public static final double DASH_SPEED = 0.95, DASH_GAIN = 1.33, DASH_LIFT = 0.08;
+    /**
+     * How long a sprint press the air dash couldn't take yet is kept (ticks): one made on the rope (a swing, a pull), in
+     * a glide that can't fly, or in the tick of a double jump goes the first tick the dash can (SPEC §17.32, "The dash's
+     * press").
+     */
+    public static final int DASH_KEPT = 6;
+
+    /**
+     * Whether sprint was pressed this tick (SPEC §17.32, "The dash's press"): the key going down, or a real press since
+     * the last tick ({@code taps}: a held key let go and pressed again inside one tick, a toggle sprint's click), which
+     * the key's state alone can't show. A held key is no press, and the key's repeats are none either.
+     */
+    public static boolean sprintPress(boolean down, boolean was, int taps) {
+        return down && !was || taps > 0;
+    }
+
+    /** Whether a sprint press kept at {@code pressedAt} is still the dash's at {@code now} ({@link #DASH_KEPT}). */
+    public static boolean dashKept(int pressedAt, int now) {
+        return now >= pressedAt && now - pressedAt <= DASH_KEPT;
+    }
     /** A dive slam: from at least this high, straight down at this speed; the landing's shock reaches this far. */
     public static final double SLAM_MIN_HEIGHT = 4, SLAM_SPEED = 1.7, SLAM_RADIUS = 3.5;
     /**

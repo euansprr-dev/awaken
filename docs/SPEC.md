@@ -3887,7 +3887,8 @@ is what the Ascent decided while building it.
 ### 17.3 Phase 1b: the Leaper and the server's checks
 - The Leaper (tier D-C), no new keys, each once an airtime (back on landing and when a rope bites), from any airborne
   body that isn't on a wall or a ledge (a leap that meets an edge climbs it, §17.32): jump in the air = a double jump
-  (+0.52 on top of any rise; it comes before the wings: a second jump opens them), sprint in the air = an air dash
+  (+0.52 on top of any rise; it comes before the wings: a second jump opens them), sprint pressed in the air (a real
+  press, §17.32 "The dash's press") = an air dash
   along the look's heading at max(0.95, 1.33 × your horizontal speed) with a lift of 0.08, sneak with 4+ blocks under
   you = a dive slam (horizontal speed ×0.25, straight down at 1.7). Each goes into the carry with the swing's momentum,
   so a release can chain into a dash and a slam. After a double jump or a dash, attack = the aimed dive (§17.33).
@@ -5270,6 +5271,28 @@ The fix: a leap is the body's own air again whenever it meets an edge, and it cl
   The log names what took each (`air catch: ...`, `air mantle onto`, `vault ... from the air`, `hang (grab)`) and where
   the feet came to rest (`[ascent] where`). The pilot gained `double <key> [gap]` and `where <label>`; the Ascent's
   `grant` gained `leaper` (the rope and the Leaper, no wings).
+
+**The dash's press** (12 Nov 2026, Euan on build 40efdd42c, right after the Gauntlet gave him the dash: "Air dashes
+don't work after any movement like double jump, wings, or rope. Need to fix that"). The dash took only the sprint key
+going down between two ticks. The free-run (§17.14) holds sprint, so after a run's jump, a double jump or a rope there
+was nothing to press: the key was already down, and a quick let-go and press again inside one tick (50 ms) left it down
+at both reads. A press on the rope or in a glide went nowhere. Now:
+- **A press is a real press.** The key going down, or a press of it since the last tick, counted off the key's own
+  events (`InputEvent.Key`, `AscentMoves.sprintKey`; a repeat of a held key is none): a held sprint let go and pressed
+  again however fast, and every click of toggle sprint, on or off (`AscentRules.sprintPress`). A held sprint never
+  dashes by itself (a run off a cliff with sprint held is no dash).
+- **A press the dash can't take yet is kept 6 ticks** (`AscentRules.DASH_KEPT`, `dashKept`): one on the rope (a swing, a
+  pull or sling) dashes in the carry the let-go starts; one in the same tick as a double jump dashes the tick after it.
+  Landing drops it.
+- **From a glide**, sprint is flight while the ladder gives it (Skyborn with the meter for a beat, §17.8, unchanged);
+  otherwise (no Skyborn, or the meter too low) the wings fold and the body dashes. Folded wings (sneak) leave the dash
+  as it was: open if this airtime hasn't spent it.
+- **Once an airtime, as before**: back on landing, at a rope's bite and at a rope strike.
+- **The trace** names each: `air dash 1.20`, `the kept sprint press dashes`, `sprint on the rope: kept for the dash at
+  the let-go`, `the double jump takes this tick: the dash goes the next`, `carry (wings folded into a dash)`, and why a
+  press made none (`no dash: one already this airtime ...`, `no dash: not open yet (the Way Up gives it at a Gauntlet's
+  stand)`, `no dash: no Leaper`). GameTest `ascent_dash_press` (pure): held is no press, a re-tap inside a tick and a
+  toggle's click are, a kept press lasts 6 ticks and no longer.
 
 ### 17.33 The aimed dive (Euan's play, 2026-11-11: "if you click like your attack button ... it pushes you down faster towards where you clicked ... so that you choose where you're gonna land")
 After a double jump or an air dash, attack sends the body down along the look to the point under the crosshair, faster
@@ -24903,6 +24926,50 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
     up (it never did, so looking at a tree from the floor showed nothing), and on the rope, where it shows where the
     next rope goes (hidden when that is within 1.5 of the place the rope holds now: the rope shows that). Its search
     budget is as before (over 1.5 ms puts it on every fourth tick).
+- **What the marker shows, the press takes** (12 Nov 2026, Euan on build 40efdd42c, in the city at night: "why did it
+  not connect? There literally was a clear connection point ... there was a blue thing showing it could connect when I
+  clicked"). His log: the press at 19:19:53 "met nothing within 45" and missed. The marker looks every second tick
+  (every fourth in the city, where a look costs over its 1.5 ms), and it fades over some frames, so what it showed
+  could be three ticks old, three or four blocks back at a sling's speed, while the press looked again from where the
+  flight had carried him. Three more ways a rope failed to connect in the same log:
+  - A press now takes the marker's pick when the marker looked within 4 ticks (`AscentMoves.shown`), its anchor is in
+    reach and bites, and the server hasn't refused it lately; its rope as long as the way to it now. Only otherwise does
+    it look again. The marker fades out twice as fast as it fades in, so a target gone is gone at once. A miss's log
+    line now ends with what the marker showed ("; the marker showed nothing", or "a sling 3 ticks before, which no
+    longer held").
+  - An anchor where nothing is solid (a top's edge over the face the look met, on a stair, a wall, a fence or a slab
+    whose shape stops short of that face) was refused by the server ("refused TETHER for Dev: no block's collision at
+    the anchor (1092.04 111.70 -988.84)") and the held rope stopped. Every pick and the marker's are now checked as the
+    server checks (`AscentSwing.bites`: a block's collision within 0.1); one with none moves to the nearest point within
+    half a block that has one, or is dropped.
+  - Slings off something lower failed while falling ("sling: its way is closed" at grass 31 off, azalea leaves 14 off,
+    oak leaves 19 off): the pull, nearly level, never stopped the fall, so the flight played into the ground. The bite of
+    a sling whose point is under 4 over the hand now catches the fall (`AscentSwing.slingStep`: its first pull tick
+    takes the speed down to nothing; `SLING_CATCH`).
+  - GameTest `ascent_rope_aimed`: the low crown slung off falling at 0.9 a tick; a wall's post bitten off the cell's
+    face, which the server takes and refused before.
+- **Under it, not over it; the held rope holds** (12 Nov 2026, Euan: "a lot of the times the clear path to swing below
+  something, for example ... a tall tree or something, yeah, it swings you above that ... it makes you swing on top. And
+  like sling yourself on top"; and "we need to stop making automatically let go so often ... I would prefer that not to
+  let go yet and to manually let go"). A held swing never lets go by itself (the key is its only let-go); what let go
+  were slings and pulls, which the rope chose because a swing from what he looked at failed one of `find`'s rules for
+  a swing along the heading: 30 degrees over level at least, its fit (the rope that keeps the feet 2.5 over the floor)
+  70% of the way to the anchor, its arc clear up to the release window. A crown 9 up looked at from 16 off fails all
+  three, so the rope slung him over its top. Now `AscentSwing.aimed` tries, before any sling:
+  - a swing from the point the look met by looser rules (`AIM_ELEV_MIN` 15 degrees, a fit 25% of the way, radius 4,
+    the feet 1.2 over the floor at the bottom, `AIM_CLEAR`): a rope longer than its fit winds you in, 1 a tick at least
+    along it with the speed across it kept (`REEL_IN`, `Pick.reel`, `Rope.reel`), so you come in and down together and
+    the rope catches you into the swing at its fit (slower, 0.6 a tick, sags into the floor from 16 out);
+  - then the same from the underside over open air in the column the look met (`SwingSpace.bottomUnder`: the bottom
+    face of the run of solid cells it is part of, 3 empty cells under it, 12 down at most; a trunk or a wall down to the
+    ground has none): a crown's, a branch's, an arch's, a bridge's;
+  - then any swing along the heading (`find`) whose anchor is within 6 of what the look met (`AIM_NEAR`; that run is
+    kept for the caller's own search, `findAfter`, so the fan of rays is cast once);
+  - and only then the sling past its top, the pull onto it, the hang under it, as before.
+  A held rope's arc need only be clear through the bottom and 25 degrees up the far side (`HELD_CLEAR`; it has no
+  release window, and what it meets further on it brakes for and swings back from). GameTest `ascent_rope_aimed`: a
+  tree whose crown is 9 up, looked at beside its trunk from a sprint jump 16.5 off, is swung under from its underside,
+  wound in to its fit, under the crown and 25 degrees up the far side with nothing met and the feet over the floor.
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8

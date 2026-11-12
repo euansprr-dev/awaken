@@ -302,7 +302,8 @@ final class AscentRender {
             }
             markKind = m.zip ? 1 : m.sling ? 2 : 0;
         }
-        markA += ((on ? 1F : 0F) - markA) * 0.25F;
+        // in at a quarter a frame, out at half: a target gone is gone at once (a press no longer takes it)
+        markA += ((on ? 1F : 0F) - markA) * (on ? 0.25F : 0.5F);
     }
 
     private static void rope(double hx, double hy, double hz, double ax, double ay, double az, float sag, float reach, float alpha) {

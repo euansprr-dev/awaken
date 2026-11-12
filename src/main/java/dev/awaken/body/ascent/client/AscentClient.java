@@ -63,6 +63,13 @@ public final class AscentClient {
         var bus = NeoForge.EVENT_BUS;
         // before the Awakened Body's own moves: an airborne state owns the body and the body's moves stand aside
         bus.addListener(EventPriority.HIGH, MovementInputUpdateEvent.class, AscentMoves::onInput);
+        // the sprint key's real presses, a held key let go and pressed again between two ticks included (the air dash's
+        // press, SPEC §17.32); a repeat of a held key is none
+        bus.addListener(net.neoforged.neoforge.client.event.InputEvent.Key.class, e -> AscentMoves.sprintKey(
+                e.getAction() == com.mojang.blaze3d.platform.InputConstants.PRESS && Minecraft.getInstance().options.keySprint.matches(e.getKeyEvent())));
+        bus.addListener(net.neoforged.neoforge.client.event.InputEvent.MouseButton.Pre.class, e -> AscentMoves.sprintKey(
+                e.getAction() == com.mojang.blaze3d.platform.InputConstants.PRESS && Minecraft.getInstance().options.keySprint.matches(
+                        com.mojang.blaze3d.platform.InputConstants.Type.MOUSE.getOrCreate(e.getButton()))));
         // first person (core.api.FirstPerson): the hands through every state of the ladder
         dev.awaken.core.api.FirstPerson.view((pt, v) -> {
             if (dev.awaken.body.client.feel.FeelConfig.fpMoves()) AscentFp.viewPose(pt, v);

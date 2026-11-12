@@ -85,6 +85,12 @@ public final class AscentMoves {
     private static int sideTapAt = -100, sideTapDir, rollAt = -100;
     /** The Leaper's air moves used this airtime (bits: 1 double jump, 2 air dash, 4 aimed dive), back on landing or a rope's bite. */
     static int airMovesUsed;
+    /**
+     * Real presses of the sprint key since the last tick (counted off the key's own events, so a held key let go and
+     * pressed again inside one tick counts, and its repeats don't), and when a press the dash couldn't take yet was kept
+     * (SPEC §17.32, "The dash's press").
+     */
+    private static int sprintTaps, dashKeptAt = -1000;
     /** A dive slam is falling: its landing shakes the ground. */
     static boolean slamming;
     /**
@@ -145,6 +151,11 @@ public final class AscentMoves {
     /** Where a press now would throw (drawn in the world while {@link #markerOn}). */
     static final AscentSwing.Pick MARKER = new AscentSwing.Pick();
     static boolean markerOn;
+    /** The tick the marker last looked, and whether what it showed was a ring or branch straight overhead (fire's own). */
+    private static int markerAt;
+    private static boolean markerOverhead;
+    /** A press takes what the marker shows when it looked this recently (ticks; it looks every second or fourth). */
+    private static final int MARKER_FRESH = 4;
     /** This rope is an assisted swing (no yank, no reel to a fit: the swing fits itself). */
     static boolean swinging;
     /** Ticks a let-go has waited for a clear flight; ticks before a held rope throws again. */
@@ -310,7 +321,11 @@ public final class AscentMoves {
         boolean tether = AwakenKeys.ROPE.isDown() && mc.gui.screen() == null;
         boolean jump = k.jump(), sneak = k.shift(), sprint = k.sprint();
         boolean tetherPressed = tether && !tetherWas, jumpPressed = jump && !jumpWas, sneakPressed = sneak && !sneakWas;
-        boolean sprintPressed = sprint && !sprintWas;
+        // sprint's press: the key going down, or a real press since the last tick (a quick re-tap of a held key, a toggle
+        // sprint's click), which the key's state alone misses (12 Nov 2026, Euan: "air dashes don't work after any
+        // movement like double jump, wings, or rope"; the free-run holds sprint, so the dash's press is often a re-tap)
+        boolean sprintPressed = AscentRules.sprintPress(sprint, sprintWas, sprintTaps) && mc.gui.screen() == null;
+        sprintTaps = 0;
         if (tetherPressed) CHAIN.press();
         if (!tether && tetherWas) pressEnded();
         boolean attack = mc.options.keyAttack.isDown() && mc.gui.screen() == null, attackPressed = attack && !attackWas;
@@ -396,7 +411,10 @@ public final class AscentMoves {
                 // a Runner move (a wall-run, a hang) or a climb (a mantle, a crossing: SPEC §17.32, a press during one
                 // never starts a leap) holds the body: only the rope cuts in
                 boolean runner = dev.awaken.body.client.RunnerMoves.busy() || dev.awaken.body.Body.isMantling(p);
-                if (p.onGround()) airMovesUsed = 0;
+                if (p.onGround()) {
+                    airMovesUsed = 0;
+                    dashKeptAt = -1000;
+                }
                 groundFor = p.onGround() ? groundFor + 1 : 0;
                 // the takeoff's crouch (SPEC §62): looking up and sneaking on the ground, the folded wings lift
                 boolean crouch = !runner && sneak && has(AscentPayloads.Tier.SKYBORN) && p.onGround() && pitch <= -AirRules.TAKEOFF_LOOK
@@ -436,6 +454,7 @@ public final class AscentMoves {
                 }
             }
             case TETHER -> {
+                keepDash(p, sprintPressed, "on the rope");
                 // a tapped swing taken in hand again is a held one: the key's let-go is its let-go
                 if (tether && swinging) heldForYou = false;
                 if (!tether && swinging && pressThrow && !heldForYou && (ropeTravel > 0 || ticks - fireAt <= AscentSwing.T.tapTicks)) {
@@ -483,6 +502,7 @@ public final class AscentMoves {
                 }
             }
             case ZIP -> {
+                keepDash(p, sprintPressed, "on the pull");
                 if (strikeTarget >= 0) {
                     // a rope strike holds itself: the rope has the creature until the blow or the let-go
                     zipTick(p, yaw);
@@ -535,6 +555,13 @@ public final class AscentMoves {
                 } else if (has(AscentPayloads.Tier.SKYBORN)
                         && (jumpPressed || AscentRules.sprintTakesFlight(sprintPressed, sprint, glideFromEmpty, aether)) && startSoar(p)) {
                     // flight again: a jump, or sprint whenever the meter allows (SPEC §17.8)
+                } else if (sprintPressed && dashOpen(p, true)) {
+                    // sprint that can't take a glide into flight (no Skyborn, or the meter too low): the wings fold into
+                    // the Leaper's dash (SPEC §17.32, "The dash's press")
+                    fold(p);
+                    toCarry(p, "wings folded into a dash");
+                    leaperMove(p, false, true, false, false);
+                    carry(yaw, fwd, right);
                 } else if (sneakPressed) {
                     fold(p);
                     toCarry(p, "wings folded");
@@ -781,7 +808,9 @@ public final class AscentMoves {
         if (assist && !overhead) {
             // a pull up a face wants a press, to be in the air already, or a face in the way: running, the held rope's hop
             // from the ground only swings or slings
-            AscentSwing.Pick pk = pick(p, eye, aimYaw, aimPitch, pressed || !p.onGround() || p.horizontalCollision);
+            // a press takes what the marker shows (SPEC §62, "What the marker shows, the press takes"); else it looks again
+            AscentSwing.Pick pk = pressed ? shown(p) : null;
+            if (pk == null) pk = pick(p, eye, aimYaw, aimPitch, pressed || !p.onGround() || p.horizontalCollision);
             if (pk != null && (refusedLately(p, pk.x, pk.y, pk.z) || spentAnchor(p, pk.x, pk.y, pk.z))) pk = null;
             // the look met something up ahead (a tree, a roof) that the rope passed over for another: say so once
             if (pressed && pk != null && !pickAimed && !Double.isNaN(WORK.aimT) && WORK.aim.y > HAND.y + 1) lookNotTaken(p, pk);
@@ -875,7 +904,10 @@ public final class AscentMoves {
                 w.aimSling == 0 ? "not asked" : AscentSwing.SLING_NO[w.aimSling], w.aimOnto == 0 ? "not asked" : AscentSwing.ONTO_NO[w.aimOnto],
                 w.aim.ny < 0 ? "an underside, not clear to hang from" : "no underside to hang from");
         String what = took == null ? "nothing (a miss)" : String.format("%s %.1f off", took.zip ? "a lip" : took.sling ? "a sling" : "a swing", took.len);
-        dev.awaken.Awaken.LOG.info("[rope] the look met {}, which the rope can't take from here{}; the press took {}", met, why, what);
+        // a miss: what the marker showed then (it should have shown nothing)
+        String shownThen = took != null ? "" : !markerOn ? "; the marker showed nothing"
+                : String.format("; the marker showed %s %d ticks before, which no longer held", MARKER.zip ? "a pull" : MARKER.sling ? "a sling" : "a swing", ticks - markerAt);
+        dev.awaken.Awaken.LOG.info("[rope] the look met {}, which the rope can't take from here{}; the press took {}{}", met, why, what, shownThen);
     }
 
     /** Nearly straight overhead (a ring, a branch, a keel): zipped up to and hung under, never swung from. */
@@ -906,13 +938,44 @@ public final class AscentMoves {
      * marker's lip or a lip in the look, with the guide only by a clear way; or null.
      */
     private static AscentSwing.@org.jspecify.annotations.Nullable Pick pick(LocalPlayer p, Vec3 eye, float yaw, float pitch, boolean lips) {
+        AscentSwing.Pick pk = search(p, eye, yaw, pitch, lips);
+        // only where the rope can bite as the server asks (else it refuses it and the held rope stops)
+        return pk != null && AscentSwing.bites(SPACE, pk) ? pk : null;
+    }
+
+    /**
+     * On a press, what the marker shows (SPEC §62, "What the marker shows, the press takes"; 12 Nov 2026, Euan: "there
+     * was a blue thing showing it could connect when I clicked", and the press looked again a tick or three on, from where
+     * the flight had carried him, and met nothing): its pick, when it looked within {@link #MARKER_FRESH} ticks, the
+     * anchor is in the rope's reach and still bites, and the server hasn't refused it lately; its rope as long as the way
+     * to it now. Null otherwise (a ring overhead is fire's own).
+     */
+    private static AscentSwing.@org.jspecify.annotations.Nullable Pick shown(LocalPlayer p) {
+        if (!markerOn || markerOverhead || ticks - markerAt > MARKER_FRESH) return null;
+        SPACE.at(p.level(), p);
+        hand(p);
+        PICK.copy(MARKER);
+        double dx = PICK.x - HAND.x, dy = PICK.y - HAND.y, dz = PICK.z - HAND.z, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (d > reach(p) + 2 || !AscentSwing.bites(SPACE, PICK) || refusedLately(p, PICK.x, PICK.y, PICK.z) || spentAnchor(p, PICK.x, PICK.y, PICK.z)) {
+            return null;
+        }
+        PICK.len = d;
+        PICK.fitLen = Math.min(PICK.fitLen, d);
+        // a swing whose way has grown long for its fit since it looked reels in to it
+        if (!PICK.zip && !PICK.sling && PICK.fitLen < d * AscentSwing.FIT_MIN) PICK.reel = true;
+        pickAimed = true;
+        return PICK;
+    }
+
+    /** The search a press runs ({@link #pick}), before the bite is checked. */
+    private static AscentSwing.@org.jspecify.annotations.Nullable Pick search(LocalPlayer p, Vec3 eye, float yaw, float pitch, boolean lips) {
         SPACE.at(p.level(), p);
         hand(p);
         // where you look first (SPEC §62, "The rope goes where you look"): the block under the crosshair, swung from or
         // slung past; else the best along the heading, as ever
         pickAimed = AscentSwing.aimed(SPACE, HAND, eye.x, eye.y, eye.z, yaw, pitch, reach(p), AscentSwing.guide, WORK, PICK);
         if (pickAimed) return PICK;
-        if (AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
+        if (AscentSwing.findAfter(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
         if (AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
         if (!lips) return null;
         if (markerOn && MARKER.zip && !Double.isNaN(MARKER.top) && zipOk(MARKER, HAND.x, HAND.y, HAND.z)) return PICK.copy(MARKER);
@@ -962,6 +1025,8 @@ public final class AscentMoves {
         len = pk.len;
         lenTarget = pk.fitLen;
         ROPE.set(ax, ay, az, len, lenTarget);
+        // a swing thrown longer than it can swing over the floor reels you up into its arc (the aimed swing under something)
+        ROPE.reel = pk.reel;
         swinging = true;
         ropeTravel = AscentSwing.travel(len);
         ropeTaut = false;
@@ -1111,11 +1176,15 @@ public final class AscentMoves {
         SPACE.at(p.level(), p);
         hand(p);
         Vec3 eye = p.getEyePosition();
-        markerOn = overheadMark(p, eye, yaw, pitch)
+        markerOverhead = overheadMark(p, eye, yaw, pitch);
+        markerAt = ticks;
+        markerOn = markerOverhead
                 || AscentSwing.aimed(SPACE, HAND, eye.x, eye.y, eye.z, yaw, pitch, reach(p), AscentSwing.guide, WORK, MARKER)
-                || AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, MARKER)
+                || AscentSwing.findAfter(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER) && zipOk(MARKER, HAND.x, HAND.y, HAND.z);
+        // never where the rope can't bite as the server asks (the anchor moved onto the block's shape when it can)
+        if (markerOn && !markerOverhead && !AscentSwing.bites(SPACE, MARKER)) markerOn = false;
         if (markerOn && state.rope && (MARKER.x - ax) * (MARKER.x - ax) + (MARKER.y - ay) * (MARKER.y - ay) + (MARKER.z - az) * (MARKER.z - az) < 2.25) {
             markerOn = false;
         }
@@ -1905,14 +1974,24 @@ public final class AscentMoves {
      * one went off.
      */
     private static boolean leaperMove(LocalPlayer p, boolean jumpPressed, boolean sprintPressed, boolean sneakPressed, boolean fromNone) {
-        if (!has(AscentPayloads.Tier.LEAPER) || p.onGround()) return false;
+        // a sprint press the rope, a glide or a double jump's tick couldn't give the dash is the dash's for a few ticks
+        boolean kept = AscentRules.dashKept(dashKeptAt, ticks);
+        if (!has(AscentPayloads.Tier.LEAPER) || p.onGround()) {
+            if (sprintPressed && !p.onGround()) trace("no dash: no Leaper");
+            return false;
+        }
         // each only once it is open (the Way Up's mask, SPEC §71.3: a leap first given at a Gauntlet's stand may come a
         // move at a time; given any other way every move is open)
         boolean dbl = jumpPressed && (airMovesUsed & 1) == 0 && !dev.awaken.body.client.RunnerMoves.wallBeside(p)
                 && WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.DOUBLE);
-        boolean dash = sprintPressed && (airMovesUsed & 2) == 0 && WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.DASH);
+        boolean dash = (sprintPressed || kept) && dashOpen(p, sprintPressed);
         boolean dive = sneakPressed && !slamming && heightAboveGround(p) >= AscentRules.SLAM_MIN_HEIGHT
                 && WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.SLAM);
+        if (dbl && dash) {
+            // both in one tick: the double jump now, the dash the next
+            dashKeptAt = ticks;
+            trace("the double jump takes this tick: the dash goes the next");
+        }
         if (!dbl && !dash && !dive) return false;
         if (fromNone) K.set(p.getX(), p.getY(), p.getZ(), stepX, p.getDeltaMovement().y, stepZ);
         leapt = dbl || dash; // a slam is no leap: it never stands aside for an edge
@@ -1928,6 +2007,8 @@ public final class AscentMoves {
             trace("double jump");
         } else if (dash) {
             airMovesUsed |= 2;
+            dashKeptAt = -1000;
+            if (kept && !sprintPressed) trace("the kept sprint press dashes");
             double yaw = p.getYRot() * Mth.DEG_TO_RAD, fx = -Math.sin(yaw), fz = Math.cos(yaw);
             double speed = Math.max(AscentRules.DASH_SPEED, K.hspeed() * AscentRules.DASH_GAIN)
                     * (1 + AscentRules.MASTERY_DASH * lv(dev.awaken.body.ascent.AscentMemory.Track.LEAPER));
@@ -1954,6 +2035,30 @@ public final class AscentMoves {
         AscentFlow.gain(0.08F);
         if (fromNone) setState(p, AscentState.CARRY);
         return true;
+    }
+
+    /**
+     * Whether the air dash can go now: the Leaper's, open (the Way Up), not yet used this airtime (the ground, a rope's
+     * bite or strike give it back). {@code why}: trace why not (a press asked for it).
+     */
+    private static boolean dashOpen(LocalPlayer p, boolean why) {
+        String no = !has(AscentPayloads.Tier.LEAPER) ? "no Leaper" : p.onGround() ? "on the ground"
+                : !WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.DASH) ? "not open yet (the Way Up gives it at a Gauntlet's stand)"
+                : (airMovesUsed & 2) != 0 ? "one already this airtime (the ground, a rope's bite or strike give it back)" : null;
+        if (no != null && why) trace("no dash: " + no);
+        return no == null;
+    }
+
+    /** A sprint press where the body is the rope's (a swing, a pull): kept for the dash once it lets go ({@link AscentRules#DASH_KEPT}). */
+    private static void keepDash(LocalPlayer p, boolean sprintPressed, String where) {
+        if (!sprintPressed || p.onGround()) return;
+        dashKeptAt = ticks;
+        trace("sprint " + where + ": kept for the dash at the let-go");
+    }
+
+    /** A press of the sprint key, off its own events (a press between two ticks counts; a repeat of a held key doesn't). */
+    static void sprintKey(boolean pressed) {
+        if (pressed && Minecraft.getInstance().gui.screen() == null) sprintTaps++;
     }
 
     /**
@@ -2468,6 +2573,7 @@ public final class AscentMoves {
             FeelDirector.land(landSpeed);
         }
         airMovesUsed = 0;
+        dashKeptAt = -1000;
         event(AscentPayloads.EV_LAND, landSpeed);
         // the run carries on: keep a share of the speed into the first steps (a roll when it's a hard landing)
         if (h > 0.3) {
@@ -2629,6 +2735,8 @@ public final class AscentMoves {
         linkArrived = false;
         glideFromEmpty = false;
         airMovesUsed = 0;
+        dashKeptAt = -1000;
+        sprintTaps = 0;
         state = AscentState.NONE;
         stateAge = 0;
         sent = false;
