@@ -832,7 +832,9 @@ of `AwakenConfig.Client`.
   streams in), `spareNanos(server)` (time left before the next tick is due). Every server-side check before a world read
   goes through it (the sweep of 12 Nov: 347 checks in 149 files); Far Sight keeps its own "already held" check, and
   `GateService.pregenFloor` keeps the ticket check so it never adds a second ticket. A read the player asked for
-  (commands, a teleport's landing, a respawn) still uses the game's own and may wait.
+  (commands, a teleport's landing, a respawn) still uses the game's own and may wait. A structure lookup at a player's
+  own feet asks `Ready.at` first (the Tether vow's look, the Day Journal's, a sweep's grass): a player flying at 32 blocks
+  a second outruns the generator, and the lookup waited 1.2 s for the chunk under them (tour `pulse-flight-ci`).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`, `armoury`: is this spot in an Armoury, §27.13), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks` (`lead(mob, x, z, speed, ticks)`: a
