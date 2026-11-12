@@ -351,9 +351,9 @@ public final class AscentMoves {
         if (fireCool > 0) fireCool--;
         windowNow *= 0.8F;
         // the rope held between swings throws again by itself (the chain), in the air, once the last let-go is behind;
-        // never after a link that went nowhere (until the next press), nor just after a press that missed
-        // (SPEC §62, "The held chain, a link at a time")
-        boolean chain = assist && tether && !tetherPressed && fireCool == 0 && !CHAIN.stopped() && !CHAIN.paused(ticks)
+        // never after a link that went nowhere or a press that missed (until the next press), and never while a sling's
+        // flight still rises over the top it was thrown past (SPEC §62, "The held chain, a link at a time")
+        boolean chain = assist && tether && !tetherPressed && fireCool == 0 && !CHAIN.stopped() && !slingRising()
                 && has(AscentPayloads.Tier.TETHER);
         marker(p, assist, tether);
         // the aim hold (SPEC §62): on wings and in flight, with the guard or a power's key held, the flight keeps the line
@@ -748,6 +748,15 @@ public final class AscentMoves {
 
     // ---- the rope ---------------------------------------------------------------------------------------------------
 
+    /**
+     * A sling let go under 2 s ago and the flight still rising over its top: the held key throws nothing yet (12 Nov
+     * 2026, Euan: "it quickly sends two different ropes ... just me trying to go onto one block"; the chain threw 2 ticks
+     * after the sling's let-go).
+     */
+    private static boolean slingRising() {
+        return ticks - slingAt < 40 && K.vy > 0;
+    }
+
     /** Fires the rope; true when it found an anchor (the state is then TETHER or ZIP). */
     private static boolean fire(LocalPlayer p) {
         return fire(p, true);
@@ -861,8 +870,12 @@ public final class AscentMoves {
         AscentSwing.Work w = WORK;
         String met = Double.isNaN(w.aimT) ? String.format("nothing within %.0f", reach(p))
                 : String.format("%s %.1f off", p.level().getBlockState(new BlockPos(w.aim.bx, w.aim.by, w.aim.bz)).getBlock(), w.aimT);
+        // why, for each way the rope could have taken it (real play shows which rule said no)
+        String why = Double.isNaN(w.aimT) ? "" : String.format(" (no swing; sling: %s; onto its top: %s; %s)",
+                w.aimSling == 0 ? "not asked" : AscentSwing.SLING_NO[w.aimSling], w.aimOnto == 0 ? "not asked" : AscentSwing.ONTO_NO[w.aimOnto],
+                w.aim.ny < 0 ? "an underside, not clear to hang from" : "no underside to hang from");
         String what = took == null ? "nothing (a miss)" : String.format("%s %.1f off", took.zip ? "a lip" : took.sling ? "a sling" : "a swing", took.len);
-        dev.awaken.Awaken.LOG.info("[rope] the look met {}, which gives no swing or sling from here; the press took {}", met, what);
+        dev.awaken.Awaken.LOG.info("[rope] the look met {}, which the rope can't take from here{}; the press took {}", met, why, what);
     }
 
     /** Nearly straight overhead (a ring, a branch, a keel): zipped up to and hung under, never swung from. */

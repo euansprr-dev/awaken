@@ -11,8 +11,9 @@ package dev.awaken.body.ascent;
  * {@link #NOWHERE} blocks off in under {@link #NOWHERE_TICKS} ticks;</li>
  * <li>a link that failed after carrying the body on lets the chain go on, but its anchor is never thrown at again
  * during that press ({@link #spent});</li>
- * <li>a press that missed pauses the held key for {@link #MISS_PAUSE} ticks (its rope falling back), so one miss is
- * never followed at once by a second rope at whatever came into reach a tick later.</li>
+ * <li>a press that missed stops the chain until the next press: one press at one thing throws one rope, never a
+ * second half a second later at something else (Euan 12 Nov 2026: "it quickly sends two different ropes ... without
+ * me letting go ... just me trying to go onto one block"; the 11 Nov pause of 10 ticks did just that).</li>
  * </ul>
  * Without this the chain threw again two ticks after every failed link, at the same top or the next one along, so one
  * press showed three or four ropes before one held (Euan 11 Nov 2026). Pure: the client's moves call it, and the
@@ -24,13 +25,11 @@ public final class RopeChain {
     /** Under this far (blocks) and this soon (ticks) even an arrival went nowhere. */
     public static final double NOWHERE = 1.0;
     public static final int NOWHERE_TICKS = 10;
-    /** Ticks the held key throws nothing after a press that missed. */
-    public static final int MISS_PAUSE = 10;
     /** No anchor (a link whose rope held no block). */
     public static final long NO_ANCHOR = Long.MIN_VALUE;
 
     private boolean open, stopped;
-    private int at, missedAt = Integer.MIN_VALUE / 2, throwsThisPress;
+    private int at, throwsThisPress;
     private double fromX, fromY, fromZ;
     private long spent = NO_ANCHOR;
     private String why = "";
@@ -39,7 +38,6 @@ public final class RopeChain {
     public void press() {
         stopped = false;
         spent = NO_ANCHOR;
-        missedAt = Integer.MIN_VALUE / 2;
         throwsThisPress = 0;
         why = "";
     }
@@ -54,10 +52,10 @@ public final class RopeChain {
         throwsThisPress++;
     }
 
-    /** The press's rope flew out at nothing: the held key waits out {@link #MISS_PAUSE} ticks. */
+    /** The press's rope flew out at nothing: the held key throws nothing more until the next press. */
     public void missed(int tick) {
         open = false;
-        missedAt = tick;
+        stop("the press missed");
     }
 
     /**
@@ -91,11 +89,6 @@ public final class RopeChain {
     /** The held key may not throw: the last link went nowhere (until the next press). */
     public boolean stopped() {
         return stopped;
-    }
-
-    /** The held key waits: a press missed under {@link #MISS_PAUSE} ticks ago. */
-    public boolean paused(int tick) {
-        return tick - missedAt < MISS_PAUSE;
     }
 
     /** This press's chain threw at this anchor and failed there: it isn't thrown at again until the next press. */

@@ -27,6 +27,14 @@ public interface SwingSpace {
     /** The top of the solid column whose side {@code h} hit, when it is at most {@code maxUp} above the hit; else NaN. */
     double topOver(Hit h, double maxUp);
 
+    /**
+     * The top of whatever stands over the cell {@code h} hit, leaves and logs alike (a crown's own top, a bamboo stalk's,
+     * a wall's), when it is at most {@code maxUp} above the hit; else NaN. {@link #topOver} answers NaN for a leaf.
+     */
+    default double topThrough(Hit h, double maxUp) {
+        return topOver(h, maxUp);
+    }
+
     /** Whether anything solid is inside the box. */
     boolean boxHits(double x0, double y0, double z0, double x1, double y1, double z1);
 
@@ -140,6 +148,13 @@ public interface SwingSpace {
         @Override
         public double topOver(Hit h, double maxUp) {
             if (h.bx < 0 || h.leaf) return Double.NaN;
+            double top = boxes.get(h.bx)[4];
+            return top - h.y <= maxUp ? top : Double.NaN;
+        }
+
+        @Override
+        public double topThrough(Hit h, double maxUp) {
+            if (h.bx < 0) return Double.NaN;
             double top = boxes.get(h.bx)[4];
             return top - h.y <= maxUp ? top : Double.NaN;
         }

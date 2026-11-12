@@ -126,7 +126,7 @@ final class AscentSwingTests {
     /**
      * The held chain, a link at a time (SPEC §62): held, the rope throws the next link once the last one ends, and never
      * again at what it couldn't take. In the client's loop (a link lasts 3 ticks, the chain waits 2, then throws at the
-     * best pick unless stopped, paused or spent), for 100 ticks after one press: where every link fails 0.4 on, one
+     * best pick unless stopped or spent), for 100 ticks after one press: where every link fails 0.4 on, one
      * throw; where every link arrives 4 on, a link at a time; where links fail 4 on at new anchors, the chain goes on;
      * where they fail 4 on at the same anchor, it is never thrown at again. Then each rule on its own.
      */
@@ -141,9 +141,9 @@ final class AscentSwingTests {
         c.press();
         c.thrown(0, 0, 64, 0);
         c.missed(0);
-        h.assertTrue(c.paused(9) && !c.paused(10) && !c.stopped(), "a press that missed pauses the held key 10 ticks, no more");
+        h.assertTrue(c.stopped() && c.throwsThisPress() == 1, "a press that missed throws nothing more while it is held");
         c.press();
-        h.assertTrue(!c.paused(1) && c.throwsThisPress() == 0, "a new press may throw at once");
+        h.assertTrue(!c.stopped() && c.throwsThisPress() == 0, "a new press may throw at once");
         c.thrown(0, 0, 64, 0);
         h.assertTrue(!c.ended(3, 0.2, 64, 0, false, false, "the zip was blocked", 7) && !c.stopped() && !c.spent(7),
                 "a link let go by the key is never judged");
@@ -188,7 +188,7 @@ final class AscentSwingTests {
                 cool--;
             } else {
                 long pick = same ? 7 : t;
-                if (c.stopped() || c.paused(t) || c.spent(pick)) continue;
+                if (c.stopped() || c.spent(pick)) continue;
                 anchor = pick;
                 c.thrown(t, x, 64, 0);
                 thrown++;
@@ -485,6 +485,25 @@ final class AscentSwingTests {
                     "a look at the sky meets nothing");
             h.assertTrue(!AscentSwing.aimed(space, hand, ex, ey, ez, 0, 40, AscentRules.TETHER_RANGE, true, w, pick)
                     && w.aimT > 2 && w.aimT < 6, String.format("a look at the floor meets it %.1f off and gives no sling", w.aimT));
+            // the tree and the wall gone: standing on the floor (the hop a press from the ground starts with), a pillar of
+            // leaves 9 high only 5.5 ahead, too near to sling past: the rope pulls you onto its top
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(0, 1, 0), o.offset(16, 24, 48))) level.setBlock(q, air, flags);
+            for (int y = 1; y <= 9; y++) level.setBlock(o.offset(8, y, 10), leaves, flags);
+            AscentRules.Kin ground = new AscentRules.Kin().set(bx + 8.5, by + AscentRules.HAND_HEIGHT, bz + 4.5, 0, 0.5, 0);
+            double gy = by + 1.62;
+            float up = (float) -Math.toDegrees(Math.atan2(by + 4.5 - gy, 10 - 4.5));
+            h.assertTrue(AscentSwing.aimed(space, ground, ex, gy, ez, 0, up, AscentRules.TETHER_RANGE, true, w, pick)
+                    && pick.zip && Math.abs(pick.top - (by + 9)) < 0.01,
+                    String.format("from the floor, a pillar of leaves too near to sling: pulled onto its top (zip %b, top %.2f; sling: %s, onto: %s)",
+                            pick.zip, pick.top - by, AscentSwing.SLING_NO[w.aimSling], AscentSwing.ONTO_NO[w.aimOnto]));
+            h.assertTrue(AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the pillar's top edge as a real anchor");
+            // a canopy of leaves 6 over the floor, looked at steeply from under it: pulled up to it, to hang there
+            for (int y = 1; y <= 9; y++) level.setBlock(o.offset(8, y, 10), air, flags);
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(6, 7, 2), o.offset(10, 7, 7))) level.setBlock(q, leaves, flags);
+            h.assertTrue(AscentSwing.aimed(space, ground, ex, gy, ez, 0, -75, AscentRules.TETHER_RANGE, true, w, pick)
+                    && pick.zip && Double.isNaN(pick.top) && Math.abs(pick.y - (by + 6.01)) < 0.02,
+                    String.format("from under a canopy: up under it (zip %b, top %.2f, at %.2f)", pick.zip, pick.top, pick.y - by));
+            h.assertTrue(AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the canopy's underside as a real anchor");
         } finally {
             AscentSwing.guide = guide;
             AscentSwing.hold = hold;

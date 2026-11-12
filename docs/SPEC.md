@@ -24611,8 +24611,12 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
   - a link that failed after carrying you 3 blocks or more lets the chain go on, but its anchor is spent: nothing is
     thrown at that block again until the next press, so it never re-throws at the same choice;
   - a link the key let go of is never judged;
-  - a press that missed pauses the held key 10 ticks (the missed rope falling back); then the held key catches what
-    comes into reach, as ever, silently when there is nothing;
+  - a press that missed stops the chain until the next press (12 Nov 2026, Euan: "sometimes it quickly sends two
+    different ropes ... without me letting go too. Like just me trying to go onto one block"; his log has 17 presses
+    in seven minutes that threw two or three ropes: the 11 Nov rule paused the held key 10 ticks after a miss and then
+    let it catch whatever came into reach, a second rope half a second after the first);
+  - a sling's own let-go with the key held throws nothing while the flight still rises over the top it was thrown past
+    (2 s at most): the next link comes as the flight turns down, never 2 ticks after the sling as before;
   - the free flight's zip over what is ahead is a link like the others: it waits out the 2 ticks, never follows a link
     that went nowhere, and never takes a spent anchor;
   - a tap (the key up within 5 ticks of a press's throw, or before its rope bit) carries that throw through by itself:
@@ -24648,7 +24652,32 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
   The fans, the bench and its gates are unchanged (the bench calls the fans directly). Test `ascent_rope_aimed` (from
   real blocks: an oak 14 ahead and a wall 14 high past it; the look at the crown takes it as a sling past its top, whose
   flight played on clears the crown and meets the wall, and the server takes the anchor; a look at the sky meets nothing; a look at the floor
-  meets it about 4 off and gives no sling).
+  meets it about 4 off and gives no sling; from the floor, a pillar of leaves 9 high 5.5 ahead is too near to sling and
+  is pulled onto; a canopy 6 over the floor looked at steeply from under it is pulled up to and hung from; the server
+  takes both points).
+- **The rope locks onto what you look at** (12 Nov 2026, Euan on build 709fc7015, again: "a lot of the time, the rope
+  just doesn't detect the thing that you're trying to lock onto. Like it shouldn't just be trees too. It should tree,
+  bamboos, anything ... any block you should be able to lock onto if that's like the most logical thing to lock onto
+  based on what you're looking at ... a tree like maybe 20 blocks in front of me, tall tree, and ... it just like didn't
+  lock onto that one"). His log (seven minutes, 15:50 to 15:57): 17 presses where the look met a block and the rope
+  took nothing, leaves 0.4 to 22 off, an oak log 40 off. Causes, from the code: the target was taken only as a clear
+  swing or a sling whose whole pull was clear, so it was refused when it was nearer than 6 (a sling's least), steeper
+  than 50 degrees over the hand (a tall tree from the ground), further than 30 (the sling's reach), its top more than
+  8 over the hit (the top was looked for only that far), or anything stood in the pull (another crown, in a wood). The
+  target is now taken the first of these ways that works (`AscentSwing.aimed`; the marker shows it):
+  - a swing from it, as before;
+  - a sling past its top along your look, as before, at any reach of the rope, its top being whatever stands over the
+    cell it hit, leaves and logs alike, up to 16 over it (`SwingSpace.topThrough`);
+  - onto its top: the rope bites the top's edge over the face it hit and pulls you straight up to it and over, with
+    room for the body there (a crown's tier, a stalk, a ledge, a roof; the lip zip's own arrival);
+  - up under it, when it is an underside 2 or more over the hand (a branch, a canopy, a ceiling): pulled up to it, then
+    hanging there, as from a ring;
+  - still it, when those ways were closed only further on: a sling past a side face over the hand whose pull is clear
+    for its first 8 ticks (what it would then meet lets it go with a hop), or the pull onto its top or up under it whose
+    first 6 blocks are clear (pressed against something, it lets go);
+  - else nothing: the floor, open sky, a face too tall to top within 16 and too steep to sling past. The log's line for
+    such a press now says which rule said no: "[rope] the look met Block{minecraft:oak_leaves} 18.4 off, which the rope
+    can't take from here (no swing; sling: too steep; onto its top: the way up is closed; no underside to hang from)".
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8

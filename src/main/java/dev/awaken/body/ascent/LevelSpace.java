@@ -63,7 +63,11 @@ public final class LevelSpace implements SwingSpace {
 
     @Override
     public double topOver(Hit h, double maxUp) {
-        if (h.leaf) return Double.NaN;
+        return h.leaf ? Double.NaN : topThrough(h, maxUp);
+    }
+
+    @Override
+    public double topThrough(Hit h, double maxUp) {
         Level l = level();
         // up the hit block's column while it stays solid: the first cell with no collision over it is the top
         for (int k = 0; k <= Math.ceil(maxUp) + 1; k++) {
