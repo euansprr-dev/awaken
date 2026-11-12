@@ -377,6 +377,9 @@ public final class Casting {
         PowerType prevCtx = Mastery.enter(r.c.type);
         try {
             if (r.onEnd != null) r.onEnd.end(r, r.why);
+            // a held pose the cast showed and never let go of (a dive cut short, a hold that ran out): every way a cast ends
+            // says so, or that hold stays up on every client (SPEC §32, "Every hold has an end")
+            if (r.c.holding) Fx.end(r.c, r.c.player, 0);
         } catch (RuntimeException e) {
             errors++;
             dev.awaken.Awaken.LOG.error("Power {} failed while ending", r.key, e);

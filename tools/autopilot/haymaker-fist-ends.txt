@@ -1,0 +1,62 @@
+# The Haymaker's fist comes down after the punch, whatever was cast over the hold (Euan 12 Nov: "Sometimes my fist stays
+# blocked up after using haymaker"; SPEC §32, "A reply never starts a hold"). Real key presses: the Haymaker is held on
+# power1 for 30 ticks, Spirit Palm is cast on power2 over it, then the Haymaker's key comes up. Before the fix the server's
+# punch beat found the hold's pose replaced and wound the fist back up for half a minute: hf_after_40 and hf_after_120 showed
+# the bare fist raised at the bottom left. After it, both show the hands at rest.
+# Look tour: tools/tour-ci.sh tools/autopilot/haymaker-fist-ends.txt 1500 PACK=feel
+world fistends survival 4261
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+window 1440 900
+gui 0
+hud on
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd gamerule fall_damage false
+cmd weather clear 100000
+cmd time set 5000
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:slow_falling 60 1 true
+cmd tp @s 0.5 201 0.5 0 12
+wait 400
+cmd fill -14 199 -6 14 199 30 minecraft:grass_block
+cmd fill -14 200 -6 14 214 30 minecraft:air
+cmd fill -14 200 24 14 208 24 minecraft:stone_bricks
+wait 40
+cmd fill -14 199 -6 14 199 30 minecraft:grass_block
+cmd fill -14 200 24 14 208 24 minecraft:stone_bricks
+cmd tp @s 0.5 200 0.5 0 0
+cmd item replace entity @s weapon.mainhand with minecraft:air
+# Spirit Palm on the second key, the Haymaker on the first
+cmd awaken admin power showcase spirit_palm 1
+cmd awaken powers equip 2 spirit_palm
+cmd awaken admin power showcase haymaker 1
+wait 20
+camera first
+look 0 4
+wait 20
+shotnow hf_rest
+hold power1 30
+wait 12
+shotnow hf_held
+key power2
+wait 6
+shotnow hf_palm
+wait 20
+shotnow hf_let_go_10
+wait 30
+shotnow hf_after_40
+wait 80
+shotnow hf_after_120
+wait 20

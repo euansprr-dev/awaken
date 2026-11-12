@@ -36,6 +36,26 @@ public final class Cast {
      * (FxEvent.keyed; SPEC §32, "A reply never starts a hold"). Set by Casting; a second press's follow-up clears it.
      */
     public boolean keyed;
+    /**
+     * A held pose this cast showed (a held cast's begin beat, a family pose that holds) is still up on the clients, as far as
+     * the server has said: Casting ends it on every way a cast ends (SPEC §32, "Every hold has an end"). Kept by Fx.Emit.
+     */
+    boolean holding;
+
+    /** What an event of this cast's leaves the clients showing of its held pose (Fx.Emit.send). */
+    void shown(dev.awaken.powers.fx.FxEvent e) {
+        if (e.caster() != player.getId()) return;
+        if (e.kind() == dev.awaken.powers.fx.FxKind.CHARGE_END) {
+            if (Math.round(e.aux()) == 0) holding = false; // the charge and its held pose are over
+            return;
+        }
+        dev.awaken.powers.fx.CastProfiles.Profile p = dev.awaken.powers.fx.CastProfiles.byId(e.profile());
+        if (p != null) {
+            if (e.beat() == dev.awaken.powers.fx.CastProfiles.BEGIN && p.channel()) holding = true;
+            return;
+        }
+        if (e.anim() != dev.awaken.powers.fx.CastAnim.NONE) holding = e.anim().held; // a family pose replaces the one before
+    }
     /** What the power's ladder adds at the level this cast started at (SPEC 36.3). */
     public final dev.awaken.powers.ladder.Kit kit;
     /** Rider bookkeeping (powers.ladder.Riders): the tick of the last throttled rider and chain hits this tick. */

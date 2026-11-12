@@ -45,6 +45,7 @@ public final class Fx {
         e.b.flag(dev.awaken.powers.fx.Ways.flags(c.way, c.take)); // how the cast was made: every client plays the caster's own clips
         e.power = c.powerLevel;
         e.caster = c.player;
+        e.cast = c;
         CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
         if (def != null) {
             // a power with a cast profile (docs/power-anims/PLAN.md) carries its beat instead of a family pose
@@ -98,6 +99,8 @@ public final class Fx {
         private boolean ultBeat;
         private boolean profiled;
         private double range = RANGE;
+        /** The cast that sent it, which keeps track of the held pose it leaves up (Cast.holding). */
+        private @Nullable Cast cast;
 
         Emit(ServerLevel level, FxEvent.Builder b, Vec3 origin) {
             this.level = level;
@@ -225,6 +228,7 @@ public final class Fx {
 
         public void send() {
             FxEvent e = build();
+            if (cast != null) cast.shown(e);
             Fx.send(level, e, origin, end, caster, range);
             if (ultBeat) {
                 FxEvent beat = FxEvent.of(FxKind.ULT, e.style(), origin).caster(caster).scale(28).seed(e.seed()).flag(FxEvent.ULT).build();
