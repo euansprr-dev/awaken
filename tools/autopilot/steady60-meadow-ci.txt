@@ -1,0 +1,431 @@
+# Far tall grass, measured (Euan, playing at 4K, 12 Nov: "all the grass and the shadows and everything just becomes one
+# big shimmering block of weirdness ... can we change the logic of how shadow is on swaying grass so that it just makes
+# it look less shimmery? Because like right now I'm on native 4K and it still just looks very shimmery"). A lawn over
+# the cloud layer, dense with short grass, clumps of tall grass and flowers, under a high sun; the camera at rest,
+# looking down its length from eight blocks up (the far grass a broad band of the picture, as on a hillside) and from
+# eye height. Bursts of five frames two ticks apart: what differs between them is what shimmers.
+# Each burst a different thing left out, so the numbers say which part it is: as built; the plants stilled (what Lens
+# itself changes from frame to frame); the contact shadows off, the ambient shade off, both off (`lens small`); Swift
+# (no light of Lens's at all: the game's own grass); and reaches for the fade. tools/lens/meadow.py reads the shots.
+# SPEC §22 "The small shade's reach".
+# Run: tools/tour-ci.sh tools/autopilot/steady60-meadow-ci.txt 2400
+# ci knobs: LENS=cinematic
+world steadystill creative 4545
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+gui 0
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 5000
+screen close
+window 1440 900
+cmd gamemode creative
+cmd tp @s -20.5 231 60.5 90 10
+cmd forceload add -80 -16 64 112
+wait 300
+cmd fill -75 230 -10 50 230 50 minecraft:grass_block
+cmd fill -75 230 51 50 230 110 minecraft:grass_block
+cmd fill -75 231 -10 50 231 50 minecraft:short_grass
+cmd fill -75 231 51 50 231 110 minecraft:short_grass
+cmd fill -48 231 92 -42 231 95 minecraft:tall_grass[half=lower]
+cmd fill -48 232 92 -42 232 95 minecraft:tall_grass[half=upper]
+cmd fill 19 231 104 22 231 110 minecraft:large_fern[half=lower]
+cmd fill 19 232 104 22 232 110 minecraft:large_fern[half=upper]
+cmd fill 39 231 88 42 231 93 minecraft:tall_grass[half=lower]
+cmd fill 39 232 88 42 232 93 minecraft:tall_grass[half=upper]
+cmd fill 27 231 51 33 231 54 minecraft:large_fern[half=lower]
+cmd fill 27 232 51 33 232 54 minecraft:large_fern[half=upper]
+cmd fill -11 231 46 -6 231 48 minecraft:tall_grass[half=lower]
+cmd fill -11 232 46 -6 232 48 minecraft:tall_grass[half=upper]
+cmd fill -63 231 58 -60 231 60 minecraft:tall_grass[half=lower]
+cmd fill -63 232 58 -60 232 60 minecraft:tall_grass[half=upper]
+cmd fill 33 231 60 35 231 62 minecraft:tall_grass[half=lower]
+cmd fill 33 232 60 35 232 62 minecraft:tall_grass[half=upper]
+cmd fill -33 231 99 -30 231 104 minecraft:tall_grass[half=lower]
+cmd fill -33 232 99 -30 232 104 minecraft:tall_grass[half=upper]
+cmd fill -68 231 -3 -63 231 1 minecraft:tall_grass[half=lower]
+cmd fill -68 232 -3 -63 232 1 minecraft:tall_grass[half=upper]
+cmd fill -66 231 16 -60 231 18 minecraft:tall_grass[half=lower]
+cmd fill -66 232 16 -60 232 18 minecraft:tall_grass[half=upper]
+cmd fill -22 231 24 -19 231 28 minecraft:tall_grass[half=lower]
+cmd fill -22 232 24 -19 232 28 minecraft:tall_grass[half=upper]
+cmd fill 40 231 74 43 231 76 minecraft:tall_grass[half=lower]
+cmd fill 40 232 74 43 232 76 minecraft:tall_grass[half=upper]
+cmd fill -6 231 21 0 231 26 minecraft:tall_grass[half=lower]
+cmd fill -6 232 21 0 232 26 minecraft:tall_grass[half=upper]
+cmd fill 41 231 74 43 231 79 minecraft:tall_grass[half=lower]
+cmd fill 41 232 74 43 232 79 minecraft:tall_grass[half=upper]
+cmd fill -56 231 101 -52 231 103 minecraft:tall_grass[half=lower]
+cmd fill -56 232 101 -52 232 103 minecraft:tall_grass[half=upper]
+cmd fill -21 231 7 -16 231 10 minecraft:tall_grass[half=lower]
+cmd fill -21 232 7 -16 232 10 minecraft:tall_grass[half=upper]
+cmd fill 12 231 75 17 231 78 minecraft:large_fern[half=lower]
+cmd fill 12 232 75 17 232 78 minecraft:large_fern[half=upper]
+cmd fill -56 231 82 -54 231 84 minecraft:tall_grass[half=lower]
+cmd fill -56 232 82 -54 232 84 minecraft:tall_grass[half=upper]
+cmd fill -56 231 101 -54 231 104 minecraft:tall_grass[half=lower]
+cmd fill -56 232 101 -54 232 104 minecraft:tall_grass[half=upper]
+cmd fill -35 231 48 -31 231 51 minecraft:tall_grass[half=lower]
+cmd fill -35 232 48 -31 232 51 minecraft:tall_grass[half=upper]
+cmd fill -11 231 19 -8 231 25 minecraft:tall_grass[half=lower]
+cmd fill -11 232 19 -8 232 25 minecraft:tall_grass[half=upper]
+cmd fill -69 231 7 -63 231 9 minecraft:large_fern[half=lower]
+cmd fill -69 232 7 -63 232 9 minecraft:large_fern[half=upper]
+cmd fill -21 231 47 -15 231 51 minecraft:tall_grass[half=lower]
+cmd fill -21 232 47 -15 232 51 minecraft:tall_grass[half=upper]
+cmd fill 9 231 63 14 231 65 minecraft:large_fern[half=lower]
+cmd fill 9 232 63 14 232 65 minecraft:large_fern[half=upper]
+cmd fill 24 231 99 26 231 104 minecraft:tall_grass[half=lower]
+cmd fill 24 232 99 26 232 104 minecraft:tall_grass[half=upper]
+cmd fill -72 231 18 -68 231 23 minecraft:tall_grass[half=lower]
+cmd fill -72 232 18 -68 232 23 minecraft:tall_grass[half=upper]
+cmd fill -29 231 73 -25 231 79 minecraft:large_fern[half=lower]
+cmd fill -29 232 73 -25 232 79 minecraft:large_fern[half=upper]
+cmd fill -56 231 -4 -50 231 1 minecraft:tall_grass[half=lower]
+cmd fill -56 232 -4 -50 232 1 minecraft:tall_grass[half=upper]
+cmd fill 28 231 83 31 231 89 minecraft:tall_grass[half=lower]
+cmd fill 28 232 83 31 232 89 minecraft:tall_grass[half=upper]
+cmd fill -60 231 53 -56 231 56 minecraft:tall_grass[half=lower]
+cmd fill -60 232 53 -56 232 56 minecraft:tall_grass[half=upper]
+cmd fill 19 231 44 24 231 48 minecraft:tall_grass[half=lower]
+cmd fill 19 232 44 24 232 48 minecraft:tall_grass[half=upper]
+cmd fill 17 231 30 23 231 34 minecraft:tall_grass[half=lower]
+cmd fill 17 232 30 23 232 34 minecraft:tall_grass[half=upper]
+cmd fill 31 231 56 35 231 60 minecraft:tall_grass[half=lower]
+cmd fill 31 232 56 35 232 60 minecraft:tall_grass[half=upper]
+cmd fill 12 231 70 14 231 74 minecraft:tall_grass[half=lower]
+cmd fill 12 232 70 14 232 74 minecraft:tall_grass[half=upper]
+cmd fill 39 231 36 43 231 42 minecraft:tall_grass[half=lower]
+cmd fill 39 232 36 43 232 42 minecraft:tall_grass[half=upper]
+cmd fill -44 231 4 -39 231 10 minecraft:tall_grass[half=lower]
+cmd fill -44 232 4 -39 232 10 minecraft:tall_grass[half=upper]
+cmd fill -61 231 16 -58 231 21 minecraft:tall_grass[half=lower]
+cmd fill -61 232 16 -58 232 21 minecraft:tall_grass[half=upper]
+cmd fill -68 231 53 -66 231 56 minecraft:large_fern[half=lower]
+cmd fill -68 232 53 -66 232 56 minecraft:large_fern[half=upper]
+cmd fill -58 231 12 -53 231 14 minecraft:tall_grass[half=lower]
+cmd fill -58 232 12 -53 232 14 minecraft:tall_grass[half=upper]
+cmd fill -31 231 11 -26 231 13 minecraft:tall_grass[half=lower]
+cmd fill -31 232 11 -26 232 13 minecraft:tall_grass[half=upper]
+cmd fill 13 231 47 15 231 52 minecraft:tall_grass[half=lower]
+cmd fill 13 232 47 15 232 52 minecraft:tall_grass[half=upper]
+cmd fill -8 231 59 -6 231 64 minecraft:tall_grass[half=lower]
+cmd fill -8 232 59 -6 232 64 minecraft:tall_grass[half=upper]
+cmd fill -57 231 32 -53 231 36 minecraft:large_fern[half=lower]
+cmd fill -57 232 32 -53 232 36 minecraft:large_fern[half=upper]
+cmd fill -10 231 22 -8 231 25 minecraft:tall_grass[half=lower]
+cmd fill -10 232 22 -8 232 25 minecraft:tall_grass[half=upper]
+cmd fill 13 231 59 16 231 61 minecraft:tall_grass[half=lower]
+cmd fill 13 232 59 16 232 61 minecraft:tall_grass[half=upper]
+cmd fill 6 231 19 10 231 25 minecraft:tall_grass[half=lower]
+cmd fill 6 232 19 10 232 25 minecraft:tall_grass[half=upper]
+cmd fill 38 231 75 42 231 78 minecraft:tall_grass[half=lower]
+cmd fill 38 232 75 42 232 78 minecraft:tall_grass[half=upper]
+cmd fill -26 231 71 -20 231 74 minecraft:tall_grass[half=lower]
+cmd fill -26 232 71 -20 232 74 minecraft:tall_grass[half=upper]
+cmd fill 12 231 53 15 231 59 minecraft:large_fern[half=lower]
+cmd fill 12 232 53 15 232 59 minecraft:large_fern[half=upper]
+cmd fill 7 231 81 10 231 86 minecraft:tall_grass[half=lower]
+cmd fill 7 232 81 10 232 86 minecraft:tall_grass[half=upper]
+cmd fill -30 231 46 -27 231 51 minecraft:tall_grass[half=lower]
+cmd fill -30 232 46 -27 232 51 minecraft:tall_grass[half=upper]
+cmd fill -41 231 92 -39 231 94 minecraft:tall_grass[half=lower]
+cmd fill -41 232 92 -39 232 94 minecraft:tall_grass[half=upper]
+cmd fill -70 231 -4 -65 231 0 minecraft:tall_grass[half=lower]
+cmd fill -70 232 -4 -65 232 0 minecraft:tall_grass[half=upper]
+cmd fill 42 231 93 46 231 97 minecraft:tall_grass[half=lower]
+cmd fill 42 232 93 46 232 97 minecraft:tall_grass[half=upper]
+cmd fill -63 231 69 -61 231 75 minecraft:tall_grass[half=lower]
+cmd fill -63 232 69 -61 232 75 minecraft:tall_grass[half=upper]
+cmd fill 37 231 39 43 231 42 minecraft:tall_grass[half=lower]
+cmd fill 37 232 39 43 232 42 minecraft:tall_grass[half=upper]
+cmd fill -25 231 89 -21 231 92 minecraft:tall_grass[half=lower]
+cmd fill -25 232 89 -21 232 92 minecraft:tall_grass[half=upper]
+cmd fill 20 231 -4 25 231 0 minecraft:tall_grass[half=lower]
+cmd fill 20 232 -4 25 232 0 minecraft:tall_grass[half=upper]
+cmd fill -73 231 9 -70 231 14 minecraft:tall_grass[half=lower]
+cmd fill -73 232 9 -70 232 14 minecraft:tall_grass[half=upper]
+cmd fill -33 231 47 -27 231 52 minecraft:tall_grass[half=lower]
+cmd fill -33 232 47 -27 232 52 minecraft:tall_grass[half=upper]
+cmd fill -74 231 21 -71 231 24 minecraft:tall_grass[half=lower]
+cmd fill -74 232 21 -71 232 24 minecraft:tall_grass[half=upper]
+cmd fill -18 231 72 -13 231 77 minecraft:tall_grass[half=lower]
+cmd fill -18 232 72 -13 232 77 minecraft:tall_grass[half=upper]
+cmd fill -25 231 85 -21 231 90 minecraft:large_fern[half=lower]
+cmd fill -25 232 85 -21 232 90 minecraft:large_fern[half=upper]
+cmd fill -60 231 31 -56 231 35 minecraft:tall_grass[half=lower]
+cmd fill -60 232 31 -56 232 35 minecraft:tall_grass[half=upper]
+cmd setblock 47 231 60 minecraft:allium
+cmd setblock -27 231 40 minecraft:dandelion
+cmd setblock -23 231 32 minecraft:poppy
+cmd setblock 7 231 11 minecraft:allium
+cmd setblock 38 231 48 minecraft:azure_bluet
+cmd setblock -73 231 43 minecraft:poppy
+cmd setblock 13 231 19 minecraft:dandelion
+cmd setblock 26 231 32 minecraft:dandelion
+cmd setblock 8 231 53 minecraft:poppy
+cmd setblock -54 231 93 minecraft:oxeye_daisy
+cmd setblock -34 231 98 minecraft:poppy
+cmd setblock -12 231 48 minecraft:azure_bluet
+cmd setblock -63 231 34 minecraft:azure_bluet
+cmd setblock 7 231 39 minecraft:allium
+cmd setblock 28 231 -5 minecraft:dandelion
+cmd setblock 37 231 95 minecraft:oxeye_daisy
+cmd setblock -30 231 -4 minecraft:oxeye_daisy
+cmd setblock -49 231 -8 minecraft:cornflower
+cmd setblock -40 231 -6 minecraft:dandelion
+cmd setblock -71 231 31 minecraft:cornflower
+cmd setblock -5 231 99 minecraft:cornflower
+cmd setblock -6 231 -2 minecraft:poppy
+cmd setblock -23 231 13 minecraft:poppy
+cmd setblock -5 231 95 minecraft:oxeye_daisy
+cmd setblock -23 231 25 minecraft:oxeye_daisy
+cmd setblock -3 231 60 minecraft:allium
+cmd setblock -32 231 3 minecraft:poppy
+cmd setblock -73 231 34 minecraft:azure_bluet
+cmd setblock 36 231 49 minecraft:oxeye_daisy
+cmd setblock 4 231 68 minecraft:cornflower
+cmd setblock -52 231 67 minecraft:cornflower
+cmd setblock -34 231 70 minecraft:cornflower
+cmd setblock -23 231 65 minecraft:oxeye_daisy
+cmd setblock 41 231 48 minecraft:azure_bluet
+cmd setblock -59 231 49 minecraft:oxeye_daisy
+cmd setblock -49 231 22 minecraft:azure_bluet
+cmd setblock -18 231 15 minecraft:azure_bluet
+cmd setblock -7 231 85 minecraft:poppy
+cmd setblock -40 231 72 minecraft:allium
+cmd setblock -73 231 24 minecraft:cornflower
+cmd setblock -47 231 86 minecraft:azure_bluet
+cmd setblock 36 231 66 minecraft:cornflower
+cmd setblock 18 231 90 minecraft:poppy
+cmd setblock -47 231 61 minecraft:oxeye_daisy
+cmd setblock -6 231 106 minecraft:dandelion
+cmd setblock -1 231 -8 minecraft:poppy
+cmd setblock 15 231 84 minecraft:allium
+cmd setblock -28 231 64 minecraft:azure_bluet
+cmd setblock -43 231 94 minecraft:dandelion
+cmd setblock -33 231 69 minecraft:poppy
+cmd setblock 2 231 77 minecraft:cornflower
+cmd setblock -50 231 63 minecraft:allium
+cmd setblock -7 231 71 minecraft:allium
+cmd setblock -37 231 34 minecraft:oxeye_daisy
+cmd setblock 17 231 -8 minecraft:cornflower
+cmd setblock 18 231 102 minecraft:azure_bluet
+cmd setblock -14 231 -3 minecraft:oxeye_daisy
+cmd setblock -69 231 71 minecraft:azure_bluet
+cmd setblock 37 231 19 minecraft:oxeye_daisy
+cmd setblock -66 231 -8 minecraft:dandelion
+cmd setblock -9 231 23 minecraft:cornflower
+cmd setblock -3 231 -3 minecraft:azure_bluet
+cmd setblock -71 231 73 minecraft:allium
+cmd setblock -36 231 57 minecraft:cornflower
+cmd setblock -55 231 -3 minecraft:cornflower
+cmd setblock -17 231 48 minecraft:dandelion
+cmd setblock 3 231 -4 minecraft:dandelion
+cmd setblock -32 231 52 minecraft:poppy
+cmd setblock -47 231 71 minecraft:dandelion
+cmd setblock 26 231 108 minecraft:poppy
+cmd setblock -59 231 86 minecraft:poppy
+cmd setblock -43 231 -6 minecraft:poppy
+cmd setblock 16 231 98 minecraft:allium
+cmd setblock 45 231 19 minecraft:dandelion
+cmd setblock -30 231 2 minecraft:poppy
+cmd setblock -46 231 -1 minecraft:allium
+cmd setblock 49 231 21 minecraft:poppy
+cmd setblock 9 231 0 minecraft:allium
+cmd setblock -57 231 92 minecraft:dandelion
+cmd setblock -8 231 59 minecraft:dandelion
+cmd setblock -22 231 102 minecraft:allium
+cmd setblock 25 231 79 minecraft:azure_bluet
+cmd setblock -1 231 91 minecraft:azure_bluet
+cmd setblock -47 231 -2 minecraft:allium
+cmd setblock 43 231 92 minecraft:cornflower
+cmd setblock -63 231 27 minecraft:allium
+cmd setblock -18 231 4 minecraft:cornflower
+cmd setblock 30 231 30 minecraft:cornflower
+cmd setblock 26 231 90 minecraft:poppy
+cmd setblock -41 231 22 minecraft:oxeye_daisy
+cmd gamemode spectator
+camera first
+hud off
+lookswitch cinematic
+opt fov 90
+wait 400
+cmd time set 5000
+# --- from eight blocks up, looking west down the lawn
+cmd tp @s 44.5 237 50.5 90 14
+wait 300
+shot v1_whole
+lens small setting
+wait 80
+shotnow v1_a_built_1
+wait 2
+shotnow v1_a_built_2
+wait 2
+shotnow v1_a_built_3
+wait 2
+shotnow v1_a_built_4
+wait 2
+shotnow v1_a_built_5
+wait 2
+cmd awaken terrain waving debug 3
+wait 80
+shotnow v1_b_still_1
+wait 2
+shotnow v1_b_still_2
+wait 2
+shotnow v1_b_still_3
+wait 2
+shotnow v1_b_still_4
+wait 2
+shotnow v1_b_still_5
+wait 2
+cmd awaken terrain waving debug 0
+lens small 0 0.01 0 0
+wait 80
+shotnow v1_c_nocontact_1
+wait 2
+shotnow v1_c_nocontact_2
+wait 2
+shotnow v1_c_nocontact_3
+wait 2
+shotnow v1_c_nocontact_4
+wait 2
+shotnow v1_c_nocontact_5
+wait 2
+lens small 0 0 0 0.01
+wait 80
+shotnow v1_d_noambient_1
+wait 2
+shotnow v1_d_noambient_2
+wait 2
+shotnow v1_d_noambient_3
+wait 2
+shotnow v1_d_noambient_4
+wait 2
+shotnow v1_d_noambient_5
+wait 2
+lens small 0 0.01 0 0.01
+wait 80
+shotnow v1_e_neither_1
+wait 2
+shotnow v1_e_neither_2
+wait 2
+shotnow v1_e_neither_3
+wait 2
+shotnow v1_e_neither_4
+wait 2
+shotnow v1_e_neither_5
+wait 2
+lens small 16 40 16 40
+wait 80
+shotnow v1_g_fade_16_40_1
+wait 2
+shotnow v1_g_fade_16_40_2
+wait 2
+shotnow v1_g_fade_16_40_3
+wait 2
+shotnow v1_g_fade_16_40_4
+wait 2
+shotnow v1_g_fade_16_40_5
+wait 2
+lens small 24 56 24 56
+wait 80
+shotnow v1_h_fade_24_56_1
+wait 2
+shotnow v1_h_fade_24_56_2
+wait 2
+shotnow v1_h_fade_24_56_3
+wait 2
+shotnow v1_h_fade_24_56_4
+wait 2
+shotnow v1_h_fade_24_56_5
+wait 2
+lens small 16 40 0 0
+wait 80
+shotnow v1_i_fade_contact_only_16_40_1
+wait 2
+shotnow v1_i_fade_contact_only_16_40_2
+wait 2
+shotnow v1_i_fade_contact_only_16_40_3
+wait 2
+shotnow v1_i_fade_contact_only_16_40_4
+wait 2
+shotnow v1_i_fade_contact_only_16_40_5
+wait 2
+lens small setting
+lookswitch swift
+wait 160
+wait 80
+shotnow v1_f_swift_1
+wait 2
+shotnow v1_f_swift_2
+wait 2
+shotnow v1_f_swift_3
+wait 2
+shotnow v1_f_swift_4
+wait 2
+shotnow v1_f_swift_5
+wait 2
+lookswitch cinematic
+wait 240
+# --- at eye height, the same way
+cmd tp @s 44.5 231 50.5 90 4
+wait 300
+shot v2_whole
+lens small setting
+wait 80
+shotnow v2_a_built_1
+wait 2
+shotnow v2_a_built_2
+wait 2
+shotnow v2_a_built_3
+wait 2
+shotnow v2_a_built_4
+wait 2
+shotnow v2_a_built_5
+wait 2
+lens small 0 0.01 0 0.01
+wait 80
+shotnow v2_e_neither_1
+wait 2
+shotnow v2_e_neither_2
+wait 2
+shotnow v2_e_neither_3
+wait 2
+shotnow v2_e_neither_4
+wait 2
+shotnow v2_e_neither_5
+wait 2
+lens small 16 40 16 40
+wait 80
+shotnow v2_g_fade_16_40_1
+wait 2
+shotnow v2_g_fade_16_40_2
+wait 2
+shotnow v2_g_fade_16_40_3
+wait 2
+shotnow v2_g_fade_16_40_4
+wait 2
+shotnow v2_g_fade_16_40_5
+wait 2
+lens small 24 56 24 56
+wait 80
+shotnow v2_h_fade_24_56_1
+wait 2
+shotnow v2_h_fade_24_56_2
+wait 2
+shotnow v2_h_fade_24_56_3
+wait 2
+shotnow v2_h_fade_24_56_4
+wait 2
+shotnow v2_h_fade_24_56_5
+wait 2
+lens small setting
+quit

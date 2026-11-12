@@ -443,6 +443,12 @@ vec4 history(vec3 p, bool sky, bool z01) {
     return wsum > 0.0 ? vec4(acc / wsum, wsum) : vec4(0.0);
 }
 
+// How much of the small shade (the contact shadows, the ambient shade) a surface d blocks off keeps: all of it up to
+// `from`, none past `to` (frame texels 30 to 33, w; `to` not past `from`: all of it everywhere).
+float smallKeep(float d, float from, float to) {
+    return to > from ? 1.0 - smoothstep(from, to, d) : 1.0;
+}
+
 void main() {
     bool z01 = F(16).x > 0.5, ultra = Quality > 1.5;
     ivec2 last = ivec2(InSize) - 1;
@@ -516,13 +522,16 @@ void main() {
             }
             l = normalize(l + (a1 * cos(ang) + cross(l, a1) * sin(ang)) * rad);
             vis = sunVisibility(ps, n, l, still, ultra);
-            if (vis > 0.0 && dist < 96.0) vis *= contactShadow(ps, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra);
+            float keepContact = smallKeep(dist, F(30).w, F(31).w);
+            if (vis > 0.0 && dist < 96.0 && keepContact > 0.0)
+                vis *= mix(1.0, contactShadow(ps, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra), keepContact);
             // the clouds' moving shadows
             if (vis > 0.0) vis *= cloudShadow(p, f14.xyz, cloudParams(), f12.y);
             // and a storm cell's, long across the land when the sun is low
             if (vis > 0.0) vis *= stormShadow(p, f14.xyz, f12.y);
         }
-        if (dist < 96.0) ao = ambient(p, n, noise, noise2, vp, z01, zFar, ultra);
+        float keepAmbient = smallKeep(dist, F(32).w, F(33).w);
+        if (dist < 96.0 && keepAmbient > 0.0) ao = mix(1.0, ambient(p, n, noise, noise2, vp, z01, zFar, ultra), keepAmbient);
     }
     float strength = f14.w * P(6).a * P(19).r;
     if (strength > 0.0 && F(15).x > 0.0) vol = volume(normalize(p), sky ? (ultra ? 320.0 : 192.0) : min(dist, ultra ? 320.0 : 192.0), f14.xyz, strength, noise2, ultra);

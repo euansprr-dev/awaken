@@ -315,6 +315,14 @@ public final class LensClient {
                         .then(lensSwitch("sunpass", LensClient::sunPass))
                         .then(lensSwitch("rays", LensClient::rays))
                         .then(lensSwitch("paths", LensClient::paths))
+                        .then(net.minecraft.commands.Commands.literal("small")
+                                .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                        .executes(c -> {
+                                            String line = small(com.mojang.brigadier.arguments.StringArgumentType.getString(c, "what"));
+                                            Awaken.LOG.info("[lens] {}", line);
+                                            Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(line));
+                                            return 1;
+                                        })))
                         .then(net.minecraft.commands.Commands.literal("projection")
                                 .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.word())
                                         .executes(c -> {
@@ -339,6 +347,32 @@ public final class LensClient {
                             Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(line));
                             return 1;
                         }));
+    }
+
+    // The small shade's reach (SPEC §22 "The small shade's reach"): contact shadows from and to, ambient shade from
+    // and to, in blocks; an end not past its start leaves that shade whole at every distance.
+    private static final float[] SMALL = {0f, 0f, 0f, 0f};
+    private static float @org.jspecify.annotations.Nullable [] forcedSmall;
+
+    /**
+     * {@code /awaken lens small <contact from> <contact to> <ambient from> <ambient to>} (autopilot {@code lens small}):
+     * where the depth-made contact shadows and the ambient shade fade out, in blocks, for A/B shots and for tuning in
+     * play; {@code setting} puts the built-in reach back. An end not past its start: no fade.
+     */
+    public static String small(String arg) {
+        String[] w = arg.trim().split("\\s+");
+        if (w.length == 4) {
+            try {
+                forcedSmall = new float[] {Float.parseFloat(w[0]), Float.parseFloat(w[1]), Float.parseFloat(w[2]), Float.parseFloat(w[3])};
+            } catch (NumberFormatException e) {
+                return "lens small: four numbers (contact from, to; ambient from, to) or 'setting'";
+            }
+        } else {
+            forcedSmall = null;
+        }
+        float[] s = forcedSmall != null ? forcedSmall : SMALL;
+        return String.format(java.util.Locale.ROOT, "small shade: contact shadows fade %.0f to %.0f, ambient shade %.0f to %.0f blocks%s",
+                s[0], s[1], s[2], s[3], forcedSmall != null ? "" : " (built in)");
     }
 
     private static boolean showPaths;
@@ -742,6 +776,8 @@ public final class LensClient {
         lensFrame.lit(litAir != null ? litAir.originX() : 0, litAir != null ? litAir.originY() : 0, litAir != null ? litAir.originZ() : 0,
                 rays && litAir.valid());
         lensFrame.paths(showPaths);
+        float[] small = forcedSmall != null ? forcedSmall : SMALL;
+        lensFrame.small(small[0], small[1], small[2], small[3]);
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
         if (WorldProjection.ready()) {
