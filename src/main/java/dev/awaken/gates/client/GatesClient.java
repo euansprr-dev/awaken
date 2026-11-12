@@ -80,6 +80,8 @@ public final class GatesClient {
         });
         e.register(dev.awaken.gates.net.RigPayloads.Ghost.TYPE, (msg, ctx) -> RigGhost.ghost(msg));
         e.register(dev.awaken.gates.net.TrialPayloads.Tally.TYPE, (msg, ctx) -> TrialTally.show(msg));
+        e.register(dev.awaken.gates.net.BeatPayloads.Lesson.TYPE, (msg, ctx) -> BeatLessons.lesson(msg));
+        e.register(dev.awaken.gates.net.BeatPayloads.Clean.TYPE, (msg, ctx) -> BeatLessons.clean(msg));
         e.register(dev.awaken.gates.net.WorldPayloads.Arrival.TYPE, (msg, ctx) -> GateWorldClient.arrive(msg));
         e.register(dev.awaken.gates.net.WorldPayloads.Journey.TYPE, (msg, ctx) -> WorldJourney.start(msg));
         e.register(dev.awaken.gates.net.WorldPayloads.AtlasView.TYPE, (msg, ctx) -> GateWorldClient.atlas(msg));

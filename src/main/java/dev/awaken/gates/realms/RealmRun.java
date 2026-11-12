@@ -133,6 +133,8 @@ final class RealmRun {
         }
         if (plays) course(level, p, g, land, ref, lx, ly, lz);
         if (!land.holds().isEmpty()) holds(level, p, g, plan, ref, st, data, plays, lx, ly, lz);
+        if (!p.isSpectator() && !land.lessons().isEmpty()) lessons(p, g, land, ref, lx, ly, lz);
+        if (plays && !land.lines().isEmpty()) clean(p, g, land, lx, ly, lz);
         RealmTrial.tick(level, p, g, land, ref, st, data, lx, ly, lz);
         if (!land.traps().isEmpty()) RealmTraps.tick(level, g, land, ref, p, lx, ly, lz);
         RealmCountry.tick(level, p, g, plan, ref, st, data, lx, lz);
@@ -151,6 +153,8 @@ final class RealmRun {
 
     /** A server is starting: gate ids begin again in another world, so nothing kept by gate id may be read as this one's. */
     static void reset() {
+        CLEAN.clear();
+        RESTING.clear();
         RealmCountry.reset();
         RealmTrial.reset();
     }
@@ -291,6 +295,122 @@ final class RealmRun {
         }
     }
 
+    /** How near a family's first showing has to be (SPEC §72.6): six across, four up or down. */
+    private static final int LESSON_NEAR = 6, LESSON_DY = 4;
+
+    /**
+     * Teach once, then go quiet (SPEC §72.6): the first time someone comes near the place a family of moves is first asked
+     * for in a gate, the gold figure does the move once and the Now line says how in plain words. Each family is shown to
+     * each player once, in whichever gate they meet it first, and never again. One at a time; a partner gets their own.
+     */
+    private static void lessons(ServerPlayer p, GateRecord g, Land land, RealmRef ref, int lx, int ly, int lz) {
+        dev.awaken.gates.run.GateMemory mem = null;
+        for (Land.Lesson l : land.lessons()) {
+            int dx = l.x() - lx, dz = l.z() - lz;
+            if (dx * dx + dz * dz > LESSON_NEAR * LESSON_NEAR || Math.abs(l.y() - ly) > LESSON_DY) continue;
+            if (mem == null) mem = p.getData(GatesRegistry.MEMORY.get());
+            if (!mem.beatsShown.add(l.family().name())) continue;
+            int cx = RealmCells.centerX(ref.cell()), cz = RealmCells.centerZ(ref.cell());
+            List<Vec3> path = new java.util.ArrayList<>(l.path().size());
+            for (double[] q : l.path()) path.add(new Vec3(q[0] + cx, q[1], q[2] + cz));
+            if (dev.awaken.core.AwakenNet.canReceive(p, dev.awaken.gates.net.BeatPayloads.Lesson.TYPE)) {
+                dev.awaken.core.AwakenNet.send(p, new dev.awaken.gates.net.BeatPayloads.Lesson(path));
+            }
+            Signal.toast(p, Component.literal(l.words()));
+            dev.awaken.Awaken.LOG.info("[beats] gate {}: showed {} to {} at {} {} {}", g.id, l.family(), p.getScoreboardName(), l.x(), l.y(), l.z());
+            return;
+        }
+    }
+
+    /** A line being crossed clean: the gate, which line, which end it's going to (0 its start), checks stood still, the feet's last place. */
+    private static final class Clean {
+        int gate, line, far, still;
+        double x, z;
+    }
+
+    private static final Map<UUID, Clean> CLEAN = new HashMap<>();
+    /** The line someone last finished or spoiled (gate, line): not begun again until they're well away from both its ends. */
+    private static final Map<UUID, int[]> RESTING = new HashMap<>();
+    /** How near an end counts as at it; how far from both ends a finished line has to be left; two seconds stood still. */
+    private static final int END_NEAR = 2, END_LEFT = 4, STILL = 4;
+
+    /**
+     * A clean line (SPEC §72.6): from one end of a line to the other without a caught fall and without standing still
+     * for two seconds gives a quiet sound and a little Flow on the client. No score, no timer, nothing said. Either way
+     * along it counts; today's crossings (a fallback) don't.
+     */
+    private static void clean(ServerPlayer p, GateRecord g, Land land, int lx, int ly, int lz) {
+        List<Land.Line> lines = land.lines();
+        UUID id = p.getUUID();
+        Clean c = CLEAN.get(id);
+        if (c != null && (c.gate != g.id || c.line >= lines.size())) {
+            CLEAN.remove(id);
+            c = null;
+        }
+        int[] rest = RESTING.get(id);
+        if (rest != null && (rest[0] != g.id || rest[1] >= lines.size() || end(lines.get(rest[1]), lx, ly, lz, END_LEFT) < 0)) {
+            RESTING.remove(id);
+            rest = null;
+        }
+        if (c == null) {
+            if (!p.onGround()) return;
+            for (int i = 0; i < lines.size(); i++) {
+                Land.Line l = lines.get(i);
+                if (l.fallback() || l.beats().isEmpty() || rest != null && rest[1] == i) continue;
+                int at = end(l, lx, ly, lz, END_NEAR);
+                if (at < 0) continue;
+                c = new Clean();
+                c.gate = g.id;
+                c.line = i;
+                c.far = 1 - at;
+                c.x = p.getX();
+                c.z = p.getZ();
+                CLEAN.put(id, c);
+                return;
+            }
+            return;
+        }
+        Land.Line l = lines.get(c.line);
+        int at = end(l, lx, ly, lz, END_NEAR);
+        if (at == c.far) {
+            if (!p.onGround()) return;
+            CLEAN.remove(id);
+            RESTING.put(id, new int[]{g.id, c.line});
+            if (dev.awaken.core.AwakenNet.canReceive(p, dev.awaken.gates.net.BeatPayloads.Clean.TYPE)) {
+                dev.awaken.core.AwakenNet.send(p, new dev.awaken.gates.net.BeatPayloads.Clean(l.beats().size()));
+            }
+            dev.awaken.Awaken.LOG.info("[beats] gate {}: {} crossed {} clean ({} beats)", g.id, p.getScoreboardName(), l.leg(), l.beats().size());
+            return;
+        }
+        double mx = p.getX() - c.x, mz = p.getZ() - c.z;
+        c.x = p.getX();
+        c.z = p.getZ();
+        if (at >= 0) {
+            // still at the end it began from: it hasn't begun, however long they wait there
+            c.still = 0;
+            return;
+        }
+        if (!inLine(land, l.leg(), lx, ly, lz)) {
+            CLEAN.remove(id);
+            return;
+        }
+        if (p.onGround() && mx * mx + mz * mz < 0.09) {
+            if (++c.still >= STILL) {
+                CLEAN.remove(id);
+                RESTING.put(id, new int[]{g.id, c.line});
+            }
+        } else {
+            c.still = 0;
+        }
+    }
+
+    /** Which end of a line the feet are at (0 its start, 1 its end), or -1 for neither: within {@code r} across and two up or down. */
+    private static int end(Land.Line l, int lx, int ly, int lz, int r) {
+        if (Math.abs(l.x0() - lx) <= r && Math.abs(l.z0() - lz) <= r && Math.abs(l.y0() - ly) <= 2) return 0;
+        if (Math.abs(l.x1() - lx) <= r && Math.abs(l.z1() - lz) <= r && Math.abs(l.y1() - ly) <= 2) return 1;
+        return -1;
+    }
+
     /** Whether a place is inside the box of a line's own stretch (its Course). */
     private static boolean inLine(Land land, String leg, int lx, int ly, int lz) {
         for (Land.Course c : land.courses()) if (c.leg().equals(leg) && c.holds(lx, ly, lz)) return true;
@@ -348,12 +468,16 @@ final class RealmRun {
                 p.setDeltaMovement(Vec3.ZERO);
                 p.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(p)); // a player moves on their own side
                 level.playSound(null, at, GatesRegistry.SND_RIG_PIT.get(), SoundSource.PLAYERS, 0.8F, 1F);
+                // a caught fall spoils a clean line
+                CLEAN.remove(p.getUUID());
                 // a hall that teaches a move takes nothing for a fall and says nothing about it
                 if (c.free()) {
                     RealmTrial.fell(p, g, land, ref, l);
                     return;
                 }
-                p.hurtServer(level, level.damageSources().generic(), FALL_DAMAGE + p.getMaxHealth() * FALL_SHARE);
+                // on Gentle a caught fall costs half (SPEC §70.4, §72.6): the same line, asked more kindly
+                float cost = FALL_DAMAGE + p.getMaxHealth() * FALL_SHARE;
+                p.hurtServer(level, level.damageSources().generic(), dev.awaken.core.api.FightsHooks.gentle(p) ? cost * 0.5F : cost);
                 Signal.toast(p, Component.literal("You fell. You're back on the last ledge you stood on."));
             }
             return;

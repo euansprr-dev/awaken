@@ -166,6 +166,8 @@ public final class RealmPacks {
         String pack = "h" + index;
         var rnd = level.getRandom();
         int made = 0;
+        // a party meets a few more, as a room's company grows (SPEC §70): two players make three into four
+        count = Rooms.partyCompany(count, 0, Rooms.fightersOnFloor(level, g, f))[0];
         for (int i = 0; i < count; i++) {
             double a = rnd.nextDouble() * Math.PI * 2, r = i == 0 ? 0 : 1 + rnd.nextDouble() * Math.max(0, radius - 1);
             BlockPos at = settle(level, center.offset((int) Math.round(Math.cos(a) * r), 0, (int) Math.round(Math.sin(a) * r)));

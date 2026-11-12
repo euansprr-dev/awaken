@@ -16,8 +16,11 @@ import java.util.Set;
  * alone no longer counts, SPEC §50.2), the Lords you've felled for the first time, and any Lord's XP still landing.
  */
 public final class GateMemory {
-    /** 3: how many open lands you've been told how to find their Wardens in (SPEC §50.9 "Lights and seals"). */
-    public static final int SCHEMA = 3;
+    /**
+     * 3: how many open lands you've been told how to find their Wardens in (SPEC §50.9 "Lights and seals"). 4: the
+     * families of moves a gate's lines have shown you (SPEC §72.6).
+     */
+    public static final int SCHEMA = 4;
 
     /** Not read since the bag (SPEC §50.2); the save keeps the field. */
     public final List<String> lastThemes = new ArrayList<>();
@@ -44,6 +47,8 @@ public final class GateMemory {
     public int trialBest;
     /** Open lands you've been told about their lights in (the line is said in your first two, then never again). */
     public int openLandsTold;
+    /** The families of moves (Land.Family names) the gold figure has shown you in a gate: each is shown once, then never again. */
+    public final Set<String> beatsShown = new LinkedHashSet<>();
 
     public void sawRealm(String id) {
         seenRealms.remove(id);
@@ -136,13 +141,21 @@ public final class GateMemory {
         ).apply(i, C::new));
     }
 
+    private record D(List<String> beatsShown) {
+        static final D EMPTY = new D(List.of());
+        static final Codec<D> CODEC = RecordCodecBuilder.create(i -> i.group(
+                Codec.STRING.listOf().optionalFieldOf("beats_shown", List.of()).forGetter(D::beatsShown)
+        ).apply(i, D::new));
+    }
+
     public static final MapCodec<GateMemory> MAP_CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             A.CODEC.fieldOf("a").forGetter(m -> new A(SCHEMA, List.copyOf(m.lastThemes), List.copyOf(m.lastLayouts), m.sinceTwist,
                     m.twistStreak, List.copyOf(m.scouted), List.copyOf(m.extractFloors))),
             B.CODEC.fieldOf("b").forGetter(m -> new B(List.copyOf(m.themesCleared), m.bossesSinceCore, m.echoFloorTicks,
                     m.echoFloorRooms, List.copyOf(m.twistsCounted), m.gatesRolled)),
-            C.CODEC.optionalFieldOf("c", C.EMPTY).forGetter(m -> new C(List.copyOf(m.seenThemes), List.copyOf(m.firstClears), m.lordXp, List.copyOf(m.seenRealms), m.trialBest, m.openLandsTold))
-    ).apply(i, (a, b, c) -> {
+            C.CODEC.optionalFieldOf("c", C.EMPTY).forGetter(m -> new C(List.copyOf(m.seenThemes), List.copyOf(m.firstClears), m.lordXp, List.copyOf(m.seenRealms), m.trialBest, m.openLandsTold)),
+            D.CODEC.optionalFieldOf("d", D.EMPTY).forGetter(m -> new D(List.copyOf(m.beatsShown)))
+    ).apply(i, (a, b, c, d) -> {
         GateMemory m = new GateMemory();
         m.lastThemes.addAll(a.themes);
         m.lastLayouts.addAll(a.layouts);
@@ -162,6 +175,7 @@ public final class GateMemory {
         m.seenRealms.addAll(c.realms);
         m.trialBest = c.trialBest;
         m.openLandsTold = c.openTold;
+        m.beatsShown.addAll(d.beatsShown);
         return m;
     }));
 }

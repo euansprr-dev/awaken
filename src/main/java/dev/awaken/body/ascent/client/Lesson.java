@@ -150,6 +150,15 @@ final class Lesson {
         if (path != null && path.length >= 2 && !dev.awaken.body.client.feel.FeelConfig.reduced()) ghostBegin(path);
     }
 
+    /**
+     * A gate's first showing of a family of moves (SPEC §72.6, through {@link GateLessons}): the figure alone, once, with
+     * no prompt and no card. Not while a lesson of the Way Up is on, and not with reduced motion.
+     */
+    static void figure(Vec3[] pts) {
+        if (kind != null || pts.length < 2 || dev.awaken.body.client.feel.FeelConfig.reduced()) return;
+        ghostBegin(pts);
+    }
+
     /** The move was done (or the moment has passed): the prompt leaves; with {@code withCard} its keys show for four seconds. */
     static void end(boolean withCard) {
         if (kind == null) return;
@@ -418,6 +427,8 @@ final class Lesson {
         offerOwn(mc, p);
         if (kind == null) {
             hold(cardAge >= 0);
+            // a gate's figure walks on its own, with no prompt (GateLessons)
+            if (ghost != null) ghostTick(mc);
             offerOwed(mc, p);
             return;
         }
