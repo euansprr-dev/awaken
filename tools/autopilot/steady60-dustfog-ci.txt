@@ -34,11 +34,29 @@ opt gamma 100
 lens grade vivid
 cmd item replace entity @s weapon.mainhand with minecraft:air
 cmd awaken living goto blossom_meadow
-wait 300
+# (the search for the land runs first, then the passage waits for it to be made: ask again and again, so whenever the
+# passage begins, one of these waits it out)
+wait 200
 waitpassage
-wait 300
+wait 200
 waitpassage
-wait 600
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 400
 shot land_day
 # a stampede by day (forty seconds long)
 cmd awaken living happen stampede
