@@ -4153,10 +4153,10 @@ checks; the timeline in `gates.run.RigDirector`, modelled on the Ritual's direct
 - **The Lens's sense of speed**: from 1.2 blocks a tick in an airborne state, smoothstepped to full at 3, the Feel
   Director hands the Lens the strength and the heading on screen (projected by the camera's own matrix); none with
   reduced motion, on the ground, or when heading away from the view (§14, texel 16).
-- **Wings in first person**: your own wings are drawn from the body, only the outer half of the span (the root would
-  sit on the camera; Phase 0 drew it and got white wedges), the cut edge fading in over 0.15 of the span, the body at
-  60% of its alpha and the glow at 45% (this close, full strength read as solid blades). They show at the edges of
-  view: the tips flick into the top corners on a beat, the outer wing rises into view in a banked turn.
+- **Wings in first person**: the classic sheet (`wingsFeathers` off) is drawn from the body, only the outer half of the
+  span (the root would sit on the camera; Phase 0 drew it and got white wedges), the cut edge fading in over 0.15 of
+  the span, the body at 60% of its alpha and the glow at 45% (this close, full strength read as solid blades).
+  Feathered wings have their own rule (§62 "First person"): you barely see them, but you know they're there.
 - **Moving air** (`core.api.AirHooks`, for the Wilds' updraft pylons and windways): sources registered on both sides
   add an acceleration (blocks a tick²) at the feet; the client's free states take it after their own step (the carry
   ×1, wings ×1.25, flight ×0.6; a rope none). Sources read only what both sides have (blocks, block entities,
@@ -24694,13 +24694,33 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
   its own flight feathers, and the Sovereign's three pairs shadow one another into grey patches (tour 42881881936,
   `d_*`). One pair reads as feathers in sunlight; six gold ones read patchy. Lens has no way to be told "this gives
   light" beyond the Holo's plates (`lens_light.fsh`, `onPlate`); a rule for it is the Lens module's to add.
-- First person: the outer feathers only, set `fpAhead` 0.8 ahead of the eye and `fpUp` -0.12 under it (where the wings
-  really are nothing of them is in view). A tour of three placements in real flight (run 42863429201) showed them at
-  the frame's lower sides in a glide and sweeping in on a beat or a turn; the opening fades in as it spreads, and
-  folded or lifting wings are not drawn through your own eyes, nor is a pair raised over the shoulders (the
-  Sovereign's upper pair lay across the top of the view as two slabs: tour 42899604284; the fix is unpictured).
-  **These two numbers are not yet Euan's eye:** `/awaken wings set fp_ahead|fp_up|fp_alpha <n>`
-  changes them while the game runs, and `/awaken wings show <state> [rung]` holds the wings in any state to look at.
+- **First person** (Euan 12 Nov 2026: "we should barely be able to see them when they're flapping so that they don't
+  bother you, but it's like you still know you have them"; the body's frame pushed 0.8 ahead of the eye had put most
+  of the outer wing across the view, over the hands, its inner edge cut). The rule: on a beat only the outer tips sweep
+  in at the frame's outer edges for a moment and leave; gliding, diving or holding, nothing, or at most a sliver at
+  the edge. Never toward the middle, never in front of the hands, never a cut slab, never a pop.
+  - Drawn in the camera's own frame (`AscentRender.firstPersonWings` turns the pose by the camera, then
+    `WingLayer.placeFirst`), not the body's: a figure whose neck is `fpBack` 1.0 behind the eye and `fpUp` 0.25 over it,
+    lying along the view in a glide, a beat or a dive and standing in it for a hover, a landing or an opening (the
+    lean crossfades with the pose: the same 6.4 ticks and ease, whole-tick clock). Each wing is turned toward the view
+    about its root, about the camera's up, by `fpSweep` 60 degrees, giving way softly (a smooth minimum over 8) so the
+    turn and the tip's swing forward (its flap times the sine of the lean) never pass `fpReach` 65.
+  - The frame is scaled across and up by the real field of view against a 70 degree 16:9 one (from the projection,
+    1 for a view that isn't a perspective), so the feathers land on the same place of the frame at any field of view
+    or window shape.
+  - Only what hangs from the outer bone: the primaries and their coverts (no secondaries, tertials or bones). No pair
+    larger than the first rung's (0.94: Skyborn's 1.18 and the Sovereign's 1.26 reached a fifth of the frame), a main
+    pair rolled under 10 degrees drawn unrolled (Skyborn's 6 degree roll tripled the cover), a pair raised over the
+    shoulders not drawn (the Sovereign's upper pair lay across the top of the view as two slabs: tour 42899604284), no
+    halos, the body at `fpAlpha` 0.8. The opening fades in as it spreads; folded or lifting wings are not drawn.
+  - The offline render (`tools/ascent/fpwings.py`, the placement in `fpwings_place.py`, `--old` for the one before)
+    decided the numbers: in a glide, a dive and an opening nothing is in view; in flight the outermost primaries come
+    down from the top corners on 3 of the 19 ticks of a beat (at most 1.4% of the frame, never nearer the middle than
+    0.91 of the way out); a hover 3 of 32 ticks (1.1%), a landing 2 of 18 (1.3%); a crossfade into a landing at most
+    4.8%, inner edge past 0.82. Nothing over the hands, nothing cut by the near plane, the three rungs alike, 70 and
+    110 degrees alike. Before: 14-31% of the frame, inner edge at 0.34 (0.14 at 110 degrees).
+  - `/awaken wings set fp_back|fp_up|fp_sweep|fp_reach|fp_alpha <n>` changes them while the game runs, and
+    `/awaken wings show <state> [rung]` holds the wings in any state to look at. Third person is unchanged.
 - Known limit: the game culls a player by their own box, so wings three blocks wide vanish when the body is just off
   screen (as the old wings did).
 

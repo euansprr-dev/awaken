@@ -48,6 +48,9 @@ final class AscentRender {
     private static final org.joml.Matrix3f MA = new org.joml.Matrix3f(), MB = new org.joml.Matrix3f();
     private static final Quaternionf QW = new Quaternionf();
     private static final Quaternionf Q = new Quaternionf();
+    /** The view's field of view against a 70 degree 16:9 one, across and up (1 for a view that isn't a perspective). */
+    private static float fovX = 1, fovY = 1;
+    private static final float TAN_V0 = (float) Math.tan(Math.toRadians(35)), TAN_H0 = TAN_V0 * 16 / 9F;
     private static boolean broken;
 
     /** The camera's turn this frame (its right, up and back are this applied to x, y and z). */
@@ -131,6 +134,11 @@ final class AscentRender {
         bx = V.x;
         by = V.y;
         bz = V.z;
+        // a perspective's m00 is 1 / (aspect tan(fov/2)), its m11 1 / tan(fov/2), its m23 -1
+        org.joml.Matrix4f proj = state.cameraRenderState.projectionMatrix;
+        boolean persp = proj.m23() < -0.5F && proj.m00() > 1e-4F && proj.m11() > 1e-4F;
+        fovX = persp ? 1F / proj.m00() / TAN_H0 : 1F;
+        fovY = persp ? 1F / proj.m11() / TAN_V0 : 1F;
         if (ropeType == null) {
             ropeType = RenderTypes.entityTranslucentEmissive(ROPE);
             ropeIronType = RenderTypes.entityTranslucentEmissive(ROPE_IRON);
@@ -167,9 +175,8 @@ final class AscentRender {
         out.order(3).submitCustomGeometry(ps, glowType, GLOWS);
         out.order(3).submitCustomGeometry(ps, ringType, RINGS);
         out.order(3).submitCustomGeometry(ps, starType, STARS);
-        // your own wings in first person: off until they have a look of their own (drawn whole they fill the frame's
-        // lower corners; Phase 1 gives them light at the edges instead)
-        // feathered wings (SPEC §62) also show their flare and their fold after the state has ended
+        // your own wings in first person (SPEC §62): only their outer feathers, at the frame's outer edges, as a beat
+        // lifts them; feathered wings also show their flare and their fold after the state has ended
         if (FIRST_PERSON_WINGS && mc.options.getCameraType().isFirstPerson() && (dev.awaken.body.client.feel.FeelConfig.wingsFeathers()
                 ? WingLayer.inView(mc.player.getId()) : AscentMoves.state().wings)) {
             firstPersonWings(ps, out, mc);
@@ -744,15 +751,24 @@ final class AscentRender {
 
     private static void firstPersonWings(PoseStack ps, SubmitNodeCollector out, Minecraft mc) {
         var p = mc.player;
+        if (dev.awaken.body.client.feel.FeelConfig.wingsFeathers()) {
+            // feathered: in the camera's own frame, not the body's (WingLayer.fpBack), scaled out by the field of view so
+            // the feathers land on the same place of the frame at any (Euan 12 Nov 2026: set from the body they stood
+            // across the middle of the view, cut by the near plane)
+            ps.pushPose();
+            ps.rotate(Q);
+            ps.scale(fovX, fovY, 1F);
+            WingLayer.drawFirstPerson(ps, out, p, pt);
+            ps.popPose();
+            return;
+        }
         AscentAnims.frame(p, pt, F);
         float bodyRot = Mth.rotLerp(pt, p.yBodyRotO, p.yBodyRot);
         float yaw = bodyRot * Mth.DEG_TO_RAD;
         double x = Mth.lerp(pt, p.xo, p.getX()), y = Mth.lerp(pt, p.yo, p.getY()), z = Mth.lerp(pt, p.zo, p.getZ());
         ps.pushPose();
-        // feathered wings sit a little ahead of the eye and above it (WingLayer.fpAhead): the outer feathers at the frame's sides
-        float ahead = dev.awaken.body.client.feel.FeelConfig.wingsFeathers() ? WingLayer.fpAhead : 0;
-        float lift = dev.awaken.body.client.feel.FeelConfig.wingsFeathers() ? WingLayer.fpUp : 0;
-        ps.translate((float) (x - cx) - bx * ahead + ux * lift, (float) (y - cy) - by * ahead + uy * lift, (float) (z - cz) - bz * ahead + uz * lift);
+        // classic: from the body, where they are
+        ps.translate((float) (x - cx), (float) (y - cy), (float) (z - cz));
         // the same turn the figure gets (AscentAnims.onPre), about the body's centre
         double fx = -Mth.sin(yaw), fz = Mth.cos(yaw);
         MA.set((float) -fz, 0, (float) fx, 0, 1, 0, (float) fx, 0, (float) fz);

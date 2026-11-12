@@ -21,6 +21,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import org.joml.Matrix4f;
 
 /**
  * Wings of light on a player's back (the Ascent's Wings tier).
@@ -49,13 +50,21 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     private static final int FOLDED_TICKS = 80;
 
     /**
-     * For your own eyes the wings are drawn from the body but set a little ahead of the eye and a little under it, so
-     * the outer feathers sit at the frame's lower sides and are seen from above (the body is not drawn in first person:
-     * where the wings really are, nothing of them is in view; level with the eye they are thin lines seen edge-on, and
-     * higher they fill the view in a dive: an offline render of this code decided the numbers, docs/movement/PLAN.md).
-     * Blocks; and how solid they are this close.
+     * Your own wings (SPEC §62, Euan 12 Nov 2026: "we should barely be able to see them when they're flapping ... but
+     * you still know you have them"). They are drawn in the camera's own frame, not the body's: a figure {@code fpBack}
+     * blocks behind the eye and {@code fpUp} over it, lying along the view in flight (a glide, a beat, a dive) and
+     * standing in it for a hover, a landing or an opening (the two crossfade with the pose). Each wing is turned toward
+     * the view about its root by {@code fpSweep} degrees, and gives way so the turn and the tip's own swing forward never
+     * pass {@code fpReach}. Only the outer feathers ever reach the frame, at its outer edges, as a beat lifts them past
+     * the shoulder; the frame is scaled by the real field of view against a 70 degree 16:9 one, so that holds at any
+     * field of view or window shape. An offline render of this code decided the numbers (tools/ascent/fpwings.py).
+     * Blocks, degrees; and how solid they are this close.
      */
-    static float fpAhead = 0.8F, fpUp = -0.12F, fpAlpha = 0.8F;
+    static float fpBack = 1.0F, fpUp = 0.25F, fpSweep = 60F, fpReach = 65F, fpAlpha = 0.8F;
+    /** Your own eyes see no pair larger than the first rung's (Skyborn's 1.18 and the Sovereign's 1.26 reached a fifth of the frame). */
+    private static final float FP_SIZE = 0.94F;
+    /** A wing lying along the view, and standing in it (degrees from the view's line). */
+    private static final float LEAN_FLAT = 0, LEAN_UP = 90;
 
     /** One view of a slot's wings this frame (the renderers run after every submit, so each view keeps its own). */
     private static final class View {
@@ -65,6 +74,12 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         float alpha, glow, turn;
         int lod;
         boolean first, ring;
+        /**
+         * For your own eyes: each pair as drawn (no larger than the first rung's, and a main pair not rolled: Skyborn's
+         * 6 degree roll tipped its outer feathers into view), and each wing's turn out of model space (left, right).
+         */
+        final float[][] drawn = new float[3][3];
+        final Matrix4f[] fpTurn = {new Matrix4f(), new Matrix4f(), new Matrix4f(), new Matrix4f(), new Matrix4f(), new Matrix4f()};
         /** A renderer a pair (each pair is its own draw: WingPipelines.feather), and the halos'. */
         final SubmitNodeCollector.CustomGeometryRenderer[] feathers = {(pose, vc) -> feathers(pose, vc, 0), (pose, vc) -> feathers(pose, vc, 1),
                 (pose, vc) -> feathers(pose, vc, 2)};
@@ -80,12 +95,13 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
 
         private void feathers(PoseStack.Pose pose, VertexConsumer vc, int i) {
             if (hidden(i)) return;
-            WingFeathers.pair(pose, vc, this.pose[i], 0, pairs[i], i, pal, alpha, lod, first);
+            WingFeathers.pair(pose, vc, this.pose[i], 0, first ? drawn[i] : pairs[i], i, pal, alpha, lod, first, fpTurn[2 * i], fpTurn[2 * i + 1]);
             if (i == 0 && ring && !first) WingFeathers.ring(pose, vc, turn, alpha);
         }
 
         private void lights(PoseStack.Pose pose, VertexConsumer vc) {
-            if (!probeHalos) return;
+            // no halos through your own eyes: a soft glow at the frame's edge reads as a smear on the screen
+            if (!probeHalos || first) return;
             WingFeathers.faceEye(pose, AscentRender.eye());
             for (int i = 0; i < pairs.length; i++) if (!hidden(i)) WingFeathers.halos(pose, vc, this.pose[i], 0, pairs[i], i, pal[WingFeathers.HALO], glow, alpha);
             if (ring && !first) WingFeathers.ringGlow(pose, vc, alpha);
@@ -113,6 +129,8 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         // feathers: the state, the client tick it began, the pose it left (the crossfade's start)
         int mode = FOLDED, modeAt = -1000;
         final float[] from = new float[WingForm.N];
+        /** Where the first-person figure leaned when the state began (the crossfade's start, degrees). */
+        float leanFrom = LEAN_UP;
         /** How far out of the mark the wings are (0 hidden, 1 there), eased per tick. */
         float show, showO;
         /** What the body is doing this tick (from touch()). */
@@ -160,6 +178,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
             f.mode = FOLDED;
             f.modeAt = AscentMoves.ticks - 1000;
             System.arraycopy(WingForm.FOLD, 0, f.from, 0, WingForm.N);
+            f.leanFrom = LEAN_UP;
             f.show = f.showO = 0;
             f.flew = f.flourish = false;
             f.gather = 0;
@@ -312,8 +331,10 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
     /** A number of the wings' look set by name while the game runs (/awaken wings set); false for a name it doesn't know. */
     static boolean tune(String key, float value) {
         switch (key) {
-            case "fp_ahead" -> fpAhead = value;
+            case "fp_back" -> fpBack = value;
             case "fp_up" -> fpUp = value;
+            case "fp_sweep" -> fpSweep = value;
+            case "fp_reach" -> fpReach = value;
             case "fp_alpha" -> fpAlpha = Mth.clamp(value, 0, 1);
             case "probe_lod" -> probeLod = (int) value;
             case "probe_pairs" -> probePairs = (int) value;
@@ -446,6 +467,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         // the crossfade starts from wherever the feathers are this tick
         poseNow(w, 0, 0, TMP);
         System.arraycopy(TMP, 0, w.from, 0, WingForm.N);
+        w.leanFrom = leanNow(w, 0);
         w.mode = mode;
         w.modeAt = AscentMoves.ticks;
     }
@@ -539,6 +561,51 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         if (b < 1) WingForm.mix(w.from, out, WingForm.ease(b), out);
     }
 
+    /** How the first-person figure leans in a state: along the view in flight, standing in it otherwise. */
+    private static float leanOf(int mode) {
+        return mode == GLIDING || mode == FLYING || mode == DIVING ? LEAN_FLAT : LEAN_UP;
+    }
+
+    /** The first-person figure's lean now, crossfaded with the pose (the same whole-tick clock and ease). */
+    private static float leanNow(Wings w, float pt) {
+        float b = (AscentMoves.ticks - w.modeAt + pt) / BLEND_TICKS, to = leanOf(w.mode);
+        return b >= 1 ? to : Mth.lerp(WingForm.ease(b), w.leanFrom, to);
+    }
+
+    /** A smooth minimum of a and b, rounded over r. */
+    private static float smin(float a, float b, float r) {
+        float h = Mth.clamp(0.5F + 0.5F * (b - a) / r, 0, 1);
+        return b + (a - b) * h - r * h * (1 - h);
+    }
+
+    private static final Matrix4f FP_ROT = new Matrix4f();
+
+    /**
+     * Your own wings' place this frame (see {@link #fpBack}): each pair's drawn size and roll, and each wing's turn out of
+     * model space (blocks; x left, y down from the neck, z off the back) into the camera's (x right, y up, z behind).
+     */
+    private static void placeFirst(Wings w, View v, float pt) {
+        float lean = leanNow(w, pt) * Mth.DEG_TO_RAD, sl = Mth.sin(lean), cl = Mth.cos(lean);
+        // the figure: its left to the camera's left, its feet along the head's way back (lying) or down (standing), its back up or behind
+        FP_ROT.set(-1, 0, 0, 0, 0, -sl, cl, 0, 0, cl, sl, 0, 0, 0, 0, 1);
+        for (int i = 0; i < v.pairs.length; i++) {
+            float[] pair = v.pairs[i], d = v.drawn[i], p = v.pose[i];
+            d[0] = Math.min(pair[0], FP_SIZE);
+            d[1] = Math.abs(pair[1]) <= 10 ? 0 : pair[1];
+            d[2] = pair[2];
+            // a wing swung forward (toward the belly) reaches into the view by the sine of the lean: the turn gives way
+            float psi = smin(fpSweep, fpReach + (p[WingForm.P0] + p[WingForm.P1] + p[WingForm.P2]) * sl, 8F) * Mth.DEG_TO_RAD;
+            float my = WingFeathers.ROOT_Y / 16F, mz = (WingFeathers.ROOT_Z + i * WingFeathers.PAIR_Z) / 16F;
+            float ry = fpUp - my * sl + mz * cl, rz = fpBack + my * cl + mz * sl;
+            for (int k = 0; k < 2; k++) {
+                int s = k == 0 ? 1 : -1;
+                float rx = -s * WingFeathers.ROOT_X / 16F;
+                // turned about the camera's up through its root, its outer end toward the view
+                v.fpTurn[2 * i + k].translation(rx, ry, rz).rotateY(-s * psi).translate(-rx, fpUp - ry, fpBack - rz).mul(FP_ROT);
+            }
+        }
+    }
+
     /** A hard downstroke sheds a few square motes of light from the tips of the large wings. */
     private static void shed(Minecraft mc, Wings w, Entity e) {
         int age = AscentMoves.ticks - w.modeAt, phase;
@@ -594,6 +661,7 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         v.pairs = pairs(w);
         v.pal = radiant ? WingFeathers.GOLD : rung == 1 ? WingFeathers.SKY : WingFeathers.LIGHT;
         for (int i = 0; i < v.pairs.length; i++) poseNow(w, pt, v.pairs[i][2], v.pose[i]);
+        if (first) placeFirst(w, v, pt);
         v.alpha = show * (first ? fpAlpha : 1F);
         // through your own eyes the opening comes in as it spreads: folded, the wings would pass across the middle of the view
         if (first && w.mode == UNFOLD) v.alpha *= WingForm.ease((AscentMoves.ticks - w.modeAt + pt - 3) / 9F);
@@ -650,14 +718,16 @@ final class WingLayer extends RenderLayer<AvatarRenderState, PlayerModel> {
         poseStack.popPose();
     }
 
-    /** First person: your own wings, drawn in the world from the body (only their outer feathers reach into view). */
+    /**
+     * First person: your own wings. Feathered, {@code ps} is the camera's own frame scaled to a 70 degree view (see
+     * {@link #fpBack}); classic, the body's model space.
+     */
     static boolean drawFirstPerson(PoseStack ps, SubmitNodeCollector out, Entity e, float pt) {
         Wings w = find(e.getId());
         if (w == null) return false;
         if (FeelConfig.wingsFeathers()) {
             if (!prepare(w, w.own, pt, 0, true)) return false;
             for (int i = 0; i < w.own.pairs.length; i++) out.submitCustomGeometry(ps, WingPipelines.feather(i), w.own.feathers[i]);
-            out.order(1).submitCustomGeometry(ps, WingPipelines.halo(), w.own.lights);
             return true;
         }
         float spread = Mth.lerp(pt, w.spreadO, w.spread), beat = Mth.lerp(pt, w.beatO, w.beat), sweep = Mth.lerp(pt, w.sweepO, w.sweep);
