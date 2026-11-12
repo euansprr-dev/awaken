@@ -24699,6 +24699,28 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
     up (it never did, so looking at a tree from the floor showed nothing), and on the rope, where it shows where the
     next rope goes (hidden when that is within 1.5 of the place the rope holds now: the rope shows that). Its search
     budget is as before (over 1.5 ms puts it on every fourth tick).
+- **What the marker shows, the press takes** (12 Nov 2026, Euan on build 40efdd42c, in the city at night: "why did it
+  not connect? There literally was a clear connection point ... there was a blue thing showing it could connect when I
+  clicked"). His log: the press at 19:19:53 "met nothing within 45" and missed. The marker looks every second tick
+  (every fourth in the city, where a look costs over its 1.5 ms), and it fades over some frames, so what it showed
+  could be three ticks old, three or four blocks back at a sling's speed, while the press looked again from where the
+  flight had carried him. Three more ways a rope failed to connect in the same log:
+  - A press now takes the marker's pick when the marker looked within 4 ticks (`AscentMoves.shown`), its anchor is in
+    reach and bites, and the server hasn't refused it lately; its rope as long as the way to it now. Only otherwise does
+    it look again. The marker fades out twice as fast as it fades in, so a target gone is gone at once. A miss's log
+    line now ends with what the marker showed ("; the marker showed nothing", or "a sling 3 ticks before, which no
+    longer held").
+  - An anchor where nothing is solid (a top's edge over the face the look met, on a stair, a wall, a fence or a slab
+    whose shape stops short of that face) was refused by the server ("refused TETHER for Dev: no block's collision at
+    the anchor (1092.04 111.70 -988.84)") and the held rope stopped. Every pick and the marker's are now checked as the
+    server checks (`AscentSwing.bites`: a block's collision within 0.1); one with none moves to the nearest point within
+    half a block that has one, or is dropped.
+  - Slings off something lower failed while falling ("sling: its way is closed" at grass 31 off, azalea leaves 14 off,
+    oak leaves 19 off): the pull, nearly level, never stopped the fall, so the flight played into the ground. The bite of
+    a sling whose point is under 4 over the hand now catches the fall (`AscentSwing.slingStep`: its first pull tick
+    takes the speed down to nothing; `SLING_CATCH`).
+  - GameTest `ascent_rope_aimed`: the low crown slung off falling at 0.9 a tick; a wall's post bitten off the cell's
+    face, which the server takes and refused before.
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8

@@ -518,6 +518,11 @@ final class AscentSwingTests {
                     String.format("from 10 up, a crown under you: slung off (sling %b, top %.2f, pull at %.2f over the hand, bite at z %.2f; sling: %s, onto: %s)",
                             pick.sling, pick.top - by, pick.py - high.y, pick.z - bz, AscentSwing.SLING_NO[w.aimSling], AscentSwing.ONTO_NO[w.aimOnto]));
             h.assertTrue(AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the low crown's face as a real anchor");
+            // the same falling fast (after a sling): the bite catches the fall, so the way is open
+            AscentRules.Kin falling = new AscentRules.Kin().set(bx + 8.5, by + 10 + AscentRules.HAND_HEIGHT, bz + 4.5, 0, -0.9, 0.36);
+            h.assertTrue(AscentSwing.aimed(space, falling, ex, hy, ez, 0, down, AscentRules.TETHER_RANGE, true, w, pick) && pick.sling,
+                    String.format("falling from 10 up, the crown under you: still slung off (sling %b; sling: %s)", pick.sling,
+                            AscentSwing.SLING_NO[w.aimSling]));
             // and from the floor, the floor 15 ahead looked at: slung off it
             for (BlockPos q : BlockPos.betweenClosed(o.offset(6, 1, 19), o.offset(10, 3, 21))) level.setBlock(q, air, flags);
             float ahead = (float) -Math.toDegrees(Math.atan2(by - gy, 15));
@@ -526,6 +531,16 @@ final class AscentSwingTests {
                     String.format("from the floor, the floor 15 ahead: slung off it (sling %b, bite %.2f up, pull at %.2f over the hand; sling: %s)",
                             pick.sling, pick.y - by, pick.py - ground.y, AscentSwing.SLING_NO[w.aimSling]));
             h.assertTrue(AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the floor as a real anchor");
+            // an anchor on a cell's face where the block's shape stops short of it (a wall's post): the server would refuse
+            // it, so the bite moves onto the post (12 Nov 2026: "no block's collision at the anchor" in Euan's play)
+            level.setBlock(o.offset(8, 1, 30), Blocks.COBBLESTONE_WALL.defaultBlockState(), flags);
+            AscentSwing.Pick edge = new AscentSwing.Pick();
+            edge.x = bx + 7.96;
+            edge.y = by + 0.5;
+            edge.z = bz + 30.5;
+            h.assertTrue(!AscentServer.anchorReal(p, edge.x, edge.y, edge.z), "the wall cell's face, off its post: no collision there");
+            h.assertTrue(AscentSwing.bites(space, edge) && AscentServer.anchorReal(p, edge.x, edge.y, edge.z) && Math.abs(edge.x - (bx + 7.96)) <= 0.46,
+                    String.format("the bite moves onto the post, and the server takes it (now at x %.2f)", edge.x - bx));
         } finally {
             AscentSwing.guide = guide;
             AscentSwing.hold = hold;

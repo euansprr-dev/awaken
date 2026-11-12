@@ -515,6 +515,44 @@ public final class AscentSwing {
      * the hand than this many blocks down per block ahead (40 degrees).
      */
     static final double AIM_LOW_LIFT = 1.5, AIM_LOW_DOWN = 0.84;
+    /** A sling's point under this far over the hand at its bite catches the fall ({@link #slingStep}). */
+    static final double SLING_CATCH = 4;
+
+    /** Offsets tried round an anchor with nothing solid at it, nearest first (blocks; {@link #bites}). */
+    private static final double[][] BITE_TRY;
+    static {
+        java.util.List<double[]> l = new java.util.ArrayList<>();
+        double[] xz = {0, -0.15, 0.15, -0.3, 0.3, -0.45, 0.45}, ys = {0, -0.15, 0.1, -0.3, -0.45};
+        for (double x : xz) for (double y : ys) for (double z : xz) if (x != 0 || y != 0 || z != 0) l.add(new double[] {x, y, z});
+        l.sort(java.util.Comparator.comparingDouble(o -> o[0] * o[0] + o[1] * o[1] + o[2] * o[2]));
+        BITE_TRY = l.toArray(new double[0][]);
+    }
+    /** How near a block's collision an anchor must be (the server's own check is 0.12: {@code AscentServer.anchorReal}). */
+    private static final double BITE_NEAR = 0.1;
+
+    /**
+     * Whether the rope can bite at the pick's anchor: a block's collision within {@link #BITE_NEAR} of it, as the server
+     * asks. Where there is none (a top's edge over the face the look met, on a stair, a wall, a fence or a slab whose
+     * shape stops short of that face), the anchor moves to the nearest point within half a block that has one, and true;
+     * false when none does. 12 Nov 2026: the server refused such a rope in Euan's play ("no block's collision at the
+     * anchor"), and the held rope stopped.
+     */
+    public static boolean bites(SwingSpace s, Pick p) {
+        if (solidAt(s, p.x, p.y, p.z)) return true;
+        for (double[] o : BITE_TRY) {
+            if (solidAt(s, p.x + o[0], p.y + o[1], p.z + o[2])) {
+                p.x += o[0];
+                p.y += o[1];
+                p.z += o[2];
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean solidAt(SwingSpace s, double x, double y, double z) {
+        return s.boxHits(x - BITE_NEAR, y - BITE_NEAR, z - BITE_NEAR, x + BITE_NEAR, y + BITE_NEAR, z + BITE_NEAR);
+    }
     /** Why the look's target gave no sling ({@link Work#aimSling}), and no pull onto its top ({@link Work#aimOnto}): for the log. */
     public static final String[] SLING_NO = {"", "too near", "too steep", "too far under the hand", "its way is closed", "no top in reach"};
     public static final String[] ONTO_NO = {"", "no top in reach", "its top is under the hand", "no room on its top",
@@ -685,6 +723,10 @@ public final class AscentSwing {
             k.vy = Math.max(k.vy, Math.min(t.slingLift, dy / Math.max(1, tt) + 0.5 * AscentRules.G * tt));
             return true;
         }
+        // the bite of a sling at a point not far over the hand (off something lower, SPEC §62) catches the fall: its pull
+        // alone, nearly level, never stopped a falling body (12 Nov 2026, Euan's play: "sling: its way is closed" at
+        // leaves and grass under him, the flight played into the ground)
+        if (age == 1 && dy < SLING_CATCH && k.vy < 0) k.vy = 0;
         k.vx += dx / d * t.slingPull;
         k.vy += dy / d * t.slingPull - AscentRules.G * (1 - t.slingCarry);
         k.vz += dz / d * t.slingPull;

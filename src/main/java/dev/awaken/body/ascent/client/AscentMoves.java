@@ -145,6 +145,11 @@ public final class AscentMoves {
     /** Where a press now would throw (drawn in the world while {@link #markerOn}). */
     static final AscentSwing.Pick MARKER = new AscentSwing.Pick();
     static boolean markerOn;
+    /** The tick the marker last looked, and whether what it showed was a ring or branch straight overhead (fire's own). */
+    private static int markerAt;
+    private static boolean markerOverhead;
+    /** A press takes what the marker shows when it looked this recently (ticks; it looks every second or fourth). */
+    private static final int MARKER_FRESH = 4;
     /** This rope is an assisted swing (no yank, no reel to a fit: the swing fits itself). */
     static boolean swinging;
     /** Ticks a let-go has waited for a clear flight; ticks before a held rope throws again. */
@@ -781,7 +786,9 @@ public final class AscentMoves {
         if (assist && !overhead) {
             // a pull up a face wants a press, to be in the air already, or a face in the way: running, the held rope's hop
             // from the ground only swings or slings
-            AscentSwing.Pick pk = pick(p, eye, aimYaw, aimPitch, pressed || !p.onGround() || p.horizontalCollision);
+            // a press takes what the marker shows (SPEC §62, "What the marker shows, the press takes"); else it looks again
+            AscentSwing.Pick pk = pressed ? shown(p) : null;
+            if (pk == null) pk = pick(p, eye, aimYaw, aimPitch, pressed || !p.onGround() || p.horizontalCollision);
             if (pk != null && (refusedLately(p, pk.x, pk.y, pk.z) || spentAnchor(p, pk.x, pk.y, pk.z))) pk = null;
             // the look met something up ahead (a tree, a roof) that the rope passed over for another: say so once
             if (pressed && pk != null && !pickAimed && !Double.isNaN(WORK.aimT) && WORK.aim.y > HAND.y + 1) lookNotTaken(p, pk);
@@ -875,7 +882,10 @@ public final class AscentMoves {
                 w.aimSling == 0 ? "not asked" : AscentSwing.SLING_NO[w.aimSling], w.aimOnto == 0 ? "not asked" : AscentSwing.ONTO_NO[w.aimOnto],
                 w.aim.ny < 0 ? "an underside, not clear to hang from" : "no underside to hang from");
         String what = took == null ? "nothing (a miss)" : String.format("%s %.1f off", took.zip ? "a lip" : took.sling ? "a sling" : "a swing", took.len);
-        dev.awaken.Awaken.LOG.info("[rope] the look met {}, which the rope can't take from here{}; the press took {}", met, why, what);
+        // a miss: what the marker showed then (it should have shown nothing)
+        String shownThen = took != null ? "" : !markerOn ? "; the marker showed nothing"
+                : String.format("; the marker showed %s %d ticks before, which no longer held", MARKER.zip ? "a pull" : MARKER.sling ? "a sling" : "a swing", ticks - markerAt);
+        dev.awaken.Awaken.LOG.info("[rope] the look met {}, which the rope can't take from here{}; the press took {}{}", met, why, what, shownThen);
     }
 
     /** Nearly straight overhead (a ring, a branch, a keel): zipped up to and hung under, never swung from. */
@@ -906,6 +916,35 @@ public final class AscentMoves {
      * marker's lip or a lip in the look, with the guide only by a clear way; or null.
      */
     private static AscentSwing.@org.jspecify.annotations.Nullable Pick pick(LocalPlayer p, Vec3 eye, float yaw, float pitch, boolean lips) {
+        AscentSwing.Pick pk = search(p, eye, yaw, pitch, lips);
+        // only where the rope can bite as the server asks (else it refuses it and the held rope stops)
+        return pk != null && AscentSwing.bites(SPACE, pk) ? pk : null;
+    }
+
+    /**
+     * On a press, what the marker shows (SPEC §62, "What the marker shows, the press takes"; 12 Nov 2026, Euan: "there
+     * was a blue thing showing it could connect when I clicked", and the press looked again a tick or three on, from where
+     * the flight had carried him, and met nothing): its pick, when it looked within {@link #MARKER_FRESH} ticks, the
+     * anchor is in the rope's reach and still bites, and the server hasn't refused it lately; its rope as long as the way
+     * to it now. Null otherwise (a ring overhead is fire's own).
+     */
+    private static AscentSwing.@org.jspecify.annotations.Nullable Pick shown(LocalPlayer p) {
+        if (!markerOn || markerOverhead || ticks - markerAt > MARKER_FRESH) return null;
+        SPACE.at(p.level(), p);
+        hand(p);
+        PICK.copy(MARKER);
+        double dx = PICK.x - HAND.x, dy = PICK.y - HAND.y, dz = PICK.z - HAND.z, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (d > reach(p) + 2 || !AscentSwing.bites(SPACE, PICK) || refusedLately(p, PICK.x, PICK.y, PICK.z) || spentAnchor(p, PICK.x, PICK.y, PICK.z)) {
+            return null;
+        }
+        PICK.len = d;
+        PICK.fitLen = Math.min(PICK.fitLen, d);
+        pickAimed = true;
+        return PICK;
+    }
+
+    /** The search a press runs ({@link #pick}), before the bite is checked. */
+    private static AscentSwing.@org.jspecify.annotations.Nullable Pick search(LocalPlayer p, Vec3 eye, float yaw, float pitch, boolean lips) {
         SPACE.at(p.level(), p);
         hand(p);
         // where you look first (SPEC §62, "The rope goes where you look"): the block under the crosshair, swung from or
@@ -1111,11 +1150,15 @@ public final class AscentMoves {
         SPACE.at(p.level(), p);
         hand(p);
         Vec3 eye = p.getEyePosition();
-        markerOn = overheadMark(p, eye, yaw, pitch)
+        markerOverhead = overheadMark(p, eye, yaw, pitch);
+        markerAt = ticks;
+        markerOn = markerOverhead
                 || AscentSwing.aimed(SPACE, HAND, eye.x, eye.y, eye.z, yaw, pitch, reach(p), AscentSwing.guide, WORK, MARKER)
                 || AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER) && zipOk(MARKER, HAND.x, HAND.y, HAND.z);
+        // never where the rope can't bite as the server asks (the anchor moved onto the block's shape when it can)
+        if (markerOn && !markerOverhead && !AscentSwing.bites(SPACE, MARKER)) markerOn = false;
         if (markerOn && state.rope && (MARKER.x - ax) * (MARKER.x - ax) + (MARKER.y - ay) * (MARKER.y - ay) + (MARKER.z - az) * (MARKER.z - az) < 2.25) {
             markerOn = false;
         }
