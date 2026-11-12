@@ -5,7 +5,9 @@
 # His world's seed, his spot, his heading, his hour and his settings (Cinematic, the Air, Vivid, fov 90, Pixels 0.85,
 # brightness 100). First as played; then one part of Lens's picture left out at a time, to find which lays the veil.
 # Run: tools/tour-ci.sh tools/autopilot/steady60-palehaze-ci.txt 3000
-# ci knobs: LENS=cinematic PACK=perf
+# (his world is the Awakened Pack's: the pack's terrain puts Carillon and every land elsewhere than the plain game's
+# does for the same seed. Runs 43223525534 and 43226201813, on PACK=perf alone, stood in another world.)
+# ci knobs: LENS=cinematic PACK=perf,feel,comfort,world TECTONIC=awakened RD=16
 world palehaze creative 5578681379194123303
 waitworld
 gui 0
@@ -39,7 +41,9 @@ waitpassage
 wait 1600
 waitpassage
 cmd tp @s 894.9 75 5530.4 119.6 -0.1
-wait 400
+wait 100
+waitpassage
+wait 800
 look 119.6 -0.1
 cmd time set 5076
 wait 100

@@ -5,7 +5,9 @@
 # brightness 100). First as played; then one part of Lens's picture left out at a time (the probe chains), to find
 # which lays the band; then the same view round the clock.
 # Run: tools/tour-ci.sh tools/autopilot/steady60-nightfog-ci.txt 2400
-# ci knobs: LENS=cinematic PACK=perf
+# (his world is the Awakened Pack's: the pack's terrain puts Carillon and every land elsewhere than the plain game's
+# does for the same seed. Runs 43223525534 and 43226201813, on PACK=perf alone, stood in another world.)
+# ci knobs: LENS=cinematic PACK=perf,feel,comfort,world TECTONIC=awakened RD=16
 world nightfog creative 5578681379194123303
 waitworld
 gui 0
@@ -52,6 +54,12 @@ shot night_no_light
 lens chain cinematic_comp_air
 wait 80
 shot night_no_air
+lens chain cinematic_bloom
+wait 80
+shot night_no_bloom
+lens chain cinematic_light
+wait 80
+shot night_no_light_pass
 lens chain cinematic_comp_grade
 wait 80
 shot night_no_grade
@@ -86,25 +94,13 @@ wait 120
 cmd time set 6000
 wait 160
 shot clock_06000_noon
-cmd time set 12000
-wait 160
-shot clock_12000_sunset
 cmd time set 13000
 wait 160
 shot clock_13000_dusk
-cmd time set 14000
+cmd time set 15000
 wait 160
-shot clock_14000
-cmd time set 16000
-wait 160
-shot clock_16000
-cmd time set 18000
-wait 160
-shot clock_18000_midnight
+shot clock_15000
 cmd time set 21000
 wait 160
 shot clock_21000
-cmd time set 23000
-wait 160
-shot clock_23000_dawn
 quit
