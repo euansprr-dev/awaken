@@ -56,6 +56,10 @@ public final class AwakenConfig {
                     "Off (12 Nov, until they are fixed): new gates are the dungeon runs, the places under a roof and the cave worlds,",
                     "and a gate standing on an open land that nobody has entered is made again as one of those. A gate someone has been in keeps what it is.")
             .define("gateOpenLands", false);
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> GATE_OPEN_LANDS_BACK = B.comment(
+                    "Open lands that come back while gateOpenLands is off, one by one, as each is fixed: it passes the open-land",
+                    "check (SPEC §50.9) and has been played or looked at. e.g. \"awaken:saltcomb_flats\"")
+            .defineListAllowEmpty("gateOpenLandsBack", List.of(), () -> "", o -> o instanceof String);
     public static final ModConfigSpec.BooleanValue GATE_WORLDS_DEPTH = B.comment("Gate Worlds' depth: new gates' places get ground that rises and falls,",
                     "walls and roofs that change with height, and wild growth away from the way (SPEC §38.14).",
                     "Off: new gates are made as before it (content version 6). Gates already made keep what they have.")

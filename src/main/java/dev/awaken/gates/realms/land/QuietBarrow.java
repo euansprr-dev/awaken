@@ -159,6 +159,15 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
         waystone(14, 118, "the tarn");
         finds();
         clearSites();
+        // plan version 2 (SPEC §50.9): a designed way over the moor, camps and stones on dry heather off the mounds and the path
+        if (ctx.version() >= 2) {
+            M m = m();
+            // the moor lies a block over the water (63 on 62): that counts as dry
+            // and the Lord's ship on its hill and the long barrow are masses, not pieces (the long barrow's top reads as ground 8
+            // over the moor, with sides no one walks up), so the planner keeps 8 off them by hand
+            designWay((x, z) -> ground(x, z) > water() && !inBarrow(x, z) && pathDist(x, z) > 5 && clearOfMasses(x, z, 8),
+                    new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band), java.util.Set.of("standing stone"));
+        }
     }
 
     /** The mounds that sleep, in the order of their dens: x and z of each one's middle. */
@@ -679,6 +688,12 @@ public final class QuietBarrow extends SheetLand<QuietBarrow.M> {
     }
 
     // ---- what grows -------------------------------------------------------------------------------------------------------------
+
+    private boolean clearOfMasses(int x, int z, int pad) {
+        for (Blockout.Mass[] set : new Blockout.Mass[][]{hullParts, posts, {longBarrow}})
+            for (Blockout.Mass m : set) if (x >= m.x0 - pad && x <= m.x1 + pad && z >= m.z0 - pad && z <= m.z1 + pad) return false;
+        return true;
+    }
 
     private boolean inBarrow(int x, int z) {
         for (Barrow b : barrows) if (b.in(x, z)) return true;

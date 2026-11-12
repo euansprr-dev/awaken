@@ -359,6 +359,12 @@ public final class AmberReach extends KitLand<AmberReach.M> {
         }
         if (roadD(mx + 34, mz + 46) > 9) pieces.add(new Tree(mx + 34, mz + 46, 22, 2, this));
         placeSites();
+        // plan version 2 (SPEC §50.9): a designed way, camps and stones on dry valley floor, off the road, the river and the rocks
+        if (ctx.version() >= 2) {
+            M m = m();
+            designWay((x, z) -> ground(x, z) > WATER + 1 && !onRock(x, z, 6) && riverD(x, z) > 6 && villageD(x, z) > 8 && roadD(x, z) > 4
+                    && Math.hypot(x - cu, z - cv) > 70, new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band), java.util.Set.of("Tree"));
+        }
     }
 
     private void placeSites() {

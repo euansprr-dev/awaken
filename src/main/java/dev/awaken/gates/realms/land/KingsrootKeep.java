@@ -158,6 +158,16 @@ public final class KingsrootKeep extends KitLand<KingsrootKeep.M> {
         village();
         placeSites();
         clearSites();
+        // plan version 2 (SPEC §50.9): a designed way up to the keep, camps and stones on dry ground clear of its walls
+        if (ctx.version() >= 2) {
+            M m = m();
+            // a camp may stand under the old trees and among the apron's poles, plinths and broken arches
+            // the wards count as ground too, clear of both curtains and their breaches; the gorge is crossed on the old bridge
+            designWay((x, z) -> ground(x, z) > WATER + 1 && !inKeep(x, z) && clearOfWalls(x, z),
+                    new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band),
+                    java.util.Set.of("crown", "bough", "Tree", "banner pole", "fire plinth", "wall stub", "ruin arch"),
+                    List.of(new int[]{0, APRON + 1, 232}));
+        }
     }
 
     private void room(Piece<M> p) {
@@ -194,6 +204,25 @@ public final class KingsrootKeep extends KitLand<KingsrootKeep.M> {
 
     private boolean inKeep(int x, int z) {
         return Math.abs(x) <= KX && z >= KZ0 && z <= KZ1;
+    }
+
+    /**
+     * Clear of both curtain walls (each stands {@link #CW} inside its line) by 4, and of the rubble spilling in from a breach
+     * (`Walls.spill`: up to 14 past the outer curtain's inner face, 6 past the inner one's), with 4 to spare.
+     */
+    private boolean clearOfWalls(int x, int z) {
+        for (Ring r : new Ring[]{ring1, ring2}) {
+            double d = r.dist(x + 0.5, z + 0.5);
+            if (d > -CW - 4 && d < 4) return false;
+        }
+        for (Breach b : List.of(new Breach(-100, 150, true, 11, 10), new Breach(104, 150, true, 11, 10))) if (inSpill(x, z, b, CW + 18)) return false;
+        for (Breach b : List.of(new Breach(-70, 84, true, 13, 14), new Breach(92, 30, false, 13, 14))) if (inSpill(x, z, b, CW + 10)) return false;
+        return true;
+    }
+
+    private static boolean inSpill(int x, int z, Breach b, int reach) {
+        int along = b.alongX() ? x - b.cx() : z - b.cz(), across = b.alongX() ? z - b.cz() : x - b.cx();
+        return Math.abs(along) <= b.hw() + 4 && Math.abs(across) <= reach;
     }
 
     @Override
@@ -1350,6 +1379,14 @@ public final class KingsrootKeep extends KitLand<KingsrootKeep.M> {
             z1 = (int) hz + 1;
             mayOverlap = true;
             label = what;
+        }
+
+        /** A root stands only along its own curve: its box is mostly air. */
+        @Override
+        public boolean stands(int x, int z, int pad) {
+            if (!super.stands(x, z, pad)) return false;
+            for (int i = 0; i < px.length; i++) if (Math.hypot(px[i] - x, pz[i] - z) <= pr[i] + pad) return true;
+            return false;
         }
 
         private double cr(double a, double b, double c, double d, double t, double t2, double t3) {

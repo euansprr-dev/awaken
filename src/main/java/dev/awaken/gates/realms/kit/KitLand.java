@@ -63,6 +63,48 @@ public abstract class KitLand<M extends Mats> extends Land {
         return false;
     }
 
+    /**
+     * Plans this land's run with {@link WayPlanner} (SPEC §50.9): an open land drawn by hand, on plan version 2, that
+     * wasn't given its run leg by leg. Call last in the constructor, once every site is placed. False: it couldn't be
+     * planned, and the land keeps the run read off its sites (the open-land check keeps it switched off).
+     */
+    protected final boolean designWay(WayPlanner.Ground ok, WayPlanner.Dress dress) {
+        return designWay(ok, dress, java.util.Set.of());
+    }
+
+    /** As above, with the labels of this land's pieces a camp may stand among (a tree's crown, a pole, a stub of wall). */
+    protected final boolean designWay(WayPlanner.Ground ok, WayPlanner.Dress dress, java.util.Set<String> among) {
+        return designWay(ok, dress, among, List.of());
+    }
+
+    /** As above, with places the way must pass straight after its first camp, in order (x, y, z: a bridge over a gorge). */
+    protected final boolean designWay(WayPlanner.Ground ok, WayPlanner.Dress dress, java.util.Set<String> among, List<int[]> via) {
+        boolean done = WayPlanner.plan(this, pieces, among, via, ok, dress, seed, new WayPlanner.Build() {
+            @Override
+            public int den(int x, int z) {
+                site(SiteKind.DEN, x, ground(x, z) + 1, z, 10, "");
+                return sites(SiteKind.DEN).size() - 1;
+            }
+
+            @Override
+            public void leg(Leg l) {
+                KitLand.this.leg(l.id(), l.kind(), l.name(), l.x(), l.y(), l.z(), l.radius(), l.site(), l.pack(), l.when(), l.exits().toArray(String[]::new));
+            }
+
+            @Override
+            public void course(Course c) {
+                KitLand.this.course(c);
+            }
+
+            @Override
+            public void stones(dev.awaken.gates.realms.kit.piece.Hops h) {
+                pieces.add(h);
+            }
+        });
+        if (!done) dev.awaken.Awaken.LOG.warn("[realms] {}: no way through could be planned ({}); its run stays read off its sites", ctx.id(), WayPlanner.why());
+        return done;
+    }
+
     @Override
     public List<? extends Piece<?>> pieces() {
         return List.copyOf(pieces);

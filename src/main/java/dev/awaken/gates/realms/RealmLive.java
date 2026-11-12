@@ -101,6 +101,7 @@ public final class RealmLive {
         seal(server, level, p, g, plan, ref, lx, lz, t);
         pressure(level, p, g, plan, lx, lz);
         RealmAir.tick(p, g, plan, ref, t);
+        RealmLights.tick(p, g, plan, ref, t);
         RealmLife.tick(level, p, g, plan, ref, lx, lz, t);
         if (((t + p.getId()) / 10) % 2 == 0) Hud.send(p);
     }
@@ -282,9 +283,18 @@ public final class RealmLive {
             double d = Math.hypot(x - lord.x(), z - lord.z());
             anyInside |= in && able;
             if (!in && d < LORD_WAKE + 24) anyAtDoor = true;
-            if (!st.heartOpen && !in && d < LORD_WAKE + 14 && st.woken.add("door_line")) {
-                if (land.heartClosedLine() != null) Signal.toast(p, Component.literal(land.heartClosedLine()));
-                data.setDirty();
+            if (!st.heartOpen && !in && d < LORD_WAKE + 14) {
+                boolean first = st.woken.add("door_line");
+                if (first && land.heartClosedLine() != null) Signal.toast(p, Component.literal(land.heartClosedLine()));
+                // an open land says how many seals are left, once for each count you come back with (SPEC §50.9)
+                int left = land.sites(Land.SiteKind.WARDEN).size() - st.wardensDown.size();
+                if (RealmLights.shows(land) && left > 0 && st.woken.add("door_seals_" + left)) {
+                    Component count = Component.literal(RealmLights.doorCount(left));
+                    if (first && land.heartClosedLine() != null) p.sendSystemMessage(count);
+                    else Signal.toast(p, count);
+                    first = true;
+                }
+                if (first) data.setDirty();
             }
             if (!st.lordWoken || g.bossDead || !able) continue; // the Lord down: there is no fight left to join
             UUID u = p.getUUID();
@@ -425,6 +435,7 @@ public final class RealmLive {
             level.playSound(null, Realms.world(ref.cell(), lord.x(), lord.y(), lord.z()), SoundEvents.HONEY_BLOCK_BREAK, SoundSource.BLOCKS, 4F, 0.5F);
         }
         data.setDirty();
+        RealmLights.sync(level, g); // the seals and pillars fade out
     }
 
     /**
@@ -504,6 +515,20 @@ public final class RealmLive {
         int index = dead.getPersistentData().getIntOr(SITE, -1);
         RealmPlan plan = Realms.plan(g);
         if (index < 0 || plan == null) return;
+        wardenFell(level, g, plan, index);
+    }
+
+    /** Tours: the {@code nth} Warden of the land as if beaten (its pillar fades, its seal breaks, its share is banked). */
+    public static boolean wardenBeaten(ServerLevel level, GateRecord g, int nth) {
+        RealmPlan plan = Realms.plan(g);
+        if (plan == null) return false;
+        List<Land.Site> wardens = plan.land().sites(Land.SiteKind.WARDEN);
+        if (nth < 0 || nth >= wardens.size()) return false;
+        wardenFell(level, g, plan, wardens.get(nth).index());
+        return true;
+    }
+
+    private static void wardenFell(ServerLevel level, GateRecord g, RealmPlan plan, int index) {
         MinecraftServer server = level.getServer();
         RealmData data = RealmData.get(server);
         RealmState st = data.state(g.id);
@@ -514,7 +539,9 @@ public final class RealmLive {
             run.satchelXp += pool(p, g) * (1 - Curve.KILL_SHARE) * wardenShare(plan.land());
             Hud.send(p);
         }
-        if (st.wardensDown.size() >= plan.land().sites(Land.SiteKind.WARDEN).size()) openHeart(level, g);
+        int left = plan.land().sites(Land.SiteKind.WARDEN).size() - st.wardensDown.size();
+        if (left <= 0) openHeart(level, g);
+        RealmLights.wardenDown(level, g, left);
         data.setDirty();
     }
 
@@ -563,7 +590,8 @@ public final class RealmLive {
     }
 
     /**
-     * One line for the run HUD (SPEC §50.9): how many herds and Wardens are down of how many, then that the way on is open.
+     * One line for the run HUD (SPEC §50.9): how many camps and Wardens are down of how many (an open land counts its broken
+     * seals first), then that the way on is open.
      * A herd that keeps its own habits (lurkers in a roof) isn't counted: it may never be met. Null once the Lord is down.
      */
     public static String hint(MinecraftServer server, GateRecord g) {
@@ -571,17 +599,19 @@ public final class RealmLive {
         if (plan == null || g.bossDead) return null;
         RealmState st = RealmData.get(server).state(g.id);
         if (st.heartOpen) return "Every Warden is down. The way on is open.";
-        int herds = 0, down = 0, wardens = 0;
+        int camps = 0, down = 0, wardens = 0;
         for (Land.Leg leg : plan.land().route()) {
             if (leg.kind() == Land.LegKind.WARDEN) wardens++;
             if (leg.kind() != Land.LegKind.FIGHT && leg.kind() != Land.LegKind.AMBUSH) continue;
             boolean stands = leg.pack().isEmpty();
             for (String name : leg.pack()) stands |= !name.startsWith("~");
             if (!stands) continue;
-            herds++;
+            camps++;
             if (st.densCleared.contains(leg.site())) down++;
         }
-        return "Herds " + down + " / " + herds + " · Wardens " + st.wardensDown.size() + " / " + wardens;
+        // an open land counts the seals its pillars stand for; a camp is any pack the run puts on the way (SPEC §50.9)
+        if (RealmLights.shows(plan.land())) return "Seals broken " + st.wardensDown.size() + " / " + wardens + " · Camps " + down + " / " + camps;
+        return "Camps " + down + " / " + camps + " · Wardens " + st.wardensDown.size() + " / " + wardens;
     }
 
     private static int hiddenLegs(Land land) {

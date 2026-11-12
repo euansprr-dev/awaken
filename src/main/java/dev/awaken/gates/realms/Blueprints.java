@@ -44,11 +44,19 @@ public final class Blueprints {
         return open(theme, rank, true);
     }
 
-    /** As {@link #open(Theme, Rank)}; with {@code openLands} false, never a land under the open sky (SPEC §50.7, Euan's switch of 12 Nov). */
+    /**
+     * As {@link #open(Theme, Rank)}; with {@code openLands} false, never a land under the open sky (SPEC §50.7, Euan's switch
+     * of 12 Nov) but those brought back one by one ({@link #back}).
+     */
     public static List<String> open(Theme theme, Rank rank, boolean openLands) {
         return defs.entrySet().stream().filter(e -> e.getValue().ready() && e.getValue().theme().equals(theme.id) && e.getValue().ranks().contains(rank.label)
-                        && (openLands || !openLand(e.getValue())))
+                        && (openLands || !openLand(e.getValue()) || back(e.getKey())))
                 .map(Map.Entry::getKey).toList();
+    }
+
+    /** Whether an open land is back while open lands are off: it is on the list of those fixed (SPEC §50.9, {@code gateOpenLandsBack}). */
+    public static boolean back(String id) {
+        return dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS_BACK.get().contains(id);
     }
 
     /** Whether this blueprint is a land under the open sky (its program says so; nothing is drawn to find out). */

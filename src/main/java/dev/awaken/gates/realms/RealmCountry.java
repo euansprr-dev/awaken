@@ -51,6 +51,18 @@ public final class RealmCountry {
 
     public enum Kind { NONE, HERD, SMALL, PROWL, WATCH, LAIR }
 
+    /**
+     * A designed open land of plan version 2 leans its life to its way (SPEC §50.9 "Life leans to the way"; Euan, 12 Nov:
+     * "barely any mobs... randomly placed"): a cell whose middle is within NEAR_WAY of the way is quieter less often and
+     * more often holds a pack; one past FAR_WAY is quiet more often and holds animals. Between them, as before. The way is
+     * every walk from one leg to the next, and the land's roads.
+     */
+    static final int NEAR_WAY = 70, FAR_WAY = 150, QUIET_NEAR = 35, QUIET_FAR = 60;
+    /** How many blocks of way buy one more pack on the prowl, and one more lookout, over a land's share. */
+    static final int WAY_PER_PROWL = 300, WAY_PER_WATCH = 600;
+    /** Per land: the way's segments (x0, z0, x1, z1, half-width) and its length. A land never changes, so this is read once. */
+    private static final Map<Land, double[][]> WAY = new java.util.WeakHashMap<>();
+
     /** One cell's haunt: what, where, a second place (a beat's far stop, a lookout's reserve), its number, and a roll of its own. */
     public record Haunt(Kind kind, int x, int y, int z, int bx, int by, int bz, int site, int roll) {}
 
@@ -137,6 +149,8 @@ public final class RealmCountry {
         char letter = h.kind() == Kind.LAIR ? 'l' : h.kind() == Kind.WATCH ? 'w' : 'p';
         // each kind has its share of a land; a cell past the share holds nothing
         int share = h.kind() == Kind.LAIR ? (rank >= 3 ? 2 : 1) : h.kind() == Kind.WATCH ? 2 + (rank + 1) / 2 : 4 + rank + rank / 2;
+        // a long designed way has more of it to keep: more packs walking it and more lookouts over it
+        if (leans(plan.land())) share += (int) (wayLength(plan.land()) / (h.kind() == Kind.PROWL ? WAY_PER_PROWL : h.kind() == Kind.WATCH ? WAY_PER_WATCH : Integer.MAX_VALUE));
         int made = 0;
         if (tally(st, letter) < share) {
             FloorLayout f = GateLayout.of(g.plan).floor(0, 1);
@@ -200,7 +214,8 @@ public final class RealmCountry {
     static Haunt find(Land land, long seed, int cx, int cz) {
         long h = mix(seed, cx, cz);
         int x0 = cx * CELL, z0 = cz * CELL;
-        if (land.edge(x0 + CELL / 2, z0 + CELL / 2) > -20 || h % 100 < QUIET) return NOTHING;
+        int lean = lean(land, x0 + CELL / 2, z0 + CELL / 2);
+        if (land.edge(x0 + CELL / 2, z0 + CELL / 2) > -20 || h % 100 < (lean > 0 ? QUIET_NEAR : lean < 0 ? QUIET_FAR : QUIET)) return NOTHING;
         // nine places in the cell, each a little off its square: the most level, the highest, and a second level one
         int[] xs = new int[9], zs = new int[9], ys = new int[9], slopes = new int[9];
         int flat = -1, high = -1, n = 0;
@@ -229,7 +244,9 @@ public final class RealmCountry {
         }
         int k = (int) (h / 100 % 100), level = slopes[flat], a = flat, b = second;
         // mostly animals: a hostile haunt is an event, not the texture of the land (the run's own dens are that)
-        Kind kind = k < 44 ? Kind.HERD : k < 72 ? Kind.SMALL : k < 86 ? Kind.PROWL : k < 95 ? Kind.WATCH : Kind.LAIR;
+        Kind kind = lean > 0 ? (k < 28 ? Kind.HERD : k < 48 ? Kind.SMALL : k < 80 ? Kind.PROWL : k < 93 ? Kind.WATCH : Kind.LAIR)
+                : lean < 0 ? (k < 52 ? Kind.HERD : k < 82 ? Kind.SMALL : k < 90 ? Kind.PROWL : k < 97 ? Kind.WATCH : Kind.LAIR)
+                : k < 44 ? Kind.HERD : k < 72 ? Kind.SMALL : k < 86 ? Kind.PROWL : k < 95 ? Kind.WATCH : Kind.LAIR;
         if (kind == Kind.LAIR && (level > 3 || !free(land, xs[flat], zs[flat], 64))) kind = Kind.HERD;
         if (kind == Kind.WATCH) {
             // a perch is a real high point with level ground in earshot behind it; without one the cell's pack is on the prowl
@@ -243,6 +260,65 @@ public final class RealmCountry {
         if (kind == Kind.SMALL && level > 4) return NOTHING;
         if (b < 0) b = a;
         return new Haunt(kind, xs[a], ys[a] + 1, zs[a], xs[b], ys[b] + 1, zs[b], 1000 + ((cx & 0x7F) << 7 | cz & 0x7F), (int) (h / 10000 % 1000));
+    }
+
+    /** Whether a land's life leans to its way: designed, and drawn on plan version 2 or later. Older plans keep their country as it was. */
+    static boolean leans(Land land) {
+        return land.designed() && land.ctx.version() >= 2;
+    }
+
+    /** 1 near the way, -1 far from it, 0 between, or for a land that doesn't lean. */
+    static int lean(Land land, int x, int z) {
+        if (!leans(land)) return 0;
+        double d = wayDistance(land, x, z);
+        return d <= NEAR_WAY ? 1 : d >= FAR_WAY ? -1 : 0;
+    }
+
+    /** How far a point is from the way: the nearest walk between two legs, or road, less its half-width. */
+    static double wayDistance(Land land, int x, int z) {
+        double best = Double.MAX_VALUE;
+        double[][] way = way(land);
+        for (int i = 1; i < way.length; i++) {
+            double[] w = way[i];
+            best = Math.min(best, segment(x, z, w[0], w[1], w[2], w[3]) - w[4]);
+        }
+        return Math.max(0, best);
+    }
+
+    /** How long the way is, in blocks: every walk from one leg to the next, once each, and the land's roads. */
+    static double wayLength(Land land) {
+        return way(land)[0][0];
+    }
+
+    private static double[][] way(Land land) {
+        synchronized (WAY) {
+            double[][] w = WAY.get(land);
+            if (w != null) return w;
+            List<double[]> segs = new java.util.ArrayList<>();
+            java.util.Set<String> seen = new java.util.HashSet<>();
+            double length = 0;
+            for (Land.Leg l : land.route()) for (String to : l.exits()) {
+                Land.Leg n = land.leg(to);
+                if (n == null || !seen.add(l.id().compareTo(to) < 0 ? l.id() + ">" + to : to + ">" + l.id())) continue;
+                segs.add(new double[]{l.x(), l.z(), n.x(), n.z(), 0});
+                length += Math.hypot(n.x() - l.x(), n.z() - l.z());
+            }
+            for (double[] r : land.ways()) {
+                segs.add(new double[]{r[0], r[1], r[2], r[3], r[4]});
+                length += Math.hypot(r[2] - r[0], r[3] - r[1]);
+            }
+            w = new double[segs.size() + 1][];
+            w[0] = new double[]{length};
+            for (int i = 0; i < segs.size(); i++) w[i + 1] = segs.get(i);
+            WAY.put(land, w);
+            return w;
+        }
+    }
+
+    private static double segment(double px, double pz, double ax, double az, double bx, double bz) {
+        double dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz;
+        double t = l2 == 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / l2));
+        return Math.hypot(px - (ax + dx * t), pz - (az + dz * t));
     }
 
     /** For tours and checks: the n-th haunt of a kind, counted outward from the way in, or null when the land has fewer. */

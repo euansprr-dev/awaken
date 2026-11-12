@@ -63,6 +63,16 @@ public final class Realms {
         return g.realm.flatMap(r -> Blueprints.get(r.blueprint())).map(Blueprints::openLand).orElse(false);
     }
 
+    /**
+     * Whether this gate's Realm is an open land that is switched off: open lands are off and it isn't one brought back, or
+     * it is but was drawn before its fix (an older plan version, SPEC §50.9), so it would be the land Euan didn't enjoy.
+     */
+    public static boolean openLandOff(GateRecord g) {
+        if (!openLand(g) || AwakenConfig.GATE_OPEN_LANDS.get()) return false;
+        RealmRef r = g.realm.orElseThrow();
+        return !Blueprints.back(r.blueprint()) || r.version() < RealmPlan.CURRENT_VERSION;
+    }
+
     /** Puts a new gate's Realm in place: a cell, and the plan where worldgen threads can read it. */
     public static void attach(MinecraftServer server, GateRecord g, String blueprint) {
         int cell = RealmData.get(server).allocate();

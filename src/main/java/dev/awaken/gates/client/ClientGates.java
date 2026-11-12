@@ -19,6 +19,31 @@ public final class ClientGates {
         return beacons;
     }
 
+    // ---- an open land's lights (SPEC §50.9 "Lights and seals") ----------------------------------------------------------
+
+    /** The gate whose lights these are, what is lit now, and what went out (each with the client's time it did). */
+    static volatile int lightsGate = -1;
+    static volatile List<GatePayloads.RealmLight> realmLights = List.of();
+    static volatile List<Fading> fading = List.of();
+
+    /** A light that went out since the last list: it fades out over {@link #FADE} ms rather than vanish. */
+    record Fading(GatePayloads.RealmLight light, long at) {}
+
+    static final long FADE = 2500;
+
+    static void realmLights(GatePayloads.RealmLights msg) {
+        List<GatePayloads.RealmLight> now = List.copyOf(msg.lights());
+        long t = System.currentTimeMillis();
+        List<Fading> out = new java.util.ArrayList<>();
+        for (Fading f : fading) if (t - f.at() < FADE && !now.contains(f.light())) out.add(f);
+        if (msg.gateId() == lightsGate) {
+            for (GatePayloads.RealmLight was : realmLights) if (!now.contains(was)) out.add(new Fading(was, t));
+        } else out.clear(); // another gate's land: nothing of the last one carries over
+        lightsGate = msg.gateId();
+        realmLights = now;
+        fading = List.copyOf(out);
+    }
+
     public static GatePayloads.RunHud hud() {
         return hud;
     }
@@ -29,6 +54,9 @@ public final class ClientGates {
 
     static void clear() {
         beacons = List.of();
+        lightsGate = -1;
+        realmLights = List.of();
+        fading = List.of();
         hud = GatePayloads.RunHud.NONE;
         spoils = GatePayloads.SpoilsView.EMPTY;
     }

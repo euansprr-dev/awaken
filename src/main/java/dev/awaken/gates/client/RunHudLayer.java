@@ -102,8 +102,10 @@ public final class RunHudLayer {
         int w = lay.w;
         float o = Mth.lerp(pt, openO, open);
         o = o * o * (3 - 2 * o);
-        // the one line: rank, gate and floor, and the collapse clock under it (it never hides)
-        int compactH = 15 + (lay.collapse.isEmpty() ? 0 : 10);
+        // the one line: rank, gate and floor, and the collapse clock under it (it never hides); in a Realm what the land
+        // wants (SPEC §50.9 "The run on the HUD": seals and camps) never folds away either, so it's there from the first step
+        boolean goal = h.floors() == 0 && !lay.hint.isEmpty();
+        int compactH = 15 + (lay.collapse.isEmpty() ? 0 : 10) + (goal ? 10 : 0);
         int hgt = Math.round(Mth.lerp(o, compactH, lay.h));
         float top = Math.max(UiHooks.topRightBelow(pt, w * s), Mth.lerp(pt, yO, y));
         int x = Math.round(g.guiWidth() - w * s - UiHooks.TOP_RIGHT_MARGIN);
@@ -127,6 +129,12 @@ public final class RunHudLayer {
         }
         HudLook.text(g, font, lay.floor, fx, 3, Glass.a(Glass.LABEL, 1f), true);
         if (o < 0.5f && !lay.collapse.isEmpty()) HudLook.text(g, font, lay.collapse, 4, 14, fa(lay.collapseColour, 1f - 2f * o), true);
+        if (goal) {
+            // the goal line glides between its row in the one line and its row at the foot of the full card, never fading
+            int fullRow = 14 + 20 + (h.noise() >= 0 ? 10 : 0) + (lay.collapse.isEmpty() ? 0 : 10);
+            int compactRow = 14 + (lay.collapse.isEmpty() ? 0 : 10);
+            HudLook.text(g, font, lay.hint, 4, Math.round(Mth.lerp(o, compactRow, fullRow)), lay.hintColour, true);
+        }
         if (o < 0.5f) {
             g.pose().popMatrix();
             return;
@@ -149,7 +157,7 @@ public final class RunHudLayer {
             HudLook.text(g, font, lay.collapse, 4, ry, fa(lay.collapseColour, b), true);
             ry += 10;
         }
-        if (!lay.hint.isEmpty()) HudLook.text(g, font, lay.hint, 4, ry, fa(lay.hintColour, b), true);
+        if (!lay.hint.isEmpty() && !goal) HudLook.text(g, font, lay.hint, 4, ry, fa(lay.hintColour, b), true);
         g.pose().popMatrix();
     }
 

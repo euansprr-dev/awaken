@@ -113,6 +113,15 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         village();
         placeSites();
         clearSites();
+        // plan version 2 (SPEC §50.9): a designed way round the seat, camps and stones on dry ground off the seat and the village
+        if (ctx.version() >= 2) {
+            M m = m();
+            // the seat's own steps count as ground (a block in from each lip, off the great stair and out of its rooms); the
+            // lagoon is crossed on the causeway, and the way climbs the great stair before its first stones
+            designWay((x, z) -> ground(x, z) > WATER + 1 && Math.hypot(x + 160, z - 214) > 56 && (Math.max(Math.abs(x), Math.abs(z)) > H0 + 10 || onStep(x, z)),
+                    new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band), java.util.Set.of("crown", "bough"),
+                    List.of(new int[]{0, WATER + 4, 165}, new int[]{0, DOOR_Y + 1, 78}));
+        }
     }
 
     private void room(Room r) {
@@ -142,6 +151,15 @@ public final class VineSeat extends KitLand<VineSeat.M> {
 
     private static int half(int tier) {
         return H0 - tier * IN;
+    }
+
+    /** A column on one of the seat's steps a block in from either lip, off the great stair and out of every room (the crown's floor isn't one). */
+    private boolean onStep(int x, int z) {
+        int a = Math.abs(x), mm = Math.max(a, Math.abs(z));
+        if (mm >= H0 || a <= SW + 3 && z >= 56) return false;
+        for (Room r : rooms) if (r.has(x, z)) return false;
+        int t = tierAt(mm);
+        return t < TIERS - 1 && mm <= half(t) - 1 && mm >= half(t + 1) + 2;
     }
 
     private static int tierTop(int tier) {
@@ -1139,6 +1157,14 @@ public final class VineSeat extends KitLand<VineSeat.M> {
             z1 = (int) hz + 1;
             mayOverlap = true;
             label = what;
+        }
+
+        /** A root stands only along its own curve: its box is mostly air. */
+        @Override
+        public boolean stands(int x, int z, int pad) {
+            if (!super.stands(x, z, pad)) return false;
+            for (int i = 0; i < px.length; i++) if (Math.hypot(px[i] - x, pz[i] - z) <= pr[i] + pad) return true;
+            return false;
         }
 
         private double cr(double a, double b, double c, double d, double t, double t2, double t3) {
