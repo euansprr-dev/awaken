@@ -49,10 +49,10 @@ public final class Fx {
         if (def != null) {
             // a power with a cast profile (docs/power-anims/PLAN.md) carries its beat instead of a family pose
             if (prof != null && kind == def.windup()) {
-                e.b.profile(prof.id(), CastProfiles.BEGIN);
+                e.b.profile(prof.id(), CastProfiles.BEGIN, c.keyed);
                 c.poseSent = true;
             } else if (prof != null && kind == def.release()) {
-                e.b.profile(prof.id(), CastProfiles.RELEASE);
+                e.b.profile(prof.id(), CastProfiles.RELEASE, c.keyed);
                 c.poseSent = true;
             }
             else if (kind == def.release() && def.anim() != CastAnim.NONE) e.b.anim(def.anim());
@@ -179,6 +179,12 @@ public final class Fx {
             return this;
         }
 
+        /** As above, for a cast the caster's own key press made (FxEvent.keyed). */
+        public Emit profile(int id, int beat, boolean keyed) {
+            b.profile(id, beat, keyed);
+            return this;
+        }
+
         public Emit seed(int s) {
             b.seed(s);
             return this;
@@ -302,7 +308,7 @@ public final class Fx {
     public static void pose(Cast c) {
         CastProfiles.Profile prof = CastProfiles.byPower(c.type.path);
         if (prof == null) return;
-        at(c, FxKind.POSE, c.pos()).noAnim().profile(prof.id(), CastProfiles.BEGIN).send();
+        at(c, FxKind.POSE, c.pos()).noAnim().profile(prof.id(), CastProfiles.BEGIN, c.keyed).send();
     }
 
     /** A glowing trail on a thrown block (Terrain Rip, Collapse, wall rams). */

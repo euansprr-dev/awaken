@@ -206,10 +206,11 @@ public final class FxClient {
 
     /** A cast profile's beat from the server: everyone but the caster starts its clips here (the caster's key press did). */
     private static void onProfile(FxEvent e, CastProfiles.Profile prof, boolean own) {
+        float shown = CastAnims.profileAge(e.caster(), prof.id(), 0f);
         switch (e.beat()) {
             case CastProfiles.BEGIN -> {
                 // your own key press already started both views; a cast that began on the server alone (a command) starts them here
-                if (!(own && CastAnims.recentlyProfile(e.caster(), prof.id(), 8))) {
+                if (dev.awaken.powers.fx.HeldHands.startsPose(CastProfiles.BEGIN, prof.channel(), own, e.keyed(), shown)) {
                     CastAnims.playProfile(e.caster(), prof, CastClips.family(e), e.way(), e.take());
                     if (own && animations()) CastAnims.begin1p(e.caster());
                     if (own) lightOwn(e, prof);
@@ -217,7 +218,7 @@ public final class FxClient {
             }
             case CastProfiles.RELEASE -> {
                 // a power with no wind-up has only this event: it starts the pose too (the caster's own press did already)
-                if (CastAnims.profileOf(e.caster()) != prof.id()) {
+                if (dev.awaken.powers.fx.HeldHands.startsPose(CastProfiles.RELEASE, prof.channel(), own, e.keyed(), shown)) {
                     CastAnims.playProfile(e.caster(), prof, CastClips.family(e), e.way(), e.take());
                     if (own && animations()) CastAnims.begin1p(e.caster());
                     if (own) lightOwn(e, prof);

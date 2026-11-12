@@ -41,6 +41,7 @@ final class PowerCastTests {
         AwakenTests.registerIsolated("power_cast_ball", 200, PowerCastTests::ball);
         AwakenTests.register("power_hold_pose_has_an_owner", 20, PowerCastTests::holdPose);
         AwakenTests.registerIsolated("power_held_casts_say_they_ended", 200, PowerCastTests::heldCastsEnd);
+        AwakenTests.registerIsolated("power_every_hold_ends", 300, PowerCastTests::everyHoldEnds);
     }
 
     private static void profiles(net.minecraft.gametest.framework.GameTestHelper h) {
@@ -336,6 +337,114 @@ final class PowerCastTests {
         }
         h.assertTrue(tried.containsAll(List.of("charged_shot", "railgun", "beam")), "the held casts were tried: " + tried);
         h.assertTrue(silent.isEmpty(), "these held casts never tell the caster they ended: " + silent);
+        h.succeed();
+    }
+
+    /**
+     * One client's view of one caster's held pose, by the client's own rules: a profile's beat starts its pose when
+     * {@link HeldHands#startsPose} says so (FxClient.onProfile), a family pose replaces the one before (CastAnims), and the
+     * end of a charge lets the hold go (FxRecipes, HeldHands.ended). Every beat is read as late as it can come: the client's
+     * pose of that cast has already gone (its key let go, or another cast was made since).
+     */
+    private static final class Watch {
+        final boolean own;
+        boolean held;
+
+        Watch(boolean own) {
+            this.own = own;
+        }
+
+        void see(FxEvent e) {
+            if (e.kind() == FxKind.CHARGE_END && Math.round(e.aux()) == 0) {
+                held = false;
+                return;
+            }
+            CastProfiles.Profile p = CastProfiles.byId(e.profile());
+            if (p != null) {
+                if (e.beat() != CastProfiles.END && HeldHands.startsPose(e.beat(), p.channel(), own, e.keyed(), -1f)) held = p.channel();
+                return;
+            }
+            if (e.anim() != CastAnim.NONE) held = e.anim().held;
+        }
+    }
+
+    /**
+     * No way a held cast ends leaves a hold up on any client (Euan 12 Nov: "Sometimes my fist stays blocked up after using
+     * haymaker"; SPEC §32, "A reply never starts a hold"). Every power that shows a held pose is cast from a key press, held,
+     * and ended each way a cast ends; the server's events then reach the caster's own client and a watcher, each as late as
+     * it can. Neither may be left holding. A cast nobody's key made (a command) still shows everywhere.
+     */
+    private static void everyHoldEnds(net.minecraft.gametest.framework.GameTestHelper h) {
+        h.assertTrue(HeldHands.startsPose(CastProfiles.BEGIN, true, true, false, -1f), "a cast the server began alone (a command) shows on its caster");
+        h.assertTrue(HeldHands.startsPose(CastProfiles.BEGIN, true, false, true, -1f), "a watcher sees every held cast begin");
+        h.assertTrue(HeldHands.startsPose(CastProfiles.RELEASE, false, false, false, -1f), "a watcher sees a one-shot cast that sent only its release");
+        h.assertTrue(!HeldHands.startsPose(CastProfiles.RELEASE, false, false, false, 2f), "a cast already showing doesn't start again");
+
+        for (int x = -6; x <= 6; x++) for (int z = -6; z <= 6; z++) h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+        ServerPlayer sp = h.makeMockServerPlayerInLevel();
+        Vec3 at = h.absoluteVec(Vec3.atBottomCenterOf(new BlockPos(0, 1, 0)));
+        sp.setGameMode(GameType.SURVIVAL);
+        // every power that shows a held pose: the held casts' profiles, the family poses that hold, and the comet's dive (set by hand)
+        Set<String> powers = new java.util.LinkedHashSet<>();
+        for (CastProfiles.Profile p : CastProfiles.all()) if (p.channel()) powers.add(p.power());
+        for (PowerType t : PowerRegistry.all()) {
+            PowerFxDefs.Def d = PowerFxDefs.get(t.path);
+            if (d != null && (d.anim().held || d.windAnim() != null && d.windAnim().held)) powers.add(t.path);
+        }
+        powers.add("meteor_dive");
+        List<FxEvent> seen = new ArrayList<>();
+        List<String> stuck = new ArrayList<>(), unkeyed = new ArrayList<>();
+        Set<String> tried = new java.util.LinkedHashSet<>();
+        Fx.testSink = seen::add;
+        try {
+            for (String power : powers) {
+                PowerType t = PowerRegistry.get(power);
+                if (t == null) continue;
+                Powers.learn(sp, t.id, 0);
+                for (Running.Why why : new Running.Why[]{Running.Why.RELEASED, Running.Why.CANCELLED, Running.Why.EXPIRED}) {
+                    Casting.endAll(sp, Running.Why.CANCELLED);
+                    // Ground Slam drives down from above the floor; everything else starts on it
+                    boolean dive = power.equals("ground_slam");
+                    sp.snapTo(at.x, at.y + (dive ? 4 : 0), at.z, 0f, 0f);
+                    sp.setDeltaMovement(Vec3.ZERO);
+                    sp.setOnGround(!dive);
+                    Powers.resetCooldowns(sp);
+                    Powers.fillEnergy(sp);
+                    seen.clear();
+                    // the hands' path: a key press that claimed a way
+                    if (!Casting.cast(sp, t, 0, false, 0f, 0f, 0f, 0f, Ways.STAND, 0).ok()) continue; // nothing to aim at: telekinesis
+                    tried.add(power);
+                    Fx.testTick(sp, 17); // held, short of a full charge; the comet dives but hasn't landed
+                    Casting.endAll(sp, why);
+                    Watch own = new Watch(true), watcher = new Watch(false);
+                    boolean keyed = false;
+                    for (FxEvent e : seen) {
+                        if (e.caster() != sp.getId()) continue;
+                        own.see(e);
+                        watcher.see(e);
+                        keyed |= e.profile() > 0 && e.keyed();
+                    }
+                    if (own.held || watcher.held) stuck.add(power + " " + why + (own.held ? ", its caster" : "") + (watcher.held ? ", a watcher" : ""));
+                    if (CastProfiles.byPower(power) != null && !keyed) unkeyed.add(power);
+                }
+            }
+            // a command's cast is the server's alone: its beats are not keyed
+            PowerType hay = PowerRegistry.get("haymaker");
+            Casting.endAll(sp, Running.Why.CANCELLED);
+            sp.snapTo(at.x, at.y, at.z, 0f, 0f);
+            sp.setOnGround(true);
+            Powers.resetCooldowns(sp);
+            Powers.fillEnergy(sp);
+            seen.clear();
+            h.assertTrue(hay != null && Casting.cast(sp, hay, 0, false, 0f, 0f).ok(), "a command casts the Haymaker");
+            h.assertTrue(seen.stream().anyMatch(e -> e.profile() > 0 && e.beat() == CastProfiles.BEGIN && !e.keyed()), "a command's cast begins unkeyed");
+        } finally {
+            Fx.testSink = null;
+            Casting.endAll(sp, Running.Why.CANCELLED);
+        }
+        h.assertTrue(tried.containsAll(List.of("haymaker", "charged_shot", "railgun", "beam", "ground_slam", "meteor_dive")), "the held casts were tried: " + tried);
+        h.assertTrue(unkeyed.isEmpty(), "a key press made these casts, but their beats don't say so: " + unkeyed);
+        h.assertTrue(stuck.isEmpty(), "these ways of ending leave a hold up: " + stuck);
         h.succeed();
     }
 

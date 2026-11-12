@@ -144,6 +144,7 @@ public final class Casting {
         Cast c = new Cast(player, type, owned.variant(), owned.level(), slot, predicted, yRot, xRot, strafe, forward);
         c.way = way(player, claimedWay, now);
         c.take = Math.max(0, Math.min(2, take));
+        c.keyed = claimedWay >= 0; // the hands claimed a way: their key press made it, and they show it already
         PowerType.Result r;
         PowerType prevCtx = Mastery.enter(type);
         boolean prevCast = Mastery.beginCast();
@@ -176,7 +177,12 @@ public final class Casting {
         boolean deferred = channel != null && channel.channel && !channel.stopping();
         if (c.followUp != null) {
             // the HUD and the client's key see the window as an AGAIN entry where the cooldown would be
-            st.followUps.put(id, new PowerState.FollowUp(type, now + c.followUpTicks, c.followUp));
+            // the second press is sent unpredicted (ClientCasting: "free and unpredicted"): what it shows, the server starts
+            Runnable then = c.followUp;
+            st.followUps.put(id, new PowerState.FollowUp(type, now + c.followUpTicks, () -> {
+                c.keyed = false;
+                then.run();
+            }));
             l.cooldowns.put(id, new Loadout.Cooldown(now + c.followUpTicks, Loadout.AGAIN));
         } else if (!deferred) startCooldown(player, l, type, owned, st);
         Progression.count(player, type.family.counter());
@@ -208,6 +214,7 @@ public final class Casting {
                     c.strafe(), c.forward());
             at.way = c.way;
             at.take = c.take;
+            at.keyed = c.keyed;
             PowerType prevCtx = Mastery.enter(c.type);
             try {
                 c.type.behaviour.cast(at);

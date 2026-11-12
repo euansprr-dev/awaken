@@ -31,6 +31,11 @@ public final class Cast {
     public int way, take;
     /** An FX event carrying this cast's profile beat has been sent (Casting adds a pose beat if a power sent none). */
     public boolean poseSent;
+    /**
+     * The caster's own key press made this cast: their client already shows its pose, so its beats never start it there again
+     * (FxEvent.keyed; SPEC §32, "A reply never starts a hold"). Set by Casting; a second press's follow-up clears it.
+     */
+    public boolean keyed;
     /** What the power's ladder adds at the level this cast started at (SPEC 36.3). */
     public final dev.awaken.powers.ladder.Kit kit;
     /** Rider bookkeeping (powers.ladder.Riders): the tick of the last throttled rider and chain hits this tick. */

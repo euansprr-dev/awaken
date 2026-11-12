@@ -60,13 +60,22 @@ public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double
     /** The cast profile this event belongs to (CastProfiles ids start at 1), or 0. */
     public int profile() {
         int hi = flags >>> 16;
-        return hi >= PROFILE_BASE ? (hi - PROFILE_BASE) >> 2 : 0;
+        return hi >= PROFILE_BASE ? (hi - PROFILE_BASE) >> 3 : 0;
     }
 
     /** The beat of the profile ({@link CastProfiles#BEGIN}, RELEASE, END). */
     public int beat() {
         int hi = flags >>> 16;
         return hi >= PROFILE_BASE ? (hi - PROFILE_BASE) & 3 : 0;
+    }
+
+    /**
+     * The caster's own key press made this cast, so their own client showed its pose from the press (SPEC §32, "A reply never
+     * starts a hold"). A cast the server began alone (a command, a second press's follow-up) is not keyed.
+     */
+    public boolean keyed() {
+        int hi = flags >>> 16;
+        return hi >= PROFILE_BASE && ((hi - PROFILE_BASE) & 4) != 0;
     }
 
     public int variant() {
@@ -196,7 +205,12 @@ public record FxEvent(FxKind kind, FxStyle style, int caster, int target, double
 
         /** Marks the event as a beat of a cast profile (replaces any pose). */
         public Builder profile(int id, int beat) {
-            this.flags = (flags & 0xFFFF) | ((PROFILE_BASE + (id << 2 | beat)) << 16);
+            return profile(id, beat, false);
+        }
+
+        /** As above, for a cast the caster's own key press made ({@link FxEvent#keyed}). */
+        public Builder profile(int id, int beat, boolean keyed) {
+            this.flags = (flags & 0xFFFF) | ((PROFILE_BASE + (id << 3 | (keyed ? 4 : 0) | beat)) << 16);
             return this;
         }
 

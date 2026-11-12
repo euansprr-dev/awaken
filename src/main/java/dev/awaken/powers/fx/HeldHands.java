@@ -98,6 +98,19 @@ public final class HeldHands {
         return loop;
     }
 
+    /**
+     * Whether a cast's beat from the server starts its pose on this client (FxClient.onProfile). {@code beat}: BEGIN or
+     * RELEASE; {@code channel}: a held cast; {@code own}: this client is the caster's; {@code keyed}: the caster's own key press
+     * made it (FxEvent.keyed); {@code shown}: ticks since this client's pose of that cast began, or -1 when it isn't showing it.
+     */
+    public static boolean startsPose(int beat, boolean channel, boolean own, boolean keyed, float shown) {
+        // your own key press already started both views
+        if (beat == CastProfiles.BEGIN) return !(own && shown >= 0 && shown <= 8);
+        // a power with no wind-up has only this event: it starts the pose too
+        if (beat == CastProfiles.RELEASE) return shown < 0;
+        return false;
+    }
+
     /** Whether a key is down on a held cast, or its loop is still playing: the hands are a cast's, from the press to the let-go. */
     public boolean holding() {
         if (loop != null) return true;
