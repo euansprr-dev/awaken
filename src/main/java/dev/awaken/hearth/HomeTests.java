@@ -283,8 +283,9 @@ final class HomeTests {
             }
         });
 
-        // SPEC §27.13: the Armoury is a Fitting Stand and a crafting table in one closed room; add an anvil, the Forge and an
-        // armour stand and it's the Forge too (one room, both kinds)
+        // SPEC §27.13: the Armoury is a Fitting Stand and a crafting table in one closed room; add an anvil and the Forge and
+        // it's the Forge too (one room, both kinds). The Forge's stand is the Fitting Stand: a vanilla armour stand isn't it
+        // (SPEC §28.2; Euan 2026-11-12: "why is it asking for an armor stand instead of a fitting stand?")
         AwakenTests.registerIsolated("hearth_armoury_room", 600, h -> {
             int[] c = new int[dev.awaken.hearth.room.Furniture.COUNT];
             c[dev.awaken.hearth.room.Furniture.FITTING_STAND.ordinal()] = 1;
@@ -296,8 +297,14 @@ final class HomeTests {
             c[dev.awaken.hearth.room.Furniture.CRAFTING.ordinal()] = 1;
             c[dev.awaken.hearth.room.Furniture.ANVIL.ordinal()] = 1;
             c[dev.awaken.hearth.room.Furniture.FORGE.ordinal()] = 1;
-            c[dev.awaken.hearth.room.Furniture.STAND.ordinal()] = 1;
             h.assertTrue(Room.classify(c, facts).containsAll(java.util.EnumSet.of(RoomType.FITTING, RoomType.ARMORY)), "grown into the Forge, still the Armoury");
+            int[] old = new int[dev.awaken.hearth.room.Furniture.COUNT];
+            old[dev.awaken.hearth.room.Furniture.ANVIL.ordinal()] = 1;
+            old[dev.awaken.hearth.room.Furniture.FORGE.ordinal()] = 1;
+            old[dev.awaken.hearth.room.Furniture.STAND.ordinal()] = 1;
+            h.assertFalse(Room.classify(old, facts).contains(RoomType.ARMORY), "an anvil, the Forge and a vanilla armour stand: not a Forge");
+            h.assertTrue(RoomType.ARMORY.furniture.contains(dev.awaken.hearth.room.Furniture.FITTING_STAND)
+                    && !RoomType.ARMORY.furniture.contains(dev.awaken.hearth.room.Furniture.STAND), "the Forge asks for the Fitting Stand");
             // the scanner knows the Fitting Stand block
             ServerLevel level = h.getLevel();
             BlockPos origin = h.absolutePos(BlockPos.ZERO);
@@ -432,10 +439,7 @@ final class HomeTests {
                         "E-rank: what an early home can have, the Storehouse not yet: " + early);
                 level.setBlock(base.offset(3, 1, 6), Blocks.ANVIL.defaultBlockState(), 3);
                 level.setBlock(base.offset(3, 1, 3), net.minecraft.core.registries.BuiltInRegistries.BLOCK.getValue(dev.awaken.Awaken.id("forge")).defaultBlockState(), 3);
-                var stand = net.minecraft.world.entity.EntityTypes.ARMOR_STAND.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
-                stand.setPos(base.getX() + 4.5, base.getY() + 1, base.getZ() + 4.5);
-                level.addFreshEntity(stand);
-                AwakenTests.onEnd(h, stand::discard);
+                // the Fitting Stand already in the room makes it the Forge (SPEC §28.2)
                 HearthService.scanNow(level, rec);
                 Progression.topUpToLevel(sp, 12, Progression.XpSource.COMMAND);
                 Progression.passReassessment(sp);

@@ -228,7 +228,7 @@ public final class Upgrades {
         Optional<HearthRecord> ho = HearthData.get(level.getServer()).containing(forgePos, level.dimension().identifier().toString());
         if (ho.isEmpty() || !ho.get().belongs(sp.getUUID())) {
             Signal.send(sp, SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Forge"))
-                    .body(Component.literal("A forge works best at home. Inside your Hearth, with an anvil and an armour stand in the same room, it can temper your gear."))
+                    .body(Component.literal("A forge works best at home. Inside your Hearth, with an anvil and a Fitting Stand in the same room, it can temper your gear."))
                     .ttl(20 * 8).build());
             return;
         }
@@ -236,7 +236,7 @@ public final class Upgrades {
         Rank rank = Progression.rank(sp);
         boolean armory = h.roomAt(forgePos.relative(net.minecraft.core.Direction.UP), RoomType.ARMORY).isPresent() || hasArmoryAround(h, forgePos);
         var w = SignalWindow.builder(SignalWindow.Kind.NOTICE, Component.literal("Forge · Tier " + roman(h.forgeTier)));
-        w.row(Component.literal("Forge room"), Component.literal(armory ? "yes" : "no · needs an anvil and an armour stand in this room"));
+        w.row(Component.literal("Forge room"), Component.literal(armory ? "yes" : "no · needs an anvil and a Fitting Stand in this room"));
         w.row(Component.literal("Temper limit"), Component.literal(roman(temperCap(h, armory))));
         w.body(Component.literal("Hold a weapon or armour piece and use the Forge to temper it."));
         if (h.forgeTier >= HearthRecord.MAX_FORGE_TIER) {
@@ -345,7 +345,7 @@ public final class Upgrades {
             if (current > 0) w.row(Component.literal("Giving it"), Component.literal(temperGives(stack)));
             if (current < MAX_TEMPER) for (Change c : temperChanges(sp, stack, current + 1)) w.row(Component.literal(c.label() + " next"), Component.literal(c.from() + " to " + c.to()));
             w.body(Component.literal(current >= MAX_TEMPER ? "It can't take any more."
-                    : armory ? "Upgrade the Forge to go further." : "Put an anvil and an armour stand in the Forge's room and it'll go further."));
+                    : armory ? "Upgrade the Forge to go further." : "Put an anvil and a Fitting Stand in the Forge's room and it'll go further."));
             Signal.send(sp, w.ttl(20 * 8).build());
             return;
         }

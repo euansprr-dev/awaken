@@ -22,7 +22,7 @@ import net.minecraft.world.phys.BlockHitResult;
 
 /**
  * The Hearth's forge. Hold a weapon or armour piece and use it to temper the gear; use it empty-handed to upgrade the
- * Forge itself. In an Armory (anvil + Forge + armour stand in one room) it tempers higher.
+ * Forge itself. In a Forge room (anvil + Forge + Fitting Stand in one room) it tempers higher.
  */
 public class ForgeBlock extends HorizontalDirectionalBlock {
     public ForgeBlock(BlockBehaviour.Properties p) {

@@ -159,7 +159,7 @@ public final class HearthHooks {
 
     /**
      * The temper limit for gear worked at {@code at} (a Forge) by this player: the Hearth's own rule, one level anywhere,
-     * the Forge's tier x2 in a Forge room (an anvil, the Forge and an armour stand in one room; the War Anvil's starting Temper is held to it, SPEC §46.2).
+     * the Forge's tier x2 in a Forge room (an anvil, the Forge and a Fitting Stand in one room; the War Anvil's starting Temper is held to it, SPEC §46.2).
      */
     public static int temperCap(ServerPlayer player, BlockPos at) {
         return lookup.temperCap(player, at);

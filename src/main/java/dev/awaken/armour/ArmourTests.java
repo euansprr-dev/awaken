@@ -49,6 +49,7 @@ final class ArmourTests {
         AwakenTests.register("armour_art_shipped", 20, ArmourTests::art);
         AwakenTests.register("armour_forge_rules", 20, ArmourTests::forgeRules);
         AwakenTests.register("armour_forge_saves", 20, ArmourTests::forgeSaves);
+        AwakenTests.register("armour_step_from_memory", 20, ArmourTests::stepFromMemory);
         AwakenTests.register("armour_forge_by_hand", 40, ArmourTests::byHand);
         AwakenTests.register("armour_forge_at_the_forge", 40, ArmourTests::atTheForge);
         AwakenTests.register("armour_numbers", 20, ArmourTests::numbers);
@@ -277,14 +278,38 @@ final class ArmourTests {
         m.forged.add("wildhide");
         m.masterwork.add(ArmouryMemory.key(ArmourSet.WILDHIDE, ArmorType.BOOTS));
         m.worn.add("bellguard");
+        m.suited = Rank.D.ordinal();
         var codec = ArmouryMemory.CODEC.codec();
         ArmouryMemory mb = codec.encodeStart(ops, m).flatMap(t -> codec.parse(ops, t)).getOrThrow();
         h.assertTrue(mb.patterns.equals(m.patterns) && mb.forged.equals(m.forged) && mb.fromMemory(ArmourSet.WILDHIDE, ArmorType.BOOTS)
                 && mb.forgedWhole(ArmourSet.WILDHIDE), "the Armoury's memory round-trips");
         h.assertTrue(mb.wornWhole(ArmourSet.BELLGUARD) && !mb.wornWhole(ArmourSet.WILDHIDE), "schema 3's sets worn whole too");
+        h.assertTrue(mb.suited == Rank.D.ordinal(), "schema 4's best suit worn too");
         var older = new net.minecraft.nbt.CompoundTag();
         older.putInt("schemaVersion", 2);
-        h.assertTrue(codec.parse(ops, older).getOrThrow().worn.isEmpty(), "a schema 2 memory reads with no set worn whole");
+        h.assertTrue(codec.parse(ops, older).getOrThrow().worn.isEmpty() && codec.parse(ops, older).getOrThrow().suited == -1,
+                "a schema 2 memory reads with no set worn whole and no suit worn");
+        h.succeed();
+    }
+
+    /**
+     * The Tasks page's armour step is done from memory (SPEC §27.14; Euan 2026-11-12: he forged his first set in creative
+     * and "Choose your first armour" stayed): a set forged whole ends the choice and asks you to put it on; a suit worn
+     * head to foot ends that; taking it off undoes neither. A set below your rank counts for neither.
+     */
+    private static void stepFromMemory(GameTestHelper h) {
+        ArmouryMemory m = ArmouryMemory.fresh();
+        ArmourGoals.Stage none = ArmourGoals.stage(m, Rank.E);
+        h.assertTrue(!none.worn() && none.forged() == null, "nothing made: the choice stands");
+        m.forged.add(ArmourSet.ROOTWARDEN.id);
+        ArmourGoals.Stage made = ArmourGoals.stage(m, Rank.E);
+        h.assertTrue(!made.worn() && made.forged() == ArmourSet.ROOTWARDEN, "forged whole, in creative or not: the choice is done, put it on");
+        h.assertTrue(ArmourGoals.stage(m, Rank.D).forged() == null, "an E set forged doesn't make your D-rank armour");
+        m.worn.add(ArmourSet.ROOTWARDEN.id);
+        h.assertTrue(ArmourGoals.stage(m, Rank.E).worn() && !ArmourGoals.stage(m, Rank.D).worn(), "worn whole: done at E, not at D");
+        ArmouryMemory mixed = ArmouryMemory.fresh();
+        mixed.suited = Rank.E.ordinal();
+        h.assertTrue(ArmourGoals.stage(mixed, Rank.E).worn(), "a mixed suit of E pieces worn head to foot is remembered");
         h.succeed();
     }
 

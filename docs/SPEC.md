@@ -10512,8 +10512,9 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   ("step|choice"). Saved: attachment `awaken:tasks` (`TaskState`, schema 1: pinned, seen (the last 256), chosen), kept
   through death. `/awaken tasks` lists the page, `/awaken tasks pin <key>`, `/awaken tasks unpin`.
 - **The Armoury** (`RoomType.FITTING`, label "Armoury", id `armoury`): a Fitting Stand and a crafting table in one closed
-  room, your first workshop, right after a bed (`HearthNow.ORDER`: Shelter, Bedroom, Armoury, then the rest). An anvil,
-  the Forge and an armour stand in the same room make it the Forge too (one room, both kinds). `Furniture.FITTING_STAND`
+  room, your first workshop, right after a bed (`HearthNow.ORDER`: Shelter, Bedroom, Armoury, then the rest). An anvil
+  and the Forge in the same room make it the Forge too (one room, both kinds): the Forge's stand is the Fitting Stand
+  (§28.2, "The Forge's stand"). `Furniture.FITTING_STAND`
   is appended (saved counts go by ordinal). Its gift: armour finished at a Fitting Stand inside an Armoury lasts a quarter
   longer (`MAX_DAMAGE` × 1.25, `ArmourForge.ARMOURY_WEAR`; the stand asks `HearthHooks.armoury(level, pos)`, §12; the
   tooltip says "Made in your Armoury: it lasts a quarter longer"; `ArmourForge.fromArmoury` reads it off the stack).
@@ -10521,9 +10522,11 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   as the guide ticks them); Clear your first gate (at the Hearthfire: the nearest enterable gate within 600 blocks, for
   its Lord's Heart) or, with a Heart in the pack, Set the Lord's Heart on your fire; Grow your Armoury into a Forge;
   Make your Bedroom a Sanctuary (optional); Grow your home to the next tier (its rules, the rank, the price).
-- **The Armour's steps** (`armour.ArmourGoals`): until every piece you wear is your rank's, "Choose your first armour"
-  (on the path) or "Make your X-rank armour", its choices your rank's known sets with what the pieces you don't own
-  still take, summed; once you wear your rank's, when the next comes.
+- **The Armour's steps** (`armour.ArmourGoals`): until a set of your rank or better is forged whole, "Choose your first
+  armour" (on the path) or "Make your X-rank armour", its choices your rank's known sets with what the pieces you don't
+  own still take, summed; then "Put on your <set> armour" (`armour/wear/<rank>`, the first on the path too: where the
+  pieces are, on the Fitting Stand or with you, and how to take them off it); once you've worn a suit of your rank or
+  better head to foot, when the next comes. All three read `ArmouryMemory`, never what is worn this second (§27.14).
 - **The Hearth page** (phase 2, `hearth.client.HomePage`, replacing the old Hearth section): your home at a glance (name,
   tier, the Forge, Comfort as pips, style, town, trophies, "Rooms and upgrades ›" to the guide); NEXT FOR YOUR HOME, the
   Hearth's first step in full with "Everything for your home (N more) ›" to the Tasks page's Hearth tab
@@ -10536,7 +10539,7 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   `looks` (optional fields, so an old client's view still reads).
 - **The beasts' steps** (`kin.KinGoals`, Hearth goal): the home's first two needs (`KinPage.NEEDS` order) with no beast of
   that kind living there yet, while a nook is free. A kind you've met or heard of is named ("Bring a Burrowbun home", the
-  need and where: "You've met one: ..." or the rumour you already have, with its place); one you haven't stays the need
+  need and where: "You've met one. Where they live: ..." or the rumour you already have, with its place); one you haven't stays the need
   itself ("Nothing lights your yard at night."). Looking never learns a rumour: it reads `Kinship`, never asks
   `KinSpawner`.
 - **The Bells' steps** (`bells.BellGoals`): a step per lead in the Bell Book you don't hold yet, newest first, up to 4
@@ -10544,10 +10547,12 @@ each piece comes from is said plainly; what the world holds beyond it is still f
   Track had it), and the tower's next step when it's yours to do (set the frame down at home, clear room for the belfry
   or the stone tower, raise the Great Belfry, ring the Hundred Peal). A tower that only wants more bells adds nothing:
   the leads are that. Reads the Book, never changes it.
-- **The beasts' wants** (phase 3): a want you've read by watching a beast three times is a plain Hearth step ("Give the
-  Burrowbun what it wants", its third watch line, "Help one three times and it trusts you; then it follows you home"),
-  until one of its kind lives with you; the first fire's Lampwing, before you've watched it, is "Watch what's been
-  watching your fire". Both under `kin.KinGoals`.
+- **The beasts' wants** (phase 3; since 2026-11-12, §43.5 "Said plainly"): every kind you've met is a plain Hearth step
+  ("Bring a Burrowbun home", `kin/want/<id>` where the home doesn't ask for it yet), what to do for it
+  (`KinHelp.howTo`) and how it comes home, until one of its kind lives with you; no watching first. The first fire's
+  Lampwing is "Set out a light for what's watching your fire" ("Make friends with the Lampwing at your fire" once met):
+  torches or a lantern on the ground near the trees at night, three times, and it settles by your fire. Under
+  `kin.KinGoals`.
 - **Truths come true by themselves** (phase 3, `Progression.truthDue`, `truthsCatchUp`): from level 5 (the road's
   `awaken:truths`), a Truth whose rank has come, whose emergence (if any) has happened and whose deed is done is true,
   its reward unchanged; no offers, no declaring, all 32 can be earned. Lived before level 5 or before its rank, it comes
@@ -10649,6 +10654,16 @@ unloaded (§28.2, "Read whole"); the rule holds whatever the cause:
 - **The fire never lifts once a room was read**: an empty hand on your fire lifts the coal only while the home has never
   had a room (`Embers`), since after it the card says to right-click the fire for the guide. Breaking it still returns
   the coal.
+- **Creative ticks as survival does** (Euan 2026-11-12: "I chose my first armor and then I built it, but the task didn't
+  tick off. It should still tick off even if you're in creative mode"). The armour step waited on what was worn this
+  second, so a set built and left on its Fitting Stand never ticked, and taking a suit off unticked it. It now reads
+  `ArmouryMemory` (§27.13, "The Armour's steps"): `forged` ends the choice, `worn` (sets worn whole) or `suited` (schema
+  4: the best rank of a suit worn head to foot, mixed sets too, -1 none) ends "Put on". Every other Goals source was
+  read for creative: counters, rooms, quests (collect counts the pack), the Way Up, the bells, the trails, enchanting and
+  the weapons' smith memory all count in creative as in survival. The one other place that reads what vanilla only
+  counts in survival (`Stats.BLOCK_MINED`, awarded only where a block drops, `Block.playerDestroy`) is the retired Anchor
+  requests' `mined:` and `got:` tokens, which nothing asks now. Lode hearts, finds' scenes and Doors still pay nothing
+  to a creative break, on purpose: creative builds without spending them. Test `armour_step_from_memory`.
 - Test `tasks_done_stays_done` (a row ticked once stays ticked on the card when its source unticks it, a live card's row
   doesn't; a home that lost its rooms to a scan keeps its first room's step and its Armoury done, and a partial scan
   keeps a room it couldn't see), for the final suite.
@@ -10852,6 +10867,17 @@ Comfort, Style, land); a loaded room answers by its box until the next scan, whi
 starts (spread by owner). The first time a player stands in a room after it's recognised or regraded (key = its box,
 grade and name; 96 remembered per player in `HearthPlayer` schema 3), its name as a quiet caption (`HomeNet.RoomCaption`,
 AMBIENT, topic `hearth_room`, `ui.hearth_room`), waiting while they stay in the room up to 600 ticks, else filed.
+
+**The Forge's stand** (Euan 2026-11-12: "it says grow your armory into a forge ... why is it asking for an armor stand
+instead of a fitting stand?"). The Forge (`ARMORY`) is an anvil, the Forge and a Fitting Stand in one closed room, so the
+Armoury grows into it by adding the anvil and the Forge. A vanilla armour stand names no room now (`Furniture.STAND`
+keeps its slot and its count, so saved rooms read the same). Every line that said "armour stand" for the Forge says
+Fitting Stand: "Grow your Armoury into a Forge" and its pieces, the Forge's window, the anvil's limit line, the Forge
+trail, the JEI page. An old world's Forge built with an armour stand keeps its saved kind until its next scan, then reads
+as a Forge again once a Fitting Stand stands in it; every step it finished stays done, since the home remembers it had
+a Forge (§27.14, `had(ARMORY)`), and the Forge's window says what the room lacks ("needs an anvil and a Fitting Stand in
+this room"). The home stage's forge (`HomeStage`) has a Fitting Stand where its armour stand stood. Test
+`hearth_armoury_room`.
 
 **Room kinds** (`RoomType`; effects in `RoomEffects`, `Breaks`, `Town`). Shelter (every closed room; the first: toast
 "First shelter · Rest heals here. From now on the Hearth reads everything you build."), Bedroom (a bed), Sanctuary,
@@ -18871,9 +18897,30 @@ once, in plain words what it was and why the owner went back, and you keep it (`
 - **What the System tells, and never tells.** Every kin card says "Could live with you" and its home job; quarry cards
   say "Quarry"; the Deep's things get no card. Each Hearth need carries a rumour: the sort of animal and a real region,
   picked from an actual place that kind lives within 600 blocks, named by landmarks the player knows, Track a rough
-  bearing. Watching adds up to three want lines, vague to plain; the third states the want. The help is never stated.
-  The right act gets the beast's tell, the band's chime and a line; a near miss gets a nudge line; after a few misses
-  the line points closer, never naming the act. The Kin list always holds at least one rumour not yet followed.
+  bearing. Watching adds up to three want lines, vague to plain; the third states the want. The right act gets the
+  beast's tell, the band's chime and a line; a near miss gets a nudge line; after a few misses the line says plainly
+  what to do (`KinHelp.closer`). The Kin list always holds at least one rumour not yet followed.
+- **Said plainly** (Euan 2026-11-12, changing the 29 Oct rule that the help is never stated: "All the directions for the
+  kins I really don't like ... just go out at night and watch it for a moment. Like how is that going to help you? ...
+  I've found a few kins so far in the game, and I never know what I have to do with them"). Once you've met a kind or
+  heard where one lives, everything says what to do for it, in one set of words (`KinHelp.howTo`, the act the code
+  checks): the Tasks step, the Hearth page's need rows and its Kin card ("What it wants": its want, then the act), the
+  Journal's Beasts page, and the line when you first meet one. The step adds how it comes home: three helps and it
+  trusts you, then it follows a few steps behind (more than 48 blocks ahead and it stops; go back for it), and what
+  the home lacks for it when it has no nook it likes. Watching stays: its first two lines go on the card, but nothing
+  waits on it. A kind you haven't met or heard of stays unnamed. The acts, as said: Lampwing, at night a torch or a
+  lantern on the ground within 10 blocks where it can see you, never a soul light; Burrowbun, till the ground near it
+  with a hoe; Mossback, water poured beside it in the open (branches over it cut back); Pebblepup, something shiny
+  dropped by its pile (gold nugget, raw gold, quartz, lapis, amethyst, a gem); Totter, a stick, flint, bone, feather,
+  sapling or mushroom dropped by its row; Thatchback, whole logs by its dam; Emberkit, a lit campfire or magma beside
+  it, or a fire lit next to it; Puffwool, a brush; Dumplins, stand a block and a half above the flock and lead them to
+  their nest, a flattened hay bale about twenty blocks off; Pondling, every block of Pond Rot broken; Snufflet, dig two
+  down where it snuffles; Chimewrens, a Handbell rung near them (once you've woken a bell); Bumblepuff, three or more
+  flowers round its nest; Loomworm, leaves or a sapling of its log's tree; Cloudcalf, get up to its height and lead it
+  to the calling; Boulderback, no light in your hands and keep still near it for half a minute. The first fire's
+  Lampwing: "It comes to warm light. At night, set a torch or a lantern on the ground near the trees, within 10 blocks
+  of it. Do that three times, a few seconds apart, and it trusts you and settles by your fire." Test
+  `kin_every_kind_says_what_to_do`.
 - The System translates beasts in brackets as subtitles do, only up close and only for kinds read, more as Kinship grows.
   Only the beast you're looking at (within 8 blocks, a 20° cone, in sight), at most one line every 25 s, and a line is
   given once until what it says changes (Euan 2026-10-30: a Lampwing asleep by the fire said so every 25 s;
@@ -20748,8 +20795,8 @@ it; coming back restarts the stage, counted in again.
 - **Quality**: 0.2 heat + 0.55 strikes x early + 0.15 quench + 0.1 hilt; Plain below 0.55, Fine, Masterwork from 0.75,
   Flawless from 0.9; burnt or brittle is never Flawless. Starting Temper Plain 0, Fine I, Masterwork II, Flawless III, then
   Oren's Mark (`awaken:temper_start`) adds its levels, all **capped at the Forge's temper limit**
-  (`HearthHooks.temperCap(player, forge)`: the Hearth's own rule, one level anywhere, the Forge's tier x2 in a Forge room, `RoomType.ARMORY`: an anvil, the Forge and an armour stand in one room;
-  the card says so plainly: "Put an anvil and an armour stand in the Forge's room and it'll go further"),
+  (`HearthHooks.temperCap(player, forge)`: the Hearth's own rule, one level anywhere, the Forge's tier x2 in a Forge room, `RoomType.ARMORY`: an anvil, the Forge and a Fitting Stand in one room (§28.2);
+  the card says so plainly: "Put an anvil and a Fitting Stand in the Forge's room and it'll go further"),
   applied with `Upgrades.applyTemper`.
 - **The story**: `awaken:weapon_forged` (`WeaponForged`, schemaVersion 1): quality, flaw (0 none, 1 burnt, 2 brittle),
   the maker's name. The tooltip says it plainly: "Masterwork", "a burnt tip" or "a brittle hairline", "Forged by Euan".
@@ -21098,7 +21145,7 @@ both come back if the anvil is broken mid-work, and the weapon comes back throug
   by the anvil (`HearthHooks.temperCap` at that Forge) whose prices you hold together: each level costs what it does at
   the Forge (`Upgrades.temper(level, false)`, priced for your rank by `Costs.price`), summed. Oren's Mark lets a weapon
   with no Temper start at its level for that level's price alone, as at the Forge. At the limit the line says why, in the
-  Forge's words ("Put an anvil and an armour stand in the Forge's room and it'll go further.", "Upgrade the Forge to go
+  Forge's words ("Put an anvil and a Fitting Stand in the Forge's room and it'll go further.", "Upgrade the Forge to go
   further.", "It can't take any more."). The scene (about 10 s whatever the levels): the whole weapon heats in the
   Forge's mouth, one strike on the style's own beat for each level gained, the quench. Nothing is judged and nothing is
   flawed: the Temper lands as paid, and the strikes ring as at the draw-out. The page says what this heat would do (at a
@@ -22832,7 +22879,7 @@ The Tasks page (§27.13) keeps its model: steps stay derived from the world, no 
 
 **Lessons.** A lesson (a `lesson:` Now id) is never urgent and never the step on top, however fresh it is: `NowMap` holds it under `TaskBook.URGENT` and `TaskBook.top` skips it. A hunter who skipped the Veil no longer has "Meditate 10 s" as Do this next from C-rank on.
 
-**Your Village** (trail) is told through beasts and works, since people no longer move in: `beasts:N` (Kin, how many live at your home) replaces `settlers:N` on it. The tier steps say what `TierRules` asks. "Choose your first armour" is for an E-rank hunter with nothing worn; at any other rank the step is "Make your X-rank armour". The Training Grounds' last step counts a strike on a dummy (`awaken:training_dummy_hits`).
+**Your Village** (trail) is told through beasts and works, since people no longer move in: `beasts:N` (Kin, how many live at your home) replaces `settlers:N` on it. The tier steps say what `TierRules` asks. "Choose your first armour" is for an E-rank hunter who has never worn a suit and wears nothing now; at any other rank, or once a piece is on, the step is "Make your X-rank armour". A set forged whole turns it into "Put on your <set> armour" (§27.13). The Training Grounds' last step counts a strike on a dummy (`awaken:training_dummy_hits`).
 
 **The cap.** `TaskBook` shelves every book by goal: at most one row per thread and three rows a tab (`TAB_CAP`), one Out there row (`OUT_CAP`); the rest wait in Later, read-only with Pin. So Now is at most seven rows: the step on top, one per tab, one Out there. A source can't exceed it, because the cap is in the book. `tasks.cap=false` in the world config brings back the old list.
 
@@ -22844,7 +22891,7 @@ The Tasks page (§27.13) keeps its model: steps stay derived from the world, no 
 
 **Tests.** `tasks_caps` walks the seven stops of `docs/tasks-progression/proof/rows-at-each-stop.txt` (Now at most 7, a tab at most 3, one row per thread, nothing lost, a lesson never on top). `tasks_slots_stay` covers places holding, the next step taking the finished one's place, Set aside and Undo, a pin in Later, trails giving way, an old save.
 
-**The Hearth tab.** Three lines of work. `hearth.home`: the guide, the Anchor, the Forge's tiers and the home's tiers (a tier only shows once your rank opens it; until then the foot of the tab says when, because nothing on the list is out of reach). `hearth.build`: the Armoury, the Forge room, and **Add to your home** (`hearth/add`), one row with up to three picks. `hearth.beasts`: the beasts, each a Lead, a kind your standing rooms are waiting on first (a Storehouse waits on a Totter, an Ore Shed on a Pebblepup, a Smeltery on an Emberkit, a Rookery on a Chimewren).
+**The Hearth tab.** Three lines of work. `hearth.home`: the guide, the Anchor, the Forge's tiers and the home's tiers (a tier only shows once your rank opens it; until then the foot of the tab says when, because nothing on the list is out of reach). `hearth.build`: the Armoury, the Forge room, and **Add to your home** (`hearth/add`), one row with up to three picks. `hearth.beasts`: the beasts, each a Lead, a kind your standing rooms are waiting on first (a Storehouse waits on a Totter, an Ore Shed on a Pebblepup, a Smeltery on an Emberkit, a Rookery on a Chimewren). A kind you've met says plainly what to do for it and how it comes home (§43.5 "Said plainly"): the one Lead that says what comes after it.
 
 Picks are `HearthGoals.OPTIONS`, in the order they're offered: a room you've started comes first and the one you picked stays on offer. Each has the rank it's told at, which is not a lock: a room counts whenever it's built. Pick one and the row becomes it, with Change to go back. The Storehouse is told at C-rank, with the Granary Keystone as a Lead (every town's granary keeps one against a ground-floor wall). The Sanctuary is a pick once there's an Anchor. The Now tracker's room suggestion now covers the works too, once two of their pieces are down.
 

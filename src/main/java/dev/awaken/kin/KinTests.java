@@ -24,6 +24,7 @@ final class KinTests {
         AwakenTests.register("kin_fields_harvest", 400, KinTests::fieldsHarvest);
         AwakenTests.register("kin_rumours_real", 100, KinTests::rumoursReal);
         AwakenTests.register("kin_done_never_shows", 200, KinTests::doneNeverShows);
+        AwakenTests.register("kin_every_kind_says_what_to_do", 20, KinTests::everyKindSaysWhatToDo);
         AwakenTests.register("kin_lines_once", 20, KinTests::linesOnce);
         AwakenTests.register("kin_plate", 40, KinTests::plate);
         AwakenTests.register("kin_ride_line", 20, KinTests::rideLine);
@@ -213,6 +214,35 @@ final class KinTests {
         h.succeed();
     }
 
+    /** What a step tells you to do: one of these, plainly, at the start of a sentence. */
+    private static final java.util.regex.Pattern ACT = java.util.regex.Pattern.compile(
+            "(^|\\. )(At night, stand|Set|Till|Pour|Drop|Use|Stand|Dive|Dig|Ring|Plant|Climb|Put)\\b");
+
+    /**
+     * Every kind says plainly what to do (SPEC §43.5; Euan 2026-11-12: "for all kins, we need to make it a bit more clear
+     * what you need to actually do once you find that thing"): once met, its step names the act and how it comes home,
+     * with no watching first; the hint after a few misses says it too; the first fire's Lampwing says to set out torches.
+     */
+    static void everyKindSaysWhatToDo(GameTestHelper h) {
+        ServerPlayer p = h.makeMockServerPlayerInLevel();
+        Kinship ks = Kinship.of(p);
+        for (KinKind k : KinKind.values()) {
+            String how = KinHelp.howTo(k);
+            h.assertTrue(ACT.matcher(how).find(), k.id() + "'s act names something to do: " + how);
+            h.assertTrue(KinHelp.closer(k).startsWith("[") && KinHelp.closer(k).length() > 20, k.id() + "'s hint says what to do: " + KinHelp.closer(k));
+            ks.kind(k).met = true; // never watched
+            var st = KinGoals.step(p, ks, k, "", p.blockPosition(), "kin/want/" + k.id(), 28);
+            h.assertTrue(st.title().equals("Bring " + KinGoals.article(k.title) + " home") && st.why().contains(how) && st.why().contains("three times"),
+                    k.id() + "'s step says what to do and how it comes home: " + st.why());
+        }
+        ks.kind(KinKind.LAMPWING).met = false;
+        ks.lesson = 1;
+        var lesson = KinGoals.step(p, ks, KinKind.LAMPWING, "Nothing lights your yard at night.", p.blockPosition(), "kin/need/lampwing", 32);
+        h.assertTrue(lesson.why().contains("set a torch or a lantern on the ground near the trees") && !lesson.why().contains("watch it"),
+                "the first fire's Lampwing: torches, plainly: " + lesson.why());
+        h.succeed();
+    }
+
     /**
      * A done goal never shows, for the beasts (SPEC §27.12, swept with core.api.Shown): a Track is done the moment its kind
      * is met anywhere; the first fire's Lampwing has no Track (it's by your fire); and once it lives with you the Track
@@ -237,15 +267,11 @@ final class KinTests {
         Kinship.save(p, ks);
         h.assertTrue(dev.awaken.core.api.Destinations.done(p, "kin/burrowbun"), "met anywhere: done");
         h.assertFalse(dev.awaken.core.api.Destinations.done(p, "kin/burrowbun/home"), "going back for one waits until one lives with you");
-        // on the Tasks page's Hearth tab (SPEC §27.13): met, it's named; its want read by watching, the want is the step
+        // on the Tasks page's Hearth tab (SPEC §27.13): met, it's named and says plainly what to do, no watching first
+        // (SPEC §43.5; Euan 2026-11-12: "I never know what I have to do with them")
         var bun = KinGoals.steps(p).stream().filter(st -> st.key().equals("kin/need/burrowbun")).findFirst().orElse(null);
-        h.assertTrue(bun != null && bun.title().equals("Bring a Burrowbun home"), "a kind met is named: " + bun);
-        ks = Kinship.of(p);
-        ks.kind(KinKind.BURROWBUN).watched = 3;
-        Kinship.save(p, ks);
-        bun = KinGoals.steps(p).stream().filter(st -> st.key().equals("kin/need/burrowbun")).findFirst().orElse(null);
-        h.assertTrue(bun != null && bun.title().equals("Give the Burrowbun what it wants") && bun.why().startsWith(KinKind.BURROWBUN.watch.get(2)),
-                "a want read is a plain step: " + bun);
+        h.assertTrue(bun != null && bun.title().equals("Bring a Burrowbun home") && bun.why().contains(KinHelp.howTo(KinKind.BURROWBUN)),
+                "a kind met is named, and its step says what to do: " + bun);
         // the first fire's Lampwing, tamed at the fire
         ks = Kinship.of(p);
         ks.lesson = 1;

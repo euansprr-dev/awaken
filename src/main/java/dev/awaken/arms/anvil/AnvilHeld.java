@@ -72,7 +72,7 @@ final class AnvilHeld {
         if (cur >= cap) {
             String why = cur >= Upgrades.MAX_TEMPER ? "It can't take any more."
                     : cap > 1 ? "It's at your Forge's limit. Upgrade the Forge to go further."
-                    : "It's at your Forge's limit. Put an anvil and an armour stand in the Forge's room and it'll go further.";
+                    : "It's at your Forge's limit. Put an anvil and a Fitting Stand in the Forge's room and it'll go further.";
             return new TemperPlan(cur, cur, cap, List.of(), false, why);
         }
         Rank rank = Progression.rank(p);

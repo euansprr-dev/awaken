@@ -54,14 +54,14 @@ public record Room(EnumSet<RoomType> types, BlockPos min, BlockPos max, LongSet 
         return t;
     }
 
-    /** As before the reading: a room holding just these (the tests' shorthand). */
+    /** As before the reading: a room holding just these (the tests' shorthand; {@code stands} are Fitting Stands). */
     public static EnumSet<RoomType> classify(int beds, int mats, int anvils, int forges, int stands, int trophies, int machines) {
         int[] c = new int[Furniture.COUNT];
         c[Furniture.BED.ordinal()] = beds;
         c[Furniture.MAT.ordinal()] = mats;
         c[Furniture.ANVIL.ordinal()] = anvils;
         c[Furniture.FORGE.ordinal()] = forges;
-        c[Furniture.STAND.ordinal()] = stands;
+        c[Furniture.FITTING_STAND.ordinal()] = stands;
         c[Furniture.TROPHY.ordinal()] = trophies;
         c[Furniture.MACHINE.ordinal()] = machines;
         return classify(c, new int[Tally.F_COUNT]);

@@ -1,0 +1,123 @@
+# Plain kin words and the Forge's Fitting Stand (SPEC §43.5 "Said plainly", §28.2 "The Forge's stand"; Euan 2026-11-12).
+# At Euan's scaled size (1708x960 at the auto GUI scale is 427x240, his 4K at GUI 9): the first fire's Lampwing says to
+# set torches out, a Burrowbun, a Pebblepup and a Puffwool met (never watched) each say what to do and how it comes
+# home, the Forge step asks for an anvil, the Forge and the Fitting Stand; then the Hearth page's Kin card and the
+# Journal's Beasts page say the same words.
+# Run on CI: tools/tour-ci.sh tools/autopilot/tasks-kin-words.txt 1500
+world autopilot_kin_words creative 27132713
+waitworld
+gui 0
+window 1708 960
+cmd gamerule spawn_mobs false
+cmd gamerule awaken:fauna_spawning false
+cmd weather clear 1000000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+wait 40
+key dismiss
+wait 10
+screen close
+# the first moves done, as a hunter who has played: their card would sit over the home's
+cmd awaken admin counter "awaken:body_roll" 1
+cmd awaken admin counter "awaken:body_sprint" 1
+cmd awaken admin counter "awaken:body_slide" 1
+cmd awaken admin counter "awaken:body_mantle" 1
+cmd awaken admin counter "awaken:first/moves_done" 1
+# the director holds paced lines for a world's first five minutes: run them through
+cmd tick sprint 6200
+wait 240
+cmd gamerule advance_time false
+cmd time set 6000
+# ---- the fire, on open ground well outside the city ----
+cmd spreadplayers ~1400 ~ 0 10 false @s
+wait 200
+cmd awaken admin ember give
+wait 20
+cmd awaken admin ember set
+wait 120
+screen close
+# ---- an Armoury: timber, a door, a window, a bed, a Fitting Stand and a crafting table (the Forge comes next) ----
+cmd fill ~4 ~-1 ~-3 ~10 ~3 ~3 minecraft:spruce_planks hollow
+cmd setblock ~4 ~ ~ minecraft:oak_door[half=lower,facing=west]
+cmd setblock ~4 ~1 ~ minecraft:oak_door[half=upper,facing=west]
+cmd setblock ~10 ~1 ~ minecraft:glass_pane
+cmd setblock ~6 ~ ~-1 minecraft:red_bed[part=foot,facing=north]
+cmd setblock ~6 ~ ~-2 minecraft:red_bed[part=head,facing=north]
+cmd setblock ~8 ~ ~-2 minecraft:lantern
+cmd setblock ~8 ~ ~2 minecraft:lantern
+cmd setblock ~7 ~ ~2 awaken:fitting_stand[facing=north]
+cmd setblock ~9 ~ ~2 minecraft:crafting_table
+wait 20
+cmd awaken admin hearth read
+wait 200
+screen close
+# ---- night: the first fire's Lampwing comes out of the trees (the lesson) ----
+cmd awaken admin kin lesson
+wait 60
+screen close
+# ---- three kinds met, none watched ----
+cmd awaken admin kin meet burrowbun
+cmd awaken admin kin meet pebblepup
+cmd awaken admin kin meet puffwool
+wait 40
+# every step and its key, into the log
+cmd awaken tasks
+wait 20
+# ---- Tasks, the Hearth tab ----
+screen band tasks
+holo run
+wait 60
+tasks hearth
+wait 30
+shot k00_hearth_tab
+tasks focus kin/need/lampwing
+wait 30
+shot k01_lampwing_lesson
+# the board shows a few steps a lane and folds the rest under Later: pin each one to read it on top
+cmd awaken tasks pin kin/need/burrowbun
+wait 40
+tasks focus kin/need/burrowbun
+wait 30
+shot k02_burrowbun
+cmd awaken tasks pin kin/want/pebblepup
+wait 40
+tasks focus kin/want/pebblepup
+wait 30
+shot k03_pebblepup
+cmd awaken tasks pin kin/want/puffwool
+wait 40
+tasks focus kin/want/puffwool
+wait 30
+shot k04_puffwool
+cmd awaken tasks pin hearth/forge
+wait 40
+tasks focus hearth/forge
+wait 30
+shot k05_forge_needs_fitting_stand
+cmd awaken tasks unpin
+wait 20
+screenkey esc
+wait 10
+screen close
+wait 10
+# ---- the Hearth page: its needs and the Kin cards ----
+screen band hearth
+holo run
+wait 60
+shot k06_hearth_page
+screen close
+wait 10
+# ---- the Journal's Beasts page ----
+screen band journal
+holo run
+wait 40
+journal kin
+wait 40
+shot k07_journal_beasts
+screen close
+quit

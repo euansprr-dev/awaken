@@ -324,7 +324,7 @@ public final class HearthService {
         return RoomScanner.isFurniture(s) || RoomScanner.closesGap(s) || s.isCollisionShapeFullBlock(level, pos);
     }
 
-    /** Armour stands are entities: placing or breaking one is a room change too (the Armory). */
+    /** Armour stands are entities: placing or breaking one is a room change too (counted as furniture; the Forge's stand is a Fitting Stand now). */
     private static void onEntityJoin(EntityJoinLevelEvent e) {
         if (e.getEntity() instanceof ArmorStand && !e.loadedFromDisk() && e.getLevel() instanceof ServerLevel level) {
             blockChanged(level, e.getEntity().blockPosition());

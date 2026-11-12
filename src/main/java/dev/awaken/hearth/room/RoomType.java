@@ -18,7 +18,6 @@ import static dev.awaken.hearth.room.Furniture.LECTERN;
 import static dev.awaken.hearth.room.Furniture.MACHINE;
 import static dev.awaken.hearth.room.Furniture.MAT;
 import static dev.awaken.hearth.room.Furniture.SEAT;
-import static dev.awaken.hearth.room.Furniture.STAND;
 import static dev.awaken.hearth.room.Furniture.TABLE;
 import static dev.awaken.hearth.room.Furniture.TROPHY;
 import static dev.awaken.hearth.room.Furniture.LEDGER;
@@ -45,7 +44,8 @@ public enum RoomType {
             "Sleep here: Fracture heals."),
     KITCHEN("Kitchen", "kitchen", List.of(COOKER, CRAFTING, BARREL), null, 16, 3, "home-cooked meals last longer",
             "Meals made here are home-cooked: eating one makes what it gives you last half again as long.", "Home-cooked meals."),
-    ARMORY("Forge", "forge", List.of(ANVIL, FORGE, STAND), null, 16, 3, "the Forge can temper higher",
+    /** An anvil, the Forge and a Fitting Stand (Euan 2026-11-12: the Forge asked for a vanilla armour stand; SPEC §28.2). */
+    ARMORY("Forge", "forge", List.of(ANVIL, FORGE, Furniture.FITTING_STAND), null, 16, 3, "the Forge can temper higher",
             "Your Forge tempers gear past level I here: two levels for every Forge tier.", "Your Forge tempers higher."),
     /** (SPEC §27.13) the first workshop: a Fitting Stand and a crafting table. It grows into the Forge (one room, both kinds). */
     FITTING("Armoury", "armoury", List.of(Furniture.FITTING_STAND, CRAFTING), null, 12, 3, "armour made here lasts longer",

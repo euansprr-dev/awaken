@@ -161,7 +161,6 @@ cmd setblock ~5 ~ ~2 minecraft:crafting_table
 cmd setblock ~7 ~ ~2 awaken:fitting_stand
 cmd setblock ~9 ~ ~2 minecraft:anvil
 cmd setblock ~9 ~ ~-2 awaken:forge
-cmd summon minecraft:armor_stand ~7 ~ ~0
 wait 20
 cmd awaken admin hearth read
 wait 60
