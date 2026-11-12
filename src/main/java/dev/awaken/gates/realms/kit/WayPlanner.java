@@ -286,7 +286,7 @@ public final class WayPlanner {
     }
 
     /** The turns off the way's own line a stretch of stones is tried at, the way itself first. */
-    static final int[] TURNS = {0, 35, -35, 70, -70, 100, -100};
+    public static final int[] TURNS = {0, 35, -35, 70, -70, 100, -100};
 
     /**
      * Whether every stone stands on good ground, over it by a block or more (the first a jump up from it, {@link Hops#on}),
