@@ -169,6 +169,43 @@ final class RealRopeTests {
                 p.hoist, p.cap, w.aimT, AscentSwing.SLING_NO[w.aimSling]);
     }
 
+    /**
+     * Every point the press tries round what the look meets, and what its played swing did (for a failure's message):
+     * whether it bites and is in clear view, the move, or why not, where it met something, how far it turned.
+     */
+    private static String report(SwingSpace s, AscentRules.Kin hand, double ex, double ey, double ez, float yaw, float pitch, double bx, double by, double bz) {
+        AscentSwing.Work w = new AscentSwing.Work();
+        SwingSpace.Hit a = w.aim;
+        double cp = Math.cos(Math.toRadians(pitch));
+        if (!s.ray(ex, ey, ez, AscentSwing.fx(yaw) * cp, -Math.sin(Math.toRadians(pitch)), AscentSwing.fz(yaw) * cp, AscentRules.TETHER_RANGE, a)) {
+            return " || the look met nothing";
+        }
+        StringBuilder b = new StringBuilder(String.format(" || met (%.2f %.2f %.2f) facing ", a.x - bx, a.y - by, a.z - bz)).append(a.nx).append(' ')
+                .append(a.ny).append(' ').append(a.nz);
+        int n = RealRope.points(s, a, yaw, w);
+        double[] p = w.rpts.clone();
+        AscentSwing.Pick c = new AscentSwing.Pick();
+        for (int i = 0; i < n; i++) {
+            c.x = p[i * 3];
+            c.y = p[i * 3 + 1];
+            c.z = p[i * 3 + 2];
+            b.append(String.format(" | (%.2f %.2f %.2f)", c.x - bx, c.y - by, c.z - bz));
+            if (!AscentSwing.bites(s, c)) {
+                b.append(" no bite");
+                continue;
+            }
+            if (!AscentSwing.clear(s, hand.x, hand.y, hand.z, c.x, c.y, c.z, 0.5, w)) b.append(" not in view");
+            int kind = RealRope.play(s, hand, yaw, c.x, c.y, c.z, w);
+            b.append(kind > 0 ? " " + RealRope.MOVE[kind] : " no: " + RealRope.NO[w.playNo]);
+            b.append(String.format(" (rope %.1f, turned %.0f, skim %d", w.playBite, w.playTurn, w.playSkim));
+            if (w.playHitAt >= 0 || w.playNo == RealRope.NO_FLIGHT) {
+                b.append(String.format(", met at tick %d at (%.2f %.2f %.2f)", w.playHitAt, w.playHx - bx, w.playHy - AscentRules.HAND_HEIGHT - by, w.playHz - bz));
+            }
+            b.append(')');
+        }
+        return b.toString();
+    }
+
     // ---- the tests -------------------------------------------------------------------------------------------------------
 
     /**
@@ -201,7 +238,7 @@ final class RealRopeTests {
             double sy = by + 1 + 1.62;
             float sYaw = yawTo(side.x, side.z, bx + 8.5, bz + 20.5), sPitch = pitchTo(side.x, sy, side.z, bx + 8.5, by + 6.5, bz + 20.5);
             h.assertTrue(AscentSwing.aimed(space, side, side.x, sy, side.z, sYaw, sPitch, AscentRules.TETHER_RANGE, true, w, pick) && !pick.zip && !pick.sling,
-                    "beside the oak, the press gives a real swing: " + pickOf(pick, w, bx, by, bz));
+                    "beside the oak, the press gives a real swing: " + pickOf(pick, w, bx, by, bz) + report(space, side, side.x, sy, side.z, sYaw, sPitch, bx, by, bz));
             Ride s = ride(space, side, sYaw, pick, 20, bx, by, bz);
             h.assertTrue(s.lenAt10 >= 0.85 * s.biteLen - 1e-6 && s.straightIn < 2, "beside the oak, the rope keeps its length and never pulls: " + s + s.trace);
         } finally {
@@ -228,7 +265,8 @@ final class RealRopeTests {
             double ey = by + 1 + 1.62;
             float yaw = yawTo(hand.x, hand.z, bx + 8.5, bz + 20.5), pitch = pitchTo(hand.x, ey, hand.z, bx + 8.5, by + 6.5, bz + 20.5);
             h.assertTrue(AscentSwing.aimed(space, hand, hand.x, ey, hand.z, yaw, pitch, AscentRules.TETHER_RANGE, true, w, pick) && pick.move == RealRope.ROUND
-                    && !pick.zip && !pick.sling, "beside an oak, the press swings round it: " + pickOf(pick, w, bx, by, bz));
+                    && !pick.zip && !pick.sling, "beside an oak, the press swings round it: " + pickOf(pick, w, bx, by, bz)
+                    + report(space, hand, hand.x, ey, hand.z, yaw, pitch, bx, by, bz));
             h.assertTrue(AscentServer.anchorReal(mock(h, bx + 12, by + 1, bz + 18.5), pick.x, pick.y, pick.z), "the server takes the oak's anchor as real");
             Ride r = ride(space, hand, yaw, pick, 20, bx, by, bz);
             h.assertTrue(r.turned >= 60 && r.lowestFeet >= 0.9 && r.touched < 0, "round the oak: turned 60° or more in a second, clear of everything: " + r + r.trace);

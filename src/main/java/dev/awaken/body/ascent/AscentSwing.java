@@ -351,6 +351,9 @@ public final class AscentSwing {
         final Pick rc = new Pick();
         final double[] rpts = new double[72], rbest = new double[8];
         double playScore, playCap;
+        /** Why the last played real swing was refused (RealRope.NO), and what it did: for the tests' report. */
+        int playNo, playHitAt, playSkim;
+        double playTurn, playBite, playHx, playHy, playHz;
 
         public Work() {
             for (int i = 0; i < cands.length; i++) cands[i] = new Pick();

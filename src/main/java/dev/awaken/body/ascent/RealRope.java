@@ -327,6 +327,10 @@ public final class RealRope {
      */
     static int play(SwingSpace s, AscentRules.Kin hand, double yaw, double x, double y, double z, AscentSwing.Work w) {
         AscentSwing.Tune t = AscentSwing.T;
+        w.playNo = NO_FLIGHT;
+        w.playHitAt = -1;
+        w.playTurn = w.playBite = 0;
+        w.playSkim = 0;
         AscentRules.Kin k = w.rk.set(hand.x, hand.y, hand.z, hand.vx, hand.vy, hand.vz);
         double lfx = AscentSwing.fx(yaw), lfz = AscentSwing.fz(yaw), llx = -lfz, llz = lfx;
         AscentSwing.entry(k, yaw);
@@ -339,13 +343,19 @@ public final class RealRope {
             k.x += k.vx;
             k.y += k.vy;
             k.z += k.vz;
-            if (AscentSwing.swept(s, x0, y0, z0, k.x, k.y, k.z)) return 0;
+            if (AscentSwing.swept(s, x0, y0, z0, k.x, k.y, k.z)) {
+                w.playHx = k.x;
+                w.playHy = k.y;
+                w.playHz = k.z;
+                return 0;
+            }
         }
         AscentSwing.Rope r = w.rr.set(x, y, z, dist, dist);
         r.real = true;
         r.cap = t.holdCap;
         bite(s, k, r, yaw);
         double biteLen = r.len, h0 = Math.atan2(k.vx, k.vz), turn = 0, top = k.speed();
+        w.playBite = biteLen;
         boolean crossed = false, passed = false, under = false;
         int hitAt = -1, skimRound = 0;
         double hitAng = 180;
@@ -355,6 +365,9 @@ public final class RealRope {
             if (AscentSwing.swept(s, x0, y0, z0, k.x, k.y, k.z)) {
                 hitAt = i;
                 hitAng = angle(k, r);
+                w.playHx = k.x;
+                w.playHy = k.y;
+                w.playHz = k.z;
                 break;
             }
             top = Math.max(top, k.speed());
@@ -369,15 +382,30 @@ public final class RealRope {
             }
             if (along > 0.5) passed = true;
         }
-        if (!passed) return 0;
+        w.playHitAt = hitAt;
+        w.playTurn = turn;
+        w.playSkim = r.skimming;
+        if (!passed) return no(w, NO_PASSED);
         int kind = crossed && under ? UNDER : ROUND;
         int span = kind == UNDER ? SPAN_UNDER : SPAN_ROUND;
-        if (hitAt >= 0 && hitAt <= span) return 0;
-        if ((kind == UNDER ? r.skimming : skimRound) > SKIM_MOST) return 0;
-        if (kind == ROUND && (biteLen > t.roundMost || turn < ROUND_TURN)) return 0;
+        if (hitAt >= 0 && hitAt <= span) return no(w, kind == UNDER ? NO_HIT_UNDER : NO_HIT_ROUND);
+        if ((kind == UNDER ? r.skimming : skimRound) > SKIM_MOST) return no(w, NO_SKIM);
+        if (kind == ROUND && biteLen > t.roundMost) return no(w, NO_LONG);
+        if (kind == ROUND && turn < ROUND_TURN) return no(w, NO_TURN);
+        w.playNo = 0;
         w.playScore = top;
         w.playCap = Math.max(HELD_LEAST, Math.min(t.holdCap, hitAng - ROOM_MARGIN));
         return kind;
+    }
+
+    /** Why a played swing was refused ({@code w.playNo}), and the words for each. */
+    static final int NO_FLIGHT = 1, NO_PASSED = 2, NO_HIT_UNDER = 3, NO_HIT_ROUND = 4, NO_SKIM = 5, NO_LONG = 6, NO_TURN = 7;
+    static final String[] NO = {"", "the rope's flight met something", "it never got past the anchor", "a swing under met something",
+            "a swing round met something", "it skimmed the floor too long", "a round on too long a rope", "a round that turned too little"};
+
+    private static int no(AscentSwing.Work w, int why) {
+        w.playNo = why;
+        return 0;
     }
 
     /** A swing that crosses the anchor's line nearer than this (blocks, across the look) swings under it. */
@@ -468,7 +496,7 @@ public final class RealRope {
     static final double SLING_ASIDE = 3;
 
     /** The points tried round what the look met ({@link #aimed}), into {@code w.rpts}; how many. */
-    private static int points(SwingSpace s, SwingSpace.Hit a, double yaw, AscentSwing.Work w) {
+    static int points(SwingSpace s, SwingSpace.Hit a, double yaw, AscentSwing.Work w) {
         double[] p = w.rpts;
         double lfx = AscentSwing.fx(yaw), lfz = AscentSwing.fz(yaw), llx = -lfz, llz = lfx;
         int n = 0;
