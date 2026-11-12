@@ -135,7 +135,8 @@ public final class Preview {
                 z = s.z() + Integer.parseInt(w[8]) + 0.5;
             } else if (w.length >= 8 && w[0].equals("cmd") && w[3].equals("realm_leg")) {
                 int back = Integer.parseInt(w[6]);
-                double[] view = land.legView(Land.LegKind.valueOf(w[4].toUpperCase(Locale.ROOT)), Integer.parseInt(w[5]), back);
+                double[] view = w[4].equalsIgnoreCase("first_fight") ? land.firstFightView(back)
+                        : land.legView(Land.LegKind.valueOf(w[4].toUpperCase(Locale.ROOT)), Integer.parseInt(w[5]), back);
                 if (view == null) {
                     System.out.println("[preview] this run has no " + w[4] + " leg " + w[5]);
                     continue;
