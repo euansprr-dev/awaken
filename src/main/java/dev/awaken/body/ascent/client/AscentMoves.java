@@ -939,6 +939,8 @@ public final class AscentMoves {
         }
         PICK.len = d;
         PICK.fitLen = Math.min(PICK.fitLen, d);
+        // a swing whose way has grown long for its fit since it looked reels in to it
+        if (!PICK.zip && !PICK.sling && PICK.fitLen < d * AscentSwing.FIT_MIN) PICK.reel = true;
         pickAimed = true;
         return PICK;
     }
@@ -951,7 +953,7 @@ public final class AscentMoves {
         // slung past; else the best along the heading, as ever
         pickAimed = AscentSwing.aimed(SPACE, HAND, eye.x, eye.y, eye.z, yaw, pitch, reach(p), AscentSwing.guide, WORK, PICK);
         if (pickAimed) return PICK;
-        if (AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
+        if (AscentSwing.findAfter(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
         if (AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, PICK)) return PICK;
         if (!lips) return null;
         if (markerOn && MARKER.zip && !Double.isNaN(MARKER.top) && zipOk(MARKER, HAND.x, HAND.y, HAND.z)) return PICK.copy(MARKER);
@@ -1001,6 +1003,8 @@ public final class AscentMoves {
         len = pk.len;
         lenTarget = pk.fitLen;
         ROPE.set(ax, ay, az, len, lenTarget);
+        // a swing thrown longer than it can swing over the floor reels you up into its arc (the aimed swing under something)
+        ROPE.reel = pk.reel;
         swinging = true;
         ropeTravel = AscentSwing.travel(len);
         ropeTaut = false;
@@ -1154,7 +1158,7 @@ public final class AscentMoves {
         markerAt = ticks;
         markerOn = markerOverhead
                 || AscentSwing.aimed(SPACE, HAND, eye.x, eye.y, eye.z, yaw, pitch, reach(p), AscentSwing.guide, WORK, MARKER)
-                || AscentSwing.find(SPACE, HAND, yaw, reach(p), WORK, MARKER)
+                || AscentSwing.findAfter(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.guide && AscentSwing.findSling(SPACE, HAND, yaw, reach(p), WORK, MARKER)
                 || AscentSwing.zipTo(SPACE, eye.x, eye.y, eye.z, yaw, pitch, reach(p), WORK, MARKER) && zipOk(MARKER, HAND.x, HAND.y, HAND.z);
         // never where the rope can't bite as the server asks (the anchor moved onto the block's shape when it can)

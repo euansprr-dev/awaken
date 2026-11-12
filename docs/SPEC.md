@@ -24721,6 +24721,28 @@ actual rope with momentum", and of the air after: "sometimes you're going fast a
     takes the speed down to nothing; `SLING_CATCH`).
   - GameTest `ascent_rope_aimed`: the low crown slung off falling at 0.9 a tick; a wall's post bitten off the cell's
     face, which the server takes and refused before.
+- **Under it, not over it; the held rope holds** (12 Nov 2026, Euan: "a lot of the times the clear path to swing below
+  something, for example ... a tall tree or something, yeah, it swings you above that ... it makes you swing on top. And
+  like sling yourself on top"; and "we need to stop making automatically let go so often ... I would prefer that not to
+  let go yet and to manually let go"). A held swing never lets go by itself (the key is its only let-go); what let go
+  were slings and pulls, which the rope chose because a swing from what he looked at failed one of `find`'s rules for
+  a swing along the heading: 30 degrees over level at least, its fit (the rope that keeps the feet 2.5 over the floor)
+  70% of the way to the anchor, its arc clear up to the release window. A crown 9 up looked at from 16 off fails all
+  three, so the rope slung him over its top. Now `AscentSwing.aimed` tries, before any sling:
+  - a swing from the point the look met by looser rules (`AIM_ELEV_MIN` 15 degrees, a fit 25% of the way, radius 4,
+    the feet 1.2 over the floor at the bottom, `AIM_CLEAR`): a rope longer than its fit winds you in, 1 a tick at least
+    along it with the speed across it kept (`REEL_IN`, `Pick.reel`, `Rope.reel`), so you come in and down together and
+    the rope catches you into the swing at its fit (slower, 0.6 a tick, sags into the floor from 16 out);
+  - then the same from the underside over open air in the column the look met (`SwingSpace.bottomUnder`: the bottom
+    face of the run of solid cells it is part of, 3 empty cells under it, 12 down at most; a trunk or a wall down to the
+    ground has none): a crown's, a branch's, an arch's, a bridge's;
+  - then any swing along the heading (`find`) whose anchor is within 6 of what the look met (`AIM_NEAR`; that run is
+    kept for the caller's own search, `findAfter`, so the fan of rays is cast once);
+  - and only then the sling past its top, the pull onto it, the hang under it, as before.
+  A held rope's arc need only be clear through the bottom and 25 degrees up the far side (`HELD_CLEAR`; it has no
+  release window, and what it meets further on it brakes for and swings back from). GameTest `ascent_rope_aimed`: a
+  tree whose crown is 9 up, looked at beside its trunk from a sprint jump 16.5 off, is swung under from its underside,
+  wound in to its fit, under the crown and 25 degrees up the far side with nothing met and the feet over the floor.
 
 *The wings (`WingForm`, `WingFeathers`, `WingLayer`, `WingPipelines`; switch `wingsFeathers`, off = the old sheet).*
 - `WingForm` is the approved model's numbers, one to one (docs/movement/src/wings.js): bones 9, 13, 14; 5 tertials, 8

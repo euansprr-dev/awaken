@@ -541,6 +541,39 @@ final class AscentSwingTests {
             h.assertTrue(!AscentServer.anchorReal(p, edge.x, edge.y, edge.z), "the wall cell's face, off its post: no collision there");
             h.assertTrue(AscentSwing.bites(space, edge) && AscentServer.anchorReal(p, edge.x, edge.y, edge.z) && Math.abs(edge.x - (bx + 7.96)) <= 0.46,
                     String.format("the bite moves onto the post, and the server takes it (now at x %.2f)", edge.x - bx));
+            // a tall tree with room under its crown (12 Nov 2026, Euan: "there's a clear way to swing very well under that
+            // place ... it makes you swing on top"): its crown 9 over the floor, looked at from a sprint jump 16.5 off and
+            // beside its trunk. The rope swings you under it, from its underside, wound in to the swing's length on the way
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(0, 1, 0), o.offset(16, 24, 48))) level.setBlock(q, air, flags);
+            for (int y = 1; y <= 14; y++) level.setBlock(o.offset(8, y, 24), Blocks.OAK_LOG.defaultBlockState(), flags);
+            for (BlockPos q : BlockPos.betweenClosed(o.offset(5, 10, 21), o.offset(11, 14, 27))) {
+                if (level.getBlockState(q).isAir()) level.setBlock(q, leaves, flags);
+            }
+            AscentRules.Kin under = new AscentRules.Kin().set(bx + 6.5, by + 1 + AscentRules.HAND_HEIGHT, bz + 4.5, 0, 0.3, 0.36);
+            float crown = (float) -Math.toDegrees(Math.atan2(by + 11.5 - ey, 21 - 4.5));
+            h.assertTrue(AscentSwing.aimed(space, under, bx + 6.5, ey, ez, 0, crown, AscentRules.TETHER_RANGE, true, w, pick)
+                    && !pick.sling && !pick.zip && pick.reel && Math.abs(pick.y - (by + 9)) < 0.1 && pick.z - bz > 21 && pick.z - bz < 21.6,
+                    String.format("a crown 9 up with room under it: swung under (sling %b, zip %b, reel %b, at %.2f up, z %.2f)",
+                            pick.sling, pick.zip, pick.reel, pick.y - by, pick.z - bz));
+            h.assertTrue(AscentSwing.bites(space, pick) && AscentServer.anchorReal(p, pick.x, pick.y, pick.z), "the server takes the crown's underside");
+            // played on: wound in, under the crown and up the far side, clear of the floor, the leaves and the trunk
+            AscentRules.Kin k2 = new AscentRules.Kin().set(under.x, under.y, under.z, under.vx, under.vy, under.vz);
+            AscentSwing.Rope rope = new AscentSwing.Rope().set(pick.x, pick.y, pick.z, pick.len, pick.fitLen);
+            rope.reel = pick.reel;
+            double[] pv = new double[4];
+            double low = 99;
+            boolean rose = false;
+            for (int i = 0; i < 60 && !rose; i++) {
+                AscentSwing.tick(space, k2, rope, 0, 0, w);
+                low = Math.min(low, k2.y - AscentRules.HAND_HEIGHT - by);
+                h.assertTrue(!space.bodyHits(k2.x, k2.y - AscentRules.HAND_HEIGHT, k2.z),
+                        String.format("the swing under the crown meets nothing (tick %d, the hand %.2f up at z %.2f)", i, k2.y - by, k2.z - bz));
+                AscentSwing.pivot(k2.x, k2.z, rope.ax, rope.ay, rope.az, 0, pv);
+                rose = k2.z > pv[2] && AscentSwing.angleFromBottom(k2, pv[0], pv[1], pv[2]) > 25;
+            }
+            h.assertTrue(rose && rope.len <= pick.fitLen + 1e-3 && low > 0.3,
+                    String.format("wound in to %.2f (fits %.2f), it swung under and 25 degrees up the far side (%b), the feet %.2f over the floor at the lowest",
+                            rope.len, pick.fitLen, rose, low));
         } finally {
             AscentSwing.guide = guide;
             AscentSwing.hold = hold;

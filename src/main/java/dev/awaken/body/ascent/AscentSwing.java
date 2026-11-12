@@ -177,6 +177,8 @@ public final class AscentSwing {
         public double ax, ay, az, len, fitLen;
         public boolean caught, swung;
         public double bend;
+        /** Thrown longer than it can swing over the floor: it reels in fast to its fit as it bites ({@link Pick#reel}). */
+        public boolean reel;
 
         public Rope set(double ax, double ay, double az, double len, double fitLen) {
             this.ax = ax;
@@ -184,7 +186,7 @@ public final class AscentSwing {
             this.az = az;
             this.len = len;
             this.fitLen = fitLen;
-            caught = swung = false;
+            caught = swung = reel = false;
             bend = 0;
             return this;
         }
@@ -198,6 +200,7 @@ public final class AscentSwing {
             caught = o.caught;
             swung = o.swung;
             bend = o.bend;
+            reel = o.reel;
         }
     }
 
@@ -209,6 +212,8 @@ public final class AscentSwing {
         /** A sling: the rope bites (x, y, z) and pulls toward the point (px, py, pz) over its top. */
         public boolean sling;
         public double px, py, pz;
+        /** A swing whose rope reels you up into its arc as it bites (the aimed rope's swing under something, SPEC §62). */
+        public boolean reel;
 
         public Pick copy(Pick o) {
             x = o.x;
@@ -227,6 +232,7 @@ public final class AscentSwing {
             px = o.px;
             py = o.py;
             pz = o.pz;
+            reel = o.reel;
             return this;
         }
     }
@@ -248,6 +254,9 @@ public final class AscentSwing {
         public double aimT = Double.NaN;
         /** Why {@link #aimed}'s target gave no sling and no pull onto its top (indexes into {@link #SLING_NO}, {@link #ONTO_NO}; 0: not asked). */
         public int aimSling, aimOnto;
+        /** {@link #aimed}'s own run of {@link #find}: 1 found ({@link #found}), 0 none, -1 not run ({@link #findAfter}). */
+        int findState = -1;
+        final Pick found = new Pick();
 
         public Work() {
             for (int i = 0; i < cands.length; i++) cands[i] = new Pick();
@@ -296,6 +305,19 @@ public final class AscentSwing {
 
     /** The swing an anchor point would give from the hand heading this way, into {@code out}; false when it's no swing. */
     static boolean plan(SwingSpace s, double hx, double hy, double hz, double heading, double reach, double x, double y, double z, Pick out) {
+        return plan(s, hx, hy, hz, heading, reach, x, y, z, out, T.elevMin, T.lenMin - 2, FIT_MIN, T.bottomClear);
+    }
+
+    /** A swing whose fit is under this share of its rope reels in to it as it bites ({@link Pick#reel}). */
+    public static final double FIT_MIN = 0.7;
+
+    /**
+     * As above, with the least elevation over level (degrees), the least radius in the swing's plane, the least fit as a
+     * share of the rope's length, and the feet's clearance over the floor at the bottom. Under {@link #FIT_MIN} the pick
+     * reels in to its fit as it bites ({@link Pick#reel}).
+     */
+    static boolean plan(SwingSpace s, double hx, double hy, double hz, double heading, double reach, double x, double y, double z, Pick out,
+            double elevMin, double radMin, double fitMin, double bottomClear) {
         Tune t = T;
         double dx = x - hx, dy = y - hy, dz = z - hz;
         double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
@@ -305,14 +327,14 @@ public final class AscentSwing {
         if (ahead < 2 || side > t.sideMax) return false;
         // the swing in your plane: the rope's angle over level there
         double elev = Math.atan2(dy, Math.max(0.01, ahead)) / D2R;
-        if (elev < t.elevMin || elev > t.elevMax) return false;
+        if (elev < elevMin || elev > t.elevMax) return false;
         double px = hx + fx * ahead, pz = hz + fz * ahead;
         double floor = 0;
         for (double o : FLOOR_AT) floor = Math.max(floor, s.floorUnder(px + fx * o, y - 1.2, pz + fz * o));
         // the radius that keeps the feet clear of that floor at the bottom, as a rope to the real anchor
-        double rad = Math.min(Math.sqrt(dy * dy + ahead * ahead), y - floor - t.bottomClear - AscentRules.HAND_HEIGHT);
+        double rad = Math.min(Math.sqrt(dy * dy + ahead * ahead), y - floor - bottomClear - AscentRules.HAND_HEIGHT);
         double fitLen = Math.min(len, Math.sqrt(rad * rad + side * side));
-        if (rad < t.lenMin - 2 || fitLen < len * 0.7) return false;
+        if (rad < radMin || fitLen < len * fitMin) return false;
         out.score = gauss(elev, t.elevBest, t.elevSpread) * gauss(rad, t.lenBest, t.lenSpread)
                 * (0.45 + 0.55 * gauss(side, t.sideBest, t.sideSpread));
         out.x = x;
@@ -324,6 +346,7 @@ public final class AscentSwing {
         out.side = side;
         out.zip = false;
         out.sling = false;
+        out.reel = fitLen < len * FIT_MIN;
         return true;
     }
 
@@ -334,19 +357,42 @@ public final class AscentSwing {
         return Math.exp(-q * q);
     }
 
-    /** The swing's first ticks played forward from the hand: false if the body would meet something before its window. */
+    /**
+     * The swing's first ticks played forward from the hand: false if the body would meet something before its window.
+     * A held rope ({@link #hold}) has no window (letting go of the key is its only let-go, and what it meets ahead it
+     * brakes for and swings back from): its arc need only be clear through the bottom and {@link #HELD_CLEAR} degrees up
+     * the far side (12 Nov 2026, Euan: "there's a clear way to swing very well under that place ... it makes you swing on
+     * top", a swing under a crown refused for a trunk past its bottom).
+     */
     static boolean arcClear(SwingSpace s, AscentRules.Kin from, Pick c, double heading, Work w) {
         AscentRules.Kin k = w.k;
         k.set(from.x, from.y, from.z, from.vx, from.vy, from.vz);
         w.r.set(c.x, c.y, c.z, c.len, c.fitLen);
+        w.r.reel = c.reel;
         for (int i = 0; i < 40; i++) {
             double x = k.x, y = k.y, z = k.z;
             step(k, w.r, heading, 0, w);
             if (swept(s, x, y, z, k.x, k.y, k.z)) return false;
-            if (windowQuality(k, w.r, heading, w) > 0.5) return true;
+            if (hold) {
+                double[] pv = w.pv;
+                pivot(k.x, k.z, w.r.ax, w.r.ay, w.r.az, heading, pv);
+                boolean past = (k.x - pv[0]) * fx(heading) + (k.z - pv[2]) * fz(heading) > 0;
+                if (past && angleFromBottom(k, pv[0], pv[1], pv[2]) > HELD_CLEAR) return true;
+            } else if (windowQuality(k, w.r, heading, w) > 0.5) {
+                return true;
+            }
         }
         return true;
     }
+
+    /** How far up the far side a held swing's arc must be clear (degrees from the bottom). */
+    static final double HELD_CLEAR = 25;
+    /**
+     * How fast a rope thrown long winds you in to its fit (blocks a tick, at least): a slower one lets you sag into the
+     * floor on the way (from 16 out and 6 under a crown's underside, 0.6 a tick touches the floor; 1 keeps the feet at
+     * their clearance).
+     */
+    static final double REEL_IN = 1.0;
 
     /**
      * Whether the body meets anything moving its hand from one point to the next: checked every 0.6 blocks of the way
@@ -568,7 +614,12 @@ public final class AscentSwing {
      * takes it the first of these ways that works:
      * <ol>
      * <li>a swing from it, by {@link #find}'s own rules for one hit (a side face near its top bites the top's edge, the
-     * rope's line clear, the arc clear to the window);</li>
+     * rope's line clear, the arc clear to the window, or a held rope's through its bottom), but from as low as
+     * {@link #AIM_ELEV_MIN} over level and thrown as long as it must be: a rope longer than the floor lets it swing
+     * reels you up into the arc ({@link Pick#reel}); then the same from the underside over open air in the column it
+     * hit (a crown's, a branch's, an arch's); then, with {@code slings}, any swing along your look whose anchor is within
+     * {@link #AIM_NEAR} of what it met (12 Nov 2026, Euan: "there's a clear way to swing very well under that place ...
+     * it makes you swing on top. And like sling yourself on top");</li>
      * <li>with {@code slings} (the guide) the rest. A sling past its top along your look: the top of whatever stands over
      * the cell it hit, leaves and logs alike, up to {@link #AIM_TOP_UP} over it; {@link #findSling}'s rules for one hit
      * at any reach, except that what the flight meets once it is past the point over the top is yours to steer. Lower
@@ -593,29 +644,75 @@ public final class AscentSwing {
         double cp = Math.cos(pitch * D2R);
         w.aimT = Double.NaN;
         w.aimSling = w.aimOnto = 0;
+        w.findState = -1;
         if (!s.ray(ex, ey, ez, fx(yaw) * cp, -Math.sin(pitch * D2R), fz(yaw) * cp, reach, a)) return false;
         w.aimT = a.t;
-        // 1. a swing from it
+        // 1. a swing from it (thrown long, it reels you up into the arc)
         double x = a.x, y = a.y, z = a.z;
         if (a.ny == 0 && !a.leaf) {
             double top = s.topOver(a, t.edgeSnap);
             if (!Double.isNaN(top)) y = top - 0.3;
         }
-        if (plan(s, hand.x, hand.y, hand.z, yaw, reach, x, y, z, out) && clear(s, hand.x, hand.y, hand.z, x, y, z, 0.5, w)
-                && arcClear(s, hand, out, yaw, w)) return true;
+        if (aimSwing(s, hand, yaw, reach, x, y, z, w, out)) return true;
+        // 2. a swing from under it: the underside over open air in the column it hit (a crown's, a branch's, an arch's)
+        if (a.ny == 0) {
+            double bottom = s.bottomUnder(a, AIM_UNDER_DOWN, AIM_UNDER_ROOM);
+            if (!Double.isNaN(bottom) && aimSwing(s, hand, yaw, reach, a.x - a.nx * 0.3, bottom - 0.04, a.z - a.nz * 0.3, w, out)) return true;
+        }
         if (!slings) return false;
+        // 3. a swing along your look from something near it (a branch beside it, the crown's other side): before a sling
+        // over it. find's run is kept for the caller's own (findAfter)
+        w.findState = find(s, hand, yaw, reach, w, w.found) ? 1 : 0;
+        if (w.findState == 1 && near(w.found, a, AIM_NEAR)) {
+            out.copy(w.found);
+            return true;
+        }
         // its top: whatever stands over the cell it hit, leaves and logs alike (NaN: none within AIM_TOP_UP)
         double top = a.ny > 0 ? a.y : s.topThrough(a, AIM_TOP_UP);
-        // 2. a sling past it
+        // 4. a sling past it
         w.aimSling = slingPast(s, hand, a, top, yaw, w, out, 0);
         if (w.aimSling == 0) return true;
-        // 3. onto its top; 4. up under it
+        // 5. onto its top; 6. up under it
         w.aimOnto = ontoTop(s, hand, a, top, reach, w, out, false);
         if (w.aimOnto == 0 || underIt(s, hand, a, reach, w, out, false)) return true;
-        // 5. still it, its way clear at the start
+        // 7. still it, its way clear at the start
         return w.aimSling == SLING_CLOSED && slingPast(s, hand, a, top, yaw, w, out, AIM_OPEN_TICKS) == 0
                 || w.aimOnto == ONTO_CLOSED && ontoTop(s, hand, a, top, reach, w, out, true) == 0
                 || underIt(s, hand, a, reach, w, out, true);
+    }
+
+    /**
+     * The aimed swing's bounds: as low as this over level (degrees), this radius in its plane, a fit this share of the
+     * rope (the rest reeled in), the feet this far over the floor at the bottom (the arc is played for what it meets).
+     */
+    static final double AIM_ELEV_MIN = 15, AIM_RAD_MIN = 4, AIM_FIT_MIN = 0.25, AIM_CLEAR = 1.2;
+    /** How far down an underside over open air is looked for, and how many empty cells must lie under it. */
+    static final double AIM_UNDER_DOWN = 12;
+    static final int AIM_UNDER_ROOM = 3;
+    /** A swing along your look is taken before a sling when its anchor is this near what the look met (blocks). */
+    static final double AIM_NEAR = 6;
+
+    /** A swing from (x, y, z) by the aimed rope's bounds: planned, the rope's line clear, the arc clear. */
+    private static boolean aimSwing(SwingSpace s, AscentRules.Kin hand, double yaw, double reach, double x, double y, double z, Work w, Pick out) {
+        return plan(s, hand.x, hand.y, hand.z, yaw, reach, x, y, z, out, AIM_ELEV_MIN, AIM_RAD_MIN, AIM_FIT_MIN, AIM_CLEAR)
+                && clear(s, hand.x, hand.y, hand.z, x, y, z, 0.5, w) && arcClear(s, hand, out, yaw, w);
+    }
+
+    private static boolean near(Pick p, SwingSpace.Hit a, double d) {
+        double dx = p.x - a.x, dy = p.y - a.y, dz = p.z - a.z;
+        return dx * dx + dy * dy + dz * dz <= d * d;
+    }
+
+    /**
+     * {@link #find}, unless {@link #aimed} just ran it on the way to a sling it then didn't take: that run's result, once
+     * (the marker and a press call this right after {@link #aimed}, so the fan of rays isn't cast twice).
+     */
+    public static boolean findAfter(SwingSpace s, AscentRules.Kin hand, double heading, double reach, Work w, Pick out) {
+        int st = w.findState;
+        w.findState = -1;
+        if (st < 0) return find(s, hand, heading, reach, w, out);
+        if (st == 1) out.copy(w.found);
+        return st == 1;
     }
 
     /**
@@ -868,6 +965,22 @@ public final class AscentSwing {
      */
     public static void step(AscentRules.Kin k, Rope rope, double heading, double fwd, Work w) {
         Tune t = T;
+        // a rope thrown longer than it can swing over the floor winds you in to its fit, REEL_IN a tick at least along it
+        // (the speed across it kept, so you swing down as you come in), then catches you into the arc: the aimed swing
+        // under something (SPEC §62)
+        boolean winding = rope.reel && rope.len > rope.fitLen + 1e-3;
+        if (winding) {
+            double dx = k.x - rope.ax, dy = k.y - rope.ay, dz = k.z - rope.az, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (d > 1e-6) {
+                double ux = dx / d, uy = dy / d, uz = dz / d, out = k.vx * ux + k.vy * uy + k.vz * uz;
+                if (out > -REEL_IN) {
+                    k.vx -= ux * (out + REEL_IN);
+                    k.vy -= uy * (out + REEL_IN);
+                    k.vz -= uz * (out + REEL_IN);
+                }
+            }
+            rope.len = Math.max(rope.fitLen, Math.min(rope.len, d) - REEL_IN);
+        }
         double hx = fx(heading), hz = fz(heading), lx = -hz, lz = hx;
         // straighten: the sideways speed goes into speed along the heading (a turn of the look turns the swing)
         double sideV = k.vx * lx + k.vz * lz;
@@ -879,7 +992,7 @@ public final class AscentSwing {
             k.vz += hz * Math.abs(sideV) * t.straighten;
         }
         k.vy -= AscentRules.G;
-        if (rope.len > rope.fitLen + 1e-3 && k.vy < 0) rope.len = Math.max(rope.fitLen, rope.len - t.fit);
+        if (!winding && rope.len > rope.fitLen + 1e-3 && k.vy < 0) rope.len = Math.max(rope.fitLen, rope.len - t.fit);
         double[] pv = w.pv;
         pivot(k.x, k.z, rope.ax, rope.ay, rope.az, heading, pv);
         double px = pv[0], py = pv[1], pz = pv[2];

@@ -41,6 +41,28 @@ public interface SwingSpace {
     /** The floor under (x, z) at or below {@code from}. */
     double floorUnder(double x, double from, double z);
 
+    /**
+     * The underside over open air in the column of the cell the look hit ({@code h}): the y of the bottom face of the
+     * solid run that cell is part of, when at least {@code room} empty cells lie under it. NaN when the column stays solid
+     * for {@code maxDown} (a trunk, a wall down to the ground) or there is no room under it.
+     */
+    default double bottomUnder(Hit h, double maxDown, int room) {
+        for (int k = 1; k <= maxDown; k++) {
+            int y = h.by - k;
+            if (cellSolid(h.bx, y, h.bz)) continue;
+            for (int r = 1; r < room; r++) {
+                if (cellSolid(h.bx, y - r, h.bz)) return Double.NaN;
+            }
+            return y + 1;
+        }
+        return Double.NaN;
+    }
+
+    /** Whether the cell at (x, y, z) has collision in its middle (a block, not a carpet or a torch). */
+    private boolean cellSolid(int x, int y, int z) {
+        return boxHits(x + 0.2, y + 0.2, z + 0.2, x + 0.8, y + 0.8, z + 0.8);
+    }
+
     /** Whether a player's box with its feet at (x, y, z) meets anything. */
     default boolean bodyHits(double x, double y, double z) {
         return boxHits(x - HALF, y + 0.001, z - HALF, x + HALF, y + TALL, z + HALF);
