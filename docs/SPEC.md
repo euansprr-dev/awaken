@@ -841,7 +841,10 @@ of `AwakenConfig.Client`.
   last 5 s (with none made for 5 s the land isn't coming in, whatever is missing, so nothing waits on it forever).
   `hold(mostNs)` waits off the server thread while it's true; `later()` is two threads of our own at the lowest
   priority whose jobs each wait first (at most a minute), in place of `Util.backgroundExecutor()` for optional
-  searches: that pool is the game's own, where world generation runs. `/awaken core land` says the count. Road
+  searches: that pool is the game's own, where world generation runs. `/awaken core land` says the count.
+  `noiseSampled()`, called by the overworld's `CityBasinFunction` (every column and chunk of its terrain passes through
+  it), counts terrain noise sampled on the server thread and logs it with its caller at most every 10 s ("terrain
+  noise on the server thread"): with Tectonic a column costs tens of milliseconds there. Road
   starts' status reads "on, no new chunk has reached it yet" until the first new chunk's structure starts run through
   its hook (a world already made round its players: the first minutes).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,

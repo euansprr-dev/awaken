@@ -50,8 +50,60 @@ public final class LandFirst {
         return missing;
     }
 
+    private static volatile @Nullable Thread serverThread;
+    private static final java.util.concurrent.atomic.LongAdder NOISE_ON_SERVER = new java.util.concurrent.atomic.LongAdder();
+    private static volatile long noiseTold;
+    /** Terrain noise on the server thread is told at most this often. */
+    static final long NOISE_TELL_NS = 10_000_000_000L;
+
+    /**
+     * (The overworld's noise router: {@code CityBasinFunction}, which every column and chunk of the overworld's terrain
+     * passes through) terrain noise sampled on this thread. On the server thread it's counted, and told with its caller
+     * at most every ten seconds: a column there costs tens of milliseconds with Tectonic (each new noise chunk hashes
+     * its whole density tree), and Euan's join of 12 Nov stood 32 s in one loop of them, its caller cut from the stall
+     * watch's stack. Any other thread returns at once.
+     */
+    public static void noiseSampled() {
+        if (Thread.currentThread() != serverThread) return;
+        NOISE_ON_SERVER.increment();
+        long now = System.nanoTime();
+        if (now - noiseTold < NOISE_TELL_NS) return;
+        noiseTold = now;
+        long n = NOISE_ON_SERVER.sumThenReset();
+        String who = StackWalker.getInstance().walk(s -> {
+            var frames = s.limit(400).toList();
+            StringBuilder b = new StringBuilder();
+            int shown = 0;
+            for (var f : frames) {
+                String c = f.getClassName();
+                if (!c.startsWith("dev.awaken.") || c.startsWith("dev.awaken.core.api.LandFirst") || c.startsWith("dev.awaken.terrain.city.CityBasinFunction")) continue;
+                if (shown++ > 0) b.append(" < ");
+                b.append(c.substring(c.lastIndexOf('.') + 1)).append('.').append(f.getMethodName()).append(':').append(f.getLineNumber());
+                if (shown == 8) break;
+            }
+            if (shown > 0) return b.toString();
+            // none of ours: the frames nearest the tick (another mod's, or the game's own)
+            int end = frames.size();
+            for (int i = 0; i < frames.size(); i++)
+                if (frames.get(i).getMethodName().equals("tickServer")) {
+                    end = i;
+                    break;
+                }
+            for (int i = Math.max(0, end - 10); i < end; i++) {
+                var f = frames.get(i);
+                String c = f.getClassName();
+                if (b.length() > 0) b.append(" < ");
+                b.append(c.substring(c.lastIndexOf('.') + 1)).append('.').append(f.getMethodName()).append(':').append(f.getLineNumber());
+            }
+            return "none of ours: " + b;
+        });
+        dev.awaken.Awaken.LOG.warn("[core] terrain noise on the server thread ({} volumes since last told): {}", n, who);
+    }
+
     /** (Server tick, CoreModule) the count. */
     public static void tick(MinecraftServer server) {
+        Thread self = Thread.currentThread();
+        if (serverThread != self) serverThread = self; // a world opened again runs on a new server thread
         if (server.getTickCount() % EVERY != 0) return;
         int n = 0;
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
@@ -74,6 +126,7 @@ public final class LandFirst {
     public static void clear() {
         streaming = false;
         missing = 0;
+        serverThread = null;
     }
 
     /**
