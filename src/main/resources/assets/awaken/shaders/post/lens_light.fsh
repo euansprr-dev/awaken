@@ -305,7 +305,11 @@ float heightRay(vec3 o, vec3 l, float noise, bool ultra, bool roof, out bool lea
 }
 
 // the depth buffer, a short way toward the light: what the heightfield can't hold (mobs, grass, slabs, block edges)
-float contactShadow(vec3 p, vec3 n, vec3 l, float dist, float noise, mat4 vp, bool z01, float zFar, bool ultra) {
+// known: how far the answer can be trusted. The march sees only what is on the screen: 0 where it ran off the screen
+// before it was through (what stands between here and the light from there on can't be seen), less than 1 for a hit
+// met within 4% of the screen's edge, 1 otherwise. What isn't known is the caller's to settle (the edge's hold).
+float contactShadow(vec3 p, vec3 n, vec3 l, float dist, float noise, mat4 vp, bool z01, float zFar, bool ultra, out float known) {
+    known = 1.0;
     int steps = ultra ? 12 : 6;
     float len = clamp(0.35 + dist * 0.025, 0.35, 3.0);
     // the Air (frame texel 22 w): near the eye the small things cast whole shadows, a block and a half long (a flower,
@@ -319,15 +323,20 @@ float contactShadow(vec3 p, vec3 n, vec3 l, float dist, float noise, mat4 vp, bo
     for (int i = 0; i < steps; i++) {
         float t = (float(i) + noise) / float(steps);
         vec3 s = project(vp, o + l * (len * t * t + 0.01), z01);
-        if (s.x <= 0.0 || s.y <= 0.0 || s.x >= 1.0 || s.y >= 1.0) break;
+        if (s.x <= 0.0 || s.y <= 0.0 || s.x >= 1.0 || s.y >= 1.0) {
+            known = 0.0;
+            break;
+        }
         float sd = texelFetch(DepthSampler, ivec2(s.xy * InSize), 0).r;
         float zs = linearDepth(sd, zFar, z01), zq = linearDepth(s.z, zFar, z01);
         float delta = zq - zs;
         // something stands between this point and the light: in front of the ray, but not a wall far in front of it.
-        // Toward the screen's edge a hit counts less, so contact shadows fade out there rather than end in a line where
-        // the march runs off the screen (what's off it is the heightfield's, which never depends on the screen)
-        if (zs > 1.25 && delta > 0.015 + zq * 0.003 && delta < 0.5 + zq * 0.02)
-            return 1.0 - smoothstep(0.0, 0.04, min(min(s.x, s.y), min(1.0 - s.x, 1.0 - s.y)));
+        // Toward the screen's edge a hit is known less, so contact shadows fade out there rather than end in a line
+        // where the march runs off the screen (what's off it is the heightfield's, which never depends on the screen)
+        if (zs > 1.25 && delta > 0.015 + zq * 0.003 && delta < 0.5 + zq * 0.02) {
+            known = smoothstep(0.0, 0.04, min(min(s.x, s.y), min(1.0 - s.x, 1.0 - s.y)));
+            return 0.0;
+        }
     }
     return 1.0;
 }
@@ -538,13 +547,33 @@ void main() {
             }
             l = normalize(l + (a1 * cos(ang) + cross(l, a1) * sin(ang)) * rad);
             vis = sunVisibility(ps, n, l, still, ultra);
-            float keepContact = smallKeep(art, F(30).w, F(31).w);
+            float keepContact = smallKeep(art, F(30).w, F(31).w), contact = 1.0, known = 1.0;
             if (vis > 0.0 && dist < 96.0 && keepContact > 0.0)
-                vis *= mix(1.0, contactShadow(ps, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra), keepContact);
+                contact = contactShadow(ps, n, f14.xyz, dist, noise2, vp, z01, zFar, ultra, known);
             // the clouds' moving shadows
             if (vis > 0.0) vis *= cloudShadow(p, f14.xyz, cloudParams(), f12.y);
             // and a storm cell's, long across the land when the sun is low
             if (vis > 0.0) vis *= stormShadow(p, f14.xyz, f12.y);
+            // The contact shadows last, over the light as it is without them: their share of it as marched, and where
+            // the march could not see (it ran off the screen, or met its hit at the very edge), the edge's hold.
+            // A flower's, a fence's or a mob's shadow is made from the screen alone, so when what casts it slid off
+            // the screen's edge the shadow, still in view, went out with it, and came back when it slid in again: a
+            // strip along the sun's side of the screen as wide as the shadows are long, a block and a half near the
+            // eye (Euan, playing, 12 Nov: "on the very left edge of my screen, I can see the shadows disappearing
+            // basically as I turn my camera. And the closer the thing is to me, the more obvious that is"). What the
+            // march can't see is not "lit": it is what it was. Last frame's light for this surface, over the light
+            // without the contact shadows, is the share they had then; that is kept, let go a little each frame
+            // (frame texel 34 w: about a second in all, so a mob that has walked off leaves no shadow standing), and
+            // the march has its say again as far as it knows. Without a history the unknown is lit, as before.
+            if (vis > 0.0 && keepContact > 0.0) {
+                float share = mix(1.0, contact, keepContact);
+                if (known < 1.0) {
+                    float hold = F(34).w;
+                    float was = hold > 0.0 && hist.w > 0.4 ? mix(clamp(hist.r / vis, 0.0, 1.0), 1.0, hold) : 1.0;
+                    share = mix(was, share, known);
+                }
+                vis *= share;
+            }
         }
         float keepAmbient = smallKeep(art, F(32).w, F(33).w);
         if (dist < 96.0 && keepAmbient > 0.0) ao = mix(1.0, ambient(p, n, noise, noise2, vp, z01, zFar, ultra), keepAmbient);

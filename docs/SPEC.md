@@ -6306,6 +6306,29 @@ magic.
     In play: `/awaken lens small <contact from> <to> <ambient from> <to>` (art pixels a light texel; the answer
     gives the blocks at the view in use; an end not past its start: no fade; `setting`: the built-in reach), so
     `/awaken lens small 0 0 0 0` is the picture as it was.
+  - **The edge's hold** (12 Nov; `lens_light.fsh`, the contact shadows' `known`; frame texel 34 w). Euan, playing:
+    "on the very left edge of my screen, I can see the shadows disappearing basically as I turn my camera. And the
+    closer the thing is to me, the more obvious that is ... even with a smaller FOV, that still happens ... I can see
+    them basically disappearing and then reappearing." A block's, a tree's or a hill's shadow is worked out in the
+    world and never depends on the screen. A flower's, a grass tuft's, a fence's, a chest's or a mob's is a contact
+    shadow, made from the screen's own depth: when what casts it slides off the screen its shadow, still in view, had
+    nothing to be made from, and the march that ran off the screen answered "lit". Near the eye those shadows are a
+    block and a half long, so the strip that lost them along the sun's side of the screen was wide. The march now says
+    how far its answer is known (0 where it ran off the screen, the old 4% ramp for a hit at the very edge), and what
+    is not known is what it was: last frame's light for the surface over this frame's light without contact shadows is
+    the share they took, which is kept and let go by 0.12 a frame before the buffer's own mix (about a second in all
+    at 60 frames a second), so a turn carries its shadows out with it and a mob that walked off leaves none standing.
+    No history, no hold: the unknown is lit, as before. No extra samples (the history is already read).
+    Checked (tools/autopilot/steady60-edgehold-ci.txt, run 43188196485; fence posts and poppies two to four blocks
+    round the camera, a turn of a degree a tick away from the sun's side, one shot at the end of each turn): after 14
+    and 20 degrees the poppy's shadow lies on the ground with the poppy off the screen, where without the hold the
+    ground is bare; five seconds later, at rest, it has gone in both (`edge-hold-before-after.jpg` in
+    docs/perf/steady60/play-2026-11-12). The first run of that tour (43186252840) shot during the turn and showed
+    nothing held: a screenshot stalls the runner past the 250 ms the light buffer keeps its history for.
+    **What it cannot do**: a shadow whose caster has not come onto the screen yet is still unknown (it comes in with
+    its caster, over the edge's ramp), and at rest the strip on the sun's side is without small shadows once the hold
+    has let go. Only casters held in the world would cure those (plants and small blocks in the block map: not built).
+    `/awaken lens edgehold off|on|setting` for A/B in play.
   - **Ambient occlusion**: 6 / 10 cosine-weighted samples in a 0.9-block hemisphere against the depth buffer. Within
     96 blocks. A sample off the screen counts as open, so the screen's edge is a little lighter. Averaging only the
     samples on screen was tried (2026-10-29) and made the edge darker than the middle instead (the samples left on
