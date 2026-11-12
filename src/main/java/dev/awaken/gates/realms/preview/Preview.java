@@ -136,6 +136,7 @@ public final class Preview {
             } else if (w.length >= 8 && w[0].equals("cmd") && w[3].equals("realm_leg")) {
                 int back = Integer.parseInt(w[6]);
                 double[] view = w[4].equalsIgnoreCase("first_fight") ? land.firstFightView(back)
+                        : w[4].equalsIgnoreCase("seals") ? dev.awaken.gates.realms.RealmLights.sealView(land, back)
                         : land.legView(Land.LegKind.valueOf(w[4].toUpperCase(Locale.ROOT)), Integer.parseInt(w[5]), back);
                 if (view == null) {
                     System.out.println("[preview] this run has no " + w[4] + " leg " + w[5]);

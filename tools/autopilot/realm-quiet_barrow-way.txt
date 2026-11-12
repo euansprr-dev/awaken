@@ -61,8 +61,8 @@ cmd awaken gate realm_leg MOVEMENT 3 14 6
 wait 80
 shot barrowway_stones_3
 
-# the Lord's door from the way to it: one seal for each Warden, all whole; then one Warden beaten
-cmd awaken gate realm_leg LORD 0 16 5
+# the Lord's door from in front of its seals (a rolled land's Lord stands in the open: the edge of its place): one seal for each Warden, all whole; then one Warden beaten
+cmd awaken gate realm_leg seals 0 12 4
 wait 80
 shot barrowway_door_seals
 cmd awaken gate realm_warden_down 0

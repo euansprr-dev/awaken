@@ -838,10 +838,14 @@ public final class RealmTests {
             h.succeed();
         });
         // Lights and seals (SPEC §50.9; Euan, 12 Nov: "nothing guided me... the big building was closed. So how do I open the doors?"):
-        // a land that shows its Wardens has one seal for each, in a row just outside the Lord's door, and says what is left in plain words
+        // a land that shows its Wardens has one seal for each, in a row just outside the Lord's door (or the edge of a doorless
+        // Lord's place), in the open, and says what is left in plain words
         AwakenTests.register("realm_seals", 400, h -> {
-            for (Land land : new Land[]{salt(1, NOW), salt(1), amber(1, NOW)}) {
+            for (Land land : new Land[]{salt(1, NOW), salt(1), amber(1, NOW), keep(1, NOW), barrow(1, NOW), vine(1, NOW),
+                    rolled("awaken:glass_country", "glass_desert", dev.awaken.gates.realms.kit.land.Landform.Kind.CAUSEWAY, "glass_serpent", Rank.D, 1),
+                    rolled("awaken:fungal_country", "fungal_hollow", dev.awaken.gates.realms.kit.land.Landform.Kind.ISLES, "mother_of_spores", Rank.E, 1)}) {
                 String at = land.ctx.id() + " plan " + land.ctx.version() + ": ";
+                Land.Site lord = land.site(Land.SiteKind.LORD);
                 if (!RealmLights.shows(land)) h.fail(at + "shows no lights");
                 List<int[]> seals = RealmLights.seals(land);
                 int wardens = land.sites(Land.SiteKind.WARDEN).size();
@@ -850,7 +854,10 @@ public final class RealmTests {
                 for (int[] seal : seals) {
                     double door = Double.MAX_VALUE;
                     for (Land.Edit e : land.change("heart_open")) door = Math.min(door, Math.hypot(e.x() - seal[0], e.z() - seal[2]));
+                    // a land with no door: the row stands at the edge of the Lord's place
+                    if (land.change("heart_open").isEmpty()) door = Math.max(0, Math.hypot(lord.x() - seal[0], lord.z() - seal[2]) - lord.radius());
                     if (door > 8) h.fail(at + "a seal at " + seal[0] + "," + seal[2] + " stands " + (int) door + " from the Lord's door");
+                    if (!RealmLights.sealClear(land, seal)) h.fail(at + "a seal at " + seal[0] + "," + seal[1] + "," + seal[2] + " stands in something");
                     if (!spots.add((long) seal[0] << 32 | seal[2] & 0xFFFFFFFFL)) h.fail(at + "two seals stand in one place");
                 }
             }

@@ -1,0 +1,80 @@
+# Re-shoot of the seals alone in four open lands (SPEC 50.9 "Lights and seals"), after the row moved clear of the Barrow's hull,
+# the Vine Seat's door shot turned to face the door, and the rolled lands (Glass Sea, High Caps) got a row at the edge of the
+# Lord's place. Each land: in front of its seals, all whole, then one Warden beaten; then out and into the next.
+# The full tours are realm-<land>-way.txt; this one only shoots what changed.
+world autopilot_realm_ways_seals creative 20261126
+waitworld
+gui 0
+cmd weather clear 1000000
+cmd time set 6000
+cmd time pause
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd difficulty peaceful
+cmd gamerule send_command_feedback false
+
+# the Quiet Barrow: the row out from the stair up the ship's side, clear of the hull
+cmd awaken gate realm_enter E awaken:quiet_barrow 1
+need realm
+wait 150
+screen close
+hud off
+wait 20
+cmd awaken gate realm_leg seals 0 12 4
+wait 80
+shot sealsway_barrow
+cmd awaken gate realm_warden_down 0
+wait 80
+shot sealsway_barrow_broken
+cmd awaken gate leave
+wait 200
+
+# the Vine Seat: the door from in front of its seals, not from the Warden behind it
+cmd awaken gate realm_enter E awaken:vine_seat 1
+need realm
+wait 150
+screen close
+hud off
+wait 20
+cmd awaken gate realm_leg seals 0 12 4
+wait 80
+shot sealsway_vine
+cmd awaken gate realm_warden_down 0
+wait 80
+shot sealsway_vine_broken
+cmd awaken gate leave
+wait 200
+
+# the Glass Sea (rolled): the row where the way comes to the Lord's place
+cmd awaken gate realm_enter D awaken:glass_sea 1
+need realm
+wait 150
+screen close
+hud off
+wait 20
+cmd awaken gate realm_leg seals 0 12 4
+wait 80
+shot sealsway_glass
+cmd awaken gate realm_warden_down 0
+wait 80
+shot sealsway_glass_broken
+cmd awaken gate leave
+wait 200
+
+# the High Caps (rolled): the same
+cmd awaken gate realm_enter E awaken:high_caps 1
+need realm
+wait 150
+screen close
+hud off
+wait 20
+cmd awaken gate realm_leg seals 0 12 4
+wait 80
+shot sealsway_caps
+cmd awaken gate realm_warden_down 0
+wait 80
+shot sealsway_caps_broken
+quit

@@ -105,10 +105,12 @@ final class GateCommands {
                                     c.getSource().sendFailure(Component.literal("You're not in a Realm."));
                                     return 0;
                                 }
-                                // "first_fight": the fight or ambush nearest the way in, whatever its place in the run's list
+                                // "first_fight": the fight or ambush nearest the way in, whatever its place in the run's list;
+                                // "seals": out in front of the seals on the Lord's door, facing them
                                 String named = StringArgumentType.getString(c, "kind");
                                 int back = IntegerArgumentType.getInteger(c, "back");
                                 double[] view = named.equalsIgnoreCase("first_fight") ? plan.land().firstFightView(back)
+                                        : named.equalsIgnoreCase("seals") ? dev.awaken.gates.realms.RealmLights.sealView(plan.land(), back)
                                         : plan.land().legView(dev.awaken.gates.realms.Land.LegKind.valueOf(named.toUpperCase()), IntegerArgumentType.getInteger(c, "index"), back);
                                 if (view == null) {
                                     c.getSource().sendFailure(Component.literal("This run has no such " + named + " leg."));

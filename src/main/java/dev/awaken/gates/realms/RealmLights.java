@@ -40,8 +40,11 @@ public final class RealmLights {
 
     /** Per player: the gate last told, and when they arrived there (game time). */
     private static final Map<ServerPlayer, long[]> TOLD = new WeakHashMap<>();
-    /** Per land: where its seals stand, one per Warden (land coordinates). A land never changes, so this is found once. */
-    private static final Map<Land, List<int[]>> SEALS = new WeakHashMap<>();
+    /** Per land: where its seals stand, one per Warden (land coordinates), and the way the row faces. Found once: a land never changes. */
+    private static final Map<Land, Row> SEALS = new WeakHashMap<>();
+
+    /** A land's row of seals, and which way is out from the door (a unit vector, away from the Lord). */
+    private record Row(List<int[]> seals, double ox, double oz) {}
 
     /** A land's colour, by its theme: the light it shows its Wardens in. */
     private static final Map<String, Integer> COLOURS = Map.ofEntries(
@@ -164,50 +167,119 @@ public final class RealmLights {
     /**
      * Where a land's seals stand, one per Warden, land coordinates (x, y of the feet, z): a short row just outside the
      * Lord's door, across the way in. The door is the run of blocks the moment {@code heart_open} clears that lies nearest
-     * the way in; the row stands a couple of blocks out from it, on the side away from the Lord. Empty when the land has no door.
+     * the way in; the row stands a couple of blocks out from it, on the side away from the Lord. A land with no door (a
+     * rolled land's Lord stands in the open) has its row where the way comes to the Lord's place. A row that would stand in
+     * something (the Barrow's door is a stair up its ship's side, and away from the Lord runs along the hull) faces the
+     * Mouth instead, or the nearest open quarter. Empty when the land has no Wardens or no Lord.
      */
     public static List<int[]> seals(Land land) {
+        return row(land).seals();
+    }
+
+    /**
+     * For tours: stand {@code back} blocks out in front of the seals, {@code up} over their feet, facing them; as
+     * {@link Land#legView} gives it (x, y, z, yaw, then the x and z to walk toward). Null when the land has no seals.
+     */
+    public static double[] sealView(Land land, int back) {
+        Row r = row(land);
+        if (r.seals().isEmpty()) return null;
+        double mx = 0, mz = 0;
+        int y = Integer.MAX_VALUE;
+        for (int[] s : r.seals()) {
+            mx += s[0];
+            mz += s[2];
+            y = Math.min(y, s[1]);
+        }
+        mx /= r.seals().size();
+        mz /= r.seals().size();
+        double x = mx + r.ox() * back, z = mz + r.oz() * back;
+        double yaw = Math.toDegrees(Math.atan2(-(mx - x), mz - z));
+        return new double[]{x, y, z, yaw, mx, mz};
+    }
+
+    private static Row row(Land land) {
         synchronized (SEALS) {
-            List<int[]> s = SEALS.get(land);
-            if (s == null) SEALS.put(land, s = findSeals(land));
-            return s;
+            Row r = SEALS.get(land);
+            if (r == null) SEALS.put(land, r = findSeals(land));
+            return r;
         }
     }
 
-    private static List<int[]> findSeals(Land land) {
+    private static Row findSeals(Land land) {
         List<Land.Edit> open = land.change("heart_open");
         int n = land.sites(Land.SiteKind.WARDEN).size();
-        if (open.isEmpty() || n == 0 || land.sites(Land.SiteKind.LORD).isEmpty()) return List.of();
+        if (n == 0 || land.sites(Land.SiteKind.LORD).isEmpty()) return new Row(List.of(), 0, 1);
         Land.Site mouth = land.mouth(), lord = land.site(Land.SiteKind.LORD);
-        Land.Edit first = null;
-        double best = Double.MAX_VALUE;
-        for (Land.Edit e : open) {
-            double d = Math.hypot(e.x() - mouth.x(), e.z() - mouth.z());
-            if (d < best) {
-                best = d;
-                first = e;
+        double cx, cz;
+        int foot;
+        if (open.isEmpty()) {
+            // no door: where the way comes to the Lord's place, from the leg that leads there (or from the Mouth)
+            double fx = mouth.x(), fz = mouth.z();
+            Land.Leg lordLeg = null;
+            for (Land.Leg l : land.route()) if (l.kind() == Land.LegKind.LORD) lordLeg = l;
+            if (lordLeg != null) {
+                for (Land.Leg p : land.route()) {
+                    if (p.exits().contains(lordLeg.id()) && (p.x() != lord.x() || p.z() != lord.z())) {
+                        fx = p.x();
+                        fz = p.z();
+                        break;
+                    }
+                }
             }
+            double dx = fx - lord.x(), dz = fz - lord.z(), dl = Math.max(1, Math.hypot(dx, dz));
+            // at the edge of the Lord's place, but never past the leg it's met from
+            double reach = Math.max(0, Math.min(lord.radius(), dl - 8));
+            cx = lord.x() + dx / dl * reach;
+            cz = lord.z() + dz / dl * reach;
+            foot = land.ground((int) Math.round(cx), (int) Math.round(cz)) + 1;
+        } else {
+            Land.Edit first = null;
+            double best = Double.MAX_VALUE;
+            for (Land.Edit e : open) {
+                double d = Math.hypot(e.x() - mouth.x(), e.z() - mouth.z());
+                if (d < best) {
+                    best = d;
+                    first = e;
+                }
+            }
+            // the door: what opens within a few blocks of that first block
+            double sx = 0, sz = 0;
+            int count = 0;
+            foot = Integer.MAX_VALUE;
+            for (Land.Edit e : open) {
+                if (Math.abs(e.x() - first.x()) > 9 || Math.abs(e.z() - first.z()) > 9 || Math.abs(e.y() - first.y()) > 12) continue;
+                sx += e.x();
+                sz += e.z();
+                count++;
+                foot = Math.min(foot, e.y());
+            }
+            cx = sx / count;
+            cz = sz / count;
         }
-        // the door: what opens within a few blocks of that first block
-        double sx = 0, sz = 0;
-        int count = 0, foot = Integer.MAX_VALUE;
-        for (Land.Edit e : open) {
-            if (Math.abs(e.x() - first.x()) > 9 || Math.abs(e.z() - first.z()) > 9 || Math.abs(e.y() - first.y()) > 12) continue;
-            sx += e.x();
-            sz += e.z();
-            count++;
-            foot = Math.min(foot, e.y());
-        }
-        double cx = sx / count, cz = sz / count;
-        // out from the door, away from the Lord (toward the way in when the Lord stands right behind it)
+        // out from the door, away from the Lord (toward the way in when the Lord stands right behind it); then toward the
+        // Mouth, then each quarter nearest that, for a row that would stand in something
         double ox = cx - lord.x(), oz = cz - lord.z(), ol = Math.hypot(ox, oz);
-        if (ol < 1) {
-            ox = mouth.x() - cx;
-            oz = mouth.z() - cz;
-            ol = Math.max(1, Math.hypot(ox, oz));
+        double mx = mouth.x() - cx, mz = mouth.z() - cz, ml = Math.max(1, Math.hypot(mx, mz));
+        List<double[]> outs = new ArrayList<>();
+        if (ol >= 1) outs.add(new double[]{ox / ol, oz / ol});
+        outs.add(new double[]{mx / ml, mz / ml});
+        double[] lead = outs.getFirst();
+        List<double[]> quarters = new ArrayList<>(List.of(new double[]{1, 0}, new double[]{-1, 0}, new double[]{0, 1}, new double[]{0, -1}));
+        quarters.sort((a, b) -> Double.compare(b[0] * lead[0] + b[1] * lead[1], a[0] * lead[0] + a[1] * lead[1]));
+        outs.addAll(quarters);
+        Drawn drawn = new Drawn();
+        Row firstTry = null;
+        for (double[] o : outs) {
+            Row r = rowAt(land, cx, cz, foot, o[0], o[1], n);
+            if (firstTry == null) firstTry = r;
+            boolean clear = true;
+            for (int[] seal : r.seals()) if (!drawn.clear(land, seal)) clear = false;
+            if (clear) return r;
         }
-        ox /= ol;
-        oz /= ol;
+        return firstTry;
+    }
+
+    private static Row rowAt(Land land, double cx, double cz, int foot, double ox, double oz, int n) {
         // far enough apart that each seal is a thing of its own from the road (they were 2.5 apart and read as one glow)
         double side = n <= 3 ? 4 : 3;
         List<int[]> out = new ArrayList<>(n);
@@ -217,6 +289,32 @@ public final class RealmLights {
             int g = land.ground(x, z) + 1;
             out.add(new int[]{x, Math.abs(g - foot) <= 3 ? g : foot, z});
         }
-        return List.copyOf(out);
+        return new Row(List.copyOf(out), ox, oz);
+    }
+
+    /** Whether a seal hangs in the open: nothing solid over its feet up to a block over its disc. */
+    public static boolean sealClear(Land land, int[] seal) {
+        return new Drawn().clear(land, seal);
+    }
+
+    /**
+     * The chunk last drawn to look for room. One at a time: a {@link dev.awaken.gates.realms.kit.V} is the thread's one
+     * scratch volume, so drawing the next chunk wipes the last.
+     */
+    private static final class Drawn {
+        private long key = Long.MIN_VALUE;
+        private dev.awaken.gates.realms.kit.V v;
+
+        boolean clear(Land land, int[] seal) {
+            int x = seal[0], z = seal[2];
+            long k = (long) (x >> 4) << 32 | (z >> 4) & 0xFFFFFFFFL;
+            if (v == null || k != key) {
+                v = new dev.awaken.gates.realms.kit.V(x >> 4 << 4, z >> 4 << 4);
+                land.paint(v);
+                key = k;
+            }
+            for (int y = seal[1] + 1; y <= seal[1] + SEAL_LIFT + 2; y++) if (dev.awaken.gates.realms.kit.V.holds(v.get(x, y, z))) return false;
+            return true;
+        }
     }
 }
