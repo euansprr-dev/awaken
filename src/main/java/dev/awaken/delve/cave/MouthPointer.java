@@ -13,7 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Util;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -106,7 +105,7 @@ public final class MouthPointer {
         if (asked == null || !asked.home().equals(need.home()) || !asked.metal().equals(need.metal())) {
             BlockPos home = need.home();
             String metal = need.metal();
-            CompletableFuture<Answer> f = CompletableFuture.supplyAsync(() -> find(level, home, metal), Util.backgroundExecutor())
+            CompletableFuture<Answer> f = CompletableFuture.supplyAsync(() -> find(level, home, metal), dev.awaken.core.api.LandFirst.later())
                     .exceptionally(t -> {
                         Awaken.LOG.warn("[delve] the Hearth's mouth search failed", t);
                         return new Answer(home, metal, null);

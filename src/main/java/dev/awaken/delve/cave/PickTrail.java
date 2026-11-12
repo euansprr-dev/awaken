@@ -6,7 +6,6 @@ import dev.awaken.core.api.TrailsApi;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Util;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -50,7 +49,7 @@ public final class PickTrail {
         boolean stale = asked == null || asked.home() != home.isPresent()
                 || (home.isPresent() ? !asked.from().equals(from) : asked.from().distSqr(from) > (double) MOVED * MOVED);
         if (stale) {
-            CompletableFuture<Optional<BlockPos>> f = CompletableFuture.supplyAsync(() -> find(level, from), Util.backgroundExecutor())
+            CompletableFuture<Optional<BlockPos>> f = CompletableFuture.supplyAsync(() -> find(level, from), dev.awaken.core.api.LandFirst.later())
                     .exceptionally(t -> {
                         Awaken.LOG.warn("[delve] the pick trail's adit search failed", t);
                         return Optional.empty();

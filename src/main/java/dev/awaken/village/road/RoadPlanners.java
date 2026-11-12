@@ -15,7 +15,9 @@ import java.util.concurrent.locks.LockSupport;
  * The road planners (SPEC §28.9, Cost): a few minimum-priority threads (half the cores, one to six, always two cores
  * left for the game) that make the network's pieces before anyone waits for them, the most urgent job first: what world
  * generation is waiting for, then the towns' and wayhouses' sites the server thread's searches asked for, then what lies
- * ahead of the players, nearest first (held back while the server is late with a tick). A job only asks for a piece (a plan, a hub, a road, a lattice chunk's legs): each piece is still made once by
+ * ahead of the players, nearest first (held back while the server is late with a tick). While new land is coming in
+ * round a player ({@code LandFirst}) only world generation's own jobs run, two at a time: the rest wait in the queue.
+ * A job only asks for a piece (a plan, a hub, a road, a lattice chunk's legs): each piece is still made once by
  * whichever thread asks first while the others wait for it, so the network is exactly what one thread would lay, and no
  * thread ever waits for a job still queued.
  */
@@ -78,17 +80,47 @@ final class RoadPlanners {
             return rank;
         });
         if (!mine[0]) return;
-        pool().execute(new Job(rank, SEQ.incrementAndGet(), () -> {
+        long seq = SEQ.incrementAndGet();
+        Job[] self = new Job[1];
+        self[0] = new Job(rank, seq, () -> {
+            // land comes first (SPEC §28.9, Cost): while new land is coming in round a player, a job ahead or one a search
+            // asked for goes back in the queue, in its place, and world generation's own jobs run LEAN at a time, so the
+            // planners never take the generator's cores (Euan's Mac, 12 Nov: five planners at 4.6 cores while he flew)
+            if (dev.awaken.core.api.LandFirst.streaming() && (tier != URGENT || WORKING.get() >= LEAN)) {
+                DEFERRED.incrementAndGet();
+                ThreadPoolExecutor p = pool;
+                if (p == null || p.isShutdown()) return; // the server stopped: the job goes with it
+                try {
+                    p.execute(self[0]);
+                } catch (java.util.concurrent.RejectedExecutionException e) {
+                    return;
+                }
+                LockSupport.parkNanos(DEFER_NS);
+                return;
+            }
             PENDING.remove(key, rank);
             // ahead of the players, a job starts between the server's ticks or within a late one's first 40 ms
             if (tier == AHEAD) for (long t0 = System.nanoTime(); RoadTimer.serverLate() && System.nanoTime() - t0 < HOLD_NS; ) LockSupport.parkNanos(5_000_000L);
+            WORKING.incrementAndGet();
             try {
                 work.run();
             } catch (RuntimeException e) {
                 Awaken.LOG.error("[road] planning {} failed", key, e);
+            } finally {
+                WORKING.decrementAndGet();
             }
-        }));
+        });
+        pool().execute(self[0]);
     }
+
+    /** While land comes in, world generation's own jobs run this many at a time (the rest wait their turn in the queue). */
+    static final int LEAN = 2;
+    /** A planner whose job went back in the queue rests this long before it takes the next (no spinning). */
+    static final long DEFER_NS = 50_000_000L;
+    /** Planners at work on a job now. */
+    private static final AtomicInteger WORKING = new AtomicInteger();
+    /** Jobs put back while land came in (the timer's line). */
+    static final AtomicLong DEFERRED = new AtomicLong();
 
     /**
      * World generation's own waits, set aside (the Turbo backstop {@code RoadStarts}): one thread, as the level's worldgen

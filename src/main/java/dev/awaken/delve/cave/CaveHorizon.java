@@ -157,6 +157,8 @@ final class CaveHorizon {
         int gen = GEN.get();
         WORKER.execute(() -> {
             Optional<Spec> got;
+            // land comes first (SPEC §12): the Horizon's sinkholes wait while new land comes in round a player
+            dev.awaken.core.api.LandFirst.hold(dev.awaken.core.api.LandFirst.MOST_NS);
             try {
                 got = Optional.ofNullable(search(level, set, c, first));
             } catch (RuntimeException e) {

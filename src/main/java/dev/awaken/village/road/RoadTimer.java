@@ -111,10 +111,12 @@ final class RoadTimer {
         Awaken.LOG.info("[road] " + line);
     }
 
-    /** Land first (SPEC §12): the chunks in players' views not made yet. */
+    /** Land first (SPEC §28.9, Cost): how often a planner put its job back while land came in, and the chunks missing now. */
     private static String landFirst() {
+        long put = RoadPlanners.DEFERRED.getAndSet(0);
         int missing = dev.awaken.core.api.LandFirst.missing();
-        return missing == 0 ? "" : "; " + missing + " chunks in view not made yet" + (dev.awaken.core.api.LandFirst.streaming() ? " (land coming in)" : "");
+        return put == 0 && missing == 0 ? "" : "; land first: jobs put back " + put + " times, " + missing + " chunks in view not made yet"
+                + (dev.awaken.core.api.LandFirst.streaming() ? " (land coming in)" : "");
     }
 
     static void reset() {

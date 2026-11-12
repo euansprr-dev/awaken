@@ -152,7 +152,7 @@ public final class Wonders {
         Site s = CACHE.get(k);
         if (s == null) {
             if (PENDING.add(k)) {
-                net.minecraft.util.Util.backgroundExecutor().execute(() -> {
+                dev.awaken.core.api.LandFirst.later().execute(() -> {
                     try {
                         siteOf(seed, map, r, t);
                     } finally {
