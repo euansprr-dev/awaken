@@ -23,7 +23,7 @@ public final class WayPlanner {
     /** The longest walk between two stops, and how far ahead the next one is looked for. Under the check's 90 either way. */
     static final int STEP = 64, MOST = 88;
     /** The first camp is looked for this far in from the Mouth (the check wants one within 60). */
-    static final int FIRST_NEAR = 34, FIRST_FAR = 56;
+    static final int FIRST_NEAR = 24, FIRST_FAR = 56;
 
     /** What the land tells the planner: where a camp or a stone may stand, and what its stones are made of. */
     public interface Ground {
@@ -111,7 +111,7 @@ public final class WayPlanner {
             }
         }
         if (camp1 == null) {
-            int[] at = spot(land, pieces, ok, taken, mouth.x(), mouth.z(), dir, FIRST_NEAR, FIRST_FAR, 30);
+            int[] at = spot(land, pieces, ok, taken, mouth.x(), mouth.z(), dir, FIRST_NEAR, FIRST_FAR, 96);
             if (at == null) return no("no first camp " + FIRST_NEAR + " to " + FIRST_FAR + " from the Mouth: " + why());
             camp1 = new Stop("camp1", Land.LegKind.FIGHT, "A camp near the way in", at[0], land.ground(at[0], at[1]) + 1, at[1], 8, nextDen++);
             camp1.newDen = at;
@@ -247,7 +247,7 @@ public final class WayPlanner {
             used.add(d.index());
             return new Stop(id, Land.LegKind.FIGHT, name, d.x(), d.y(), d.z(), 8, d.index());
         }
-        int[] at = spot(land, pieces, ok, taken, (int) px, (int) pz, null, 0, 22, 12);
+        int[] at = spot(land, pieces, ok, taken, (int) px, (int) pz, null, 0, 34, 180);
         if (at == null) return null;
         taken.add(new int[]{at[0], at[1], 12});
         Stop s = new Stop(id, Land.LegKind.FIGHT, name, at[0], land.ground(at[0], at[1]) + 1, at[1], 8, nextDen);
@@ -301,11 +301,12 @@ public final class WayPlanner {
         int high = 0;
         for (Hops.Stone s : line) {
             int g = land.ground(s.x(), s.z());
-            if (land.edge(s.x(), s.z()) > -40) return "edge";
+            if (land.edge(s.x(), s.z()) > -12) return "edge";
             if (!ok.ok(s.x(), s.z())) return "ground";
             if (s.top() < g + 1) return "buried";
             if (s.top() > g + 8) return "high";
-            if (covered(pieces, s.x(), s.z(), s.r() + 2)) return "built";
+            Piece<?> by = coveredBy(pieces, s.x(), s.z(), s.r() + 2);
+            if (by != null) return "built " + by.label;
             if (near(taken, s.x(), s.z(), 3)) return "taken";
             if (onWay(land, s.x(), s.z(), s.r() + 1)) return "way";
             high = Math.max(high, s.top() - g);
@@ -331,11 +332,13 @@ public final class WayPlanner {
 
     /** Why a camp can't stand here (null: it can): too near the edge, on something built, on the plan, on a way, by a site, bad or uneven ground. */
     private static String unfit(Land land, List<? extends Piece<?>> pieces, Ground ok, List<int[]> taken, int x, int z) {
-        if (land.edge(x, z) > -48) return "edge";
-        if (covered(pieces, x, z, 10)) return "built";
+        // the land's own edge already stands inside its bounds; the country's haunts keep 20 in from it, and so does a camp
+        if (land.edge(x, z) > -20) return "edge";
+        Piece<?> by = coveredBy(pieces, x, z, 6);
+        if (by != null) return "built " + by.label;
         if (near(taken, x, z, 14)) return "taken";
         if (onWay(land, x, z, 8)) return "way";
-        for (Land.Site s : land.sites()) if (Math.hypot(s.x() - x, s.z() - z) < s.radius() + 14) return "site";
+        for (Land.Site s : land.sites()) if (Math.hypot(s.x() - x, s.z() - z) < s.radius() + 6) return "site";
         int g = land.ground(x, z);
         for (int dx = -6; dx <= 6; dx += 3) for (int dz = -6; dz <= 6; dz += 3) {
             if (!ok.ok(x + dx, z + dz)) return "ground";
@@ -346,11 +349,16 @@ public final class WayPlanner {
 
     /** Whether something built stands over this ground. A piece the size of the land (a city's pass, its roads) doesn't count. */
     static boolean covered(List<? extends Piece<?>> pieces, int x, int z, int pad) {
+        return coveredBy(pieces, x, z, pad) != null;
+    }
+
+    /** What built thing stands over here, or null: for the log, so a land that has no room says what fills it. */
+    static Piece<?> coveredBy(List<? extends Piece<?>> pieces, int x, int z, int pad) {
         for (Piece<?> p : pieces) {
             if (p instanceof Hops || p.airborne || (long) (p.x1 - p.x0) * (p.z1 - p.z0) > 160L * 160L) continue;
-            if (x + pad >= p.x0 && x - pad <= p.x1 && z + pad >= p.z0 && z - pad <= p.z1) return true;
+            if (x + pad >= p.x0 && x - pad <= p.x1 && z + pad >= p.z0 && z - pad <= p.z1) return p;
         }
-        return false;
+        return null;
     }
 
     /** Whether a road or a stair of the land runs within {@code pad} of here: nothing of the plan stands on a way. */

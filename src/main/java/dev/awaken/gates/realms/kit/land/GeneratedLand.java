@@ -388,26 +388,29 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
      * what is built; where none fits, the run is as before.
      */
     private void secondStretch() {
-        Leg from = null, to = null;
-        double best = 44;
+        // every walk between two legs long enough for a stretch, the longest first, until one takes a line of stones
+        List<Leg[]> walks = new ArrayList<>();
         for (Leg a : route()) for (String id : a.exits()) {
             Leg b = leg(id);
             if (b == null || a.kind() == LegKind.MOVEMENT || b.kind() == LegKind.MOVEMENT || b.kind() == LegKind.LORD || b.kind() == LegKind.HIDDEN
                     || b.kind() == LegKind.SHORTCUT || a.kind() == LegKind.HIDDEN) continue;
-            double d = Math.hypot(b.x() - a.x(), b.z() - a.z());
-            if (d > best) {
-                best = d;
-                from = a;
-                to = b;
-            }
+            if (Math.hypot(b.x() - a.x(), b.z() - a.z()) > 44) walks.add(new Leg[]{a, b});
         }
-        if (from == null) {
+        if (walks.isEmpty()) {
             dev.awaken.Awaken.LOG.info("[realms] {}: no walk over 44 between two legs for a second stretch of stones", ctx.id());
             return;
         }
+        walks.sort(java.util.Comparator.comparingDouble((Leg[] w) -> -Math.hypot(w[1].x() - w[0].x(), w[1].z() - w[0].z())));
+        java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
+        for (Leg[] w : walks) if (stretchBy(w[0], w[1], tally)) return;
+        dev.awaken.Awaken.LOG.info("[realms] {}: no second stretch of stones by any of {} walks ({})", ctx.id(), walks.size(), tally);
+    }
+
+    /** A line of stones beside the walk from one leg to the next, spliced in between them; false when none fits there. */
+    private boolean stretchBy(Leg from, Leg to, java.util.Map<String, Integer> tally) {
+        double best = Math.hypot(to.x() - from.x(), to.z() - from.z());
         double ux = (to.x() - from.x()) / best, uz = (to.z() - from.z()) / best;
         List<? extends Piece<?>> all = pieces();
-        java.util.Map<String, Integer> tally = new java.util.TreeMap<>();
         for (int turn : WayPlanner.TURNS) for (double at : new double[]{0.35, 0.5, 0.25, 0.65}) for (int side : new int[]{9, -9, 15, -15, 22, -22}) for (int len : new int[]{32, 24}) {
             double cx = from.x() + (to.x() - from.x()) * at - uz * side, cz = from.z() + (to.z() - from.z()) * at + ux * side;
             double c = Math.cos(Math.toRadians(turn)), sn = Math.sin(Math.toRadians(turn)), lx = ux * c - uz * sn, lz = ux * sn + uz * c;
@@ -423,13 +426,13 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
             int[] a = h.start(), b = h.end();
             if (!between(from.id(), to.id(), "climb", LegKind.MOVEMENT, "Stones to jump along", (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, 9)) {
                 dev.awaken.Awaken.LOG.warn("[realms] {}: the second stretch couldn't be put between {} and {}", ctx.id(), from.id(), to.id());
-                return;
+                return false;
             }
             pieces.add(h);
             course(h.course("climb", this));
-            return;
+            return true;
         }
-        dev.awaken.Awaken.LOG.info("[realms] {}: no second stretch of stones by the walk from {} to {} ({})", ctx.id(), from.id(), to.id(), tally);
+        return false;
     }
 
     // ---- the ground -----------------------------------------------------------------------------------------------------------
