@@ -1,0 +1,114 @@
+package dev.awaken.core.api;
+
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ChunkTrackingView;
+import net.minecraft.server.level.ServerChunkCache;
+import net.minecraft.server.level.ServerPlayer;
+import org.jspecify.annotations.Nullable;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
+
+/**
+ * Land comes first (SPEC §12, §21.6, §28.9). Whether new land is still coming in round a player: a chunk inside some
+ * player's view that isn't made yet, while chunks are still being made. Work of ours that can wait (roads, villages and
+ * places planned ahead, the searches for a mouth, an adit, a wonder or a well, lode and sinkhole plans) waits for it
+ * instead of taking cores from the generator: on Euan's Mac (12 Nov) five road planners used 4.6 cores while he flew
+ * over new land, and our searches ran on the game's own worldgen threads ({@code Util.backgroundExecutor}).
+ * <p>
+ * The server thread counts the missing chunks twice a second (a hash lookup each: about a thousand for a view of 16);
+ * any thread may ask. With no chunk made for {@link #STILL_NS} the land isn't coming in, whatever is missing (a chunk
+ * waiting on something, a paused world), so nothing waits on it forever.
+ */
+public final class LandFirst {
+    private LandFirst() {}
+
+    /** Ticks between counts. */
+    static final int EVERY = 10;
+    /** No chunk made for this long: the generator isn't busy, so nothing waits for it. */
+    static final long STILL_NS = 5_000_000_000L;
+    /** How often a waiting thread looks again. */
+    static final long LOOK_NS = 50_000_000L;
+    /** Optional work never waits longer than this: it still comes, only last. */
+    public static final long MOST_NS = 60_000_000_000L;
+
+    private static volatile boolean streaming;
+    private static volatile int missing;
+    private static volatile long lastMade;
+
+    /** Whether new land is coming in round a player now (any thread). */
+    public static boolean streaming() {
+        return streaming;
+    }
+
+    /** The chunks inside players' views not made yet, at the last count. */
+    public static int missing() {
+        return missing;
+    }
+
+    /** (Server tick, CoreModule) the count. */
+    public static void tick(MinecraftServer server) {
+        if (server.getTickCount() % EVERY != 0) return;
+        int n = 0;
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            if (!(p.getChunkTrackingView() instanceof ChunkTrackingView.Positioned v)) continue;
+            ServerChunkCache cache = p.level().getChunkSource();
+            int cx = v.center().x(), cz = v.center().z(), r = v.viewDistance();
+            for (int x = cx - r; x <= cx + r; x++)
+                for (int z = cz - r; z <= cz + r; z++) if (v.isInViewDistance(x, z) && cache.getChunkNow(x, z) == null) n++;
+        }
+        missing = n;
+        streaming = n > 0 && System.nanoTime() - lastMade < STILL_NS;
+    }
+
+    /** (ChunkEvent.Load, CoreModule) a chunk was made or read: the generator is at work. */
+    public static void chunkLoaded() {
+        lastMade = System.nanoTime();
+    }
+
+    /** (Server stopping) nothing waits on a world that's gone. */
+    public static void clear() {
+        streaming = false;
+        missing = 0;
+    }
+
+    /**
+     * Off the server thread: waits while new land is coming in, at most {@code mostNs}. Optional work calls this before it
+     * starts. True if it waited.
+     */
+    public static boolean hold(long mostNs) {
+        if (!streaming) return false;
+        long t0 = System.nanoTime();
+        while (streaming && System.nanoTime() - t0 < mostNs) LockSupport.parkNanos(LOOK_NS);
+        return true;
+    }
+
+    private static @Nullable ThreadPoolExecutor later;
+
+    /**
+     * In place of {@code Util.backgroundExecutor()} for optional searches: that pool is the game's own, where world
+     * generation runs, so a search there takes a generator's thread. Two threads of our own at the lowest priority, each
+     * job held while land comes in (at most {@link #MOST_NS}).
+     */
+    public static synchronized ExecutorService later() {
+        if (later == null) {
+            AtomicInteger k = new AtomicInteger();
+            later = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), r -> {
+                Thread t = new Thread(r, "Awaken land-first " + k.incrementAndGet());
+                t.setDaemon(true);
+                t.setPriority(Thread.MIN_PRIORITY);
+                return t;
+            }) {
+                @Override
+                protected void beforeExecute(Thread t, Runnable r) {
+                    hold(MOST_NS);
+                }
+            };
+        }
+        return later;
+    }
+}

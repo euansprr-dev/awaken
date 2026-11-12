@@ -72,13 +72,23 @@ public final class CoreModule {
                     Awaken.LOG.info("[core] creative tabs: {}", report.summary());
                     c.getSource().sendSuccess(() -> Component.literal("Creative tabs: " + report.summary()), false);
                     return report.clean() ? 1 : 0;
+                }))
+                // "/awaken core land": the chunks in view not made yet, and whether land is coming in (SPEC §12, land first)
+                .then(Commands.literal("land").executes(c -> {
+                    String line = dev.awaken.core.api.LandFirst.missing() + " chunks in view not made yet"
+                            + (dev.awaken.core.api.LandFirst.streaming() ? ", land coming in" : "");
+                    Awaken.LOG.info("[core] land: {}", line);
+                    c.getSource().sendSuccess(() -> Component.literal(line), false);
+                    return 1;
                 }))));
         modBus.addListener(CorePayloads::register);
         Playtest.init();
         NeoForge.EVENT_BUS.addListener(Later::tick);
         NeoForge.EVENT_BUS.addListener(Later::stopping);
-        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> { DirectorLog.clear(); Playtest.clear(); Throttle.clear(); RegionRecycler.clear(); dev.awaken.core.api.Passage.clear(); });
-        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) -> { RegionRecycler.tick(e.getServer()); dev.awaken.core.api.Passage.tick(e.getServer()); });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent e) -> { DirectorLog.clear(); Playtest.clear(); Throttle.clear(); RegionRecycler.clear(); dev.awaken.core.api.Passage.clear(); dev.awaken.core.api.LandFirst.clear(); });
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) -> { RegionRecycler.tick(e.getServer()); dev.awaken.core.api.Passage.tick(e.getServer()); dev.awaken.core.api.LandFirst.tick(e.getServer()); });
+        // land comes first (SPEC §12): a chunk made or read means the generator is at work
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.ChunkEvent.Load e) -> { if (!e.getLevel().isClientSide()) dev.awaken.core.api.LandFirst.chunkLoaded(); });
         NeoForge.EVENT_BUS.addListener(dev.awaken.core.api.Passage::hurt);
         NeoForge.EVENT_BUS.addListener(net.neoforged.bus.api.EventPriority.LOWEST, net.neoforged.neoforge.event.entity.EntityTeleportEvent.TeleportCommand.class,
                 dev.awaken.core.api.Passage::commanded);

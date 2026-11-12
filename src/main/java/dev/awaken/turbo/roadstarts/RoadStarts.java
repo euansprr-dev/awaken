@@ -102,7 +102,11 @@ public final class RoadStarts {
 
     /** One line for the log and the tests. */
     public static String status() {
-        return (active() ? "on" : "off") + (applied ? "" : ", the hook never ran") + (wanted ? "" : ", switched off")
+        // before the first new chunk's structure starts it hasn't run yet: in a world already made round its players that is
+        // the first minutes (Euan's log of 12 Nov read "off, the hook never ran" at tick 280 and "on" an hour in)
+        boolean waiting = !applied && wanted && versionOk && !failed;
+        return (active() ? "on" : waiting ? "on, no new chunk has reached it yet" : "off") + (applied || waiting ? "" : ", the hook never ran")
+                + (wanted ? "" : ", switched off")
                 + (versionOk ? "" : ", other versions") + (failed ? ", failed" : "") + "; " + SET_ASIDE.get() + " lattice chunks set aside, "
                 + TAKEN_UP.get() + " taken up";
     }

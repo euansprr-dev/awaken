@@ -835,6 +835,15 @@ of `AwakenConfig.Client`.
   (commands, a teleport's landing, a respawn) still uses the game's own and may wait. A structure lookup at a player's
   own feet asks `Ready.at` first (the Tether vow's look, the Day Journal's, a sweep's grass): a player flying at 32 blocks
   a second outruns the generator, and the lookup waited 1.2 s for the chunk under them (tour `pulse-flight-ci`).
+- `dev.awaken.core.api.LandFirst` — is new land still coming in round a player (12 Nov 2026, Euan: "still not loading
+  fast enough"). The server thread counts, twice a second, the chunks inside each player's view not made yet
+  (`missing()`, a hash lookup each); `streaming()` is true while some are missing and a chunk was made or read in the
+  last 5 s (with none made for 5 s the land isn't coming in, whatever is missing, so nothing waits on it forever).
+  `hold(mostNs)` waits off the server thread while it's true; `later()` is two threads of our own at the lowest
+  priority whose jobs each wait first (at most a minute), in place of `Util.backgroundExecutor()` for optional
+  searches: that pool is the game's own, where world generation runs. `/awaken core land` says the count. Road
+  starts' status reads "on, no new chunk has reached it yet" until the first new chunk's structure starts run through
+  its hook (a world already made round its players: the first minutes).
 - `dev.awaken.core.api.*Hooks` — install-once bridges between modules: `GateHooks`, `HearthHooks` (`inside`, `belongs`,
   `hearthsOf`, `household`, `shareHearth`, `within`, `armoury`: is this spot in an Armoury, §27.13), `PartyHooks` (`members`, `sameParty`; see "Together";
   `Parties.sharing(player, at)` is who of the party shares a kill), `MobHooks` (`lead(mob, x, z, speed, ticks)`: a
@@ -12005,7 +12014,9 @@ finder reading a chunk still generating, then one tick of 4.5 minutes in it; the
 already whole). A watch on the server thread (`RoadTimer.watch`) logs any tick (or task between ticks) over two seconds
 with its stack, always (a player's log says what held the server; on a tour over one second, sampled 20 times a
 second), again every 10 s while the same tick runs, each time with the first frames of every thread not waiting for
-work, of any name (a chunk the server thread waits for waits on one of them; those waiting for work counted), Road
+work, of any name (a stack's first 24 frames, then when they don't reach the tick the rest from the first frame of ours
+on, else the last ten above it: a density function's frames alone filled the 24 of Euan's 32 s stall at a join, 12 Nov,
+and the caller was cut off) (a chunk the server thread waits for waits on one of them; those waiting for work counted), Road
 starts' lattice chunks not given back with what each waits for (its roads, the worldgen dispatcher to take it up, its
 step) and how long, each level's worldgen and light dispatchers (queue head, asleep, both executors' state), its light
 tasks, generation tasks not yet run and chunk tasks for the server thread, and the chunk under each player followed to
