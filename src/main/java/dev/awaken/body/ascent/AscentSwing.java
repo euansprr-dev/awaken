@@ -246,6 +246,8 @@ public final class AscentSwing {
         /** What the look met in {@link #aimed} (its own copy: the looks after it reuse {@link #hit}), and how far; NaN for nothing in reach. */
         public final SwingSpace.Hit aim = new SwingSpace.Hit();
         public double aimT = Double.NaN;
+        /** Why {@link #aimed}'s target gave no sling and no pull onto its top (indexes into {@link #SLING_NO}, {@link #ONTO_NO}; 0: not asked). */
+        public int aimSling, aimOnto;
 
         public Work() {
             for (int i = 0; i < cands.length; i++) cands[i] = new Pick();
@@ -502,20 +504,40 @@ public final class AscentSwing {
 
     // ---- where you look (SPEC §62, "The rope goes where you look") -------------------------------------------------
 
+    /** How far over the block the look met its top is looked for (a tall tree's crown, a wall's lip). */
+    static final double AIM_TOP_UP = 16;
+    /** What must be clear when what comes after is yours: the first ticks of a sling's pull, the first blocks of a pull. */
+    static final int AIM_OPEN_TICKS = 8;
+    static final double AIM_OPEN_PULL = 6;
+    /** Why the look's target gave no sling ({@link Work#aimSling}), and no pull onto its top ({@link Work#aimOnto}): for the log. */
+    public static final String[] SLING_NO = {"", "too near", "too steep", "under the hand", "its way is closed", "no top in reach"};
+    public static final String[] ONTO_NO = {"", "no top in reach", "its top is under the hand", "no room on its top",
+            "the rope's line is blocked", "the way up is closed", "too far"};
+    private static final int SLING_CLOSED = 4, ONTO_CLOSED = 5;
+
     /**
-     * The rope thrown where you look first (12 Nov 2026, Euan: "I'm clearly looking at a tree that would be perfect, and
-     * it's like the rope just either just goes straight through it or just doesn't connect"). The look's own ray from the
-     * eye; the first block it meets within reach is the target, and the rope takes that target or leaves it to the looks
-     * after this one (the fans along the heading, a lip):
-     * <ul>
+     * The rope thrown where you look first (SPEC §62, "The rope goes where you look"; 12 Nov 2026, Euan, twice: "I'm
+     * clearly looking at a tree that would be perfect", then "a lot of the time the rope just doesn't detect the thing
+     * that you're trying to lock onto ... any block you should be able to lock onto if that's the most logical thing to
+     * lock onto based on what you're looking at"). The look's own ray from the eye; the first block it meets within
+     * reach (a tree, a bamboo stalk, a wall, a branch: anything the body would bump into) is the target, and the rope
+     * takes it the first of these ways that works:
+     * <ol>
      * <li>a swing from it, by {@link #find}'s own rules for one hit (a side face near its top bites the top's edge, the
      * rope's line clear, the arc clear to the window);</li>
-     * <li>else, with {@code slings} (the guide), a sling past its top along your look, by {@link #findSling}'s rules for
-     * one hit, except that what the flight meets once it is past the point over the top is yours to steer (the fans want
-     * all of the flight clear, so in a wood the next tree spoiled every sling at a tree you looked at).</li>
-     * </ul>
-     * {@link Work#aimT} is how far the look met a block (NaN for none within reach): a press that took nothing shows
-     * its missed rope stopping there, never flying on through the tree. False when the target gives neither.
+     * <li>with {@code slings} (the guide) the rest. A sling past its top along your look: the top of whatever stands over
+     * the cell it hit, leaves and logs alike, up to {@link #AIM_TOP_UP} over it; {@link #findSling}'s rules for one hit
+     * at any reach, except that what the flight meets once it is past the point over the top is yours to steer;</li>
+     * <li>onto its top: the rope bites its edge over the face it hit and pulls you straight up to it and over (a crown's
+     * tier, a ledge, a roof), with room for the body there: a target too near or too steep to sling past;</li>
+     * <li>up under it (a branch, a canopy, a ceiling, 2 or more over the hand): pulled up to it, then hanging there;</li>
+     * <li>still it, when the ways above were closed only further on: the sling past a side face whose pull is clear for
+     * its first {@link #AIM_OPEN_TICKS} ticks (a pull that would then meet something lets go with a hop), or the pull onto
+     * its top or up under it whose first {@link #AIM_OPEN_PULL} blocks are clear (pressed against something, it lets go).</li>
+     * </ol>
+     * {@link Work#aimT} is how far the look met a block (NaN for none within reach): a press that took nothing shows its
+     * missed rope stopping there. False when the target gives none of these (the floor, open sky, a face too tall to top
+     * and too steep to sling); {@link Work#aimSling} and {@link Work#aimOnto} say why.
      */
     public static boolean aimed(SwingSpace s, AscentRules.Kin hand, double ex, double ey, double ez, double yaw, double pitch,
             double reach, boolean slings, Work w, Pick out) {
@@ -523,9 +545,10 @@ public final class AscentSwing {
         SwingSpace.Hit a = w.aim;
         double cp = Math.cos(pitch * D2R);
         w.aimT = Double.NaN;
+        w.aimSling = w.aimOnto = 0;
         if (!s.ray(ex, ey, ez, fx(yaw) * cp, -Math.sin(pitch * D2R), fz(yaw) * cp, reach, a)) return false;
         w.aimT = a.t;
-        // a swing from it
+        // 1. a swing from it
         double x = a.x, y = a.y, z = a.z;
         if (a.ny == 0 && !a.leaf) {
             double top = s.topOver(a, t.edgeSnap);
@@ -534,17 +557,38 @@ public final class AscentSwing {
         if (plan(s, hand.x, hand.y, hand.z, yaw, reach, x, y, z, out) && clear(s, hand.x, hand.y, hand.z, x, y, z, 0.5, w)
                 && arcClear(s, hand, out, yaw, w)) return true;
         if (!slings) return false;
-        // else a sling past its top (findSling's rule for one hit)
+        // its top: whatever stands over the cell it hit, leaves and logs alike (NaN: none within AIM_TOP_UP)
+        double top = a.ny > 0 ? a.y : s.topThrough(a, AIM_TOP_UP);
+        // 2. a sling past it
+        w.aimSling = slingPast(s, hand, a, top, yaw, w, out, 0);
+        if (w.aimSling == 0) return true;
+        // 3. onto its top; 4. up under it
+        w.aimOnto = ontoTop(s, hand, a, top, reach, w, out, false);
+        if (w.aimOnto == 0 || underIt(s, hand, a, reach, w, out, false)) return true;
+        // 5. still it, its way clear at the start
+        return w.aimSling == SLING_CLOSED && a.ny == 0 && top >= hand.y + 1 && slingPast(s, hand, a, top, yaw, w, out, AIM_OPEN_TICKS) == 0
+                || w.aimOnto == ONTO_CLOSED && ontoTop(s, hand, a, top, reach, w, out, true) == 0
+                || underIt(s, hand, a, reach, w, out, true);
+    }
+
+    /**
+     * A sling past {@code top} (NaN: none) of what the look met ({@code a}), along your look: 0 when taken into
+     * {@code out}, else why not ({@link #SLING_NO}). {@code open}: only this many ticks of the pull need be clear (0: all
+     * of the flight up to the point over the top).
+     */
+    private static int slingPast(SwingSpace s, AscentRules.Kin hand, SwingSpace.Hit a, double top, double yaw, Work w, Pick out, int open) {
+        Tune t = T;
+        if (Double.isNaN(top)) return 5;
         double hx = a.x, hy = a.y, hz = a.z;
-        double top = a.ny > 0 ? hy : s.topOver(a, 8);
-        if (Double.isNaN(top)) top = s.floorUnder(hx - a.nx * 0.34, hy + 8, hz - a.nz * 0.34);
         double fx = fx(yaw), fz = fz(yaw), dx = hx - hand.x, dz = hz - hand.z;
         double ahead = dx * fx + dz * fz, side = Math.abs(dx * -fz + dz * fx), rise = top + t.slingOver - hand.y;
-        if (a.t > Math.min(reach, t.slingReach) || ahead < t.slingFrom || rise < 1 || rise > ahead * 1.2 || top < hy - 0.5) return false;
+        if (ahead < t.slingFrom) return 1;
+        if (rise < 1 || top < hy - 0.5) return 3;
+        if (rise > ahead * 1.2) return 2;
         double lx = hand.x + fx * ahead - hx, lz = hand.z + fz * ahead - hz, ld = Math.sqrt(lx * lx + lz * lz);
         double lean = !hold ? 0 : ld > t.slingLean ? t.slingLean / ld : 1, px = hx + lx * lean, pz = hz + lz * lean;
-        if (!slingClear(s, hand, px, top + t.slingOver, pz, w, true)) {
-            if (lean * ld < 0.05 || !slingClear(s, hand, hx, top + t.slingOver, hz, w, true)) return false;
+        if (!slingClear(s, hand, px, top + t.slingOver, pz, w, true, open)) {
+            if (lean * ld < 0.05 || !slingClear(s, hand, hx, top + t.slingOver, hz, w, true, open)) return SLING_CLOSED;
             px = hx;
             pz = hz;
         }
@@ -561,7 +605,60 @@ public final class AscentSwing {
         out.elev = Math.atan2(rise, Math.max(0.01, ahead)) / D2R;
         out.zip = false;
         out.sling = true;
-        return true;
+        return 0;
+    }
+
+    /**
+     * Onto {@code top} (NaN: none) of what the look met ({@code a}): the rope bites the top's edge over the face it hit
+     * (or the top face it hit) and pulls the body straight up to it and over, as {@link #zipTo}'s lip. 0 when taken into
+     * {@code out}, else why not ({@link #ONTO_NO}). {@code open}: only the pull's first {@link #AIM_OPEN_PULL} blocks need
+     * be clear.
+     */
+    private static int ontoTop(SwingSpace s, AscentRules.Kin hand, SwingSpace.Hit a, double top, double reach, Work w, Pick out, boolean open) {
+        if (a.ny < 0 || Double.isNaN(top)) return 1;
+        if (top < hand.y + 0.3) return 2;
+        // room for the body on the top just past its edge
+        double tx = a.x - a.nx * 0.8, tz = a.z - a.nz * 0.8;
+        if (s.boxHits(tx - 0.3, top + 0.01, tz - 0.3, tx + 0.3, top + 2, tz + 0.3)) return 3;
+        double ly = top - 0.3, dx = a.x - hand.x, dy = ly - hand.y, dz = a.z - hand.z, len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (len > reach) return 6;
+        if (!clear(s, hand.x, hand.y, hand.z, a.x, ly, a.z, 0.5, w)) return 4;
+        pull(out, a.x, ly, a.z, top, a.nx, a.nz, dx, dy, dz, len);
+        return (open ? pullOpen(s, hand, out) : zipClear(s, hand.x, hand.y, hand.z, out)) ? 0 : ONTO_CLOSED;
+    }
+
+    /** Up under what the look met (a branch, a canopy, a ceiling 2 or more over the hand): pulled up to it, then hanging there. */
+    private static boolean underIt(SwingSpace s, AscentRules.Kin hand, SwingSpace.Hit a, double reach, Work w, Pick out, boolean open) {
+        if (a.ny >= 0) return false;
+        // a hair inside the underside it bit: the zip that arrives there hangs under it (or goes up over a ledge's lip)
+        double y = a.y + 0.05, dx = a.x - hand.x, dy = y - hand.y, dz = a.z - hand.z, len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dy < 2 || len > reach || !clear(s, hand.x, hand.y, hand.z, a.x, a.y, a.z, 0.5, w)) return false;
+        pull(out, a.x, y, a.z, Double.NaN, 0, 0, dx, dy, dz, len);
+        return open ? pullOpen(s, hand, out) : zipClear(s, hand.x, hand.y, hand.z, out);
+    }
+
+    /** A pull straight to (x, y, z) into {@code out} (a zip: over a lip at {@code top}, or NaN to hang under it). */
+    private static void pull(Pick out, double x, double y, double z, double top, int nx, int nz, double dx, double dy, double dz, double len) {
+        out.x = x;
+        out.y = y;
+        out.z = z;
+        out.top = top;
+        out.nx = nx;
+        out.nz = nz;
+        out.zip = true;
+        out.sling = false;
+        out.len = out.fitLen = len;
+        out.score = 1;
+        out.side = 0;
+        out.elev = Math.atan2(dy, Math.max(0.01, Math.sqrt(dx * dx + dz * dz))) / D2R;
+    }
+
+    /** Whether the first {@link #AIM_OPEN_PULL} blocks of a straight pull from the hand to the pick are clear. */
+    private static boolean pullOpen(SwingSpace s, AscentRules.Kin hand, Pick p) {
+        double dx = p.x - hand.x, dy = p.y - hand.y, dz = p.z - hand.z, d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (d < 2.4) return true;
+        double f = Math.min(AIM_OPEN_PULL, d - 1.6) / d;
+        return !swept(s, hand.x, hand.y, hand.z, hand.x + dx * f, hand.y + dy * f, hand.z + dz * f);
     }
 
     /**
@@ -602,6 +699,11 @@ public final class AscentSwing {
      * what the flight meets is yours to steer, not a reason to refuse the sling.
      */
     static boolean slingClear(SwingSpace s, AscentRules.Kin hand, double x, double y, double z, Work w, boolean yours) {
+        return slingClear(s, hand, x, y, z, w, yours, 0);
+    }
+
+    /** As above; {@code open} over 0: only that many ticks of the flight need be clear. */
+    static boolean slingClear(SwingSpace s, AscentRules.Kin hand, double x, double y, double z, Work w, boolean yours, int open) {
         AscentRules.Kin k = w.k2;
         k.set(hand.x, hand.y, hand.z, hand.vx, hand.vy, hand.vz);
         // the look-ahead's rays reuse the caller's hit: put it back for the caller's loop
@@ -625,7 +727,7 @@ public final class AscentSwing {
             if (free) freeFor++;
             // room under the feet through the pull and while it rises over the top it was pulled toward
             if (swept(s, x0, y0, z0, k.x, k.y, k.z, SLING_SIDE, i > 1 && freeFor < 12 ? SLING_UNDER : 0, free ? 0 : SLING_OVER)) {
-                ok = free && (yours && pastPoint(hand, x, z, x0, z0)
+                ok = open > 0 && i >= open || free && (yours && pastPoint(hand, x, z, x0, z0)
                         || (T.slingLand < 0 ? i > 14 : freeFor > T.slingLand) && landing(s, x0, y0, z0, k));
                 break;
             }

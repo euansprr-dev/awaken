@@ -71,7 +71,7 @@ public final class WingCaseRenderer implements BlockEntityRenderer<WingCoreBlock
         return Mth.sin(phase(period) * Mth.TWO_PI);
     }
     private static final SubmitNodeCollector.CustomGeometryRenderer FEATHERS =
-            (pose, vc) -> WingFeathers.pair(pose, vc, POSE, 0, PAIR, 0, WingFeathers.LIGHT, alpha, lod, false);
+            (pose, vc) -> WingFeathers.pair(pose, vc, POSE, 0, PAIR, 0, WingFeathers.LIGHT, alpha, lod, false, null, null);
     private static final SubmitNodeCollector.CustomGeometryRenderer HALOS = (pose, vc) -> {
         WingFeathers.faceEye(pose, AscentRender.eye());
         WingFeathers.halos(pose, vc, POSE, 0, PAIR, 0, WingFeathers.LIGHT[WingFeathers.HALO], glow, alpha);

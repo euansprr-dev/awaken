@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 import org.joml.Matrix3f;
+import org.joml.Matrix4fc;
 import org.joml.Quaternionfc;
 import org.joml.Vector3f;
 
@@ -65,12 +66,22 @@ final class WingFeathers {
 
     /**
      * One pair of wings in the pose at {@code o} in {@code p}, its size and roll from {@code pair}, the {@code index}th
-     * pair on this back. {@code first}: for your own eyes, only the outer wing (never the bones at the camera).
+     * pair on this back. {@code first}: for your own eyes, only what hangs from the outer bone (the primaries and their
+     * coverts), each wing's model space first taken through its own turn ({@code left}, {@code right}: model space in
+     * blocks to the pose's, see WingLayer's first-person placement).
      */
-    static void pair(PoseStack.Pose pose, VertexConsumer vc, float[] p, int o, float[] pair, int index, int[] pal, float alpha, int lod, boolean first) {
+    static void pair(PoseStack.Pose pose, VertexConsumer vc, float[] p, int o, float[] pair, int index, int[] pal, float alpha, int lod, boolean first,
+                     @org.jspecify.annotations.Nullable Matrix4fc left, @org.jspecify.annotations.Nullable Matrix4fc right) {
+        turn = first ? left : null;
         wing(pose, vc, 1, p, o, pair, index, pal, alpha, lod, first);
+        turn = first ? right : null;
         wing(pose, vc, -1, p, o, pair, index, pal, alpha, lod, first);
+        turn = null;
     }
+
+    /** The wing being drawn for your own eyes: its turn out of model space (null otherwise). */
+    private static @org.jspecify.annotations.Nullable Matrix4fc turn;
+    private static final Vector3f TV = new Vector3f();
 
     private static void root(int s, float[] pair, int index) {
         side = s;
@@ -119,7 +130,8 @@ final class WingFeathers {
                         TERS[i], WingForm.width(G_TER, lod), pal[ROOT], pal[MID], pal[OUTER], pal[TIP], pal[SHAFT]);
             }
         }
-        for (int i = first ? 4 : WingForm.first(G_SEC, lod); i < SECS.length; i += WingForm.step(G_SEC, lod)) {
+        // for your own eyes none of the secondaries: they hang from the forearm, which passes by the camera
+        for (int i = first ? SECS.length : WingForm.first(G_SEC, lod); i < SECS.length; i += WingForm.step(G_SEC, lod)) {
             float t = i / (float) (SECS.length - 1), ci = ease((c - 0.1F - 0.15F * t) / 0.6F), sp = 0.04F + 0.94F * t;
             feather(pose, vc, 1, sp, Mth.lerp(ci, -90, sec + t * (fanIn - sec) * 0.55F), flap(p0, p1, p2, 1 + sp), 0.5F + i * 0.16F, Mth.lerp(ci, 0.8F, 1),
                     SECS[i], WingForm.width(G_SEC, lod), pal[ROOT], pal[MID], pal[OUTER], pal[TIP], pal[SHAFT]);
@@ -221,8 +233,19 @@ final class WingFeathers {
         // the pair's size and roll about its root, then the root's place; model space is x left, y down, z behind
         float rx = (x * rollC - y * rollS) * size, ry = (x * rollS + y * rollC) * size, rz = z * size;
         float tx = qx * rollC - qy * rollS, ty = qx * rollS + qy * rollC;
-        vc.addVertex(pose, (rootX + rx) / 16F, (rootY - ry) / 16F, (rootZ + rz) / 16F).setColor(col).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(LightCoordsUtil.FULL_BRIGHT).setNormal(pose, tx, -ty, qz);
+        float mx = (rootX + rx) / 16F, my = (rootY - ry) / 16F, mz = (rootZ + rz) / 16F, ny = -ty;
+        if (turn != null) {
+            turn.transformPosition(mx, my, mz, TV);
+            mx = TV.x;
+            my = TV.y;
+            mz = TV.z;
+            turn.transformDirection(tx, ny, qz, TV);
+            tx = TV.x;
+            ny = TV.y;
+            qz = TV.z;
+        }
+        vc.addVertex(pose, mx, my, mz).setColor(col).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(LightCoordsUtil.FULL_BRIGHT).setNormal(pose, tx, ny, qz);
     }
 
     private static void upright(float x, float y, float z, float alpha) {

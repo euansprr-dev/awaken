@@ -50,8 +50,9 @@ final class RopeTuning {
         // the wings' studio and numbers (SPEC §62): /awaken wings show <state|off> [rung], /awaken wings set <key> <value>
         NeoForge.EVENT_BUS.addListener(RegisterClientCommandsEvent.class, e -> e.getDispatcher().register(
                 Commands.literal(Awaken.MODID).then(Commands.literal("wings")
-                        .executes(c -> say("Wings: show <" + String.join("|", WingLayer.MODES) + "|off> [wings|skyborn|sovereign]; set <fp_ahead|fp_up|fp_alpha> <number> (now "
-                                + WingLayer.fpAhead + ", " + WingLayer.fpUp + ", " + WingLayer.fpAlpha + ")."))
+                        .executes(c -> say("Wings: show <" + String.join("|", WingLayer.MODES) + "|off> [wings|skyborn|sovereign]; set <fp_back|fp_up|fp_sweep|fp_reach|fp_alpha> <number> (now "
+                                + WingLayer.fpBack + ", " + WingLayer.fpUp + ", " + WingLayer.fpSweep + ", " + WingLayer.fpReach + ", "
+                                + WingLayer.fpAlpha + ")."))
                         .then(Commands.literal("show").then(Commands.argument("state", StringArgumentType.word())
                                 .executes(c -> wings(StringArgumentType.getString(c, "state"), ""))
                                 .then(Commands.argument("rung", StringArgumentType.word())
