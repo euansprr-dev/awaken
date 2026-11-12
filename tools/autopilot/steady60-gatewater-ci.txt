@@ -1,8 +1,10 @@
 # Water in a gate (Euan, 12 Nov, in an E-rank Hive gate on Cinematic: "seems like there's an issue with the water in
-# this gate here creating squares in the water"). The Air's water (SPEC §22 "Glasswater") under a roof: a pool of one
-# block of water laid on the floor of the Hive's biggest place and its second, each seen three ways: Lens off (the
-# game's own frame), Cinematic, and Cinematic without the Air's water (the probe chain cinematic_comp_water). First an
-# open-air pool, so water outside gates is seen too: across it, down at the bank, and under a plank bridge.
+# this gate here creating squares in the water"). His Hive was a Realm (its HUD: "Camps 2 / 2 · Wardens 0 / 1"): the
+# Realms' world has the overworld's sky, so the Air and its water (SPEC §22 "Glasswater") are on there, and every Realm
+# look gives Lens's light no sun. A pool of one block of water under a wax roof at Brood Burrow's way in (a Hive Realm),
+# seen three ways: Lens off (the game's own frame), Cinematic, and Cinematic without the Air's water (the probe chain
+# cinematic_comp_water). First an open-air pool, so water outside gates is seen too: across it, down at the bank, and
+# under a plank bridge.
 # Run: tools/tour-ci.sh tools/autopilot/steady60-gatewater-ci.txt 2400
 # ci knobs: LENS=cinematic
 world steadygatewater creative 4545
@@ -61,64 +63,41 @@ shot lake_under_bridge_lens_off
 lens cinematic
 wait 120
 
-# ---- A Hive gate: away from Carillon (gates never form in its reserve) -----------------------------------------------
+# ---- A Hive Realm: Brood Burrow, entered straight in (no gate has to form in the overworld first) -------------------
 cmd forceload remove all
-cmd tp @s 6000 200 6000
-wait 600
-cmd awaken gate hop
+cmd awaken gate realm_enter E awaken:brood_burrow 1
+need realm
+hud off
 wait 400
-cmd awaken gate open E hive world 7 awaken:hive/the_comb
-wait 400
-cmd awaken gate interior enter
-wait 300
-cmd awaken gate interior goto place
-wait 200
-# a pool laid on the floor ahead: wax under it, one block of water, open air over it to the room's own roof
+# a pool laid ahead of the way in: wax under it, one block of water, open air over it, and a wax roof six over the
+# feet wherever the Realm left the sky open (keep: what stands there stays)
 cmd tp @s ~ ~ ~ 0 0
 wait 20
 cmd fill ~-7 ~-3 ~1 ~7 ~-2 ~15 awaken:hive_wax_dark
 cmd fill ~-7 ~-1 ~1 ~7 ~-1 ~15 minecraft:water
-cmd fill ~-7 ~0 ~1 ~7 ~4 ~15 minecraft:air
+cmd fill ~-7 ~0 ~1 ~7 ~5 ~15 minecraft:air
+cmd fill ~-9 ~6 ~-1 ~9 ~6 ~17 awaken:hive_wax_dark keep
 wait 100
 look 0 38
 wait 200
 lens look
 lens off
 wait 60
-shot gate_a_lens_off
+shot realm_pool_lens_off
 lens cinematic
 wait 160
-shot gate_a_cinematic
+shot realm_pool_cinematic
 lens chain cinematic_comp_water
 wait 80
-shot gate_a_no_glasswater
+shot realm_pool_no_glasswater
 lens chain off
 wait 60
-look -35 24
+look -35 22
 wait 80
-shot gate_a_cinematic_wide
-
-cmd awaken gate interior goto place2
-wait 200
-cmd tp @s ~ ~ ~ 0 0
-wait 20
-cmd fill ~-7 ~-3 ~1 ~7 ~-2 ~15 awaken:hive_wax_dark
-cmd fill ~-7 ~-1 ~1 ~7 ~-1 ~15 minecraft:water
-cmd fill ~-7 ~0 ~1 ~7 ~4 ~15 minecraft:air
-wait 100
-look 0 38
-wait 200
+shot realm_pool_cinematic_wide
 lens off
 wait 60
-shot gate_b_lens_off
+shot realm_pool_wide_lens_off
 lens cinematic
-wait 160
-shot gate_b_cinematic
-lens chain cinematic_comp_water
-wait 80
-shot gate_b_no_glasswater
-lens chain off
-wait 60
-cmd awaken gate leave
 wait 100
 quit
