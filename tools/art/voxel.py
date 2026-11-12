@@ -9,6 +9,7 @@ A weapon is a list of Boxes on a whole-texel grid where 1 texel = 1 item unit (1
 Every box is whole texels in size. Each visible face is its own chart at exactly 1 texel per unit, so texels on the
 weapon are square and all the same size. Texels buried inside another box are culled (a face wholly hidden makes no
 triangles); where two boxes' faces lie in one plane over each other, the earlier box keeps the face (no z-fighting).
+A veil (a box made with veil=True) buries nothing: a part the game may leave out (a pick's rank ring) leaves no hole.
 The visible texels of a face are merged into as few rectangles as they make.
 
 For painting, each visible texel knows what lies beside it in each of its four directions (DIR_*): the surface going on
@@ -167,6 +168,9 @@ def faces(boxes):
     any that don't are listed in WARNINGS."""
     WARNINGS.clear()
     out = []
+    # a veil (data veil=True) is laid over the boxes it meets and hides none of their faces, so a mesh drawn without it
+    # (a pick's rank ring: arms_picks.py) has no hole where it was; the texels under it are painted as if it weren't there
+    veil = [bool(o.data.get("veil")) for o in boxes]
     for bi, b in enumerate(boxes):
         others = [k for k in range(len(boxes)) if k != bi]
         same = [k for k in range(len(boxes)) if boxes[k].part == b.part]
@@ -179,6 +183,7 @@ def faces(boxes):
             lift = P + n * LIFT
             sunk = P - n * LIFT
             hidden = np.zeros(len(P), dtype=bool)
+            under = np.zeros(len(P), dtype=bool)
             fights = []
             for k in others:
                 o = boxes[k]
@@ -187,7 +192,10 @@ def faces(boxes):
                     cover &= o.inside(lift + du * u + dv * v)
                 # a face of an earlier box in this very plane, over this one: that one keeps it
                 flush = o.inside(sunk) & ~o.inside(lift) & (k < bi)
-                hidden |= cover | flush
+                if veil[k] and not veil[bi]:
+                    under |= cover | flush
+                else:
+                    hidden |= cover | flush
                 coplanar = any(on @ n > 1 - 1e-6 and abs(on @ (oc - corner)) < 1e-6 for on, _, _, oc, _, _ in o.faces())
                 if k < bi and coplanar and not aligned(b, o, n):
                     touch = np.zeros(len(P), dtype=bool)
@@ -204,6 +212,7 @@ def faces(boxes):
             if not vis.any():
                 continue
             f.i, f.j, f.P = i[vis], j[vis], P[vis]
+            bare = under[vis]
             # what lies beside each texel, in the directions +u, -u, +v, -v
             f.dirs = np.array([u, -u, v, -v])
             code = np.zeros((len(f.P), 4), dtype=int)
@@ -212,6 +221,10 @@ def faces(boxes):
                 above, below = q + n * 0.5, q - n * 0.5
                 oa, sa = _any(boxes, above, diff), _any(boxes, above, same)
                 sb, ob = _any(boxes, below, same), _any(boxes, below, diff)
+                if bare.any():
+                    pd, ps = [k for k in diff if not veil[k]], [k for k in same if not veil[k]]
+                    oa[bare], sa[bare] = _any(boxes, above[bare], pd), _any(boxes, above[bare], ps)
+                    sb[bare], ob[bare] = _any(boxes, below[bare], ps), _any(boxes, below[bare], pd)
                 c = np.full(len(q), EDGE)
                 c[ob] = SEAM
                 c[sb] = FLAT
