@@ -3852,7 +3852,8 @@ is what the Ascent decided while building it.
 ### 17.3 Phase 1b: the Leaper and the server's checks
 - The Leaper (tier D-C), no new keys, each once an airtime (back on landing and when a rope bites), from any airborne
   body that isn't on a wall or a ledge (a leap that meets an edge climbs it, §17.32): jump in the air = a double jump
-  (+0.52 on top of any rise; it comes before the wings: a second jump opens them), sprint in the air = an air dash
+  (+0.52 on top of any rise; it comes before the wings: a second jump opens them), sprint pressed in the air (a real
+  press, §17.32 "The dash's press") = an air dash
   along the look's heading at max(0.95, 1.33 × your horizontal speed) with a lift of 0.08, sneak with 4+ blocks under
   you = a dive slam (horizontal speed ×0.25, straight down at 1.7). Each goes into the carry with the swing's momentum,
   so a release can chain into a dash and a slam. After a double jump or a dash, attack = the aimed dive (§17.33).
@@ -5235,6 +5236,28 @@ The fix: a leap is the body's own air again whenever it meets an edge, and it cl
   The log names what took each (`air catch: ...`, `air mantle onto`, `vault ... from the air`, `hang (grab)`) and where
   the feet came to rest (`[ascent] where`). The pilot gained `double <key> [gap]` and `where <label>`; the Ascent's
   `grant` gained `leaper` (the rope and the Leaper, no wings).
+
+**The dash's press** (12 Nov 2026, Euan on build 40efdd42c, right after the Gauntlet gave him the dash: "Air dashes
+don't work after any movement like double jump, wings, or rope. Need to fix that"). The dash took only the sprint key
+going down between two ticks. The free-run (§17.14) holds sprint, so after a run's jump, a double jump or a rope there
+was nothing to press: the key was already down, and a quick let-go and press again inside one tick (50 ms) left it down
+at both reads. A press on the rope or in a glide went nowhere. Now:
+- **A press is a real press.** The key going down, or a press of it since the last tick, counted off the key's own
+  events (`InputEvent.Key`, `AscentMoves.sprintKey`; a repeat of a held key is none): a held sprint let go and pressed
+  again however fast, and every click of toggle sprint, on or off (`AscentRules.sprintPress`). A held sprint never
+  dashes by itself (a run off a cliff with sprint held is no dash).
+- **A press the dash can't take yet is kept 6 ticks** (`AscentRules.DASH_KEPT`, `dashKept`): one on the rope (a swing, a
+  pull or sling) dashes in the carry the let-go starts; one in the same tick as a double jump dashes the tick after it.
+  Landing drops it.
+- **From a glide**, sprint is flight while the ladder gives it (Skyborn with the meter for a beat, §17.8, unchanged);
+  otherwise (no Skyborn, or the meter too low) the wings fold and the body dashes. Folded wings (sneak) leave the dash
+  as it was: open if this airtime hasn't spent it.
+- **Once an airtime, as before**: back on landing, at a rope's bite and at a rope strike.
+- **The trace** names each: `air dash 1.20`, `the kept sprint press dashes`, `sprint on the rope: kept for the dash at
+  the let-go`, `the double jump takes this tick: the dash goes the next`, `carry (wings folded into a dash)`, and why a
+  press made none (`no dash: one already this airtime ...`, `no dash: not open yet (the Way Up gives it at a Gauntlet's
+  stand)`, `no dash: no Leaper`). GameTest `ascent_dash_press` (pure): held is no press, a re-tap inside a tick and a
+  toggle's click are, a kept press lasts 6 ticks and no longer.
 
 ### 17.33 The aimed dive (Euan's play, 2026-11-11: "if you click like your attack button ... it pushes you down faster towards where you clicked ... so that you choose where you're gonna land")
 After a double jump or an air dash, attack sends the body down along the look to the point under the crosshair, faster

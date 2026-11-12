@@ -85,6 +85,12 @@ public final class AscentMoves {
     private static int sideTapAt = -100, sideTapDir, rollAt = -100;
     /** The Leaper's air moves used this airtime (bits: 1 double jump, 2 air dash, 4 aimed dive), back on landing or a rope's bite. */
     static int airMovesUsed;
+    /**
+     * Real presses of the sprint key since the last tick (counted off the key's own events, so a held key let go and
+     * pressed again inside one tick counts, and its repeats don't), and when a press the dash couldn't take yet was kept
+     * (SPEC §17.32, "The dash's press").
+     */
+    private static int sprintTaps, dashKeptAt = -1000;
     /** A dive slam is falling: its landing shakes the ground. */
     static boolean slamming;
     /**
@@ -315,7 +321,11 @@ public final class AscentMoves {
         boolean tether = AwakenKeys.ROPE.isDown() && mc.gui.screen() == null;
         boolean jump = k.jump(), sneak = k.shift(), sprint = k.sprint();
         boolean tetherPressed = tether && !tetherWas, jumpPressed = jump && !jumpWas, sneakPressed = sneak && !sneakWas;
-        boolean sprintPressed = sprint && !sprintWas;
+        // sprint's press: the key going down, or a real press since the last tick (a quick re-tap of a held key, a toggle
+        // sprint's click), which the key's state alone misses (12 Nov 2026, Euan: "air dashes don't work after any
+        // movement like double jump, wings, or rope"; the free-run holds sprint, so the dash's press is often a re-tap)
+        boolean sprintPressed = AscentRules.sprintPress(sprint, sprintWas, sprintTaps) && mc.gui.screen() == null;
+        sprintTaps = 0;
         if (tetherPressed) CHAIN.press();
         if (!tether && tetherWas) pressEnded();
         boolean attack = mc.options.keyAttack.isDown() && mc.gui.screen() == null, attackPressed = attack && !attackWas;
@@ -401,7 +411,10 @@ public final class AscentMoves {
                 // a Runner move (a wall-run, a hang) or a climb (a mantle, a crossing: SPEC §17.32, a press during one
                 // never starts a leap) holds the body: only the rope cuts in
                 boolean runner = dev.awaken.body.client.RunnerMoves.busy() || dev.awaken.body.Body.isMantling(p);
-                if (p.onGround()) airMovesUsed = 0;
+                if (p.onGround()) {
+                    airMovesUsed = 0;
+                    dashKeptAt = -1000;
+                }
                 groundFor = p.onGround() ? groundFor + 1 : 0;
                 // the takeoff's crouch (SPEC §62): looking up and sneaking on the ground, the folded wings lift
                 boolean crouch = !runner && sneak && has(AscentPayloads.Tier.SKYBORN) && p.onGround() && pitch <= -AirRules.TAKEOFF_LOOK
@@ -441,6 +454,7 @@ public final class AscentMoves {
                 }
             }
             case TETHER -> {
+                keepDash(p, sprintPressed, "on the rope");
                 // a tapped swing taken in hand again is a held one: the key's let-go is its let-go
                 if (tether && swinging) heldForYou = false;
                 if (!tether && swinging && pressThrow && !heldForYou && (ropeTravel > 0 || ticks - fireAt <= AscentSwing.T.tapTicks)) {
@@ -488,6 +502,7 @@ public final class AscentMoves {
                 }
             }
             case ZIP -> {
+                keepDash(p, sprintPressed, "on the pull");
                 if (strikeTarget >= 0) {
                     // a rope strike holds itself: the rope has the creature until the blow or the let-go
                     zipTick(p, yaw);
@@ -540,6 +555,13 @@ public final class AscentMoves {
                 } else if (has(AscentPayloads.Tier.SKYBORN)
                         && (jumpPressed || AscentRules.sprintTakesFlight(sprintPressed, sprint, glideFromEmpty, aether)) && startSoar(p)) {
                     // flight again: a jump, or sprint whenever the meter allows (SPEC §17.8)
+                } else if (sprintPressed && dashOpen(p, true)) {
+                    // sprint that can't take a glide into flight (no Skyborn, or the meter too low): the wings fold into
+                    // the Leaper's dash (SPEC §17.32, "The dash's press")
+                    fold(p);
+                    toCarry(p, "wings folded into a dash");
+                    leaperMove(p, false, true, false, false);
+                    carry(yaw, fwd, right);
                 } else if (sneakPressed) {
                     fold(p);
                     toCarry(p, "wings folded");
@@ -1952,14 +1974,24 @@ public final class AscentMoves {
      * one went off.
      */
     private static boolean leaperMove(LocalPlayer p, boolean jumpPressed, boolean sprintPressed, boolean sneakPressed, boolean fromNone) {
-        if (!has(AscentPayloads.Tier.LEAPER) || p.onGround()) return false;
+        // a sprint press the rope, a glide or a double jump's tick couldn't give the dash is the dash's for a few ticks
+        boolean kept = AscentRules.dashKept(dashKeptAt, ticks);
+        if (!has(AscentPayloads.Tier.LEAPER) || p.onGround()) {
+            if (sprintPressed && !p.onGround()) trace("no dash: no Leaper");
+            return false;
+        }
         // each only once it is open (the Way Up's mask, SPEC §71.3: a leap first given at a Gauntlet's stand may come a
         // move at a time; given any other way every move is open)
         boolean dbl = jumpPressed && (airMovesUsed & 1) == 0 && !dev.awaken.body.client.RunnerMoves.wallBeside(p)
                 && WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.DOUBLE);
-        boolean dash = sprintPressed && (airMovesUsed & 2) == 0 && WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.DASH);
+        boolean dash = (sprintPressed || kept) && dashOpen(p, sprintPressed);
         boolean dive = sneakPressed && !slamming && heightAboveGround(p) >= AscentRules.SLAM_MIN_HEIGHT
                 && WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.SLAM);
+        if (dbl && dash) {
+            // both in one tick: the double jump now, the dash the next
+            dashKeptAt = ticks;
+            trace("the double jump takes this tick: the dash goes the next");
+        }
         if (!dbl && !dash && !dive) return false;
         if (fromNone) K.set(p.getX(), p.getY(), p.getZ(), stepX, p.getDeltaMovement().y, stepZ);
         leapt = dbl || dash; // a slam is no leap: it never stands aside for an edge
@@ -1975,6 +2007,8 @@ public final class AscentMoves {
             trace("double jump");
         } else if (dash) {
             airMovesUsed |= 2;
+            dashKeptAt = -1000;
+            if (kept && !sprintPressed) trace("the kept sprint press dashes");
             double yaw = p.getYRot() * Mth.DEG_TO_RAD, fx = -Math.sin(yaw), fz = Math.cos(yaw);
             double speed = Math.max(AscentRules.DASH_SPEED, K.hspeed() * AscentRules.DASH_GAIN)
                     * (1 + AscentRules.MASTERY_DASH * lv(dev.awaken.body.ascent.AscentMemory.Track.LEAPER));
@@ -2001,6 +2035,30 @@ public final class AscentMoves {
         AscentFlow.gain(0.08F);
         if (fromNone) setState(p, AscentState.CARRY);
         return true;
+    }
+
+    /**
+     * Whether the air dash can go now: the Leaper's, open (the Way Up), not yet used this airtime (the ground, a rope's
+     * bite or strike give it back). {@code why}: trace why not (a press asked for it).
+     */
+    private static boolean dashOpen(LocalPlayer p, boolean why) {
+        String no = !has(AscentPayloads.Tier.LEAPER) ? "no Leaper" : p.onGround() ? "on the ground"
+                : !WayClient.canLeap(dev.awaken.body.ascent.WayUp.Leap.DASH) ? "not open yet (the Way Up gives it at a Gauntlet's stand)"
+                : (airMovesUsed & 2) != 0 ? "one already this airtime (the ground, a rope's bite or strike give it back)" : null;
+        if (no != null && why) trace("no dash: " + no);
+        return no == null;
+    }
+
+    /** A sprint press where the body is the rope's (a swing, a pull): kept for the dash once it lets go ({@link AscentRules#DASH_KEPT}). */
+    private static void keepDash(LocalPlayer p, boolean sprintPressed, String where) {
+        if (!sprintPressed || p.onGround()) return;
+        dashKeptAt = ticks;
+        trace("sprint " + where + ": kept for the dash at the let-go");
+    }
+
+    /** A press of the sprint key, off its own events (a press between two ticks counts; a repeat of a held key doesn't). */
+    static void sprintKey(boolean pressed) {
+        if (pressed && Minecraft.getInstance().gui.screen() == null) sprintTaps++;
     }
 
     /**
@@ -2515,6 +2573,7 @@ public final class AscentMoves {
             FeelDirector.land(landSpeed);
         }
         airMovesUsed = 0;
+        dashKeptAt = -1000;
         event(AscentPayloads.EV_LAND, landSpeed);
         // the run carries on: keep a share of the speed into the first steps (a roll when it's a hard landing)
         if (h > 0.3) {
@@ -2676,6 +2735,8 @@ public final class AscentMoves {
         linkArrived = false;
         glideFromEmpty = false;
         airMovesUsed = 0;
+        dashKeptAt = -1000;
+        sprintTaps = 0;
         state = AscentState.NONE;
         stateAge = 0;
         sent = false;

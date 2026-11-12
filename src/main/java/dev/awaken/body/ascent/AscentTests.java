@@ -23,6 +23,7 @@ final class AscentTests {
         AwakenTests.registerIsolated("ascent_tether_vow", 200, AscentTests::tetherVow);
         AwakenTests.register("ascent_aether", 40, AscentTests::aether);
         AwakenTests.register("ascent_sprint_flies_again", 20, AscentTests::sprintFliesAgain);
+        AwakenTests.register("ascent_dash_press", 20, AscentTests::dashPress);
         AwakenTests.registerIsolated("ascent_sky_rig", 100, AscentTests::skyRig);
         AwakenTests.registerIsolated("ascent_tether_spire", 100, AscentTests::tetherSpire);
         AwakenTests.register("ascent_windway", 20, AscentTests::windway);
@@ -519,6 +520,24 @@ final class AscentTests {
         h.assertTrue(AscentRules.sprintTakesFlight(true, true, false, 0.3), "a press takes a plain glide into flight");
         h.assertTrue(AscentRules.sprintTakesFlight(true, true, true, 0.01), "a press always tries (the weak beat if it can't)");
         h.assertFalse(AscentRules.sprintTakesFlight(false, true, false, 1), "sprint held into a plain glide (a run off a cliff) stays a glide");
+        h.succeed();
+    }
+
+    /**
+     * The air dash's press (SPEC §17.32, "The dash's press"; 12 Nov 2026, Euan: "air dashes don't work after any movement
+     * like double jump, wings, or rope"): a held sprint is no press, a re-tap inside one tick and a toggle's click are;
+     * a press the rope or a double jump's tick couldn't take is the dash's for six ticks, no longer.
+     */
+    private static void dashPress(GameTestHelper h) {
+        h.assertFalse(AscentRules.sprintPress(true, true, 0), "sprint held from the run is no press (it never dashes by itself)");
+        h.assertTrue(AscentRules.sprintPress(true, false, 0), "sprint going down is a press");
+        h.assertTrue(AscentRules.sprintPress(true, true, 1), "a held sprint let go and pressed again inside one tick is a press");
+        h.assertTrue(AscentRules.sprintPress(false, true, 1), "a toggle sprint's click that turns it off is a press too");
+        h.assertFalse(AscentRules.sprintPress(false, true, 0), "letting sprint go is no press");
+        h.assertTrue(AscentRules.dashKept(100, 100) && AscentRules.dashKept(100, 100 + AscentRules.DASH_KEPT),
+                "a press kept on the rope dashes at a let-go up to " + AscentRules.DASH_KEPT + " ticks on");
+        h.assertFalse(AscentRules.dashKept(100, 101 + AscentRules.DASH_KEPT), "a press kept longer than that is gone");
+        h.assertFalse(AscentRules.dashKept(-1000, 0), "nothing kept, nothing dashes");
         h.succeed();
     }
 
