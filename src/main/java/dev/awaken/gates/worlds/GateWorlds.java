@@ -56,6 +56,21 @@ public final class GateWorlds {
         return false;
     }
 
+    /**
+     * Whether an ordinary floor of this theme can be a world under a roof at this rank, by rank alone (SPEC §50.7, the
+     * theme bag while open lands are off). Mastery is left out: it depends on the player. Rare worlds belong to no theme.
+     */
+    public static boolean roofedWorld(Theme t, dev.awaken.progression.Rank rank) {
+        if (!AwakenConfig.GATE_WORLDS.get()) return false;
+        List<? extends String> off = AwakenConfig.GATE_WORLDS_OFF.get();
+        for (var e : defs.entrySet()) {
+            GateWorld w = e.getValue();
+            if (w.theme() == t && w.enabled() && !w.open() && w.ordinary() && w.tier() != GateWorld.Tier.RARE && w.tier() != GateWorld.Tier.SECRET
+                    && !off.contains(e.getKey()) && rank.ordinal() >= w.rankFrom()) return true;
+        }
+        return false;
+    }
+
     /** A theme's worlds in id order (a rare world belongs to no theme's set, whatever its recipe names: SPEC §38.13). */
     public static List<String> ofTheme(Theme t) {
         List<String> out = new ArrayList<>();
