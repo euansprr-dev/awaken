@@ -50,7 +50,12 @@ public final class Realms {
             return Blueprints.get(f).isPresent() ? Optional.of(f) : Optional.empty();
         }
         if (!AwakenConfig.GATE_REALMS.get()) return Optional.empty();
-        return Blueprints.pick(plan.theme(), plan.rank(), seen, plan.seed());
+        return Blueprints.pick(plan.theme(), plan.rank(), seen, plan.seed(), AwakenConfig.GATE_OPEN_LANDS.get());
+    }
+
+    /** Whether this gate's Realm is a land under the open sky. */
+    public static boolean openLand(GateRecord g) {
+        return g.realm.flatMap(r -> Blueprints.get(r.blueprint())).map(Blueprints::openLand).orElse(false);
     }
 
     /** Puts a new gate's Realm in place: a cell, and the plan where worldgen threads can read it. */

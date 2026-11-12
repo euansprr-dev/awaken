@@ -43,8 +43,25 @@ public final class LandPrograms {
             Map.entry("awaken:glass_country", dev.awaken.gates.realms.land.GlassCountry::new),
             Map.entry("awaken:fungal_country", dev.awaken.gates.realms.land.FungalCountry::new));
 
+    /**
+     * The programs that draw a place under a roof: the crawls and the two hand-built halls that say {@code indoors}. Every
+     * other program is a land under the open sky ({@link RealmCountry#has}); a new one counts as open until it is listed
+     * here, so a switched-off open land can never slip through. {@code realm_open_lands_off} builds each and checks.
+     */
+    private static final java.util.Set<String> ROOFED = java.util.Set.of(
+            "awaken:hour_crypt", "awaken:wax_galleries", "awaken:broodwarren", "awaken:brood_burrow", "awaken:frozen_cells",
+            "awaken:sunken_stacks", "awaken:hollow_hills", "awaken:catacombs", "awaken:root_cellars", "awaken:tallow_runs",
+            "awaken:glass_warrens", "awaken:sporewells", "awaken:cinder_workings", "awaken:silvered_halls", "awaken:sealed_wing",
+            "awaken:sleepless_ward", "awaken:unlit_stair", "awaken:rime_hollows", "awaken:green_dark", "awaken:stopped_works",
+            "awaken:leapers_gauntlet");
+
     public static boolean has(String id) {
         return PROGRAMS.containsKey(id);
+    }
+
+    /** Whether a program draws a land under the open sky, known without drawing it (Euan's switch of 12 Nov, SPEC §50.7). */
+    public static boolean open(String id) {
+        return !ROOFED.contains(id);
     }
 
     public static Land make(Land.Ctx ctx) {

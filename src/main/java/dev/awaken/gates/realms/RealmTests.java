@@ -722,6 +722,78 @@ public final class RealmTests {
             }
             h.succeed();
         });
+        // Open lands off (Euan 12 Nov, SPEC §50.7 and §38.11): no theme at any rank rolls a Realm under the open sky or dresses
+        // a floor as an open world, and every program said to be under a roof draws a land that is. The same sweep with the
+        // switch on does find open ones, so it is the switch that keeps them out. The real catalogues are read from the data
+        // here, since other tests leave a stand-in behind.
+        AwakenTests.register("realm_open_lands_off", 1200, h -> {
+            var server = h.getLevel().getServer();
+            var rm = server.getResourceManager();
+            Map<String, Blueprint> realBps = new java.util.TreeMap<>();
+            net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener.scanDirectory(rm, net.minecraft.resources.FileToIdConverter.json("realms"),
+                    com.mojang.serialization.JsonOps.INSTANCE, Blueprint.CODEC, new java.util.HashMap<>()).forEach((k, v) -> {
+                if (v.problem().isEmpty()) realBps.put(k.toString(), v);
+            });
+            Map<String, dev.awaken.gates.worlds.GateWorld> realWorlds = new java.util.TreeMap<>();
+            net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener.scanDirectory(rm, net.minecraft.resources.FileToIdConverter.json("gate_worlds"),
+                    com.mojang.serialization.JsonOps.INSTANCE, dev.awaken.gates.worlds.GateWorld.CODEC, new java.util.HashMap<>()).forEach((k, v) -> {
+                if (v.problem().isEmpty()) realWorlds.put(k.toString(), v);
+            });
+            if (realBps.isEmpty() || realWorlds.isEmpty()) h.fail("no Realms or gate worlds in the data");
+            Map<String, Blueprint> wasBps = Blueprints.all();
+            Map<String, dev.awaken.gates.worlds.GateWorld> wasWorlds = dev.awaken.gates.worlds.GateWorlds.all();
+            boolean realms = dev.awaken.core.AwakenConfig.GATE_REALMS.get(), worlds = dev.awaken.core.AwakenConfig.GATE_WORLDS.get(),
+                    lands = dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.get();
+            List<String> bad = new java.util.ArrayList<>();
+            try {
+                Blueprints.replace(realBps);
+                dev.awaken.gates.worlds.GateWorlds.replace(realWorlds);
+                dev.awaken.core.AwakenConfig.GATE_REALMS.set(true);
+                dev.awaken.core.AwakenConfig.GATE_WORLDS.set(true);
+                boolean sky = dev.awaken.gates.GateService.hasSky(server);
+                for (boolean on : new boolean[]{true, false}) {
+                    dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.set(on);
+                    Map<String, Rank> rolled = new java.util.TreeMap<>();
+                    Set<String> dressed = new java.util.TreeSet<>();
+                    for (Theme t : Theme.values()) {
+                        for (Rank r : Rank.values()) {
+                            if (!t.fits(r)) continue;
+                            for (long s = 0; s < 24; s++) {
+                                long seed = s * 7919L + t.ordinal() * 131L + r.ordinal();
+                                var plan = new dev.awaken.gates.content.GatePlan(seed, dev.awaken.gates.content.GatePlan.CONTENT_VERSION, r, t,
+                                        dev.awaken.gates.content.Layout.LABYRINTH, List.of(), dev.awaken.gates.content.Twist.NONE, 3, t.bossId(),
+                                        t == Theme.HIVE ? Theme.BELL_CRYPT : Theme.HIVE, 0);
+                                Realms.choose(server, plan, false, Set.of()).ifPresent(id -> rolled.putIfAbsent(id, r));
+                                for (var fw : dev.awaken.gates.worlds.GateWorlds.dress(server, plan, java.util.Optional.empty()).worlds()) dressed.add(fw.world());
+                            }
+                        }
+                    }
+                    List<String> openRolled = rolled.keySet().stream().filter(id -> Blueprints.openLand(realBps.get(id))).toList();
+                    List<String> openDressed = dressed.stream().filter(id -> realWorlds.get(id).open()).toList();
+                    if (on) {
+                        if (openRolled.isEmpty()) bad.add("with the switch on no open Realm was rolled at all (is the Realms dimension there?)");
+                        if (sky && openDressed.isEmpty()) bad.add("with the switch on no floor was dressed as an open world");
+                        continue;
+                    }
+                    if (!openRolled.isEmpty()) bad.add("open lands are off and these Realms were rolled: " + openRolled);
+                    if (!openDressed.isEmpty()) bad.add("open lands are off and floors were dressed as: " + openDressed);
+                    // what was rolled must really be under a roof: draw each once
+                    for (var e : rolled.entrySet()) {
+                        Land land = RealmPlan.of(e.getKey(), realBps.get(e.getKey()), e.getValue(), 1, RealmPlan.CURRENT_VERSION).land();
+                        if (RealmCountry.has(land)) bad.add(e.getKey() + " (" + realBps.get(e.getKey()).land().program() + ") is said to be under a roof but its land is open: list it in LandPrograms");
+                    }
+                    dev.awaken.Awaken.LOG.info("[realms] open lands off: {} Realms can roll ({}), {} floor worlds", rolled.size(), String.join(", ", rolled.keySet()), dressed.size());
+                }
+            } finally {
+                Blueprints.replace(wasBps);
+                dev.awaken.gates.worlds.GateWorlds.replace(wasWorlds);
+                dev.awaken.core.AwakenConfig.GATE_REALMS.set(realms);
+                dev.awaken.core.AwakenConfig.GATE_WORLDS.set(worlds);
+                dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.set(lands);
+            }
+            if (!bad.isEmpty()) h.fail(String.join("; ", bad));
+            h.succeed();
+        });
         // The valley's herd, people and flies: each exists, is never rolled by a biome, and is a peaceful creature with its own voice.
         AwakenTests.register("realm_life_creatures", 40, h -> {
             var level = h.getLevel();
