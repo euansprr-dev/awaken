@@ -459,7 +459,7 @@ public final class GateService {
         for (GateRecord g : reg.all()) {
             if (g.state == GateState.RELEASED) continue;
             if (!dev.awaken.core.AwakenConfig.GATE_OPEN_LANDS.get() && unentered(g)
-                    && (dev.awaken.gates.realms.Realms.openLand(g) || g.realm.isEmpty() && dev.awaken.gates.worlds.GateWorlds.openLand(g.plan))) {
+                    && (dev.awaken.gates.realms.Realms.openLandOff(g) || g.realm.isEmpty() && dev.awaken.gates.worlds.GateWorlds.openLand(g.plan))) {
                 remakeOffOpenLand(server, reg, g);
             } else if (g.realm.isEmpty() && g.state == GateState.READY && g.plan.contentVersion() < GatePlan.current() && g.party.isEmpty() && reg.hasFreeCell()) {
                 // content changed and nobody entered: rebuild on the new version in a fresh cell

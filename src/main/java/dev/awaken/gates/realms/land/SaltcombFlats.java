@@ -7,6 +7,7 @@ import dev.awaken.gates.realms.kit.N;
 import dev.awaken.gates.realms.kit.Piece;
 import dev.awaken.gates.realms.kit.V;
 import dev.awaken.gates.realms.kit.piece.Find;
+import dev.awaken.gates.realms.kit.piece.Hops;
 import dev.awaken.gates.realms.kit.piece.Hut;
 import dev.awaken.gates.realms.kit.piece.MouthRing;
 import dev.awaken.gates.realms.kit.piece.Stall;
@@ -37,6 +38,8 @@ public final class SaltcombFlats extends KitLand<SaltcombFlats.M> {
     static final int CCZ = -60, RI = 42, RW = 60, RO = 67, SPRING = 52, OCULUS = 22;
     static final int[] FORDS = {188, 128, 72};
     static final int FRX = 28, FRZ = 12;
+    /** Version 2's comb table (SPEC §50.9): the flats Warden's ground, a hexagon of comb standing out of the pan, and the top of it. */
+    static final int TX = 140, TZ = 150, TR = 17, TT = CRUST + 8;
     static final double S3 = Math.sqrt(3), TAU = Math.PI * 2;
 
     public static final class M extends Mats {
@@ -73,9 +76,20 @@ public final class SaltcombFlats extends KitLand<SaltcombFlats.M> {
     private final List<int[]> mounds = new ArrayList<>(), cones = new ArrayList<>(), stacks = new ArrayList<>(), keepClear = new ArrayList<>();
     private final List<Edit> grille = new ArrayList<>(), fordCrust = new ArrayList<>();
     private final List<int[]> sinkA = new ArrayList<>(), sinkB = new ArrayList<>();
+    /**
+     * Version 2 (SPEC §50.9, Euan 12 Nov: "nothing guided me"): a designed run with camps on the way, stones to jump along
+     * over each ford, a climb of comb towers to the flats Warden's table and a stair of stones round the drum. A plan of
+     * version 1 keeps the land exactly as it was.
+     */
+    final boolean v2;
+    /** The stretches to jump along, in the run's order: the first ford, the comb towers, the second ford, the last ford, round the drum. */
+    private final List<Hops> hops = new ArrayList<>();
+    /** Columns a stone of those stands on: solid down to the bed, so a ford going soft never leaves one standing on brine. */
+    private final java.util.Set<Long> hopCols = new java.util.HashSet<>();
 
     public SaltcombFlats(Ctx ctx) {
         super(ctx, 0x53414C54L);
+        v2 = ctx.version() >= 2;
         n1 = N.noise(seed + 31);
         n2 = N.noise(seed + 32);
         n3 = N.noise(seed + 33);
@@ -88,6 +102,7 @@ public final class SaltcombFlats extends KitLand<SaltcombFlats.M> {
         mounds.add(new int[]{-74, 212, 40, 4});
         mounds.add(new int[]{62, 204, 36, 4});
         road();
+        if (v2) planHops();
         planFords();
         planFloor();
         grilleOfDoor();
@@ -102,6 +117,7 @@ public final class SaltcombFlats extends KitLand<SaltcombFlats.M> {
         flats();
         village();
         clearSites();
+        if (v2) run();
     }
 
     // ---- the plan ----------------------------------------------------------------------------------------------------------
@@ -127,8 +143,146 @@ public final class SaltcombFlats extends KitLand<SaltcombFlats.M> {
     private void planFords() {
         M m = m();
         for (int fz : FORDS) for (int x = -FRX; x <= FRX; x++) for (int z = fz - FRZ; z <= fz + FRZ; z++) {
+            if (hopCols.contains(col(x, z))) continue; // a stone's footing stays put when the salt goes soft
             if (N.sq(x / (double) FRX) + N.sq((z - fz) / (double) FRZ) < 1) fordCrust.add(new Edit(x, CRUST, z, crustAt(m, x, z)));
         }
+    }
+
+    private static long col(int x, int z) {
+        return (long) x << 32 ^ z & 0xFFFFFFFFL;
+    }
+
+    // ---- version 2: the way through (SPEC §50.9) --------------------------------------------------------------------------
+
+    /**
+     * The stones to jump along. Over each ford a line of the road's own black stone beside the road, a running jump apart,
+     * so the way across holds when the salt goes soft; east, comb towers climbing from the pan to the flats Warden's table;
+     * north-east, a stair of bone-white stones up the sand round the drum to the dome's foot. Each keeps the city back.
+     */
+    private void planHops() {
+        M m = m();
+        // the ford lines keep a few blocks off the road's own stones, which wander a little either side of the middle
+        addHops(new Hops(Hops.on(Hops.line(-14, 207, CRUST + 2, -15, 169, CRUST + 2, 1, 2, seed + 1), this), m.flag, m.flag, m.deep, "stones over the first ford"));
+        addHops(new Hops(Hops.on(Hops.line(66, 140, CRUST + 2, 117, 146, TT - 1, 1, 3, seed + 2), this), m.combBlock, m.pale, m.relief, "the comb towers"));
+        addHops(new Hops(Hops.on(Hops.line(17, 147, CRUST + 2, 16, 109, CRUST + 3, 1, 2, seed + 3), this), m.flag, m.flag, m.deep, "stones over the second ford"));
+        addHops(new Hops(Hops.on(Hops.line(-12, 90, CRUST + 2, -13, 54, CRUST + 2, 1, 2, seed + 4), this), m.flag, m.flag, m.deep, "stones over the last ford"));
+        addHops(new Hops(Hops.follow(52, 28, 80, -24, 3, 1, 2, seed + 5, this), m.bone, m.pale, m.relief, "stones round the drum"));
+    }
+
+    private void addHops(Hops h) {
+        hops.add(h);
+        pieces.add(h);
+        for (Hops.Stone s : h.stones) {
+            for (int dx = -s.r(); dx <= s.r(); dx++) for (int dz = -s.r(); dz <= s.r(); dz++) if (dx * dx + dz * dz <= s.r() * s.r() + s.r()) hopCols.add(col(s.x() + dx, s.z() + dz));
+            // the lower city keeps its heaps of cells off the stones
+            keepClear.add(new int[]{s.x(), s.z(), 3});
+        }
+    }
+
+    /** The stretches to jump along (version 2), in the run's order; none in version 1. */
+    public List<Hops> hops() {
+        return List.copyOf(hops);
+    }
+
+    /** The comb table's top here, or of its ramp down the east side to the pan, or -1 off it. Version 2 only. */
+    private int tableTop(int x, int z) {
+        if (!v2 || Math.abs(x - TX) > TR + 20 || Math.abs(z - TZ) > TR + 2) return -1;
+        if (hexMetric(x + 0.5 - TX, z + 0.5 - TZ) <= TR) return TT;
+        // a way up for whoever walks round: a ramp off the east side, a block down for every two out
+        if (Math.abs(z - TZ) <= 2 && x > TX + TR - 2) {
+            int y = TT - (x - (TX + TR - 2)) / 2;
+            return y > CRUST ? y : -1;
+        }
+        return -1;
+    }
+
+    private void tableColumn(V v, M m, int x, int z, int top) {
+        for (int y = 1; y < BASIN; y++) v.set(x, y, z, m.rock);
+        boolean ramp = hexMetric(x + 0.5 - TX, z + 0.5 - TZ) > TR;
+        double e = hexMetric(x + 0.5 - TX, z + 0.5 - TZ) / TR;
+        for (int y = BASIN; y < top; y++) v.set(x, y, z, ramp ? m.crust : Math.floorMod(y + (int) (rnd(x, z, 97) * 3), 4) == 0 ? m.relief : m.combBlock);
+        v.set(x, top, z, ramp ? crustAt(m, x, z) : e > 0.92 ? m.pale : crustAt(m, x, z));
+    }
+
+    /** Whether the pan here is one of its sunk plates, full of brine, the way {@link #saltColumn} draws it. */
+    boolean brine(int x, int z) {
+        if (inFord(x, z) || tableTop(x, z) > 0) return false;
+        double h = sandH(x, z);
+        if (h > CRUST + 0.5) return false;
+        N.Hex p = N.hex(x + 7.5, z + 3.5, 13);
+        return rnd(p.q(), p.r(), seed + 5) < 0.3 && h < CRUST - 2 && Math.hypot(x, z - 244) > 30 && p.edge() < 0.87;
+    }
+
+    /** The nearest place to (x, z) a camp can stand: dry salt or sand, with nothing sunk under the ring of it. */
+    private int[] dry(int x, int z) {
+        for (int r = 0; r <= 14; r += 2) for (int k = 0; k < Math.max(1, r * 3); k++) {
+            double a = k * Math.PI * 2 / Math.max(1, r * 3);
+            int cx = x + (int) Math.round(Math.cos(a) * r), cz = z + (int) Math.round(Math.sin(a) * r);
+            boolean ok = true;
+            for (int dx = -4; dx <= 4 && ok; dx += 2) for (int dz = -4; dz <= 4 && ok; dz += 2) ok = !brine(cx + dx, cz + dz) && !inFord(cx + dx, cz + dz);
+            if (ok) return new int[]{cx, cz};
+        }
+        return new int[]{x, z};
+    }
+
+    /** Version 2's own camps, after the eight dens of old so their numbers stay: the first ford, out on the salt, under the comb towers, the market's stalls. */
+    private static final int[][] CAMPS = {{18, 203}, {-22, 150}, {40, 158}, {-62, 4}};
+
+    /**
+     * The run (SPEC §50.9): a camp within sight of the way in, the first ford by its stones or round it, a camp out on the
+     * salt, then three ways on, each to a Warden under its light. East, a camp and the comb towers up to the flats
+     * Warden's table. North over the other two fords to the court steps, where the way splits again: west past a camp
+     * into the empty stalls, where the market Warden's company waits; east past a camp and up the stones round the drum
+     * to the dome's Warden. The court steps are a breather, and the door is there.
+     */
+    private void run() {
+        List<String> none = List.of();
+        leg("arrive", LegKind.ARRIVE, "The black road", 0, CRUST + 2, 244, 6, -1, none, "", "camp1");
+        camp("camp1", 8, "A camp at the first ford", "ford1", "camp2");
+        hop("ford1", 0, "Stones over the first ford", "camp2");
+        camp("camp2", 9, "A camp out on the salt", "ford2", "flats_camp");
+        camp("flats_camp", 10, "A camp under the comb towers", "comb");
+        hop("comb", 1, "The comb towers", "warden0");
+        warden("warden0", 0, "The comb table", "comb");
+        hop("ford2", 2, "Stones over the second ford", "ford3");
+        hop("ford3", 3, "Stones over the last ford", "steps");
+        leg("steps", LegKind.BREATHER, "The court steps", 0, F + 1, 22, 10, -1, none, "", "camp_w", "camp_e", "lord");
+        camp("camp_w", 6, "A camp below the market", "stalls");
+        Site stalls = sites(SiteKind.DEN).get(11);
+        leg("stalls", LegKind.AMBUSH, "The empty stalls", stalls.x(), stalls.y(), stalls.z(), 8, 11, none, "", "warden1");
+        warden("warden1", 1, "The market", "stalls");
+        camp("camp_e", 7, "A camp by the drum", "drum");
+        hop("drum", 4, "The stones round the drum", "warden2");
+        warden("warden2", 2, "The dome's foot", "drum");
+        Site lord = site(SiteKind.LORD);
+        leg("lord", LegKind.LORD, "The Sinking Court", lord.x(), lord.y(), lord.z(), lord.radius(), -1, none, "");
+        for (Hops h : hops) course(h.course(legOf(h), this));
+    }
+
+    private String legOf(Hops h) {
+        return switch (hops.indexOf(h)) {
+            case 0 -> "ford1";
+            case 1 -> "comb";
+            case 2 -> "ford2";
+            case 3 -> "ford3";
+            default -> "drum";
+        };
+    }
+
+    private void camp(String id, int den, String name, String... exits) {
+        Site s = sites(SiteKind.DEN).get(den);
+        leg(id, LegKind.FIGHT, name, s.x(), s.y(), s.z(), 8, den, List.of(), "", exits);
+    }
+
+    private void hop(String id, int i, String name, String... exits) {
+        Hops h = hops.get(i);
+        int[] a = h.start(), b = h.end();
+        leg(id, LegKind.MOVEMENT, name, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, 9, -1, List.of(), "", exits);
+    }
+
+    private void warden(String id, int i, String name, String... exits) {
+        Site s = sites(SiteKind.WARDEN).get(i);
+        leg(id, LegKind.WARDEN, name, s.x(), s.y(), s.z(), Math.max(12, s.radius()), i, List.of(), "", exits);
     }
 
     private BlockState crustAt(M m, int x, int z) {
@@ -211,6 +365,8 @@ public final class SaltcombFlats extends KitLand<SaltcombFlats.M> {
     public int ground(int x, int z) {
         int st = stoneTop(x, z);
         if (st > 0) return st;
+        int tt = tableTop(x, z);
+        if (tt > 0) return tt;
         if (inCourt(x, z)) return F;
         if (inFord(x, z)) return CRUST;
         double h = sandH(x, z);
@@ -347,6 +503,19 @@ public final class SaltcombFlats extends KitLand<SaltcombFlats.M> {
     private void column(V v, M m, int x, int z) {
         if (Math.abs(x) > HALF || Math.abs(z) > HALF) return;
         v.set(x, 0, z, m.bedrock);
+        if (v2) {
+            int tt = tableTop(x, z);
+            if (tt > 0) {
+                tableColumn(v, m, x, z, tt);
+                return;
+            }
+            if (hopCols.contains(col(x, z))) {
+                // a stone to jump to stands on the bed, as the road's stones do; the pan comes up to its foot
+                for (int y = 1; y < BASIN; y++) v.set(x, y, z, m.rock);
+                for (int y = BASIN; y <= CRUST; y++) v.set(x, y, z, m.flag);
+                return;
+            }
+        }
         if (inFord(x, z)) {
             for (int y = 1; y < BASIN; y++) v.set(x, y, z, m.rock);
             v.set(x, BASIN, z, m.crust);
@@ -882,6 +1051,11 @@ public final class SaltcombFlats extends KitLand<SaltcombFlats.M> {
         }
         site(SiteKind.VILLAGE, -150, ground(-150, 160) + 1, 160, 34, "");
         for (int[] d : new int[][]{{-210, 90}, {-170, 40}, {-140, -50}, {180, 40}, {210, 120}, {150, -20}, {-30, 40}, {40, 40}}) {
+            site(SiteKind.DEN, d[0], ground(d[0], d[1]) + 1, d[1], 10, "");
+            keepClear.add(new int[]{d[0], d[1], 12});
+        }
+        if (v2) for (int[] c : CAMPS) {
+            int[] d = dry(c[0], c[1]);
             site(SiteKind.DEN, d[0], ground(d[0], d[1]) + 1, d[1], 10, "");
             keepClear.add(new int[]{d[0], d[1], 12});
         }

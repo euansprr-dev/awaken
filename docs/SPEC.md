@@ -23065,7 +23065,15 @@ nobody has entered (`GateService.unentered`: READY or BUILDING, no party, no ent
 (`remakeOffOpenLand`, a line in its trace): a Realm's land goes to the eraser and the gate rolls again in a fresh Realm
 cell; a gate of floors with an open world is dressed again in a fresh cell, as a content rebuild is (no free cell: it stays
 as it is). A gate someone has been in keeps what it is. `/awaken gate realm` still forms any Realm, and switching it on
-brings them back for new gates. The fix is planned on its own before anything is built.
+brings them back for new gates.
+**Coming back one by one** (the fix, page https://claude.ai/artifact/9ifcnaxemAp1Gc2AF1Jtwt, Euan 12 Nov: "Go ahead with the
+full plan"; §50.9 "Open lands, fixed"). `AwakenConfig.gateOpenLandsBack` (a list of Realm ids, empty by default): with
+`gateOpenLands` off, an open land on the list rolls again for new gates (`Blueprints.back`), on today's plan only
+(`RealmPlan.CURRENT_VERSION`, 2): an unentered gate standing on an older plan of it is still made again at the next start
+(`Realms.openLandOff`). A land goes on the list once it passes the open-land check and has been looked at: Saltcomb Flats,
+the proof land, once Euan has played it (by command, `/awaken gate realm E awaken:saltcomb_flats`); each of the others on
+the check and CI tour shots. Gate Worlds' open floors stay off (§38.11); the Lantern Night Market and the Sky Archipelago
+stay out of the bag while the switch is off, as below.
 The theme bag follows the switch (`Director.inBag`): with it off, a theme stays out of the bag at a rank where it has
 nothing under a roof, neither a Realm (`Blueprints.open(theme, rank, false)`, while `gateRealms` is on) nor an ordinary
 floor world (`GateWorlds.roofedWorld`: enabled, not open, everyday, deep or wonder, its rank reached, not in
@@ -23086,7 +23094,8 @@ coordinates, 0,0 the Realm's middle; `V` is a scratch volume per chunk with a on
 Runs hands a Realm gate to `RealmLive` before the floors' code sees it: no pressure clock, no rooms, no twists yet (a gate with a twist
 stays floors until its Realm form is built). Your way home is the arch by the Mouth, any time, Satchel banked; bag per owner
 (`GateMemory.seenRealms`). Monsters wake within 56 blocks of their den or Warden. Wardens fall in any order and the last opens the way
-to the Lord, never announced (decision 12).
+to the Lord, never announced (decision 12; changed 12 Nov for open ground: each Warden stands under a pillar of light and the
+Lord's door carries a seal for each, §50.9 "Lights and seals").
 
 Pay (§50.3): a Realm's pool is what the same gate's floors would pay. 60% is split kill by kill (a den about five shares, a Warden
 four); of the other 40% each Warden banks a sixth and the Lord pays what's left, plus first clear and the Lord's payout as usual.
@@ -23299,9 +23308,63 @@ its theme's herds, four each for the Hive, the Bell Crypt and the Overgrown Temp
 seed picks, so two camps in one land are not the same fight. Under a roof a fifth herd joins the round: Drip Lurkers or
 Hushlings with one of the theme's own. A theme with no herds rolls from its roster as before.
 
-**The run on the HUD.** In a Realm the run HUD's hint line reads "Herds 2 / 5 · Wardens 1 / 3" (packs that stand and wait and
-are all down, of those the run has; a herd that keeps its own habits isn't counted), then "Every Warden is down. The way on is
-open." until the Lord falls (`RealmLive.hint`).
+**The run on the HUD.** In a Realm the run HUD's hint line reads "Camps 2 / 5 · Wardens 1 / 3" (packs that stand and wait and
+are all down, of those the run has; a herd that keeps its own habits isn't counted), on open ground "Seals broken 1 / 3 ·
+Camps 2 / 5", then "Every Warden is down. The way on is open." until the Lord falls (`RealmLive.hint`).
+
+#### Open lands, fixed (page https://claude.ai/artifact/9ifcnaxemAp1Gc2AF1Jtwt; Euan 12 Nov, all five decisions: "Go ahead with the full plan")
+What Euan found on Saltcomb Flats: nothing showed where to go, the Lord's building was shut with no word of how it opens,
+few monsters and those scattered, no movement. The runs under a roof work because the way is the jumping. So on open ground:
+
+**Lights and seals** (`gates.realms.RealmLights`, payload `GatePayloads.RealmLights`, drawn by `client.Pillars.realm`). A land
+that shows its Wardens (`RealmLights.shows`: it has a country, `RealmCountry.has`, a Lord and Wardens) puts a pillar of light
+in the theme's colour (`RealmLights.COLOURS`, warm white for a theme without one) 360 high over every Warden still standing,
+and an 11-high seal light for each in a short row just outside the Lord's door (`RealmLights.seals`: the blocks `heart_open`
+clears nearest the Mouth are the door; the row stands 3 out, away from the Lord, 2.5 apart, on the ground). The Lord stays
+unnamed and unlit (decision 1). Sent on arrival and every 30 s; when a Warden falls its pillar and one seal fade over 2.5 s
+(`ClientGates.realmLights`), a toast says "A seal on the Lord's door has broken. 2 Wardens are left, each under a light."
+(one-left and last-seal variants) with the beacon's power-down sound, and when the heart opens all lights go. The first two
+open lands you enter teach it once, six seconds in, in a System window "Find the Wardens": "Each pillar of light in the sky
+stands over a Warden. Beat every one of them and the seals on the Lord's door break." (`GateMemory.openLandsTold`, schema 3,
+key `open_told`). At the shut door the land's own line comes first, then, once for each count you come back with, "3 seals
+are left on this door, one for each Warden still standing. Each is under a pillar of light." (in chat the first time, a toast
+after: `RealmLights.doorCount`).
+
+**A way with climbs** (`kit.piece.Hops`, `kit.WayPlanner`). A line of stones to jump along: pillars 3 or 5 across, gaps of 2
+or 3 (a running jump), each top at most one up or down from the last, the first a jump up from the ground (`Hops.on`), every
+stone dressed in the land's own stone with a band of its accent; its course catches a fall back onto the last stone stood on.
+- **Saltcomb Flats** is designed (decision 2, the proof land): Mouth, a camp, then stones over the first ford or the walk to a
+  second camp (a ring), the flats camp and the comb towers, ten stones climbing to a raised comb table (hex of 17 at crust
+  plus 8, a ramp off its east side for whoever walks round) where the first Warden stands; the second and last fords on
+  stones (they hold when the salt goes soft: their columns are solid to the bed) to the steps before the court (a
+  breather), then west through the stalls (an ambush) to the second Warden and east up a stair of bone-white stones round
+  the drum to the third; the Lord behind the door. Four new camps (dens 8 to 11) put a fight within 60 of the Mouth.
+- **Amber Reach, The Vine Seat, Kingsroot Keep, The Quiet Barrow** get a run planned from their own sites
+  (`KitLand.designWay`, `WayPlanner.plan`): a camp near the Mouth, stones beside it and a hub camp past them (two ways, a
+  ring), then a branch to each Warden by distance and last to the Lord's door, a stop every 64 blocks at most (an unused den
+  within 26, or a new camp on level ground clear of the land's sites, roads and what is built), each branch with its own line
+  of stones. All of it or none: a branch that can't be laid is rolled back and tried from another stop, and a land where any
+  target fails keeps its run read off its sites, with a warning in the log.
+- **The rolled lands** (`GeneratedLand.secondStretch`): beside the longest walk between two legs of the run that are neither
+  movement nor the Lord's, a second stretch of stones in the country's rock, spliced in as a movement leg ("Stones to jump
+  along", `Land.between`); where no line fits on dry ground clear of the ways, the run is as before.
+
+**Life leans to the way** (`RealmCountry.leans`: designed, plan 2 or later). A cell whose middle is within 70 blocks of the
+way (every walk from one leg to the next, and the land's roads) is quiet on a roll under 35 (50 elsewhere) and holds hunters
+more often (herd 28, small 20, prowl 32, watch 13, lair 7 in a hundred); one 150 or more off the way is quiet under 60 and
+mostly grazers. A land with a long way gets more of them: one more prowl share for every 300 blocks of way and one more watch
+for every 600.
+
+**Open lands come back on the check** (`check.OpenLandCheck`, decision 3). On top of the run check: a designed run; a first fight
+within 60 blocks of the Mouth; no walk between two legs over 90; at least two stretches of movement and one on a way to each
+Warden; each Warden's light in view from the Mouth over the land's ground (a line from head height to somewhere 40 to 140 up
+the pillar). Saltcomb has to pass it (`realm_open_way`, which also checks every line of stones of every open land on today's
+plan, and logs the other lands' answers); a land comes back on `gateOpenLandsBack` (§50.7).
+
+**Plan version 2** (`RealmPlan.CURRENT_VERSION`). All of the above but the lights is drawn only for a gate on plan 2; a gate's
+version is saved with it, so one rolled before keeps its land exactly. The open lands' walk and float checks run on plan 2
+(`realm_saltcomb_*`, `realm_kingsroot_*`, `realm_vine_*`, `realm_quiet_barrow_*`, the rolled lands' tests); `realm_seals` and
+`realm_country_way` check the seals and the lean.
 
 Three more skins, each one file a builder wrote from a thirty-line brief in ten to twenty minutes (bench on three seeds, then
 the six-seed test here):

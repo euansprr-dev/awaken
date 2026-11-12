@@ -109,6 +109,24 @@ public abstract class Land {
         legs.add(new Leg(id, kind, name, x, y, z, radius, site, List.copyOf(pack), when, List.of(exits)));
     }
 
+    /**
+     * Puts a new leg between two legs of the run already laid (SPEC §50.9, version 2's second stretch of movement): the
+     * exit from {@code from} to {@code to} now goes through it. False when {@code from} doesn't lead on to {@code to}.
+     */
+    protected final boolean between(String from, String to, String id, LegKind kind, String name, int x, int y, int z, int radius) {
+        for (int i = 0; i < legs.size(); i++) {
+            Leg l = legs.get(i);
+            if (!l.id().equals(from) || !l.exits().contains(to)) continue;
+            List<String> ex = new ArrayList<>(l.exits());
+            ex.set(ex.indexOf(to), id);
+            legs.set(i, new Leg(l.id(), l.kind(), l.name(), l.x(), l.y(), l.z(), l.radius(), l.site(), l.pack(), l.when(), List.copyOf(ex)));
+            legs.add(new Leg(id, kind, name, x, y, z, radius, -1, List.of(), "", List.of(to)));
+            route = null;
+            return true;
+        }
+        return false;
+    }
+
     protected final void trap(Trap t) {
         traps.add(t);
     }

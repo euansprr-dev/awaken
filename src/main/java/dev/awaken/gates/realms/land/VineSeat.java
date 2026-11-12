@@ -113,6 +113,12 @@ public final class VineSeat extends KitLand<VineSeat.M> {
         village();
         placeSites();
         clearSites();
+        // plan version 2 (SPEC §50.9): a designed way round the seat, camps and stones on dry ground off the seat and the village
+        if (ctx.version() >= 2) {
+            M m = m();
+            designWay((x, z) -> ground(x, z) > WATER + 1 && Math.max(Math.abs(x), Math.abs(z)) > H0 + 10 && Math.hypot(x + 160, z - 214) > 56,
+                    new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band));
+        }
     }
 
     private void room(Room r) {

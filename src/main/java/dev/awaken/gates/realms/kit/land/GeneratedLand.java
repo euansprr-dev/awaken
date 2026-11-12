@@ -8,6 +8,8 @@ import dev.awaken.gates.realms.kit.N.Hex;
 import dev.awaken.gates.realms.kit.Piece;
 import dev.awaken.gates.realms.kit.SheetLand;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.kit.WayPlanner;
+import dev.awaken.gates.realms.kit.piece.Hops;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -375,7 +377,47 @@ public abstract class GeneratedLand extends SheetLand<GeneratedLand.Kit> {
         form.lay();
         if (grid == null) throw new IllegalStateException(kind + " laid no ways");
         furnish();
+        if (ctx.version() >= 2) secondStretch();
         clearSites();
+    }
+
+    /**
+     * Plan version 2 (SPEC §50.9; Euan, 12 Nov: the runs are better "with the movement, the jumping"): a second stretch to
+     * jump along besides the broken bridge, beside the longest walk between two legs of the run that are neither movement
+     * nor the Lord's, in the land's own rock. Laid only where every stone stands on dry ground clear of the ways and of
+     * what is built; where none fits, the run is as before.
+     */
+    private void secondStretch() {
+        Leg from = null, to = null;
+        double best = 44;
+        for (Leg a : route()) for (String id : a.exits()) {
+            Leg b = leg(id);
+            if (b == null || a.kind() == LegKind.MOVEMENT || b.kind() == LegKind.MOVEMENT || b.kind() == LegKind.LORD || b.kind() == LegKind.HIDDEN
+                    || b.kind() == LegKind.SHORTCUT || a.kind() == LegKind.HIDDEN) continue;
+            double d = Math.hypot(b.x() - a.x(), b.z() - a.z());
+            if (d > best) {
+                best = d;
+                from = a;
+                to = b;
+            }
+        }
+        if (from == null) return;
+        double ux = (to.x() - from.x()) / best, uz = (to.z() - from.z()) / best;
+        List<? extends Piece<?>> all = pieces();
+        for (double at : new double[]{0.35, 0.5, 0.25}) for (int side : new int[]{9, -9, 15, -15, 22, -22}) for (int len : new int[]{32, 24}) {
+            double cx = from.x() + (to.x() - from.x()) * at - uz * side, cz = from.z() + (to.z() - from.z()) * at + ux * side;
+            int x0 = (int) Math.round(cx - ux * len / 2.0), z0 = (int) Math.round(cz - uz * len / 2.0);
+            int x1 = (int) Math.round(cx + ux * len / 2.0), z1 = (int) Math.round(cz + uz * len / 2.0);
+            List<Hops.Stone> line = Hops.follow(x0, z0, x1, z1, 3, 1, 2, seed + side * 7L + len, this);
+            if (!WayPlanner.fits(this, all, (x, z) -> ground(x, z) > water() + 1,
+                    new ArrayList<>(), line)) continue;
+            Hops h = new Hops(line, dress.rock(), dress.stone(), dress.dark(), "stones to jump along");
+            int[] a = h.start(), b = h.end();
+            if (!between(from.id(), to.id(), "climb", LegKind.MOVEMENT, "Stones to jump along", (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, 9)) return;
+            pieces.add(h);
+            course(h.course("climb", this));
+            return;
+        }
     }
 
     // ---- the ground -----------------------------------------------------------------------------------------------------------

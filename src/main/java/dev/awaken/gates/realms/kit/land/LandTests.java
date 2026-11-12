@@ -20,12 +20,17 @@ import java.util.Map;
 public final class LandTests {
     private LandTests() {}
 
-    /** A rolled land as a gate would make it: the skin's program, the landform by its place in {@link Landform.Kind}. */
+    /** A rolled land as a gate would make it today: the skin's program, the landform by its place in {@link Landform.Kind}. */
     static Land land(String program, String theme, Landform.Kind kind, String lord, Rank rank, long seed) {
+        return land(program, theme, kind, lord, rank, seed, dev.awaken.gates.realms.RealmPlan.CURRENT_VERSION);
+    }
+
+    /** The same on a plan version of its own (version 1 is the land before its second stretch of stones, SPEC §50.9). */
+    public static Land land(String program, String theme, Landform.Kind kind, String lord, Rank rank, long seed, int version) {
         Blueprint bp = new Blueprint(1, "t", "land", theme, List.of("E"), new Blueprint.LandSpec(program, GeneratedLand.WATER, Map.of("landform", (double) kind.ordinal())),
                 new Blueprint.Sky(List.of("awaken:realm/cinder_crown"), "", List.of()), new Blueprint.Life(List.of(), List.of(), List.of()), new Blueprint.Folk("none", 0),
                 new Blueprint.Law("none", Map.of()), new Blueprint.Sites(1, 0, 6), new Blueprint.Heart(lord, ""), List.of(), "");
-        return LandPrograms.make(new Land.Ctx(bp, program, rank, seed, 1));
+        return LandPrograms.make(new Land.Ctx(bp, program, rank, seed, version));
     }
 
     private static void walks(net.minecraft.gametest.framework.GameTestHelper h, String program, String theme, Landform.Kind kind, String lord, Rank rank) {

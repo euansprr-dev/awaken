@@ -40,23 +40,39 @@ public final class RealmTests {
     }
 
     private static dev.awaken.gates.realms.land.SaltcombFlats salt(long seed) {
+        return salt(seed, 1);
+    }
+
+    private static dev.awaken.gates.realms.land.SaltcombFlats salt(long seed, int version) {
         return new dev.awaken.gates.realms.land.SaltcombFlats(new Land.Ctx(new Blueprint(1, "t", "desert_ruin", "hive", List.of("E"), new Blueprint.LandSpec("awaken:saltcomb_flats", 0, Map.of()),
-                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:saltcomb_flats", Rank.E, seed, 1));
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:saltcomb_flats", Rank.E, seed, version));
     }
 
     private static dev.awaken.gates.realms.land.KingsrootKeep keep(long seed) {
+        return keep(seed, 1);
+    }
+
+    private static dev.awaken.gates.realms.land.KingsrootKeep keep(long seed, int version) {
         return new dev.awaken.gates.realms.land.KingsrootKeep(new Land.Ctx(new Blueprint(1, "t", "stronghold", "overgrown_temple", List.of("E"), new Blueprint.LandSpec("awaken:kingsroot_keep", 0, Map.of()),
-                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:kingsroot_keep", Rank.E, seed, 1));
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:kingsroot_keep", Rank.E, seed, version));
     }
 
     private static dev.awaken.gates.realms.land.VineSeat vine(long seed) {
+        return vine(seed, 1);
+    }
+
+    private static dev.awaken.gates.realms.land.VineSeat vine(long seed, int version) {
         return new dev.awaken.gates.realms.land.VineSeat(new Land.Ctx(new Blueprint(1, "t", "stronghold", "overgrown_temple", List.of("E"), new Blueprint.LandSpec("awaken:vine_seat", 0, Map.of()),
-                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:vine_seat", Rank.E, seed, 1));
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:vine_seat", Rank.E, seed, version));
     }
 
     private static dev.awaken.gates.realms.land.QuietBarrow barrow(long seed) {
+        return barrow(seed, 1);
+    }
+
+    private static dev.awaken.gates.realms.land.QuietBarrow barrow(long seed, int version) {
         return new dev.awaken.gates.realms.land.QuietBarrow(new Land.Ctx(new Blueprint(1, "t", "land", "bell_crypt", List.of("E"), new Blueprint.LandSpec("awaken:quiet_barrow", 62, Map.of()),
-                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:quiet_barrow", Rank.E, seed, 1));
+                AMBER.sky(), AMBER.life(), AMBER.folk(), AMBER.law(), AMBER.sites(), AMBER.heart(), AMBER.moods(), ""), "awaken:quiet_barrow", Rank.E, seed, version));
     }
 
     private static dev.awaken.gates.realms.land.WaxGalleries wax(long seed) {
@@ -70,7 +86,31 @@ public final class RealmTests {
     }
 
     private static Land amber(long seed) {
-        return new AmberReach(new Land.Ctx(AMBER, "awaken:amber_reach", Rank.E, seed, 1));
+        return amber(seed, 1);
+    }
+
+    private static Land amber(long seed, int version) {
+        return new AmberReach(new Land.Ctx(AMBER, "awaken:amber_reach", Rank.E, seed, version));
+    }
+
+    /** The plan version a gate rolls today (SPEC §50.9): the open lands' walks and float checks are run on it. */
+    private static final int NOW = RealmPlan.CURRENT_VERSION;
+
+    /** What every line of stones to jump along has to be: on the ground, a jump up onto it, a step a stone, gaps a running jump clears. */
+    private static void stones(Land land, dev.awaken.gates.realms.kit.piece.Hops hop, String what, List<String> bad) {
+        var st = hop.stones;
+        if (st.size() < 4) bad.add(what + ": only " + st.size() + " stones");
+        for (int i = 0; i < st.size(); i++) {
+            var s = st.get(i);
+            int over = s.top() - land.ground(s.x(), s.z());
+            if (over < 1 || over > 14) bad.add(what + ": stone " + i + " at " + s.x() + "," + s.z() + " stands " + over + " over the ground");
+            if (i == 0 && over > 1) bad.add(what + ": the first stone is " + over + " up, more than a jump");
+            if (i == 0) continue;
+            var b = st.get(i - 1);
+            double gap = Math.hypot(s.x() - b.x(), s.z() - b.z()) - s.r() - b.r() - 1;
+            if (Math.abs(s.top() - b.top()) > 1) bad.add(what + ": stone " + i + " is " + (s.top() - b.top()) + " up from the last");
+            if (gap < 0.9 || gap > 4.5) bad.add(what + ": the gap before stone " + i + " is " + String.format("%.1f", gap));
+        }
     }
 
     public static void register() {
@@ -373,38 +413,38 @@ public final class RealmTests {
             h.succeed();
         });
         AwakenTests.register("realm_saltcomb_walks_to_everything", 2400, h -> {
-            List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(salt(1));
+            List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(salt(1, NOW));
             if (!bad.isEmpty()) h.fail("can't reach: " + bad);
             h.succeed();
         });
         AwakenTests.register("realm_saltcomb_nothing_floats", 2400, h -> {
-            FloatCheck.Report r = FloatCheck.scan(salt(1), -436, -436, 436, 436);
+            FloatCheck.Report r = FloatCheck.scan(salt(1, NOW), -436, -436, 436, 436);
             if (!r.clean()) h.fail(r.summary());
             h.succeed();
         });
         AwakenTests.register("realm_kingsroot_walks_to_everything", 2400, h -> {
-            List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(keep(1));
+            List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(keep(1, NOW));
             if (!bad.isEmpty()) h.fail("can't reach: " + bad);
             h.succeed();
         });
         AwakenTests.register("realm_kingsroot_nothing_floats", 2400, h -> {
-            FloatCheck.Report r = FloatCheck.scan(keep(1), -456, -456, 456, 456);
+            FloatCheck.Report r = FloatCheck.scan(keep(1, NOW), -456, -456, 456, 456);
             if (!r.clean()) h.fail(r.summary());
             h.succeed();
         });
         AwakenTests.register("realm_vine_walks_to_everything", 2400, h -> {
-            List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(vine(1));
+            List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(vine(1, NOW));
             if (!bad.isEmpty()) h.fail("can't reach: " + bad);
             h.succeed();
         });
         AwakenTests.register("realm_vine_nothing_floats", 2400, h -> {
-            FloatCheck.Report r = FloatCheck.scan(vine(1), -416, -416, 416, 416);
+            FloatCheck.Report r = FloatCheck.scan(vine(1, NOW), -416, -416, 416, 416);
             if (!r.clean()) h.fail(r.summary());
             h.succeed();
         });
         AwakenTests.register("realm_quiet_barrow_walks_to_everything", 2400, h -> {
             for (long seed : new long[]{1, 2}) {
-                List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(barrow(seed));
+                List<String> bad = dev.awaken.gates.realms.check.WalkCheck.unreachable(barrow(seed, NOW));
                 if (!bad.isEmpty()) h.fail("seed " + seed + ": can't reach " + bad);
             }
             h.succeed();
@@ -418,6 +458,9 @@ public final class RealmTests {
             if (land.sleepers().size() != 9 || land.sites(Land.SiteKind.DEN).size() != 9) h.fail("nine mounds should sleep, each with its den");
             for (int i = 0; i < 9; i++) if (land.change("wake_" + i).size() < 18) h.fail("mound " + i + " has no seal to take out");
             if (land.change("heart_open").isEmpty() || land.change("heart_shut").isEmpty()) h.fail("the way aboard doesn't open and shut");
+            // today's plan adds camps and stones to the land, and none of them may float either
+            FloatCheck.Report now = FloatCheck.scan(barrow(1, NOW), -256, -256, 256, 256);
+            if (!now.clean()) h.fail("plan " + NOW + ": " + now.summary());
             h.succeed();
         });
         AwakenTests.register("realm_wax_galleries_walks_to_everything", 2400, h -> {
@@ -720,6 +763,86 @@ public final class RealmTests {
             } finally {
                 dev.awaken.core.AwakenConfig.GATE_REALMS.set(was);
             }
+            h.succeed();
+        });
+        // Open lands come back on the check (SPEC §50.9; Euan, 12 Nov: open lands were "not fun whatsoever", the runs "much better,
+        // with the movement, the jumping"): the proof land passes the open-land check on today's plan and stands every stone right,
+        // and its old plan is as it was. The other lands' answers go to the log for whoever brings each back; their stones are checked.
+        AwakenTests.register("realm_open_way", 2400, h -> {
+            List<String> bad = new java.util.ArrayList<>();
+            for (long seed : new long[]{1, 2}) {
+                var land = salt(seed, NOW);
+                var r = dev.awaken.gates.realms.check.OpenLandCheck.check(land);
+                dev.awaken.Awaken.LOG.info("[realms] open-land check, Saltcomb seed {}: {} {}", seed, r.summary(), r.problems());
+                if (!r.problems().isEmpty()) bad.add("Saltcomb seed " + seed + ": " + r.summary() + ": " + r.problems());
+                if (land.hops().size() != 5) bad.add("Saltcomb seed " + seed + " has " + land.hops().size() + " lines of stones, not five");
+                for (var hop : land.hops()) stones(land, hop, "Saltcomb seed " + seed + ", " + hop.label, bad);
+            }
+            var old = salt(1);
+            if (old.designed() || !old.hops().isEmpty()) bad.add("Saltcomb's first plan changed: it has a designed run or stones");
+            Land[] others = {amber(1, NOW), vine(1, NOW), keep(1, NOW), barrow(1, NOW),
+                    dev.awaken.gates.realms.kit.land.LandTests.land("awaken:ember_country", "ember_mines", dev.awaken.gates.realms.kit.land.Landform.Kind.ASCENT, "ember_tyrant", Rank.E, 1, NOW)};
+            for (Land land : others) {
+                var r = dev.awaken.gates.realms.check.OpenLandCheck.check(land);
+                dev.awaken.Awaken.LOG.info("[realms] open-land check, {}: {} {}", land.ctx.id(), r.summary(), r.problems());
+                int lines = 0;
+                for (var p : land.pieces()) {
+                    if (!(p instanceof dev.awaken.gates.realms.kit.piece.Hops hop)) continue;
+                    lines++;
+                    stones(land, hop, land.ctx.id() + ", " + hop.label, bad);
+                    FloatCheck.Report f = FloatCheck.scan(land, hop.x0 - 4, hop.z0 - 4, hop.x1 + 4, hop.z1 + 4);
+                    if (!f.clean()) bad.add(land.ctx.id() + ", " + hop.label + ": " + f.summary());
+                }
+                if (lines == 0) bad.add(land.ctx.id() + " has no stones to jump along on plan " + NOW);
+            }
+            if (!bad.isEmpty()) h.fail(bad.size() + " wrong, first: " + bad.getFirst() + (bad.size() > 1 ? "; " + bad.subList(1, Math.min(6, bad.size())) : ""));
+            h.succeed();
+        });
+        // Lights and seals (SPEC §50.9; Euan, 12 Nov: "nothing guided me... the big building was closed. So how do I open the doors?"):
+        // a land that shows its Wardens has one seal for each, in a row just outside the Lord's door, and says what is left in plain words
+        AwakenTests.register("realm_seals", 400, h -> {
+            for (Land land : new Land[]{salt(1, NOW), salt(1), amber(1, NOW)}) {
+                String at = land.ctx.id() + " plan " + land.ctx.version() + ": ";
+                if (!RealmLights.shows(land)) h.fail(at + "shows no lights");
+                List<int[]> seals = RealmLights.seals(land);
+                int wardens = land.sites(Land.SiteKind.WARDEN).size();
+                if (seals.size() != wardens) h.fail(at + seals.size() + " seals for " + wardens + " Wardens");
+                Set<Long> spots = new HashSet<>();
+                for (int[] seal : seals) {
+                    double door = Double.MAX_VALUE;
+                    for (Land.Edit e : land.change("heart_open")) door = Math.min(door, Math.hypot(e.x() - seal[0], e.z() - seal[2]));
+                    if (door > 8) h.fail(at + "a seal at " + seal[0] + "," + seal[2] + " stands " + (int) door + " from the Lord's door");
+                    if (!spots.add((long) seal[0] << 32 | seal[2] & 0xFFFFFFFFL)) h.fail(at + "two seals stand in one place");
+                }
+            }
+            if (!RealmLights.doorCount(1).startsWith("One seal is left") || !RealmLights.doorCount(3).startsWith("3 seals are left")) h.fail("the door's count reads wrong");
+            if (RealmLights.colour("hive") == RealmLights.colour("no_such_theme")) h.fail("the hive's lights have no colour of their own");
+            h.succeed();
+        });
+        // Life leans to the way (SPEC §50.9; Euan, 12 Nov: "barely any mobs... randomly placed"): on a designed land of today's plan
+        // the cells beside the way hold more of what hunts you than the cells far off it; on the old plan nothing leans
+        AwakenTests.register("realm_country_way", 400, h -> {
+            var land = salt(1, NOW);
+            if (!RealmCountry.leans(land) || RealmCountry.leans(salt(1))) h.fail("the lean isn't on today's plan alone");
+            int half = land.halfSize() / RealmCountry.CELL + 1, near = 0, nearHunt = 0, far = 0, farHunt = 0;
+            for (int cz = -half; cz <= half; cz++) for (int cx = -half; cx <= half; cx++) {
+                int x = cx * RealmCountry.CELL + RealmCountry.CELL / 2, z = cz * RealmCountry.CELL + RealmCountry.CELL / 2;
+                if (land.edge(x, z) > -20) continue;
+                RealmCountry.Kind k = RealmCountry.find(land, 1, cx, cz).kind();
+                boolean hunts = k == RealmCountry.Kind.PROWL || k == RealmCountry.Kind.WATCH || k == RealmCountry.Kind.LAIR;
+                double d = RealmCountry.wayDistance(land, x, z);
+                if (d <= RealmCountry.NEAR_WAY) {
+                    near++;
+                    if (hunts) nearHunt++;
+                } else if (d >= RealmCountry.FAR_WAY) {
+                    far++;
+                    if (hunts) farHunt++;
+                }
+            }
+            dev.awaken.Awaken.LOG.info("[country] Saltcomb plan {}: {} of {} cells by the way hunt, {} of {} far off it; the way is {} blocks", NOW, nearHunt, near, farHunt, far,
+                    (int) RealmCountry.wayLength(land));
+            if (near == 0 || far == 0) h.fail("no cells by the way (" + near + ") or far from it (" + far + ")");
+            if ((long) nearHunt * far <= (long) farHunt * near) h.fail("the cells by the way hunt no more than those far off: " + nearHunt + "/" + near + " against " + farHunt + "/" + far);
             h.succeed();
         });
         // Open lands off (Euan 12 Nov, SPEC §50.7 and §38.11): no theme at any rank rolls a Realm under the open sky or dresses

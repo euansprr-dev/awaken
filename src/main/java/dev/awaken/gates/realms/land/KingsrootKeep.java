@@ -158,6 +158,12 @@ public final class KingsrootKeep extends KitLand<KingsrootKeep.M> {
         village();
         placeSites();
         clearSites();
+        // plan version 2 (SPEC §50.9): a designed way up to the keep, camps and stones on dry ground clear of its walls
+        if (ctx.version() >= 2) {
+            M m = m();
+            designWay((x, z) -> ground(x, z) > WATER + 1 && !inKeep(x, z) && (x < -164 || x > 166 || z < -158 || z > 176),
+                    new dev.awaken.gates.realms.kit.WayPlanner.Dress(m.stoneA, m.pale, m.band));
+        }
     }
 
     private void room(Piece<M> p) {
