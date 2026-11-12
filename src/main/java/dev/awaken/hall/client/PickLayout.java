@@ -35,7 +35,7 @@ final class PickLayout {
         return CELLS[col * HallNet.ROWS + tier];
     }
 
-    static @Nullable HallLayout.Cell at(float x, float y) {
+    static HallLayout.@Nullable Cell at(float x, float y) {
         for (HallLayout.Cell c : CELLS) if (x >= c.x() - c.w() / 2F && x < c.x() + c.w() / 2F && y >= c.y0() && y < c.y1()) return c;
         return null;
     }
