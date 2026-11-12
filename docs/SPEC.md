@@ -27528,3 +27528,40 @@ plan with `leaperTrial` once it says it is ready, which it does not until someon
 - *Not built yet:* the gate's card showing the best time and medal; a place for the rope on the run; a check that
   proves each crossing against the reach above (the walk check takes the land's word for which crossings need a move);
   par set from real runs. Nobody has played it.
+
+## 72. Gates in Motion (PROPOSED, not built; plan docs/gates-in-motion/PLAN.md; waiting on Euan's answers on the approval page)
+
+Euan, 12 Nov 2026: the gates' parkour is "very boring": little wall running, simple jumps, no mantling, no sliding; a bit
+of fighting on the spiral stairs; "extrapolate this to every possible level". Renumber at merge if 72 is taken.
+
+**72.1 Why it is flat today.** Every move in the Runner's Kit is everyone's from the first second (§16.3), but a rolled
+crawl never asks for one: its crossings are sprint jumps over one to three cells, level or down (§50.9, `CrawlLand.Chasm`),
+a run has one of them, the shaft is one spiral at the same size at every rank, and fights sit only in dens, stands, Wardens
+and the Lord. The cause under all of it: `WalkCheck` proves walking and the sprint jump only, so the generator builds only
+those. (§71's Gauntlet notes the same gap: "a check that proves each crossing against the reach".)
+
+**72.2 Beats.** About 24 hand-made pieces of movement in five families (low: slide gate, slide jump, chute, landing slide,
+closing teeth, rail run; wall: wall-run gulf, chimney, switchback, run to hang, corner run; ledge: mantle steps, hang and
+shimmy, drop to hang, jump to hang, ledge to ledge, broken wall; grip: pipe or chain line, chain fall; flow: crumble run,
+drop and roll; side routes, never required: Stride wall, swing out, leap gap). Each rolls its sizes within its rank's range,
+is dressed by the kind's skin, and sits in a Course.
+
+**72.3 The composer** strings beats into every movement leg (ways, chasms, shafts) by seed, kind accent and rank (E one move
+at a time, D pairs, C chains of three with timed beats, B four, A five or more, S whole rooms). Six shaft forms: spiral with
+landings, broken spiral, chimney, chain fall, ledges down, square well.
+
+**72.4 Proof.** `Land.Move` generalises `Land.Leap`; `MoveProof` adds move edges tested by `RunnerRules`' own probes on the
+painted land, at no more than 80% of each move's reach, and `needless` proves each move is needed. Template GameTests run a
+mock player with the real rules through every beat at its smallest and largest size. A failed line rerolls, then takes a
+simpler beat, then today's crossing (`beats.fallback`, at most 3% of legs on the sweep).
+
+**72.5 Fights in motion.** Holds (2-4 light monsters on a landing, leashed, never locking the way), perches (C+), one chase
+(B+), dens and stands with ledges and wall-run rings. A hit never throws a player off a wall or a ledge (pending Euan).
+
+**72.6 Teaching, co-op, data.** Signs in each kind's stone; the gold `LessonFigure` once per family per player (GateMemory
+schema +1); a clean line gives a quiet Flow. Timed beats cycle for a partner (§70). `RealmPlan.CURRENT_VERSION` +1 so open
+gates keep their layout; config `gateBeats` (off = today's crossings).
+
+**72.7 Every level.** Rolled crawls first; then the Broodwarren and the designed realms' ways (hand-placed beat spots, Amber
+Reach and the Hour Crypt with care); then the rolled and open lands' ways (outdoor beats, off until those lands return). The
+Leaper's Gauntlet stays as remade (§71).
