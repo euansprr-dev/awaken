@@ -1,8 +1,8 @@
 # Forged picks above E in the hand (SPEC §49.8): a pick shows a ring only for each rank it was really raised through, so a pick
 # first made at D leaves the E ring out, and one made at S all five. Is the haft whole where a ring is left out?
 # D and S Delvers as a command gives them (made at their own rank), and an S Delver raised all the way from E (every ring),
-# held in first person and in third person (over the shoulder, and from the front); the S Breaker and Sounder, whose hafts
-# and rings are other sizes, in first person. Against the noon sky, so a gap shows bright through a dark haft.
+# held in first person and in third person from either side; the S Breaker and Sounder, whose hafts and rings are other
+# sizes, too. Against the noon sky, so a gap shows bright through a dark haft.
 world pickrings creative 4350
 waitworld
 wait 60
@@ -49,35 +49,48 @@ shot s_breaker_1p
 cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_sounder
 wait 40
 shot s_sounder_1p
-# over the shoulder, close in
+# third person from the side, close in, both sides (the hand toward the camera on one, the body behind it on the other):
+# from behind the haft hides behind the arm, so the side is where it shows whole
 hud off
 camera back
-cmd awaken fx sidecam 35
 opt fov 30
+cmd awaken fx sidecam 75
 wait 20
 cmd tp @s 1040.5 290 -551.5 0 -18
 cmd item replace entity @s weapon.mainhand with awaken:beastbound_pick_delver
 wait 40
-shot d_delver_3p
+shot d_delver_3p_right
 cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_delver
 wait 40
-shot s_delver_3p
+shot s_delver_3p_right
 cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_delver[awaken:pick_forged={from:0}]
 wait 40
-shot s_delver_raised_3p
-# from the front
-camera front
-cmd awaken fx sidecam 0
+shot s_delver_raised_3p_right
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_breaker
+wait 40
+shot s_breaker_3p_right
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_sounder
+wait 40
+shot s_sounder_3p_right
+cmd awaken fx sidecam -75
 wait 20
+cmd tp @s 1040.5 290 -551.5 0 -18
 cmd item replace entity @s weapon.mainhand with awaken:beastbound_pick_delver
 wait 40
-shot d_delver_front
+shot d_delver_3p_left
 cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_delver
 wait 40
-shot s_delver_front
+shot s_delver_3p_left
 cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_delver[awaken:pick_forged={from:0}]
 wait 40
-shot s_delver_raised_front
+shot s_delver_raised_3p_left
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_breaker
+wait 40
+shot s_breaker_3p_left
+cmd item replace entity @s weapon.mainhand with awaken:sovereign_pick_sounder
+wait 40
+shot s_sounder_3p_left
+cmd awaken fx sidecam 0
 camera first
 opt fov 70
 hud on
