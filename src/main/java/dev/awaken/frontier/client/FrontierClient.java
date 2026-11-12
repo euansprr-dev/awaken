@@ -66,7 +66,8 @@ public final class FrontierClient {
             case "descent" -> {
                 FlightFilm.Flight f = FlightFilm.cur;
                 if (f == null) return "no flight";
-                if (f.phase != FlightFilm.Phase.DESCEND && ++waited < 20 * 120) return null;
+                // the cloud holds while the far land is made (up to 2 minutes on the server) and reaches the client (1 more)
+                if (f.phase != FlightFilm.Phase.DESCEND && ++waited < 20 * 200) return null;
                 waited = 0;
                 return f.phase == FlightFilm.Phase.DESCEND ? "coming down" : "gave up";
             }
