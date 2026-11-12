@@ -5668,7 +5668,10 @@ creatures, camps · **E** crafts · **F** wonders, secrets, legends · **G** set
   every 2 s, an empty list once when the last goes). `living.client.PulseFx` draws them in an alpha pass (unfogged,
   reads by day) and an additive pass, the centre eased over the 2 s; past 70% of the render distance a tell is pulled
   in along its sight line and shrunk to match (as the gate pillars). The storm tell is a cell of its own (below), never
-  pulled in.
+  pulled in. **Dust and fog are air** (12 Nov, §22 "Dust and fog as air"): the haze, the dust line, the Deep Tide's fog
+  and a duel's dust are handed to Lens as soft volumes (`PulseFx.air`, `LensClient.haze`, three a frame) wherever it
+  draws them; where it does not (Lens off, Swift) their veils stay, in the hour's light, drawn once, fading as the
+  camera comes into them (`PulseFx.veil`). Birds, lights and smoke are drawn as before.
 - **The Almanac**: within a kind's `witness_radius` a player witnesses it once: counter `awaken:happenings_witnessed`;
   the first time a discovery `happening/<id>` (0.1 of a level), a new thing for the Director, and "Witnessed · <title>".
   The Codex tab lists them ("HAPPENINGS WITNESSED · n / ??").
@@ -6841,6 +6844,47 @@ RD 16): ImmersiveVFX needs 16.7 ms of GPU time flying, most of it a shadow pass 
     particles are light, not things: they draw through their own pipeline (`awaken:pipeline/lens_particle`, the
     particle pipeline without a depth write), so no shadow, contact darkness or haze of Lens's falls under them (in the
     depth they cast blocky little shadows, Euan 2026-11-10), and one within 1.2 to 3.4 blocks of the eye fades out. The sunlit mist is 3.4 times as strong in the composite and up to 2.6 times denser under a low sun.
+- **Dust and fog as air** (12 Nov; `hazeAir` in `lens_composite.glsl`, `LensClient.haze`, `LensFrame` texels 48-59,
+  the Living Wilds' `PulseFx`, §21.6). Euan, playing, of a wood at night and then of a stampede he stood in: "smth
+  wrong with the fog here, making things very washed out and flat" and "it makes everything look very pale and flat
+  instead of actually looking good like a fog or something ... even without the shaders it looks bad as well. So I
+  think it's an issue with those textures themselves". He was right, and two tours of mine at his spots were beside
+  the point. Both were happenings' tells: the Deep Tide's fog (his world was on moon 4, its night) and a stampede's
+  dust line. A tell was drawn as ten to sixty-four flat discs facing the camera, up to eleven blocks across, in one
+  fixed colour whatever the hour, unfogged and unlit, and each twice over (both windings through a render type that
+  culls nothing: 27% laid as 47%). Made to be seen from afar, they were a sheet over the land for anyone inside
+  them; the Deep Tide's fixed grey was brighter than the night round it; and because they were in the frame Lens
+  reads, Lens lit and fogged them as part of the ground behind and painted its own sky over the part before the sky.
+  Now such a tell is **air**: a soft ellipsoid in the world (a centre, half-extents along its track, across it and
+  up, a colour, a thickness), up to three a frame, in the frame's values. In the composite, after the Air's fog and
+  the clouds, each pixel's view ray is cut by each volume; the density is 1 at the core and falls as 1 - r² to
+  nothing at the rim, which sums exactly along the ray up to the surface the pixel shows, so the picture is veiled
+  by the dust that is really in front of it: what is near stays clear, what is far goes into it, the sky behind it
+  too, and the camera may stand inside. Billows come from the air's own noise at two depths of the ray, drifting.
+  Its light is the hour's: the Air's horizon colour where the eye looks (the game's fog colour without the Air), a
+  little greyed, and the sun's or the moon's over that, strongest looking into the light (0.30 of it, 0.80 looking
+  straight into the sun); so dust glows toward a low sun. By night the moon's share is 1.6: lit by the sky alone,
+  and then with the day's share of the moon, the Deep Tide came out of the grade's dark end as the night's own
+  colour, a darkness over the distance and no mist (runs 43233875622 and 43236419470); now it is a faint blue mist
+  lying in the low ground (far land 6, 21, 32 clear, 8, 30, 55 in the Tide, run 43240496428), not a pale band (his
+  picture: 47, 63, 70, flat, at every depth). A volume's `thickness`
+  is what a look straight across its middle loses (a stampede's line 0.5, a migration's haze 0.55, the Deep Tide
+  0.8, a duel 0.42 pulsing); its density follows. A frame with any is not calm (the Tiles twins' calm composite
+  leaves it out, `LensBlock.calm`); with none the cost is one read of a frame value. A tell beyond the render
+  distance is drawn where it is, over the sky, unfogged, as the veils were (it is a tell).
+  **The frame's values are 64 texels** (they were 48, all taken): `LensFrame.WIDTH`, `LensF[64]` in
+  `lens_block.glsl`, and `tools/lens/block.py` now sets the block and the frame's width on every Lens chain in the
+  folder, the measuring ones too. 60 to 63 are spare.
+  Where Lens does not draw them (Lens off, Swift, VFX, a story's tear, `/awaken lens haze off`) the veils stay, but
+  in the hour's light (full by day, a fifth by night, less under rain), drawn once, and fading as the camera comes
+  within half a veil's radius. Not built: the veils as many small textured puffs; soft edges where a veil meets the
+  ground; the wider smoke and lights of the other tells over Lens's sky (they are still in the frame it reads).
+  Seen on CI (`tools/autopilot/steady60-dustfog-ci.txt`, run 43240496428; `docs/perf/steady60/play-2026-11-12/
+  dust-and-fog-as-air.jpg`): a tell held ahead of the camera on open ground (autopilot `tell <haze|dustline|fog|
+  roar> <blocks>|off`, `LivingClient.testTell`: real happenings start where they like), by a morning sun, at dusk
+  and at night, from outside and inside. Standing in a stampede's dust the ground at the feet keeps its colour and
+  texture and the far land keeps 86% of its texture (luma deviation 37.6 clear, 32.5 in the dust). Not measured:
+  frame time with a volume on screen (the Mac was in use); not seen: his own two spots with their happenings.
 - **A power's look** (12 Nov; `LensClient.accent`, `Looks.shift`, powers' `CastLens`, §36.5). Euan, playing, with
   two pictures of the same deck, one while holding a beam: "is intentional, that everything is way less bright when
   you're using the power." It was not. A cast's look (`looks_powers.json`) went through the moment channel

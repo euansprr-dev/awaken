@@ -1,0 +1,158 @@
+# Dust and fog as air (Euan, playing, 12 Nov, of the Deep Tide's fog in a wood at night and of a stampede he stood in:
+# "it makes everything look very pale and flat instead of actually looking good like a fog or something ... even
+# without the shaders it looks bad as well. So I think it's an issue with those textures themselves"). The happenings'
+# dust and fog were flat discs of one fixed colour, up to eleven blocks across, drawn twice over. Lens now draws each as
+# a soft volume in its picture (SPEC §22 "Dust and fog as air"); without Lens the veils take the hour's light, are
+# drawn once and fade as the camera comes into them.
+# In an open meadow, on the ground at eye height, with a tell held where the script wants it (`tell <kind> <blocks>`:
+# the very tell the server sends, placed ahead of the camera): a stampede's dust line and a migration's haze by a
+# morning sun, the Deep Tide at night and at dusk, each from outside and from inside, toward the light and away
+# from it, as air and then as the veils (`lens haze off`), with the clear view beside them.
+# (Runs 43231633144 and 43233875622 used real happenings: they start where they will, and the camera stood in the
+# city, on a stand over the trees, or in a bear.)
+# Run: tools/tour-ci.sh tools/autopilot/steady60-dustfog-ci.txt 2400
+# ci knobs: LENS=cinematic PACK=perf
+world dustfog creative 20261025
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 3000
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+camera first
+lookswitch cinematic
+opt fov 90
+opt gamma 100
+lens grade vivid
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd awaken living goto blossom_meadow
+# (the search for the land runs first, then the passage waits for it to be made: ask again and again, so whenever the
+# passage begins, one of these waits it out)
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 200
+waitpassage
+wait 400
+shot land_day
+look -90 2
+wait 20
+shot clear_east
+look 90 2
+wait 20
+shot clear_west
+# a stampede's dust line 34 blocks off, across the view: toward the sun, then away from it
+look -90 2
+tell dustline 34
+wait 30
+shot dust_outside_east_air
+lens haze off
+wait 4
+shot dust_outside_east_veils
+lens haze on
+tell off
+look 90 2
+tell dustline 34
+wait 30
+shot dust_outside_west_air
+tell off
+# standing in it
+look -90 2
+tell dustline 0
+wait 30
+shot dust_inside_east_air
+lens haze off
+wait 4
+shot dust_inside_east_veils
+lens haze on
+look 90 2
+wait 10
+shot dust_inside_west_air
+# (down its length: the most dust a look can pass)
+look 0 2
+wait 10
+shot dust_inside_along_air
+tell off
+# a migration's haze: its edge, then inside it
+look -90 2
+tell haze 34
+wait 30
+shot haze_edge_east_air
+lens haze off
+wait 4
+shot haze_edge_east_veils
+lens haze on
+tell haze 0
+wait 30
+shot haze_inside_east_air
+look 90 2
+wait 10
+shot haze_inside_west_air
+tell off
+# the Deep Tide deep in the night
+cmd time set 18500
+wait 120
+look -90 2
+wait 10
+shot night_clear_east
+tell fog 0
+wait 30
+shot tide_inside_east_air
+lens haze off
+wait 4
+shot tide_inside_east_veils
+lens haze on
+look 90 2
+wait 10
+shot tide_inside_west_air
+tell fog 44
+wait 30
+shot tide_outside_west_air
+lens haze off
+wait 4
+shot tide_outside_west_veils
+lens haze on
+tell off
+# and at dusk, away from the sunset and into it
+cmd time set 12800
+wait 120
+look -90 2
+tell fog 0
+wait 30
+shot tide_dusk_inside_east_air
+look 90 2
+wait 10
+shot tide_dusk_inside_west_air
+lens haze off
+wait 4
+shot tide_dusk_inside_west_veils
+lens haze on
+tell off
+wait 10
+shot dusk_clear_west
+quit

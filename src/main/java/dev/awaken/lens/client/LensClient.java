@@ -328,6 +328,7 @@ public final class LensClient {
                         .then(lensSwitch("paths", LensClient::paths))
                         .then(lensSwitch("edgehold", LensClient::edgeHold))
                         .then(lensSwitch("accent", LensClient::accentSwitch))
+                        .then(lensSwitch("haze", LensClient::hazeSwitch))
                         .then(net.minecraft.commands.Commands.literal("small")
                                 .then(net.minecraft.commands.Commands.argument("what", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
                                         .executes(c -> {
@@ -401,6 +402,67 @@ public final class LensClient {
     // at 60 frames a second; 0 keeps none (the shadow goes out with what cast it).
     private static final float EDGE_HOLD = 0.12f;
     private static @org.jspecify.annotations.Nullable Boolean forcedEdgeHold;
+
+    // Dust and fog as air (SPEC §22): the volumes handed over for the frame being drawn (haze), written with its values
+    public static final int HAZES = 3;
+    static final int HAZE_FLOATS = 12;
+    private static final double[] hazeAt = new double[HAZES * 3];
+    private static final float[] hazeIs = new float[HAZES * HAZE_FLOATS];
+    private static int hazeN;
+    private static boolean hazeOff;
+
+    /**
+     * Whether Lens draws a happening's dust or fog as air this frame (SPEC §22 "Dust and fog as air"): a chain that
+     * reads the frame's values runs (Lite, Cinematic, Ultra) and no story's tear is open. When it does not, the owner
+     * draws its own veils.
+     */
+    public static boolean drawsHaze() {
+        return !hazeOff && active && framed && chainRuns && lensFrame != null && tear <= 0f && tearStep <= 0f;
+    }
+
+    /**
+     * One volume of dust or fog for the frame being drawn, called while the world is being submitted (every frame it
+     * should show): a soft ellipsoid about {@code x, y, z} in the world, half as long as {@code along} down its track
+     * ({@code wayX, wayZ}, a unit vector on the ground), {@code across} to each side and {@code up} above and below.
+     * {@code thickness} is how much of the picture a look straight through its middle, across, loses (0..1, the rest by
+     * how much dust the look really passes); {@code rgb} its own colour in full light; {@code sun} how much of the
+     * sun's or the moon's light it takes (0: the sky's alone); {@code grain} the size of its billows in blocks;
+     * {@code seconds} its own clock, which drifts them. False when Lens does not draw it ({@link #drawsHaze}) or the
+     * frame's {@link #HAZES} are taken: then the caller draws it itself.
+     */
+    public static boolean haze(double x, double y, double z, float wayX, float wayZ, float along, float across, float up,
+            float thickness, int rgb, float sun, float grain, float seconds) {
+        if (!drawsHaze() || hazeN >= HAZES || thickness <= 0.002f) return false;
+        int o = hazeN * HAZE_FLOATS;
+        hazeAt[hazeN * 3] = x;
+        hazeAt[hazeN * 3 + 1] = y;
+        hazeAt[hazeN * 3 + 2] = z;
+        float len = (float) Math.sqrt(wayX * wayX + wayZ * wayZ);
+        // the core's density for that loss across the middle: a look across passes 4/3 of `across` of dust at full density
+        hazeIs[o] = (float) (-Math.log(1.0 - Math.min(thickness, 0.98)) * 0.75 / Math.max(across, 0.5f));
+        hazeIs[o + 1] = Math.max(along, 0.5f);
+        hazeIs[o + 2] = Math.max(across, 0.5f);
+        hazeIs[o + 3] = Math.max(up, 0.5f);
+        hazeIs[o + 4] = len > 1.0e-4f ? wayX / len : 1f;
+        hazeIs[o + 5] = len > 1.0e-4f ? wayZ / len : 0f;
+        hazeIs[o + 6] = seconds % 3600f;
+        hazeIs[o + 7] = 1f / Math.max(grain, 0.5f);
+        hazeIs[o + 8] = ((rgb >> 16) & 255) / 255f;
+        hazeIs[o + 9] = ((rgb >> 8) & 255) / 255f;
+        hazeIs[o + 10] = (rgb & 255) / 255f;
+        hazeIs[o + 11] = sun;
+        hazeN++;
+        return true;
+    }
+
+    /**
+     * {@code /awaken lens haze off|on} (autopilot {@code lens haze}): a happening's dust and fog as air in Lens's picture
+     * (on, as built), or left to its owner's own veils (off), for A/B in play.
+     */
+    public static String hazeSwitch(String arg) {
+        hazeOff = arg.trim().equals("off");
+        return "dust and fog " + (hazeOff ? "left to their owner's veils" : "drawn as air (built in)");
+    }
 
     /** {@code /awaken lens edgehold off|on|setting} (autopilot {@code lens edgehold}): the edge's hold, for A/B in play. */
     public static String edgeHold(String arg) {
@@ -929,6 +991,8 @@ public final class LensClient {
         float[] small = forcedSmall != null ? forcedSmall : SMALL;
         lensFrame.small(small[0], small[1], small[2], small[3]);
         lensFrame.edgeHold(forcedEdgeHold == Boolean.FALSE ? 0f : EDGE_HOLD);
+        lensFrame.hazes(hazeAt, hazeIs, hazeN);
+        hazeN = 0;
         lensFrame.write(state.cameraRenderState, state.playerRenderState, zeroToOne, lx, ly, lz, lightStrength, moonLight, rain,
                 sunHere ? heightfield : null, temporal);
         if (WorldProjection.ready()) {

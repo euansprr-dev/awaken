@@ -45,6 +45,11 @@ public final class LivingClient {
 
     static final net.minecraft.resources.Identifier TIP_PLATE = dev.awaken.Awaken.id("living/first_plate"), TIP_REGION = dev.awaken.Awaken.id("living/first_region");
     static long ticks;
+    /** Tours (autopilot {@code tell <kind> <blocks>|off}): a happening's tell held ahead of the camera (PulseFx.test). */
+    public static String testTell(String tell, float distance) {
+        return PulseFx.test(tell, distance);
+    }
+
     static boolean shown = true;
     static double lookRange = PlateRules.lookRange(0);
     /** The creature the binoculars' look rests on past the normal range, and since when (ticks). */

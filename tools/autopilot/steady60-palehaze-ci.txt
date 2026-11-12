@@ -1,0 +1,100 @@
+# The pale, flat middle distance by day (Euan, playing, 12 Nov, the Stampede near the Far Landing, late morning, with
+# a picture: "It's the same thing here ... it makes everything look very pale and flat instead of actually looking
+# good like a fog or something."). In his picture the grass at his feet has its colour and texture; forty blocks out
+# the same grass is half again as bright and has lost its texture, and the hill beyond is a pale yellow shape.
+# His world's seed, his spot, his heading, his hour and his settings (Cinematic, the Air, Vivid, fov 90, Pixels 0.85,
+# brightness 100). First as played; then one part of Lens's picture left out at a time, to find which lays the veil.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-palehaze-ci.txt 3000
+# (his world is the Awakened Pack's: the pack's terrain puts Carillon and every land elsewhere than the plain game's
+# does for the same seed. Runs 43223525534 and 43226201813, on PACK=perf alone, stood in another world.)
+# ci knobs: LENS=cinematic PACK=perf,feel,comfort,world TECTONIC=awakened RD=16
+world palehaze creative 5578681379194123303
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 5076
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+camera first
+lookswitch cinematic
+opt fov 90
+opt gamma 100
+pixels 0.85 sharp
+lens grade vivid
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd tp @s 894.9 75 5530.4 119.6 -0.1
+# (the land out here is not made yet in a new world: the teleport is one of Awaken's passages and waits for it)
+wait 100
+waitpassage
+wait 1600
+waitpassage
+cmd tp @s 894.9 75 5530.4 119.6 -0.1
+wait 100
+waitpassage
+wait 800
+look 119.6 -0.1
+cmd time set 5076
+wait 100
+info
+lens look
+shot day_as_played
+# one part left out at a time
+lens chain cinematic_comp_scatter
+wait 80
+shot day_no_scatter
+lens chain cinematic_comp_air_fog
+wait 80
+shot day_no_air_fog
+lens chain cinematic_bloom
+wait 80
+shot day_no_bloom
+lens chain cinematic_shafts
+wait 80
+shot day_no_shafts
+lens chain cinematic_light
+wait 80
+shot day_no_light_pass
+lens chain cinematic_comp_light
+wait 80
+shot day_no_light
+lens chain cinematic_comp_grade
+wait 80
+shot day_no_grade
+lens chain cinematic_comp_air
+wait 80
+shot day_no_air
+lens chain off
+wait 60
+lens grade awaken
+wait 60
+shot day_grade_awaken
+lens grade vivid
+wait 20
+lens small 0 0 0 0
+wait 80
+shot day_small_shade_whole
+lens small setting
+wait 20
+lens sunpass off
+wait 80
+shot day_no_sunpass
+lens sunpass setting
+lookswitch swift
+wait 80
+shot day_swift
+lookswitch cinematic
+wait 120
+shot day_as_played_again
+quit

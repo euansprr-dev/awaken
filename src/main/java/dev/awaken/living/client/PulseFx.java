@@ -24,6 +24,14 @@ import java.util.Map;
  * Each in two passes: alpha-blended and unfogged (so it reads against a noon sky), then additive light. A tell past
  * the render distance is pulled in along its line of sight and shrunk to match, like the gate pillars, so it sits on
  * the horizon where it really is. Nothing allocates per frame but the per-tell state when a tell first arrives.
+ * <p>Dust and fog (a herd's haze, a stampede's line, the Deep Tide, a duel) are air, not veils (SPEC §22 "Dust and fog
+ * as air"; Euan, playing, 12 Nov, of the Deep Tide in a wood at night and of a stampede he stood in: "it makes
+ * everything look very pale and flat instead of actually looking good like a fog"). The veils were ten to fourteen
+ * flat discs up to eleven blocks across, one fixed colour whatever the hour, each drawn twice over: from inside they
+ * were a sheet over the land, and by night a pale grey brighter than everything round it. While Lens draws them
+ * ({@link dev.awaken.lens.client.LensClient#haze}) each is a soft volume in its picture, thick by how much of it
+ * the eye looks through and lit by the hour. Without that (Lens off, Swift) the veils stay, in the hour's light,
+ * drawn once, and fading as the camera comes into them.
  */
 final class PulseFx {
     private PulseFx() {}
@@ -35,6 +43,7 @@ final class PulseFx {
         float radius, progress, dx, dz;
         float since; // client ticks when the newest centre arrived
         float born;
+        boolean air; // this frame its dust or fog is Lens's (drawn as air): no veils here
     }
 
     static final Map<Integer, Shown> SHOWN = new HashMap<>();
@@ -96,6 +105,36 @@ final class PulseFx {
         SHOWN.clear();
     }
 
+    /**
+     * Tours (autopilot {@code tell <kind> <blocks>}, {@code tell off}): one tell held on the ground that far ahead of
+     * the camera (0: round it), as the server would send it, until told off or a real tell list arrives. A dust
+     * line runs across the view.
+     */
+    static String test(String tell, float distance) {
+        SHOWN.remove(-1);
+        Minecraft mc = Minecraft.getInstance();
+        if (tell.equals("off") || mc.player == null || mc.level == null) return "no test tell";
+        Vec3 look = mc.player.getLookAngle();
+        double len = Math.max(0.01, Math.sqrt(look.x * look.x + look.z * look.z));
+        Shown s = new Shown();
+        s.tell = tell;
+        s.px = s.x = mc.player.getX() + look.x / len * distance;
+        s.pz = s.z = mc.player.getZ() + look.z / len * distance;
+        s.py = s.y = mc.level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, Mth.floor(s.x), Mth.floor(s.z));
+        s.radius = switch (tell) {
+            case "dustline" -> 14;
+            case "haze" -> 22;
+            case "fog" -> 30;
+            default -> 12;
+        };
+        s.progress = 0.5F;
+        s.dx = (float) (-look.z / len);
+        s.dz = (float) (look.x / len);
+        s.since = s.born = LivingClient.ticks - 1000;
+        SHOWN.put(-1, s);
+        return tell + " held at " + Mth.floor(s.x) + " " + Mth.floor(s.y) + " " + Mth.floor(s.z);
+    }
+
     // ---- drawing ----------------------------------------------------------------------------------------------------
 
     private static RenderType alpha, light;
@@ -123,6 +162,19 @@ final class PulseFx {
         if (alpha == null) alpha = RenderTypes.debugQuads();
         if (light == null) light = RenderTypes.lightning();
         float clamp = Math.max(64, mc.options.getEffectiveRenderDistance() * 16 * 0.7F);
+        // the hour's light on a veil drawn here: full by day, about a fifth by night, less under rain
+        float sunAngle = mc.gameRenderer.mainCamera().attributeProbe().getValue(net.minecraft.world.attribute.EnvironmentAttributes.SUN_ANGLE,
+                state.worldPartialTicks) * Mth.DEG_TO_RAD;
+        float up = Mth.clamp((Mth.cos(sunAngle) + 0.25F) / 0.5F, 0, 1);
+        tone = Mth.lerp(up * up * (3 - 2 * up), 0.2F, 1F) * (1 - 0.4F * mc.level.getRainLevel(state.worldPartialTicks));
+        // dust and fog as air, where Lens draws it (nearest tells first come first: it holds three a frame)
+        if (LivingClient.shown) {
+            for (Shown s : SHOWN.values()) {
+                float lk = Mth.clamp((now - s.since) / LERP, 0, 1);
+                float fadeIn = Mth.clamp((now - s.born) / 40F, 0, 1);
+                s.air = air(s, Mth.lerp(lk, s.px, s.x), Mth.lerp(lk, s.py, s.y), Mth.lerp(lk, s.pz, s.z), fadeIn * Math.min(1, (1 - s.progress) * 12));
+            }
+        }
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), alpha, (pose, vc) -> guard(() -> pass(vc, clamp, false)));
         e.getSubmitNodeCollector().submitCustomGeometry(e.getPoseStack(), light, (pose, vc) -> guard(() -> pass(vc, clamp, true)));
         if (!dev.awaken.lens.client.LensClient.drawsStormCells()) StormFallback.submit(e);
@@ -178,11 +230,37 @@ final class PulseFx {
 
     // ---- the tells --------------------------------------------------------------------------------------------------
 
+    /**
+     * A tell's dust or fog as air in Lens's picture (SPEC §22 "Dust and fog as air"): one soft volume, {@code a} its
+     * strength. False when Lens does not draw it this frame (or the tell has none): its veils are drawn here.
+     */
+    private static boolean air(Shown s, double x, double y, double z, float a) {
+        if (a <= 0) return false;
+        float r = s.radius, secs = now / 20F;
+        switch (s.tell) {
+            case "haze": // a herd's dust: a low wide cloud over it
+                return dev.awaken.lens.client.LensClient.haze(x, y + 3.5, z, 1, 0, r * 1.15F, r * 1.15F, 6.5F, 0.55F * a, 0xC9AC7C, 1F, 9F, secs);
+            case "dustline": // a stampede's: trailing back down its track
+                return dev.awaken.lens.client.LensClient.haze(x - s.dx * r * 0.85, y + 3.0, z - s.dz * r * 0.85, s.dx, s.dz, r * 1.9F, r * 0.8F, 6F,
+                        0.5F * a, 0xC9AC7C, 1F, 7F, secs);
+            case "fog": { // the Deep Tide: fog lying on the ground, wider as the night goes on
+                float grow = 0.65F + 0.35F * Mth.clamp(s.progress * 3, 0, 1);
+                return dev.awaken.lens.client.LensClient.haze(x, y + 1.2, z, 1, 0, r * grow, r * grow, 4.5F, 0.8F * a, 0xAEB6C2, 0.8F, 11F, secs);
+            }
+            case "roar": { // a duel's dust, bursting with each crash
+                float beat = (now % 60) / 60F, wide = 4 + beat * r * 0.7F;
+                return dev.awaken.lens.client.LensClient.haze(x, y + 2.0, z, 1, 0, wide, wide, 4.5F, 0.42F * a * (1 - 0.6F * beat), 0xB79878, 1F, 5F, secs);
+            }
+            default:
+                return false;
+        }
+    }
+
     /** A herd's dust: soft tan veils over it, layered and drifting; birds wheeling high above. A dust line trails it. */
     private static void haze(VertexConsumer vc, Shown s, float a, boolean add, boolean line) {
         float r = s.radius;
         if (!add) {
-            int puffs = line ? 14 : 10;
+            int puffs = s.air ? 0 : line ? 14 : 10;
             for (int i = 0; i < puffs; i++) {
                 float f = i / (float) puffs;
                 double ox, oz;
@@ -195,7 +273,7 @@ final class PulseFx {
                 }
                 double oy = 2 + (i % 4) * 2.2 + Mth.sin(now * 0.01F + i) * 0.8;
                 float size = r * (0.55F + 0.25F * ((i * 37) % 10) / 10F);
-                soft(vc, ox, oy, oz, size, argb(0.27F * a, 0xB89A6E));
+                veil(vc, ox, oy, oz, size, argb(0.27F * a, 0xB89A6E));
             }
             if (line) return;
             // the birds: dark wings wheeling in a loose ring over the dust
@@ -254,7 +332,7 @@ final class PulseFx {
 
     /** The Deep Tide: grey fog fingers creeping out along the ground, longer as the night goes on. */
     private static void fog(VertexConsumer vc, Shown s, float a, boolean add) {
-        if (add) return;
+        if (add || s.air) return;
         float grow = 0.65F + 0.35F * Mth.clamp(s.progress * 3, 0, 1);
         for (int f = 0; f < 9; f++) {
             float ang = f * Mth.TWO_PI / 9 + Mth.sin(now * 0.004F + f) * 0.35F;
@@ -264,10 +342,10 @@ final class PulseFx {
                 double curl = Mth.sin(now * 0.006F + f * 1.3F + j * 0.5F) * j * 0.6;
                 double ox = Mth.cos(ang) * d - Mth.sin(ang) * curl, oz = Mth.sin(ang) * d + Mth.cos(ang) * curl;
                 double oy = 0.7 + Mth.sin(now * 0.02F + j + f) * 0.3;
-                soft(vc, ox, oy, oz, 4.5F + j * 1.1F, argb(0.16F * a * (1 - j / 8F), 0x4A5058));
+                veil(vc, ox, oy, oz, 4.5F + j * 1.1F, argb(0.16F * a * (1 - j / 8F), 0x8A93A0));
             }
         }
-        soft(vc, 0, 1.2, 0, s.radius * 0.45F, argb(0.2F * a, 0x40464E));
+        veil(vc, 0, 1.2, 0, s.radius * 0.45F, argb(0.2F * a, 0x7C8592));
     }
 
     /**
@@ -330,10 +408,10 @@ final class PulseFx {
     private static void roar(VertexConsumer vc, Shown s, float a, boolean add) {
         float beat = (now % 60) / 60F;
         if (!add) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < (s.air ? 0 : 9); i++) {
                 float f = (beat + i / 9F) % 1F;
                 double ox = Mth.sin(i * 2.7F) * (2 + f * s.radius), oz = Mth.cos(i * 1.9F) * (2 + f * s.radius);
-                soft(vc, ox, 1 + f * 6, oz, 2 + f * 5, argb(0.28F * a * (1 - f), 0x9C8064));
+                veil(vc, ox, 1 + f * 6, oz, 2 + f * 5, argb(0.28F * a * (1 - f), 0x9C8064));
             }
             return;
         }
@@ -357,6 +435,33 @@ final class PulseFx {
 
     private static float rz(double oz) {
         return (float) ((az + oz - cz) * k);
+    }
+
+    /** The hour's light on a veil drawn here (1 by day, about a fifth by night), set once a frame. */
+    private static float tone = 1F;
+
+    /**
+     * A veil of dust or fog where Lens does not draw it as air: a soft round in its colour as the hour lights it (a
+     * fixed colour stood pale against the night), drawn once (the render type culls nothing, and both windings laid it
+     * twice over), and fading as the camera comes into it: from inside, a veil is a sheet over everything.
+     */
+    private static void veil(VertexConsumer vc, double ox, double oy, double oz, float r, int argb) {
+        float x = rx(ox), y = ry(oy), z = rz(oz), rr = (float) (r * k);
+        float near = Mth.clamp((Mth.sqrt(x * x + y * y + z * z) - 0.5F * rr) / (1.2F * rr), 0, 1);
+        int a = (int) ((argb >>> 24) * near);
+        if (a == 0) return;
+        // (night's light is cooler: red falls a little further than blue)
+        int rd = (int) (((argb >> 16) & 255) * tone * (0.9F + 0.1F * tone)), g = (int) (((argb >> 8) & 255) * tone), b = (int) ((argb & 255) * Math.min(1F, tone * 1.1F));
+        int col = a << 24 | rd << 16 | g << 8 | b, rim = col & 0x00FFFFFF;
+        int n = 10;
+        for (int i = 0; i < n; i++) {
+            float a0 = i * Mth.TWO_PI / n, a1 = (i + 1) * Mth.TWO_PI / n;
+            float c0 = Mth.cos(a0) * rr, s0 = Mth.sin(a0) * rr, c1 = Mth.cos(a1) * rr, s1 = Mth.sin(a1) * rr;
+            vc.addVertex(x, y, z).setColor(col);
+            vc.addVertex(x, y, z).setColor(col);
+            vc.addVertex(x + RIGHT.x * c1 + UP.x * s1, y + RIGHT.y * c1 + UP.y * s1, z + RIGHT.z * c1 + UP.z * s1).setColor(rim);
+            vc.addVertex(x + RIGHT.x * c0 + UP.x * s0, y + RIGHT.y * c0 + UP.y * s0, z + RIGHT.z * c0 + UP.z * s0).setColor(rim);
+        }
     }
 
     /** A soft round veil: bright at its middle, nothing at its rim (a fan of triangles as quads). */

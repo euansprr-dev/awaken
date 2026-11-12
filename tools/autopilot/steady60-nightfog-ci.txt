@@ -1,0 +1,106 @@
+# The night's pale band (Euan, playing, 12 Nov, a wood near Carillon just after midnight, clear sky: "smth wrong with
+# the fog here, making things very washed out and flat"). In his picture the middle distance (ground, grass, the
+# feet of the trunks) stands paler than both the ground at his feet and the far trees, with no texture left in it.
+# His world's seed, his spot, his heading, his hour and his settings (Cinematic, the Air, Vivid, fov 90, Pixels 0.85,
+# brightness 100). First as played; then one part of Lens's picture left out at a time (the probe chains), to find
+# which lays the band; then the same view round the clock.
+# Run: tools/tour-ci.sh tools/autopilot/steady60-nightfog-ci.txt 2400
+# (his world is the Awakened Pack's: the pack's terrain puts Carillon and every land elsewhere than the plain game's
+# does for the same seed. Runs 43223525534 and 43226201813, on PACK=perf alone, stood in another world.)
+# ci knobs: LENS=cinematic PACK=perf,feel,comfort,world TECTONIC=awakened RD=16
+world nightfog creative 5578681379194123303
+waitworld
+gui 0
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 100000
+cmd time set 18937
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken admin awaken
+wait 200
+cmd awaken powers starter 1
+wait 20
+screen close
+window 1440 900
+camera first
+lookswitch cinematic
+opt fov 90
+opt gamma 100
+pixels 0.85 sharp
+lens grade vivid
+cmd item replace entity @s weapon.mainhand with minecraft:air
+cmd time set 18937
+cmd tp @s 856.36 71 -999.95 143.85 -10.2
+wait 400
+look 143.85 -10.2
+wait 100
+lens look
+shot night_as_played
+# one part left out at a time
+lens chain cinematic_comp_air_fog
+wait 80
+shot night_no_air_fog
+lens chain cinematic_comp_scatter
+wait 80
+shot night_no_scatter
+lens chain cinematic_comp_light
+wait 80
+shot night_no_light
+lens chain cinematic_comp_air
+wait 80
+shot night_no_air
+lens chain cinematic_bloom
+wait 80
+shot night_no_bloom
+lens chain cinematic_light
+wait 80
+shot night_no_light_pass
+lens chain cinematic_comp_grade
+wait 80
+shot night_no_grade
+lens chain cinematic_comp_under
+wait 80
+shot night_no_under
+lens chain cinematic_comp_cover
+wait 80
+shot night_no_cover
+lens chain off
+wait 60
+lens grade awaken
+wait 60
+shot night_grade_awaken
+lens grade vivid
+wait 20
+lens sunpass off
+wait 80
+shot night_no_sunpass
+lens sunpass setting
+lookswitch swift
+wait 80
+shot night_swift
+lookswitch cinematic
+wait 80
+lens chain cinematic_none
+wait 80
+shot night_game_own
+lens chain off
+wait 120
+# the same view round the clock
+cmd time set 6000
+wait 160
+shot clock_06000_noon
+cmd time set 13000
+wait 160
+shot clock_13000_dusk
+cmd time set 15000
+wait 160
+shot clock_15000
+cmd time set 21000
+wait 160
+shot clock_21000
+quit

@@ -21,11 +21,13 @@ import java.nio.ByteBuffer;
  * ring and the light's direction. The matrices and the sun written here are the CPU's estimate (the game's projection
  * with its own bob, hurt tilt and nausea); LensClient then copies WorldProjection's exact ones over them on the GPU,
  * from the projection the world was really drawn with (a camera mod's roll included).
- * A 48×1 RGBA32F texture ({@code awaken:lens_frame}), written once a frame just before the post effects run; layout in
+ * A 64×1 RGBA32F texture ({@code awaken:lens_frame}), written once a frame just before the post effects run; layout in
  * {@code shaders/include/lens_frame.glsl}. Nothing is allocated per frame.
  */
 final class LensFrame {
-    static final int WIDTH = 48;
+    static final int WIDTH = 64;
+    /** Where the dust and fog volumes start (four texels each, layout in lens_frame.glsl). */
+    static final int HAZE = 48;
     /** The sun on screen (layout in lens_frame.glsl). */
     static final int SUN = 21;
     final Texture texture = new Texture();
@@ -121,6 +123,18 @@ final class LensFrame {
 
     void edgeHold(float letGo) {
         edgeHold = letGo;
+    }
+
+    // dust and fog as air (SPEC §22): this frame's volumes, their centres in the world and the rest as the shader reads it
+    private final double[] hazeAt = new double[LensClient.HAZES * 3];
+    private final float[] hazeIs = new float[LensClient.HAZES * LensClient.HAZE_FLOATS];
+    private int hazeCount;
+
+    /** This frame's dust and fog volumes (LensClient.haze): copied, so the caller may fill its own again at once. */
+    void hazes(double[] at, float[] is, int count) {
+        hazeCount = Math.min(count, LensClient.HAZES);
+        System.arraycopy(at, 0, hazeAt, 0, hazeCount * 3);
+        System.arraycopy(is, 0, hazeIs, 0, hazeCount * LensClient.HAZE_FLOATS);
     }
 
     /** This frame's clouds (L4): the layer's base height (0: Lens draws none), cover 0..1, wind drift in blocks, colour. */
@@ -231,6 +245,19 @@ final class LensFrame {
                 put(t + j, on ? storms[o + j * 4] : 0f, on ? storms[o + j * 4 + 1] : 0f, on ? storms[o + j * 4 + 2] : 0f, on ? storms[o + j * 4 + 3] : 0f);
             }
         }
+        // 48-59: up to three volumes of dust or fog, four texels each (layout in lens_frame.glsl); 60-63 spare
+        for (int k = 0; k < LensClient.HAZES; k++) {
+            int o = k * LensClient.HAZE_FLOATS, t = HAZE + k * 4;
+            boolean on = k < hazeCount;
+            // centre (camera-relative), thickness at the core; half-extents along, across, up; the track's direction,
+            // seconds, grain; colour, how much of the sun's light it takes
+            put(t, on ? (float) (hazeAt[k * 3] - x) : 0f, on ? (float) (hazeAt[k * 3 + 1] - y) : 0f, on ? (float) (hazeAt[k * 3 + 2] - z) : 0f, on ? hazeIs[o] : 0f);
+            put(t + 1, on ? hazeIs[o + 1] : 1f, on ? hazeIs[o + 2] : 1f, on ? hazeIs[o + 3] : 1f, 0f);
+            put(t + 2, on ? hazeIs[o + 4] : 1f, on ? hazeIs[o + 5] : 0f, on ? hazeIs[o + 6] : 0f, on ? hazeIs[o + 7] : 0f);
+            put(t + 3, on ? hazeIs[o + 8] : 0f, on ? hazeIs[o + 9] : 0f, on ? hazeIs[o + 10] : 0f, on ? hazeIs[o + 11] : 0f);
+        }
+        for (int t = HAZE + LensClient.HAZES * 4; t < WIDTH; t++) put(t, 0f, 0f, 0f, 0f);
+        hazeCount = 0;
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(texture.getTexture(), data, 0, 0, 0, 0, WIDTH, 1);
 
         prevViewProj.set(viewProj);

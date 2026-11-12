@@ -177,6 +177,57 @@ vec3 lightColour(vec4 p1, vec4 sunset) {
     return F(16).y > 0.5 ? vec3(0.6, 0.7, 0.95) * 0.7 : mix(vec3(1.0, 0.96, 0.88), sunset.rgb, p1.a);
 }
 
+#ifdef LENS_LIGHT
+// Dust and fog as air (SPEC §22 "Dust and fog as air"): a happening's dust or night fog is a soft volume in the world,
+// not a veil drawn in front of it. Up to three a frame (frame texels 48-59, four each, from LensClient.haze): a centre,
+// its half-extents along its track, across it and up, its colour, and how thick it is at its core. The density is 1
+// at the core and falls to nothing at the rim (1 - r^2 in the volume's own measure), which has an exact sum along the
+// view ray: so what stands in the dust is veiled by the dust in front of it and no more. The near stays clear, the far
+// goes into it, and the camera may stand inside. It takes the hour's light: the sky's where you look, and the sun's or
+// the moon's over that, most of all looking into the light. rgb what the dust adds, a what is left of the picture.
+vec4 hazeAir(vec3 dir, float reach, vec3 gameFog, vec4 p1, vec4 sunset) {
+    vec3 add = vec3(0.0);
+    float left = 1.0;
+    vec4 f14 = F(14), f16 = F(16), f22 = F(22);
+    for (int k = 0; k < 3; k++) {
+        vec4 at = F(48 + k * 4);
+        if (at.w <= 0.0) break;
+        vec4 ext = F(49 + k * 4), way = F(50 + k * 4), col = F(51 + k * 4);
+        // the ray in the volume's own measure (along, up, across, each over its half-extent): a unit sphere there
+        vec3 o = -at.xyz;
+        vec3 oo = vec3(dot(o.xz, way.xy) / ext.x, o.y / ext.z, (o.z * way.x - o.x * way.y) / ext.y);
+        vec3 dd = vec3(dot(dir.xz, way.xy) / ext.x, dir.y / ext.z, (dir.z * way.x - dir.x * way.y) / ext.y);
+        float qa = dot(dd, dd), qb = 2.0 * dot(oo, dd), qc = dot(oo, oo);
+        float disc = qb * qb - 4.0 * qa * (qc - 1.0);
+        if (disc <= 0.0) continue;
+        // about the ray's nearest point to the core (s = t - tm), where the numbers stay small: the chord is -hc..hc
+        float tm = -qb / (2.0 * qa), hc = sqrt(disc) / (2.0 * qa);
+        float s0 = max(-hc, -tm), s1 = min(hc, reach - tm);
+        if (s1 <= s0) continue;
+        // the sum of 1 - r^2 along it: (1 - rmin^2)(s1 - s0) - qa (s1^3 - s0^3) / 3, with 1 - rmin^2 = disc / (4 qa)
+        float sum = disc / (4.0 * qa) * (s1 - s0) - qa * (s1 * s1 * s1 - s0 * s0 * s0) / 3.0;
+        // billows: the air's own noise at two depths of the chord, drifting, so it is not one even cloud
+        vec3 drift = vec3(way.z * 0.06, -way.z * 0.035, way.z * 0.045);
+        vec3 w0 = (dir * (tm + mix(s0, s1, 0.3)) + o) * way.w, w1 = (dir * (tm + mix(s0, s1, 0.75)) + o) * way.w;
+        float billow = 0.45 + 0.55 * (airNoise(w0 + drift) + airNoise(w1 * 2.3 - drift.zxy + 17.0));
+        float through = exp(-at.w * max(sum, 0.0) * billow);
+        // its light: what the air holds where you look (the Air's horizon, or the game's fog colour without the Air),
+        // a little greyed, and the sun's or the moon's on top, strongest looking into it
+        vec3 sky = mix(gameFog, airFog(dir, f22.xyz, f16.z), airOn());
+        vec3 amb = mix(vec3(luma(sky)), sky, 0.6);
+        float into = max(dot(dir, f14.xyz), 0.0);
+        // (by night the moon's share is much the larger: mist under a dark sky is seen by the little light it catches.
+        // Lit by the sky alone, or with the day's share of the moon, it came out of the grade's dark end as the
+        // night's own colour: a darkness over the distance and no mist, runs 43233875622 and 43236419470)
+        vec3 direct = lightColour(p1, sunset) * f14.w * mix(0.30 + 0.50 * into * into * into, 1.60, f16.y);
+        vec3 lit = min(col.rgb * (amb * 0.62 + direct * col.w), vec3(1.0));
+        add += left * (1.0 - through) * lit;
+        left *= through;
+    }
+    return vec4(add, left);
+}
+#endif
+
 // Lens 2's light (SPEC §22), on the frame as the game lit it: a warm key on faces the sun reaches, a cool shade where it
 // doesn't (deeper and warmer-keyed as the sun lowers), ambient occlusion in corners. As a multiplier on linear light;
 // the frame is display-encoded, where that is about its square root. Fades out under solid cover (a roof, a cave),
@@ -742,6 +793,15 @@ void main() {
     }
     // the near light back over whatever of the sky was laid on it
     c += nearGlow * skyCover;
+    // a happening's dust or fog, as air between the eye and whatever this pixel shows (hazeAir above); not on a Holo
+    // plate. (The calm composite leaves it out: a frame with any is not calm, LensBlock.calm.)
+#ifndef LENS_CALM
+    if (F(48).w > 0.0 && !plate && !classic) {
+        vec3 hv = open ? normalize(unproject(frameMat(0), texCoord, 1.0e-5, F(16).x > 0.5)) : normalize(pRel);
+        vec4 ha = hazeAir(hv, sky ? 1.0e9 : (farTerrain ? d : length(pRel)), fogColor.rgb, p1, sunset);
+        c = c * ha.a + ha.rgb;
+    }
+#endif
 #endif
     float haze = sky ? h.r * 0.12 : smoothstep(h.g * rdEnd, rdEnd * 1.1, d) * h.r;
     // aerial perspective keeps deepening over far terrain: ridges fade layer by layer toward the horizon

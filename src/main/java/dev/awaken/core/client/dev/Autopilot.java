@@ -742,6 +742,11 @@ public final class Autopilot {
                     Awaken.LOG.info("[autopilot] lens cost: {}", dev.awaken.lens.client.LensClient.cost());
                     return true;
                 }
+                if (arg.trim().startsWith("haze")) { // lens haze off|on: a happening's dust and fog as air (built in), or its owner's veils
+                    Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.hazeSwitch(arg.trim().substring(4)));
+                    waitTicks = 10;
+                    return true;
+                }
                 if (arg.trim().startsWith("accent")) { // lens accent off|on: a power's look over the place's own (built in), or in place of it as it was
                     Awaken.LOG.info("[autopilot] lens {}: {}", arg.trim(), dev.awaken.lens.client.LensClient.accentSwitch(arg.trim().substring(6)));
                     waitTicks = 10;
@@ -803,6 +808,10 @@ public final class Autopilot {
             case "pixels" -> { // pixels <scale> [fsr|sharp|bilinear] | config | state | gpu ...: Pixels for the following scenes
                 Awaken.LOG.info("[autopilot] pixels {}: {}", arg.trim(), dev.awaken.turbo.pixels.Pixels.autopilot(arg));
                 if (!arg.trim().startsWith("gpu")) waitTicks = 10;
+            }
+            case "tell" -> { // tell <haze|dustline|fog|roar> <blocks> | off: a happening's dust or fog held that far ahead, on the ground
+                String[] t = arg.trim().split("\\s+");
+                Awaken.LOG.info("[autopilot] tell {}: {}", arg.trim(), dev.awaken.living.client.LivingClient.testTell(t[0], t.length > 1 ? Float.parseFloat(t[1]) : 0F));
             }
             case "lensdebug" -> {
                 dev.awaken.lens.client.LensClient.debug(Integer.parseInt(arg.trim()));

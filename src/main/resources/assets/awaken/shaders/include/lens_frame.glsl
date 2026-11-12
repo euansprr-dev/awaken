@@ -1,4 +1,4 @@
-// AWAKEN Lens 2 (SPEC §22): the frame's float values (dev.awaken.lens.client.LensFrame, 24x1 RGBA32F) and the terrain's
+// AWAKEN Lens 2 (SPEC §22): the frame's float values (dev.awaken.lens.client.LensFrame, 64x1 RGBA32F) and the terrain's
 // heights (lens_height.glsl). Needs FrameSampler declared before it; lens_height.glsl needs HeightSampler and
 // lens_normal.glsl DepthSampler.
 //   0-3  inverse view-projection (NDC -> camera-relative world), from the projection the world was drawn with (its
@@ -21,6 +21,13 @@
 //        light texel may be, in the art's pixels, where the contact shadows fade from and to, then the ambient shade;
 //        34 the edge's hold: how much of a contact shadow the screen can no longer see is let go each frame, 0 none
 //        kept)
+//   48-59 dust and fog as air (hazeAir in lens_composite.glsl; LensClient.haze), up to three volumes, four texels each,
+//        filled from the first (a volume with no thickness ends the list):
+//        48 + 4k  its centre, camera-relative; w its density at the core, per block (0: none)
+//        49 + 4k  its half-extents: along its track, across it, up
+//        50 + 4k  xy the track's direction on the ground (unit x, z); z its clock in seconds; w 1 / its billows' size
+//        51 + 4k  its colour in full light; w how much of the sun's or the moon's light it takes
+//   60-63 spare
 
 #include <awaken:lens_block.glsl>
 
