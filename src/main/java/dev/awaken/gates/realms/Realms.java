@@ -70,14 +70,22 @@ public final class Realms {
     public static boolean openLandOff(GateRecord g) {
         if (!openLand(g) || AwakenConfig.GATE_OPEN_LANDS.get()) return false;
         RealmRef r = g.realm.orElseThrow();
-        return !Blueprints.back(r.blueprint()) || r.version() < RealmPlan.CURRENT_VERSION;
+        return !Blueprints.back(r.blueprint()) || r.version() < RealmPlan.OPEN_LANDS_FIXED;
     }
 
     /** Puts a new gate's Realm in place: a cell, and the plan where worldgen threads can read it. */
     public static void attach(MinecraftServer server, GateRecord g, String blueprint) {
         int cell = RealmData.get(server).allocate();
-        g.realm = Optional.of(new RealmRef(blueprint, g.plan.seed(), RealmPlan.CURRENT_VERSION, cell));
+        g.realm = Optional.of(new RealmRef(blueprint, g.plan.seed(), planVersion(), cell));
         publish(g);
+    }
+
+    /**
+     * The plan version a new gate is drawn at: the beats (SPEC §72) only with gateBeats on and the Runner's kit in the game,
+     * since every beat asks for one of its moves. A gate keeps the version it was drawn at for as long as it stands.
+     */
+    public static int planVersion() {
+        return AwakenConfig.GATE_BEATS.get() && dev.awaken.body.BodyConfig.runnersKit() ? RealmPlan.CURRENT_VERSION : RealmPlan.BEFORE_BEATS;
     }
 
     private static boolean publish(GateRecord g) {
