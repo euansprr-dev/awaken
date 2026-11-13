@@ -3,6 +3,10 @@ package dev.awaken.gates.realms.land;
 import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
@@ -65,6 +69,18 @@ public final class UnlitStair extends GeneratedCrawl<UnlitStair.M> {
     @Override
     protected M mats() {
         return m();
+    }
+
+    /** Its beats (SPEC §72.3): stairs that turn round holds, niches to wall-jump between; the switchback up the black shaft. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.SWITCHBACK, Family.WALL, 2, Family.LEDGE, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(UnlitStair.M m) {
+        return super.beatSkin(m).lip(m.pale).scuff(m.black).beam(net.minecraft.world.level.block.Blocks.DEEPSLATE.defaultBlockState()).rail(m.flag).plinth(m.cracked).dust(m.cracked).glow(m.rune);
     }
 
     @Override

@@ -4,6 +4,10 @@ import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.Mats;
 import dev.awaken.gates.realms.kit.N;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.synth.SimplexNoise;
@@ -61,6 +65,18 @@ public final class GlassWarren extends GeneratedCrawl<GlassWarren.M> {
     @Override
     protected M mats() {
         return m();
+    }
+
+    /** Its beats (SPEC §72.3): glass sheets to run along, glass floors that shatter, sand chutes; the shattering floor. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.CRUMBLE, Family.FLOW, 3, Family.WALL, 2, Family.LOW, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(GlassWarren.M m) {
+        return super.beatSkin(m).scuff(m.glass).lip(m.sandstone).beam(m.timber).rail(m.burnt).plinth(m.burnt).dust(m.rippled).deck(m.sandstone).glow(m.hot);
     }
 
     @Override

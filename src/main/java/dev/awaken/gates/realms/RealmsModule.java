@@ -36,7 +36,9 @@ public final class RealmsModule {
         GENERATORS.register(modBus);
         SOURCES.register(modBus);
         NeoForge.EVENT_BUS.addListener(Blueprints::addReload);
+        NeoForge.EVENT_BUS.addListener(RealmRun::knockBack);
         dev.awaken.core.api.Sources.neverHeld("a Realm's rising air, drawn into the land", "realm_updraft", "realm_honey");
         RealmTests.register();
+        BeatTests.register();
     }
 }

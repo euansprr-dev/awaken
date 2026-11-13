@@ -57,6 +57,11 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
             return 0;
         }
 
+        /** More floors in a column under its own (feet2, roof, wet each), for a part that runs under itself (a well's flights); null for most. */
+        public int @org.jspecify.annotations.Nullable [] more(int x, int z) {
+            return null;
+        }
+
         /** Takes the rock out, and stands water in what it says is a pool. */
         void carve(V v) {
             for (int x = Math.max(x0, v.x0 - 1); x <= Math.min(x1, v.x0 + 16); x++) for (int z = Math.max(z0, v.z0 - 1); z <= Math.min(z1, v.z0 + 16); z++) {
@@ -1090,6 +1095,8 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
                 if (f == NONE) continue;
                 low = Math.min(low, Math.floorDiv(f, 2));
                 top = Math.max(top, p.roof(x, z));
+                int[] more = p.more(x, z);
+                if (more != null) for (int i = 0; i < more.length; i += 3) low = Math.min(low, Math.floorDiv(more[i], 2));
             }
         }
         bx0 -= 14;
@@ -1137,6 +1144,115 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
 
     /** Anything too big for {@link #adorn}: drawn after the floors are laid and before the walls are dressed. */
     protected void special(V v, M m) {}
+
+    // ---- beats (SPEC §72.2) ------------------------------------------------------------------------------------------
+
+    private volatile @org.jspecify.annotations.Nullable BeatSkin beats;
+
+    /** This land's blocks for the parts of its beats; what it leaves out is its rock, floor and half step. */
+    protected BeatSkin beatSkin(M m) {
+        return new BeatSkin();
+    }
+
+    final BeatSkin beats(M m) {
+        BeatSkin k = beats;
+        if (k == null) beats = k = beatSkin(m);
+        return k;
+    }
+
+    /** The block of one cell of a beat's solid box ({@code top}: the box's top cell). */
+    final BlockState beatBlock(M m, Part part, Sculpt.Role role, int arg, int x, int y, int z, boolean top) {
+        BeatSkin k = beats(m);
+        return switch (role) {
+            case ROCK -> rock(m, x, y, z);
+            case FLOOR -> top ? floor(m, part, x, y, z) : rock(m, x, y, z);
+            case DUST -> top ? BeatSkin.or(k.dust, floor(m, part, x, y, z)) : rock(m, x, y, z);
+            case CRUMBLE -> top ? BeatSkin.or(k.crumble, floor(m, part, x, y, z)) : rock(m, x, y, z);
+            case DECK -> top ? BeatSkin.or(k.deck, floor(m, part, x, y, z)) : rock(m, x, y, z);
+            case STEP -> BeatSkin.or(k.step, step(m));
+            case PLINTH_TOP -> BeatSkin.or(k.plinthTop, BeatSkin.or(k.step, step(m)));
+            case CAP -> BeatSkin.or(k.cap, BeatSkin.high(BeatSkin.or(k.step, step(m))));
+            case BEAM -> BeatSkin.axis(BeatSkin.or(k.beam, rock(m, x, y, z)), arg);
+            case LIP -> BeatSkin.or(k.lip, rock(m, x, y, z));
+            case SCUFF -> BeatSkin.or(k.scuff, rock(m, x, y, z));
+            case RAIL -> BeatSkin.or(k.rail, rock(m, x, y, z));
+            case PLINTH -> BeatSkin.or(k.plinth, rock(m, x, y, z));
+            case LINE -> arg < 0 ? BeatSkin.or(k.rope, Sculpt.rope()) : BeatSkin.facing(BeatSkin.or(k.line, BeatSkin.LADDER), arg);
+            case DOOR -> BeatSkin.or(k.door, doorBlock(m));
+            case GLOW -> BeatSkin.or(k.glow, Blocks.SHROOMLIGHT.defaultBlockState());
+            case TOOTH -> BeatSkin.or(k.tooth, rock(m, x, y, z));
+            case ANCHOR -> Sculpt.anchorRing();
+        };
+    }
+
+    /**
+     * A beat placed by hand in a designed crawl (SPEC §72.7): beat {@code b} at size {@code t} (0 its smallest, 1 its
+     * largest) from (x, feet, z) along (dx, dz), dressed in this land's own skin, proved where it stands with the body's
+     * rules, and put in the land as a rolled line is: its piece, its moves, its holds, the first lesson of a family the
+     * land hasn't taught yet, its traps, the Course that puts a fall back on its ledges (free at E and D) and its line.
+     * Returns the cell past it (x, feet, z) for the way on, or null when it won't hold there, and then nothing of it is
+     * kept and the way is the land's own. Call before {@link #done}.
+     */
+    protected final int @org.jspecify.annotations.Nullable [] handBeat(String leg, Beats.Beat b, double t, int x, int feet, int z, int dx, int dz) {
+        BeatLine L = new BeatLine(leg, x, feet, z, dx, dz);
+        if (!Beats.build(b, L, t, 1, ctx.rank(), new java.util.Random(seed ^ leg.hashCode()))) return null;
+        L.s.done();
+        M m = mats();
+        if (!dev.awaken.gates.realms.check.MoveProof.failures(L.s.view(paint(m, L.s)), L.moves, ctx.rank()).isEmpty()) return null;
+        part(L.s);
+        for (Move mv : L.moves) move(mv);
+        for (Hold hd : L.holds) hold(hd.leg(), hd.kind(), hd.x(), hd.y(), hd.z(), hd.radius(), hd.count());
+        for (Lesson ls : L.lessons) if (lessons().stream().noneMatch(o -> o.family() == ls.family())) lesson(ls);
+        BeatSkin k = beats(m);
+        for (int[] tp : L.traps) {
+            boolean press = tp[6] == 0;
+            trap(new Trap(leg, press ? TrapKind.PRESS : TrapKind.CRUMBLE, tp[0], tp[1], tp[2], tp[3], tp[4], tp[5], tp[7], tp[8],
+                    press ? BeatSkin.or(k.tooth, rock(m, tp[0], tp[1], tp[2])) : BeatSkin.or(k.crumble, floor(m, L.s, tp[0], tp[1] - 1, tp[2])),
+                    Blocks.AIR.defaultBlockState()));
+        }
+        boolean free = ctx.rank().ordinal() <= dev.awaken.progression.Rank.D.ordinal();
+        course(new Course(leg, L.s.x0 - 1, L.yLo - 10, L.s.z0 - 1, L.s.x1 + 1, L.yHi + 6, L.s.z1 + 1, List.copyOf(L.catches), free,
+                L.lowest == Integer.MAX_VALUE ? Integer.MIN_VALUE : L.lowest));
+        line(new Line(leg, List.copyOf(L.beats), java.util.Set.copyOf(L.families), false, L.startX, L.startY, L.startZ, L.endX(), L.feet, L.endZ()));
+        return new int[]{L.x(L.a, 0), L.feet, L.z(L.a, 0)};
+    }
+
+    /** A beat's piece in this land's own blocks, for the beat hall (SPEC §72.8): what the proof at generation reads. */
+    public final Sculpt.Paint beatPaint(Part part) {
+        return paint(mats(), part);
+    }
+
+    /** A beat's piece in this land's own blocks, for the proof at generation (nothing painted, nothing adorned). */
+    final Sculpt.Paint paint(M m, Part part) {
+        return new Sculpt.Paint() {
+            @Override
+            public BlockState solid(Sculpt.Role role, int arg, int x, int y, int z, boolean top) {
+                return beatBlock(m, part, role, arg, x, y, z, top);
+            }
+
+            @Override
+            public BlockState floor(int x, int y, int z) {
+                return CrawlLand.this.floor(m, part, x, y, z);
+            }
+
+            @Override
+            public BlockState rock(int x, int y, int z) {
+                return CrawlLand.this.rock(m, x, y, z);
+            }
+
+            @Override
+            public BlockState step() {
+                return CrawlLand.this.step(m);
+            }
+        };
+    }
+
+    /** Where this land's blocks for the roles a move depends on differ in shape from plain stone's (BeatSkin.check). */
+    public final List<String> beatShapes() {
+        M m = mats();
+        Sculpt probe = new Sculpt("probe");
+        return BeatSkin.check((role, top) -> beatBlock(m, probe, role, 0, 0, 64, 0, top));
+    }
 
     /** The top of the rock. */
     protected final int rockTop() {
@@ -1212,6 +1328,8 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         for (Part p : near) dress(v, m, p, near);
         finish(v, m);
         drawPieces(v, m);
+        // last of all: what the beats' moves need is so, whatever a skin, a trim or a piece did (SPEC §72.2)
+        for (Part p : near) if (p instanceof Sculpt s) s.enforce(v, this, m);
     }
 
     /**
@@ -1229,16 +1347,23 @@ public abstract class CrawlLand<M extends Mats> extends SheetLand<M> {
         for (int x = Math.max(p.x0, v.x0 - 1); x <= Math.min(p.x1, v.x0 + 16); x++) for (int z = Math.max(p.z0, v.z0 - 1); z <= Math.min(p.z1, v.z0 + 16); z++) {
             int f = p.feet2(x, z);
             if (f == NONE) continue;
-            for (int y = Math.floorDiv(f, 2), roof = p.roof(x, z); y < roof; y++) {
-                if (v.get(x, y, z) != null) continue;
-                boolean onFloor = rock(v, near, x, y - 1, z), underRoof = rock(v, near, x, y + 1, z);
-                int wx = 0, wz = 0;
-                if (rock(v, near, x + 1, y, z)) wx = 1;
-                else if (rock(v, near, x - 1, y, z)) wx = -1;
-                else if (rock(v, near, x, y, z + 1)) wz = 1;
-                else if (rock(v, near, x, y, z - 1)) wz = -1;
-                if (onFloor || underRoof || wx != 0 || wz != 0) adorn(v, m, p, x, y, z, onFloor, underRoof, wx, wz);
-            }
+            dress(v, m, p, near, x, z, Math.floorDiv(f, 2), p.roof(x, z));
+            // and every floor under it, where a part runs under itself
+            int[] more = p.more(x, z);
+            if (more != null) for (int i = 0; i < more.length; i += 3) dress(v, m, p, near, x, z, Math.floorDiv(more[i], 2), more[i + 1]);
+        }
+    }
+
+    private void dress(V v, M m, Part p, List<Part> near, int x, int z, int from, int roof) {
+        for (int y = from; y < roof; y++) {
+            if (v.get(x, y, z) != null) continue;
+            boolean onFloor = rock(v, near, x, y - 1, z), underRoof = rock(v, near, x, y + 1, z);
+            int wx = 0, wz = 0;
+            if (rock(v, near, x + 1, y, z)) wx = 1;
+            else if (rock(v, near, x - 1, y, z)) wx = -1;
+            else if (rock(v, near, x, y, z + 1)) wz = 1;
+            else if (rock(v, near, x, y, z - 1)) wz = -1;
+            if (onFloor || underRoof || wx != 0 || wz != 0) adorn(v, m, p, x, y, z, onFloor, underRoof, wx, wz);
         }
     }
 }

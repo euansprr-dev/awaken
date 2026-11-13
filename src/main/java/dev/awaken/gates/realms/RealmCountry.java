@@ -72,6 +72,11 @@ public final class RealmCountry {
     private record Kit(String herd, String small, String flier, String lookout) {}
 
     private static final Kit BARE = new Kit("", "", "", "");
+
+    /** A theme's marksman, the one that keeps watch from a height (its lookout), or "" (SPEC §72.5: a perch over a gulf). */
+    static String marksman(String theme) {
+        return KITS.getOrDefault(theme, BARE).lookout();
+    }
     // No creature here changes the land: nothing that plants, grows or leaves a trail.
     private static final Map<String, Kit> KITS = Map.ofEntries(
             Map.entry("ember_mines", new Kit("crag_ram", "scree_marmot", "peak_kite", "ember_imp")),

@@ -167,9 +167,39 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
     private static final BlockState WELL_LIGHT = Blocks.LIGHT.defaultBlockState().setValue(net.minecraft.world.level.block.LightBlock.LEVEL, 15);
     /** Every form, plan and crossing this run rolled: for whoever checks that all of them turn up. */
     private final java.util.Set<String> used = new java.util.TreeSet<>();
+    /** Plan 3 (SPEC §72): how the run's lines are going, and the families already taught on it. */
+    private final Composer.Run lines = new Composer.Run();
+    private final java.util.Set<dev.awaken.gates.realms.Land.Family> taught = java.util.EnumSet.noneOf(dev.awaken.gates.realms.Land.Family.class);
+    private int lineCount;
+
+    /** What the composer said it couldn't do on this run (SPEC §72.3, {@code beats.fallback}). */
+    public final Composer.Run beatRun() {
+        return lines;
+    }
+
+    /**
+     * This kind's accents (SPEC §72.3): the families it leans to and its signature beat. Plain, unless the skin says.
+     */
+    protected Composer.Accents accents() {
+        return Composer.Accents.NONE;
+    }
+
+    /** A kind's beat blocks start from its own traps: what gives way is its thin floor, a press's tooth its tooth. */
+    @Override
+    protected BeatSkin beatSkin(M m) {
+        return new BeatSkin().crumble(thinFloor(m)).tooth(tooth(m));
+    }
 
     protected GeneratedCrawl(Ctx ctx, long salt) {
         super(ctx, salt);
+    }
+
+    /** The crossings onto the lines' side routes (SPEC §72.3): never asked for, so the walk check takes them as leaps. */
+    private final List<Leap> sideLeaps = new ArrayList<>();
+
+    @Override
+    public List<Leap> leaps() {
+        return sideLeaps;
     }
 
     public final List<int[]> finds() {
@@ -227,6 +257,41 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             thin.add(t);
             trap(new Trap(id, TrapKind.CRUMBLE, t[0], t[1], t[2], t[3], t[4], t[5], 0, 0, thinFloor(m), AIR));
         }
+    }
+
+    /**
+     * Puts a laid line in the land (SPEC §72): proved where it stands on this kind's own blocks (MoveProof, both timings),
+     * then its piece, its moves, its holds, the first lesson of each family, its traps and finds, the Course that puts a
+     * fall back on its ledges (free at E and D) and the line the sweep reads. False, and nothing of it kept, when a move
+     * won't hold there.
+     */
+    private boolean placeLine(String leg, BeatLine L, M m, String name) {
+        L.s.done();
+        List<String> fails = dev.awaken.gates.realms.check.MoveProof.failures(L.s.view(paint(m, L.s)), L.moves, ctx.rank());
+        if (!fails.isEmpty()) {
+            lines.note(leg + " (" + name + ") where it stands: " + fails.getFirst());
+            return false;
+        }
+        part(L.s);
+        int[] b = {L.s.x0, L.yLo - 10, L.s.z0, L.s.x1, L.yHi + 2, L.s.z1};
+        taken.add(b);
+        for (Move mv : L.moves) move(mv);
+        for (Hold hd : L.holds) hold(hd.leg(), hd.kind(), hd.x(), hd.y(), hd.z(), hd.radius(), hd.count());
+        for (Lesson ls : L.lessons) if (taught.add(ls.family())) lesson(ls);
+        BeatSkin k = beats(m);
+        for (int[] t : L.traps) {
+            boolean press = t[6] == 0;
+            trap(new Trap(leg, press ? TrapKind.PRESS : TrapKind.CRUMBLE, t[0], t[1], t[2], t[3], t[4], t[5], t[7], t[8],
+                    press ? BeatSkin.or(k.tooth, tooth(m)) : BeatSkin.or(k.crumble, thinFloor(m)), AIR));
+        }
+        finds.addAll(L.finds);
+        sideLeaps.addAll(L.leaps);
+        boolean free = ctx.rank().ordinal() <= dev.awaken.progression.Rank.D.ordinal();
+        course(new Course(leg, b[0] - 1, b[1], b[2] - 1, b[3] + 1, b[4] + 4, b[5] + 1, List.copyOf(L.catches), free,
+                L.lowest == Integer.MAX_VALUE ? Integer.MIN_VALUE : L.lowest));
+        line(new dev.awaken.gates.realms.Land.Line(leg, List.copyOf(L.beats), java.util.Set.copyOf(L.families), false, L.startX, L.startY, L.startZ, L.endX(), L.feet, L.endZ()));
+        for (String bt : L.beats) used.add("beat " + bt);
+        return true;
     }
 
     /** The crossings a branch may be: the ones that are as easy to come back over as to go out on. */
@@ -369,6 +434,15 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             plan.add('L');
         }
 
+        // plan 3 (SPEC §72): every way but the Lord's is a line of beats, a gulf is crossed by one, a shaft is a well of
+        // them. Their rolls are their own, so the layout's rolls are where plan 2 had them
+        boolean beats = ctx.version() >= 3;
+        Random br = new Random(seed * 0x5DEECE66DL ^ 0xBEA75L);
+        Composer.Accents acc = accents();
+        Composer.Paints paints = beats ? new Composer.Paints(getClass().getName(), paint(m, new Sculpt("probe"))) : null;
+        // the dens and quiet rooms, for their rises once every way into them is known (plan 3)
+        List<Cave> risers = new ArrayList<>();
+
         int feet = up ? 92 : 196; // a climb starts low and ends high; everything else starts high
         mouthFeet = feet;
         root = part(new Cave("root", 0, feet, 0, 7, 8, 6, 0.16 * wild, s++));
@@ -476,6 +550,21 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             // and the walk that proves a run would wade in and never try the jump)
             int half = cross == Chasm.Kind.FORD ? 7 : 5, deep = cross == Chasm.Kind.FORD ? 2 : cross == Chasm.Kind.STEPS ? crossFall + 9 : 10;
 
+            // plan 3: the line this way is, the line across a gulf, the well a shaft is (composed in their own frame first, so
+            // the way can be fitted round them)
+            Composer.Recipe line = null, across = null;
+            BeatWell.Plan well = null;
+            int[] wellBox = null;
+            int leadLen = step == 1 ? 14 : 8, tailLen = 8;
+            if (beats) {
+                if (kind != 'L') line = Composer.compose(lines, ctx.rank(), acc, -drop, Composer.longestAt(ctx.rank()), Composer.WAY, true, br, paints);
+                if (kind == 'C') across = Composer.compose(lines, ctx.rank(), acc, up ? 0 : -crossFall, Composer.longestAt(ctx.rank()), Composer.CROSSING, false, br, paints);
+                if (kind == 'M') {
+                    well = BeatWell.roll(up, ctx.rank(), br, paints, lines);
+                    if (well != null) wellBox = BeatWell.measure(well, up, ctx.rank());
+                }
+            }
+
             // which way: straight on out of a shaft; else try a few turns and keep the first that runs into nothing
             List<Double> ways = new ArrayList<>();
             if (straight) ways.add(heading);
@@ -486,20 +575,45 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 for (double t : new double[]{0, 0.6, -0.6, 1.15, -1.15, 1.7, -1.7}) ways.add(heading + t);
                 Collections.shuffle(ways, r);
             }
+            // a line runs square: its way is the nearest of north, east, south and west to each turn tried
+            if (line != null || across != null || well != null) {
+                List<Double> square = new ArrayList<>();
+                for (double w : ways) if (!square.contains(snap(w))) square.add(snap(w));
+                ways = square;
+            }
             double best = heading;
             int fewest = Integer.MAX_VALUE;
             for (double h : ways) {
                 double lead = from != null ? from.reach(h) * 0.9 : cr * 0.9;
                 double ax = cx + sx(h) * lead, az = cz + sz(h) * lead, ex = ax + sx(h) * len, ez = az + sz(h) * len;
                 int to = feet - drop, lo = Math.min(feet, to), hi = Math.max(feet, to);
-                int n = hits(box(ax, lo - 4, az, ex, hi + 9, ez, 5), 1);
-                if (run > 0) n += hits(box(ex, Math.min(to, to - slope) - (kind == 'C' ? deep + 4 : 4), ez, ex + sx(h) * run, Math.max(to, to - slope) + 10, ez + sz(h) * run, kind == 'C' ? half + 2 : 7), 0);
+                // the heading the next leg goes on along: the way's own, or where its line comes out
+                double hn = h;
+                int n;
+                if (line != null) {
+                    int wdx = (int) Math.round(sx(h)), wdz = (int) Math.round(sz(h));
+                    int px = (int) Math.round(ax + wdx * leadLen), pz = (int) Math.round(az + wdz * leadLen);
+                    int[] g = line.at(px, feet, pz, wdx, wdz);
+                    hn = Math.atan2(g[9], g[10]);
+                    to = g[7];
+                    ex = g[6] + g[9] * tailLen;
+                    ez = g[8] + g[10] * tailLen;
+                    n = hits(box(ax, feet - 4, az, px, feet + 9, pz, 5), 1) + hits(new int[]{g[0] - 3, g[1], g[2] - 3, g[3] + 3, g[4], g[5] + 3}, 1)
+                            + hits(box(g[6], to - 4, g[8], ex, to + 9, ez, 5), 1);
+                } else n = hits(box(ax, lo - 4, az, ex, hi + 9, ez, 5), 1);
+                if (across != null) {
+                    int[] g = across.at((int) Math.round(ex), to, (int) Math.round(ez), (int) Math.round(sx(hn)), (int) Math.round(sz(hn)));
+                    n += hits(new int[]{g[0] - 3, g[1], g[2] - 3, g[3] + 3, g[4], g[5] + 3}, 0);
+                } else if (well != null) {
+                    int[] g = BeatWell.at(wellBox, (int) Math.round(ex), to, (int) Math.round(ez), (int) Math.round(sx(hn)), (int) Math.round(sz(hn)));
+                    n += hits(new int[]{g[0] - 3, g[1], g[2] - 3, g[3] + 3, g[4], g[5] + 3}, 0);
+                } else if (run > 0) n += hits(box(ex, Math.min(to, to - slope) - (kind == 'C' ? deep + 4 : 4), ez, ex + sx(hn) * run, Math.max(to, to - slope) + 10, ez + sz(hn) * run, kind == 'C' ? half + 2 : 7), 0);
                 else if (kind == 'M') {
-                    double mx = ex + sx(h) * (wide - 1.5), mz = ez + sz(h) * (wide - 1.5);
+                    double mx = ex + sx(hn) * (wide - 1.5), mz = ez + sz(hn) * (wide - 1.5);
                     n += hits(box(mx - wide, to - 34, mz - wide, mx + wide, to + 42, mz + wide, 5), 0);
                 } else {
-                    double rax = built ? snap(h) : h, back = round ? rl : Cave.edge(cut, rimOf, rl, rw, h - rax);
-                    double mx = ex + sx(h) * (back - 1.5), mz = ez + sz(h) * (back - 1.5);
+                    double rax = built ? snap(hn) : hn, back = round ? rl : Cave.edge(cut, rimOf, rl, rw, hn - rax);
+                    double mx = ex + sx(hn) * (back - 1.5), mz = ez + sz(hn) * (back - 1.5);
                     double far = cut == Cave.Form.CROSS ? rl : 0;
                     double bx = round ? rl : Math.max(far, Math.abs(sx(rax)) * rl + Math.abs(sz(rax)) * rw), bz = round ? rl : Math.max(far, Math.abs(sz(rax)) * rl + Math.abs(sx(rax)) * rw);
                     n += hits(box(mx - bx, to - 7, mz - bz, mx + bx, to + high + 6, mz + bz, 5), 0);
@@ -533,26 +647,66 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             };
             if (kind != 'F' && nth > 1) id += nth;
             double way = style.wayHalf() + (kind == 'L' ? 0.3 : 0);
-            part(new Tunnel("way" + step, (int) Math.round(ax), feet, (int) Math.round(az), (int) Math.round(ex), to, (int) Math.round(ez), way, style.wayHigh() + (kind == 'L' ? 1 : 0), 0.4 * wild, s++)).ground = deepGround;
-            taken.add(box(ax, Math.min(feet, to) - 4, az, ex, Math.max(feet, to) + 9, ez, 5));
+            // plan 3: a lead tunnel, the line, a tail tunnel; the doors and the side cell's join are in the tunnels
+            String lineId = null;
+            double startH = h;
+            int startFeet = feet;
+            if (line != null) {
+                int wdx = (int) Math.round(sx(h)), wdz = (int) Math.round(sz(h));
+                int px = (int) Math.round(ax + wdx * leadLen), pz = (int) Math.round(az + wdz * leadLen);
+                part(new Tunnel("way" + step, (int) Math.round(ax), feet, (int) Math.round(az), px, feet, pz, way, style.wayHigh(), 0.4 * wild, s++)).ground = deepGround;
+                taken.add(box(ax, feet - 4, az, px, feet + 9, pz, 5));
+                lineId = "line" + (++lineCount);
+                BeatLine bl = new BeatLine(lineId, px, feet, pz, wdx, wdz);
+                boolean laid = line.lay(bl) && placeLine(lineId, bl, m, line.name());
+                int qx = laid ? bl.x(bl.a, 0) : px, qz = laid ? bl.z(bl.a, 0) : pz;
+                if (laid) {
+                    to = bl.feet;
+                    h = Math.atan2(bl.dx(), bl.dz());
+                    ex = qx + bl.dx() * tailLen;
+                    ez = qz + bl.dz() * tailLen;
+                    int[] legAt = bl.middle();
+                    made.add(new Object[]{lineId, LegKind.MOVEMENT, line.name(), legAt[0], legAt[1], legAt[2], Math.max(8, bl.a / 2 + 3), -1, none});
+                } else {
+                    // it didn't hold where it was put: the way is today's from the line's start, and the run says so
+                    lineId = null;
+                    int[] g = line.at(px, feet, pz, wdx, wdz);
+                    to = g[7];
+                    ex = g[6] + g[9] * tailLen;
+                    ez = g[8] + g[10] * tailLen;
+                    h = Math.atan2(g[9], g[10]);
+                    line(new dev.awaken.gates.realms.Land.Line("line" + lineCount, List.of(), java.util.Set.of(), true, px, feet, pz, (int) Math.round(ex), to, (int) Math.round(ez)));
+                }
+                part(new Tunnel("way" + step + "_out", qx, to, qz, (int) Math.round(ex), to, (int) Math.round(ez), way, style.wayHigh(), 0.4 * wild, s++)).ground = deepGround;
+                taken.add(box(qx, Math.min(feet, to) - 4, qz, ex, Math.max(feet, to) + 9, ez, 5));
+            } else {
+                part(new Tunnel("way" + step, (int) Math.round(ax), feet, (int) Math.round(az), (int) Math.round(ex), to, (int) Math.round(ez), way, style.wayHigh() + (kind == 'L' ? 1 : 0), 0.4 * wild, s++)).ground = deepGround;
+                taken.add(box(ax, Math.min(feet, to) - 4, az, ex, Math.max(feet, to) + 9, ez, 5));
+            }
             // the doors on this way: the last fight's, six along it, and this fight's, six short of its end; the way to the Lord has the heart's door instead
             if (kind == 'L') {
                 int mx = (int) Math.round((ax + ex) / 2), mz = (int) Math.round((az + ez) / 2), w = 6;
                 int lo = Math.min(feet, to) - 2, hi = Math.max(feet, to) + 8;
                 heartDoor = Math.abs(sx(h)) >= Math.abs(sz(h)) ? new int[]{mx - 1, lo, mz - w, mx + 1, hi, mz + w} : new int[]{mx - w, lo, mz - 1, mx + w, hi, mz + 1};
+            } else if (line != null) {
+                if (prevSeals) doorAcross(prevLeg, ax + sx(startH) * 6, startFeet, startFeet, az + sz(startH) * 6, startH, way);
+                if (kind == 'F' || kind == 'A' || kind == 'W') doorAcross(id, ex - sx(h) * 6, to, to, ez - sz(h) * 6, h, way);
             } else {
                 if (prevSeals) doorAcross(prevLeg, ax + sx(h) * 6, feet, to, az + sz(h) * 6, h, way);
                 if (kind == 'F' || kind == 'A' || kind == 'W') doorAcross(id, ex - sx(h) * 6, feet, to, ez - sz(h) * 6, h, way);
             }
             if (step == 1) {
                 // where the side cell's second way joins this one: past the first fight's door, short of the next one
-                sideX = ax + sx(h) * 11;
-                sideZ = az + sz(h) * 11;
-                sideHeading = h;
-                sideFeetB = feet - (int) Math.round(drop * 11.0 / len);
-                afterFirst = id;
+                sideX = ax + sx(startH) * 11;
+                sideZ = az + sz(startH) * 11;
+                sideHeading = startH;
+                sideFeetB = line != null ? startFeet : feet - (int) Math.round(drop * 11.0 / len);
+                afterFirst = lineId != null ? lineId : id;
             }
-            joins.add(new String[]{prevLeg, id});
+            if (lineId != null) {
+                joins.add(new String[]{prevLeg, lineId});
+                joins.add(new String[]{lineId, id});
+            } else joins.add(new String[]{prevLeg, id});
             feet = to;
             straight = false;
             from = null;
@@ -612,6 +766,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                             }
                         }
                         dens++;
+                        if (beats) risers.add(room);
                     }
                     cx = ix;
                     cz = iz;
@@ -644,6 +799,21 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                     cr = 0;
                 }
                 case 'C' -> {
+                    // plan 3: a line of beats across it (SPEC §72.3); where it won't hold, the gulf of before
+                    if (across != null) {
+                        BeatLine xl = new BeatLine(id, x0, feet, z0, ddx, ddz);
+                        if (across.lay(xl) && placeLine(id, xl, m, across.name())) {
+                            used.add("crossing LINE");
+                            int[] legAt = xl.middle();
+                            made.add(new Object[]{id, LegKind.MOVEMENT, across.name(), legAt[0], legAt[1], legAt[2], Math.max(8, xl.a / 2 + 3), -1, none});
+                            feet = xl.feet;
+                            cx = xl.x(xl.a, 0);
+                            cz = xl.z(xl.a, 0);
+                            cr = 0;
+                            h = Math.atan2(xl.dx(), xl.dz());
+                            break;
+                        }
+                    }
                     // a gulf, and whatever this run rolled to cross it on: on a climb it stays level, otherwise it steps down as it goes
                     used.add("crossing " + cross);
                     Chasm pit = part(new Chasm(id, cross, x0, feet, z0, ddx, ddz, run, half, cross == Chasm.Kind.FORD ? 6 : 8, deep, crossFall, s++));
@@ -657,6 +827,22 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                     cr = 0;
                 }
                 default -> {
+                    // plan 3: a well of beats (SPEC §72.3); where it won't hold, the shaft of before
+                    if (well != null) {
+                        BeatLine wl = new BeatLine(id, x0, feet, z0, ddx, ddz);
+                        if (BeatWell.lay(well, wl, up, ctx.rank(), null) && placeLine(id, wl, m, well.form().title)) {
+                            used.add("well " + well.form());
+                            int[] legAt = wl.middle();
+                            made.add(new Object[]{id, LegKind.MOVEMENT, well.form().title, legAt[0], legAt[1], legAt[2], 14, -1, none});
+                            feet = wl.feet;
+                            cx = wl.x(wl.a, 0);
+                            cz = wl.z(wl.a, 0);
+                            cr = 0;
+                            h = Math.atan2(wl.dx(), wl.dz());
+                            straight = true;
+                            break;
+                        }
+                    }
                     // the shaft. Going down: in at the top on the near side, out a turn and a half and twenty-four blocks lower on the far side,
                     // over three breaks in the ledge. Going up it is the same shaft walked the other way, with no breaks (nobody jumps a gap upward).
                     int near = (int) Math.floorMod(4 - Math.round(h / (Math.PI / 2)), 4), quarter = up ? (near + 2) % 4 : near;
@@ -766,6 +952,7 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
                 break branch;
             }
         }
+        if (beats) rises(risers, new Random(seed * 0x2545F491L ^ 0x7153L));
         wells(new Random(seed * 31 + 0x77E11L));
         done();
         for (int[] f : finds) site(SiteKind.FIND, f[0], f[1], f[2], 2, "");
@@ -777,6 +964,68 @@ public abstract class GeneratedCrawl<M extends Mats> extends CrawlLand<M> {
             leg((String) l[0], (LegKind) l[1], (String) l[2], (Integer) l[3], (Integer) l[4], (Integer) l[5], (Integer) l[6], (Integer) l[7], pack,
                     stand && l[1] == LegKind.AMBUSH ? "waves:" + waves : "", exits.toArray(new String[0]));
         }
+    }
+
+    /**
+     * Rooms that go up (SPEC §72.5, plan 3): a den's room gets two or three rises along its rim and a stand's room four, so
+     * a fight can climb. A rise is two wide: a step a block and a half high to mantle, and behind it, toward the wall, a
+     * block three high to mantle again from the step. Each stands square on level floor, five from every door and two and
+     * a half off the worn way from each door to the middle, four from the middle, with room to stand on its top.
+     */
+    private void rises(List<Cave> rooms, Random r) {
+        for (Cave room : rooms) {
+            boolean waves = stand && room.name.startsWith("ambush");
+            int want = waves ? 4 : 2 + r.nextInt(2), made = 0;
+            List<Double> angles = new ArrayList<>();
+            double turn = r.nextDouble() * Math.PI * 2;
+            Sculpt sc = new Sculpt(room.name + "_rises");
+            for (int k = 0; k < 16 && made < want; k++) {
+                double a = turn + k * (Math.PI * 2 / 16);
+                boolean near = false;
+                for (double t : angles) near |= Math.abs(Math.IEEEremainder(a - t, Math.PI * 2)) < Math.PI / 3;
+                if (near) continue;
+                int ux = (int) Math.round(sx(snap(a))), uz = (int) Math.round(sz(snap(a))), vx = -uz, vz = ux;
+                double reach = room.reach(a);
+                if (reach < 7) continue;
+                int px = (int) Math.round(room.cx + sx(a) * reach * 0.62), pz = (int) Math.round(room.cz + sz(a) * reach * 0.62);
+                int[][] cells = {{px, pz}, {px + vx, pz + vz}, {px + ux, pz + uz}, {px + ux + vx, pz + uz + vz}};
+                int f = room.feet2(px, pz) == NONE ? Integer.MIN_VALUE : room.floorAt(px, pz);
+                boolean fits = f != Integer.MIN_VALUE;
+                for (int i = 0; i < cells.length && fits; i++) {
+                    int x = cells[i][0], z = cells[i][1];
+                    fits = room.feet2(x, z) != NONE && room.floorAt(x, z) == f && room.roof(x, z) >= f + (i < 2 ? 5 : 6)
+                            && (x - room.cx) * (x - room.cx) + (z - room.cz) * (z - room.cz) >= 16 && clearOfDoors(room, x, z);
+                }
+                // and the cell in front of the step is floor at the same height, to stand on and mantle from
+                fits = fits && room.feet2(px - ux, pz - uz) != NONE && room.floorAt(px - ux, pz - uz) == f;
+                if (!fits) continue;
+                for (int i = 0; i < 2; i++) {
+                    int x = cells[i][0], z = cells[i][1];
+                    sc.solid(x, f, z, x, f, z, Sculpt.Role.PLINTH, 0);
+                    sc.solid(x, f + 1, z, x, f + 1, z, Sculpt.Role.PLINTH_TOP, 0);
+                }
+                for (int i = 2; i < 4; i++) sc.solid(cells[i][0], f, cells[i][1], cells[i][0], f + 2, cells[i][1], Sculpt.Role.PLINTH, 0);
+                angles.add(a);
+                made++;
+            }
+            if (made == 0) continue;
+            sc.done();
+            part(sc);
+            used.add(waves ? "stand rises" : "den rises");
+        }
+    }
+
+    /** Whether a column is five from every door of a room and two and a half off the worn way from each to the middle. */
+    private static boolean clearOfDoors(Cave room, int x, int z) {
+        for (int[] d : room.doors) {
+            double dx = x - d[0], dz = z - d[1];
+            if (dx * dx + dz * dz < 25) return false;
+            double wx = room.cx - d[0], wz = room.cz - d[1], l2 = wx * wx + wz * wz;
+            double t = l2 == 0 ? 0 : Math.clamp((dx * wx + dz * wz) / l2, 0, 1);
+            double ox = dx - wx * t, oz = dz - wz * t;
+            if (ox * ox + oz * oz < 6.25) return false;
+        }
+        return true;
     }
 
     /** The stretch of a shaft's ledge on one side of it (0 north, 1 east, 2 south, 3 west), seven cells long, at about a height. */

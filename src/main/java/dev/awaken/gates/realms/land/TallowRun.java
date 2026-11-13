@@ -4,6 +4,10 @@ import dev.awaken.Awaken;
 import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.N;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.state.BlockState;
@@ -46,6 +50,18 @@ public final class TallowRun extends GeneratedCrawl<WaxGalleries.M> {
     @Override
     protected WaxGalleries.M mats() {
         return WaxGalleries.m();
+    }
+
+    /** Its beats (SPEC §72.3): low wax tunnels to slide, chutes of old wax; the long wax chute. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.DROPSLIDE, Family.LOW, 3, Family.FLOW, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(WaxGalleries.M m) {
+        return super.beatSkin(m).dust(m.old).deck(m.deck).scuff(m.run).lip(m.old).beam(m.timber).plinth(m.combWall).rail(m.deck);
     }
 
     @Override

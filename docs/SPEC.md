@@ -1081,6 +1081,13 @@ of `AwakenConfig.Client`.
   `RunnerRules` probes (`findWall`, `findEdge`, `climbOut`, `wallAhead`, `wallOn`, `climbTarget`) and `GripRules`
   (`find`, `climbTop`, `topLip`) read only, to prove its courses. `core.api.MovementHooks.remember(player, moves)`,
   `remembered(player, move)` (both sides) and `addMastery(player, track, points)` (§9.4), installed by the body.
+- Gates in Motion (§72): `dev.awaken.body.ascent.client.GateLessons` (client) — `show(List<Vec3> path)`: the Way Up's gold
+  figure walks a gate's path once, with no prompt (not while a Way Up lesson is on, not with reduced motion), and
+  `clean(beats)`: a little Flow for a line crossed clean. The gates' `MoveProof` reads the body's `RunnerRules`,
+  `BodyRules` and `GripRules` probes and `body.BodyConfig.runnersKit()` read only; `core.AwakenConfig.GATE_BEATS`
+  (`gateBeats`, default on) switches the beats; `BeatSkin.named(id)` looks up our own `rope`, `anchor_ring`, `drainpipe`,
+  `trellis`, `wall_ivy` and `hanging_ladder` blocks by name (a ladder when one is missing); a perch's marksman is the
+  realm country's theme lookout (`RealmCountry.marksman`); `core.api.FightsHooks.gentle(player)` halves a caught fall.
 
 ---------------------------------------------------------------------------------------------------------------------
 
@@ -27630,3 +27637,169 @@ plan with `leaperTrial` once it says it is ready, which it does not until someon
 - *Not built yet:* the gate's card showing the best time and medal; a place for the rope on the run; a check that
   proves each crossing against the reach above (the walk check takes the land's word for which crossings need a move);
   par set from real runs. Nobody has played it.
+
+## 72. Gates in Motion (APPROVED 12 Nov 2026, BUILT 13 Nov on `claude/gates-in-motion-plan`; plan docs/gates-in-motion/PLAN.md, build docs/gates-in-motion/BUILD-PLAN.md)
+
+Euan, 12 Nov 2026: the gates' parkour is "very boring": little wall running, simple jumps, no mantling, no sliding; a bit
+of fighting on the spiral stairs; "extrapolate this to every possible level". Approved the same day: "Go ahead with the full plan in
+INSANE detail and attention" (every recommendation; both kinds of teaching). Renumber at merge if 72 is taken. Unplayed:
+proved by the checks below and seen in CI tours only.
+
+**72.1 Why it is flat today.** Every move in the Runner's Kit is everyone's from the first second (§16.3), but a rolled
+crawl never asks for one: its crossings are sprint jumps over one to three cells, level or down (§50.9, `CrawlLand.Chasm`),
+a run has one of them, the shaft is one spiral at the same size at every rank, and fights sit only in dens, stands, Wardens
+and the Lord. The cause under all of it: `WalkCheck` proves walking and the sprint jump only, so the generator builds only
+those. (§71's Gauntlet notes the same gap: "a check that proves each crossing against the reach".)
+
+**72.2 Beats** (`gates/realms/kit/crawl/Beats.java`). Twenty-five hand-made pieces of movement, each with its family, the
+lowest rank it comes at and which way it takes the floor. Each is built in its own frame (a lane three wide, c -1 to 1,
+between walls at c ±2) at a size t from 0 (E) to 1 (S), and records its moves, catch ledges, holds, traps, lesson and
+signs as it goes.
+- **Low**: slide gate (E; one block high for one or two cells, one in three narrow from C, dust on the run-up), slide jump
+  (D), chute (D, down), landing slide (E, down), closing teeth (C: the low cells are a press on a 100-tick cycle).
+- **Wall**: wall-run gulf (E; a gap of 7 to 9 over deep water, past a sprint jump and past a jump that catches the far lip,
+  the far shelf a block up, else level, else a block down with 8 at least, the first the body's slow and fast runs both
+  cross), chimney (D), switchback (B), run to a hang (C), corner run (A).
+- **Ledge**: mantle steps (E; a rise of 1.5 and up, past a jump), hang and shimmy (D), drop to a hang (C), jump to a hang
+  (E), ledge to ledge (C), broken wall (B).
+- **Grip**: pipe line (E), chain fall (D), swing between ropes (B).
+- **Flow**: rail run (E), crumble run (D: the floor falls in behind you and comes back after 100 ticks, so a partner can
+  still cross), drop and roll (E, 4 to 6).
+- **Side routes**, never on the way and never required: stride wall (E), swing out on a rope anchor (D), leap gap (C).
+  Each has a find at its end, and its crossing is a `Land.Leap` (stride, swing, double) that the walk check takes.
+- A beat's moves are **asked for** (needed) except a chute, rail, pipe, crumble or drop, which are the way's flow.
+
+**72.3 The composer** (`Composer.java`). It picks every line's beats for the leg's height change and room, the rank and the
+kind's accents, from the run's own `Random` (so the rooms and ways of plan 2 come out unchanged).
+- Beats a line: E 2-3, D 3-4, C 4-5, B 4-6, A 5-7, S 6-8. A beat's size is rank/5, a little either way; a line is no
+  longer than 40 + 6 a rank (cells along).
+- Never the same beat twice running; every line asks for a move that isn't walking or a sprint jump, and two families from
+  C; no family is more than 40% of a run's beats; a kind leans to its families and its signature beat comes once a run (a
+  line has a one in three chance of it) at its size + 0.35. A side route in a fifth of lines, a third from D.
+- Every step is proved on the kind's own blocks before it is kept: rolled again up to six times a little smaller, then a
+  simpler beat of its family, then left out (logged as `beats.fallback`); a line with nothing left is today's way, and the
+  run says so (`Land.Line.fallback`).
+- **Ways**: a lead tunnel (14 for the first, else 8), the line, a tail tunnel of 8; the way is fitted round the line, which
+  is composed and measured in its own frame first. **Crossings** (chasms): lines of the wall, ledge, grip and flow
+  families. **Shafts** (`BeatWell`, about twenty-four down or up, flights round a core turning on a landing at each corner):
+  six forms, spiral with landings, broken spiral (jump, run along the wall or drop to a hang), chimney (up: wall jumps and
+  ledges; down from C: chains), chain fall (from D), ledges round a well, square well (from D: a wall run each side).
+  Going up gets the climbing forms. A well that can't be had is the shaft of before. A well's fifth and sixth flights run
+  under its first and second: a `Sculpt` column cut clear of the floor it already has (rock between them) is another
+  floor in it (`Part.more`), carved, laid, dressed and proved like its own; cut where it already has air or a floor, it is
+  cut anew. Flights side by side keep a cell apart; one over another may share the rock between them. A line's, a
+  crossing's and a well's leg stands on its middle catch (`BeatLine.middle`). A switchback lands on a shelf six long (a
+  fast body carries on along the second wall before it comes down).
+- **Accents** (each in the kind's own stone, `beatSkin`):
+
+| Kind | Signature | Leans to |
+|---|---|---|
+| Frozen Cells | slide gate | low 3, ledge 2 |
+| Rime Hollows | chute | ledge 3, low 2 |
+| Stopped Works | closing teeth | grip 3, low 2 |
+| Cinder Workings | crumble run | flow 3, low 2 |
+| Green Dark | pipe line (wall ivy) | grip 3, ledge 2 |
+| Tallow Runs | landing slide | low 3, flow 2 |
+| Unlit Stair | switchback | wall 2, ledge 2 |
+| Silvered Halls | wall-run gulf | wall 3, ledge 2, flow 2 |
+| Lower Combs (Brood Burrow) | slide jump | low 3, wall 2 |
+| Hollow Hills | ledge to ledge | ledge 3, low 2 |
+| Sporewells | chimney | ledge 3, wall 2 |
+| Root Cellars | hang and shimmy | ledge 3, grip 2, wall 2 |
+| Sleepless Ward | run to a hang | wall 3, low 2 |
+| Sunken Stacks | broken wall | ledge 3, wall 2 |
+| Sealed Wing | closing teeth | wall 3, low 2 |
+| Catacombs | chain fall | ledge 2, low 2, grip 2 |
+| Glass Warrens | crumble run | flow 3, wall 2, low 2 |
+
+- **Signs** (the skin): low, dust before the low cells (the draught's mark); wall, scuffs along the wall at running height;
+  ledge, a worn pale lip; grip, the line rubbed bright (a drainpipe, a trellis, wall ivy, a hanging ladder, chain). Every
+  block a move stands on, hangs from, slides under or runs along keeps the plain shape it was proved on (`BeatSkin.check`):
+  no slab lips, no fence beams, no ice floors (friction isn't in the proof).
+
+**72.4 Proof.** `Land.Move` (leg, beat, move, family, needed, from cell, to cell, yaw, arg, over) is proved by `MoveProof` with
+the body's own rules (`RunnerRules`, `BodyRules`, `GripRules`), the slow way and the fast way, the body's rank never above D,
+at no more than 80% of a move's reach. Three times: the beat alone, the whole line in its own frame, and where it stands in
+the land on the kind's blocks (`GeneratedCrawl.placeLine`; a line that fails there is today's way). `WalkCheck` walks a move
+as an edge from within a cell of its start (no more than one up or down) to standing at its end; `needlessMoves` walks from
+each asked-for move's start with no moves and no leaps, inside the move's own stretch, never stepping up more than 1.01 from
+where the feet really are (half slabs count), and a move a walk gets round is a fault. A fall on a line is caught more than
+three under the lowest catch ledge within five across, or below the line's lowest where none is that near; a drop the line
+asks for lands on a ledge and is never caught. Elsewhere a fall of more than six. Free (no cost, nothing said) at E and D;
+on Gentle a caught fall costs half (§70.4).
+
+**72.5 Fights in motion** (`Land.Hold`, `RealmRun.holds`, `RealmPacks.hold`).
+- **Courts** (holds on a line): a 5 x 5 landing with a frame of wall at ±3, its roof at head height + 1 and a light; three
+  of the theme's light monsters (four at S), tied to it. At S every second beat has one; at A one partway, on a line of
+  three steps or more.
+- **Well landings**: a spiral's one to three landings, one on the other forms, all but the last at S; two monsters, three
+  from D.
+- **Perches** (from C): on the first line of a run with a beat that crosses something (a gulf, a corner run, a run to a
+  hang, a swing, ledge to ledge, a broken wall), and from B on each later one by a coin's toss; just past that beat, one of
+  the theme's lookout marksmen (two from A), shooting along it.
+- **The chase** (from B, once a run, one line in three, never one with a side route): three (four at S) come up awake behind
+  whoever is 7 to 20 past its start, no more than 12 up or down, and still in the line, with the sound of eggs cracking.
+- Holds and perches stand when someone comes within 28 (16 up or down) and wake as a den's pack does; each is tied to its
+  place (`setHomeTo`, its radius + 2) and one that goes more than 6 past it, or 3 below, gives up and walks back
+  (`MobHooks.lead`), so nobody is followed down a line. Never in peace, never in creative, never shut in, never required.
+  A party meets more (`Rooms.partyCompany`, +35% an extra fighter).
+- **Rooms that rise**: fight and ambush rooms get two or three rises (a stand's ambush four): a step two wide and a block
+  and a half high with a block three high behind it toward the wall, at least four from the middle, five from every door and
+  two and a half off every door's way to the middle, under a roof of five or six over it.
+- **A hit never throws you off**: inside any line's stretch nobody is knocked back (`LivingKnockBackEvent` cancelled).
+- Not built: wall-run rings round a stand and a slide gap under a fallen beam in the wave rooms (the rises are what a den
+  fight climbs); `MobHooks.spawnMarksman` (perches use the theme's lookout).
+
+**72.6 Teaching, a clean line, co-op, data.**
+- **The gold figure, once per family per player**: a land keeps the first lesson of each family it lays (`Land.Lesson`:
+  where, the path, the words). The first time a player comes within six across and four up or down of one, the server sends
+  `BeatPayloads.Lesson` (the path, up to 32 points) and says the words on the Now line; `GateMemory` (schema 4,
+  `beats_shown`) keeps the family, in every gate after. The client's `GateLessons.show` paces the path (0.85 a step on the
+  flat, 0.4 up a wall, three ticks a step, a pause where it appears) and the Way Up's `LessonFigure` walks it once, with no
+  prompt; not while a Way Up lesson is on, and not with reduced motion (the words still come).
+- The words (plain, read aloud): "Too low to walk under? Sprint, then crouch to slide through." "Slide, and jump as you
+  come out: the slide's speed carries you further than a run." "Too far to jump? Sprint, jump beside the wall and hold Jump
+  to run along it." "Run up the wall, jump to the other wall, and keep going up between them." "Run the first wall, and
+  jump across to the other one where it ends." "Too high to jump? Press Jump facing the ledge and you'll climb up onto it."
+  "Sneak off the edge to hang from it, hold left or right to move along, then press Jump to climb up." "Sneak off the edge
+  to hang, press Shift to drop to the ledge below, then let go." "Jump at the high ledge and you'll catch it. Press Jump to
+  climb up." "Can't climb out? Press Jump while hanging to leap up to the next ledge." "Jump to the rope and you'll catch
+  it. Hold Shift to slide down." "On the rope, press Jump with left or right to swing across to the next one."
+- **A clean line**: from one end of a line to the other (within two across and two up or down, either way along it), with
+  no caught fall and never two seconds stood still, gives `BeatPayloads.Clean`: amethyst's own resonate at 0.35 and pitch
+  1.15, and Flow + 0.12 + 0.03 a beat (up to five). Not for today's crossings. No score, no timer, nothing said.
+- **Co-op**: timed beats cycle and crumbled floor comes back, so a partner always gets a go; holds grow with the party; a
+  hold wakes for whoever comes first and stays on its landing; each player is shown their own first time; both get the
+  same line (it comes from the seed).
+- **Data**: beats come from the seed, rank, kind and plan version, so nothing new is saved a gate. `RealmPlan.CURRENT_VERSION`
+  is 3 (`BEFORE_BEATS` 2); `Realms.planVersion()` gives 3 when `gateBeats` (awaken-common, default on) and the body's
+  Runner's Kit are on, else 2 (today's crossings). A gate opened before keeps its layout.
+
+**72.7 Every level.**
+- **Rolled crawls**, all seventeen kinds: every way, crossing and shaft (72.3).
+- **The Broodwarren**: from plan 3 the throat starts with a slide under a root of the dead tree (dark oak for the beam,
+  pale paper for the dust), laid by hand (`CrawlLand.handBeat`: proved and put in the land as a rolled line is); a lead
+  from the root to it, then the throat goes on down 6 in 13 to the antechamber. The nursery stays the nest's own climb.
+- **The Hour Crypt and the Wax Galleries** are hand-built halls (the Hour Crypt is the bar, §50.8) and are not changed: beats
+  there want their own architecture and shots of their own (a pass of its own).
+- **Open lands** (Amber Reach, the Vine Seat, Saltcomb, Kingsroot, the Quiet Barrow, the countries) are off (§50.9); their
+  outdoor beats come with them when they return.
+- The Leaper's Gauntlet stays as remade (§71).
+
+**72.8 Bench, hall and tours.** The bench writes `beats: N lines, M fell back, K moves, H holds, X needless; families {...}`
+and each line. `/awaken gate beat_hall <rank> <kind>` lays every beat at or below the rank in one row in the kind's own
+blocks at y 236, running east from beside you, proves every move again where it stands and logs `[beats] hall: ...`;
+`/awaken gate beat_at <n|NAME> <back> <up>` stands you short of one, back along the way the hall runs there (it turns at
+the corner run). A hall tour waits 600 ticks after laying it, so the client has every block before the first shot. `tools/autopilot/beat-hall-tours.py` writes
+`beats-<kind>.txt` (its signature and five every kind has; `all` for every beat). The `realm-<kind>` tours' MOVEMENT legs
+now show the lines. The run logs `[beats] gate ...` for holds standing, a family shown and a line crossed clean.
+
+**72.9 Checks** (`BeatTests`): `beats_each_holds_alone` (every beat at both sizes, its own rank and S, both sides, four
+facings, on plain stone), `beats_crawls_play` (every kind on plan 3 at a rank that turns with the kind, six more at S:
+walks, routes, floats nothing, no needless move, every family has a move on some line (flow is never asked for, so it is
+counted from the moves, not the asked families), a tenth or less fall back; it logs how many runs got a well and how many
+the shaft of before), `beats_old_plans_unchanged`,
+`beats_skins_keep_their_shapes`, `beats_brood_slide`, `beats_fall_is_caught_under_the_ledges`, `beats_shown_is_saved`.
+A beat with no shape logs each size it tried and why (`Beats.whyNoShape`, `[beats] no shape:`); a crawl that doesn't walk
+logs where the walk stops on each line (`WalkCheck.stuck`, `[beats] stuck:`: the move whose end nothing stands on, or the
+nearest cell stood in with the columns round it).

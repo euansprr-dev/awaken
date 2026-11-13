@@ -4,6 +4,10 @@ import dev.awaken.Awaken;
 import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.N;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Blocks;
@@ -55,6 +59,18 @@ public final class GreenDark extends GeneratedCrawl<VineSeat.M> {
     @Override
     protected VineSeat.M mats() {
         return VineSeat.m();
+    }
+
+    /** Its beats (SPEC §72.3): vines and roots to climb, mossy lips to mantle; the climb up the vine curtain. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.PIPE, Family.GRIP, 3, Family.LEDGE, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(VineSeat.M m) {
+        return super.beatSkin(m).beam(m.timber).lip(m.barkMoss).scuff(m.bark).plinth(m.relief).rail(m.timber).dust(m.moss).deck(m.planks).line(BeatSkin.named("wall_ivy"));
     }
 
     @Override

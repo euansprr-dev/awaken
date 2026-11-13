@@ -193,6 +193,7 @@ public final class Bench {
             }
             s.append(route.summary()).append('\n');
             for (String wrong : route.problems()) s.append("  ").append(wrong).append('\n');
+            beats(s, land);
             // where each leg is, so whoever writes a tour can stand a camera in it
             if (land.designed()) for (Land.Leg leg : land.route()) s.append("  leg ").append(leg.id()).append(' ').append(leg.kind().name().toLowerCase(Locale.ROOT)).append(" at ")
                     .append(leg.x()).append(' ').append(leg.y()).append(' ').append(leg.z()).append("  (").append(leg.name()).append(")\n");
@@ -205,6 +206,28 @@ public final class Bench {
         }
         Files.writeString(a.out().resolve("bench.txt"), s);
         return new Answer(clean, s.toString());
+    }
+
+    /**
+     * The beats (SPEC §72): how many lines were laid and how many fell back to the way of before, every line's beats, what
+     * the composer said it couldn't do, and any move a line asks for that a walk doesn't need. Nothing for a land with none.
+     */
+    private static void beats(StringBuilder s, Land land) {
+        if (land.lines().isEmpty()) return;
+        int laid = 0, fell = 0;
+        java.util.EnumMap<Land.Family, Integer> fams = new java.util.EnumMap<>(Land.Family.class);
+        for (Land.Line l : land.lines()) {
+            if (l.fallback()) fell++;
+            else laid++;
+            for (Land.Family f : l.families()) fams.merge(f, 1, Integer::sum);
+        }
+        List<String> needless = WalkCheck.needlessMoves(land);
+        s.append("beats: ").append(laid).append(" lines, ").append(fell).append(" fell back, ").append(land.moves().size()).append(" moves, ")
+                .append(land.holds().size()).append(" holds, ").append(needless.size()).append(" needless; families ").append(fams).append('\n');
+        for (Land.Line l : land.lines()) s.append("  line ").append(l.leg()).append(l.fallback() ? " FELL BACK" : "").append(" at ").append(l.x0()).append(' ').append(l.y0())
+                .append(' ').append(l.z0()).append(" to ").append(l.x1()).append(' ').append(l.y1()).append(' ').append(l.z1()).append(": ").append(String.join(", ", l.beats())).append('\n');
+        if (land instanceof dev.awaken.gates.realms.kit.crawl.GeneratedCrawl<?> g) for (String n : g.beatRun().log()) s.append("  fallback ").append(n).append('\n');
+        for (String n : needless) s.append("  needless ").append(n).append('\n');
     }
 
     /** More chunks than this and the three checks take turns (the lands of 420 to 460 half-size are about 3,500). */

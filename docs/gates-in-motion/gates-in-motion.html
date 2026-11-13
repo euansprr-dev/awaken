@@ -1,0 +1,389 @@
+<title>Gates in Motion</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f1ea; --panel:#fffdf8; --panel2:#efe9dd; --ink:#1d1b18; --muted:#5d574d; --line:#d9d0bf;
+  --accent:#b4531f; --accent-soft:#f6e2d4; --good:#2f6f4f; --good-soft:#dcefe3; --warn:#8a5a00; --warn-soft:#f7ead0;
+  --stone:#cfc6b4; --stone2:#a89f8c; --air:#e9e3d6; --path:#b4531f; --foe:#7b2d6b;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15130f; --panel:#1e1b16; --panel2:#262219; --ink:#eee8dc; --muted:#a79f90; --line:#3a342a;
+    --accent:#ee8a4f; --accent-soft:#3a2416; --good:#7fcfa2; --good-soft:#15301f; --warn:#e7b960; --warn-soft:#332810;
+    --stone:#4a4337; --stone2:#6b6252; --air:#1b1813; --path:#ee8a4f; --foe:#d77cc4;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15130f; --panel:#1e1b16; --panel2:#262219; --ink:#eee8dc; --muted:#a79f90; --line:#3a342a;
+  --accent:#ee8a4f; --accent-soft:#3a2416; --good:#7fcfa2; --good-soft:#15301f; --warn:#e7b960; --warn-soft:#332810;
+  --stone:#4a4337; --stone2:#6b6252; --air:#1b1813; --path:#ee8a4f; --foe:#d77cc4;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:16px/1.6 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right)) 80px max(16px,env(safe-area-inset-left))}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;line-height:1.2;margin:0}
+h1{font-size:clamp(34px,6vw,54px);font-weight:700;letter-spacing:-.01em}
+h2{font-size:clamp(24px,3.6vw,32px);margin:56px 0 14px}
+h3{font-size:19px;margin:0 0 6px}
+p{margin:0 0 12px}
+.muted{color:var(--muted)}
+.kicker{font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.lede{font-size:19px;max-width:760px;margin-top:14px}
+.quote{border-left:3px solid var(--accent);padding:10px 16px;margin:22px 0;background:var(--panel);border-radius:0 var(--radius) var(--radius) 0;color:var(--muted);font-style:italic}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--panel2);color:var(--muted);margin:0 6px 6px 0}
+.pill.rec{background:var(--good-soft);color:var(--good)}
+.pill.side{background:var(--warn-soft);color:var(--warn)}
+.big{font-family:Fraunces,Georgia,serif;font-size:30px;font-weight:700;color:var(--accent);line-height:1}
+.stat .lab{font-size:14px;color:var(--muted);margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.tablewrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.tablewrap table{min-width:640px}
+code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--panel2);padding:1px 5px;border-radius:5px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin:10px 0}
+summary{cursor:pointer;padding:14px 18px;font-weight:600;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+";display:inline-block;width:18px;color:var(--accent);font-weight:700}
+details[open] summary::before{content:"−"}
+details>.in{padding:0 18px 16px}
+.fam{border-top:4px solid var(--accent)}
+.fam ol{margin:6px 0 0;padding-left:20px}
+.fam li{margin:4px 0}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.ba{grid-template-columns:1fr}}
+.ba .b{background:var(--panel2);border-radius:10px;padding:12px 14px}
+.ba .a{background:var(--accent-soft);border-radius:10px;padding:12px 14px}
+.ba .t{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+svg text{font-family:Inter,system-ui,sans-serif}
+.diagram{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.diagram svg{width:100%;height:auto;display:block}
+.steps{counter-reset:s -1;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;position:relative;padding:12px 14px 12px 54px;background:var(--panel);border:1px solid var(--line);border-radius:12px;margin:8px 0}
+.steps li::before{content:counter(s,decimal);position:absolute;left:14px;top:12px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:14px;display:grid;place-items:center}
+/* decisions */
+.dec{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin:14px 0}
+.dec h3{display:flex;gap:10px;align-items:baseline}
+.dec .n{font-family:Inter;font-size:13px;font-weight:700;color:var(--accent)}
+.opts{display:grid;gap:8px;margin-top:10px}
+.opt{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;cursor:pointer;background:var(--bg);transition:border-color .12s,background .12s}
+.opt:hover{border-color:var(--accent)}
+.opt input{margin-top:4px;accent-color:var(--accent);flex:none}
+.opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.opt .ol{font-weight:600}
+.opt .od{font-size:14px;color:var(--muted)}
+.opt[aria-disabled="true"]{cursor:default;opacity:.85}
+.bar{position:sticky;bottom:12px;margin-top:22px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.bar .s{flex:1;min-width:180px;font-size:14px;color:var(--muted)}
+button{font:600 15px Inter,system-ui,sans-serif;border-radius:10px;padding:10px 16px;border:1.5px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:disabled{opacity:.5;cursor:default}
+textarea{width:100%;min-height:90px;font:15px/1.5 Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px}
+textarea:focus{outline:none;border-color:var(--accent)}
+.note{font-size:13.5px;color:var(--muted)}
+.tag{font-size:12px;font-weight:700;color:var(--accent)}
+hr{border:0;border-top:1px solid var(--line);margin:40px 0}
+</style>
+
+<div class="wrap">
+  <div class="kicker">Plan for approval · 12 Nov 2026 · nothing built yet</div>
+  <h1>Gates in Motion</h1>
+  <p class="lede">Every stretch between fights asks for real moves (slide, mantle, wall run, wall jump, hang, grip), strung in a new order every run, harder as the rank goes up, with small fights on the stairs and ledges. The rolled crawls come first, then every other kind of gate.</p>
+  <div class="quote">"right now the parkour is very boring… very not much wall running. The jumps are extremely simple to do. No mantling… No sliding either… during the spiral staircases, I think there could be a bit of fighting there… extrapolate this to every possible level." — you, 12 Nov</div>
+
+  <div class="grid g3" style="margin-top:22px">
+    <div class="card stat"><div class="big">0</div><div class="lab">places in a rolled gate today that ask you to slide, mantle, wall run or hang (read from the generator; Stage 0 counts it across 816 runs)</div></div>
+    <div class="card stat"><div class="big">24</div><div class="lab">hand-made pieces of movement in five families, each rolling its own sizes</div></div>
+    <div class="card stat"><div class="big">6</div><div class="lab">kinds of shaft instead of one spiral, with fights on the landings</div></div>
+  </div>
+
+  <h2>Why it's boring today</h2>
+  <p>Everyone has every runner move from the first second, but no gate ever asks for one. Underneath all of it is one cause: <b>the gate's checker only knows walking and the sprint jump, so the generator only builds what it can prove.</b></p>
+  <div class="grid g2">
+    <div class="card"><h3>The jumps are simple by design</h3><p class="muted">All 8 crossings are sprint jumps over 1 to 3 cells, level or down. The code says "nothing is ever higher than what you jump from" (<code>CrawlLand.java:723</code>). A run has one of them.</p></div>
+    <div class="card"><h3>The spiral is the same everywhere</h3><p class="muted">Every shaft is one spiral: 1.5 turns, 24 down, the same size at E and at S (<code>GeneratedCrawl.java:665</code>). Nobody is on it.</p></div>
+    <div class="card"><h3>Rank only adds waves</h3><p class="muted">Rank changes how many waves a stand has, and nothing else. An S gate's jumps are an E gate's jumps.</p></div>
+    <div class="card"><h3>17 kinds, 2 lists of crossings</h3><p class="muted">Each kind has its own stone, but the crossings come from just two lists, one for dug places and one for built places. The kinds look different but move the same.</p></div>
+    <div class="card"><h3>Fights never meet movement</h3><p class="muted">Monsters only appear in dens, stands, Wardens and the Lord. A leg you move along has no monsters (<code>RealmLive.java:183</code>).</p></div>
+    <div class="card"><h3>The good news</h3><p class="muted">The pieces we need already exist: the moves' own rules can be tested, fall catches, required-move declarations from the Gauntlet, the gold lesson figure, Flow and plan versions. This plan joins them up.</p></div>
+  </div>
+
+  <details><summary>The full audit: every part, the evidence, what we keep</summary><div class="in">
+    <div class="tablewrap"><table>
+      <tr><th>Part</th><th>What it does today</th><th>Evidence</th><th>Plan</th></tr>
+      <tr><td>The moves</td><td>Everyone has slide, mantle, wall run, wall jump, hang, shimmy, ledge jump, vault, grip and roll from the first second. The rope, leaps and wings are earned (The Way Up).</td><td><code>Body.unlocked</code> is true with <code>runnersKit</code> (on by default)</td><td>Keep. The body's rules don't change</td></tr>
+      <tr><td>Crossings</td><td>8 kinds, all sprint jumps over 1-3 cells</td><td><code>CrawlLand.java:723-728</code></td><td>Keep as the E pieces and the fallback</td></tr>
+      <tr><td>Shafts</td><td>One spiral, fixed sizes</td><td><code>GeneratedCrawl.java:665-666</code></td><td>Six forms</td></tr>
+      <tr><td>The checker</td><td>Steps, drops up to 3, swimming, rungs and the 1-3 cell jump</td><td><code>WalkCheck.java:100, 164</code></td><td>Learns every move (MoveProof)</td></tr>
+      <tr><td>Required moves</td><td><code>Land.Leap</code> marks a crossing that needs the double jump, dash or slam, and <code>needless</code> proves it's needed</td><td><code>Land.java:144</code></td><td>Works for every move (<code>Land.Move</code>)</td></tr>
+      <tr><td>Fall catches</td><td>A Course puts you back on the last ledge, costing 3 + 8% of max health</td><td><code>Land.java:60</code>, <code>RealmRun</code></td><td>One around every piece</td></tr>
+      <tr><td>Move probes</td><td>The body's checks are pure functions over the blocks</td><td><code>RunnerRules</code></td><td>Used as the proof</td></tr>
+      <tr><td>Real-rule tests</td><td>A mock player runs the real rules</td><td><code>body_slide_gap_and_wall</code>, <code>body_mantle_ledges</code>, …</td><td>One per piece</td></tr>
+      <tr><td>Teaching</td><td>The gold figure shows a move once</td><td><code>LessonFigure</code>, §63.3</td><td>Once per family</td></tr>
+      <tr><td>Old gates</td><td>Plan versions keep their layouts</td><td><code>RealmPlan.CURRENT_VERSION</code></td><td>Bumped</td></tr>
+    </table></div>
+    <p class="note" style="margin-top:10px">Every family of gate: the 17 rolled crawls; the designed crawls (the Broodwarren, the Leaper's Gauntlet); the designed realms (Amber Reach, Hour Crypt, Kingsroot Keep, Saltcomb, Vine Seat, Quiet Barrow, Wax Galleries); the rolled lands (Ember, Frost, Fungal, Glass and Temple countries, all off today); and the older Gate World floors, which Stage 0 checks to see whether any still roll.</p>
+  </div></details>
+
+  <h2>Three ways to do it</h2>
+  <div class="grid g3">
+    <div class="card"><span class="pill">A · about a day</span><h3>Four new crossings</h3><p class="muted">A wall-run gulf, a slide gate, mantle steps and a hang lip, plus fights on shaft landings. But it's still one set piece a run, the same every time, with no change by rank, and the other levels aren't touched.</p></div>
+    <div class="card" style="border-color:var(--good)"><span class="pill rec">B · recommended · 3-5 days</span><h3>Pieces strung by seed</h3><p class="muted">24 hand-made pieces, a composer that strings them into every leg by seed, kind and rank, a checker that proves each line with the body's own rules, six shafts, and fights while you move.</p></div>
+    <div class="card"><span class="pill">C · risky</span><h3>Fully generated parkour</h3><p class="muted">Shape the ground from a simulated runner. The most variety on paper, but hard to make look built, hard to keep fair, and slow. It stays a later experiment.</p></div>
+  </div>
+  <p class="muted" style="margin-top:12px">Why B: "actually thought out and a ton of different ones" means pieces made by hand, and "always feel like a unique gate" means the order and the sizes change with the seed and the kind. It's the same idea good platformers use: short groups of moves, each checked playable, strung together (Launchpad, 2011), and hand-made room templates with random chunks (Spelunky).</p>
+
+  <h2>One stretch, before and after</h2>
+  <div class="diagram">
+    <svg viewBox="0 0 900 400" role="img" aria-label="Side view of one stretch of a gate. Before: flat tunnel, a row of pillars to jump. After: slide under a fallen beam, wall run along the wall over a pit, catch a lip, mantle up, and a fight on the landing.">
+      <text x="10" y="20" font-size="13" font-weight="700" fill="var(--muted)" letter-spacing="1.5">BEFORE</text>
+      <rect x="10" y="90" width="250" height="34" fill="var(--stone)"/>
+      <rect x="260" y="106" width="350" height="18" fill="var(--panel2)"/>
+      <g fill="var(--stone2)"><rect x="300" y="90" width="24" height="34"/><rect x="380" y="90" width="24" height="34"/><rect x="460" y="90" width="24" height="34"/><rect x="540" y="90" width="24" height="34"/></g>
+      <rect x="610" y="90" width="280" height="34" fill="var(--stone)"/>
+      <path d="M120 82 H272 Q291 52 312 82 Q352 52 392 82 Q432 52 472 82 Q512 52 552 82 Q588 52 622 82 H880" fill="none" stroke="var(--path)" stroke-width="3" stroke-dasharray="7 6"/>
+      <text x="20" y="146" font-size="13" fill="var(--muted)">walk the tunnel</text>
+      <text x="300" y="146" font-size="13" fill="var(--muted)">jump, jump, jump, jump (2 cells each)</text>
+      <text x="660" y="146" font-size="13" fill="var(--muted)">walk on</text>
+
+      <text x="10" y="194" font-size="13" font-weight="700" fill="var(--accent)" letter-spacing="1.5">AFTER (ONE ROLL OF MANY)</text>
+      <rect x="10" y="300" width="200" height="56" fill="var(--stone)"/>
+      <rect x="95" y="268" width="72" height="12" fill="var(--stone2)" transform="rotate(-5 131 274)"/>
+      <rect x="210" y="300" width="250" height="56" fill="var(--panel2)"/>
+      <rect x="210" y="226" width="250" height="14" rx="2" fill="var(--stone2)" opacity=".55"/>
+      <rect x="460" y="262" width="44" height="94" fill="var(--stone)"/>
+      <rect x="504" y="240" width="116" height="116" fill="var(--stone)"/>
+      <rect x="620" y="220" width="270" height="136" fill="var(--stone)"/>
+      <path d="M30 292 H200 Q214 270 232 250 H440 Q452 254 458 266 L470 266 Q492 262 508 236 H612 Q624 226 640 216 H880" fill="none" stroke="var(--path)" stroke-width="3.2" stroke-linejoin="round"/>
+      <g fill="var(--foe)"><circle cx="720" cy="206" r="7"/><circle cx="760" cy="206" r="7"/><circle cx="800" cy="206" r="7"/></g>
+      <text x="236" y="218" font-size="12.5" fill="var(--ink)" font-weight="600">wall run along the wall, over the pit</text>
+      <text x="680" y="184" font-size="12.5" fill="var(--foe)" font-weight="600">a hold: three small things</text>
+      <text x="232" y="334" font-size="12" fill="var(--muted)">fall → caught, back to the start of the piece</text>
+      <text x="20" y="380" font-size="12.5" fill="var(--ink)" font-weight="600">slide under the fallen beam</text>
+      <text x="452" y="380" font-size="12.5" fill="var(--ink)" font-weight="600">catch the lip · shimmy · mantle up</text>
+    </svg>
+  </div>
+  <p class="note">This is an illustration of the idea, not a shot from the game. The order and the sizes roll differently each run.</p>
+
+  <h2>The kit: 24 pieces in five families</h2>
+  <p class="muted">Each piece is hand-made, rolls its sizes within its rank's range, is built in the kind's own stone, and has a fall catch around it. Every move uses the body's real numbers. For example, a wall run reaches about 11 blocks, so no wall-run gap is ever wider than 9.</p>
+  <div class="grid g2">
+    <div class="card fam"><h3>Low · slides</h3><ol>
+      <li><b>Slide gate</b>: under a fallen beam or a half-shut door</li>
+      <li><b>Slide jump</b>: slide off an edge, and the jump carries further</li>
+      <li><b>Chute</b>: a long stair or ramp you slide down</li>
+      <li><b>Landing slide</b>: drop and land into a slide under a low roof</li>
+      <li><b>Closing teeth</b> <span class="tag">C+</span>: slide under a press or a bulkhead on its cycle</li>
+      <li><b>Rail run</b>: rails, coffins or benches to vault in a row</li></ol></div>
+    <div class="card fam"><h3>Wall</h3><ol start="7">
+      <li><b>Wall-run gulf</b>: 5 long at E, up to 9 at A and S</li>
+      <li><b>Chimney</b>: two walls close together, wall-jump up</li>
+      <li><b>Switchback</b>: run the left wall, jump, run the right</li>
+      <li><b>Run to hang</b>: the run ends at a lip you catch</li>
+      <li><b>Corner run</b>: round an inside corner on the wall</li></ol></div>
+    <div class="card fam"><h3>Ledge · mantles</h3><ol start="12">
+      <li><b>Mantle steps</b>: rises of 1.1-1.6, one after another</li>
+      <li><b>Hang and shimmy</b>: along a lip over a drop</li>
+      <li><b>Drop to hang</b>: step off and catch the lip below</li>
+      <li><b>Jump to hang</b>: jump a gap to a higher lip</li>
+      <li><b>Ledge to ledge</b>: hang, then jump to the next lip</li>
+      <li><b>Broken wall</b>: climb a fallen wall by hangs and mantles</li></ol></div>
+    <div class="card fam"><h3>Grip, flow and fall</h3><ol start="18">
+      <li><b>Pipe or chain line</b>: hang and move along it over a gap</li>
+      <li><b>Chain fall</b>: down hanging chains, one to the next</li>
+      <li><b>Crumble run</b>: the floor falls in behind you</li>
+      <li><b>Drop and roll</b>: a big drop, then a roll</li></ol>
+      <p style="margin:10px 0 4px"><span class="pill side">side routes, never required</span></p><ol start="22">
+      <li><b>Stride wall</b>: a Wall Stride climb to a find</li>
+      <li><b>Swing out</b>: a rope shortcut, if you have the rope</li>
+      <li><b>Leap gap</b>: a Gauntlet move to a hidden find</li></ol></div>
+  </div>
+
+  <h2>Six shafts instead of one spiral</h2>
+  <div class="grid g3">
+    <div class="card"><h3>Spiral with landings</h3><p class="muted">Three landings, with fights on one to three of them. This is the one you asked for.</p></div>
+    <div class="card"><h3>Broken spiral</h3><p class="muted">Cross the breaks by a jump, a wall run on the shaft wall, or a drop to a hang.</p></div>
+    <div class="card"><h3>Chimney</h3><p class="muted">Wall-jump up, or come down by chains.</p></div>
+    <div class="card"><h3>Chain fall</h3><p class="muted">Chains hang down the middle, with landings between.</p></div>
+    <div class="card"><h3>Ledges down</h3><p class="muted">Hang and drop, ledge to ledge round the wall.</p></div>
+    <div class="card"><h3>Square well</h3><p class="muted">Wall-run each side, turning at the corners.</p></div>
+  </div>
+
+  <h2>Harder as the rank goes up</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Rank</th><th>Pieces a leg</th><th>How they join</th><th>Fights while you move</th></tr>
+    <tr><td><b>E</b></td><td>2-3</td><td>one move at a time, generous sizes</td><td>one hold per shaft, 2 small monsters</td></tr>
+    <tr><td><b>D</b></td><td>3-4</td><td>pairs: slide then mantle, run then hang</td><td>holds of 2-3</td></tr>
+    <tr><td><b>C</b></td><td>4-5</td><td>chains of 3, with timed pieces (teeth, crumble)</td><td>archers perched across a gap</td></tr>
+    <tr><td><b>B</b></td><td>4-6</td><td>chains of 4, chimneys, switchbacks</td><td>a chase, once a run</td></tr>
+    <tr><td><b>A</b></td><td>5-7</td><td>chains of 5 or more, long wall runs</td><td>fights on landings partway along a line</td></tr>
+    <tr><td><b>S</b></td><td>6-8</td><td>long lines across whole rooms, everything mixed</td><td>a hold on every landing</td></tr>
+  </table></div>
+
+  <h2>Every kind moves its own way</h2>
+  <p class="muted">Each of the 17 rolled kinds leans toward two or three families and has one signature piece it uses at most once a run, built in its own stone. So the Silvered Halls play like a wall-running gallery, and the Lower Combs play like a chase through burrows.</p>
+  <details open><summary>All 17 kinds</summary><div class="in"><div class="tablewrap"><table>
+    <tr><th>Kind</th><th>Leans to</th><th>Signature</th></tr>
+    <tr><td>Frozen Cells</td><td>slides on ice, cell bars to vault</td><td>the iced gallery under the bars</td></tr>
+    <tr><td>Rime Hollows</td><td>shimmy on icicle lips, ice chutes</td><td>the ice chute down</td></tr>
+    <tr><td>Stopped Works</td><td>the pipe run overhead, presses, grating</td><td>a slide under a press that starts again</td></tr>
+    <tr><td>Cinder Workings</td><td>crumble runs over the glow, rails, drop and roll</td><td>the burning floor run</td></tr>
+    <tr><td>Green Dark</td><td>vines and roots to grip, mossy mantles</td><td>the vine curtain climb</td></tr>
+    <tr><td>Tallow Runs</td><td>low wax tunnels, wax chutes</td><td>the long wax chute</td></tr>
+    <tr><td>Unlit Stair</td><td>spiral stairs with fights, niches to wall-jump</td><td>the long spiral fight down</td></tr>
+    <tr><td>Silvered Halls</td><td>long wall runs, balconies, rails</td><td>the mirror gallery wall run</td></tr>
+    <tr><td>Lower Combs</td><td>low burrows, comb walls</td><td>the brood chase</td></tr>
+    <tr><td>Hollow Hills</td><td>low ways, kerb mantles, timber frames</td><td>the fallen shaft climb</td></tr>
+    <tr><td>Sporewells</td><td>fungus shelves, wells to chimney</td><td>the well chimney</td></tr>
+    <tr><td>Root Cellars</td><td>roots to hang from, half-built walls to run</td><td>the root bridge shimmy</td></tr>
+    <tr><td>Sleepless Ward</td><td>corridor wall runs, beds to vault, half-fallen doors</td><td>the corridor where the floor stops</td></tr>
+    <tr><td>Sunken Stacks</td><td>shelf bays to mantle and run</td><td>the run along the drowned stacks</td></tr>
+    <tr><td>Sealed Wing</td><td>panel walls, bulkheads that close</td><td>the closing bulkheads</td></tr>
+    <tr><td>Bone Roads</td><td>niches to mantle, low vaults, bell ropes</td><td>the bell-rope descent</td></tr>
+    <tr><td>Glass Warrens</td><td>glass sheets to run, floors that shatter</td><td>the shattering floor</td></tr>
+  </table></div></div></details>
+
+  <h2>Fights while you move</h2>
+  <div class="grid g2">
+    <div class="card"><h3>Holds</h3><p class="muted">Two to four light monsters from the kind's own roster wait on a landing and wake as you come near. They stay on their landing and never lock the way, and the kills count toward your spoils.</p></div>
+    <div class="card"><h3>Perches <span class="tag">C+</span></h3><p class="muted">One or two archers on ledges across a gap shoot while you cross. A side line reaches them if you want them.</p></div>
+    <div class="card"><h3>The chase <span class="tag">B+</span></h3><p class="muted">Once a run, the brood or the swarm comes up behind you down a corridor of pieces with no dead ends.</p></div>
+    <div class="card"><h3>Rooms that go up</h3><p class="muted">Dens and wave rooms get mantle steps, ledges and a ring you can wall-run, so a fight can climb.</p></div>
+  </div>
+
+  <h2>Teaching, co-op, and the rules that hold</h2>
+  <div class="grid g2">
+    <div class="card"><h3>Teach once, then quiet</h3><p class="muted">Each family has a sign in the stone: dust under a fallen beam, scuffs along a wall at running height, a worn pale lip, a pipe rubbed bright. The first time a family appears for you, the gold figure shows the move once, and the Now line says it plainly, for example "Slide under it: sprint, then crouch." After that, nothing.</p></div>
+    <div class="card"><h3>Co-op</h3><p class="muted">Timed pieces cycle, so your partner always gets another go. Holds scale for the party. On her easier setting, a caught fall costs her less. You both get the same line.</p></div>
+    <div class="card"><h3>Never stuck, nothing floats</h3><p class="muted">Every line is proved with the body's own rules at 80% of each move's reach, and each move is proved needed. Each piece is tested by a mock player at its smallest and largest size. Beams sit in walls and chains hang from the roof. A piece that won't fit falls back to a simpler one, then to today's crossing.</p></div>
+    <div class="card"><h3>Safe to roll back</h3><p class="muted">Gates you've already opened keep their layout. One setting (<code>gateBeats</code>) turns it off for new gates. No score or timer goes on screen: a clean line only gives a quiet sound and a little Flow.</p></div>
+  </div>
+
+  <h2>Four runs, before and after</h2>
+  <div class="card" style="margin-bottom:12px"><h3>The Hollow Hills, D rank</h3><div class="ba"><div class="b"><div class="t">Today</div>A 20-long tunnel; four 2-cell jumps over pillars; a 24-down spiral with nobody on it; then the dens.</div><div class="a"><div class="t">After</div>You slide under a fallen timber frame and mantle up a kerb. You wall-run the shored wall onto a lip, shimmy, and mantle out. Down a broken spiral, two barrow things wait on the middle landing.</div></div></div>
+  <div class="card" style="margin-bottom:12px"><h3>The Unlit Stair: your spiral</h3><div class="ba"><div class="b"><div class="t">Today</div>1.5 turns, three breaks to jump, nothing to fight.</div><div class="a"><div class="t">After</div>Three landings, with fights on two of them: two small things at E, three or four at B. A stair slide joins them, and from C one break is crossed by a wall run along the niche wall.</div></div></div>
+  <div class="card" style="margin-bottom:12px"><h3>The Silvered Halls, S rank, co-op</h3><div class="ba"><div class="b"><div class="t">Today</div>The same jumps as an E gate.</div><div class="a"><div class="t">After</div>Mirror-gallery wall runs of 8-9, bulkheads that close every 4 s, then a chimney. The bulkheads cycle so your partner always gets another go, and her caught falls cost less.</div></div></div>
+  <div class="card"><h3>When a piece won't fit: a low rift in the Cinder Workings</h3><div class="ba"><div class="b"><div class="t">What fails</div>A wall run doesn't fit under the low roof, so the proof rejects it.</div><div class="a"><div class="t">What happens</div>A simpler piece takes its place (a crumble run). If that fails too, today's pillars do. The gate can still be finished, and the test sweep counts every fallback.</div></div></div>
+
+  <h2>How we'll know it worked</h2>
+  <div class="grid g2">
+    <div class="card"><h3>Checked by machine, on CI</h3><p class="muted">A sweep of 17 kinds × 8 seeds × 6 ranks. It checks:</p><ul class="muted" style="margin:0;padding-left:20px">
+      <li>every run asks for at least 4 of the 5 families from C (3 at E and D);</li>
+      <li>every leg needs a real move;</li>
+      <li>two seeds of a kind share at most half their order of pieces;</li>
+      <li>fallbacks are at most 3% of legs;</li>
+      <li>nothing is stuck and nothing floats;</li>
+      <li>generation is at most 15% slower.</li></ul></div>
+    <div class="card"><h3>Judged by eye, then by you</h3><p class="muted">One CI tour per kind showing two pieces and a hold, checked against the Gates bar. Then a seed list for you: one run per kind at C, and a few at E and S. Your verdict is the real test.</p></div>
+  </div>
+
+  <h2>Stages (all coded, then tested once)</h2>
+  <ol class="steps">
+    <li><b>Measure today.</b> Count the moves every run needs today, time the generation, and check whether the old Gate World floors still roll.</li>
+    <li><b>The checker learns the moves.</b> It proves lines with the body's rules, and a mock player runs every piece.</li>
+    <li><b>The kit.</b> 24 pieces dressed for every kind, plus a bench hall that lays them all in a row for tours.</li>
+    <li><b>The composer.</b> Pieces strung by seed, kind and rank, the six shafts, kind accents, and the fallback.</li>
+    <li><b>Fights while you move.</b> Holds, perches, the chase, and rooms that go up.</li>
+    <li><b>Teaching, flow and co-op.</b></li>
+    <li><b>Every other level.</b> The Broodwarren and the designed realms' ways get pieces placed by hand (with care at Amber Reach and the Hour Crypt). The open lands get outdoor pieces, built but off until they come back. The Gauntlet stays as it was remade.</li>
+    <li><b>Check once.</b> The sweep, the named tests and CI tours, then a seed list for you.</li>
+  </ol>
+  <p class="muted" style="margin-top:10px">About 3 to 5 days for one builder. The biggest unknown is dressing 24 pieces in 17 different stones well.</p>
+
+  <hr>
+  <h2 id="decisions">Your decisions</h2>
+  <p class="muted">Pick one for each. Your answers save on this page and I read them from here. The first option is my recommendation each time.</p>
+  <div id="decs"></div>
+  <div class="dec"><h3><span class="n">Notes</span> Anything else?</h3><textarea id="note" placeholder="Anything to add, change or cut…"></textarea></div>
+  <div class="bar"><div class="s" id="status">Loading your answers…</div><button class="ghost" id="allrec">Take all recommendations</button></div>
+  <p class="note" style="margin-top:22px">Plan: <code>docs/gates-in-motion/PLAN.md</code> · SPEC §72 (draft) · branch <code>claude/gates-in-motion-plan</code>. Nothing is built until you approve.</p>
+</div>
+
+<script>
+const DECS = [
+  {id:"approach", q:"The approach", o:[
+    ["B","Pieces strung by seed","24 hand-made pieces, a composer, the proof, six shafts, fights while moving. About 3-5 days."],
+    ["A","Four new crossings","A wall-run gulf, a slide gate, mantle steps and a hang lip, plus fights on shaft landings. About a day; still one set piece a run."]]},
+  {id:"knew", q:"Did you know you can already slide, mantle, wall run and hang?", o:[
+    ["no","No, I didn't","Teaching matters more: the gold figure and the signs come first."],
+    ["some","Some of them","Teach the ones you hadn't met."],
+    ["yes","Yes, all of them","The gates just never asked. Teaching stays light."]], norec:true},
+  {id:"curve", q:"How hard from E", o:[
+    ["gentle","One move at a time at E, long chains by S","E stays welcoming; each rank adds a link."],
+    ["steep","Chains from E","Even the first gates ask for two or three moves in a row."]]},
+  {id:"fall", q:"What a caught fall costs", o:[
+    ["split","Nothing at E and D, today's cost from C","Learn freely early; a fall matters later (3 + 8% of max health, back to the start of the piece)."],
+    ["today","Today's cost everywhere","3 + 8% at every rank."],
+    ["none","Nothing anywhere","A fall only costs the time to try again."]]},
+  {id:"fights", q:"How much fighting while you move", o:[
+    ["mid","Holds on every shaft, perches from C, a chase from B","Movement and fights mix in every run without taking over."],
+    ["light","Shafts only","Small fights on the spiral landings, nothing else."],
+    ["heavy","Most movement legs","Something to fight on most stretches."]]},
+  {id:"knock", q:"Hits on a wall or a ledge", o:[
+    ["never","A hit costs health but never knocks you off","Fair: you never fall because of something you couldn't see."],
+    ["high","They can knock you off at A and S, with a clear sign first","More danger at the top ranks."]]},
+  {id:"teach", q:"Teaching", o:[
+    ["both","Signs in the stone, plus the gold figure once per family","Teach once, then go quiet."],
+    ["signs","Signs only","No figure; you read the stone."]]},
+  {id:"order", q:"Order", o:[
+    ["all","Rolled crawls first, then every other level in the same build","Everything gets it in one build."],
+    ["crawls","Rolled crawls only for now","Play those first, then decide on the rest."]]},
+  {id:"extras", q:"Rope, leaps and wings in gates", o:[
+    ["optional","Optional side routes and shortcuts, never required","Nobody gets stuck for lack of a move."],
+    ["required","Required once you hold them","Gates ask for every move you've earned."]]},
+  {id:"old", q:"Gates you've already opened", o:[
+    ["keep","They keep their layout","Nothing changes under you mid-run."],
+    ["remake","They're remade on your next visit","You see the new pieces sooner."]]}
+];
+const state = {choices:{}, note:""};
+let ref = null, canWrite = false, saving = Promise.resolve(), noteTimer = 0;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function render(){
+  const box = document.getElementById("decs");
+  box.innerHTML = DECS.map((d,i) => `<div class="dec"><h3><span class="n">${i+1}</span>${esc(d.q)}</h3><div class="opts">${
+    d.o.map((o,j) => `<label class="opt${state.choices[d.id]===o[0]?" on":""}" aria-disabled="${!canWrite}">
+      <input type="radio" name="${d.id}" value="${o[0]}" ${state.choices[d.id]===o[0]?"checked":""} ${canWrite?"":"disabled"}>
+      <span><span class="ol">${esc(o[1])}</span>${j===0&&!d.norec?' <span class="pill rec" style="margin:0 0 0 6px">recommended</span>':""}<br><span class="od">${esc(o[2])}</span></span></label>`).join("")
+  }</div></div>`).join("");
+  box.querySelectorAll("input[type=radio]").forEach(r => r.addEventListener("change", () => { state.choices[r.name] = r.value; render(); save(); }));
+  const n = document.getElementById("note");
+  if (document.activeElement !== n) n.value = state.note || "";
+  n.disabled = !canWrite;
+  document.getElementById("allrec").disabled = !canWrite;
+  const done = DECS.filter(d => state.choices[d.id]).length;
+  if (ref) setStatus(canWrite ? `${done} of ${DECS.length} answered · saved on this page` : `${done} of ${DECS.length} answered · only the page's owner can change these`);
+}
+function setStatus(t){ document.getElementById("status").textContent = t; }
+function save(){
+  if (!ref || !canWrite) return;
+  const body = {choices: {...state.choices}, note: state.note || "", at: new Date().toISOString(), v: 1};
+  saving = saving.then(() => ref.set(body)).then(() => render()).catch(e => { setStatus("Couldn't save (" + (e && e.code || "error") + "). Tell Claude your picks in chat."); });
+}
+document.getElementById("note").addEventListener("input", e => { state.note = e.target.value; clearTimeout(noteTimer); noteTimer = setTimeout(save, 900); });
+document.getElementById("allrec").addEventListener("click", () => { DECS.forEach(d => { if (!d.norec) state.choices[d.id] = d.o[0][0]; }); render(); save(); });
+
+render();
+(async () => {
+  const fail = setTimeout(() => { if (!ref) setStatus("Answers can't be saved in this view. Tell Claude your picks in chat."); }, 10000);
+  try {
+    const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if (!db) { clearTimeout(fail); setStatus("Answers can't be saved in this view. Tell Claude your picks in chat."); return; }
+    canWrite = user ? await user.isOwner() : false;
+    ref = db.doc("answers/euan");
+    ref.onSnapshot(snap => {
+      clearTimeout(fail);
+      if (snap.exists) { const d = snap.data() || {}; state.choices = {...(d.choices || {})}; if (document.activeElement !== document.getElementById("note")) state.note = d.note || ""; }
+      render();
+    }, e => { clearTimeout(fail); setStatus("Couldn't load saved answers (" + (e && e.code || "error") + ")."); });
+  } catch (e) { clearTimeout(fail); setStatus("Answers can't be saved in this view. Tell Claude your picks in chat."); }
+})();
+</script>

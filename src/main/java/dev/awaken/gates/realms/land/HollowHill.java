@@ -3,6 +3,10 @@ package dev.awaken.gates.realms.land;
 import dev.awaken.gates.realms.kit.AirPlan;
 import dev.awaken.gates.realms.kit.N;
 import dev.awaken.gates.realms.kit.V;
+import dev.awaken.gates.realms.Land.Family;
+import dev.awaken.gates.realms.kit.crawl.BeatSkin;
+import dev.awaken.gates.realms.kit.crawl.Beats.Beat;
+import dev.awaken.gates.realms.kit.crawl.Composer;
 import dev.awaken.gates.realms.kit.crawl.GeneratedCrawl;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
@@ -39,6 +43,18 @@ public final class HollowHill extends GeneratedCrawl<QuietBarrow.M> {
     @Override
     protected QuietBarrow.M mats() {
         return QuietBarrow.m();
+    }
+
+    /** Its beats (SPEC §72.3): low ways, kerb stones to mantle, timber frames to hang from; the climb up the fallen shaft. */
+    @Override
+    protected Composer.Accents accents() {
+        return Composer.Accents.of(Beat.LEDGES, Family.LEDGE, 3, Family.LOW, 2);
+    }
+
+    /** Its beats in its own blocks (SPEC §72.2); the rest is its rock, floor and half step. */
+    @Override
+    protected BeatSkin beatSkin(QuietBarrow.M m) {
+        return super.beatSkin(m).lip(m.pale).scuff(m.worn).beam(m.timber).rail(m.timber).plinth(m.deep).dust(m.turf).deck(m.planks).line(BeatSkin.named("hanging_ladder"));
     }
 
     @Override
