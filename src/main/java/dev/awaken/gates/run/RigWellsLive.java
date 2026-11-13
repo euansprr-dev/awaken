@@ -117,9 +117,13 @@ public final class RigWellsLive {
         e.setNewSize(d.withEyeHeight(Math.max(0.1F, d.height() - d.eyeHeight())));
     }
 
-    /** Falling up in a well (the modifier is synced to every client that tracks the entity). */
+    /**
+     * Falling up in a well (the modifier is synced to every client that tracks the entity). Read through the map, never
+     * {@code getAttribute}: that makes the instance the first time and marks it dirty, and {@link #onSize} runs inside
+     * vanilla's walk over the dirty attributes (a changed scale refreshes the size), so it grew the set under the walk and
+     * Lithium's tight set crashed the server (a beast's carcass in a gate, 12 Nov; SPEC §17 "Gate Rig").
+     */
     public static boolean upsideDown(LivingEntity e) {
-        AttributeInstance g = e.getAttribute(Attributes.GRAVITY);
-        return g != null && g.hasModifier(WELL);
+        return e.getAttributes().hasModifier(Attributes.GRAVITY, WELL);
     }
 }

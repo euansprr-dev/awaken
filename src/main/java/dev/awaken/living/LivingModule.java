@@ -253,6 +253,7 @@ public final class LivingModule {
         dev.awaken.living.wild.WildCommands.register();
         dev.awaken.living.hunt.Tracking.register();
         LivingTests.register();
+        dev.awaken.living.hunt.CarcassTests.register();
         dev.awaken.living.wild.WildTests.register();
         dev.awaken.living.combat.FairWildTests.register();
     }

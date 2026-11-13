@@ -7,6 +7,7 @@ import dev.awaken.living.population.Spoor;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,6 +22,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
@@ -54,6 +56,8 @@ public final class Carcass {
         String species = "", ledgerSpecies = "";
         boolean alpha;
         Quarry.Plan plan = Quarry.BEAST;
+        /** The level it lies in: a realm's or a stratum's as much as the overworld (its minute is counted there). */
+        ResourceKey<Level> dim = Level.OVERWORLD;
     }
 
     private static final Map<UUID, Body> BODIES = new HashMap<>();
@@ -71,6 +75,7 @@ public final class Carcass {
         Quarry.State s = Quarry.state(dead);
         if (s.hunters.isEmpty()) return;
         Body b = new Body();
+        b.dim = level.dimension();
         b.hunters.addAll(s.hunters);
         b.species = Quarry.species(dead);
         b.ledgerSpecies = Quarry.ledgerSpecies(dead);
@@ -162,6 +167,7 @@ public final class Carcass {
         }
         BODIES.computeIfAbsent(e.getEntity().getUUID(), k -> {
             Body b = new Body();
+            b.dim = level.dimension();
             b.species = Quarry.species(e.getEntity());
             b.ledgerSpecies = Quarry.ledgerSpecies(e.getEntity());
             b.plan = Quarry.plan(e.getEntity());
@@ -253,13 +259,17 @@ public final class Carcass {
         body.discard();
     }
 
-    /** Every second: bodies whose minute is up go. */
+    /** Every second: bodies whose minute is up go, in whatever level they lie (a gate's realm, a stratum, the overworld). */
     public static void tick(MinecraftServer server) {
         if (server.getTickCount() % 20 != 11 || BODIES.isEmpty()) return;
-        ServerLevel level = server.overworld();
         var it = BODIES.entrySet().iterator();
         while (it.hasNext()) {
             var e = it.next();
+            ServerLevel level = server.getLevel(e.getValue().dim);
+            if (level == null) { // its level is gone from the server: nothing is left to carve
+                it.remove();
+                continue;
+            }
             Entity body = level.getEntity(e.getKey());
             if (body == null) continue; // unloaded: it goes when it loads (onJoin)
             if (level.getGameTime() > body.getData(LivingContent.CARCASS)) {
@@ -277,6 +287,7 @@ public final class Carcass {
         made.setData(LivingContent.CARCASS, level.getGameTime() + LIES);
         if (!level.addFreshEntity(made)) return null;
         Body b = new Body();
+        b.dim = level.dimension();
         b.hunters.addAll(hunters);
         b.species = Quarry.species(dead);
         b.ledgerSpecies = Quarry.ledgerSpecies(dead);
