@@ -98,6 +98,24 @@ public final class HeldHands {
         return loop;
     }
 
+    /**
+     * Whether a cast's beat from the server starts its pose on this client (FxClient.onProfile; SPEC §32, "A reply never starts
+     * a hold"). {@code beat}: BEGIN or RELEASE; {@code channel}: a held cast; {@code own}: this client is the caster's;
+     * {@code keyed}: the caster's own key press made it (FxEvent.keyed); {@code shown}: ticks since this client's pose of that
+     * cast began, or -1 when it isn't showing it.
+     */
+    public static boolean startsPose(int beat, boolean channel, boolean own, boolean keyed, float shown) {
+        // one side decides: your own key press showed it from the press, so no reply starts it again, however late it comes
+        // (Euan 12 Nov: the Haymaker's punch arrived after its pose had gone and wound the fist back up for half a minute)
+        if (own && keyed) return false;
+        // a cast the server began alone (a command, a second press) shows here
+        if (beat == CastProfiles.BEGIN) return !(own && shown >= 0 && shown <= 8);
+        // a power with no wind-up has only this event: it starts the pose too. Never a hold: a held cast's release comes
+        // with or after its end, so nothing would be left to end it
+        if (beat == CastProfiles.RELEASE) return !channel && shown < 0;
+        return false;
+    }
+
     /** Whether a key is down on a held cast, or its loop is still playing: the hands are a cast's, from the press to the let-go. */
     public boolean holding() {
         if (loop != null) return true;

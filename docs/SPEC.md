@@ -13246,6 +13246,23 @@ setting (D13).
   (`Fx.end`, `Fx.chargeEnd`), so a charge that runs out with the key still down lets go too. Only a held cast's `hold1p` may
   be `loop: true` in the first-person clip files. `power_hold_pose_has_an_owner` runs every order of press, release,
   hand-over, server end and tick; `power_held_casts_say_they_ended` checks the end on the server's real path.
+- **A reply never starts a hold** (Euan, 2026-11-12: "Sometimes my fist stays blocked up after using haymaker"). The
+  Haymaker's let-go sends its END and then its punch, which carries the RELEASE beat. When the punch reached the caster after
+  their own pose of it had gone (the key let go more than 5 ticks before, which a slow server tick in a fight gives, or
+  another power was cast over the hold), the client read the beat as "a power with no wind-up" and started the cast again:
+  the held wind-up, its hold loop and the arm's light, with nothing left to end them but the 30-second cap. The same held for
+  every held cast (Charged Shot, Railgun, Beam, Prism Lance, Telekinesis) and for a watcher whose pose of the caster was
+  replaced. One side decides: a cast the caster's own key press made carries `FxEvent.keyed` on its beats (`Cast.keyed`, set
+  when the hands claim a way; a second press's follow-up is the server's and is not keyed), and the caster's own client never
+  starts a pose from a keyed beat, however late it comes. A RELEASE beat never begins a hold for anyone, since a held cast's
+  release comes with or after its end. The rule is `HeldHands.startsPose`, which `FxClient.onProfile` calls.
+- **Every hold has an end.** Every cast tracks the held pose it has shown (`Cast.holding`: a held cast's BEGIN, a family pose
+  that holds, until a charge end or a pose that replaces it), and `Casting.finish` sends the end (`Fx.end(c, player, 0)`) on
+  every way a running cast ends if the power's own end did not. Ground Slam's and Meteor Dive's dives showed `SLAM_WIND` and
+  only let it go on landing, so a dive cut short (a co-op catch, the 70 or 140 ticks running out) held both arms up on
+  every client. `power_every_hold_ends` casts every power that shows a held pose from a key press, ends it each way (let go,
+  cancelled, ran out) and reads the server's events as the caster's own client and as a watcher, each beat as late as it
+  can come: no hold may stay up, and a command's cast is still shown everywhere.
 - **Hands additions**: `FpClipSet.FILES` also reads `fp_casts.json`; a clip may be `stow` (its fists are drawn even when a hand holds
   something, so a held weapon is out of view while you cast); `FirstPerson.View.stow`, `FirstPerson.LAST_FIST_MAIN/OFF`, `lastFistNanos`.
 - **Sound**: `tools/art/specs/audio_powers.py` renders `sounds/powers/power_{stomp_lift,stomp_plant,beam_gather,beam_loop,beam_end}_*.ogg`
