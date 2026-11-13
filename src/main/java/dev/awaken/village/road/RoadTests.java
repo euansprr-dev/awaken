@@ -79,6 +79,23 @@ public final class RoadTests {
         h.succeed();
     }
 
+    /**
+     * SPEC §28.9, Cost: the planners' noise columns are the generator's own, block for block (vanilla's noise here; the
+     * command {@code /awaken village road columns} checks Tectonic's in a tour).
+     */
+    private static void columnsExact(GameTestHelper h) {
+        var reg = h.getLevel().registryAccess();
+        var ns = reg.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE_SETTINGS).getOrThrow(net.minecraft.world.level.levelgen.NoiseGeneratorSettings.OVERWORLD);
+        var preset = reg.lookupOrThrow(net.minecraft.core.registries.Registries.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST)
+                .getOrThrow(net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterLists.OVERWORLD);
+        var gen = new net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator(net.minecraft.world.level.biome.MultiNoiseBiomeSource.createFromPreset(preset), ns);
+        var rs = net.minecraft.world.level.levelgen.RandomState.create(reg.lookupOrThrow(net.minecraft.core.registries.Registries.NOISE), 4242L, ns.value());
+        var r = dev.awaken.village.world.NoiseColumnsCheck.run(gen, net.minecraft.world.level.LevelHeightAccessor.create(-64, 384), rs, 300, -200, 144, 12_000);
+        Awaken.LOG.info("[road] columns exact: {}", r.line());
+        h.assertTrue(r.columns() > 300 && r.differ() == 0, "the planners' columns are the generator's: " + r.line());
+        h.succeed();
+    }
+
     public static void register() {
         RoadBanksTests.register();
         ArrivalTests.register();
@@ -92,6 +109,9 @@ public final class RoadTests {
         AwakenTests.register("village_tall_things_keep_off_region", 20, RoadTests::tallThingsKeepOffRegion);
         AwakenTests.register("village_town_plan", 400, RoadTests::towns);
         AwakenTests.register("village_wide_roads", 1200, RoadTests::wideRoads);
+        AwakenTests.register("village_columns_exact", 400, RoadTests::columnsExact);
+        // on its own: it says land is coming in for the whole server
+        AwakenTests.registerIsolated("village_road_held_answered", 200, RoadTests::heldAnswered);
         AwakenTests.register("village_march_ranks", 20, h -> {
             // a march post writes the land's rank range plainly (SPEC §21.10)
             String[] want = {"1–9", "10–24", "25–44", "45–69", "70–99", "100+"};
@@ -628,4 +648,40 @@ public final class RoadTests {
 
     /** Unused land reader for tests that need none. */
     static final Terrain FLAT = new TestLand(1);
+
+    /**
+     * Land first never starves the planners' work (SPEC §12, §28.9): with land coming in the whole time, as under a player
+     * flying over new ground (and as in the full suite of 12 Nov), a site search the server thread asked for and a piece
+     * far ahead of the players are both held; a minute on, the search runs and the piece is let go, to be asked for again.
+     */
+    private static void heldAnswered(GameTestHelper h) {
+        String tag = "test held " + System.nanoTime(), search = tag + " S", ahead = tag + " A";
+        var searched = new java.util.concurrent.atomic.AtomicBoolean();
+        var laid = new java.util.concurrent.atomic.AtomicBoolean();
+        try {
+            dev.awaken.core.api.LandFirst.testCount(true, 0);
+            RoadPlanners.job(search, RoadPlanners.SOON, 0, () -> searched.set(true));
+            RoadPlanners.job(ahead, RoadPlanners.AHEAD, 1L << 50, () -> laid.set(true));
+            long until = System.nanoTime() + 10_000_000_000L;
+            while (!(RoadPlanners.held(search) && RoadPlanners.held(ahead)) && System.nanoTime() < until) java.util.concurrent.locks.LockSupport.parkNanos(5_000_000L);
+            h.assertTrue(RoadPlanners.held(search) && RoadPlanners.held(ahead), "the search and the piece ahead are held while land comes in");
+            h.assertFalse(searched.get() || laid.get(), "neither ran while land came in");
+
+            dev.awaken.core.api.LandFirst.testCount(true, 0);
+            RoadPlanners.release(System.nanoTime());
+            h.assertTrue(RoadPlanners.held(search) && RoadPlanners.held(ahead), "both still held before their minute is up");
+
+            // a minute on, the land still coming
+            dev.awaken.core.api.LandFirst.testCount(true, 0);
+            RoadPlanners.release(System.nanoTime() + dev.awaken.core.api.LandFirst.MOST_NS);
+            until = System.nanoTime() + 10_000_000_000L;
+            while (!searched.get() && System.nanoTime() < until) java.util.concurrent.locks.LockSupport.parkNanos(5_000_000L);
+            h.assertTrue(searched.get(), "the search the server thread asked for ran a minute on, with land still coming in");
+            h.assertFalse(laid.get() || RoadPlanners.held(ahead) || RoadPlanners.pending(ahead), "the piece ahead was let go, not laid");
+            h.assertTrue(RoadPlanners.job(ahead, RoadPlanners.AHEAD, 1L << 50, () -> {}), "and asking for it again queues it");
+        } finally {
+            dev.awaken.core.api.LandFirst.testCount(false, 0);
+        }
+        h.succeed();
+    }
 }

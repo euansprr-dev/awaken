@@ -127,17 +127,16 @@ public final class VillageService {
             return t;
         });
         var src = level.getChunkSource();
-        planner.submit(() -> {
+        // land comes first (SPEC §12): the plan waits while new land comes in round a player, at most a minute from the ask
+        planner.submit(dev.awaken.core.api.LandFirst.held(dev.awaken.core.api.LandFirst.MOST_NS, () -> {
             try {
-                // land comes first (SPEC §12): the plan waits while new land comes in round a player
-                dev.awaken.core.api.LandFirst.hold(dev.awaken.core.api.LandFirst.MOST_NS);
                 Plans.of(a, GenTerrain.of(src.getGenerator(), level, src.randomState()));
             } catch (RuntimeException e) {
                 Awaken.LOG.error("[village] planning {} failed", a.key(), e);
             } finally {
                 PLANNING.remove(a.key());
             }
-        });
+        }));
     }
 
     /**

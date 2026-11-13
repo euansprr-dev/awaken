@@ -79,17 +79,17 @@ public final class LodePlans {
         CompletableFuture<List<Lode>> f = CACHE.get(k);
         if (f != null && f.isDone() && !f.isCompletedExceptionally()) return f.join();
         if (f == null && ASKED.add(k)) {
-            WORKER.execute(() -> {
+            // land comes first (SPEC §12): a region asked this way waits while new land comes in round a player, at most
+            // a minute from the ask
+            WORKER.execute(dev.awaken.core.api.LandFirst.held(dev.awaken.core.api.LandFirst.MOST_NS, () -> {
                 try {
-                    // land comes first (SPEC §12): a region asked this way waits while new land comes in round a player
-                    dev.awaken.core.api.LandFirst.hold(dev.awaken.core.api.LandFirst.MOST_NS);
                     region(k.seed, k.rx, k.rz);
                 } catch (RuntimeException e) {
                     dev.awaken.Awaken.LOG.warn("[delve] lode region {} {} failed to plan: {}", k.rx, k.rz, e.toString());
                 } finally {
                     ASKED.remove(k);
                 }
-            });
+            }));
         }
         return null;
     }

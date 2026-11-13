@@ -841,10 +841,26 @@ of `AwakenConfig.Client`.
   last 5 s (with none made for 5 s the land isn't coming in, whatever is missing, so nothing waits on it forever), or
   while world generation waits on work of ours (`atWork(BooleanSupplier)`; Road starts registers its lattice chunks set
   aside for their roads: Euan's new world of 12 Nov stood 30 s at a time with no chunk made and 333 missing while
-  generation waited for its roads, and counted as still, it let the planners take up work kilometres away).
+  generation waited for its roads, and counted as still, it let the planners take up work kilometres away), or while a
+  level with players has chunk generation queued (its worldgen dispatcher's `hasWork()`, read on the server thread as
+  the game's own shutdown reads it): a chunk only counts as made once it's whole, and a view that grows (a new world's
+  join widens it from 10 to 16) first makes a ring of part-made chunks past its edge with none whole for a minute at a
+  time (CI's fresh joins at Euan's seed: 60 missing for 45 s, read as still).
   `hold(mostNs)` waits off the server thread while it's true; `later()` is two threads of our own at the lowest
   priority whose jobs each wait first (at most a minute), in place of `Util.backgroundExecutor()` for optional
   searches: that pool is the game's own, where world generation runs. `/awaken core land` says the count.
+  Nothing waits on it forever (12 Nov, the full suite's delve_horizon_flyover): a count older than 10 s (`STALE_NS`:
+  the server thread stopped ticking, as in a GameTest's body or a paused world) says nothing is coming in, and work
+  for a queue goes through `held(mostNs, work)`, whose span counts from its ask, not from when a worker takes it up, so
+  however long the land keeps coming (a flight over new ground) each search starts within a minute of being asked for,
+  plus the work ahead of it (the Horizon's sinkholes, eight on one worker, waited a minute each one after another).
+  The Horizon's sinkholes, lode regions and village plans, and every `later()` job, wait that way; the ruin finder
+  keeps its 2 s a spot at the start (a trickle on purpose, 64 waiting at most). The road planners' jobs held while land
+  comes in are held a minute from their ask at most too: then a region's site search (the server thread asked for it)
+  runs whatever the land does, and a piece ahead of the players is let go (nobody waits on it, and the next pass asks
+  for it again, as that land's own once a player nears; the road timer's line counts them), so the planners stay off
+  the cores through a long flight. `core_land_first_never_starves` and `village_road_held_answered` hold these with
+  land coming in the whole time.
   `noiseSampled()`, called by the overworld's `CityBasinFunction` (every column and chunk of its terrain passes through
   it), counts terrain noise sampled on the server thread and logs it with its caller at most every 10 s ("terrain
   noise on the server thread"): with Tectonic a column costs tens of milliseconds there. What it found on the tour
@@ -12131,8 +12147,23 @@ within 2,400 of the centre), painting a road chunk 0.9-3.1 ms (cold); a town pla
 slower ones planned twice, the second with the wider wall; 48 ms on the test valley), painted at about 0.3 ms a chunk
 over ~75-110 chunks, at most 6 lights a chunk. On Euan's terrain (Tectonic with the Awakened preset, the city basin) a
 land read is a whole noise column (26.3 samples it all), 0.63 ms on the M4 (3x vanilla) and ~2.7 ms on CI's runner, so
-the land is nearly all of the cost and the only lever is reading fewer columns. What keeps it down (every cut exact: the
-same roads and plans for a seed, the bench's fingerprint unchanged):
+the land is nearly all of the cost. What keeps it down (every cut exact: the same roads and plans for a seed, the bench's
+fingerprint unchanged):
+- the planners' own read of a column (`village.world.NoiseColumns`, one a thread, behind `GenTerrain`): the generator's
+  `getBaseColumn` made a new noise chunk for every column, whose sampler set looks each density function up by its
+  value, a hash of the whole function tree seven times a column (the final density and the aquifer's six), and ran the
+  aquifer down all 384 blocks. Ours binds the same sampler objects, found once a thread by identity, and stops at the
+  first solid block; everything else is the generator's (the volume, context, buffers, aquifer, its fluid picker
+  through an access transformer, since Tectonic sets its own), read top down in the same order, so each block is the
+  one `getBaseColumn` gives. `/awaken village road columns [count]` checks it block for block over the roads' noise and
+  the overworld's own (Tectonic's in a tour) and times both ways, with where a column's time goes;
+  `village_columns_exact` checks vanilla's noise. `-Dawaken.noiseColumns=false` reads every column the generator's way.
+  Measured in the land-join tour (CI's macOS runner, Tectonic, Euan's seed): 1,856 columns over 53 biomes, none differ,
+  and in the same run a column takes 4.3-5.7 ms ours against 6.0-9.0 ms the generator's way (1.4-1.6x; its lookups by
+  value were 0.6-0.8 ms of it; ours is the aquifer 1.7-1.8, the density 1.9-2.2 and the blocks 0.4-0.5). Sharing the
+  aquifer's surface samples or a column's density with its neighbours isn't exact (a sampler context's cached volume
+  and a fresh sample at the same place can differ in the last bit, so a block at the edge of solid could flip), so the
+  rest of a column's cost stays.
 - one shared reading of the land (`SharedLand`, behind `RoadWorld.terrain()`: 64 stripes of 4,096 recent columns and
   4,096 older ones), so a site search, the plan on its site, a village's fallback hamlet, a town's wider wall and the
   roads over it read each column once;

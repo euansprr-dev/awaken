@@ -65,6 +65,7 @@ public final class VillageModule {
             }
         });
         NeoForge.EVENT_BUS.addListener((ServerStoppedEvent e) -> {
+            dev.awaken.village.world.NoiseColumns.forget();
             dev.awaken.village.road.RoadNet.stopAhead();
             Plans.clear();
             dev.awaken.village.road.RoadNet.clear();

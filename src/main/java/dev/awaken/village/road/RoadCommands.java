@@ -24,6 +24,7 @@ import java.util.Set;
  * camp            stands you on the road north out of the Wayfarer camp, looking up it (once it's laid)
  * walk &lt;points&gt;   moves you that many points (four blocks each) along the nearest road, toward its far end
  * marker          stands you before the nearest waymarker, reading it
+ * columns [count] the planners' noise columns against the generator's own, block for block, and timed (the log)
  * </pre>
  * and the framings {@code /awaken village view} uses for towns, mining towns and wayhouses.
  */
@@ -39,7 +40,40 @@ public final class RoadCommands {
                 .then(Commands.literal("walk").then(Commands.argument("points", IntegerArgumentType.integer(-2000, 2000))
                         .executes(c -> walk(c.getSource(), IntegerArgumentType.getInteger(c, "points")))))
                 .then(Commands.literal("marker").executes(c -> marker(c.getSource())))
-                .then(Commands.literal("watch").executes(c -> watch(c.getSource())));
+                .then(Commands.literal("watch").executes(c -> watch(c.getSource())))
+                .then(Commands.literal("columns").executes(c -> columns(c.getSource(), 1600))
+                        .then(Commands.argument("count", IntegerArgumentType.integer(16, 20000)).executes(c -> columns(c.getSource(), IntegerArgumentType.getInteger(c, "count")))));
+    }
+
+    /**
+     * The planners' noise columns against the generator's own (SPEC §28.9, Cost): block for block, then timed, over the
+     * roads' noise and the overworld's own, on a thread of its own (it reads a few thousand columns); a line each.
+     */
+    private static int columns(CommandSourceStack src, int far) {
+        RoadWorld w = RoadWorld.get();
+        if (w == null) {
+            src.sendFailure(Component.literal("No roads in this world (it was made without the Awakened Villages pack)."));
+            return 0;
+        }
+        var server = src.getServer();
+        ServerLevel overworld = server.overworld();
+        var levelGen = overworld.getChunkSource().getGenerator();
+        var levelRandom = overworld.getChunkSource().randomState();
+        Thread t = new Thread(() -> {
+            try {
+                var roads = dev.awaken.village.world.NoiseColumnsCheck.run(w.generator, w.heights, w.random, w.cx, w.cz, far, 16_000);
+                Awaken.LOG.info("[road] columns, the roads' noise: {}", roads.line());
+                var level = dev.awaken.village.world.NoiseColumnsCheck.run(levelGen, overworld, levelRandom, w.cx, w.cz, Math.max(16, far / 4), 16_000);
+                Awaken.LOG.info("[road] columns, the overworld's noise: {}", level.line());
+                server.execute(() -> src.sendSuccess(() -> Component.literal("Roads: " + roads.line() + " | Overworld: " + level.line()), false));
+            } catch (RuntimeException e) {
+                Awaken.LOG.error("[road] columns check failed", e);
+            }
+        }, "Awaken columns check");
+        t.setDaemon(true);
+        t.start();
+        src.sendSuccess(() -> Component.literal("Checking the planners' noise columns against the generator's own (the log has the result)."), false);
+        return 1;
     }
 
     private static int info(CommandSourceStack src) throws CommandSyntaxException {

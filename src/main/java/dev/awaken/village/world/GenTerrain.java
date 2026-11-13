@@ -31,12 +31,16 @@ public record GenTerrain(ChunkGenerator generator, LevelHeightAccessor heights, 
 
     @Override
     public int top(int x, int z) {
+        long v = ours(x, z);
+        if (v != NONE) return (int) (v >> 32);
         COLUMNS.increment();
         return generator.getFirstOccupiedHeight(x, z, Heightmap.Types.WORLD_SURFACE_WG, heights, random);
     }
 
     @Override
     public int water(int x, int z) {
+        long v = ours(x, z);
+        if (v != NONE) return (int) v;
         int top = top(x, z);
         COLUMNS.increment();
         int floor = generator.getFirstOccupiedHeight(x, z, Heightmap.Types.OCEAN_FLOOR_WG, heights, random);
@@ -46,10 +50,34 @@ public record GenTerrain(ChunkGenerator generator, LevelHeightAccessor heights, 
     /**
      * Both heights from one noise column: the generator samples the whole column either way, so asking twice (once per
      * heightmap) cost two full columns per read, and a hamlet's plan reads ~1,600 columns inside world generation.
-     * Scanned top down with each heightmap's own test, it gives exactly what {@code getFirstOccupiedHeight} gives.
+     * Scanned top down with each heightmap's own test, it gives exactly what {@code getFirstOccupiedHeight} gives; top and
+     * water are read the same way ({@link NoiseColumns}: one column each, down to its floor).
      */
     @Override
     public long both(int x, int z) {
+        long v = ours(x, z);
+        return v != NONE ? v : vanilla(x, z);
+    }
+
+    /** No column of ours (another kind of generator, switched off, or a read that failed). */
+    private static final long NONE = Long.MIN_VALUE;
+
+    /** The planners' own read of the generator's column, block for block the same (SPEC §28.9, Cost), or {@link #NONE}. */
+    private long ours(int x, int z) {
+        try {
+            NoiseColumns c = NoiseColumns.of(generator, heights, random);
+            if (c == null) return NONE;
+            long v = c.both(x, z, null);
+            COLUMNS.increment();
+            return v;
+        } catch (RuntimeException | LinkageError e) {
+            NoiseColumns.failed(e);
+            return NONE;
+        }
+    }
+
+    /** {@link #both} read through the generator's own {@code getBaseColumn} (the check, generators of other kinds). */
+    public long vanilla(int x, int z) {
         COLUMNS.increment();
         net.minecraft.world.level.NoiseColumn col = generator.getBaseColumn(x, z, heights, random);
         int min = heights.getMinY(), top = min - 1, floor = min - 1;

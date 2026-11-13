@@ -113,9 +113,10 @@ final class RoadTimer {
 
     /** Land first (SPEC §28.9, Cost): the jobs held while land came in, and the chunks missing now. */
     private static String landFirst() {
-        long held = RoadPlanners.DEFERRED.getAndSet(0);
+        long held = RoadPlanners.DEFERRED.getAndSet(0), letGo = RoadPlanners.LET_GO.getAndSet(0);
         int missing = dev.awaken.core.api.LandFirst.missing();
-        return held == 0 && missing == 0 ? "" : "; land first: " + held + " jobs held, " + missing + " chunks in view not made yet"
+        return held == 0 && missing == 0 && letGo == 0 ? "" : "; land first: " + held + " jobs held, "
+                + (letGo > 0 ? letGo + " let go after a minute, " : "") + missing + " chunks in view not made yet"
                 + (dev.awaken.core.api.LandFirst.streaming() ? " (land coming in)" : "");
     }
 

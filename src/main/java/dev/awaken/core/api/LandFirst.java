@@ -20,12 +20,19 @@ import java.util.concurrent.locks.LockSupport;
  * instead of taking cores from the generator: on Euan's Mac (12 Nov) five road planners used 4.6 cores while he flew
  * over new land, and our searches ran on the game's own worldgen threads ({@code Util.backgroundExecutor}).
  * <p>
+ * Nothing waits on it forever. A count older than {@link #STALE_NS} (the server thread stopped ticking: a long tick, a
+ * paused world, a GameTest's body) says the land isn't coming in, and work waits at most its span from when it was
+ * asked for ({@link #held}), not from when a worker takes it up, so a queue of searches under a player flying over new
+ * ground doesn't wait a span each, one after another (the full suite of 12 Nov: the Horizon's eight sinkhole searches
+ * queued on one worker, each waiting its minute behind the last).
+ * <p>
  * The server thread counts the missing chunks twice a second (a hash lookup each: about a thousand for a view of 16);
  * any thread may ask. With no chunk made for {@link #STILL_NS} the land isn't coming in, whatever is missing (a chunk
  * waiting on something, a paused world), so nothing waits on it forever, unless the generator is waiting on work of
- * ours ({@link #atWork}: the roads of a lattice chunk it set aside). That is the land coming in too: Euan's new world of
- * 12 Nov stood 30 s at a time with no chunk made and 333 missing while it waited for its roads, and counted as still,
- * it let the road planners take up work kilometres away beside what it waited for.
+ * ours ({@link #atWork}: the roads of a lattice chunk it set aside) or has chunks queued that aren't whole yet. That is
+ * the land coming in too: Euan's new world of 12 Nov stood 30 s at a time with no chunk made and 333 missing while it
+ * waited for its roads, and counted as still, it let the road planners take up work kilometres away beside what it
+ * waited for.
  */
 public final class LandFirst {
     private LandFirst() {}
@@ -36,16 +43,23 @@ public final class LandFirst {
     static final long STILL_NS = 5_000_000_000L;
     /** How often a waiting thread looks again. */
     static final long LOOK_NS = 50_000_000L;
-    /** Optional work never waits longer than this: it still comes, only last. */
+    /** Optional work never waits longer than this from when it was asked for: it still comes, only last. */
     public static final long MOST_NS = 60_000_000_000L;
+    /**
+     * A count older than this says nothing is coming in: the server thread isn't ticking, so nothing is counted (it counts
+     * every half second at 20 ticks a second, and every 10 s only below one tick a second).
+     */
+    public static final long STALE_NS = 10_000_000_000L;
 
     private static volatile boolean streaming;
     private static volatile int missing;
     private static volatile long lastMade;
+    /** When the server thread last counted. */
+    private static volatile long counted;
 
-    /** Whether new land is coming in round a player now (any thread). */
+    /** Whether new land is coming in round a player now (any thread): false once the last count is stale. */
     public static boolean streaming() {
-        return streaming;
+        return streaming && System.nanoTime() - counted < STALE_NS;
     }
 
     /** The chunks inside players' views not made yet, at the last count. */
@@ -123,6 +137,7 @@ public final class LandFirst {
         Thread self = Thread.currentThread();
         if (serverThread != self) serverThread = self; // a world opened again runs on a new server thread
         if (server.getTickCount() % EVERY != 0) return;
+        counted = System.nanoTime();
         int n = 0;
         for (ServerPlayer p : server.getPlayerList().getPlayers()) {
             if (!(p.getChunkTrackingView() instanceof ChunkTrackingView.Positioned v)) continue;
@@ -132,7 +147,19 @@ public final class LandFirst {
                 for (int z = cz - r; z <= cz + r; z++) if (v.isInViewDistance(x, z) && cache.getChunkNow(x, z) == null) n++;
         }
         missing = n;
-        streaming = n > 0 && (System.nanoTime() - lastMade < STILL_NS || generatorWaits());
+        streaming = n > 0 && (System.nanoTime() - lastMade < STILL_NS || generatorWaits() || generating(server));
+    }
+
+    /**
+     * Whether a level with players has chunk generation queued: chunks only count as made once they're whole, and a view
+     * that grows (a new world's join widens it from 10 to 16) first makes a ring of part-made chunks past its edge, with
+     * none finished for a minute at a time (CI's fresh joins at Euan's seed, 12 Nov: 60 missing for 45 s, read as still).
+     * Read on the server thread, as the game's own shutdown reads it.
+     */
+    private static boolean generating(MinecraftServer server) {
+        for (ServerPlayer p : server.getPlayerList().getPlayers())
+            if (p.level().getChunkSource().chunkMap.worldgenTaskDispatcher.hasWork()) return true;
+        return false;
     }
 
     /** (ChunkEvent.Load, CoreModule) a chunk was made or read: the generator is at work. */
@@ -148,14 +175,37 @@ public final class LandFirst {
     }
 
     /**
-     * Off the server thread: waits while new land is coming in, at most {@code mostNs}. Optional work calls this before it
-     * starts. True if it waited.
+     * Off the server thread: waits while new land is coming in, at most {@code mostNs} from now. Work asked for just now
+     * calls this before it starts; work that may wait in a queue first goes through {@link #held}. True if it waited.
      */
     public static boolean hold(long mostNs) {
-        if (!streaming) return false;
-        long t0 = System.nanoTime();
-        while (streaming && System.nanoTime() - t0 < mostNs) LockSupport.parkNanos(LOOK_NS);
+        return holdSince(System.nanoTime(), mostNs);
+    }
+
+    /** {@link #hold}, its span counted from {@code askedAt} ({@code System.nanoTime()} when the work was asked for). */
+    public static boolean holdSince(long askedAt, long mostNs) {
+        if (!streaming()) return false;
+        while (streaming() && System.nanoTime() - askedAt < mostNs) LockSupport.parkNanos(LOOK_NS);
         return true;
+    }
+
+    /**
+     * Optional work for a queue (a worker of its own, a pool): when a worker takes it up it waits while new land is coming
+     * in, at most {@code mostNs} from now, its ask. Work queued behind other work has waited already, so however long the
+     * land keeps coming, it starts within its span of being asked for (and the work ahead of it).
+     */
+    public static Runnable held(long mostNs, Runnable work) {
+        long asked = System.nanoTime();
+        return () -> {
+            holdSince(asked, mostNs);
+            work.run();
+        };
+    }
+
+    /** (Tests) a count made {@code agoNs} ago, saying the land is coming in or isn't. */
+    public static void testCount(boolean coming, long agoNs) {
+        counted = System.nanoTime() - agoNs;
+        streaming = coming;
     }
 
     private static @Nullable ThreadPoolExecutor later;
@@ -163,7 +213,7 @@ public final class LandFirst {
     /**
      * In place of {@code Util.backgroundExecutor()} for optional searches: that pool is the game's own, where world
      * generation runs, so a search there takes a generator's thread. Two threads of our own at the lowest priority, each
-     * job held while land comes in (at most {@link #MOST_NS}).
+     * job held while land comes in (at most {@link #MOST_NS} from its ask).
      */
     public static synchronized ExecutorService later() {
         if (later == null) {
@@ -175,8 +225,8 @@ public final class LandFirst {
                 return t;
             }) {
                 @Override
-                protected void beforeExecute(Thread t, Runnable r) {
-                    hold(MOST_NS);
+                public void execute(Runnable r) {
+                    super.execute(held(MOST_NS, r));
                 }
             };
         }
