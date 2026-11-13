@@ -17,8 +17,9 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Set;
 
 /**
- * /awaken frontier status · goto ridge|landing · look ridge|landing [0-11] · fly [quick] · ready · letter · invite &lt;bell&gt; · homecoming (SPEC §67).
- * Dev and tours: where everything is, standing at either helm, a flight from where you stand, the skiff's go-ahead
+ * /awaken frontier status · goto ridge|landing · look ridge|landing [0-11] · perch ridge|landing &lt;8-20&gt; · fly [quick] · ready · letter · invite &lt;bell&gt; · homecoming (SPEC §67).
+ * Dev and tours: where everything is, standing at either helm, a mooring put up as if on trees (the 12 Nov fix takes it
+ * down and builds it on the land), a flight from where you stand, the skiff's go-ahead
  * without Ilse's scene, a letter, an invitation and the homecoming now.
  */
 final class FrontierCommands {
@@ -35,6 +36,11 @@ final class FrontierCommands {
                                 .then(Commands.argument("view", IntegerArgumentType.integer(0, VIEWS - 1)).executes(c -> look(c.getSource(), Moorings.Which.RIDGE, IntegerArgumentType.getInteger(c, "view")))))
                         .then(Commands.literal("landing").executes(c -> look(c.getSource(), Moorings.Which.LANDING, 0))
                                 .then(Commands.argument("view", IntegerArgumentType.integer(0, VIEWS - 1)).executes(c -> look(c.getSource(), Moorings.Which.LANDING, IntegerArgumentType.getInteger(c, "view"))))))
+                .then(Commands.literal("perch")
+                        .then(Commands.literal("ridge").then(Commands.argument("up", IntegerArgumentType.integer(8, 20))
+                                .executes(c -> Moorings.perch(c.getSource().getServer().overworld(), Moorings.Which.RIDGE, IntegerArgumentType.getInteger(c, "up")) ? 1 : 0)))
+                        .then(Commands.literal("landing").then(Commands.argument("up", IntegerArgumentType.integer(8, 20))
+                                .executes(c -> Moorings.perch(c.getSource().getServer().overworld(), Moorings.Which.LANDING, IntegerArgumentType.getInteger(c, "up")) ? 1 : 0))))
                 .then(Commands.literal("fly").executes(c -> fly(c.getSource(), false))
                         .then(Commands.literal("quick").executes(c -> fly(c.getSource(), true))))
                 .then(Commands.literal("ready").executes(c -> {

@@ -1,0 +1,115 @@
+# The ridge mooring among Elder Colossi (Euan's world of 12 Nov, "the boat thing literally spawned in a tree"): his seed
+# and his terrain (Tectonic's awakened preset, the world pack), so the ridge's mooring is built where his was. Its six
+# picture views, two from the forest floor looking at where his stood and one over the forest; then (on the fix) an old
+# world's mooring left on the trees, and built again on the land. Run once on the build he played (before) and once on
+# the fix (after): tools/tour-ci.sh tools/autopilot/far-landing-ridge-trees.txt 1500
+# The mooring's origin is in latest.log ("[frontier] the ridge's mooring built at").
+# ci knobs: PACK=perf,world TECTONIC=awakened
+world autopilot_ridge_trees survival -2048970511949968766
+waitworld
+gui 0
+window 1708 960
+cmd gamerule send_command_feedback false
+cmd gamerule awaken:fauna_spawning false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 1500
+wait 40
+cmd awaken opening skip
+wait 100
+screen close
+cmd awaken powers starter 1
+wait 20
+screen close
+cmd effect give @s minecraft:resistance 100000 4 true
+cmd effect give @s minecraft:saturation 100000 10 true
+cmd awaken frontier status
+# the ridge: its land loads, the mooring is built (the server can be far behind its client: wait on the moves)
+frontier mark
+cmd awaken frontier goto ridge
+frontier moved
+wait 200
+frontier mark
+cmd awaken frontier goto ridge
+frontier moved
+wait 60
+cmd awaken frontier goto ridge
+wait 40
+wait 300
+cmd awaken frontier goto ridge
+wait 40
+cmd awaken frontier status
+cmd gamemode spectator
+hud off
+frontier mark
+cmd awaken frontier look ridge 0
+frontier moved
+wait 80
+shot rt_01_bow_quarter
+frontier mark
+cmd awaken frontier look ridge 1
+frontier moved
+wait 40
+shot rt_02_stern_and_pier
+frontier mark
+cmd awaken frontier look ridge 2
+frontier moved
+wait 40
+shot rt_03_from_above
+frontier mark
+cmd awaken frontier look ridge 3
+frontier moved
+wait 40
+shot rt_04_open_side_low
+frontier mark
+cmd awaken frontier look ridge 5
+frontier moved
+wait 40
+shot rt_05_from_ground_ahead
+# the forest floor east and south of where Euan's mooring stood (-1241 92 -443): what a walker sees of it
+frontier mark
+cmd tp @s -1211 67 -439 facing -1241 80 -443
+frontier moved
+wait 60
+shot rt_06_floor_east
+frontier mark
+cmd tp @s -1231 67 -419 facing -1241 80 -443
+frontier moved
+wait 60
+shot rt_07_floor_south
+frontier mark
+cmd tp @s -1196 104 -404 facing -1241 80 -443
+frontier moved
+wait 60
+shot rt_08_over_the_forest
+# an old world's mooring as the old ground search left Euan's: put up 16 on its stone over the land and saved as the look
+# before (no command on the build he played: there this part does nothing). The camera within 32 holds it while it's
+# photographed (so it goes near first); far off, its next check takes it down and builds it on the land.
+frontier mark
+cmd awaken frontier look ridge 0
+frontier moved
+wait 20
+cmd awaken frontier perch ridge 16
+frontier mark
+cmd awaken frontier look ridge 0
+frontier moved
+wait 60
+shot rt_09_perched_like_an_old_world
+frontier mark
+cmd tp @s -1180 110 -390 facing -1241 80 -443
+frontier moved
+wait 400
+cmd awaken frontier status
+frontier mark
+cmd awaken frontier look ridge 0
+frontier moved
+wait 60
+shot rt_10_old_world_built_on_the_land
+frontier mark
+cmd awaken frontier look ridge 2
+frontier moved
+wait 40
+shot rt_11_old_world_from_above
+cmd awaken frontier status
+quit

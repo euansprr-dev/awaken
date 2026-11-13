@@ -10,7 +10,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -92,6 +95,25 @@ final class FrontierTests {
             for (int i = 0; i < 10; i++)
                 for (int j = 0; j < 10; j++) past = Math.max(past, far.levelAt(lx + 3000 + i * 500, lz - 2500 + j * 500));
             h.assertTrue(past > 9, "the land gets harder past the landing: " + past);
+            h.succeed();
+        });
+        AwakenTests.register("frontier_ground_under_trees", 60, h -> {
+            // a giant's bough high over open ground, and a crowned trunk standing on it: the land under both is the floor,
+            // where the no-leaves heightmap stops on the bough (Euan's ridge mooring was set on Elder Colossi, 12 Nov)
+            BlockPos floor = AwakenTests.site(h, new BlockPos(0, 1, 0), new BlockPos(4, 20, 4), Blocks.GRASS_BLOCK.defaultBlockState());
+            ServerLevel level = h.getLevel();
+            BlockPos bough = floor.offset(1, 0, 1), trunk = floor.offset(3, 0, 3);
+            level.setBlock(bough.above(11), Blocks.OAK_LEAVES.defaultBlockState(), Block.UPDATE_CLIENTS);
+            level.setBlock(bough.above(12), Blocks.OAK_WOOD.defaultBlockState(), Block.UPDATE_CLIENTS);
+            level.setBlock(bough.above(13), Blocks.OAK_LEAVES.defaultBlockState(), Block.UPDATE_CLIENTS);
+            for (int y = 1; y <= 6; y++) level.setBlock(trunk.above(y), Blocks.OAK_LOG.defaultBlockState(), Block.UPDATE_CLIENTS);
+            level.setBlock(trunk.above(7), Blocks.OAK_LEAVES.defaultBlockState(), Block.UPDATE_CLIENTS);
+            int want = floor.getY() + 1, map = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, bough.getX(), bough.getZ());
+            h.assertTrue(map == bough.getY() + 13, "the no-leaves heightmap stops on the bough (" + map + ")");
+            for (BlockPos c : List.of(bough, trunk, floor)) {
+                int got = Moorings.ground(level, c.getX(), c.getZ());
+                h.assertTrue(got == want, "the land at " + c.toShortString() + " is " + got + ", not the floor's " + want);
+            }
             h.succeed();
         });
         AwakenTests.register("frontier_skiff_shape", 40, h -> {
