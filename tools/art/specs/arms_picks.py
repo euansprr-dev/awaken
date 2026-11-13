@@ -83,13 +83,14 @@ DRESS = {
 }
 
 # Each raise leaves a ring of the metal before it on the haft, climbing from the grip: E lowest, A highest, at fixed heights
-# so a pick first made at C shows two empty places below its first ring.
+# so a pick first made at C shows two empty places below its first ring. A ring is laid over the haft (a veil), so where
+# one is left out the haft is whole, not holed.
 RING_OF = {"E": "sinew", "D": "p_copper", "C": "brass", "B": "mirror", "A": "gold"}
 RING_Y = {"E": 4, "D": 6, "C": 8, "B": 10, "A": 12}
 
 
 def rank_rings(rank, width=4, depth=4):
-    return [VX.slab(-width / 2, width / 2, RING_Y[r], RING_Y[r] + 1, depth, RING_OF[r], f"rank_{r}") for r in RANKS[:RANKS.index(rank)]]
+    return [VX.slab(-width / 2, width / 2, RING_Y[r], RING_Y[r] + 1, depth, RING_OF[r], f"rank_{r}", veil=True) for r in RANKS[:RANKS.index(rank)]]
 
 
 def foot(d, y=-5):

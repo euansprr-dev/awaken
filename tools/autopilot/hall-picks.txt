@@ -1,0 +1,130 @@
+# Forged picks in the Hall of Arms (SPEC §49.4, §52): the Picks tab beside Arms and Armour, a hovered pick, picks brought close,
+# and the Hall opened at the War Anvil with a pickaxe in hand: iron (the wall), forged (straight to Raise yours), old (Remake).
+# At Euan's window (1708 x 960, a 427 x 240 GUI as his 4K at GUI 9) and at 1280 x 720. The Arms tab first, to hold it against.
+world hallpicks creative 4350
+waitworld
+wait 60
+cmd awaken opening skip
+wait 40
+cmd awaken powers starter 1
+screen close
+cmd gamerule send_command_feedback false
+cmd gamerule spawn_mobs false
+cmd gamerule advance_time false
+cmd weather clear 1000000
+cmd time set 6000
+window 1708 960
+cmd awaken admin levels 13
+cmd awaken admin rankup
+# a lode's heart taught the Breaker; the Sounder waits for a Delver lamp
+cmd awaken admin counter "awaken:delve/deed_heart" 1
+# the smithy high over where this seed spawns you (1037 -555), whose chunks are already made: 0,0 can still be waiting for its
+# roads after 300 ticks on the runner, and a platform there never came (the first run fell into the sea)
+cmd tp @s 1040.5 290 -551.5 0 0
+cmd forceload add 1024 -568 1056 -536
+wait 100
+cmd fill 1032 289 -557 1048 289 -541 minecraft:polished_deepslate
+cmd fill 1032 290 -557 1048 295 -541 minecraft:air
+cmd setblock 1040 290 -548 awaken:war_anvil[facing=north]
+cmd setblock 1038 290 -549 awaken:forge[facing=east]
+cmd setblock 1037 292 -550 minecraft:lantern
+cmd setblock 1043 292 -547 minecraft:lantern
+cmd effect give @s minecraft:water_breathing infinite 0 true
+cmd effect give @s minecraft:slow_falling infinite 0 true
+cmd effect give @s minecraft:resistance infinite 4 true
+wait 20
+cmd gamemode survival
+cmd give @s iron_ingot 5
+cmd give @s copper_ingot 3
+cmd give @s oak_log 2
+cmd give @s string 3
+cmd give @s awaken:essence_shard 9
+cmd item replace entity @s weapon.mainhand with minecraft:air
+wait 20
+# the three tabs, nothing in hand
+cmd awaken hall wall 0
+wait 80
+shot w1708_arms
+cmd awaken hall view wing 2
+wait 60
+shot w1708_picks
+cmd awaken hall view hover 0
+wait 40
+shot w1708_hover_delver
+cmd awaken hall view hover 3
+wait 40
+shot w1708_hover_sounder
+cmd awaken hall piece pick_delver 1
+wait 80
+shot w1708_close_delver
+cmd awaken hall piece pick_mattock 2
+wait 80
+shot w1708_close_mattock
+cmd awaken hall piece pick_sounder 2
+wait 80
+shot w1708_close_sounder
+screen close
+wait 10
+# at the anvil: an iron pickaxe opens the Hall on the Picks wall
+cmd tp @s 1040.5 290 -548.75 0 35
+cmd item replace entity @s weapon.mainhand with minecraft:iron_pickaxe
+wait 20
+use
+wait 80
+shot w1708_anvil_iron
+screen close
+wait 10
+# a forged pick goes straight to its form at the next rank up, with the anvil's Raise on it
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_pick_delver
+wait 20
+use
+wait 90
+shot w1708_anvil_forged
+# Esc steps back to the wall: the pick in hand under the tabs, its own niche marked
+screenkey esc
+wait 40
+cmd awaken hall view hand 0
+wait 30
+shot w1708_anvil_forged_wall
+cmd awaken hall view hover 5
+wait 40
+shot w1708_anvil_redraw_hover
+cmd awaken hall piece pick_breaker 0
+wait 80
+shot w1708_anvil_redraw_close
+screen close
+wait 10
+# the old pick: Remake it on what it becomes, free
+cmd item replace entity @s weapon.mainhand with awaken:waking_pick
+wait 20
+use
+wait 90
+shot w1708_anvil_old
+screen close
+wait 10
+# smaller: the same sheet, letterboxed, text snapped to its pixels
+window 1280 720
+wait 40
+cmd item replace entity @s weapon.mainhand with minecraft:air
+wait 10
+cmd awaken hall wall 0
+wait 60
+cmd awaken hall view wing 2
+wait 60
+shot w1280_picks
+cmd awaken hall view hover 0
+wait 40
+shot w1280_hover
+cmd awaken hall piece pick_breaker 1
+wait 80
+shot w1280_close_breaker
+screen close
+wait 10
+cmd item replace entity @s weapon.mainhand with awaken:wildhide_pick_delver
+wait 20
+use
+wait 90
+shot w1280_anvil_forged
+screen close
+wait 10
+quit

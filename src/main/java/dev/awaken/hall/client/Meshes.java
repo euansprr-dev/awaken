@@ -11,8 +11,8 @@ import java.util.Map;
 final class Meshes {
     private Meshes() {}
 
-    /** The mesh, its turn about z, the point to turn it round, the bounds' middle after turning, and its length. */
-    record Up(WeaponMesh mesh, float angle, float mx, float my, float mz, float cx, float cy, float cz, float length) {}
+    /** The mesh, its turn about z, the point to turn it round, the bounds' middle after turning, its length, and how wide it stands (a pick's head). */
+    record Up(WeaponMesh mesh, float angle, float mx, float my, float mz, float cx, float cy, float cz, float length, float width) {}
 
     private static final Map<String, Up> UP = new HashMap<>();
 
@@ -67,6 +67,6 @@ final class Meshes {
             z0 = Math.min(z0, z);
             z1 = Math.max(z1, z);
         }
-        return new Up(m, angle, mx, my, mz, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, y1 - y0);
+        return new Up(m, angle, mx, my, mz, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, y1 - y0, x1 - x0);
     }
 }

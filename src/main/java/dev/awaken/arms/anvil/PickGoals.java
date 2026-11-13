@@ -64,7 +64,7 @@ final class PickGoals {
                         .optional().priority(46).build());
             } else {
                 Goals.Builder b = Goals.Step.of(FIRST, Goal.WEAPONS, "Forge your first pick")
-                        .why("At a War Anvil, on the Picks side. By hand at first: knap the head clean, bind it, and tap it down the haft. How well you do decides how well it digs.")
+                        .why("Use a War Anvil and open Picks, beside Arms and Armour. By hand at first: knap the head clean, bind it, and tap it down the haft. How well you do decides how well it digs.")
                         .need(Need.of("A War Anvil", anvil != null)).priority(45);
                 for (NeedRow r : ArmsArmoury.needsOf(p, ArmsArmoury.PREFIX[0] + "_" + PickForm.DELVER.style())) b.need(WeaponGoals.need(r));
                 if (anvil != null) b.at(anvil);
@@ -73,7 +73,7 @@ final class PickGoals {
         }
         if (!old.isEmpty()) {
             Goals.Builder b = Goals.Step.of(REMAKE, Goal.WEAPONS, "Bring your old pick to a War Anvil")
-                    .why("Any anvil remakes it free, and it keeps everything it has. It goes on working as it is if you'd rather not.")
+                    .why("Hold it and use any War Anvil. It's remade free, and it keeps everything it has. It goes on working as it is if you'd rather not.")
                     .optional().priority(44);
             if (anvil != null) b.at(anvil);
             out.add(b.build());
@@ -89,7 +89,7 @@ final class PickGoals {
         }
         if (!waiting.isEmpty()) {
             Goals.Builder b = Goals.Step.of(WORK_IN, Goal.WEAPONS, "Work what you've done into your pick")
-                    .why("You've earned a gift it doesn't hold yet. Any anvil works it in, free, in a few seconds.")
+                    .why("You've earned a gift it doesn't hold yet. Hold your pick and use any War Anvil: it's worked in free, in a few seconds.")
                     .optional().priority(42);
             if (anvil != null) b.at(anvil);
             out.add(b.build());

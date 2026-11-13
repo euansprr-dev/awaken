@@ -48,7 +48,9 @@ final class Panel {
         List<ItemStack> icons = new ArrayList<>(1);
         String name = label;
         if (tag) {
-            if (name.isEmpty()) name = Component.translatable("tag.item." + nid.getNamespace() + "." + nid.getPath()).getString();
+            // vanilla names few of its tags ("tag.item.minecraft.logs" has no words): the path, plainly, as "Logs"
+            String key = "tag.item." + nid.getNamespace() + "." + nid.getPath();
+            if (name.isEmpty()) name = Language.getInstance().has(key) ? Language.getInstance().getOrDefault(key) : plain(nid.getPath());
             for (Holder<Item> h : BuiltInRegistries.ITEM.getTagOrEmpty(TagKey.create(Registries.ITEM, nid))) icons.add(new ItemStack(h.value()));
         } else {
             Item it = BuiltInRegistries.ITEM.getValue(nid);
@@ -61,6 +63,11 @@ final class Panel {
                 : nid.getPath().endsWith("_blueprint") ? "awaken.source.blueprint" : "awaken.source." + nid.getNamespace() + "." + nid.getPath();
         String source = Language.getInstance().has(key) ? Language.getInstance().getOrDefault(key) : "";
         return new Need(icons.toArray(new ItemStack[0]), Math.min(have, need) + "/" + need, name, s.wrap(name, TEXT_W / across - 8F, 2F), ok, source);
+    }
+
+    private static String plain(String path) {
+        String words = path.replace('_', ' ');
+        return words.isEmpty() ? words : words.substring(0, 1).toUpperCase(Locale.ROOT) + words.substring(1);
     }
 
     static float needsHeight(int count) {
